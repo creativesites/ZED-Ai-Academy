@@ -1,0 +1,55 @@
+import { auth } from "@clerk/nextjs/server";
+import { redirect } from "next/navigation";
+import { createServiceClient } from "@/lib/supabase/server";
+import { ensureProfile } from "@/lib/supabase/ensure-profile";
+import { requireOnboarding } from "@/lib/require-onboarding";
+import Header2Wrapper from "@/components/layout/Header2Wrapper";
+import Footer1 from "@/components/layout/footer/Footer1";
+import { NotificationBellServer } from "@/components/shared/notification-bell-server";
+import "../../../public/assets/css/style.css"
+import 'swiper/css'
+// import "swiper/css/navigation"
+import "swiper/css/pagination"
+import 'swiper/css/free-mode';
+import { dmSans } from '@/lib/font'
+
+export default async function CreatorLayout({ children }: { children: React.ReactNode }) {
+  const { userId } = await auth();
+  if (!userId) redirect("/sign-in");
+
+  try {
+    await ensureProfile(userId);
+  } catch {
+    // Non-fatal — continue rendering even if profile sync fails
+  }
+
+  try {
+    await requireOnboarding(userId);
+  } catch {
+    // redirect() throws
+  }
+
+  const supabase = createServiceClient();
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", userId)
+    .single();
+
+  if (!profile || !["instructor", "super_admin"].includes(profile.role)) {
+    redirect("/dashboard");
+  }
+
+  return (
+    <div className="page-wrapper">
+      <Header2Wrapper />
+      <div style={{ position: "fixed", top: "18px", right: "80px", zIndex: 9999 }}>
+        <NotificationBellServer />
+      </div>
+      <div id="page-content">
+        {children}
+      </div>
+      <Footer1 />
+    </div>
+  );
+}

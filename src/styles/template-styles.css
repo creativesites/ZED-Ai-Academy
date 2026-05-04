@@ -1,0 +1,4 @@
+/* Wrap the marketing template CSS in a named layer so Tailwind utilities take precedence.
+   CSS layers declared earlier have lower priority for normal declarations — the template
+   layer is declared first in globals.css, making ALL Tailwind utilities win over it. */
+@import "../assets/css/style.css" layer(template);

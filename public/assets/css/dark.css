@@ -1,0 +1,176 @@
+.dark-version .page-wrapper {
+    background-color: var(--logistiq-black);
+    color: rgba(var(--logistiq-white-rgb), .70);
+}
+
+.dark-version .about-one__content-text2-single,
+.dark-version .service-one,
+.dark-version .skill-one__progress-single .bar,
+.dark-version .testimonial-one,
+.dark-version .faq-one__content-faq,
+.dark-version .cta-one::before,
+.dark-version .counter-one,
+.dark-version .team-one__single-content::before,
+.dark-version .blog-one {
+    background: var(--logistiq-black);
+}
+
+.dark-version h1,
+.dark-version h2,
+.dark-version h3,
+.dark-version h4,
+.dark-version h5,
+.dark-version h6,
+.dark-version .faq-one-accrodion .accrodion-title h4,
+.dark-version .team-one__single-content h2 a {
+    color: var(--logistiq-white);
+}
+
+.dark-version .sec-title__tagline .text h4,
+.dark-version .testimonial-one__img-author .text-box h2 {
+    color: var(--logistiq-white);
+}
+
+.dark-version .about-one,
+.dark-version .about-one__img2::before,
+.dark-version .service-one__single-content,
+.dark-version .project-one,
+.dark-version .project-one__overlay-content::before,
+.dark-version .skill-one,
+.dark-version .skill-one__img2::before,
+.dark-version .testimonial-one__single-inner,
+.dark-version .faq-one,
+.dark-version .cta-one,
+.dark-version .team-one,
+.dark-version .brand-one,
+.dark-version .blog-one__single-content-inner {
+    background: #042630;
+}
+
+.dark-version .service-one__pattern {
+    display: none;
+}
+
+.dark-version .about-one__content-bottom .contact-box .text-box h4 a,
+.dark-version .service-one__single-content h2 a,
+.dark-version .service-one__single-content .btn-box a,
+.dark-version .project-one__overlay-content .text-box h2 a,
+.dark-version .skill-one__progress-single .title-box p,
+.dark-version .team-one__single-content .btn-box a,
+.dark-version .blog-one__single-content-inner h2 a {
+    color: var(--logistiq-white);
+}
+
+.dark-version .service-one__single-content::before {
+    background: rgba(var(--logistiq-white-rgb), .10);
+}
+.dark-version .service-one__single .icon {
+    background: #04171d;
+}
+.dark-version .owl-dot-style1.owl-theme .owl-dots .owl-dot span {
+    background: var(--logistiq-white);
+}
+.dark-version .project-one__title,
+.dark-version .why-choose-one__form-distance-inner .ranger-min-max-block {
+    border: 1px solid rgba(var(--logistiq-white-rgb), .20);
+}
+.dark-version .project-one__title .btn-box .thm-btn {
+    background-color: rgba(var(--logistiq-white-rgb), .10);
+    border: none;
+}
+.dark-version .project-one__title .btn-box .hover-btn {
+    background-color: var(--logistiq-base);
+}
+.dark-version .project-one__title .btn-box .thm-btn:hover {
+    color: var(--logistiq-white);
+}
+.dark-version .why-choose-one__form-box,
+.dark-version .cta-one__inner {
+    background: #103844;
+}
+.dark-version .why-choose-one__form-distance-inner .ranger-min-max-block input[type="text"] {
+    background: transparent;
+    color: rgba(var(--logistiq-white-rgb), .70);
+}
+.dark-version .why-choose-one__form-distance-inner .ranger-min-max-block span,
+.dark-version .why-choose-one__form-distance .title p,
+.dark-version .testimonial-one__img-author .text-box p,
+.dark-version .counter-one__single-inner .content-box .text-box p,
+.dark-version .blog-one__single-content-inner .meta-box li .text-box p a {
+    color: rgba(var(--logistiq-white-rgb), .70);
+}
+.dark-version .blog-one__single-content-inner .meta-box::before {
+    background: rgba(var(--logistiq-white-rgb), .10);
+}
+.dark-version .why-choose-one__form .input-box input[type="text"],
+.dark-version .why-choose-one__form .input-box input[type="email"] {
+    background-color: rgba(var(--logistiq-white-rgb), .10);
+    border: 1px solid rgba(var(--logistiq-white-rgb), .10);
+    color: rgba(var(--logistiq-white-rgb), .70);
+}
+.dark-version .why-choose-one__form .input-box .icon span::before,
+.dark-version .testimonial-one__single-inner .author-box .author-info .bottom-text p {
+    color: rgba(var(--logistiq-white-rgb), .70);
+}
+.dark-version .why-choose-one__form .input-box .nice-select {
+    background-color: rgba(var(--logistiq-white-rgb), .10);
+    border: 1px solid rgba(var(--logistiq-white-rgb), .10);
+    color: rgba(var(--logistiq-white-rgb), .70);
+}
+.dark-version .why-choose-one__form .input-box .nice-select:after {
+    border-bottom: 1px solid rgba(var(--logistiq-white-rgb), .70);
+    border-right: 1px solid rgba(var(--logistiq-white-rgb), .70);
+}
+.dark-version .testimonial-one__pattern {
+    opacity: 0.04;
+}
+.dark-version .testimonial-one__content .big-title h2 {
+    -webkit-text-stroke: 1px rgba(var(--logistiq-white-rgb), 0.07);
+}
+.dark-version .faq-one-accrodion .accrodion-title h4::before {
+    color: rgba(var(--logistiq-white-rgb), .20);
+}
+.dark-version .faq-one-accrodion {
+    border-top: 1px solid rgba(var(--logistiq-white-rgb), .15);
+}
+.dark-version .faq-one-accrodion .accrodion {
+    border-bottom: 1px solid rgba(var(--logistiq-white-rgb), .15);
+}
+.dark-version .sliding-text__title {
+    -webkit-text-stroke: 1px rgba(var(--logistiq-white-rgb), 0.2);
+    color: transparent;
+}
+.dark-version .sliding-text__title img {
+    opacity: 0.2;
+}
+.dark-version .counter-one__single-inner .icon::before {
+    border-bottom: 90px solid #042630;
+}
+.dark-version .counter-one__single-inner .icon span::before {
+    color: var(--logistiq-white);
+}
+.dark-version .counter-one__single-inner .content-box::before {
+    background: rgba(var(--logistiq-white-rgb), .15);
+}
+.dark-version .counter-one__single .shape1 {
+    border-top: 20px solid #042630;
+}
+.dark-version .counter-one__single-inner .content-box .count-text-box .plus {
+    color: var(--logistiq-white);
+}
+.dark-version .team-one__single-content .social-links>li>a>span {
+    color: rgba(var(--logistiq-white-rgb), .70);
+}
+.dark-version .blog-one__single-content-inner .btn-box .hover-btn {
+    background-color: var(--logistiq-black);
+}
+.dark-version .blog-one {
+    padding: 120px 0px 90px;
+}
+.dark-version .brand-one__carousel img {
+    opacity: 0.9;
+    filter: invert(1);
+}
+.dark-version .brand-one__single-inner::before {
+    background: rgba(var(--logistiq-white-rgb), .05);
+}
