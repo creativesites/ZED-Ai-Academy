@@ -4,6 +4,8 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button-variants";
+import { cn } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
 import { formatPrice } from "@/lib/course-experience";
 import {
@@ -63,26 +65,36 @@ export default async function CreatorCoursesPage() {
           </div>
 
           <div className="flex flex-wrap gap-4">
-            <Button
-              variant="outline"
-              className="rounded-full border-white/20 bg-white/10 text-white hover:bg-white/20"
-              render={<Link href="/creator/courses/new" />}
+            <Link
+              href="/creator/courses/new"
+              className={cn(
+                buttonVariants({ variant: "outline" }),
+                "rounded-full border-white/20 bg-white/10 text-white hover:bg-white/20 flex items-center justify-center px-4 h-10"
+              )}
             >
               <WandSparkles className="mr-2 h-4 w-4 text-[#fd8d69]" />
               AI Assistant
-            </Button>
-            <Button
-              variant="outline"
-              className="rounded-full border-white/20 bg-white/10 text-white hover:bg-white/20"
-              render={<Link href="/admin/images" />}
+            </Link>
+            <Link
+              href="/admin/images"
+              className={cn(
+                buttonVariants({ variant: "outline" }),
+                "rounded-full border-white/20 bg-white/10 text-white hover:bg-white/20 flex items-center justify-center px-4 h-10"
+              )}
             >
               <ImageIcon className="mr-2 h-4 w-4 text-[#fd8d69]" />
               Manage Images
-            </Button>
-            <Button className="rounded-full bg-[#fd5523] px-8 py-6 text-lg font-semibold text-white hover:bg-[#ef4a16]" render={<Link href="/creator/courses/new" />}>
+            </Link>
+            <Link 
+              href="/creator/courses/new"
+              className={cn(
+                buttonVariants({ variant: "default" }),
+                "rounded-full bg-[#fd5523] px-8 py-6 text-lg font-semibold text-white hover:bg-[#ef4a16] flex items-center justify-center"
+              )}
+            >
               <Plus className="mr-2 h-5 w-5" />
               New Course
-            </Button>
+            </Link>
           </div>
         </div>
       </section>
@@ -154,22 +166,28 @@ export default async function CreatorCoursesPage() {
 
                   <div className="flex flex-wrap gap-3 lg:flex-col lg:justify-center">
                     {course.status === "published" ? (
-                      <Button
-                        variant="ghost"
-                        className="rounded-full text-[#062e39] hover:bg-[#fff6ee]"
-                        render={<Link href={`/courses/${course.slug}`} target="_blank" />}
+                      <Link
+                        href={`/courses/${course.slug}`}
+                        target="_blank"
+                        className={cn(
+                          buttonVariants({ variant: "ghost" }),
+                          "rounded-full text-[#062e39] hover:bg-[#fff6ee] flex items-center justify-center px-4 h-10"
+                        )}
                       >
                         <Eye className="mr-2 h-4 w-4" />
                         Live Site
-                      </Button>
+                      </Link>
                     ) : null}
-                    <Button
-                      className="rounded-full bg-[#062e39] px-6 text-white hover:bg-[#0a4055]"
-                      render={<Link href={`/creator/courses/${course.id}`} />}
+                    <Link
+                      href={`/creator/courses/${course.id}`}
+                      className={cn(
+                        buttonVariants({ variant: "default" }),
+                        "rounded-full bg-[#062e39] px-6 text-white hover:bg-[#0a4055] flex items-center justify-center h-10"
+                      )}
                     >
                       <Pencil className="mr-2 h-4 w-4" />
                       Edit Studio
-                    </Button>
+                    </Link>
                   </div>
                 </CardContent>
               </Card>
@@ -186,10 +204,16 @@ export default async function CreatorCoursesPage() {
             <p className="mx-auto mt-4 max-w-xl text-lg leading-relaxed text-slate-600">
               Start with the AI blueprint flow to generate a quick-win lesson angle, professional audience fit, and launch-ready course positioning.
             </p>
-            <Button className="mt-8 rounded-full bg-[#fd5523] px-8 py-6 text-lg font-semibold text-white hover:bg-[#ef4a16]" render={<Link href="/creator/courses/new" />}>
+            <Link 
+              href="/creator/courses/new"
+              className={cn(
+                buttonVariants({ variant: "default" }),
+                "mt-8 rounded-full bg-[#fd5523] px-8 py-6 text-lg font-semibold text-white hover:bg-[#ef4a16] flex items-center justify-center"
+              )}
+            >
               Generate a course blueprint
               <ArrowRight className="ml-2 h-5 w-5" />
-            </Button>
+            </Link>
           </CardContent>
         </Card>
       )}

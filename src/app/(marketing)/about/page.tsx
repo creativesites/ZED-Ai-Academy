@@ -2,21 +2,9 @@
 import Layout from "@/components/layout/Layout"
 import CounterUp from "@/components/elements/CounterUp"
 import Link from "next/link"
-import { Autoplay, Navigation, Pagination } from "swiper/modules"
-import { Swiper, SwiperSlide } from "swiper/react"
 import { useState, useEffect } from "react"
-import VideoModal from "@/components/shared/video-modal"
-import { getSiteAsset } from "@/lib/site-assets"
+import { getResolvedPageMediaSlot } from "@/lib/page-media"
 import { Sparkles, Target, Zap, GraduationCap, Users, ShieldCheck, TrendingUp, Phone, ArrowRight } from "lucide-react"
-
-const testimonialOptions = {
-    modules: [Autoplay, Pagination, Navigation],
-    slidesPerView: 1,
-    loop: true,
-    autoplay: { delay: 4000, disableOnInteraction: false },
-    navigation: { nextEl: '.srn', prevEl: '.srp' },
-    pagination: { el: '.swiper-pagination', clickable: true },
-}
 
 const testimonials = [
     {
@@ -26,21 +14,19 @@ const testimonials = [
         quote: "I finished the Prompt Engineering course in two weeks and immediately started using it at work. I now produce content in a fraction of the time.",
     },
     {
-        name: "Bwalya Tembo",
+        name: "Justice Tembo",
         role: "Entrepreneur, Ndola",
-        img: "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=150&q=80",
+        img: "images/photo-1522529599102-193c0d76b5b6.avif",
         quote: "The AI for Business course changed how I run my company. I use AI to draft proposals, respond to emails and analyse my sales data.",
     },
 ]
 
 export default function AboutPage() {
-    const [isOpen, setOpen] = useState(false)
-    const [heroImg, setHeroImg] = useState("https://images.unsplash.com/photo-1758612214917-81d7956c09de?w=1200&q=80")
-    const [missionImg, setMissionImg] = useState("https://images.unsplash.com/photo-1499914485622-a88fac536970?w=800&q=80")
+    const heroFallback = "https://images.unsplash.com/photo-1758612214917-81d7956c09de?w=1200&q=80"
+    const [heroImg, setHeroImg] = useState(heroFallback)
 
     useEffect(() => {
-        getSiteAsset("about_hero", heroImg).then(setHeroImg);
-        getSiteAsset("about_mission_img", missionImg).then(setMissionImg);
+        getResolvedPageMediaSlot("about", "hero_primary", heroFallback).then(({ url }) => setHeroImg(url));
     }, []);
 
     return (
@@ -123,10 +109,10 @@ export default function AboutPage() {
                 <div className="container relative z-10">
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-12">
                         {[
-                            { label: "Courses", val: 20, icon: GraduationCap },
-                            { label: "Learners", val: 500, icon: Users },
+                            { label: "Courses", val: 3, icon: GraduationCap },
+                            { label: "Learners", val: 50, icon: Users },
                             { label: "Success Rate", val: 98, icon: ShieldCheck, suffix: "%" },
-                            { label: "Companies", val: 30, icon: TrendingUp },
+                            { label: "Companies", val: 2, icon: TrendingUp },
                         ].map((s, idx) => (
                             <div key={idx} className="text-center group">
                                 <div className="h-14 w-14 rounded-2xl bg-white/10 flex items-center justify-center text-[#fd5523] mx-auto mb-6 group-hover:scale-110 transition-transform shadow-xl">

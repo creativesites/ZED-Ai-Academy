@@ -26,9 +26,9 @@ export default async function LearningLayout({ children }: { children: React.Rea
 
   return (
     <div className="min-h-screen bg-[#f8fafc]">
-      <div style={{ position: "fixed", top: "18px", right: "24px", zIndex: 9999 }}>
+      {/* <div style={{ position: "fixed", top: "18px", right: "24px", zIndex: 9999 }}>
         <NotificationBellServer />
-      </div>
+      </div> */}
       <main>
         {children}
       </main>

@@ -121,28 +121,28 @@ export default function Testimonial() {
                     <div className="col-xl-6">
                         <div className="testimonial-one__img">
                             <div className="testimonial-one__img1 reveal">
-                                <img src="https://images.unsplash.com/photo-1758518731468-98e90ffd7430?w=800&q=80&auto=format&fit=crop" alt="Zambian learners celebrating success"/>
+                                <img src="images/8984.jpg" alt="Zambian learners celebrating success"/>
                             </div>
 
                             <div className="testimonial-one__img-author">
                                 <ul>
                                     <li>
-                                        <div className="img-box"><img src="https://images.unsplash.com/photo-1758600587815-b654d1405e83?w=100&q=80&auto=format&fit=crop" alt="Learner"/>
+                                        <div className="img-box"><img src="images/beauty-charisma-head-shot-portrait-600nw-2647728057.webp" alt="Learner"/>
                                         </div>
                                     </li>
                                     <li>
-                                        <div className="img-box"><img src="https://images.unsplash.com/photo-1573496527892-904f897eb744?w=100&q=80&auto=format&fit=crop" alt="Learner"/>
+                                        <div className="img-box"><img src="images/photo-1522529599102-193c0d76b5b6.avif" alt="Learner"/>
                                         </div>
                                     </li>
                                     <li>
-                                        <div className="img-box"><img src="https://images.unsplash.com/photo-1607990283143-e81e7a2c9349?w=100&q=80&auto=format&fit=crop" alt="Learner"/>
+                                        <div className="img-box"><img src="images/9b2879c1af82d24e1ad2336583952385.jpeg" alt="Learner"/>
                                         </div>
                                     </li>
                                 </ul>
 
                                 <div className="text-box">
                                     <h2>Learners Satisfied</h2>
-                                    <p>4.9 (500+ Learners)</p>
+                                    <p>4.9 (50+ Learners)</p>
                                 </div>
                             </div>
                         </div>

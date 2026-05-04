@@ -22,7 +22,7 @@ export default function Home() {
                 <Service />
                 <Projects />
                 <Cta />
-                <Team />
+                {/* <Team /> */}
                 <Testimonial />
                 <Faq />
                 <WhyChooseUs />

@@ -28,24 +28,24 @@ const swiperOptions = {
 
 const courses = [
     {
-        img: "https://images.unsplash.com/photo-1677442135703-1787eea5ce01?w=600&q=80&auto=format&fit=crop",
+        img: "images/Gemini_Generated_Image_r5hk74r5hk74r5hk-1024x1024.webp",
         title: "Prompt Engineering",
         desc: "Master the art of writing effective prompts for ChatGPT, Claude and other AI tools to get better results faster.",
         icon: "icon-delivery-man",
         slug: "prompt-engineering",
     },
     {
-        img: "https://images.unsplash.com/photo-1762341107834-a3437dd0ae62?w=600&q=80&auto=format&fit=crop",
+        img: "images/ai-for-business.jpg",
         title: "AI for Business",
         desc: "Automate workflows, write better emails, generate reports and use AI to make smarter business decisions.",
-        icon: "icon-shipment",
+        icon: "icon-delivery-man",
         slug: "ai-for-business",
     },
     {
-        img: "https://images.unsplash.com/photo-1542038784456-1ea8e935640e?w=600&q=80&auto=format&fit=crop",
+        img: "images/handsome-african-guy-with-stylish-haircut-taking-photo-digital-camera.jpg",
         title: "AI Photography & Creative Tools",
         desc: "Use Midjourney, Adobe Firefly and AI editing tools to create stunning visuals and grow your creative business.",
-        icon: "icon-international-shipping",
+        icon: "icon-delivery-man",
         slug: "ai-photography",
     },
     {
@@ -59,14 +59,14 @@ const courses = [
         img: "https://images.unsplash.com/photo-1499914485622-a88fac536970?w=600&q=80&auto=format&fit=crop",
         title: "AI Tools for Productivity",
         desc: "Save hours every week by integrating AI into your daily work — from scheduling to content creation and beyond.",
-        icon: "icon-shipment",
+        icon: "icon-delivery-man",
         slug: "ai-productivity",
     },
     {
         img: "https://images.unsplash.com/photo-1678995637406-1ca9bdf03817?w=600&q=80&auto=format&fit=crop",
         title: "Machine Learning Basics",
         desc: "A non-technical introduction to how AI models work — perfect for anyone wanting to understand the technology.",
-        icon: "icon-international-shipping",
+        icon: "icon-delivery-man",
         slug: "machine-learning-basics",
     },
 ]

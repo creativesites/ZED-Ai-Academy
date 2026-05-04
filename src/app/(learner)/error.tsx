@@ -3,6 +3,8 @@
 import { useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button-variants";
+import { cn } from "@/lib/utils";
 import { AlertTriangle, RefreshCw, LayoutDashboard } from "lucide-react";
 
 export default function LearnerError({
@@ -41,14 +43,16 @@ export default function LearnerError({
             <RefreshCw className="mr-2 h-4 w-4" />
             Try Again
           </Button>
-          <Button
-            variant="outline"
-            className="rounded-full border-slate-200 bg-white px-6 py-4 font-bold text-[#062e39] hover:bg-slate-50"
-            render={<Link href="/dashboard" />}
+          <Link
+            href="/dashboard"
+            className={cn(
+              buttonVariants({ variant: "outline" }),
+              "rounded-full border-slate-200 bg-white px-6 py-4 font-bold text-[#062e39] hover:bg-slate-50 flex items-center justify-center h-12"
+            )}
           >
             <LayoutDashboard className="mr-2 h-4 w-4" />
             Dashboard
-          </Button>
+          </Link>
         </div>
       </div>
     </div>

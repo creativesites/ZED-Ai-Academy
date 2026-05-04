@@ -691,7 +691,7 @@ button {
 .sidebar-contact-info ul li span {
   position: relative;
   display: inline-block;
-  width: 25px;
+  
 }
 
 .sidebar-contact-info ul li span:before {
@@ -2058,7 +2058,7 @@ Main Header Two
   position: absolute;
   top: 0;
   left: 0;
-  height: 122px;
+  height: 126px;
   display: flex;
   align-items: center;
   justify-content: flex-start;
@@ -2290,6 +2290,7 @@ Main Header Two
   width: 70px;
   background: #983315;
   clip-path: polygon(0% 0%, 45% 0, 29% 32%, 100% 100%, 0% 100%);
+  display: none;
 }
 
 .main-header-two__bottom-inner {
@@ -6016,19 +6017,19 @@ Main Header Three
   .logo-box-two::before {
       display: none;
   }
-
   .main-header-two {
-      background: var(--logistiq-base);
-      padding: 25px 0px 25px;
+      background: white !important;
+      padding: 8px 0px 8px !important;
+      border-bottom: 1px solid rgba(6, 46, 57, 0.05);
   }
 
   .main-header-two__bottom-right {
-      display: none;
+      display: flex !important;
   }
 
   .logo-box-two {
       position: relative;
-      height: auto;
+      height: auto !important;
       padding-right: 0px;
   }
 
@@ -6093,4 +6094,45 @@ Main Header Three
 
 
 
+}
+/* Premium Quiz & Responsive Block Enhancements */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.dark-glass-panel {
+  background: rgba(6, 46, 57, 0.8);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-up {
+  animation: slide-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@media (max-width: 640px) {
+  .responsive-stack {
+    flex-direction: column !important;
+    align-items: center !important;
+    text-align: center !important;
+  }
+  
+  .responsive-padding {
+    padding: 1.5rem !important;
+  }
 }

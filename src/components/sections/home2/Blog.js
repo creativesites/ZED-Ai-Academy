@@ -1,33 +1,8 @@
 import Link from "next/link"
+import { listPublishedBlogPosts } from "@/lib/blog-posts"
 
-const posts = [
-    {
-        img: "assets/images/blog/blog-v1-img1.jpg",
-        day: "12",
-        month: "APR",
-        author: "Zed AI Team",
-        title: "5 Ways ChatGPT Can Transform Your Workday Right Now",
-        excerpt: "From drafting emails to summarising meetings, here are the most immediately useful ChatGPT workflows for Zambian professionals...",
-    },
-    {
-        img: "assets/images/blog/blog-v1-img2.jpg",
-        day: "28",
-        month: "MAR",
-        author: "Zed AI Team",
-        title: "How Zambian Businesses Are Using AI in 2026",
-        excerpt: "We spoke with SME owners and corporate teams across Lusaka to find out how AI tools are changing the way Zambia does business...",
-    },
-    {
-        img: "assets/images/blog/blog-v1-img3.jpg",
-        day: "10",
-        month: "MAR",
-        author: "Zed AI Team",
-        title: "From Zero to AI: A Beginner's Guide to Getting Started",
-        excerpt: "Never touched an AI tool before? No problem. This guide walks you through the first steps, the best free tools and what to learn first...",
-    },
-]
-
-export default function Blog() {
+export default async function Blog() {
+    const posts = await listPublishedBlogPosts(3)
     return (
         <>
 
@@ -48,16 +23,18 @@ export default function Blog() {
                 </div>
                 <div className="row">
                     {posts.map((post, idx) => (
-                        <div key={idx} className={`col-xl-4 col-lg-6 wow ${idx === 1 ? 'fadeInDown' : 'fadeInUp'}`} data-wow-delay=".3s">
+                        <div key={post.id} className={`col-xl-4 col-lg-6 wow ${idx === 1 ? 'fadeInDown' : 'fadeInUp'}`} data-wow-delay=".3s">
                             <div className="blog-one__single">
                                 <div className="blog-one__single-img">
-                                    <img src={post.img} alt={post.title}/>
+                                    <Link href={`/blog/${post.slug}`}>
+                                        <img src={post.card_image_src || "/assets/images/blog/blog-v1-img1.jpg"} alt={post.title}/>
+                                    </Link>
                                 </div>
 
                                 <div className="blog-one__single-content">
                                     <div className="date-box">
-                                        <h2>{post.day}</h2>
-                                        <p>{post.month}</p>
+                                        <h2>{new Date(post.published_at).toLocaleDateString("en-US", { day: "2-digit" })}</h2>
+                                        <p>{new Date(post.published_at).toLocaleDateString("en-US", { month: "short" }).toUpperCase()}</p>
                                     </div>
                                     <div className="blog-one__single-content-inner">
                                         <ul className="meta-box">
@@ -66,16 +43,16 @@ export default function Blog() {
                                                     <span className="icon-user"></span>
                                                 </div>
                                                 <div className="text-box">
-                                                    <p><Link href="#">{post.author}</Link></p>
+                                                    <p><Link href={`/blog/${post.slug}`}>{post.author_name}</Link></p>
                                                 </div>
                                             </li>
                                         </ul>
 
-                                        <h2><Link href="#">{post.title}</Link></h2>
+                                        <h2><Link href={`/blog/${post.slug}`}>{post.title}</Link></h2>
                                         <p>{post.excerpt}</p>
 
                                         <div className="btn-box">
-                                            <Link className="thm-btn" href="#">Read More
+                                            <Link className="thm-btn" href={`/blog/${post.slug}`}>Read More
                                                 <i className="icon-right-arrow21"></i>
                                                 <span className="hover-btn hover-bx"></span>
                                                 <span className="hover-btn hover-bx2"></span>

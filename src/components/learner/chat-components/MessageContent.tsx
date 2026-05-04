@@ -12,6 +12,7 @@ import { ResourceLink } from "./ResourceLink";
 import { ActionCard } from "./ActionCard";
 import { KnowledgeCheck } from "./KnowledgeCheck";
 import { CodeSnippet } from "./CodeSnippet";
+import { CourseCard } from "./CourseCard";
 
 interface MessageContentProps {
   content: string;
@@ -19,6 +20,8 @@ interface MessageContentProps {
 
 export function MessageContent({ content }: MessageContentProps) {
   // Pattern to find our custom components: :::component_name {JSON_PROPS} :::
+  // We use a non-greedy match that allows for nested braces if needed, but primarily 
+  // we look for the closing :::
   const parts = content.split(/(:::[a-z_]+[\s\S]*?:::)/g);
 
   return (
@@ -30,8 +33,15 @@ export function MessageContent({ content }: MessageContentProps) {
             if (!match) return null;
 
             const name = match[1];
-            const propsStr = match[2];
-            const props = JSON.parse(propsStr);
+            let propsStr = match[2].trim();
+            
+            // Clean up common AI formatting errors in JSON
+            // Remove markdown code blocks if the AI wrapped JSON in them
+            if (propsStr.startsWith("```json")) propsStr = propsStr.replace(/^```json/, "");
+            if (propsStr.startsWith("```")) propsStr = propsStr.replace(/^```/, "");
+            if (propsStr.endsWith("```")) propsStr = propsStr.replace(/```$/, "");
+            
+            const props = JSON.parse(propsStr.trim());
 
             switch (name) {
               case "prompt_template":
@@ -54,12 +64,19 @@ export function MessageContent({ content }: MessageContentProps) {
                 return <KnowledgeCheck key={i} {...props} />;
               case "code_snippet":
                 return <CodeSnippet key={i} {...props} />;
+              case "course_card":
+                return <CourseCard key={i} {...props} />;
               default:
                 return <pre key={i} className="text-xs text-red-500">Unknown component: {name}</pre>;
             }
           } catch (e) {
-            console.error("Failed to parse component props", e);
-            return <pre key={i} className="text-xs text-red-500">Error parsing component: {part}</pre>;
+            console.error("Failed to parse component props", e, part);
+            return (
+              <div key={i} className="my-2 rounded-xl border border-red-100 bg-red-50/50 p-4">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-red-500 mb-2">Component Render Error</p>
+                <pre className="whitespace-pre-wrap font-mono text-[10px] text-slate-600">{part}</pre>
+              </div>
+            );
           }
         }
 

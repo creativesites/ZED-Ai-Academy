@@ -94,6 +94,7 @@ export async function enrollFree(courseId: string, courseSlug: string) {
     user_id: userId,
     course_id: courseId,
     source: "individual_purchase",
+    status: "active",
   });
 
   if (error) throw new Error(error.message);

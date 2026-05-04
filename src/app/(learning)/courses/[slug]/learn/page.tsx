@@ -26,19 +26,34 @@ export default async function LearnPage({ params, searchParams }: PageProps) {
   // Get course
   const { data: course } = await supabase
     .from("courses")
-    .select("id, title, slug, status, description, category, level")
+    .select("id, title, slug, status, description, category, level, price_type")
     .eq("slug", slug)
     .single();
 
   if (!course) notFound();
 
   // Check enrollment
-  const { data: enrollment } = await supabase
+  let { data: enrollment } = await supabase
     .from("enrollments")
     .select("id, status")
     .eq("user_id", userId)
     .eq("course_id", course.id)
-    .single();
+    .maybeSingle();
+
+  // Auto-enroll if free
+  if (!enrollment && course.price_type === "free") {
+    const { data: newEnrollment } = await supabase
+      .from("enrollments")
+      .insert({
+        user_id: userId,
+        course_id: course.id,
+        source: "individual_purchase",
+        status: "active",
+      })
+      .select("id, status")
+      .single();
+    enrollment = newEnrollment;
+  }
 
 
   // Get curriculum with content blocks + quiz data
@@ -157,6 +172,7 @@ export default async function LearnPage({ params, searchParams }: PageProps) {
         description: course.description,
         category: course.category,
         level: course.level,
+        price_type: course.price_type,
       }}
       modules={modules}
       activeLessonId={activeLessonId}

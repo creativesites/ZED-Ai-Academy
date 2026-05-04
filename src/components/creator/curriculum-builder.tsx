@@ -20,7 +20,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { createModule, updateModule, deleteModule, reorderModules } from "@/actions/modules";
-import { createLesson, reorderLessons, updateLesson } from "@/actions/lessons";
+import { createLesson, reorderLessons, updateLesson, deleteLesson } from "@/actions/lessons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -41,6 +41,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
+import { AIBlueprintAssistant } from "./ai-blueprint-assistant";
 
 type LessonItem = { id: string; title: string; position: number; is_preview: boolean };
 type ModuleItem = { id: string; title: string; position: number; lessons: LessonItem[] };
@@ -49,10 +50,12 @@ function SortableLesson({
   lesson,
   courseId,
   onPreviewToggled,
+  onDelete,
 }: {
   lesson: LessonItem;
   courseId: string;
-  onPreviewToggled: (lessonId: string, next: boolean) => void;
+  onPreviewToggled: (id: string, next: boolean) => void;
+  onDelete: (id: string) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: lesson.id,
@@ -65,9 +68,24 @@ function SortableLesson({
       try {
         await updateLesson(lesson.id, courseId, { is_preview: next });
         onPreviewToggled(lesson.id, next);
-        toast.success(next ? "Lesson set as preview" : "Lesson removed from preview");
+        toast.success(next ? "Lesson set to preview" : "Lesson set to draft");
       } catch (err) {
-        toast.error(err instanceof Error ? err.message : "Unable to update lesson preview setting.");
+        toast.error(err instanceof Error ? err.message : "Unable to update lesson.");
+      }
+    });
+  }
+
+  function handleDelete() {
+    if (!confirm(`Delete lesson "${lesson.title}"?`)) return;
+    startTransition(async () => {
+      try {
+        await deleteLesson(lesson.id, courseId);
+        onDelete(lesson.id);
+        toast.success("Lesson deleted");
+      } catch (err) {
+        // If it redirects, this might catch an error that we can ignore or handle
+        if (err instanceof Error && err.message.includes("NEXT_REDIRECT")) return;
+        toast.error(err instanceof Error ? err.message : "Unable to delete lesson.");
       }
     });
   }
@@ -121,12 +139,21 @@ function SortableLesson({
         )}
       </button>
 
-      <Link
-        href={`/creator/courses/${courseId}/lessons/${lesson.id}`}
-        className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-50 text-slate-400 transition-all hover:bg-[#062e39] hover:text-white lg:opacity-0 lg:group-hover:opacity-100"
-      >
-        <Pencil className="h-4 w-4" />
-      </Link>
+      <div className="flex items-center gap-1 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
+        <Link
+          href={`/creator/courses/${courseId}/lessons/${lesson.id}`}
+          className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-50 text-slate-400 transition-all hover:bg-[#062e39] hover:text-white"
+        >
+          <Pencil className="h-4 w-4" />
+        </Link>
+        <button
+          onClick={handleDelete}
+          disabled={pending}
+          className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-500"
+        >
+          {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+        </button>
+      </div>
     </div>
   );
 }
@@ -285,6 +312,9 @@ function SortableModule({
                       prev.map((l) => (l.id === lessonId ? { ...l, is_preview: next } : l))
                     )
                   }
+                  onDelete={(lessonId) =>
+                    setLessons((prev) => prev.filter((l) => l.id !== lessonId))
+                  }
                 />
               ))}
             </SortableContext>
@@ -434,6 +464,8 @@ export function CurriculumBuilder({
         </div>
 
         <div className="flex items-center gap-2">
+          <AIBlueprintAssistant courseId={courseId} />
+          <div className="h-6 w-px bg-[#062e39]/10 mx-2" />
           <Button 
             variant="ghost" 
             className="rounded-full text-[#062e39] hover:bg-[#fff6ee] hover:text-[#fd5523]" 

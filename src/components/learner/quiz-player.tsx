@@ -12,6 +12,7 @@ import {
   Trophy,
   RotateCcw,
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
 type Question = {
@@ -96,29 +97,28 @@ export function QuizPlayer({
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-5">
+    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      {/* Header / Meta */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-[2rem] bg-slate-50/50 border border-slate-100 p-6 md:p-8">
         <div>
-          <h3 className="text-lg font-semibold text-slate-900">{quiz.title ?? "Quiz"}</h3>
-          <p className="text-sm text-slate-600">
-            {questions.length} question{questions.length !== 1 ? "s" : ""} • Pass at {quiz.pass_threshold}%
+          <h3 className="text-xl font-bold text-[#062e39] tracking-tight">{quiz.title ?? "Knowledge Check"}</h3>
+          <p className="text-sm font-medium text-slate-500 mt-1">
+            {questions.length} question{questions.length !== 1 ? "s" : ""} • {quiz.pass_threshold}% to pass
           </p>
         </div>
         {submitted && result && (
-          <Badge
-            className={
-              result.passed
-                ? "border-green-200 bg-green-50 text-green-700"
-                : "border-red-200 bg-red-50 text-red-700"
-            }
-          >
-            {result.passed ? <Trophy className="mr-1 h-3 w-3" /> : <XCircle className="mr-1 h-3 w-3" />}
+          <div className={cn(
+            "inline-flex items-center gap-2 px-5 py-2 rounded-full font-bold text-sm shadow-lg",
+            result.passed ? "bg-green-500 text-white shadow-green-500/20" : "bg-red-500 text-white shadow-red-500/20"
+          )}>
+            {result.passed ? <Trophy className="h-4 w-4" /> : <XCircle className="h-4 w-4" />}
             {result.score}% — {result.passed ? "Passed" : "Failed"}
-          </Badge>
+          </div>
         )}
       </div>
 
-      <div className="space-y-5">
+      {/* Questions */}
+      <div className="space-y-8">
         {questions.map((q, qIdx) => {
           const selected = answers[q.id] ?? [];
           const isCorrect =
@@ -130,29 +130,17 @@ export function QuizPlayer({
           return (
             <div
               key={q.id}
-              className={`space-y-3 rounded-2xl border p-5 transition-colors ${
-                submitted
-                  ? isCorrect
-                    ? "border-green-200 bg-green-50/60"
-                    : "border-red-200 bg-red-50/60"
-                  : "border-slate-200 bg-white"
-              }`}
+              className="group space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500"
+              style={{ animationDelay: `${qIdx * 100}ms` }}
             >
-              <div className="flex items-start gap-2">
-                <span className="mt-1 shrink-0 text-xs text-slate-500">Q{qIdx + 1}.</span>
-                <p className="text-sm font-medium text-slate-900">{q.question}</p>
-                {submitted && (
-                  <span className="ml-auto shrink-0">
-                    {isCorrect ? (
-                      <CheckCircle className="h-5 w-5 text-green-600" />
-                    ) : (
-                      <XCircle className="h-5 w-5 text-red-600" />
-                    )}
-                  </span>
-                )}
+              <div className="flex items-start gap-4">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-[10px] font-black text-slate-400 group-hover:bg-[#062e39] group-hover:text-white transition-colors">
+                  0{qIdx + 1}
+                </div>
+                <p className="text-lg font-bold text-[#062e39] leading-snug pt-0.5">{q.question}</p>
               </div>
 
-              <div className="ml-5 space-y-2">
+              <div className="grid gap-3">
                 {q.options.map((opt, idx) => {
                   const isSelected = selected.includes(idx);
                   const isCorrectOpt =
@@ -164,43 +152,50 @@ export function QuizPlayer({
                       key={idx}
                       onClick={() => toggleAnswer(q.id, idx)}
                       disabled={submitted}
-                      className={`w-full rounded-xl border px-3 py-2 text-left text-sm transition-all disabled:cursor-default ${
-                        isCorrectOpt && submitted
-                          ? "border-green-300 bg-green-100/70 text-green-800"
-                          : isWrongOpt
-                            ? "border-red-300 bg-red-100/70 text-red-800"
-                            : isSelected
-                              ? "border-blue-300 bg-blue-50 text-blue-800"
-                              : "border-slate-200 bg-white text-slate-700 hover:border-blue-200 hover:bg-blue-50/40"
-                      }`}
+                      className={cn(
+                        "relative w-full rounded-2xl border-2 p-4 text-left transition-all duration-200 disabled:cursor-default",
+                        submitted
+                          ? isCorrectOpt
+                            ? "border-green-500 bg-green-50 text-green-900 shadow-sm"
+                            : isWrongOpt
+                              ? "border-red-500 bg-red-50 text-red-900"
+                              : "border-slate-100 bg-slate-50/50 opacity-60"
+                          : isSelected
+                            ? "border-[#062e39] bg-[#062e39] text-white shadow-xl shadow-[#062e39]/10 translate-x-1"
+                            : "border-slate-100 bg-white text-slate-700 hover:border-slate-200 hover:bg-slate-50 hover:shadow-md"
+                      )}
                     >
-                      <span className="flex items-center gap-3">
-                        <span
-                          className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border text-xs ${
-                            isCorrectOpt && submitted
-                              ? "border-green-500 bg-green-600 text-white"
+                      <div className="flex items-center gap-4">
+                        <div className={cn(
+                          "flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border-2 transition-colors",
+                          submitted
+                            ? isCorrectOpt
+                              ? "border-green-600 bg-green-600 text-white"
                               : isWrongOpt
-                                ? "border-red-500 bg-red-600 text-white"
-                                : isSelected
-                                  ? "border-blue-500 bg-blue-600 text-white"
-                                  : "border-slate-300"
-                          }`}
-                        >
-                          {(isSelected || (isCorrectOpt && submitted)) && "✓"}
-                        </span>
-                        {opt}
-                      </span>
+                                ? "border-red-600 bg-red-600 text-white"
+                                : "border-slate-200"
+                            : isSelected
+                              ? "border-white/20 bg-white/20 text-white"
+                              : "border-slate-200 bg-white"
+                        )}>
+                          {(isSelected || (isCorrectOpt && submitted)) && <CheckCircle className="h-3.5 w-3.5" />}
+                        </div>
+                        <span className="text-sm font-semibold">{opt}</span>
+                      </div>
                     </button>
                   );
                 })}
               </div>
 
               {submitted && q.explanation && (
-                <div className="ml-5 mt-2 rounded-xl border border-blue-200 bg-blue-50 px-3 py-2">
-                  <p className="text-xs text-slate-700">
-                    <span className="font-medium text-blue-700">Explanation: </span>
-                    {q.explanation}
-                  </p>
+                <div className="ml-12 rounded-2xl bg-indigo-50/50 border border-indigo-100 p-5 animate-in fade-in zoom-in-95 duration-300">
+                  <div className="flex gap-3">
+                    <HelpCircle className="h-4 w-4 shrink-0 text-indigo-600 mt-0.5" />
+                    <div>
+                      <p className="text-xs font-bold uppercase tracking-widest text-indigo-600 mb-1">Deep Dive</p>
+                      <p className="text-sm leading-relaxed text-indigo-900/80">{q.explanation}</p>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
@@ -208,40 +203,55 @@ export function QuizPlayer({
         })}
       </div>
 
-      {submitted && result && (
-        <div
-          className={`rounded-2xl border p-5 text-center ${
-            result.passed ? "border-green-200 bg-green-50" : "border-red-200 bg-red-50"
-          }`}
-        >
-          {result.passed ? (
-            <>
-              <Trophy className="mx-auto mb-2 h-10 w-10 text-amber-500" />
-              <h4 className="text-lg font-semibold text-slate-900">Quiz Passed!</h4>
-              <p className="mt-1 text-sm text-slate-600">You scored {result.score}% — great work.</p>
-            </>
-          ) : (
-            <>
-              <XCircle className="mx-auto mb-2 h-10 w-10 text-red-500" />
-              <h4 className="text-lg font-semibold text-slate-900">Not quite — {result.score}%</h4>
-              <p className="mt-1 text-sm text-slate-600">
-                You need {quiz.pass_threshold}% to pass. Review the answers and try again.
-              </p>
-              <Button onClick={handleRetry} className="mt-4 bg-blue-600 text-white hover:bg-blue-500">
-                <RotateCcw className="mr-2 h-4 w-4" />
-                Try Again
-              </Button>
-            </>
-          )}
-        </div>
-      )}
-
-      {!submitted && (
-        <Button onClick={handleSubmit} disabled={submitting} className="w-full bg-blue-600 text-white hover:bg-blue-500">
-          {submitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle className="mr-2 h-4 w-4" />}
-          Submit Answers
-        </Button>
-      )}
+      {/* Results / CTA */}
+      <div className="pt-4">
+        {submitted && result ? (
+          <div className={cn(
+            "rounded-[2.5rem] p-10 text-center shadow-2xl animate-in zoom-in duration-500",
+            result.passed ? "bg-green-600 text-white" : "bg-[#062e39] text-white"
+          )}>
+            {result.passed ? (
+              <>
+                <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-3xl bg-white/20 text-white backdrop-blur-md">
+                  <Trophy className="h-10 w-10" />
+                </div>
+                <h4 className="text-3xl font-bold tracking-tight mb-2">Mastery Confirmed!</h4>
+                <p className="text-green-50 font-medium mb-8">You scored {result.score}% — you&apos;ve cleared the bar.</p>
+              </>
+            ) : (
+              <>
+                <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-3xl bg-red-500/20 text-red-400 backdrop-blur-md">
+                  <RotateCcw className="h-10 w-10" />
+                </div>
+                <h4 className="text-3xl font-bold tracking-tight mb-2">Almost There — {result.score}%</h4>
+                <p className="text-slate-400 font-medium mb-8">
+                  You need {quiz.pass_threshold}% to pass. Re-read the takeaways and give it another shot.
+                </p>
+                <Button 
+                  onClick={handleRetry} 
+                  className="rounded-2xl bg-[#fd5523] px-10 py-7 text-lg font-bold text-white hover:bg-[#ef4a16] shadow-xl shadow-[#fd5523]/20"
+                >
+                  <RotateCcw className="mr-2 h-5 w-5" />
+                  Try Again
+                </Button>
+              </>
+            )}
+          </div>
+        ) : (
+          <Button 
+            onClick={handleSubmit} 
+            disabled={submitting} 
+            className="w-full rounded-[2rem] bg-[#062e39] py-8 text-xl font-bold text-white hover:bg-[#0a4055] transition-all hover:scale-[1.01] active:scale-95 shadow-xl"
+          >
+            {submitting ? (
+              <Loader2 className="mr-3 h-6 w-6 animate-spin" />
+            ) : (
+              <CheckCircle className="mr-3 h-6 w-6" />
+            )}
+            Finalize Answers
+          </Button>
+        )}
+      </div>
     </div>
   );
 }

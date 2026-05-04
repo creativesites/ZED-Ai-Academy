@@ -5,6 +5,7 @@ import {
   Phone, MessageCircle, BookOpen, ShieldCheck,
 } from "lucide-react";
 import { EnrollmentActions } from "@/components/admin/enrollment-actions";
+import { BulkEnrollmentActions } from "@/components/admin/bulk-enrollment-actions";
 
 export const metadata = { title: "Student Management — Zed AI Academy Admin" };
 
@@ -111,12 +112,15 @@ export default async function StudentsPage({ searchParams }: PageProps) {
               Activate payments, manage access, and track learner progress.
             </p>
           </div>
-          <Link
-            href="/admin"
-            className="rounded-full border border-slate-200 px-5 py-2.5 text-sm font-bold text-slate-500 hover:bg-slate-50 transition-colors"
-          >
-            ← Back to Dashboard
-          </Link>
+          <div className="flex items-center gap-3">
+            <BulkEnrollmentActions pendingCount={pendingCount ?? 0} />
+            <Link
+              href="/admin"
+              className="rounded-full border border-slate-200 px-5 py-2.5 text-sm font-bold text-slate-500 hover:bg-slate-50 transition-colors"
+            >
+              ← Back
+            </Link>
+          </div>
         </div>
 
         {/* KPI row */}

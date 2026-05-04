@@ -57,14 +57,14 @@ export default async function SignInPage() {
       </div>
 
       {/* Right: Auth Form */}
-      <div className="flex flex-1 flex-col justify-center px-6 py-12 sm:px-8 lg:flex-none lg:px-20 xl:px-24 bg-white">
-        <div className="mx-auto w-full max-w-sm lg:w-96">
+      <div className="flex flex-1 flex-col justify-center px-6 py-4 sm:px-8 lg:flex-none lg:px-20 xl:px-24 bg-white">
+        <div className="mx-auto w-full max-w-sm lg:w-96 flex items-center justify-center flex-col">
           {/* Logo — visible on mobile (left panel is hidden on small screens) */}
-          <div className="mb-8 lg:mb-10">
+          <div className="mb-4 lg:mb-6 flex items-center justify-center flex-col">
             <img
-              src='images/zed-ai-logo2.png'
+              src='images/logo-dark.png'
               alt="Zed AI Academy"
-              className="h-10 w-auto"
+              className="h-20 w-auto"
             />
             <h2 className="mt-6 text-3xl font-extrabold text-[#062e39] tracking-tight">Welcome back</h2>
             <p className="mt-2 text-sm text-slate-500">

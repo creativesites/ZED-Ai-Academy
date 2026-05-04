@@ -94,3 +94,19 @@ export async function createManualEnrollment(
   revalidatePath("/admin/students");
   revalidatePath("/dashboard");
 }
+
+export async function activateAllPending() {
+  const { supabase } = await requireAdmin();
+
+  const { data, error } = await supabase
+    .from("enrollments")
+    .update({ status: "active" })
+    .eq("status", "pending_payment")
+    .select("id");
+
+  if (error) throw new Error(error.message);
+
+  revalidatePath("/admin/students");
+  revalidatePath("/dashboard");
+  return { count: data?.length ?? 0 };
+}

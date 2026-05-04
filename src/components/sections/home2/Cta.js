@@ -1,15 +1,12 @@
-'use client';
-
-import { useState, useEffect } from "react";
 import Link from "next/link";
-import { getSiteAsset } from "@/lib/site-assets";
+import { getResolvedPageMediaSlot } from "@/lib/page-media";
 
-export default function Cta() {
-    const [ctaImg, setCtaImg] = useState("https://images.unsplash.com/photo-1704652838446-edc4448d6261?w=800&q=80&auto=format&fit=crop");
-
-    useEffect(() => {
-        getSiteAsset("cta_image", ctaImg).then(setCtaImg);
-    }, []);
+export default async function Cta() {
+    const { url: ctaImg, altText } = await getResolvedPageMediaSlot(
+        "home",
+        "cta_primary",
+        "images/118620.jpg"
+    );
 
     return (
         <>
@@ -19,8 +16,8 @@ export default function Cta() {
                 <div className="cta-one__inner" style={{ overflow: 'hidden' }}>
                     <div className="cta-one__img wow fadeInRight" data-wow-delay="0ms" data-wow-duration="1500ms" style={{ maxWidth: '450px', right: '50px', bottom: '0' }}>
                         <img
-                            src={ctaImg}
-                            alt="Team training on AI skills"
+                            src="images/118620.jpg"
+                            alt={altText || "Team training on AI skills"}
                             style={{ width: '100%', height: 'auto', display: 'block', objectFit: 'contain' }}
                         />
                     </div>

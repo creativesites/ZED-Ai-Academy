@@ -4,6 +4,8 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button-variants";
+import { cn } from "@/lib/utils";
 import {
   ArrowRight, Award, BookOpen, Building2, Clock3, GraduationCap,
   Image as ImageIcon, Layers, MessageCircle, Play, ShieldCheck,
@@ -190,12 +192,26 @@ export default async function DashboardPage() {
                       : `You have ${inProgressCount} course${inProgressCount !== 1 ? "s" : ""} in flight. Keep building your AI edge.`}
               </p>
             </div>
-            <Button
-              className="rounded-full bg-white px-10 py-7 text-xl font-bold text-[#062e39] shadow-2xl transition-all hover:bg-white/90 hover:scale-105 active:scale-95"
-              render={<Link href="/courses" />}
-            >
-              Browse Courses <ArrowRight className="ml-3 h-6 w-6" />
-            </Button>
+            <div className="flex flex-wrap gap-4">
+              <Link
+                href="/courses"
+                className={cn(
+                  buttonVariants({ variant: "default" }),
+                  "rounded-full bg-white px-10 py-7 text-xl font-bold text-[#062e39] shadow-2xl transition-all hover:bg-white/90 hover:scale-105 active:scale-95 flex items-center justify-center"
+                )}
+              >
+                Browse Courses <ArrowRight className="ml-3 h-6 w-6" />
+              </Link>
+              <Link
+                href="/dashboard/settings"
+                className={cn(
+                  buttonVariants({ variant: "outline" }),
+                  "rounded-full border-2 border-white/30 bg-white/10 px-8 py-7 text-lg font-bold text-white backdrop-blur-md transition-all hover:bg-white/20 flex items-center justify-center"
+                )}
+              >
+                Manage Account
+              </Link>
+            </div>
           </div>
         </section>
 
@@ -517,7 +533,6 @@ export default async function DashboardPage() {
                           href={`https://wa.me/${process.env.NEXT_PUBLIC_FOUNDER_WHATSAPP ?? "260979046745"}?text=${encodeURIComponent(`Hi! I've enrolled in "${course.title}" and I'd like to confirm my payment to unlock full access.`)}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          onClick={(e) => e.stopPropagation()}
                           className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#25D366] py-2.5 text-[13px] font-bold text-white transition-colors hover:bg-[#20bd5a]"
                         >
                           <MessageCircle className="h-4 w-4" />
@@ -548,12 +563,15 @@ export default async function DashboardPage() {
               <p className="mx-auto mt-3 max-w-sm text-lg text-slate-500 font-medium">
                 Start your professional AI journey today with our curated curriculums.
               </p>
-              <Button
-                className="mt-8 rounded-full bg-[#fd5523] px-10 py-7 text-lg font-bold text-white shadow-xl hover:bg-[#ef4a16]"
-                render={<Link href="/courses" />}
+              <Link
+                href="/courses"
+                className={cn(
+                  buttonVariants({ variant: "default" }),
+                  "mt-8 rounded-full bg-[#fd5523] px-10 py-7 text-lg font-bold text-white shadow-xl hover:bg-[#ef4a16] flex items-center justify-center"
+                )}
               >
                 Find Your First Course
-              </Button>
+              </Link>
             </div>
           )}
         </section>

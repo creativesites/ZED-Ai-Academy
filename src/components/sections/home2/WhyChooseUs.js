@@ -9,16 +9,16 @@ export default function WhyChooseUs() {
 
        <section className="why-choose-two">
             <div className="why-choose-two__bg"
-                style={{ backgroundImage: 'url(assets/images/backgrounds/why-choose-v2-bg.jpg)' }} >
+                style={{ backgroundImage: 'url(images/ali.jpg)' }} >
                 <div className="shape3 float-bob-x"><img src="assets/images/shapes/why-choose-v2-shape3.png" alt=""/></div>
-                <div className="why-choose-two__video-box">
+                {/* <div className="why-choose-two__video-box">
                     <a onClick={() => setOpen(true)} className="video-popup">
                         <div className="why-choose-two__video-box-icon">
                             <span className="icon-video"></span>
                             <i className="ripple"></i>
                         </div>
                     </a>
-                </div>
+                </div> */}
             </div>
             <div className="shape1"><img src="assets/images/shapes/why-choose-v2-shape1.png" alt=""/></div>
             <div className="container">
@@ -50,28 +50,28 @@ export default function WhyChooseUs() {
                             <ul>
                                 <li>
                                     <div className="img-box">
-                                        <img src="assets/images/resources/why-choose-v2-img1.png" alt=""/>
+                                        <img src="images/istockphoto-1644128335-612x612-1.jpg" alt=""/>
                                     </div>
                                 </li>
                                 <li>
                                     <div className="img-box">
-                                        <img src="assets/images/resources/why-choose-v2-img2.png" alt=""/>
+                                        <img src="images/beauty-charisma-head-shot-portrait-600nw-2647728057.webp" alt=""/>
                                     </div>
                                 </li>
                                 <li>
                                     <div className="img-box">
-                                        <img src="assets/images/resources/why-choose-v2-img3.png" alt=""/>
+                                        <img src="images/photo-1522529599102-193c0d76b5b6.avif" alt=""/>
                                     </div>
                                 </li>
                                 <li>
                                     <div className="img-box">
-                                        <img src="assets/images/resources/why-choose-v2-img4.png" alt=""/>
+                                        <img src="images/9b2879c1af82d24e1ad2336583952385.jpeg" alt=""/>
                                     </div>
                                 </li>
                             </ul>
 
                             <div className="count-text-box count-box">
-                                <h3><CounterUp end={500} /></h3>
+                                <h3><CounterUp end={50} /></h3>
                                 <span className="plus">+</span>
                             </div>
                             <h3>Happy Learners</h3>

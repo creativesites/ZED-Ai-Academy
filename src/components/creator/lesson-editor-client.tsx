@@ -36,6 +36,10 @@ import { AiPromptBlockEditor } from "@/components/creator/blocks/ai-prompt-block
 import { StepsBlockEditor } from "@/components/creator/blocks/steps-block";
 import { ChecklistBlockEditor } from "@/components/creator/blocks/checklist-block";
 import { KeyTakeawayBlockEditor } from "@/components/creator/blocks/key-takeaway-block";
+import { ExpertNoteBlockEditor } from "@/components/creator/blocks/expert-note-block";
+import { ComparisonTableEditor } from "@/components/creator/blocks/comparison-table-block";
+import { CaseStudyBlockEditor } from "@/components/creator/blocks/case-study-block";
+import { MeetingBlockEditor } from "@/components/creator/blocks/meeting-block";
 import { QuizBuilder } from "@/components/creator/quiz-builder";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -62,6 +66,9 @@ import {
   ListOrdered,
   CheckSquare,
   Zap,
+  Table,
+  BookOpen,
+  Users,
 } from "lucide-react";
 import { toast } from "sonner";
 import type { ContentBlockType, Json } from "@/types/database";
@@ -103,13 +110,18 @@ const BLOCK_META: Record<ContentBlockType, { label: string; icon: React.ElementT
   steps:          { label: "Steps",          icon: ListOrdered,            color: "text-indigo-600",  bgColor: "bg-indigo-50" },
   checklist:      { label: "Checklist",      icon: CheckSquare,            color: "text-emerald-600", bgColor: "bg-emerald-50" },
   key_takeaway:   { label: "Takeaways",      icon: Zap,                    color: "text-amber-600",   bgColor: "bg-amber-50" },
+  expert_note:    { label: "Expert Note",    icon: Zap,                    color: "text-slate-100",   bgColor: "bg-slate-900" },
+  comparison_table: { label: "Comparison",   icon: Table,                  color: "text-violet-600",  bgColor: "bg-violet-50" },
+  case_study:     { label: "Case Study",     icon: BookOpen,               color: "text-indigo-600",  bgColor: "bg-indigo-50" },
+  meeting:        { label: "Meeting",        icon: Video,                  color: "text-[#fd5523]",   bgColor: "bg-[#fff6ee]" },
 };
 
 const TOOLBAR_GROUPS: { heading: string; types: ContentBlockType[] }[] = [
   { heading: "Media & Visuals", types: ["video", "image", "before_after"] },
   { heading: "Knowledge Delivery", types: ["text", "callout", "tool_spotlight", "resource"] },
   { heading: "Practical Learning", types: ["ai_prompt", "steps", "checklist", "key_takeaway"] },
-  { heading: "Assessment", types: ["quiz"] },
+  { heading: "Advanced Learning", types: ["expert_note", "comparison_table", "case_study"] },
+  { heading: "Live & Assessment", types: ["meeting", "quiz"] },
 ];
 
 const DEFAULT_CONTENT: Record<ContentBlockType, Json> = {
@@ -125,6 +137,10 @@ const DEFAULT_CONTENT: Record<ContentBlockType, Json> = {
   steps:          { title: "", steps: [{ title: "", body: "" }] } as Json,
   checklist:      { title: "", items: [""] } as Json,
   key_takeaway:   { title: "Key Takeaways", points: [""] } as Json,
+  expert_note:    { title: "Advanced Technical Deep Dive", body: "" } as Json,
+  comparison_table: { headers: ["Feature", "Standard", "AI-Powered"], rows: [["Speed", "Slow", "Instant"]] } as Json,
+  case_study:     { title: "New Case Study", context: "", action: "", result: "" } as Json,
+  meeting:        { meeting_id: "", title: "Live Session", start_time: "" } as Json,
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -133,11 +149,15 @@ const asTyped = <T,>(v: unknown): T => v as T;
 function BlockEditor({
   block,
   courseId,
+  courseTitle,
+  moduleTitle,
   quiz,
   onChange,
 }: {
   block: Block;
   courseId: string;
+  courseTitle: string;
+  moduleTitle: string;
   quiz?: Quiz | null;
   onChange: (content: Json) => void;
 }) {
@@ -150,13 +170,13 @@ function BlockEditor({
   if (block.type === "text")
     return <TextBlockEditor content={asTyped(c)} onChange={emit} />;
   if (block.type === "image")
-    return <ImageBlockEditor content={asTyped(c)} courseId={courseId} onChange={emit} />;
+    return <ImageBlockEditor content={asTyped(c)} courseId={courseId} courseTitle={courseTitle} moduleTitle={moduleTitle} lessonTitle={block.id} onChange={emit} />;
   if (block.type === "callout")
     return <CalloutBlockEditor content={asTyped(c)} onChange={emit} />;
   if (block.type === "tool_spotlight")
-    return <ToolSpotlightEditor content={asTyped(c)} courseId={courseId} onChange={emit} />;
+    return <ToolSpotlightEditor content={asTyped(c)} courseId={courseId} courseTitle={courseTitle} moduleTitle={moduleTitle} lessonTitle={block.id} onChange={emit} />;
   if (block.type === "before_after")
-    return <BeforeAfterEditor content={asTyped(c)} courseId={courseId} onChange={emit} />;
+    return <BeforeAfterEditor content={asTyped(c)} courseId={courseId} courseTitle={courseTitle} moduleTitle={moduleTitle} lessonTitle={block.id} onChange={emit} />;
   if (block.type === "resource")
     return <ResourceBlockEditor content={asTyped(c)} courseId={courseId} onChange={emit} />;
   if (block.type === "ai_prompt")
@@ -167,6 +187,14 @@ function BlockEditor({
     return <ChecklistBlockEditor content={asTyped(c)} onChange={emit} />;
   if (block.type === "key_takeaway")
     return <KeyTakeawayBlockEditor content={asTyped(c)} onChange={emit} />;
+  if (block.type === "expert_note")
+    return <ExpertNoteBlockEditor content={asTyped(c)} onChange={emit} />;
+  if (block.type === "comparison_table")
+    return <ComparisonTableEditor content={asTyped(c)} onChange={emit} />;
+  if (block.type === "case_study")
+    return <CaseStudyBlockEditor content={asTyped(c)} onChange={emit} />;
+  if (block.type === "meeting")
+    return <MeetingBlockEditor content={asTyped(c)} onChange={emit} />;
   if (block.type === "quiz")
     return <QuizBuilder lessonId={block.id} courseId={courseId} initialQuiz={quiz ?? null} initialQuestions={quiz?.quiz_questions ?? []} />;
 
@@ -177,6 +205,8 @@ function SortableBlock({
   block,
   lessonId,
   courseId,
+  courseTitle,
+  moduleTitle,
   quiz,
   onDelete,
   onSave,
@@ -184,6 +214,8 @@ function SortableBlock({
   block: Block;
   lessonId: string;
   courseId: string;
+  courseTitle: string;
+  moduleTitle: string;
   quiz?: Quiz | null;
   onDelete: (id: string) => void;
   onSave: (id: string, content: Json) => void;
@@ -271,6 +303,8 @@ function SortableBlock({
           <BlockEditor
             block={{ ...block, content: content as Json }}
             courseId={courseId}
+            courseTitle={courseTitle}
+            moduleTitle={moduleTitle}
             quiz={quiz}
             onChange={(c) => setContent(c as Record<string, unknown>)}
           />
@@ -283,11 +317,15 @@ function SortableBlock({
 export function LessonEditorClient({
   lesson,
   courseId,
+  courseTitle,
+  moduleTitle,
   initialBlocks,
   quiz,
 }: {
   lesson: { id: string; title: string; is_preview: boolean };
   courseId: string;
+  courseTitle: string;
+  moduleTitle: string;
   initialBlocks: Block[];
   quiz?: Quiz | null;
 }) {
@@ -391,6 +429,8 @@ export function LessonEditorClient({
                     block={block}
                     lessonId={lesson.id}
                     courseId={courseId}
+                    courseTitle={courseTitle}
+                    moduleTitle={moduleTitle}
                     quiz={block.type === "quiz" ? quiz : null}
                     onDelete={(id) => setBlocks((prev) => prev.filter((b) => b.id !== id))}
                     onSave={(id, content) => setBlocks((prev) => prev.map((b) => (b.id === id ? { ...b, content } : b)))}

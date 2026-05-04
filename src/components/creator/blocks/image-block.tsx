@@ -12,13 +12,21 @@ export interface ImageBlockContent {
   display?: "full" | "contained";
 }
 
+import { AIImageGenerator } from "../ai-image-generator";
+
 export function ImageBlockEditor({
   content,
   courseId,
+  courseTitle,
+  moduleTitle,
+  lessonTitle,
   onChange,
 }: {
   content: ImageBlockContent;
   courseId: string;
+  courseTitle: string;
+  moduleTitle: string;
+  lessonTitle: string;
   onChange: (c: ImageBlockContent) => void;
 }) {
   const [caption, setCaption] = useState(content.caption ?? "");
@@ -31,15 +39,24 @@ export function ImageBlockEditor({
 
   return (
     <div className="space-y-4">
-      <FileUpload
-        courseId={courseId}
-        folder="images"
-        accept="image/*"
-        label="Image"
-        currentUrl={content.url || null}
-        isImage
-        onUpload={(url) => emit({ url })}
-      />
+      <div className="flex items-center justify-between">
+        <FileUpload
+          courseId={courseId}
+          folder="images"
+          accept="image/*"
+          label="Image"
+          currentUrl={content.url || null}
+          isImage
+          onUpload={(url) => emit({ url })}
+        />
+        <AIImageGenerator 
+          courseTitle={courseTitle}
+          moduleTitle={moduleTitle}
+          lessonTitle={lessonTitle}
+          onImageSelected={(asset) => emit({ url: asset.public_url })}
+          currentImageId={content.url ? content.url.split('/').pop()?.split('.')[0] : undefined}
+        />
+      </div>
 
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="space-y-1.5">

@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { DM_Sans, JetBrains_Mono } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import { SiteIntelligenceDock } from "@/components/shared/site-intelligence-dock";
+import NextTopLoader from "nextjs-toploader";
 import "./globals.css";
 
 const dmSans = DM_Sans({ variable: "--font-dm-sans", subsets: ["latin"], display: "swap" });
@@ -39,8 +40,19 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         className={`${dmSans.variable} ${jetbrainsMono.variable} h-full antialiased`}
       >
         <body className="min-h-full flex flex-col overflow-x-hidden bg-background text-foreground">
+          <NextTopLoader 
+            color="#fd5523"
+            initialPosition={0.08}
+            crawlSpeed={200}
+            height={3}
+            crawl={true}
+            showSpinner={false}
+            easing="ease"
+            speed={200}
+            shadow="0 0 10px #fd5523,0 0 5px #fd5523"
+          />
           {children}
-          {/* <SiteIntelligenceDock /> */}
+          <SiteIntelligenceDock />
         </body>
       </html>
     </ClerkProvider>

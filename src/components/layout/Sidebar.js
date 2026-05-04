@@ -11,7 +11,7 @@ export default function Sidebar({ isSidebar, handleSidebar }) {
                 <div className="sidebar-widget-container">
                     <div className="widget-heading">
                         <button onClick={handleSidebar} className="close-side-widget">
-                            <X className="h-6 w-6 text-[#062e39]" />
+                            <X className="h-6 w-6 text-white" />
                         </button>
                     </div>
                     <div className="sidebar-textwidget">
@@ -28,15 +28,15 @@ export default function Sidebar({ isSidebar, handleSidebar }) {
                                             We bridge the gap between global technology and local talent through hands-on, practical training.
                                         </p>
                                     </div>
-                                    <div className="mt-6 flex gap-3">
-                                        <div className="flex items-center gap-2 px-3 py-1 bg-[#fff2e9] rounded-full">
-                                            <Sparkles className="h-3 w-3 text-[#fd5523]" />
-                                            <span className="text-[10px] font-bold uppercase text-[#fd5523]">1.2k+ Learners</span>
-                                        </div>
-                                        <div className="flex items-center gap-2 px-3 py-1 bg-slate-100 rounded-full">
-                                            <div className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse" />
-                                            <span className="text-[10px] font-bold uppercase text-slate-500">Admissions Open</span>
-                                        </div>
+                                    <div className="mt-6 flex flex-col gap-2">
+                                        <Link href="/dashboard" className="flex items-center gap-3 px-6 py-4 rounded-2xl bg-slate-50 text-[#062e39] font-bold transition-all hover:bg-[#fd5523] hover:text-white group">
+                                            <div className="h-2 w-2 rounded-full bg-[#fd5523] group-hover:bg-white" />
+                                            Student Dashboard
+                                        </Link>
+                                        <Link href="/dashboard/settings" className="flex items-center gap-3 px-6 py-4 rounded-2xl bg-slate-50 text-[#062e39] font-bold transition-all hover:bg-[#fd5523] hover:text-white group">
+                                            <div className="h-2 w-2 rounded-full bg-[#fd5523] group-hover:bg-white" />
+                                            Account Settings
+                                        </Link>
                                     </div>
                                 </div>
 

@@ -143,8 +143,8 @@ export default async function CourseDetailPage({ params }: PageProps) {
     );
     if (isFree) return (
       <form action={enrollFree.bind(null, course.id, course.slug)}>
-        <button type="submit" className="thm-btn" style={{ width: "100%", border: "none", cursor: "pointer" }}>
-          Enroll for Free
+        <button type="submit" className="thm-btn" style={{ width: "100%", border: "none", cursor: "pointer", background: "#fd5523", borderColor: "#fd5523" }}>
+          Start Learning Now
           <i className="icon-right-arrow21"></i>
           <span className="hover-btn hover-bx"></span>
           <span className="hover-btn hover-bx2"></span>
@@ -259,7 +259,7 @@ export default async function CourseDetailPage({ params }: PageProps) {
             )}
 
             {/* Meta chips */}
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "20px", color: "rgba(255,255,255,0.7)", fontSize: "14px" }}>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "20px", color: "rgba(255,255,255,0.7)", fontSize: "14px", marginBottom: "32px" }}>
               <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                 <Layers style={{ width: "16px", height: "16px", color: "#fd5523" }} />
                 {modules.length || "–"} modules · {totalLessons || "–"} lessons
@@ -276,14 +276,16 @@ export default async function CourseDetailPage({ params }: PageProps) {
                   {previewCount} free preview{previewCount !== 1 ? "s" : ""}
                 </span>
               )}
-              <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                <MessageSquare style={{ width: "16px", height: "16px", color: "#fd5523" }} />
-                AI tutor included
-              </span>
-              <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                <Award style={{ width: "16px", height: "16px", color: "#fd5523" }} />
-                Certificate on completion
-              </span>
+            </div>
+
+            {/* Mobile-only CTA */}
+            <div className="block lg:hidden" style={{ maxWidth: "400px" }}>
+              <EnrollButton />
+              {!isFree && !isEnrolled && (
+                <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "12px", marginTop: "12px", textAlign: "center" }}>
+                   Unlock lifetime access for {priceLabel}
+                </p>
+              )}
             </div>
           </div>
         </section>

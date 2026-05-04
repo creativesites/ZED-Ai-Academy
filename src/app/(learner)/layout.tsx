@@ -33,9 +33,9 @@ export default async function LearnerLayout({ children }: { children: React.Reac
     <div className="page-wrapper">
       <Header2Wrapper />
       {/* Notification bell — fixed top-right on authenticated pages */}
-      <div style={{ position: "fixed", top: "18px", right: "80px", zIndex: 9999 }}>
+      {/* <div style={{ position: "fixed", top: "38px", right: "80px", zIndex: 9999 }}>
         <NotificationBellServer />
-      </div>
+      </div> */}
       <div id="page-content">
         {children}
       </div>

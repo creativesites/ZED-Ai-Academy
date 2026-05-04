@@ -1,9 +1,11 @@
 "use client";
 
 import { useState, useTransition, useEffect } from "react";
+import { useUser } from "@clerk/nextjs";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button-variants";
 import { QuizPlayer } from "@/components/learner/quiz-player";
 import { AiTutor } from "@/components/learner/ai-tutor";
 import { PracticeStudio } from "@/components/learner/practice-studio";
@@ -11,10 +13,11 @@ import { LessonDiscussions } from "@/components/learner/lesson-discussions";
 import type { Discussion } from "@/types/database";
 import { markLessonComplete, generateCertificate } from "@/actions/certificates";
 import { cn } from "@/lib/utils";
+import { ZoomMeeting } from "@/components/shared/zoom-meeting";
 import {
   ArrowLeft, ArrowRight, Award, BookOpen, CheckCircle, ChevronLeft, ChevronRight,
   ChevronsLeftRight, Code2, Download, ExternalLink, FileText, GraduationCap,
-  HelpCircle, Layers, Lock, Loader2, Menu, MessageCircle,
+  HelpCircle, Layers, Lock, Loader2, Menu, MessageCircle, Info, Table, Calendar, Users, ChevronDown,
   PlayCircle, ShieldCheck, Sparkles, Trophy, Video, X, Zap
 } from "lucide-react";
 import { toast } from "sonner";
@@ -119,7 +122,7 @@ function CalloutBlock({ content }: { content: Record<string, unknown> }) {
   const s = CALLOUT_STYLES[variant] ?? CALLOUT_STYLES.tip;
   if (!title && !body) return null;
   return (
-    <div className={cn("rounded-[2rem] border-2 p-6 sm:p-8 flex gap-5", s.container)}>
+    <div className={cn("rounded-[2rem] border-2 p-6 md:p-8 flex flex-col sm:flex-row gap-5", s.container)}>
       <span className="text-2xl shrink-0">{s.emoji}</span>
       <div>
         {title && <p className="font-bold text-lg tracking-tight mb-1">{title}</p>}
@@ -136,7 +139,7 @@ function ToolSpotlightBlock({ content }: { content: Record<string, unknown> }) {
   const iconUrl = content.icon_url as string | undefined;
   if (!name) return null;
   const inner = (
-    <div className="flex items-start gap-5 rounded-[2rem] border-2 border-slate-100 bg-white p-6 transition-all hover:border-[#fd5523]/30 hover:shadow-xl hover:shadow-[#fd5523]/5 group">
+    <div className="flex flex-col sm:flex-row items-start gap-5 rounded-[2rem] border-2 border-slate-100 bg-white p-6 transition-all hover:border-[#fd5523]/30 hover:shadow-xl hover:shadow-[#fd5523]/5 group">
       {iconUrl ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img src={iconUrl} alt={name} className="h-14 w-14 rounded-2xl object-contain shadow-sm border border-slate-50" />
@@ -201,11 +204,11 @@ function ResourceBlock({ content }: { content: Record<string, unknown> }) {
   const formatBytes = (b: number) => b < 1024 * 1024 ? `${(b / 1024).toFixed(1)} KB` : `${(b / (1024 * 1024)).toFixed(1)} MB`;
   if (!fileUrl) return null;
   return (
-    <div className="flex items-center gap-5 rounded-[2rem] border-2 border-slate-100 bg-white p-6 hover:shadow-lg transition-all group">
+    <div className="flex flex-col sm:flex-row items-center gap-5 rounded-[2rem] border-2 border-slate-100 bg-white p-6 hover:shadow-lg transition-all group">
       <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-[#fff6ee] group-hover:scale-110 transition-transform">
         <FileText className="h-6 w-6 text-[#fd5523]" />
       </div>
-      <div className="flex-1 min-w-0">
+      <div className="flex-1 min-w-0 text-center sm:text-left">
         <p className="font-bold text-[#062e39] text-lg truncate mb-1">{fileName}</p>
         <p className="text-sm text-slate-500">
           {fileSize ? formatBytes(fileSize) : "Document"}
@@ -213,7 +216,7 @@ function ResourceBlock({ content }: { content: Record<string, unknown> }) {
         </p>
       </div>
       <a href={fileUrl} target="_blank" rel="noreferrer"
-        className="flex shrink-0 items-center gap-2 rounded-2xl bg-[#062e39] px-6 py-3 text-sm font-bold text-white transition-all hover:bg-[#0a4055] hover:scale-105 active:scale-95 shadow-lg shadow-[#062e39]/10">
+        className="flex w-full sm:w-auto shrink-0 items-center justify-center gap-2 rounded-2xl bg-[#062e39] px-6 py-3 text-sm font-bold text-white transition-all hover:bg-[#0a4055] hover:scale-105 active:scale-95 shadow-lg shadow-[#062e39]/10">
         <Download className="h-4 w-4" />
         Download
       </a>
@@ -236,7 +239,7 @@ function AiPromptBlock({ content }: { content: Record<string, unknown> }) {
 
   return (
     <div className="rounded-[2rem] border-2 border-[#fd5523]/20 bg-[#fff8f5] overflow-hidden">
-      <div className="flex items-center justify-between px-6 py-4 bg-[#fd5523]/10 border-b border-[#fd5523]/15">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between px-6 py-4 bg-[#fd5523]/10 border-b border-[#fd5523]/15 gap-4">
         <div className="flex items-center gap-3">
           <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#fd5523] shadow-md shadow-[#fd5523]/20">
             <Sparkles className="h-4 w-4 text-white" />
@@ -248,7 +251,7 @@ function AiPromptBlock({ content }: { content: Record<string, unknown> }) {
         </div>
         <button
           onClick={handleCopy}
-          className="flex items-center gap-2 rounded-xl bg-[#fd5523] px-4 py-2 text-xs font-bold text-white transition-all hover:bg-[#ef4a16] active:scale-95 shadow-md shadow-[#fd5523]/20"
+          className="flex items-center justify-center gap-2 rounded-xl bg-[#fd5523] px-4 py-2.5 text-xs font-bold text-white transition-all hover:bg-[#ef4a16] active:scale-95 shadow-md shadow-[#fd5523]/20 w-full sm:w-auto"
         >
           {copied ? <CheckCircle className="h-3.5 w-3.5" /> : <Code2 className="h-3.5 w-3.5" />}
           {copied ? "Copied!" : "Copy Prompt"}
@@ -268,12 +271,12 @@ function StepsBlock({ content }: { content: Record<string, unknown> }) {
       {title && <h3 className="text-xl font-bold text-[#062e39] tracking-tight">{title}</h3>}
       <div className="space-y-3">
         {steps.map((step, i) => (
-          <div key={i} className="flex gap-5 rounded-[1.5rem] border border-slate-100 bg-white p-5 shadow-sm">
+          <div key={i} className="flex flex-col sm:flex-row gap-5 rounded-[1.5rem] border border-slate-100 bg-white p-6 shadow-sm">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#062e39] text-sm font-black text-white shadow-lg">
               {i + 1}
             </div>
             <div className="flex-1 min-w-0 pt-0.5">
-              {step.title && <p className="font-bold text-[#062e39] mb-1">{step.title}</p>}
+              {step.title && <p className="font-bold text-[#062e39] mb-2">{step.title}</p>}
               {step.body && <p className="text-sm leading-relaxed text-slate-600">{step.body}</p>}
             </div>
           </div>
@@ -333,7 +336,7 @@ function KeyTakeawayBlock({ content }: { content: Record<string, unknown> }) {
   const points = (content.points as string[]) ?? [];
   if (!points.length) return null;
   return (
-    <div className="rounded-[2rem] bg-[#062e39] p-8 shadow-2xl shadow-[#062e39]/20">
+    <div className="rounded-[2rem] bg-[#062e39] p-6 md:p-8 shadow-2xl shadow-[#062e39]/20">
       <div className="flex items-center gap-3 mb-6">
         <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#fd5523] shadow-lg shadow-[#fd5523]/30">
           <Zap className="h-5 w-5 text-white" />
@@ -348,6 +351,211 @@ function KeyTakeawayBlock({ content }: { content: Record<string, unknown> }) {
           </li>
         ))}
       </ul>
+    </div>
+  );
+}
+
+function ExpertNoteBlock({ content }: { content: Record<string, unknown> }) {
+  const title = content.title as string | undefined;
+  const body = content.body as string | undefined;
+  const [isOpen, setIsOpen] = useState(false);
+  if (!body) return null;
+
+  return (
+    <div className="rounded-[2rem] border-2 border-slate-900 bg-slate-900 text-white overflow-hidden shadow-2xl">
+      <div className="flex items-center justify-between p-6 cursor-pointer select-none" onClick={() => setIsOpen(!isOpen)}>
+        <div className="flex items-center gap-4">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 text-[#fd5523]">
+            <Zap className="h-5 w-5" />
+          </div>
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#fd5523]">Expert Deep Dive</p>
+            <h3 className="text-lg text-white font-bold tracking-tight">{title ?? "Technical Details"}</h3>
+          </div>
+        </div>
+        <div className={cn("transition-transform duration-300", isOpen ? "rotate-180" : "")}>
+          <ChevronDown className="h-5 w-5 opacity-40" />
+        </div>
+      </div>
+      {isOpen && (
+        <div className="px-8 pb-8 pt-2 animate-in fade-in slide-in-from-top-2 duration-300">
+           <div className="h-px bg-white/10 mb-6" />
+           <div className="prose prose-invert prose-p:text-slate-400 prose-p:leading-relaxed prose-p:text-base max-w-none" dangerouslySetInnerHTML={{ __html: body }} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ComparisonTableBlock({ content }: { content: Record<string, unknown> }) {
+  const headers = (content.headers as string[]) ?? [];
+  const rows = (content.rows as string[][]) ?? [];
+  if (!headers.length || !rows.length) return null;
+
+  return (
+    <div className="overflow-hidden rounded-[2rem] border-2 border-slate-100 bg-white shadow-xl p-4 md:p-0">
+      <div className="overflow-x-auto">
+        <table className="w-full text-left border-collapse">
+          <thead>
+            <tr className="bg-slate-50">
+              {headers.map((h, i) => (
+                <th key={i} className="px-6 py-4 text-xs font-black uppercase tracking-widest text-[#062e39] border-b border-slate-100">
+                  {h}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-50">
+            {rows.map((row, i) => (
+              <tr key={i} className="hover:bg-slate-50/50 transition-colors">
+                {row.map((cell, j) => (
+                  <td key={j} className="px-6 py-4 text-sm text-slate-600 font-medium">
+                    {cell}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+function CaseStudyBlock({ content }: { content: Record<string, unknown> }) {
+  const title = content.title as string | undefined;
+  const context = content.context as string | undefined;
+  const action = content.action as string | undefined;
+  const result = content.result as string | undefined;
+  if (!title) return null;
+
+  return (
+    <div className="rounded-[2.5rem] bg-white border-2 border-slate-100 p-6 md:p-10 shadow-2xl shadow-slate-200/50 relative overflow-hidden group">
+      <div className="absolute top-0 right-0 p-8 opacity-[0.05] group-hover:scale-110 transition-transform duration-1000">
+        <GraduationCap className="h-32 w-32 text-[#062e39]" />
+      </div>
+      <div className="relative z-10">
+        <div className="flex items-center gap-3 mb-8">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
+            <BookOpen className="h-5 w-5" />
+          </div>
+          <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-slate-400">Case Study</span>
+        </div>
+        <h3 className="text-2xl font-extrabold text-[#062e39] tracking-tight mb-8">{title}</h3>
+        
+        <div className="grid gap-6 md:gap-8 sm:grid-cols-3">
+          <div className="space-y-3">
+            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">The Context</p>
+            <p className="text-sm leading-relaxed text-slate-600">{context}</p>
+          </div>
+          <div className="space-y-3">
+            <p className="text-[10px] font-black uppercase tracking-widest text-[#fd5523]">The Action</p>
+            <p className="text-sm leading-relaxed text-slate-600 font-medium">{action}</p>
+          </div>
+          <div className="space-y-3">
+            <p className="text-[10px] font-black uppercase tracking-widest text-green-600">The Result</p>
+            <p className="text-sm leading-relaxed text-slate-900 font-bold">{result}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MeetingBlock({ content }: { content: Record<string, unknown> }) {
+  const meetingId = content.meeting_id as string;
+  const title = (content.title as string) || "Live Training Session";
+  const passWord = content.password as string | undefined;
+  const [joined, setJoined] = useState(false);
+  const [joining, setJoining] = useState(false);
+  const [signature, setSignature] = useState<string | null>(null);
+  const { user } = useUser();
+
+  async function handleJoin() {
+    setJoining(true);
+    try {
+      const resp = await fetch("/api/zoom/signature", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ meetingNumber: meetingId, role: 0 }),
+      });
+      
+      if (!resp.ok) {
+        const errorData = await resp.json();
+        throw new Error(errorData.error || "Failed to get signature");
+      }
+
+      const data = await resp.json();
+      if (data.signature) {
+        setSignature(data.signature);
+        setJoined(true);
+      } else {
+        throw new Error("Invalid signature received");
+      }
+    } catch (error: any) {
+      toast.error(error?.message || "Failed to connect to Zoom");
+    } finally {
+      setJoining(false);
+    }
+  }
+
+  if (!meetingId) return null;
+
+  if (joined && signature && user) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h3 className="text-xl font-bold text-[#062e39] tracking-tight">{title}</h3>
+          <Button variant="ghost" size="sm" onClick={() => setJoined(false)} className="text-slate-400">
+            Exit Session
+          </Button>
+        </div>
+        <ZoomMeeting
+          meetingNumber={meetingId}
+          passWord={passWord}
+          signature={signature}
+          sdkKey={process.env.NEXT_PUBLIC_ZOOM_CLIENT_ID!}
+          userName={user.fullName || user.username || "Learner"}
+          userEmail={user.primaryEmailAddress?.emailAddress || ""}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-[2.5rem] bg-[#062e39] p-6 md:p-10 text-white shadow-2xl relative overflow-hidden">
+      <div className="absolute inset-0 mesh-orange opacity-20" />
+      <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-8">
+        <div className="space-y-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 text-[#fd5523] animate-pulse">
+              <div className="h-2 w-2 rounded-full bg-[#fd5523]" />
+            </div>
+            <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#fd8d69]">Live Meeting</span>
+          </div>
+          <h3 className="text-2xl font-bold tracking-tight">{title}</h3>
+          <div className="flex items-center gap-6 text-white/60">
+            <div className="flex items-center gap-2">
+              <Users className="h-4 w-4" />
+              <span className="text-xs font-bold">Interactive Session</span>
+            </div>
+          </div>
+        </div>
+        <Button 
+          className="rounded-2xl bg-[#fd5523] px-8 py-6 text-lg font-bold text-white hover:bg-[#ef4a16] shadow-xl shadow-[#fd5523]/20 disabled:opacity-70"
+          onClick={handleJoin}
+          disabled={joining}
+        >
+          {joining ? (
+            <>
+              <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+              Connecting...
+            </>
+          ) : (
+            "Join Session Now"
+          )}
+        </Button>
+      </div>
     </div>
   );
 }
@@ -412,6 +620,7 @@ export function LessonPlayerClient({
     description: string | null;
     category: string | null;
     level: string | null;
+    price_type?: string | null;
   };
   modules: Module[];
   activeLessonId: string;
@@ -478,7 +687,7 @@ export function LessonPlayerClient({
   }
 
   return (
-    <div className="-mx-4 py-6 -my-8 sm:-mx-6 lg:-mx-8 flex h-screen overflow-hidden bg-[#f8fafc]">
+    <div className="fixed inset-0 flex h-screen w-screen overflow-hidden bg-[#f8fafc] z-50">
       
       {/* ── Sidebar ──────────────────────────────────────────────────────── */}
       <aside
@@ -615,94 +824,74 @@ export function LessonPlayerClient({
       <div className="flex-1 flex flex-col min-w-0 relative">
         
         {/* Header */}
-        <header className="h-14 shrink-0 flex items-center justify-between gap-4 border-b border-slate-200 bg-white px-4 z-30">
+        <header className="h-12 shrink-0 flex items-center justify-between gap-2 border-b border-slate-200 bg-white px-3 md:px-4 z-30">
           {/* Left: toggle + lesson info */}
-          <div className="flex items-center gap-3 min-w-0">
-            {/* Desktop sidebar toggle */}
+          <div className="flex items-center gap-2 min-w-0">
+            {/* Sidebar toggle buttons */}
             <button
               onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-              className="hidden lg:flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-[#062e39] transition-colors"
+              className="hidden lg:flex h-7 w-7 items-center justify-center rounded-md text-slate-400 hover:bg-slate-100 hover:text-[#062e39] transition-colors"
               title="Toggle sidebar"
             >
-              <Menu className="h-4 w-4" />
+              <Menu className="h-3.5 w-3.5" />
             </button>
-            {/* Mobile sidebar open */}
             <button
               onClick={() => setSidebarOpen(true)}
-              className="lg:hidden h-8 w-8 shrink-0 flex items-center justify-center rounded-lg bg-slate-100 text-[#062e39]"
+              className="lg:hidden h-7 w-7 flex items-center justify-center rounded-md bg-slate-50 text-[#062e39]"
             >
-              <Menu className="h-4 w-4" />
+              <Menu className="h-3.5 w-3.5" />
             </button>
 
-            {/* Divider */}
-            <div className="hidden sm:block h-5 w-px bg-slate-200 shrink-0" />
+            <div className="hidden sm:block h-4 w-px bg-slate-200 mx-1" />
 
-            {/* Lesson breadcrumb */}
-            <div className="min-w-0">
+            {/* Breadcrumb & Title */}
+            <div className="min-w-0 flex flex-col justify-center">
               {(() => {
                 const currentModule = modules.find((m) =>
                   m.lessons.some((l) => l.id === activeLessonId)
                 );
                 return (
-                  <div className="flex items-center gap-1.5 text-xs text-slate-400 mb-0.5 truncate">
-                    <span className="hidden sm:inline truncate max-w-[120px]">{course.title}</span>
-                    <span className="hidden sm:inline">/</span>
-                    <span className="truncate max-w-[140px] font-medium text-slate-500">
-                      {currentModule?.title ?? ""}
-                    </span>
-                    <span>/</span>
-                    <span className="font-semibold text-[#062e39]">
-                      {currentIdx + 1} of {totalLessons}
-                    </span>
-                    {(isPreview || isPartialEnrollment) && (
-                      <span className={cn(
-                        "ml-1 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider",
-                        isPreview ? "bg-[#fff6ee] text-[#fd5523]" : "bg-amber-100 text-amber-700"
-                      )}>
-                        {isPreview ? "Preview" : "Pending Payment"}
+                  <>
+                    <div className="flex items-center gap-1 text-[9px] md:text-[10px] font-bold uppercase tracking-wider text-slate-400 truncate">
+                      <span className="hidden sm:inline opacity-70">Course /</span>
+                      <span className="truncate max-w-[80px] md:max-w-[120px] text-slate-500">
+                        {currentModule?.title ?? "Module"}
                       </span>
-                    )}
-                  </div>
+                      <span>/</span>
+                      <span className="text-[#fd5523]">
+                        {currentIdx + 1}/{totalLessons}
+                      </span>
+                    </div>
+                    {/* Compact title */}
+                    <span className="hidden sm:block text-[11px] md:text-xs font-bold text-[#062e39] truncate max-w-[150px] sm:max-w-[250px] md:max-w-sm lg:max-w-lg leading-tight">
+                      {currentLesson?.title ?? "Lesson"}
+                    </span>
+                  </>
                 );
               })()}
-              <h1 className="text-sm font-bold text-[#062e39] truncate max-w-[320px] sm:max-w-lg lg:max-w-2xl leading-tight">
-                {currentLesson?.title ?? "Lesson"}
-              </h1>
             </div>
           </div>
 
-          {/* Right: progress + actions */}
-          <div className="flex items-center gap-2 shrink-0">
-            {/* Progress pill (desktop) */}
-            {!isPreview && (
-              <div className="hidden md:flex items-center gap-2">
-                <div className="h-1.5 w-20 rounded-full bg-slate-100 overflow-hidden">
-                  <div
-                    className="h-full rounded-full bg-[#fd5523] transition-all duration-700"
-                    style={{ width: `${progressPct}%` }}
-                  />
-                </div>
-                <span className="text-xs font-bold tabular-nums text-slate-400">{progressPct}%</span>
-              </div>
-            )}
-
-            {/* Studio button */}
+          {/* Right: Actions */}
+          <div className="flex items-center gap-1.5 md:gap-2 mr-2">
+            {/* Practice Studio */}
             <button
               onClick={() => setStudioOpen(true)}
-              className="hidden sm:flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-600 hover:border-[#fd5523] hover:text-[#fd5523] transition-all"
+              className="flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[9px] md:text-[10px] font-bold uppercase tracking-widest text-[#062e39] hover:border-[#fd5523] hover:text-[#fd5523] transition-all shadow-sm active:scale-95"
             >
-              <Code2 className="h-3.5 w-3.5" />
-              <span className="hidden lg:inline">Practice Studio</span>
-              <span className="lg:hidden">Studio</span>
+              <Code2 className="h-3 w-3" />
+              <span className="hidden sm:inline">Practice Studio</span>
+              <span className="sm:hidden">Studio</span>
             </button>
 
-            {/* AI Coach button */}
+            {/* AI Coach */}
             <button
               onClick={() => setTutorOpen(true)}
-              className="flex items-center gap-1.5 rounded-lg bg-[#062e39] px-3 py-1.5 text-xs font-bold text-white hover:bg-[#0a4055] transition-colors"
+              className="flex items-center gap-1.5 rounded-full bg-[#062e39] px-2.5 py-1 text-[9px] md:text-[10px] font-bold uppercase tracking-widest text-white hover:bg-[#0a4055] transition-all shadow-md active:scale-95 mr-2 md:mr-0"
             >
-              <Sparkles className="h-3.5 w-3.5 text-[#fd8d69]" />
-              <span>AI Coach</span>
+              <Sparkles className="h-3 w-3 text-[#fd8d69]" />
+              <span className="hidden sm:inline">AI Coach</span>
+              <span className="sm:hidden">AI</span>
             </button>
           </div>
         </header>
@@ -712,7 +901,7 @@ export function LessonPlayerClient({
           <div className="max-w-5xl mx-auto px-8 py-12">
             
             {/* Banner Alerts */}
-            {(isPreview || isPartialEnrollment) && (
+            {(isPreview || isPartialEnrollment) && course.price_type !== "free" && (
               <div className={cn(
                 "mb-12 p-6 rounded-[2rem] border-2 flex items-center justify-between gap-6 shadow-sm animate-in fade-in slide-in-from-top-4 duration-500",
                 isPreview ? "bg-[#fff6ee] border-[#fd5523]/20" : "bg-amber-50 border-amber-200"
@@ -723,10 +912,10 @@ export function LessonPlayerClient({
                   </div>
                   <div>
                     <h3 className={cn("font-bold text-lg", isPreview ? "text-[#062e39]" : "text-amber-900")}>
-                      {isPreview ? "Free Preview Mode" : "Payment Pending"}
+                      {isPreview ? "Premium Access Required" : "Payment Pending"}
                     </h3>
                     <p className={cn("text-sm opacity-70", isPreview ? "text-[#062e39]" : "text-amber-800")}>
-                      {isPreview ? "You are viewing a preview lesson. Enroll for full access." : "Confirm payment to unlock all modules instantly."}
+                      {isPreview ? "This is a premium lesson. Unlock the full course to continue." : "Confirm payment to unlock all modules instantly."}
                     </p>
                   </div>
                 </div>
@@ -735,7 +924,7 @@ export function LessonPlayerClient({
                   className={cn("px-6 py-3 rounded-xl text-sm font-bold transition-all hover:scale-105 active:scale-95", 
                     isPreview ? "bg-[#fd5523] text-white" : "bg-amber-500 text-white")}
                 >
-                  {isPreview ? "Enroll Now" : "Unlock Course"}
+                  {isPreview ? "Upgrade Now" : "Unlock Course"}
                 </Link>
               </div>
             )}
@@ -813,8 +1002,12 @@ export function LessonPlayerClient({
                       {block.type === "steps" && <StepsBlock content={block.content} />}
                       {block.type === "checklist" && <ChecklistBlock content={block.content} />}
                       {block.type === "key_takeaway" && <KeyTakeawayBlock content={block.content} />}
+                      {block.type === "expert_note" && <ExpertNoteBlock content={block.content} />}
+                      {block.type === "comparison_table" && <ComparisonTableBlock content={block.content} />}
+                      {block.type === "case_study" && <CaseStudyBlock content={block.content} />}
+                      {block.type === "meeting" && <MeetingBlock content={block.content} />}
                       {block.type === "quiz" && quiz && (
-                        <div className="bg-white rounded-[2.5rem] p-10 shadow-xl border border-slate-100">
+                        <div className="bg-white rounded-[2.5rem] p-6 md:p-10 shadow-xl border border-slate-100">
                           <div className="flex items-center gap-4 mb-8">
                             <div className="h-12 w-12 rounded-2xl bg-indigo-50 flex items-center justify-center">
                               <HelpCircle className="h-6 w-6 text-indigo-600" />
@@ -862,12 +1055,15 @@ export function LessonPlayerClient({
                         </div>
                         <h3 className="text-3xl font-bold text-white">Course Certified</h3>
                         <p className="text-white/60">You have successfully completed this course.</p>
-                        <Button 
-                          render={<Link href={`/certificates/${existingCertificate.public_id}`} />}
-                          className="w-full py-8 rounded-[2rem] bg-white text-[#062e39] text-lg font-bold hover:bg-slate-100"
+                        <Link 
+                          href={`/certificates/${existingCertificate.public_id}`}
+                          className={cn(
+                            buttonVariants({ variant: "default" }),
+                            "w-full py-8 rounded-[2rem] bg-white text-[#062e39] text-lg font-bold hover:bg-slate-100 flex items-center justify-center"
+                          )}
                         >
                           View Certificate
-                        </Button>
+                        </Link>
                       </div>
                     ) : isDone ? (
                       <div className="space-y-6">
@@ -877,13 +1073,16 @@ export function LessonPlayerClient({
                         <h3 className="text-2xl font-bold text-white">Lesson Complete</h3>
                         <p className="text-white/40 mb-8">Ready to take on the next challenge?</p>
                         {nextLessonAllowed && (
-                          <Button 
-                            render={<Link href={`/courses/${course.slug}/learn?lesson=${nextLessonAllowed.id}`} />}
-                            className="w-full py-8 rounded-[2rem] bg-[#fd5523] text-white text-lg font-bold hover:bg-[#ef4a16]"
+                          <Link 
+                            href={`/courses/${course.slug}/learn?lesson=${nextLessonAllowed.id}`}
+                            className={cn(
+                              buttonVariants({ variant: "default" }),
+                              "w-full py-8 rounded-[2rem] bg-[#fd5523] text-white text-lg font-bold hover:bg-[#ef4a16] flex items-center justify-center"
+                            )}
                           >
                             Jump to Next Lesson
                             <ChevronRight className="ml-3 h-6 w-6" />
-                          </Button>
+                          </Link>
                         )}
                       </div>
                     ) : (

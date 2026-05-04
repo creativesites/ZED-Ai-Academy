@@ -6,6 +6,8 @@ import { createCourse } from "@/actions/courses";
 import { CourseBlueprintAssistant } from "@/components/creator/course-blueprint-assistant";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button-variants";
+import { cn } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -48,13 +50,15 @@ export function NewCourseForm() {
     <div className="space-y-10">
       <div className="flex items-center justify-between gap-6">
         <div className="flex items-center gap-4">
-          <Button
-            variant="ghost"
-            className="rounded-full h-12 w-12 p-0 text-slate-400 hover:bg-[#062e39] hover:text-white transition-all"
-            render={<Link href="/creator/courses" />}
+          <Link
+            href="/creator/courses"
+            className={cn(
+              buttonVariants({ variant: "ghost" }),
+              "rounded-full h-12 w-12 p-0 text-slate-400 hover:bg-[#062e39] hover:text-white transition-all flex items-center justify-center"
+            )}
           >
             <ArrowLeft className="h-6 w-6" />
-          </Button>
+          </Link>
           <div>
             <h1 className="text-4xl font-bold tracking-tight text-[#062e39]">Create New Curriculum</h1>
             <p className="text-slate-500 font-medium mt-1 text-lg">Bring your expertise to life with a professional-first approach.</p>
@@ -216,14 +220,15 @@ export function NewCourseForm() {
                   <Button type="submit" className="rounded-full bg-[#fd5523] px-12 py-7 text-xl font-bold text-white transition-all hover:bg-[#ef4a16] hover:scale-105 active:scale-95 shadow-xl">
                     Deploy Course Studio
                   </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    className="rounded-full border border-white/20 px-8 text-white/75 hover:bg-white/10 hover:text-white"
-                    render={<Link href="/creator/courses" />}
+                  <Link
+                    href="/creator/courses"
+                    className={cn(
+                      buttonVariants({ variant: "ghost" }),
+                      "rounded-full border border-white/20 px-8 text-white/75 hover:bg-white/10 hover:text-white flex items-center justify-center h-10"
+                    )}
                   >
                     Cancel
-                  </Button>
+                  </Link>
                 </div>
               </form>
             </CardContent>

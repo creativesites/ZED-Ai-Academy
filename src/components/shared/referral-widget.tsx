@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect } from "react";
 import { getOrCreateReferralCode } from "@/actions/referrals";
 import { Copy, Check, Share2 } from "lucide-react";
 import { WhatsAppShare } from "./whatsapp-share";
@@ -18,7 +18,14 @@ export function ReferralWidget({
   const [copied, setCopied] = useState(false);
   const [loading, start] = useTransition();
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://zedai.academy";
+  const [origin, setOrigin] = useState<string>("");
+
+  useEffect(() => {
+    setOrigin(window.location.origin);
+  }, []);
+
+  const envUrl = process.env.NEXT_PUBLIC_APP_URL;
+  const appUrl = (envUrl && !envUrl.includes("localhost")) ? envUrl : origin;
   const referralUrl = code ? `${appUrl}?ref=${code}` : "";
 
   function generate() {

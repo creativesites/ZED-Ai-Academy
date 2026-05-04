@@ -1,7 +1,12 @@
-'use client'
 import CounterUp from "@/components/elements/CounterUp"
 import Link from "next/link"
-export default function About() {
+import { getResolvedPageMediaSlots } from "@/lib/page-media";
+
+export default async function About() {
+    const slots = await getResolvedPageMediaSlots("home");
+    const primary = slots.find((slot) => slot.slot_key === "about_primary");
+    const secondary = slots.find((slot) => slot.slot_key === "about_secondary");
+
     return (
         <>
 
@@ -20,7 +25,7 @@ export default function About() {
                             </div>
                             <div className="about-two__img1">
                                 <div className="inner reveal">
-                                    <img src="https://images.unsplash.com/photo-1587614382231-d1590f0039e7?w=800&q=80&auto=format&fit=crop" alt="Professional learning AI skills"/>
+                                    <img src={primary?.resolved_url || "images/emmanuel-ikwuegbu-81fRHbVliQI-unsplash.jpg"} alt={primary?.resolved_alt_text || "Professional learning AI skills"}/>
                                 </div>
                                 <div className="about-two__counter">
                                     <div className="shape1"><img src="assets/images/shapes/about-v2-shape1.png" alt=""/>
@@ -36,7 +41,7 @@ export default function About() {
                             </div>
 
                             <div className="about-two__img2 reveal">
-                                <img src="https://images.unsplash.com/photo-1762341119317-fb5417c18407?w=600&q=80&auto=format&fit=crop" alt="Zambia professionals using AI"/>
+                                <img src={secondary?.resolved_url || "images/african-american-woman-working-late-night-on-laptop-picture-id1300822118.jpg"} alt={secondary?.resolved_alt_text || "Zambia professionals using AI"}/>
                             </div>
                         </div>
                     </div>

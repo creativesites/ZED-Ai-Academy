@@ -35,7 +35,7 @@ export default function Faq() {
         <>
 
         <section className="faq-one">
-            <div className="shape1 float-bob-x"><img src="assets/images/shapes/faq-v1-shape1.png" alt=""/></div>
+            <div className="shape1 float-bob-x"><img src="images/logo-dark.png" style={{width:'24rem', opacity: '0.5', marginTop: '5rem'}} alt=""/></div>
             <div className="container">
                 <div className="row">
                     {/*Start Faq One Content*/}
@@ -79,16 +79,16 @@ export default function Faq() {
                     <div className="col-xl-6">
                         <div className="faq-one__img">
                             <div className="faq-one__img-box">
-                                <img src="https://images.unsplash.com/photo-1515378791036-0648a3ef77b2?w=800&q=80&auto=format&fit=crop" alt="AI learning"/>
+                                <img src="images/pngtree-native-african-black-man-using-smart-phone-fashion-arab-muslim-photo-image_42278090.jpg" alt="AI learning"/>
 
-                                <div className="faq-one__video-link">
+                                {/* <div className="faq-one__video-link">
                                     <a onClick={() => setOpen(true)} className="video-popup">
                                         <div className="faq-one__video-icon">
                                             <span className="icon-video"></span>
                                             <i className="ripple"></i>
                                         </div>
                                     </a>
-                                </div>
+                                </div> */}
                             </div>
                         </div>
                     </div>
@@ -97,32 +97,32 @@ export default function Faq() {
             </div>
 
             {/*Start Sliding Text One*/}
-            <div className="sliding-text-one">
+            {/* <div className="sliding-text-one">
                 <div className="sliding-text-one__wrap">
                     <ul className="sliding-text__list list-unstyled marquee_mode">
                         <li>
                             <h2 data-hover="PRACTICAL AI FOR ZAMBIA" className="sliding-text__title">PRACTICAL AI FOR ZAMBIA
-                                <img src="assets/images/icon/sliding-text-icon-1.png" alt=""/></h2>
+                                <img src="images/zed-ai-logo.png" alt=""/></h2>
                         </li>
                         <li>
                             <h2 data-hover="PRACTICAL AI FOR ZAMBIA" className="sliding-text__title">PRACTICAL AI FOR ZAMBIA
-                                <img src="assets/images/icon/sliding-text-icon-1.png" alt=""/></h2>
+                                <img src="images/zed-ai-logo.png" alt=""/></h2>
                         </li>
                         <li>
                             <h2 data-hover="PRACTICAL AI FOR ZAMBIA" className="sliding-text__title">PRACTICAL AI FOR ZAMBIA
-                                <img src="assets/images/icon/sliding-text-icon-1.png" alt=""/></h2>
+                                <img src="images/zed-ai-logo.png" alt=""/></h2>
                         </li>
                         <li>
                             <h2 data-hover="PRACTICAL AI FOR ZAMBIA" className="sliding-text__title">PRACTICAL AI FOR ZAMBIA
-                                <img src="assets/images/icon/sliding-text-icon-1.png" alt=""/></h2>
+                                <img src="images/zed-ai-logo.png" alt=""/></h2>
                         </li>
                         <li>
                             <h2 data-hover="PRACTICAL AI FOR ZAMBIA" className="sliding-text__title">PRACTICAL AI FOR ZAMBIA
-                                <img src="assets/images/icon/sliding-text-icon-1.png" alt=""/></h2>
+                                <img src="images/zed-ai-logo.png" alt=""/></h2>
                         </li>
                     </ul>
                 </div>
-            </div>
+            </div> */}
             {/*End Sliding Text One*/}
         </section>
         <VideoModal isOpen={isOpen} onClose={() => setOpen(false)} videoId="Get7rqXYrbQ" />

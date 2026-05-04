@@ -14,13 +14,21 @@ export interface ToolSpotlightContent {
   icon_url?: string;
 }
 
+import { AIImageGenerator } from "../ai-image-generator";
+
 export function ToolSpotlightEditor({
   content,
   courseId,
+  courseTitle,
+  moduleTitle,
+  lessonTitle,
   onChange,
 }: {
   content: ToolSpotlightContent;
   courseId: string;
+  courseTitle: string;
+  moduleTitle: string;
+  lessonTitle: string;
   onChange: (c: ToolSpotlightContent) => void;
 }) {
   const [name, setName]               = useState(content.name ?? "");
@@ -34,15 +42,26 @@ export function ToolSpotlightEditor({
   return (
     <div className="space-y-4">
       <div className="grid gap-4 sm:grid-cols-[80px_1fr]">
-        <FileUpload
-          courseId={courseId}
-          folder="tool-icons"
-          accept="image/*"
-          label="Icon"
-          currentUrl={content.icon_url || null}
-          isImage
-          onUpload={(icon_url) => emit({ icon_url })}
-        />
+        <div className="flex flex-col gap-2">
+          <FileUpload
+            courseId={courseId}
+            folder="tool-icons"
+            accept="image/*"
+            label="Icon"
+            currentUrl={content.icon_url || null}
+            isImage
+            onUpload={(icon_url) => emit({ icon_url })}
+          />
+          <AIImageGenerator 
+            courseTitle={courseTitle}
+            moduleTitle={moduleTitle}
+            lessonTitle={lessonTitle}
+            sectionTitle={name}
+            variant="inline"
+            onImageSelected={(asset) => emit({ icon_url: asset.public_url })}
+            currentImageId={content.icon_url ? content.icon_url.split('/').pop()?.split('.')[0] : undefined}
+          />
+        </div>
 
         <div className="space-y-3">
           <div className="space-y-1.5">

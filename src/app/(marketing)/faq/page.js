@@ -1,8 +1,9 @@
 'use client'
 import Link from "next/link"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Layout from "@/components/layout/Layout"
 import VideoModal from "@/components/shared/video-modal"
+import { getResolvedPageMediaSlot } from "@/lib/page-media"
 
 const FAQ_SECTIONS = [
     {
@@ -82,6 +83,12 @@ const FAQ_SECTIONS = [
 export default function FaqPage() {
     const [activeKey, setActiveKey] = useState({ section: 0, key: 0 })
     const [isOpen, setOpen] = useState(false)
+    const [featureImg, setFeatureImg] = useState("/assets/images/resources/faq-v1-img1.jpg")
+
+    useEffect(() => {
+        getResolvedPageMediaSlot("faq", "feature_primary", "/assets/images/resources/faq-v1-img1.jpg")
+            .then(({ url }) => setFeatureImg(url))
+    }, [])
 
     const handleToggle = (section, key) => {
         if (activeKey.section === section && activeKey.key === key) {
@@ -157,7 +164,7 @@ export default function FaqPage() {
                         <div className="col-xl-6">
                             <div className="faq-one__img">
                                 <div className="faq-one__img-box">
-                                    <img src="assets/images/resources/faq-v1-img1.jpg" alt="AI learning Zambia"/>
+                                    <img src={featureImg} alt="AI learning Zambia"/>
                                     <div className="faq-one__video-link">
                                         <a onClick={() => setOpen(true)} className="video-popup" style={{ cursor: 'pointer' }}>
                                             <div className="faq-one__video-icon">

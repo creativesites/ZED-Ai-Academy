@@ -5,6 +5,8 @@ import { initiatePayment } from "@/lib/payments/paychangu";
 import { randomUUID } from "crypto";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button-variants";
+import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, BookOpen, CheckCircle, Lock, Shield } from "lucide-react";
 import type { Metadata } from "next";
@@ -128,15 +130,16 @@ export default async function CheckoutPage({ params }: Props) {
     <div className="container" style={{ paddingTop: "60px", paddingBottom: "80px" }}>
 
       {/* Back */}
-      <Button
-        variant="ghost"
-        size="sm"
-        className="mb-8 rounded-full text-slate-500 hover:bg-[#fff6ee] hover:text-[#062e39]"
-        render={<Link href={`/courses/${slug}`} />}
+      <Link
+        href={`/courses/${slug}`}
+        className={cn(
+          buttonVariants({ variant: "ghost" }),
+          "mb-8 rounded-full text-slate-500 hover:bg-[#fff6ee] hover:text-[#062e39] flex items-center justify-center w-fit h-9 px-3"
+        )}
       >
         <ArrowLeft className="mr-1 h-4 w-4" />
         Back to course
-      </Button>
+      </Link>
 
       <div className="mb-8">
         <p className="text-xs font-bold uppercase tracking-widest text-[#fd5523] mb-1">Secure Checkout</p>

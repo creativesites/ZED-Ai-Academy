@@ -32,7 +32,7 @@ export default async function LessonEditorPage({
   // Verify ownership via module → course
   const { data: mod } = await supabase
     .from("modules")
-    .select("course_id")
+    .select("title, course_id")
     .eq("id", lesson.module_id)
     .single();
 
@@ -100,6 +100,8 @@ export default async function LessonEditorPage({
             is_preview: lesson.is_preview,
           }}
           courseId={courseId}
+          courseTitle={course.title}
+          moduleTitle={mod.title}
           initialBlocks={typedBlocks.map((b) => ({
             id: b.id,
             type: b.type as ContentBlockType,

@@ -12,13 +12,21 @@ export interface BeforeAfterContent {
   caption?: string;
 }
 
+import { AIImageGenerator } from "../ai-image-generator";
+
 export function BeforeAfterEditor({
   content,
   courseId,
+  courseTitle,
+  moduleTitle,
+  lessonTitle,
   onChange,
 }: {
   content: BeforeAfterContent;
   courseId: string;
+  courseTitle: string;
+  moduleTitle: string;
+  lessonTitle: string;
   onChange: (c: BeforeAfterContent) => void;
 }) {
   const [caption, setCaption] = useState(content.caption ?? "");
@@ -30,24 +38,46 @@ export function BeforeAfterEditor({
   return (
     <div className="space-y-4">
       <div className="grid gap-4 sm:grid-cols-2">
-        <FileUpload
-          courseId={courseId}
-          folder="before-after"
-          accept="image/*"
-          label="Before image"
-          currentUrl={content.before_url || null}
-          isImage
-          onUpload={(before_url) => emit({ before_url })}
-        />
-        <FileUpload
-          courseId={courseId}
-          folder="before-after"
-          accept="image/*"
-          label="After image"
-          currentUrl={content.after_url || null}
-          isImage
-          onUpload={(after_url) => emit({ after_url })}
-        />
+        <div className="space-y-2">
+          <FileUpload
+            courseId={courseId}
+            folder="before-after"
+            accept="image/*"
+            label="Before image"
+            currentUrl={content.before_url || null}
+            isImage
+            onUpload={(before_url) => emit({ before_url })}
+          />
+          <AIImageGenerator 
+            courseTitle={courseTitle}
+            moduleTitle={moduleTitle}
+            lessonTitle={lessonTitle}
+            sectionTitle="Before Comparison"
+            variant="inline"
+            onImageSelected={(asset) => emit({ before_url: asset.public_url })}
+            currentImageId={content.before_url ? content.before_url.split('/').pop()?.split('.')[0] : undefined}
+          />
+        </div>
+        <div className="space-y-2">
+          <FileUpload
+            courseId={courseId}
+            folder="before-after"
+            accept="image/*"
+            label="After image"
+            currentUrl={content.after_url || null}
+            isImage
+            onUpload={(after_url) => emit({ after_url })}
+          />
+          <AIImageGenerator 
+            courseTitle={courseTitle}
+            moduleTitle={moduleTitle}
+            lessonTitle={lessonTitle}
+            sectionTitle="After Comparison"
+            variant="inline"
+            onImageSelected={(asset) => emit({ after_url: asset.public_url })}
+            currentImageId={content.after_url ? content.after_url.split('/').pop()?.split('.')[0] : undefined}
+          />
+        </div>
       </div>
 
       <div className="space-y-1.5">

@@ -1,22 +1,19 @@
-'use client';
-
-import { useState, useEffect } from "react";
 import Link from "next/link";
-import { getSiteAsset } from "@/lib/site-assets";
+import { getResolvedPageMediaSlot } from "@/lib/page-media";
 
-export default function Banner() {
-    const [bannerImg, setBannerImg] = useState("https://images.unsplash.com/photo-1604933762021-54a5858c9832?w=1200&q=80&auto=format&fit=crop");
-
-    useEffect(() => {
-        getSiteAsset("banner_image", bannerImg).then(setBannerImg);
-    }, []);
+export default async function Banner() {
+    const { url: bannerImg, altText } = await getResolvedPageMediaSlot(
+        "home",
+        "banner_primary",
+        "https://images.unsplash.com/photo-1604933762021-54a5858c9832?w=1200&q=80&auto=format&fit=crop"
+    );
 
     return (
         <>
         <section className="banner-two">
             <div className="banner-two__img1 float-bob-y" style={{ height: '100%', top: '40px' }}>
                 <div className="inner" style={{ height: '90%' }}>
-                    <img src={bannerImg} alt="Professional using AI tools" style={{ height: '100%', width: '100%', objectFit: 'cover' }} />
+                    <img src={bannerImg} alt={altText || "Professional using AI tools"} style={{ height: '100%', width: '100%', objectFit: 'cover' }} />
                 </div>
             </div>
             <div className="banner-two__img2 float-bob-x"><img src="assets/images/banner/banner-v2-img2.png" alt=""/></div>
