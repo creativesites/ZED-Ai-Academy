@@ -13,7 +13,9 @@ function readString(formData: FormData, key: string, fallback = "") {
 }
 
 function readNumber(formData: FormData, key: string, fallback: number) {
-  const value = Number(readString(formData, key));
+  const str = readString(formData, key);
+  if (!str) return fallback;
+  const value = Number(str);
   return Number.isFinite(value) ? value : fallback;
 }
 
