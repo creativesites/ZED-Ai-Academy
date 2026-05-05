@@ -38,7 +38,7 @@ export async function completeOnboarding(formData: FormData) {
       .eq("id", userId);
 
     // 3. Track Platform
-    await supabase
+    await (supabase as any)
       .from("user_platforms")
       .upsert({
         user_id: userId,
@@ -47,7 +47,7 @@ export async function completeOnboarding(formData: FormData) {
       });
 
     // 4. Enroll in Free Course (if configured)
-    const { data: setting } = await supabase
+    const { data: setting } = await (supabase as any)
       .from("site_settings")
       .select("value")
       .eq("key", "onboarding_course_id")

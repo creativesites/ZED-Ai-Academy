@@ -23,7 +23,7 @@ async function requireAdmin() {
 export async function updateOnboardingCourse(courseId: string) {
   const { supabase } = await requireAdmin();
   
-  const { error } = await supabase
+  const { error } = await (supabase as any)
     .from("site_settings")
     .upsert({ 
       key: "onboarding_course_id", 
