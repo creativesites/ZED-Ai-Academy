@@ -2,7 +2,7 @@ import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { createServiceClient } from "@/lib/supabase/server";
 import Link from "next/link";
-import { Users, BookOpen, GraduationCap, DollarSign, Star, TrendingUp, Layers, ShieldCheck, Image as ImageIcon, UserCheck, MessageSquare } from "lucide-react";
+import { Users, BookOpen, GraduationCap, DollarSign, Star, TrendingUp, Layers, ShieldCheck, Image as ImageIcon, UserCheck, MessageSquare, Settings } from "lucide-react";
 
 type AdminUser = { id: string; full_name: string | null; email: string | null; role: string; created_at: string };
 type AdminCourse = { id: string; title: string; status: string; instructor_id: string; created_at: string; profiles: { full_name: string | null } | null };
