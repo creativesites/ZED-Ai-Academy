@@ -64,10 +64,11 @@ export async function completeOnboarding(formData: FormData) {
         .maybeSingle();
 
       if (!existing) {
-        await supabase.from("enrollments").insert({
+        await (supabase as any).from("enrollments").insert({
           user_id: userId,
           course_id: courseId,
           status: "active",
+          source: "manual_admin",
         });
       }
     }
