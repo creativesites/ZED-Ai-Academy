@@ -4,9 +4,11 @@ import { redirect } from 'next/navigation'
 export default async function OnboardingLayout({ children }: { children: React.ReactNode }) {
   const { sessionClaims } = await auth();
   
+  /*
   if (sessionClaims?.metadata?.onboardingComplete === true) {
     redirect('/dashboard')
   }
+  */
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4">
