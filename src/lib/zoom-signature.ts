@@ -1,11 +1,11 @@
 import { KJUR } from 'jsrsasign';
 
 export function generateZoomSignature(meetingNumber: string, role: number) {
-  const sdkKey = process.env.ZOOM_CLIENT_ID;
-  const sdkSecret = process.env.ZOOM_CLIENT_SECRET;
+  const sdkKey = process.env.ZOOM_MEETING_SDK_KEY ?? process.env.ZOOM_CLIENT_ID;
+  const sdkSecret = process.env.ZOOM_MEETING_SDK_SECRET ?? process.env.ZOOM_CLIENT_SECRET;
 
   if (!sdkKey || !sdkSecret) {
-    throw new Error('Zoom SDK Key or Secret not found in environment variables');
+    throw new Error('Zoom Meeting SDK key or secret not found in environment variables');
   }
 
   const iat = Math.round(new Date().getTime() / 1000) - 30;

@@ -40,6 +40,7 @@ import { ExpertNoteBlockEditor } from "@/components/creator/blocks/expert-note-b
 import { ComparisonTableEditor } from "@/components/creator/blocks/comparison-table-block";
 import { CaseStudyBlockEditor } from "@/components/creator/blocks/case-study-block";
 import { MeetingBlockEditor } from "@/components/creator/blocks/meeting-block";
+import { PracticeExerciseBlockEditor } from "@/components/creator/blocks/practice-exercise-block";
 import { QuizBuilder } from "@/components/creator/quiz-builder";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -110,6 +111,7 @@ const BLOCK_META: Record<ContentBlockType, { label: string; icon: React.ElementT
   steps:          { label: "Steps",          icon: ListOrdered,            color: "text-indigo-600",  bgColor: "bg-indigo-50" },
   checklist:      { label: "Checklist",      icon: CheckSquare,            color: "text-emerald-600", bgColor: "bg-emerald-50" },
   key_takeaway:   { label: "Takeaways",      icon: Zap,                    color: "text-amber-600",   bgColor: "bg-amber-50" },
+  practice_exercise: { label: "Practice",    icon: CheckSquare,            color: "text-emerald-700", bgColor: "bg-emerald-50" },
   expert_note:    { label: "Expert Note",    icon: Zap,                    color: "text-slate-100",   bgColor: "bg-slate-900" },
   comparison_table: { label: "Comparison",   icon: Table,                  color: "text-violet-600",  bgColor: "bg-violet-50" },
   case_study:     { label: "Case Study",     icon: BookOpen,               color: "text-indigo-600",  bgColor: "bg-indigo-50" },
@@ -119,7 +121,7 @@ const BLOCK_META: Record<ContentBlockType, { label: string; icon: React.ElementT
 const TOOLBAR_GROUPS: { heading: string; types: ContentBlockType[] }[] = [
   { heading: "Media & Visuals", types: ["video", "image", "before_after"] },
   { heading: "Knowledge Delivery", types: ["text", "callout", "tool_spotlight", "resource"] },
-  { heading: "Practical Learning", types: ["ai_prompt", "steps", "checklist", "key_takeaway"] },
+  { heading: "Practical Learning", types: ["ai_prompt", "steps", "checklist", "key_takeaway", "practice_exercise"] },
   { heading: "Advanced Learning", types: ["expert_note", "comparison_table", "case_study"] },
   { heading: "Live & Assessment", types: ["meeting", "quiz"] },
 ];
@@ -137,6 +139,20 @@ const DEFAULT_CONTENT: Record<ContentBlockType, Json> = {
   steps:          { title: "", steps: [{ title: "", body: "" }] } as Json,
   checklist:      { title: "", items: [""] } as Json,
   key_takeaway:   { title: "Key Takeaways", points: [""] } as Json,
+  practice_exercise: {
+    title: "Practice Exercise",
+    brief: "",
+    mode: "text_response",
+    estimated_minutes: 20,
+    instructions: [""],
+    deliverables: [{ type: "text", label: "Response", required: true }],
+    allowed_file_types: ["image/jpeg", "image/png", "image/webp", "application/pdf", "text/plain"],
+    max_files: 5,
+    rubric: [],
+    ai_scoring_enabled: true,
+    instructor_review_required: false,
+    resubmissions_allowed: true,
+  } as Json,
   expert_note:    { title: "Advanced Technical Deep Dive", body: "" } as Json,
   comparison_table: { headers: ["Feature", "Standard", "AI-Powered"], rows: [["Speed", "Slow", "Instant"]] } as Json,
   case_study:     { title: "New Case Study", context: "", action: "", result: "" } as Json,
@@ -195,6 +211,8 @@ function BlockEditor({
     return <CaseStudyBlockEditor content={asTyped(c)} onChange={emit} />;
   if (block.type === "meeting")
     return <MeetingBlockEditor content={asTyped(c)} onChange={emit} />;
+  if (block.type === "practice_exercise")
+    return <PracticeExerciseBlockEditor content={asTyped(c)} onChange={emit} />;
   if (block.type === "quiz")
     return <QuizBuilder lessonId={block.id} courseId={courseId} initialQuiz={quiz ?? null} initialQuestions={quiz?.quiz_questions ?? []} />;
 

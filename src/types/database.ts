@@ -10,7 +10,7 @@ export type UserRole = "learner" | "instructor" | "company_admin" | "super_admin
 export type CourseStatus = "draft" | "published" | "archived";
 export type PriceType = "free" | "one_time" | "subscription_only" | "both";
 export type CourseLevel = "beginner" | "intermediate" | "advanced";
-export type ContentBlockType = "video" | "text" | "quiz" | "resource" | "image" | "callout" | "tool_spotlight" | "before_after" | "ai_prompt" | "steps" | "checklist" | "key_takeaway" | "expert_note" | "comparison_table" | "case_study" | "meeting";
+export type ContentBlockType = "video" | "text" | "quiz" | "resource" | "image" | "callout" | "tool_spotlight" | "before_after" | "ai_prompt" | "steps" | "checklist" | "key_takeaway" | "expert_note" | "comparison_table" | "case_study" | "meeting" | "practice_exercise";
 export type OrderStatus = "pending" | "paid" | "failed" | "refunded";
 export type SubscriptionStatus = "active" | "cancelled" | "expired" | "past_due";
 export type MemberStatus = "invited" | "active" | "deactivated";
@@ -18,6 +18,18 @@ export type EnrollmentSource = "individual_purchase" | "subscription" | "company
 export type EnrollmentStatus = "pending_payment" | "active" | "revoked";
 export type DiscountType = "percent" | "fixed";
 export type ReferralStatus = "pending" | "converted";
+export type LiveSessionBookingStatus =
+  | "requested"
+  | "confirmed"
+  | "declined"
+  | "reschedule_requested"
+  | "cancelled_by_learner"
+  | "cancelled_by_instructor"
+  | "completed"
+  | "no_show";
+export type AvailabilityExceptionKind = "unavailable" | "extra_available";
+export type PracticeSubmissionStatus = "draft" | "submitted" | "scored" | "needs_review" | "reviewed";
+export type PracticeReviewStatus = "reviewed" | "resubmission_requested";
 
 type R = [];
 
@@ -601,6 +613,450 @@ export interface Database {
         };
         Relationships: R;
       };
+      live_session_services: {
+        Row: {
+          id: string;
+          instructor_id: string;
+          course_id: string | null;
+          lesson_id: string | null;
+          title: string;
+          description: string | null;
+          duration_minutes: number;
+          buffer_before_minutes: number;
+          buffer_after_minutes: number;
+          min_notice_hours: number;
+          max_booking_days: number;
+          requires_instructor_confirmation: boolean;
+          is_active: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          instructor_id: string;
+          course_id?: string | null;
+          lesson_id?: string | null;
+          title: string;
+          description?: string | null;
+          duration_minutes?: number;
+          buffer_before_minutes?: number;
+          buffer_after_minutes?: number;
+          min_notice_hours?: number;
+          max_booking_days?: number;
+          requires_instructor_confirmation?: boolean;
+          is_active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          instructor_id?: string;
+          course_id?: string | null;
+          lesson_id?: string | null;
+          title?: string;
+          description?: string | null;
+          duration_minutes?: number;
+          buffer_before_minutes?: number;
+          buffer_after_minutes?: number;
+          min_notice_hours?: number;
+          max_booking_days?: number;
+          requires_instructor_confirmation?: boolean;
+          is_active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: R;
+      };
+      instructor_availability_rules: {
+        Row: {
+          id: string;
+          instructor_id: string;
+          weekday: number;
+          start_time: string;
+          end_time: string;
+          timezone: string;
+          is_active: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          instructor_id: string;
+          weekday: number;
+          start_time: string;
+          end_time: string;
+          timezone?: string;
+          is_active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          instructor_id?: string;
+          weekday?: number;
+          start_time?: string;
+          end_time?: string;
+          timezone?: string;
+          is_active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: R;
+      };
+      instructor_availability_exceptions: {
+        Row: {
+          id: string;
+          instructor_id: string;
+          date: string;
+          timezone: string;
+          start_time: string | null;
+          end_time: string | null;
+          kind: AvailabilityExceptionKind;
+          reason: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          instructor_id: string;
+          date: string;
+          timezone?: string;
+          start_time?: string | null;
+          end_time?: string | null;
+          kind: AvailabilityExceptionKind;
+          reason?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          instructor_id?: string;
+          date?: string;
+          timezone?: string;
+          start_time?: string | null;
+          end_time?: string | null;
+          kind?: AvailabilityExceptionKind;
+          reason?: string | null;
+          created_at?: string;
+        };
+        Relationships: R;
+      };
+      live_session_bookings: {
+        Row: {
+          id: string;
+          service_id: string;
+          course_id: string | null;
+          lesson_id: string | null;
+          instructor_id: string;
+          learner_id: string;
+          status: LiveSessionBookingStatus;
+          starts_at: string;
+          ends_at: string;
+          timezone: string;
+          learner_notes: string | null;
+          instructor_notes: string | null;
+          meeting_agenda: Json;
+          confirmed_at: string | null;
+          declined_at: string | null;
+          cancelled_at: string | null;
+          completed_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          service_id: string;
+          course_id?: string | null;
+          lesson_id?: string | null;
+          instructor_id: string;
+          learner_id: string;
+          status?: LiveSessionBookingStatus;
+          starts_at: string;
+          ends_at: string;
+          timezone?: string;
+          learner_notes?: string | null;
+          instructor_notes?: string | null;
+          meeting_agenda?: Json;
+          confirmed_at?: string | null;
+          declined_at?: string | null;
+          cancelled_at?: string | null;
+          completed_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          service_id?: string;
+          course_id?: string | null;
+          lesson_id?: string | null;
+          instructor_id?: string;
+          learner_id?: string;
+          status?: LiveSessionBookingStatus;
+          starts_at?: string;
+          ends_at?: string;
+          timezone?: string;
+          learner_notes?: string | null;
+          instructor_notes?: string | null;
+          meeting_agenda?: Json;
+          confirmed_at?: string | null;
+          declined_at?: string | null;
+          cancelled_at?: string | null;
+          completed_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: R;
+      };
+      zoom_meetings: {
+        Row: {
+          id: string;
+          booking_id: string;
+          zoom_meeting_id: string;
+          zoom_uuid: string | null;
+          host_id: string | null;
+          host_email: string | null;
+          topic: string;
+          start_url_encrypted: string | null;
+          join_url: string | null;
+          password_encrypted: string | null;
+          settings: Json;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          booking_id: string;
+          zoom_meeting_id: string;
+          zoom_uuid?: string | null;
+          host_id?: string | null;
+          host_email?: string | null;
+          topic: string;
+          start_url_encrypted?: string | null;
+          join_url?: string | null;
+          password_encrypted?: string | null;
+          settings?: Json;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          booking_id?: string;
+          zoom_meeting_id?: string;
+          zoom_uuid?: string | null;
+          host_id?: string | null;
+          host_email?: string | null;
+          topic?: string;
+          start_url_encrypted?: string | null;
+          join_url?: string | null;
+          password_encrypted?: string | null;
+          settings?: Json;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: R;
+      };
+      live_session_events: {
+        Row: {
+          id: string;
+          booking_id: string;
+          actor_id: string | null;
+          event_type: string;
+          metadata: Json;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          booking_id: string;
+          actor_id?: string | null;
+          event_type: string;
+          metadata?: Json;
+          created_at?: string;
+        };
+        Update: never;
+        Relationships: R;
+      };
+      live_session_attendance: {
+        Row: {
+          id: string;
+          booking_id: string;
+          user_id: string;
+          role: "learner" | "instructor" | "admin";
+          joined_at: string;
+          left_at: string | null;
+          duration_seconds: number | null;
+          client_metadata: Json;
+        };
+        Insert: {
+          id?: string;
+          booking_id: string;
+          user_id: string;
+          role: "learner" | "instructor" | "admin";
+          joined_at?: string;
+          left_at?: string | null;
+          duration_seconds?: number | null;
+          client_metadata?: Json;
+        };
+        Update: {
+          left_at?: string | null;
+          duration_seconds?: number | null;
+          client_metadata?: Json;
+        };
+        Relationships: R;
+      };
+      practice_exercise_submissions: {
+        Row: {
+          id: string;
+          exercise_block_id: string;
+          course_id: string;
+          lesson_id: string;
+          user_id: string;
+          status: PracticeSubmissionStatus;
+          attempt_number: number;
+          text_response: string | null;
+          studio_tool_id: string | null;
+          studio_inputs: Json;
+          studio_output: string | null;
+          metadata: Json;
+          submitted_at: string | null;
+          scored_at: string | null;
+          reviewed_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          exercise_block_id: string;
+          course_id: string;
+          lesson_id: string;
+          user_id: string;
+          status?: PracticeSubmissionStatus;
+          attempt_number?: number;
+          text_response?: string | null;
+          studio_tool_id?: string | null;
+          studio_inputs?: Json;
+          studio_output?: string | null;
+          metadata?: Json;
+          submitted_at?: string | null;
+          scored_at?: string | null;
+          reviewed_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          status?: PracticeSubmissionStatus;
+          attempt_number?: number;
+          text_response?: string | null;
+          studio_tool_id?: string | null;
+          studio_inputs?: Json;
+          studio_output?: string | null;
+          metadata?: Json;
+          submitted_at?: string | null;
+          scored_at?: string | null;
+          reviewed_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: R;
+      };
+      practice_exercise_files: {
+        Row: {
+          id: string;
+          submission_id: string;
+          user_id: string;
+          bucket_id: string;
+          storage_path: string;
+          file_name: string;
+          mime_type: string;
+          file_size: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          submission_id: string;
+          user_id: string;
+          bucket_id?: string;
+          storage_path: string;
+          file_name: string;
+          mime_type: string;
+          file_size: number;
+          created_at?: string;
+        };
+        Update: {
+          storage_path?: string;
+          file_name?: string;
+          mime_type?: string;
+          file_size?: number;
+        };
+        Relationships: R;
+      };
+      practice_exercise_scores: {
+        Row: {
+          id: string;
+          submission_id: string;
+          score: number;
+          max_score: number;
+          rubric_breakdown: Json;
+          feedback_summary: string | null;
+          strengths: Json;
+          improvements: Json;
+          model: string | null;
+          confidence: number | null;
+          needs_instructor_review: boolean;
+          raw_ai_response: Json;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          submission_id: string;
+          score: number;
+          max_score?: number;
+          rubric_breakdown?: Json;
+          feedback_summary?: string | null;
+          strengths?: Json;
+          improvements?: Json;
+          model?: string | null;
+          confidence?: number | null;
+          needs_instructor_review?: boolean;
+          raw_ai_response?: Json;
+          created_at?: string;
+        };
+        Update: {
+          score?: number;
+          max_score?: number;
+          rubric_breakdown?: Json;
+          feedback_summary?: string | null;
+          strengths?: Json;
+          improvements?: Json;
+          model?: string | null;
+          confidence?: number | null;
+          needs_instructor_review?: boolean;
+          raw_ai_response?: Json;
+        };
+        Relationships: R;
+      };
+      practice_exercise_reviews: {
+        Row: {
+          id: string;
+          submission_id: string;
+          reviewer_id: string;
+          score_override: number | null;
+          feedback: string | null;
+          status: PracticeReviewStatus;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          submission_id: string;
+          reviewer_id: string;
+          score_override?: number | null;
+          feedback?: string | null;
+          status?: PracticeReviewStatus;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          score_override?: number | null;
+          feedback?: string | null;
+          status?: PracticeReviewStatus;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: R;
+      };
       media_assets: {
         Row: {
           id: string;
@@ -800,6 +1256,17 @@ export type LessonProgress = Database["public"]["Tables"]["lesson_progress"]["Ro
 export type MediaAsset = Database["public"]["Tables"]["media_assets"]["Row"];
 export type PageMediaSlot = Database["public"]["Tables"]["page_media_slots"]["Row"];
 export type BlogPost = Database["public"]["Tables"]["blog_posts"]["Row"];
+export type LiveSessionService = Database["public"]["Tables"]["live_session_services"]["Row"];
+export type InstructorAvailabilityRule = Database["public"]["Tables"]["instructor_availability_rules"]["Row"];
+export type InstructorAvailabilityException = Database["public"]["Tables"]["instructor_availability_exceptions"]["Row"];
+export type LiveSessionBooking = Database["public"]["Tables"]["live_session_bookings"]["Row"];
+export type ZoomMeeting = Database["public"]["Tables"]["zoom_meetings"]["Row"];
+export type LiveSessionEvent = Database["public"]["Tables"]["live_session_events"]["Row"];
+export type LiveSessionAttendance = Database["public"]["Tables"]["live_session_attendance"]["Row"];
+export type PracticeExerciseSubmission = Database["public"]["Tables"]["practice_exercise_submissions"]["Row"];
+export type PracticeExerciseFile = Database["public"]["Tables"]["practice_exercise_files"]["Row"];
+export type PracticeExerciseScore = Database["public"]["Tables"]["practice_exercise_scores"]["Row"];
+export type PracticeExerciseReview = Database["public"]["Tables"]["practice_exercise_reviews"]["Row"];
 export type Order = Database["public"]["Tables"]["orders"]["Row"];
 export type Certificate = Database["public"]["Tables"]["certificates"]["Row"];
 export type Review = Database["public"]["Tables"]["reviews"]["Row"];

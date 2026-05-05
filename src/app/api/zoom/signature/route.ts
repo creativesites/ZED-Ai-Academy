@@ -10,12 +10,17 @@ export async function POST(req: NextRequest) {
 
   try {
     const { meetingNumber, role } = await req.json();
+    const requestedRole = Number(role ?? 0);
 
     if (!meetingNumber) {
       return NextResponse.json({ error: 'meetingNumber is required' }, { status: 400 });
     }
 
-    const signature = generateZoomSignature(meetingNumber.toString().replace(/\s/g, ''), role ?? 0);
+    if (requestedRole !== 0) {
+      return NextResponse.json({ error: 'Host signatures are not available from the legacy meeting endpoint' }, { status: 403 });
+    }
+
+    const signature = generateZoomSignature(meetingNumber.toString().replace(/\s/g, ''), requestedRole);
     
     return NextResponse.json({ signature });
   } catch (error) {

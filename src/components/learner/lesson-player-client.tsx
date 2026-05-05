@@ -12,6 +12,7 @@ import { PracticeStudio } from "@/components/learner/practice-studio";
 import { LessonDiscussions } from "@/components/learner/lesson-discussions";
 import type { Discussion } from "@/types/database";
 import { markLessonComplete, generateCertificate } from "@/actions/certificates";
+import { submitPracticeExercise } from "@/actions/practice-exercises";
 import { cn } from "@/lib/utils";
 import { ZoomMeeting } from "@/components/shared/zoom-meeting";
 import {
@@ -466,6 +467,8 @@ function MeetingBlock({ content }: { content: Record<string, unknown> }) {
   const meetingId = content.meeting_id as string;
   const title = (content.title as string) || "Live Training Session";
   const passWord = content.password as string | undefined;
+  const startTime = content.start_time as string | undefined;
+  const sdkKey = process.env.NEXT_PUBLIC_ZOOM_MEETING_SDK_KEY ?? process.env.NEXT_PUBLIC_ZOOM_CLIENT_ID;
   const [joined, setJoined] = useState(false);
   const [joining, setJoining] = useState(false);
   const [signature, setSignature] = useState<string | null>(null);
@@ -492,14 +495,69 @@ function MeetingBlock({ content }: { content: Record<string, unknown> }) {
       } else {
         throw new Error("Invalid signature received");
       }
-    } catch (error: any) {
-      toast.error(error?.message || "Failed to connect to Zoom");
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : "Failed to connect to Zoom");
     } finally {
       setJoining(false);
     }
   }
 
-  if (!meetingId) return null;
+  if (!meetingId) {
+    const serviceId = content.service_id as string | undefined;
+
+    return (
+      <div className="rounded-[2rem] border border-dashed border-[#fd5523]/30 bg-[#fff6ee] p-6 md:p-8">
+        <div className="flex flex-col gap-5 sm:flex-row sm:items-start">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white text-[#fd5523] shadow-sm">
+            <Calendar className="h-6 w-6" />
+          </div>
+          <div className="space-y-4 flex-1">
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-[0.25em] text-[#fd5523]">Live Session</p>
+              <h3 className="mt-2 text-2xl font-bold tracking-tight text-[#062e39]">{title}</h3>
+            </div>
+            {startTime && <p className="text-sm font-semibold text-slate-600">{startTime}</p>}
+            <p className="max-w-2xl text-sm leading-relaxed text-slate-600">
+              {serviceId 
+                ? "This session requires booking a specific time slot with the instructor."
+                : "Scheduling for this live session is being moved into the new booking calendar. Once enabled, you will choose an available slot and receive a confirmed Zoom studio link here."}
+            </p>
+            {serviceId && (
+              <Link 
+                href={`/live-sessions/${serviceId}/book`}
+                className={cn(
+                  buttonVariants({ variant: "default" }),
+                  "rounded-xl bg-[#fd5523] px-6 py-4 text-white hover:bg-[#ef4a16]"
+                )}
+              >
+                Book Your Slot
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!sdkKey) {
+    return (
+      <div className="rounded-[2rem] border border-amber-200 bg-amber-50 p-6 md:p-8">
+        <div className="flex items-start gap-4">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white text-amber-600 shadow-sm">
+            <Info className="h-6 w-6" />
+          </div>
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-[0.25em] text-amber-700">Zoom setup needed</p>
+            <h3 className="mt-2 text-2xl font-bold tracking-tight text-[#062e39]">{title}</h3>
+            <p className="mt-3 max-w-2xl text-sm leading-relaxed text-amber-900/80">
+              This meeting has a Zoom ID, but the public Meeting SDK key is not configured. Add `NEXT_PUBLIC_ZOOM_MEETING_SDK_KEY` before learners join in-browser.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (joined && signature && user) {
     return (
@@ -514,7 +572,7 @@ function MeetingBlock({ content }: { content: Record<string, unknown> }) {
           meetingNumber={meetingId}
           passWord={passWord}
           signature={signature}
-          sdkKey={process.env.NEXT_PUBLIC_ZOOM_CLIENT_ID!}
+          sdkKey={sdkKey}
           userName={user.fullName || user.username || "Learner"}
           userEmail={user.primaryEmailAddress?.emailAddress || ""}
         />
@@ -533,7 +591,7 @@ function MeetingBlock({ content }: { content: Record<string, unknown> }) {
             </div>
             <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#fd8d69]">Live Meeting</span>
           </div>
-          <h3 className="text-2xl font-bold tracking-tight">{title}</h3>
+          <h3 className="text-2xl text-white font-bold tracking-tight">{title}</h3>
           <div className="flex items-center gap-6 text-white/60">
             <div className="flex items-center gap-2">
               <Users className="h-4 w-4" />
@@ -556,6 +614,207 @@ function MeetingBlock({ content }: { content: Record<string, unknown> }) {
           )}
         </Button>
       </div>
+    </div>
+  );
+}
+
+function PracticeExerciseBlock({
+  blockId,
+  content,
+  submission,
+}: {
+  blockId: string;
+  content: Record<string, unknown>;
+  submission?: any;
+}) {
+  const title = (content.title as string) || "Practice Exercise";
+  const brief = content.brief as string | undefined;
+  const mode = (content.mode as string) || "text_response";
+  const estimatedMinutes = content.estimated_minutes as number | undefined;
+  const instructions = Array.isArray(content.instructions) ? content.instructions.filter(Boolean) as string[] : [];
+
+  const score = submission?.practice_exercise_scores;
+
+  return (
+    <div className="rounded-[2rem] border border-emerald-100 bg-white p-6 shadow-xl shadow-slate-200/40 md:p-8">
+      <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
+        <div className="space-y-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-700">
+              <CheckCircle className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-[0.25em] text-emerald-600">Practice Exercise</p>
+              <h3 className="mt-1 text-2xl font-bold tracking-tight text-[#062e39]">{title}</h3>
+            </div>
+          </div>
+
+          {brief && <p className="max-w-3xl text-base leading-relaxed text-slate-600">{brief}</p>}
+
+          {instructions.length > 0 && (
+            <div className="space-y-3">
+              {instructions.map((instruction, idx) => (
+                <div key={`${instruction}-${idx}`} className="flex gap-3 text-sm text-slate-600">
+                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-xs font-bold text-emerald-700">
+                    {idx + 1}
+                  </span>
+                  <span className="leading-relaxed">{instruction}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="flex shrink-0 flex-row gap-3 md:flex-col">
+          <div className="rounded-2xl bg-slate-50 px-4 py-3">
+            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Mode</p>
+            <p className="mt-1 text-sm font-bold capitalize text-[#062e39]">{mode.replace(/_/g, " ")}</p>
+          </div>
+          {estimatedMinutes && (
+            <div className="rounded-2xl bg-slate-50 px-4 py-3">
+              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Estimate</p>
+              <p className="mt-1 text-sm font-bold text-[#062e39]">{estimatedMinutes} min</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {submission ? (
+        <div className="mt-8 space-y-6">
+          <div className="rounded-[1.5rem] bg-emerald-50/50 p-6 border border-emerald-100">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-black uppercase tracking-widest text-emerald-600">Your Submission</span>
+                <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-[10px] font-bold text-emerald-700 uppercase">
+                  Attempt #{submission.attempt_number}
+                </span>
+              </div>
+              <span className="text-[10px] font-bold text-slate-400">
+                {new Date(submission.submitted_at).toLocaleDateString()}
+              </span>
+            </div>
+            
+            {submission.text_response && (
+              <div className="mb-4">
+                <p className="text-sm text-slate-600 leading-relaxed italic border-l-2 border-emerald-200 pl-4">
+                  "{submission.text_response}"
+                </p>
+              </div>
+            )}
+
+            {submission.practice_exercise_files?.length > 0 && (
+              <div className="flex flex-wrap gap-2 mb-4">
+                {submission.practice_exercise_files.map((f: any) => (
+                  <div key={f.id} className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white border border-emerald-100 text-[11px] font-medium text-slate-600">
+                    <FileText className="h-3.5 w-3.5 text-emerald-500" />
+                    {f.file_name}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div className="pt-4 border-t border-emerald-100">
+              {score ? (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-4">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white shadow-sm border border-emerald-100">
+                      <span className="text-xl font-black text-emerald-600">{Math.round(score.score)}</span>
+                    </div>
+                    <div>
+                      <p className="text-xs font-black uppercase tracking-widest text-emerald-600">AI Feedback Score</p>
+                      <p className="text-sm font-semibold text-[#062e39]">
+                        {score.score >= 80 ? "Excellent Work!" : score.score >= 50 ? "Good Progress" : "Needs Review"}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  {score.feedback_summary && (
+                    <p className="text-sm text-slate-600 leading-relaxed bg-white/50 p-4 rounded-xl border border-emerald-50">
+                      {score.feedback_summary}
+                    </p>
+                  )}
+
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    {score.strengths?.length > 0 && (
+                      <div className="space-y-2">
+                        <p className="text-[10px] font-black uppercase tracking-widest text-green-600">Strengths</p>
+                        <ul className="space-y-1.5">
+                          {score.strengths.map((s: string, i: number) => (
+                            <li key={i} className="flex items-start gap-2 text-[12px] text-slate-600">
+                              <CheckCircle className="h-3 w-3 mt-0.5 text-green-500 shrink-0" />
+                              {s}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    {score.improvements?.length > 0 && (
+                      <div className="space-y-2">
+                        <p className="text-[10px] font-black uppercase tracking-widest text-amber-600">To Improve</p>
+                        <ul className="space-y-1.5">
+                          {score.improvements.map((s: string, i: number) => (
+                            <li key={i} className="flex items-start gap-2 text-[12px] text-slate-600">
+                              <Info className="h-3 w-3 mt-0.5 text-amber-500 shrink-0" />
+                              {s}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center gap-3 py-2">
+                  <Loader2 className="h-4 w-4 animate-spin text-emerald-600" />
+                  <p className="text-xs font-bold text-emerald-700">AI is analyzing your submission...</p>
+                </div>
+              )}
+            </div>
+          </div>
+          
+          <Button 
+            variant="outline" 
+            className="w-full rounded-xl border-emerald-200 text-emerald-700 hover:bg-emerald-50"
+            onClick={() => {
+              // This is a hack to allow re-submission, by just showing the form again.
+              // In a real app we might want to toggle state.
+              const form = document.getElementById(`form-${blockId}`);
+              if (form) form.classList.remove('hidden');
+              const feedback = document.getElementById(`feedback-${blockId}`);
+              if (feedback) feedback.classList.add('hidden');
+            }}
+          >
+            Try Again
+          </Button>
+        </div>
+      ) : (
+        <div id={`form-${blockId}`} className="mt-6 rounded-2xl border border-dashed border-emerald-200 bg-emerald-50/60 p-4">
+          <form action={submitPracticeExercise} className="space-y-4">
+            <input type="hidden" name="exercise_block_id" value={blockId} />
+            <label className="block space-y-2">
+              <span className="text-xs font-black uppercase tracking-widest text-emerald-700">Text response</span>
+              <textarea
+                name="text_response"
+                rows={6}
+                placeholder="Write your answer, reflection, workflow, or notes here."
+                className="w-full rounded-xl border border-emerald-200 bg-white px-4 py-3 text-sm text-[#062e39] outline-none transition-colors placeholder:text-slate-300 focus:border-emerald-500"
+              />
+            </label>
+            <label className="block space-y-2">
+              <span className="text-xs font-black uppercase tracking-widest text-emerald-700">Upload evidence</span>
+              <input
+                name="files"
+                type="file"
+                multiple
+                className="block w-full rounded-xl border border-emerald-200 bg-white px-4 py-3 text-sm text-slate-600 file:mr-4 file:rounded-lg file:border-0 file:bg-emerald-50 file:px-3 file:py-2 file:text-sm file:font-bold file:text-emerald-700"
+              />
+            </label>
+            <Button className="rounded-xl bg-emerald-700 px-6 py-5 text-white hover:bg-emerald-800">
+              Submit for AI feedback
+            </Button>
+          </form>
+        </div>
+      )}
     </div>
   );
 }
@@ -609,6 +868,7 @@ export function LessonPlayerClient({
   allDone,
   existingCertificate,
   discussions,
+  practiceSubmissions = [],
   userId,
   isPreview = false,
   isPartialEnrollment = false,
@@ -630,6 +890,7 @@ export function LessonPlayerClient({
   allDone: boolean;
   existingCertificate: { id: string; public_id: string; issued_at: string } | null;
   discussions?: DiscussionWithProfile[];
+  practiceSubmissions?: any[];
   userId?: string | null;
   isPreview?: boolean;
   isPartialEnrollment?: boolean;
@@ -1006,6 +1267,13 @@ export function LessonPlayerClient({
                       {block.type === "comparison_table" && <ComparisonTableBlock content={block.content} />}
                       {block.type === "case_study" && <CaseStudyBlock content={block.content} />}
                       {block.type === "meeting" && <MeetingBlock content={block.content} />}
+                      {block.type === "practice_exercise" && (
+                        <PracticeExerciseBlock 
+                          blockId={block.id} 
+                          content={block.content} 
+                          submission={practiceSubmissions.find((s) => s.exercise_block_id === block.id)}
+                        />
+                      )}
                       {block.type === "quiz" && quiz && (
                         <div className="bg-white rounded-[2.5rem] p-6 md:p-10 shadow-xl border border-slate-100">
                           <div className="flex items-center gap-4 mb-8">
@@ -1038,7 +1306,7 @@ export function LessonPlayerClient({
                           <Trophy className="h-10 w-10 text-[#fd5523]" />
                         </div>
                         <h3 className="text-3xl font-bold text-white">Legendary Work!</h3>
-                        <p className="text-white/60">You've mastered the entire course. Claim your verified certificate now.</p>
+                        <p className="text-white/60">You have mastered the entire course. Claim your verified certificate now.</p>
                         <Button 
                           onClick={handleGetCertificate}
                           disabled={certifying}

@@ -20,76 +20,56 @@ export function ZoomMeeting({
   signature,
   sdkKey,
 }: ZoomMeetingProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [client, setClient] = useState<any>(null);
 
   useEffect(() => {
-    // Dynamic import to avoid SSR issues
-    const initZoom = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const ZoomMtgEmbedded = (await import("@zoom/meetingsdk/embedded")).default;
-        const client = ZoomMtgEmbedded.createClient();
-        setClient(client);
+    const handleMessage = (event: MessageEvent) => {
+      const { type, payload } = event.data;
 
-        await client.init({
-          zoomAppRoot: containerRef.current!,
-          language: "en-US",
-          customize: {
-            video: {
-              isResizable: true,
-              viewSizes: {
-                default: {
-                  width: containerRef.current?.clientWidth || 1000,
-                  height: containerRef.current?.clientHeight || 600,
-                },
-              },
+      if (type === "ZOOM_BRIDGE_READY") {
+        if (iframeRef.current?.contentWindow) {
+          iframeRef.current.contentWindow.postMessage({
+            type: "JOIN_MEETING",
+            payload: {
+              meetingNumber,
+              passWord,
+              userName,
+              userEmail,
+              signature,
+              sdkKey,
             },
-          },
-        });
+          }, "*");
+        }
+      }
 
-        await client.join({
-          meetingNumber: meetingNumber.replace(/\s/g, ""),
-          signature,
-          sdkKey,
-          userName,
-          userEmail,
-          password: passWord || "",
-        });
-        
+      if (type === "ZOOM_JOIN_SUCCESS") {
         setLoading(false);
-        console.log("Joined Zoom meeting successfully");
-      } catch (err: any) {
-        console.error("Zoom Meeting Error:", err);
-        setError(err?.message || "Failed to join the live session. Please check your connection or meeting details.");
+      }
+
+      if (type === "ZOOM_JOIN_ERROR") {
+        setError(payload || "Failed to join the live session.");
         setLoading(false);
       }
     };
 
-    if (containerRef.current) {
-      initZoom();
-    }
-
-    return () => {
-      // Zoom Meeting SDK doesn't always have a clean destroy for embedded
-      // but we can try to leave the meeting if client exists
-    };
+    window.addEventListener("message", handleMessage);
+    return () => window.removeEventListener("message", handleMessage);
   }, [meetingNumber, passWord, userName, userEmail, signature, sdkKey]);
 
   return (
     <div className="space-y-4">
       <div className="relative w-full aspect-video rounded-[2.5rem] overflow-hidden bg-black shadow-2xl border-4 border-slate-900 group">
-        <div 
-          ref={containerRef} 
-          id="zoom-meeting-container" 
-          className="absolute inset-0 w-full h-full"
+        <iframe
+          ref={iframeRef}
+          src="/zoom-bridge.html"
+          className="absolute inset-0 w-full h-full border-0"
+          allow="camera; microphone; fullscreen; speaker; display-capture"
         />
         
         {loading && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900 z-10">
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900 z-10 pointer-events-none">
             <div className="h-12 w-12 rounded-2xl bg-[#fd5523]/10 flex items-center justify-center mb-4">
               <div className="h-6 w-6 border-4 border-[#fd5523] border-t-transparent rounded-full animate-spin" />
             </div>

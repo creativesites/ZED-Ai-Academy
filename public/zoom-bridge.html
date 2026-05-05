@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zoom Bridge</title>
+    <style>
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: black; }
+        #zoom-root { width: 100%; height: 100%; }
+        #status { color: white; font-family: sans-serif; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; }
+    </style>
+    
+    <!-- Required Dependencies for Zoom SDK 6.0.0 -->
+    <script src="https://source.zoom.us/6.0.0/lib/vendor/react.min.js"></script>
+    <script src="https://source.zoom.us/6.0.0/lib/vendor/react-dom.min.js"></script>
+    <script src="https://source.zoom.us/6.0.0/lib/vendor/redux.min.js"></script>
+    <script src="https://source.zoom.us/6.0.0/lib/vendor/redux-thunk.min.js"></script>
+    <script src="https://source.zoom.us/6.0.0/lib/vendor/lodash.min.js"></script>
+    
+    <!-- Zoom Meeting SDK Component View -->
+    <script src="https://source.zoom.us/zoom-meeting-embedded-6.0.0.min.js"></script>
+</head>
+<body>
+    <div id="zoom-root"></div>
+    <div id="status">Connecting to live session...</div>
+
+    <script>
+        const client = ZoomMtgEmbedded.createClient();
+        const root = document.getElementById('zoom-root');
+        const status = document.getElementById('status');
+
+        window.addEventListener('message', async (event) => {
+            const { type, payload } = event.data;
+            
+            if (type === 'JOIN_MEETING') {
+                try {
+                    status.innerText = 'Initializing Zoom SDK...';
+                    
+                    await client.init({
+                        zoomAppRoot: root,
+                        language: 'en-US',
+                        customize: {
+                            video: {
+                                isResizable: true,
+                                viewSizes: {
+                                    default: {
+                                        width: window.innerWidth,
+                                        height: window.innerHeight,
+                                    },
+                                },
+                            },
+                        },
+                    });
+
+                    status.innerText = 'Joining meeting...';
+
+                    await client.join({
+                        meetingNumber: payload.meetingNumber.replace(/\s/g, ''),
+                        signature: payload.signature,
+                        sdkKey: payload.sdkKey,
+                        userName: payload.userName,
+                        userEmail: payload.userEmail,
+                        password: payload.passWord || '',
+                    });
+
+                    status.style.display = 'none';
+                    console.log('Joined Zoom meeting successfully via bridge');
+                    window.parent.postMessage({ type: 'ZOOM_JOIN_SUCCESS' }, '*');
+                } catch (error) {
+                    console.error('Zoom Bridge Error:', error);
+                    status.innerText = 'Error: ' + (error.message || 'Failed to join');
+                    status.style.color = '#ef4444';
+                    window.parent.postMessage({ type: 'ZOOM_JOIN_ERROR', payload: error.message }, '*');
+                }
+            }
+        });
+
+        // Notify parent that bridge is ready
+        window.parent.postMessage({ type: 'ZOOM_BRIDGE_READY' }, '*');
+
+        // Handle resize
+        window.addEventListener('resize', () => {
+            // Note: Update view size if supported by SDK on resize
+        });
+    </script>
+</body>
+</html>

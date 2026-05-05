@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { buttonVariants } from "@/components/ui/button-variants";
 import { cn } from "@/lib/utils";
 import {
-  ArrowRight, Award, BookOpen, Building2, Clock3, GraduationCap,
+  ArrowRight, Award, BookOpen, Building2, CalendarDays, Clock3, GraduationCap,
   Image as ImageIcon, Layers, MessageCircle, Play, ShieldCheck,
   Sparkles, Trophy, UserCheck, Users,
 } from "lucide-react";
@@ -283,6 +283,22 @@ export default async function DashboardPage() {
                   accent: "bg-slate-50 text-slate-600",
                   badge: null,
                 },
+                {
+                  label: "Live Sessions",
+                  desc: "Availability and booking requests",
+                  href: "/creator/live-sessions",
+                  icon: CalendarDays,
+                  accent: "bg-green-50 text-green-700",
+                  badge: null,
+                },
+                {
+                  label: "Practice Reviews",
+                  desc: "Exercise submissions and AI feedback",
+                  href: "/creator/practice-submissions",
+                  icon: MessageCircle,
+                  accent: "bg-indigo-50 text-indigo-700",
+                  badge: null,
+                },
               ].map((tool) => (
                 <Link
                   key={tool.href}
@@ -336,6 +352,20 @@ export default async function DashboardPage() {
                   href: "/admin/students",
                   icon: Users,
                   accent: "bg-blue-50 text-blue-600",
+                },
+                {
+                  label: "Live Sessions",
+                  desc: "Set availability and confirm bookings",
+                  href: "/creator/live-sessions",
+                  icon: CalendarDays,
+                  accent: "bg-green-50 text-green-700",
+                },
+                {
+                  label: "Practice Reviews",
+                  desc: "Review exercise submissions",
+                  href: "/creator/practice-submissions",
+                  icon: MessageCircle,
+                  accent: "bg-indigo-50 text-indigo-700",
                 },
               ].map((tool) => (
                 <Link

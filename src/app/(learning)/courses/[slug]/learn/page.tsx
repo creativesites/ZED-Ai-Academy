@@ -163,6 +163,14 @@ export default async function LearnPage({ params, searchParams }: PageProps) {
       error: unknown;
     };
 
+  // Fetch practice submissions for this lesson
+  const { data: submissionsData } = await supabase
+    .from("practice_exercise_submissions")
+    .select("*, practice_exercise_scores(*), practice_exercise_files(*)")
+    .eq("user_id", userId)
+    .eq("lesson_id", activeLessonId)
+    .order("attempt_number", { ascending: false });
+
   return (
     <LessonPlayerClient
       course={{
@@ -187,6 +195,7 @@ export default async function LearnPage({ params, searchParams }: PageProps) {
       allDone={allDone}
       existingCertificate={existingCert ?? null}
       discussions={discussionsData ?? []}
+      practiceSubmissions={submissionsData ?? []}
       userId={userId}
       isPreview={isPreview}
       isPartialEnrollment={isPartialEnrollment}
