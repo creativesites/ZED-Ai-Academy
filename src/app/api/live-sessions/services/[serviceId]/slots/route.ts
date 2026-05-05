@@ -4,16 +4,17 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { serviceId: string } }
+  ctx: { params: Promise<{ serviceId: string }> }
 ) {
   try {
+    const { serviceId } = await ctx.params;
     const { searchParams } = new URL(request.url);
     const from = searchParams.get("from") || undefined;
     const to = searchParams.get("to") || undefined;
     const timezone = searchParams.get("timezone") || undefined;
 
     const supabase = createServiceClient();
-    const result = await getLiveSessionSlots(supabase, params.serviceId, {
+    const result = await getLiveSessionSlots(supabase, serviceId, {
       from,
       to,
       timezone,
