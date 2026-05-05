@@ -204,6 +204,40 @@ export interface Database {
         Update: { type?: ContentBlockType; position?: number; content?: Json };
         Relationships: R;
       };
+      site_settings: {
+        Row: {
+          key: string;
+          value: Json;
+          updated_at: string;
+        };
+        Insert: {
+          key: string;
+          value: Json;
+          updated_at?: string;
+        };
+        Update: {
+          value?: Json;
+          updated_at?: string;
+        };
+        Relationships: R;
+      };
+      user_platforms: {
+        Row: {
+          user_id: string;
+          platform: string;
+          last_seen_at: string;
+        };
+        Insert: {
+          user_id: string;
+          platform: string;
+          last_seen_at?: string;
+        };
+        Update: {
+          platform?: string;
+          last_seen_at?: string;
+        };
+        Relationships: R;
+      };
       quizzes: {
         Row: {
           id: string;
