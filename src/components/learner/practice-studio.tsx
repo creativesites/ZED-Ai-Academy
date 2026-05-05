@@ -13,6 +13,8 @@ import { Button } from "@/components/ui/button";
 interface PracticeStudioProps {
   lessonTitle: string;
   onClose: () => void;
+  initialTool?: string;
+  onSelectOutput?: (toolId: string, inputs: Record<string, string>, output: string) => void;
 }
 
 // ── Tool definitions ──────────────────────────────────────────────────────────
@@ -176,8 +178,8 @@ function renderMarkdown(text: string) {
 
 type HistoryItem = { id: string; toolId: ToolId; inputs: Record<string, string>; output: string; timestamp: number };
 
-export function PracticeStudio({ lessonTitle, onClose }: PracticeStudioProps) {
-  const [selectedTool, setSelectedTool] = useState<ToolId>("prompt_optimizer");
+export function PracticeStudio({ lessonTitle, onClose, initialTool, onSelectOutput }: PracticeStudioProps) {
+  const [selectedTool, setSelectedTool] = useState<ToolId>((initialTool as ToolId) || "prompt_optimizer");
   const [inputs, setInputs] = useState<Record<string, string>>({});
   const [output, setOutput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -578,6 +580,15 @@ export function PracticeStudio({ lessonTitle, onClose }: PracticeStudioProps) {
                     {copied ? <Check className="h-3.5 w-3.5 text-green-400" /> : <Copy className="h-3.5 w-3.5" />}
                     {copied ? "Copied" : "Copy Result"}
                   </button>
+                  {onSelectOutput && (
+                    <button
+                      onClick={() => onSelectOutput(selectedTool, inputs, output)}
+                      className="flex items-center gap-2 px-6 py-1.5 rounded-full bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-600/20"
+                    >
+                      <Check className="h-3.5 w-3.5 text-white" />
+                      Use Result
+                    </button>
+                  )}
                 </div>
               )}
             </div>

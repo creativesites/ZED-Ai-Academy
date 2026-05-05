@@ -54,7 +54,10 @@ export async function POST(
   const user = await currentUser();
   const displayName = user?.fullName || user?.username || "Zed AI Academy";
   const email = user?.primaryEmailAddress?.emailAddress || "";
-  const signature = generateZoomSignature(zoomMeeting.zoom_meeting_id, 0);
+  
+  // Instructors must join with role 1 (Host) to start the meeting
+  const role = userId === booking.instructor_id ? 1 : 0;
+  const signature = generateZoomSignature(zoomMeeting.zoom_meeting_id, role);
 
   return NextResponse.json({
     signature,

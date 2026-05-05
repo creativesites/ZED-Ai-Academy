@@ -24,13 +24,21 @@ interface PracticeExerciseContent {
   resubmissions_allowed: boolean;
 }
 
+import { Sparkles, Loader2 } from "lucide-react";
+import { toast } from "sonner";
+
 export function PracticeExerciseBlockEditor({
   content,
+  lessonId,
+  courseId,
   onChange,
 }: {
   content: PracticeExerciseContent;
+  lessonId?: string;
+  courseId?: string;
   onChange: (c: PracticeExerciseContent) => void;
 }) {
+  const [generating, setGenerating] = useState(false);
   const [data, setData] = useState<PracticeExerciseContent>({
     title: content.title ?? "Practice Exercise",
     brief: content.brief ?? "",
@@ -68,9 +76,49 @@ export function PracticeExerciseBlockEditor({
 
   return (
     <div className="space-y-8">
-      <div className="flex items-center gap-2 text-[#062e39] mb-2">
-        <Brain className="h-4 w-4 text-emerald-600" />
-        <span className="text-xs font-bold uppercase tracking-widest text-emerald-700">Practice Exercise Editor</span>
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-2 text-[#062e39]">
+          <Brain className="h-4 w-4 text-emerald-600" />
+          <span className="text-xs font-bold uppercase tracking-widest text-emerald-700">Practice Exercise Editor</span>
+        </div>
+        {lessonId && courseId && (
+          <Button
+            onClick={async () => {
+              setGenerating(true);
+              try {
+                const res = await fetch("/api/ai/generate-practice-exercise", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ lessonId, courseId })
+                });
+                const result = await res.json();
+                if (!res.ok) throw new Error(result.error || "Failed to generate");
+                
+                const exercise = result.exercise;
+                update({
+                  title: exercise.title || data.title,
+                  brief: exercise.brief || data.brief,
+                  mode: exercise.mode || data.mode,
+                  estimated_minutes: exercise.estimated_minutes || data.estimated_minutes,
+                  instructions: Array.isArray(exercise.instructions) ? exercise.instructions : data.instructions,
+                  rubric: Array.isArray(exercise.rubric) ? exercise.rubric : data.rubric,
+                });
+                toast.success("Generated exercise with AI!");
+              } catch (e: any) {
+                toast.error(e.message || "Failed to generate");
+              } finally {
+                setGenerating(false);
+              }
+            }}
+            disabled={generating}
+            variant="outline"
+            size="sm"
+            className="rounded-full border-emerald-200 text-emerald-700 hover:bg-emerald-50"
+          >
+            {generating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4 text-emerald-600" />}
+            Generate with AI
+          </Button>
+        )}
       </div>
 
       <div className="grid gap-6 sm:grid-cols-2">

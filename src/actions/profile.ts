@@ -1,12 +1,13 @@
 "use server";
 
-import { auth } from "@clerk/nextjs/server";
+import { currentUser } from "@clerk/nextjs/server";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 
 export async function completeOnboarding(formData: FormData) {
-  const { userId } = await auth();
-  if (!userId) redirect("/sign-in");
+  const user = await currentUser();
+  if (!user) redirect("/sign-in");
+  const userId = user.id;
 
   const fullName = (formData.get("full_name") as string)?.trim();
   const level = formData.get("level") as string;
@@ -15,15 +16,19 @@ export async function completeOnboarding(formData: FormData) {
   if (!fullName) throw new Error("Please enter your name.");
 
   const supabase = createClient();
+  const email = user.emailAddresses.find((e) => e.id === user.primaryEmailAddressId)?.emailAddress;
+
   const { error } = await supabase
     .from("profiles")
-    .update({
+    .upsert({
+      id: userId,
       full_name: fullName,
       bio: goal ? `Goal: ${goal}` : null,
+      email: email,
+      avatar_url: user.imageUrl,
       onboarding_completed: true,
       updated_at: new Date().toISOString(),
-    })
-    .eq("id", userId);
+    }, { onConflict: "id" });
 
   if (error) throw new Error(error.message);
 

@@ -15,8 +15,9 @@ export async function enrollManual(
   courseSlug: string,
   studentPhone: string
 ): Promise<ManualEnrollResult> {
-  const { userId } = await auth();
-  if (!userId) return { success: false, error: "Not signed in" };
+  const clerkUser = await currentUser();
+  if (!clerkUser) return { success: false, error: "Not signed in" };
+  const userId = clerkUser.id;
 
   const supabase = createClient();
 
@@ -40,6 +41,16 @@ export async function enrollManual(
     if (existing.status === "active") return { success: false, error: "already_enrolled" };
     if (existing.status === "pending_payment") return { success: false, error: "already_pending" };
   }
+
+  // Ensure profile exists (in case Clerk webhook is delayed)
+  const email = clerkUser.emailAddresses.find((e) => e.id === clerkUser.primaryEmailAddressId)?.emailAddress;
+  await supabase.from("profiles").upsert({
+    id: userId,
+    full_name: [clerkUser.firstName, clerkUser.lastName].filter(Boolean).join(" ") || null,
+    email: email,
+    avatar_url: clerkUser.imageUrl,
+    updated_at: new Date().toISOString(),
+  }, { onConflict: "id", ignoreDuplicates: true });
 
   const { data: enrollment, error } = await supabase
     .from("enrollments")
@@ -67,8 +78,9 @@ export async function enrollManual(
 }
 
 export async function enrollFree(courseId: string, courseSlug: string) {
-  const { userId } = await auth();
-  if (!userId) redirect("/sign-in");
+  const clerkUser = await currentUser();
+  if (!clerkUser) redirect("/sign-in");
+  const userId = clerkUser.id;
 
   const supabase = createClient();
 
@@ -90,6 +102,16 @@ export async function enrollFree(courseId: string, courseSlug: string) {
 
   if (existing) redirect(`/courses/${courseSlug}/learn`);
 
+  // Ensure profile exists (in case Clerk webhook is delayed)
+  const email = clerkUser.emailAddresses.find((e) => e.id === clerkUser.primaryEmailAddressId)?.emailAddress;
+  await supabase.from("profiles").upsert({
+    id: userId,
+    full_name: [clerkUser.firstName, clerkUser.lastName].filter(Boolean).join(" ") || null,
+    email: email,
+    avatar_url: clerkUser.imageUrl,
+    updated_at: new Date().toISOString(),
+  }, { onConflict: "id", ignoreDuplicates: true });
+
   const { error } = await supabase.from("enrollments").insert({
     user_id: userId,
     course_id: courseId,
@@ -100,13 +122,8 @@ export async function enrollFree(courseId: string, courseSlug: string) {
   if (error) throw new Error(error.message);
 
   // Send confirmation email (non-blocking)
-  const clerkUser = await currentUser();
-  const email = clerkUser?.emailAddresses.find(
-    (e) => e.id === clerkUser.primaryEmailAddressId
-  )?.emailAddress;
-
   if (email) {
-    const firstName = clerkUser?.firstName ?? clerkUser?.fullName?.split(" ")[0] ?? "there";
+    const firstName = clerkUser.firstName ?? clerkUser.fullName?.split(" ")[0] ?? "there";
     const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
     sendEnrollmentConfirmation({
       toEmail: email,

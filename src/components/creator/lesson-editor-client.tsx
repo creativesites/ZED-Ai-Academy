@@ -164,6 +164,7 @@ const asTyped = <T,>(v: unknown): T => v as T;
 
 function BlockEditor({
   block,
+  lessonId,
   courseId,
   courseTitle,
   moduleTitle,
@@ -171,6 +172,7 @@ function BlockEditor({
   onChange,
 }: {
   block: Block;
+  lessonId: string;
   courseId: string;
   courseTitle: string;
   moduleTitle: string;
@@ -212,7 +214,7 @@ function BlockEditor({
   if (block.type === "meeting")
     return <MeetingBlockEditor content={asTyped(c)} onChange={emit} />;
   if (block.type === "practice_exercise")
-    return <PracticeExerciseBlockEditor content={asTyped(c)} onChange={emit} />;
+    return <PracticeExerciseBlockEditor content={asTyped(c)} lessonId={lessonId} courseId={courseId} onChange={emit} />;
   if (block.type === "quiz")
     return <QuizBuilder lessonId={block.id} courseId={courseId} initialQuiz={quiz ?? null} initialQuestions={quiz?.quiz_questions ?? []} />;
 
@@ -320,6 +322,7 @@ function SortableBlock({
         <div className="p-6">
           <BlockEditor
             block={{ ...block, content: content as Json }}
+            lessonId={lessonId}
             courseId={courseId}
             courseTitle={courseTitle}
             moduleTitle={moduleTitle}

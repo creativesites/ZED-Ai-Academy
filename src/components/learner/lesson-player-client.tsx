@@ -622,10 +622,12 @@ function PracticeExerciseBlock({
   blockId,
   content,
   submission,
+  onLaunchStudio,
 }: {
   blockId: string;
   content: Record<string, unknown>;
   submission?: any;
+  onLaunchStudio?: (initialTool?: string) => void;
 }) {
   const title = (content.title as string) || "Practice Exercise";
   const brief = content.brief as string | undefined;
@@ -791,10 +793,29 @@ function PracticeExerciseBlock({
         <div id={`form-${blockId}`} className="mt-6 rounded-2xl border border-dashed border-emerald-200 bg-emerald-50/60 p-4">
           <form action={submitPracticeExercise} className="space-y-4">
             <input type="hidden" name="exercise_block_id" value={blockId} />
+            <input type="hidden" name="studio_output" id={`studio-output-${blockId}`} />
+            <input type="hidden" name="studio_tool_id" id={`studio-tool-${blockId}`} />
+            <input type="hidden" name="studio_inputs" id={`studio-inputs-${blockId}`} />
+            
+            {["studio_workbench", "studio_submission", "combined"].includes(mode) && (
+              <div className="mb-4">
+                <Button 
+                  type="button" 
+                  onClick={() => onLaunchStudio?.()} 
+                  variant="outline" 
+                  className="rounded-xl border-[#fd5523]/30 text-[#fd5523] bg-[#fff6ee] hover:bg-[#fd5523] hover:text-white"
+                >
+                  <Wand2 className="mr-2 h-4 w-4" />
+                  Launch Practice Studio
+                </Button>
+              </div>
+            )}
+
             <label className="block space-y-2">
-              <span className="text-xs font-black uppercase tracking-widest text-emerald-700">Text response</span>
+              <span className="text-xs font-black uppercase tracking-widest text-emerald-700">Text response / Output</span>
               <textarea
                 name="text_response"
+                id={`text-response-${blockId}`}
                 rows={6}
                 placeholder="Write your answer, reflection, workflow, or notes here."
                 className="w-full rounded-xl border border-emerald-200 bg-white px-4 py-3 text-sm text-[#062e39] outline-none transition-colors placeholder:text-slate-300 focus:border-emerald-500"
@@ -900,9 +921,37 @@ export function LessonPlayerClient({
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [tutorOpen, setTutorOpen] = useState(false);
   const [studioOpen, setStudioOpen] = useState(false);
+  const [studioInitialTool, setStudioInitialTool] = useState<string | undefined>();
+  const [studioTargetBlockId, setStudioTargetBlockId] = useState<string | null>(null);
+
   const [marking, startMark] = useTransition();
   const [certifying, startCertify] = useTransition();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+
+  function handleOpenStudio(blockId?: string, initialTool?: string) {
+    setStudioTargetBlockId(blockId || null);
+    setStudioInitialTool(initialTool);
+    setStudioOpen(true);
+  }
+
+  function handleStudioOutput(toolId: string, inputs: any, output: string) {
+    if (studioTargetBlockId) {
+      const inputEl = document.getElementById(`studio-output-${studioTargetBlockId}`) as HTMLInputElement;
+      if (inputEl) inputEl.value = output;
+      
+      const toolEl = document.getElementById(`studio-tool-${studioTargetBlockId}`) as HTMLInputElement;
+      if (toolEl) toolEl.value = toolId;
+
+      const inputsEl = document.getElementById(`studio-inputs-${studioTargetBlockId}`) as HTMLInputElement;
+      if (inputsEl) inputsEl.value = JSON.stringify(inputs);
+
+      const textEl = document.getElementById(`text-response-${studioTargetBlockId}`) as HTMLTextAreaElement;
+      if (textEl) textEl.value = output;
+      
+      setStudioOpen(false);
+      toast.success("Output copied to exercise!");
+    }
+  }
 
   const allLessons = modules.flatMap((m) => m.lessons);
   const currentIdx = allLessons.findIndex((l) => l.id === activeLessonId);
@@ -1272,6 +1321,7 @@ export function LessonPlayerClient({
                           blockId={block.id} 
                           content={block.content} 
                           submission={practiceSubmissions.find((s) => s.exercise_block_id === block.id)}
+                          onLaunchStudio={(initialTool) => handleOpenStudio(block.id, initialTool)}
                         />
                       )}
                       {block.type === "quiz" && quiz && (
@@ -1496,6 +1546,8 @@ export function LessonPlayerClient({
         <PracticeStudio
           lessonTitle={currentLesson?.title ?? "Lesson"}
           onClose={() => setStudioOpen(false)}
+          initialTool={studioInitialTool}
+          onSelectOutput={studioTargetBlockId ? handleStudioOutput : undefined}
         />
       )}
 

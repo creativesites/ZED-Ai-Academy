@@ -1,4 +1,4 @@
-import { auth } from "@clerk/nextjs/server";
+import { currentUser } from "@clerk/nextjs/server";
 import { createClient } from "@/lib/supabase/server";
 import { notFound, redirect } from "next/navigation";
 import { LessonPlayerClient } from "@/components/learner/lesson-player-client";
@@ -18,8 +18,9 @@ export default async function LearnPage({ params, searchParams }: PageProps) {
   const { slug } = await params;
   const { lesson: lessonIdParam } = await searchParams;
 
-  const { userId } = await auth();
-  if (!userId) redirect("/sign-in");
+  const clerkUser = await currentUser();
+  if (!clerkUser) redirect("/sign-in");
+  const userId = clerkUser.id;
 
   const supabase = createClient();
 
@@ -42,6 +43,15 @@ export default async function LearnPage({ params, searchParams }: PageProps) {
 
   // Auto-enroll if free
   if (!enrollment && course.price_type === "free") {
+    const email = clerkUser.emailAddresses.find((e) => e.id === clerkUser.primaryEmailAddressId)?.emailAddress;
+    await supabase.from("profiles").upsert({
+      id: userId,
+      full_name: [clerkUser.firstName, clerkUser.lastName].filter(Boolean).join(" ") || null,
+      email: email,
+      avatar_url: clerkUser.imageUrl,
+      updated_at: new Date().toISOString(),
+    }, { onConflict: "id", ignoreDuplicates: true });
+
     const { data: newEnrollment } = await supabase
       .from("enrollments")
       .insert({
