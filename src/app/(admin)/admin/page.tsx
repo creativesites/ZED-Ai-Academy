@@ -166,6 +166,7 @@ export default async function AdminPage() {
               { label: "Manage Contacts", href: "/admin/contacts", icon: MessageSquare },
               { label: "Manage Images", href: "/admin/images", icon: ImageIcon },
               { label: "Create Coupon", href: "/admin/coupons", icon: DollarSign },
+              { label: "Platform Settings", href: "/admin/settings", icon: Settings },
             ].map(({ label, href, icon: Icon }) => (
               <Link
                 key={label}
