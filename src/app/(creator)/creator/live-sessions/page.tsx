@@ -161,7 +161,7 @@ export default async function CreatorLiveSessionsPage() {
                 <span className="text-xs font-bold uppercase tracking-widest text-slate-400">Booking window days</span>
                 <input name="max_booking_days" type="number" min={1} defaultValue={30} className="h-12 w-full rounded-xl border border-slate-200 px-4 outline-none focus:border-[#fd5523]" />
               </label>
-              <Button className="md:col-span-2 rounded-xl bg-[#fd5523] py-6 text-white">
+              <Button type="submit" className="md:col-span-2 rounded-xl bg-[#fd5523] py-6 text-white">
                 Create session type
               </Button>
             </form>
@@ -185,7 +185,7 @@ export default async function CreatorLiveSessionsPage() {
               <input name="start_time" type="time" required defaultValue="09:00" className="h-12 rounded-xl border border-slate-200 px-4 outline-none focus:border-[#fd5523]" />
               <input name="end_time" type="time" required defaultValue="12:00" className="h-12 rounded-xl border border-slate-200 px-4 outline-none focus:border-[#fd5523]" />
               <input name="timezone" defaultValue="Africa/Lusaka" className="h-12 rounded-xl border border-slate-200 px-4 outline-none focus:border-[#fd5523]" />
-              <Button className="rounded-xl bg-[#062e39] px-6 text-white">Add</Button>
+              <Button type="submit" className="rounded-xl bg-[#062e39] px-6 text-white">Add</Button>
             </form>
 
             <div className="mt-6 grid gap-3">
@@ -229,7 +229,7 @@ export default async function CreatorLiveSessionsPage() {
                       <p className="mt-1 text-sm text-slate-500">{service.duration_minutes} min · {service.is_active ? "Active" : "Paused"}</p>
                     </div>
                     <form action={updateLiveSessionServiceStatus.bind(null, service.id, !service.is_active)}>
-                      <Button variant="outline" className="rounded-xl">
+                      <Button type="submit" variant="outline" className="rounded-xl">
                         {service.is_active ? "Pause" : "Activate"}
                       </Button>
                     </form>
@@ -264,13 +264,13 @@ export default async function CreatorLiveSessionsPage() {
                   {booking.learner_notes && <p className="mt-3 text-sm text-slate-600">{booking.learner_notes}</p>}
                   <div className="mt-4 flex gap-2">
                     <form action={confirmLiveSessionBooking.bind(null, booking.id)}>
-                      <Button className="rounded-xl bg-green-600 text-white">
+                      <Button type="submit" className="rounded-xl bg-green-600 text-white">
                         <CheckCircle className="mr-2 h-4 w-4" />
                         Confirm
                       </Button>
                     </form>
                     <form action={declineLiveSessionBooking.bind(null, booking.id)}>
-                      <Button variant="outline" className="rounded-xl text-red-600">
+                      <Button type="submit" variant="outline" className="rounded-xl text-red-600">
                         <XCircle className="mr-2 h-4 w-4" />
                         Decline
                       </Button>
