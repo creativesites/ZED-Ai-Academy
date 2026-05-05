@@ -150,7 +150,7 @@ export function PracticeExerciseBlockEditor({
             </div>
             <Switch
               checked={data.ai_scoring_enabled}
-              onCheckedChange={(v) => update({ ai_scoring_enabled: v })}
+              onCheckedChange={(v: boolean) => update({ ai_scoring_enabled: v })}
             />
           </div>
 
@@ -161,7 +161,7 @@ export function PracticeExerciseBlockEditor({
             </div>
             <Switch
               checked={data.resubmissions_allowed}
-              onCheckedChange={(v) => update({ resubmissions_allowed: v })}
+              onCheckedChange={(v: boolean) => update({ resubmissions_allowed: v })}
             />
           </div>
 
