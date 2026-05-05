@@ -131,7 +131,7 @@ export function MeetingBlockEditor({
           ) : (
             <Select 
               value={data.service_id} 
-              onValueChange={(v) => update({ service_id: v })}
+              onValueChange={(v) => update({ service_id: v ?? undefined })}
             >
               <SelectTrigger className="border-slate-200 bg-white">
                 <SelectValue placeholder="Choose a service to enable booking..." />
