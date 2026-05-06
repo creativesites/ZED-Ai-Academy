@@ -134,6 +134,53 @@ function CalloutBlock({ content }: { content: Record<string, unknown> }) {
   );
 }
 
+function Countdown({ targetDate, onComplete }: { targetDate: string; onComplete?: () => void }) {
+  const [timeLeft, setTimeLeft] = useState<{ d: number; h: number; m: number; s: number } | null>(null);
+
+  useEffect(() => {
+    const calculateTimeLeft = () => {
+      const difference = new Date(targetDate).getTime() - new Date().getTime();
+      if (difference <= 0) {
+        onComplete?.();
+        return null;
+      }
+      return {
+        d: Math.floor(difference / (1000 * 60 * 60 * 24)),
+        h: Math.floor((difference / (1000 * 60 * 60)) % 24),
+        m: Math.floor((difference / 1000 / 60) % 60),
+        s: Math.floor((difference / 1000) % 60),
+      };
+    };
+
+    setTimeLeft(calculateTimeLeft());
+    const timer = setInterval(() => {
+      const next = calculateTimeLeft();
+      setTimeLeft(next);
+      if (!next) clearInterval(timer);
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [targetDate, onComplete]);
+
+  if (!timeLeft) return null;
+
+  return (
+    <div className="flex gap-4">
+      {[
+        { label: "days", value: timeLeft.d },
+        { label: "hours", value: timeLeft.h },
+        { label: "mins", value: timeLeft.m },
+        { label: "secs", value: timeLeft.s },
+      ].map((unit) => (
+        <div key={unit.label} className="flex flex-col items-center">
+          <div className="text-3xl sm:text-4xl font-black text-white">{String(unit.value).padStart(2, '0')}</div>
+          <div className="text-[10px] font-black uppercase tracking-widest text-[#fd8d69]">{unit.label}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function ToolSpotlightBlock({ content }: { content: Record<string, unknown> }) {
   const name = content.name as string;
   const description = content.description as string | undefined;
@@ -536,7 +583,14 @@ function MeetingBlock({ content, booking }: { content: Record<string, unknown>, 
     }
 
     if (isConfirmed && displayMeetingId) {
-      if (joined && signature && user) {
+      const startsAt = new Date(booking.starts_at).getTime();
+      const endsAt = new Date(booking.ends_at).getTime();
+      const now = new Date().getTime();
+      
+      const isLive = now >= (startsAt - 15 * 60_000) && now <= (endsAt + 30 * 60_000);
+      const hasEnded = now > (endsAt + 30 * 60_000);
+
+      if (joined && signature && user && isLive) {
         return (
           <div className="space-y-6">
             <div className="flex items-center justify-between">
@@ -557,41 +611,71 @@ function MeetingBlock({ content, booking }: { content: Record<string, unknown>, 
         );
       }
 
-      return (
-        <div className="rounded-[2.5rem] bg-[#062e39] p-6 md:p-10 text-white shadow-2xl relative overflow-hidden">
-          <div className="absolute inset-0 mesh-orange opacity-20" />
-          <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-8">
-            <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 text-[#fd5523] animate-pulse">
-                  <div className="h-2 w-2 rounded-full bg-[#fd5523]" />
-                </div>
-                <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#fd8d69]">Confirmed Session</span>
-              </div>
-              <h3 className="text-2xl text-white font-bold tracking-tight">{title}</h3>
-              <div className="flex items-center gap-6 text-white/60">
-                <div className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4" />
-                  <span className="text-xs font-bold">
-                    {new Date(booking.starts_at).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}
-                  </span>
-                </div>
-              </div>
+      if (hasEnded) {
+        return (
+          <div className="rounded-[2rem] border border-slate-100 bg-slate-50 p-6 md:p-8 text-center">
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-slate-400 shadow-sm mb-4">
+              <CheckCircle className="h-6 w-6" />
             </div>
-            <Button 
-              className="rounded-2xl bg-[#fd5523] px-8 py-6 text-lg font-bold text-white hover:bg-[#ef4a16] shadow-xl shadow-[#fd5523]/20 disabled:opacity-70"
-              onClick={() => handleJoin(displayMeetingId)}
-              disabled={joining}
-            >
-              {joining ? (
-                <>
-                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                  Connecting...
-                </>
-              ) : (
-                "Join Session Now"
+            <h3 className="text-xl font-bold text-[#062e39]">Session Completed</h3>
+            <p className="mt-2 text-sm text-slate-500">This live session occurred on {new Date(booking.starts_at).toLocaleDateString()}.</p>
+          </div>
+        );
+      }
+
+      return (
+        <div className="rounded-[2.5rem] bg-[#062e39] p-6 md:p-10 text-white shadow-2xl relative overflow-hidden group">
+          <div className="absolute inset-0 mesh-orange opacity-20 transition-opacity group-hover:opacity-30" />
+          <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-10">
+            <div className="space-y-6">
+              <div className="flex items-center gap-3">
+                <div className={cn(
+                  "flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 text-[#fd5523]",
+                  isLive && "animate-pulse"
+                )}>
+                  {isLive ? <div className="h-2 w-2 rounded-full bg-[#fd5523]" /> : <Calendar className="h-5 w-5" />}
+                </div>
+                <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#fd8d69]">
+                  {isLive ? "Session is Live" : "Confirmed Session"}
+                </span>
+              </div>
+              
+              <div>
+                <h3 className="text-3xl text-white font-bold tracking-tight">{title}</h3>
+                <p className="mt-2 text-white/60 font-medium">
+                  {new Date(booking.starts_at).toLocaleString([], { weekday: 'long', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                </p>
+              </div>
+
+              {!isLive && <Countdown targetDate={booking.starts_at} />}
+            </div>
+
+            <div className="flex flex-col items-center gap-4">
+              <Button 
+                className={cn(
+                  "rounded-2xl px-10 py-8 text-xl font-black text-white shadow-2xl transition-all duration-300",
+                  isLive 
+                    ? "bg-[#fd5523] hover:bg-[#ef4a16] shadow-[#fd5523]/40 hover:scale-105 active:scale-95" 
+                    : "bg-white/10 hover:bg-white/20 text-white/40 cursor-not-allowed"
+                )}
+                onClick={() => handleJoin(displayMeetingId)}
+                disabled={joining || !isLive}
+              >
+                {joining ? (
+                  <>
+                    <Loader2 className="mr-2 h-6 w-6 animate-spin" />
+                    Connecting...
+                  </>
+                ) : (
+                  isLive ? "Join Session Now" : "Ready Soon"
+                )}
+              </Button>
+              {isLive && (
+                <p className="text-xs font-bold text-[#fd8d69] animate-bounce">
+                  Instructor is ready for you!
+                </p>
               )}
-            </Button>
+            </div>
           </div>
         </div>
       );
@@ -621,6 +705,7 @@ function MeetingBlock({ content, booking }: { content: Record<string, unknown>, 
             {serviceId && (
               <BookingModal 
                 serviceId={serviceId}
+                onSuccess={() => router.refresh()}
                 trigger={
                   <Button 
                     className="rounded-xl bg-[#fd5523] px-6 py-4 text-white hover:bg-[#ef4a16] h-auto"
@@ -969,7 +1054,7 @@ function PracticeExerciseBlock({
                 {/* Feedback - Collapsible */}
                 {score.feedback_summary && (
                   <div className="p-4 rounded-xl bg-white border border-emerald-100">
-                    <p className="text-xs font-bold text-emerald-700 mb-1">🤖 AI Feedback</p>
+                    <p className="text-xs font-bold text-emerald-700 mb-1">🤖 Feedback</p>
                     <p className="text-sm text-slate-600 leading-relaxed">
                       {score.feedback_summary}
                     </p>
@@ -1013,7 +1098,7 @@ function PracticeExerciseBlock({
             ) : (
               <div className="flex items-center gap-3 py-6 justify-center">
                 <Loader2 className="h-6 w-6 animate-spin text-emerald-600" />
-                <p className="text-sm font-medium text-emerald-700">AI analyzing your work...</p>
+                <p className="text-sm font-medium text-emerald-700">analyzing your work...</p>
               </div>
             )}
 
@@ -1093,7 +1178,7 @@ function PracticeExerciseBlock({
 
                 {/* Submit Button - Full width, prominent */}
                 <Button className="w-full rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white hover:from-emerald-700 hover:to-teal-700 py-5 text-sm font-bold shadow-lg shadow-emerald-200/50 active:scale-[0.98] transition-transform">
-                  🚀 Submit for AI Feedback
+                  🚀 Submit for Feedback
                 </Button>
               </form>
             </div>
