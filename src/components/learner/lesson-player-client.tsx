@@ -790,7 +790,6 @@ export function LessonPlayerClient({
   </div>
 </div>
 </div>
-</div>
 );
 }
 
