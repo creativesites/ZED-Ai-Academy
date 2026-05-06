@@ -1,7 +1,7 @@
 "use client";
 
 import { CSSProperties, useState, type Dispatch, type SetStateAction } from "react";
-import { Mic, MicOff, Video, VideoOff, PhoneOff } from "lucide-react";
+import { Mic, MicOff, Video, VideoOff, PhoneOff, Loader2 } from "lucide-react";
 import {
   useSession,
   useSessionUsers,
@@ -11,16 +11,11 @@ import {
   useAudioState,
 } from "@zoom/videosdk-react";
 import { Button } from "./ui/button";
-
-// Generates a unique session name for each new call
-const generateSessionName = () => `test-session-${Date.now()}`;
+import { getVideoToken } from "@/actions/zoom";
+import { toast } from "sonner";
 
 // Random user name for demo purposes
 const randomUserName = `User-${Math.random().toString(36).slice(2, 8)}`;
-
-import { getVideoToken } from "@/actions/zoom";
-import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
 
 const Container = () => {
   const [inCall, setInCall] = useState(false);
