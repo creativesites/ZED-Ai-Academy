@@ -111,13 +111,13 @@ const Videochat = ({
 
       <div className="flex w-full justify-center py-4">
         <div className="flex gap-4 rounded-xl bg-white p-3 shadow">
-          <Button onClick={toggleVideo} title="Toggle camera">
+          <Button onClick={() => void toggleVideo()} title="Toggle camera">
             {isVideoOn ? <Video /> : <VideoOff />}
           </Button>
-          <Button onClick={toggleMute} title="Toggle microphone">
+          <Button onClick={() => void toggleMute()} title="Toggle microphone">
             {isAudioMuted ? <MicOff /> : <Mic />}
           </Button>
-          <Button onClick={onLeave} title="Leave session">
+          <Button onClick={() => onLeave()} title="Leave session">
             <PhoneOff />
           </Button>
         </div>
