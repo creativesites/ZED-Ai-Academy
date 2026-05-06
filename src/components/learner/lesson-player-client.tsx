@@ -597,8 +597,8 @@ function MeetingBlock({ content, booking }: { content: Record<string, unknown>, 
     }
   }
 
-  if (!meetingId) {
-    const serviceId = content.service_id as string | undefined;
+  // If service is attached but no booking exists, show booking flow
+  if (serviceId && !booking) {
 
     return (
       <div className="rounded-[2rem] border border-dashed border-[#fd5523]/30 bg-[#fff6ee] p-6 md:p-8">
@@ -631,6 +631,18 @@ function MeetingBlock({ content, booking }: { content: Record<string, unknown>, 
             )}
           </div>
         </div>
+      </div>
+    );
+  }
+
+  if (!meetingId) {
+    return (
+      <div className="rounded-[2.5rem] border-2 border-dashed border-slate-100 bg-slate-50/50 p-12 text-center">
+        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-[2rem] bg-white shadow-sm">
+          <Users className="h-8 w-8 text-slate-300" />
+        </div>
+        <h3 className="text-lg font-bold text-[#062e39]">{title}</h3>
+        <p className="mt-2 text-sm text-slate-500">This live session is being scheduled. Check back soon for the confirmed time.</p>
       </div>
     );
   }
