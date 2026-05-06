@@ -1,42 +1,105 @@
 "use client";
 
-import { CSSProperties, type SetStateAction, type Dispatch, useState } from "react";
-import { Mic, MicOff, Video, VideoOff } from "lucide-react";
-import { useVideoState, useAudioState } from "@zoom/videosdk-react";
-import { PhoneOff } from "lucide-react";
+import { CSSProperties, useState, type Dispatch, type SetStateAction } from "react";
+import { Mic, MicOff, Video, VideoOff, PhoneOff } from "lucide-react";
+import {
+  useSession,
+  useSessionUsers,
+  VideoPlayerComponent,
+  VideoPlayerContainerComponent,
+  useVideoState,
+  useAudioState,
+} from "@zoom/videosdk-react";
 import { Button } from "./ui/button";
-import { useSession, useSessionUsers, VideoPlayerComponent, VideoPlayerContainerComponent } from "@zoom/videosdk-react";
 
-const userName = `User-${new Date().getTime().toString().slice(8)}`;
+// Generates a unique session name for each new call
+const generateSessionName = () => `test-session-${Date.now()}`;
 
-const Container = (props: { slug: string; JWT: string }) => {
-  const [inCall, setInCall] = useState(false);
-  return inCall ? (
-    <Videochat {...props} setInCall={setInCall} />
-  ) : (
-    <Button onClick={() => setInCall(true)}>Join session</Button>
+// Random user name for demo purposes
+const randomUserName = `User-${Math.random().toString(36).slice(2, 8)}`;
+
+const Container = (props: { JWT: string }) => {
+  const { JWT } = props;
+  const [sessionName, setSessionName] = useState<string | null>(null);
+
+  const startNewSession = () => {
+    setSessionName(generateSessionName());
+  };
+
+  const endSession = () => {
+    setSessionName(null);
+  };
+
+  if (!sessionName) {
+    return (
+      <div className="flex flex-col items-center gap-4 p-8">
+        <Button onClick={startNewSession} size="lg">
+          Start New Zoom Test Session
+        </Button>
+        <p className="text-sm text-gray-500">
+          A unique session ID will be created automatically.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <Videochat
+      sessionName={sessionName}
+      JWT={JWT}
+      userName={randomUserName}
+      onLeave={endSession}
+    />
   );
 };
 
-const Videochat = (props: { slug: string; JWT: string; setInCall: Dispatch<SetStateAction<boolean>> }) => {
-  const { slug: session, JWT, setInCall } = props;
-  const { isLoading, isError, isInSession, error } = useSession(session, JWT, userName);
+// ─── Video Chat Component ─────────────────────────────────────────────────────
+
+const Videochat = ({
+  sessionName,
+  JWT,
+  userName,
+  onLeave,
+}: {
+  sessionName: string;
+  JWT: string;
+  userName: string;
+  onLeave: () => void;
+}) => {
+  const { isLoading, isError, isInSession, error } = useSession(
+    sessionName,
+    JWT,
+    userName
+  );
   const participants = useSessionUsers();
   const { isVideoOn, toggleVideo } = useVideoState();
   const { isAudioMuted, toggleMute } = useAudioState();
 
-  if (isLoading) return <div>Loading...</div>;
-  if (isError) return <div>Error: {error?.reason}</div>;
+  if (isLoading) return <div className="p-8 text-center">Connecting…</div>;
+  if (isError)
+    return (
+      <div className="p-8 text-center text-red-500">
+        Error: {error?.reason ?? "Unknown error"}
+        <br />
+        <Button onClick={onLeave} variant="outline" className="mt-4">
+          Go back
+        </Button>
+      </div>
+    );
 
   return (
     <div className="flex h-full w-full flex-1 flex-col">
-      <h1 className="text-center text-3xl font-bold mb-4 mt-0">
-        Session: {session}
+      <h1 className="text-center text-2xl font-bold mb-2">
+        Session: {sessionName}
       </h1>
-      <div>
+      <p className="text-center text-sm text-gray-500 mb-4">
+        Participants: {participants.length}
+      </p>
+
+      <div className="flex-1 min-h-0">
         {isInSession && (
           <VideoPlayerContainerComponent style={videoPlayerStyle}>
-            {participants.map(participant => (
+            {participants.map((participant) => (
               <VideoPlayerComponent
                 key={participant.userId}
                 user={participant}
@@ -45,15 +108,16 @@ const Videochat = (props: { slug: string; JWT: string; setInCall: Dispatch<SetSt
           </VideoPlayerContainerComponent>
         )}
       </div>
-      <div className="flex w-full flex-col justify-around self-center">
-        <div className="mt-4 flex w-[30rem] flex-1 justify-around self-center rounded-md bg-white p-4">
-          <Button onClick={() => void toggleVideo()} title="camera">
+
+      <div className="flex w-full justify-center py-4">
+        <div className="flex gap-4 rounded-xl bg-white p-3 shadow">
+          <Button onClick={toggleVideo} title="Toggle camera">
             {isVideoOn ? <Video /> : <VideoOff />}
           </Button>
-          <Button onClick={toggleMute} title="microphone">
+          <Button onClick={toggleMute} title="Toggle microphone">
             {isAudioMuted ? <MicOff /> : <Mic />}
           </Button>
-          <Button onClick={() => setInCall(false)} title="leave session">
+          <Button onClick={onLeave} title="Leave session">
             <PhoneOff />
           </Button>
         </div>
@@ -64,25 +128,12 @@ const Videochat = (props: { slug: string; JWT: string; setInCall: Dispatch<SetSt
 
 export default Container;
 
-const videoPlayerStyle2: CSSProperties = {
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
+const videoPlayerStyle: CSSProperties = {
   width: "100%",
-  height: "100%",
-  minHeight: "400px",
+  height: "70vh",
+  minHeight: "300px",
   background: "#000",
-  position: "relative",
-  overflow: "hidden",
   borderRadius: "12px",
-  margin: "0 auto"
-};
-const videoPlayerStyle = {
-  height: "75vh",
-  marginTop: "1.5rem",
-  marginLeft: "3rem",
-  marginRight: "3rem",
-  alignContent: "center",
-  borderRadius: "10px",
   overflow: "hidden",
-} as CSSProperties;
+  margin: "0 auto",
+};

@@ -411,7 +411,7 @@ export function PracticeStudio({
                     <div>
                       <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Steps</p>
                       <div className="space-y-2">
-                        {exerciseContext.instructions.map((step, i) => (
+                        {exerciseContext.instructions?.map((step, i) => (
                           <div key={i} className="flex gap-2 text-sm text-slate-600">
                             <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-[10px] font-bold text-emerald-700">
                               {i + 1}
