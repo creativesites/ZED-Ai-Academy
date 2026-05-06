@@ -153,11 +153,11 @@ function DiscussionItem({
 
             {(isInstructor || userId === item.user_id) && (
               <DropdownMenu>
-                <DropdownMenuTrigger asChild>
+                <DropdownMenuTrigger render={
                   <button className="h-8 w-8 flex items-center justify-center rounded-full hover:bg-slate-100 transition-colors text-slate-400">
                     <MoreVertical className="h-4 w-4" />
                   </button>
-                </DropdownMenuTrigger>
+                } />
                 <DropdownMenuContent align="end" className="w-48 rounded-xl p-1">
                   {isInstructor && (
                     <>

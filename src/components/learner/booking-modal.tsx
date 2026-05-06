@@ -32,9 +32,7 @@ export function BookingModal({ serviceId, trigger, onSuccess }: BookingModalProp
   if (isDesktop) {
     return (
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogTrigger asChild>
-          {trigger}
-        </DialogTrigger>
+        <DialogTrigger render={trigger} />
         <DialogContent className="sm:max-w-[480px] p-0 overflow-hidden rounded-[2.5rem] border-none shadow-2xl">
           <LiveSessionBookingUI 
             serviceId={serviceId} 
@@ -48,9 +46,7 @@ export function BookingModal({ serviceId, trigger, onSuccess }: BookingModalProp
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
-      <SheetTrigger asChild>
-        {trigger}
-      </SheetTrigger>
+      <SheetTrigger render={trigger} />
       <SheetContent side="bottom" className="p-0 h-[85vh] rounded-t-[2.5rem] overflow-hidden border-none shadow-2xl">
         <LiveSessionBookingUI 
           serviceId={serviceId} 
