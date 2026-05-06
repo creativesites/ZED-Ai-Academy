@@ -867,7 +867,7 @@ function MeetingBlock({ content, bookings }: { content: Record<string, unknown>,
 console.log('booking data',booking)
 
   // Handle Booking logic
-  const serviceId = content.service_id as string | undefined;
+
   
   if (booking) {
     const isConfirmed = booking.status === "confirmed";
