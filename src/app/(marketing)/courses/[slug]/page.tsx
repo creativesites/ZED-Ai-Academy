@@ -171,7 +171,6 @@ export default async function CourseDetailPage({ params, searchParams }: PagePro
         <span className="hover-btn hover-bx4"></span>
       </Link>
     );
-    const { action } = (await params) as any; // Actually searchParams
     return (
       <ManualEnrollModal
         courseId={course.id}
