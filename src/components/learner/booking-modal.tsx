@@ -16,7 +16,7 @@ import { LiveSessionBookingUI } from "./booking-ui";
 
 type BookingModalProps = {
   serviceId: string;
-  trigger: React.ReactNode;
+  trigger: React.ReactElement;
   onSuccess?: () => void;
 };
 
