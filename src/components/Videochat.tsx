@@ -18,34 +18,38 @@ const generateSessionName = () => `test-session-${Date.now()}`;
 // Random user name for demo purposes
 const randomUserName = `User-${Math.random().toString(36).slice(2, 8)}`;
 
-const Container = (props: { JWT: string }) => {
-  const { JWT } = props;
-  const [sessionName, setSessionName] = useState<string | null>(null);
+const Container = (props: { slug: string; JWT: string }) => {
+  const { slug, JWT } = props;
+  const [inCall, setInCall] = useState(false);
 
-  const startNewSession = () => {
-    setSessionName(generateSessionName());
+  const startSession = () => {
+    setInCall(true);
   };
 
   const endSession = () => {
-    setSessionName(null);
+    setInCall(false);
   };
 
-  if (!sessionName) {
+  if (!inCall) {
     return (
-      <div className="flex flex-col items-center gap-4 p-8">
-        <Button onClick={startNewSession} size="lg">
-          Start New Zoom Test Session
-        </Button>
-        <p className="text-sm text-gray-500">
-          A unique session ID will be created automatically.
+      <div className="flex flex-col items-center gap-4 p-8 bg-white rounded-2xl shadow-sm border border-slate-100">
+        <div className="h-12 w-12 rounded-full bg-blue-50 flex items-center justify-center mb-2">
+          <Video className="h-6 w-6 text-blue-600" />
+        </div>
+        <h2 className="text-xl font-bold text-slate-900">Ready to join?</h2>
+        <p className="text-sm text-slate-500 text-center max-w-[240px]">
+          You are about to join session: <span className="font-mono font-bold text-slate-900">{slug}</span>
         </p>
+        <Button onClick={startSession} size="lg" className="mt-2 px-8 rounded-xl bg-blue-600 hover:bg-blue-700">
+          Join Session
+        </Button>
       </div>
     );
   }
 
   return (
     <Videochat
-      sessionName={sessionName}
+      sessionName={slug}
       JWT={JWT}
       userName={randomUserName}
       onLeave={endSession}
