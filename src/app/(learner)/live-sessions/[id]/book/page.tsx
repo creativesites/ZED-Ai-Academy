@@ -7,6 +7,7 @@ import { getLiveSessionSlots } from "@/lib/live-sessions/slots";
 import { requestLiveSessionBooking } from "@/actions/live-sessions";
 import { Button } from "@/components/ui/button";
 import type { LiveSessionBooking } from "@/types/database";
+import { LiveSessionBookingUI } from "@/components/learner/booking-ui";
 
 export const metadata = { title: "Book Live Session" };
 
@@ -112,50 +113,8 @@ export default async function BookLiveSessionPage({ params, searchParams }: Page
           </Link>
         </aside>
 
-        <section className="rounded-[2rem] border border-slate-100 bg-white p-6 shadow-xl shadow-slate-200/50 md:p-8">
-          <div className="mb-8 flex flex-col justify-between gap-4 md:flex-row md:items-end">
-            <div>
-              <p className="text-xs font-black uppercase tracking-[0.25em] text-[#fd5523]">Choose a slot</p>
-              <h2 className="mt-2 text-3xl font-bold tracking-tight text-[#062e39]">Available Times</h2>
-              <p className="mt-2 text-sm text-slate-500">Timezone: {timezone}</p>
-            </div>
-          </div>
-
-          <div className="space-y-6">
-            {slotCount === 0 ? (
-              <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-8 text-center">
-                <CalendarDays className="mx-auto h-10 w-10 text-slate-300" />
-                <h3 className="mt-4 text-xl font-bold text-[#062e39]">No slots available</h3>
-                <p className="mt-2 text-sm text-slate-500">Check back later or ask the instructor to add availability.</p>
-              </div>
-            ) : days.filter((day) => day.slots.length > 0).map((day) => (
-              <div key={day.date} className="rounded-2xl border border-slate-100 p-5">
-                <h3 className="mb-4 text-lg font-bold text-[#062e39]">{day.label}</h3>
-                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                  {day.slots.map((slot) => (
-                    <form key={slot.starts_at} action={requestLiveSessionBooking} className="rounded-xl border border-slate-100 bg-slate-50 p-3">
-                      <input type="hidden" name="service_id" value={service.id} />
-                      <input type="hidden" name="starts_at" value={slot.starts_at} />
-                      <input type="hidden" name="ends_at" value={slot.ends_at} />
-                      <input type="hidden" name="timezone" value={timezone} />
-                      <label className="mb-3 block">
-                        <span className="mb-1 block text-[10px] font-black uppercase tracking-widest text-slate-400">Goal or question</span>
-                        <textarea
-                          name="learner_notes"
-                          rows={3}
-                          placeholder="Optional"
-                          className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-[#fd5523]"
-                        />
-                      </label>
-                      <Button className="w-full rounded-xl bg-[#fd5523] text-white">
-                        Request {slot.label}
-                      </Button>
-                    </form>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
+        <section className="rounded-[3rem] border-2 border-slate-100 bg-white shadow-2xl shadow-slate-200/50 overflow-hidden">
+          <LiveSessionBookingUI serviceId={id} />
         </section>
       </div>
     </main>
