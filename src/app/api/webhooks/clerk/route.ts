@@ -15,6 +15,11 @@ type ClerkUserPayload = {
 type WebhookEvent =
   | { type: "user.created"; data: ClerkUserPayload }
   | { type: "user.updated"; data: ClerkUserPayload }
+  | { type: "organization.created"; data: any }
+  | { type: "organization.updated"; data: any }
+  | { type: "organization.deleted"; data: any }
+  | { type: "organizationMembership.created"; data: any }
+  | { type: "organizationMembership.deleted"; data: any }
   | { type: string; data: unknown };
 
 export async function POST(req: Request) {
@@ -46,6 +51,47 @@ export async function POST(req: Request) {
     return new Response("Invalid signature", { status: 400 });
   }
 
+  const supabase = createServiceClient();
+
+  // Handle Organization Events
+  if (event.type.startsWith("organization")) {
+    const data = event.data as any;
+
+    if (event.type === "organization.created" || event.type === "organization.updated") {
+      const { error } = await supabase.from("companies").upsert({
+        id: data.id,
+        name: data.name,
+        slug: data.slug,
+        logo_url: data.image_url || data.logo_url,
+        admin_id: data.created_by, // Clerk provides creator ID
+        updated_at: new Date().toISOString(),
+      }, { onConflict: "id" });
+      if (error) console.error("Org sync error:", error);
+    }
+
+    if (event.type === "organization.deleted") {
+      await supabase.from("companies").delete().eq("id", data.id);
+    }
+
+    if (event.type === "organizationMembership.created") {
+      await supabase.from("company_members").upsert({
+        company_id: data.organization.id,
+        profile_id: data.public_user_data.user_id,
+        status: "active",
+        joined_at: new Date().toISOString(),
+      }, { onConflict: "company_id, profile_id" });
+    }
+
+    if (event.type === "organizationMembership.deleted") {
+      await supabase.from("company_members")
+        .delete()
+        .eq("company_id", data.organization.id)
+        .eq("profile_id", data.public_user_data.user_id);
+    }
+
+    return new Response("OK", { status: 200 });
+  }
+
   if (event.type !== "user.created" && event.type !== "user.updated") {
     return new Response("Event ignored", { status: 200 });
   }
@@ -56,8 +102,6 @@ export async function POST(req: Request) {
   )?.email_address ?? null;
 
   const fullName = [user.first_name, user.last_name].filter(Boolean).join(" ") || null;
-
-  const supabase = createServiceClient();
 
   const { error } = await supabase.from("profiles").upsert(
     {

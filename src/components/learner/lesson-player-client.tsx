@@ -463,7 +463,7 @@ function CaseStudyBlock({ content }: { content: Record<string, unknown> }) {
   );
 }
 
-function MeetingBlock({ content }: { content: Record<string, unknown> }) {
+function MeetingBlock({ content, booking }: { content: Record<string, unknown>, booking?: any }) {
   const meetingId = content.meeting_id as string;
   const title = (content.title as string) || "Live Training Session";
   const passWord = content.password as string | undefined;
@@ -474,13 +474,14 @@ function MeetingBlock({ content }: { content: Record<string, unknown> }) {
   const [signature, setSignature] = useState<string | null>(null);
   const { user } = useUser();
 
-  async function handleJoin() {
+  async function handleJoin(idOverride?: string) {
+    const targetId = idOverride || meetingId;
     setJoining(true);
     try {
       const resp = await fetch("/api/zoom/signature", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ meetingNumber: meetingId, role: 0 }),
+        body: JSON.stringify({ meetingNumber: targetId, role: 0 }),
       });
       
       if (!resp.ok) {
@@ -499,6 +500,102 @@ function MeetingBlock({ content }: { content: Record<string, unknown> }) {
       toast.error(error instanceof Error ? error.message : "Failed to connect to Zoom");
     } finally {
       setJoining(false);
+    }
+  }
+
+    );
+  }
+
+  // Handle Booking logic
+  const serviceId = content.service_id as string | undefined;
+  
+  if (booking) {
+    const isConfirmed = booking.status === "confirmed";
+    const isRequested = booking.status === "requested" || booking.status === "reschedule_requested";
+    const zoomMeeting = booking.zoom_meetings?.[0] || booking.zoom_meetings; // could be array or object depending on join
+    
+    const displayMeetingId = zoomMeeting?.zoom_meeting_id || meetingId;
+    const displayPassword = zoomMeeting?.zoom_password || passWord;
+
+    if (isRequested) {
+      return (
+        <div className="rounded-[2rem] border border-dashed border-amber-200 bg-amber-50 p-6 md:p-8">
+          <div className="flex flex-col gap-5 sm:flex-row sm:items-start">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white text-amber-600 shadow-sm">
+              <Calendar className="h-6 w-6" />
+            </div>
+            <div className="space-y-2 flex-1">
+              <p className="text-[10px] font-black uppercase tracking-[0.25em] text-amber-700">Booking Status</p>
+              <h3 className="text-2xl font-bold tracking-tight text-[#062e39]">Requested</h3>
+              <p className="text-sm leading-relaxed text-slate-600">
+                Your booking request for this session is pending instructor approval. You'll receive a notification once it's confirmed.
+              </p>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    if (isConfirmed && displayMeetingId) {
+      if (joined && signature && user) {
+        return (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xl font-bold text-[#062e39] tracking-tight">{title}</h3>
+              <Button variant="ghost" size="sm" onClick={() => setJoined(false)} className="text-slate-400">
+                Exit Session
+              </Button>
+            </div>
+            <ZoomMeeting
+              meetingNumber={displayMeetingId}
+              passWord={displayPassword}
+              signature={signature}
+              sdkKey={sdkKey}
+              userName={user.fullName || user.username || "Learner"}
+              userEmail={user.primaryEmailAddress?.emailAddress || ""}
+            />
+          </div>
+        );
+      }
+
+      return (
+        <div className="rounded-[2.5rem] bg-[#062e39] p-6 md:p-10 text-white shadow-2xl relative overflow-hidden">
+          <div className="absolute inset-0 mesh-orange opacity-20" />
+          <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-8">
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 text-[#fd5523] animate-pulse">
+                  <div className="h-2 w-2 rounded-full bg-[#fd5523]" />
+                </div>
+                <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#fd8d69]">Confirmed Session</span>
+              </div>
+              <h3 className="text-2xl text-white font-bold tracking-tight">{title}</h3>
+              <div className="flex items-center gap-6 text-white/60">
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4" />
+                  <span className="text-xs font-bold">
+                    {new Date(booking.starts_at).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}
+                  </span>
+                </div>
+              </div>
+            </div>
+            <Button 
+              className="rounded-2xl bg-[#fd5523] px-8 py-6 text-lg font-bold text-white hover:bg-[#ef4a16] shadow-xl shadow-[#fd5523]/20 disabled:opacity-70"
+              onClick={() => handleJoin(displayMeetingId)}
+              disabled={joining}
+            >
+              {joining ? (
+                <>
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                  Connecting...
+                </>
+              ) : (
+                "Join Session Now"
+              )}
+            </Button>
+          </div>
+        </div>
+      );
     }
   }
 
@@ -638,8 +735,8 @@ function PracticeExerciseBlock({
   const score = submission?.practice_exercise_scores;
 
   return (
-    <div className="rounded-[2rem] border border-emerald-100 bg-white p-6 shadow-xl shadow-slate-200/40 md:p-8">
-      <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
+    <div className="rounded-[2rem] border border-emerald-100 bg-white p-5 shadow-xl shadow-slate-200/40 md:p-8">
+      <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
         <div className="space-y-4">
           <div className="flex items-center gap-3">
             <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-700">
@@ -667,7 +764,7 @@ function PracticeExerciseBlock({
           )}
         </div>
 
-        <div className="flex shrink-0 flex-row gap-3 md:flex-col">
+        <div className="flex shrink-0 flex-row gap-3 lg:flex-col">
           <div className="rounded-2xl bg-slate-50 px-4 py-3">
             <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Mode</p>
             <p className="mt-1 text-sm font-bold capitalize text-[#062e39]">{mode.replace(/_/g, " ")}</p>
@@ -803,7 +900,7 @@ function PracticeExerciseBlock({
                   type="button" 
                   onClick={() => onLaunchStudio?.()} 
                   variant="outline" 
-                  className="rounded-xl border-[#fd5523]/30 text-[#fd5523] bg-[#fff6ee] hover:bg-[#fd5523] hover:text-white"
+                  className="w-full sm:w-auto rounded-xl border-[#fd5523]/30 text-[#fd5523] bg-[#fff6ee] hover:bg-[#fd5523] hover:text-white"
                 >
                   <Wand2 className="mr-2 h-4 w-4" />
                   Launch Practice Studio
@@ -830,7 +927,7 @@ function PracticeExerciseBlock({
                 className="block w-full rounded-xl border border-emerald-200 bg-white px-4 py-3 text-sm text-slate-600 file:mr-4 file:rounded-lg file:border-0 file:bg-emerald-50 file:px-3 file:py-2 file:text-sm file:font-bold file:text-emerald-700"
               />
             </label>
-            <Button className="rounded-xl bg-emerald-700 px-6 py-5 text-white hover:bg-emerald-800">
+            <Button className="w-full sm:w-auto rounded-xl bg-emerald-700 px-6 py-5 text-white hover:bg-emerald-800">
               Submit for AI feedback
             </Button>
           </form>
@@ -890,6 +987,7 @@ export function LessonPlayerClient({
   existingCertificate,
   discussions,
   practiceSubmissions = [],
+  booking,
   userId,
   isPreview = false,
   isPartialEnrollment = false,
@@ -912,6 +1010,7 @@ export function LessonPlayerClient({
   existingCertificate: { id: string; public_id: string; issued_at: string } | null;
   discussions?: DiscussionWithProfile[];
   practiceSubmissions?: any[];
+  booking?: any;
   userId?: string | null;
   isPreview?: boolean;
   isPartialEnrollment?: boolean;
@@ -923,14 +1022,16 @@ export function LessonPlayerClient({
   const [studioOpen, setStudioOpen] = useState(false);
   const [studioInitialTool, setStudioInitialTool] = useState<string | undefined>();
   const [studioTargetBlockId, setStudioTargetBlockId] = useState<string | null>(null);
+  const [studioContext, setStudioContext] = useState<{ brief?: string; instructions?: string[] } | null>(null);
 
   const [marking, startMark] = useTransition();
   const [certifying, startCertify] = useTransition();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
-  function handleOpenStudio(blockId?: string, initialTool?: string) {
+  function handleOpenStudio(blockId?: string, initialTool?: string, context?: { brief?: string; instructions?: string[] }) {
     setStudioTargetBlockId(blockId || null);
     setStudioInitialTool(initialTool);
+    setStudioContext(context || null);
     setStudioOpen(true);
   }
 
@@ -1315,13 +1416,20 @@ export function LessonPlayerClient({
                       {block.type === "expert_note" && <ExpertNoteBlock content={block.content} />}
                       {block.type === "comparison_table" && <ComparisonTableBlock content={block.content} />}
                       {block.type === "case_study" && <CaseStudyBlock content={block.content} />}
-                      {block.type === "meeting" && <MeetingBlock content={block.content} />}
+                      {block.type === "meeting" && <MeetingBlock content={block.content} booking={booking} />}
                       {block.type === "practice_exercise" && (
                         <PracticeExerciseBlock 
                           blockId={block.id} 
                           content={block.content} 
                           submission={practiceSubmissions.find((s) => s.exercise_block_id === block.id)}
-                          onLaunchStudio={(initialTool) => handleOpenStudio(block.id, initialTool)}
+                          onLaunchStudio={(initialTool) => handleOpenStudio(
+                            block.id, 
+                            initialTool, 
+                            { 
+                              brief: block.content.brief as string, 
+                              instructions: block.content.instructions as string[] 
+                            }
+                          )}
                         />
                       )}
                       {block.type === "quiz" && quiz && (
@@ -1547,6 +1655,7 @@ export function LessonPlayerClient({
           lessonTitle={currentLesson?.title ?? "Lesson"}
           onClose={() => setStudioOpen(false)}
           initialTool={studioInitialTool}
+          exerciseContext={studioContext}
           onSelectOutput={studioTargetBlockId ? handleStudioOutput : undefined}
         />
       )}

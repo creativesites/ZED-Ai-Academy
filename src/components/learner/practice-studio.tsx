@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import {
   X, Sparkles, Loader2, ChevronRight, Wand2,
   Copy, Check, RotateCcw, Zap, Brain, MessageSquare,
-  Layout, Code, Info, HelpCircle, History
+  Layout, Code, Info, HelpCircle, History, CheckCircle
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -14,6 +14,7 @@ interface PracticeStudioProps {
   lessonTitle: string;
   onClose: () => void;
   initialTool?: string;
+  exerciseContext?: { brief?: string; instructions?: string[] } | null;
   onSelectOutput?: (toolId: string, inputs: Record<string, string>, output: string) => void;
 }
 
@@ -178,13 +179,19 @@ function renderMarkdown(text: string) {
 
 type HistoryItem = { id: string; toolId: ToolId; inputs: Record<string, string>; output: string; timestamp: number };
 
-export function PracticeStudio({ lessonTitle, onClose, initialTool, onSelectOutput }: PracticeStudioProps) {
+export function PracticeStudio({ lessonTitle,  onClose,
+  initialTool,
+  exerciseContext,
+  onSelectOutput,
+}: PracticeStudioProps) {
   const [selectedTool, setSelectedTool] = useState<ToolId>((initialTool as ToolId) || "prompt_optimizer");
   const [inputs, setInputs] = useState<Record<string, string>>({});
   const [output, setOutput] = useState("");
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
+  const [showContext, setShowContext] = useState(!!exerciseContext);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [activeTab, setActiveTab] = useState<"tools" | "history">("tools");
   const [history, setHistory] = useState<HistoryItem[]>([]);
@@ -334,7 +341,21 @@ export function PracticeStudio({ lessonTitle, onClose, initialTool, onSelectOutp
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 sm:gap-4">
+          {exerciseContext && (
+            <Button
+              variant={showContext ? "default" : "ghost"}
+              size="sm"
+              onClick={() => setShowContext(!showContext)}
+              className={cn(
+                "rounded-xl font-bold text-xs uppercase tracking-widest",
+                showContext ? "bg-[#fd5523] text-white" : "text-slate-400 hover:text-[#062e39] hover:bg-slate-100"
+              )}
+            >
+              <Info className="h-4 w-4 mr-2" />
+              Brief
+            </Button>
+          )}
           <Button
             variant="ghost"
             size="sm"
@@ -354,7 +375,45 @@ export function PracticeStudio({ lessonTitle, onClose, initialTool, onSelectOutp
       </header>
 
       {/* ── Studio Canvas ── */}
-      <div className="flex flex-1 overflow-hidden relative">
+      <div className="flex flex-1 flex-col lg:flex-row overflow-hidden relative">
+        
+        {/* Exercise Brief Sidebar (Overlay on mobile, sidebar on desktop) */}
+        {showContext && exerciseContext && (
+          <aside className="absolute inset-y-0 right-0 z-50 w-full sm:w-80 bg-white border-l border-slate-200 shadow-2xl lg:relative lg:inset-auto lg:z-0 lg:shadow-none animate-in slide-in-from-right duration-300">
+            <div className="flex flex-col h-full">
+              <div className="p-6 border-b border-slate-100 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="h-4 w-4 text-emerald-600" />
+                  <h3 className="text-sm font-black uppercase tracking-widest text-[#062e39]">Exercise Brief</h3>
+                </div>
+                <Button variant="ghost" size="sm" onClick={() => setShowContext(false)} className="lg:hidden">
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+              <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                <div className="space-y-3">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Objective</p>
+                  <p className="text-sm leading-relaxed text-slate-600 font-medium">{exerciseContext.brief}</p>
+                </div>
+                {exerciseContext.instructions && exerciseContext.instructions.length > 0 && (
+                  <div className="space-y-4">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Steps</p>
+                    <div className="space-y-3">
+                      {exerciseContext.instructions.map((step, i) => (
+                        <div key={i} className="flex gap-3 text-sm text-slate-600">
+                          <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-[10px] font-bold text-emerald-700">
+                            {i + 1}
+                          </span>
+                          <span className="leading-relaxed">{step}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </aside>
+        )}
         
         {/* Help Overlay */}
         {showHelp && (

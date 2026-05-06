@@ -181,6 +181,15 @@ export default async function LearnPage({ params, searchParams }: PageProps) {
     .eq("lesson_id", activeLessonId)
     .order("attempt_number", { ascending: false });
 
+  // Fetch active booking for this lesson (if any)
+  const { data: bookingData } = await supabase
+    .from("live_session_bookings")
+    .select("*, zoom_meetings(*)")
+    .eq("learner_id", userId)
+    .eq("lesson_id", activeLessonId)
+    .in("status", ["requested", "confirmed", "reschedule_requested"])
+    .maybeSingle();
+
   return (
     <LessonPlayerClient
       course={{
@@ -206,6 +215,7 @@ export default async function LearnPage({ params, searchParams }: PageProps) {
       existingCertificate={existingCert ?? null}
       discussions={discussionsData ?? []}
       practiceSubmissions={submissionsData ?? []}
+      booking={bookingData}
       userId={userId}
       isPreview={isPreview}
       isPartialEnrollment={isPartialEnrollment}

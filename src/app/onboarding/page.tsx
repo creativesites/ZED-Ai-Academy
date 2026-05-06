@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useUser } from "@clerk/nextjs";
+import { useUser, CreateOrganization } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { completeOnboarding } from "./_actions";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ export default function OnboardingPage() {
   const { user } = useUser();
   const router = useRouter();
   const [loading, setLoading] = React.useState(false);
+  const [showOrgCreate, setShowOrgCreate] = React.useState(false);
 
   const handleSubmit = async (formData: FormData) => {
     setLoading(true);
@@ -62,6 +63,30 @@ export default function OnboardingPage() {
             By completing this step, you'll gain access to your personalized dashboard and any complimentary courses assigned to your account.
           </p>
         </div>
+
+        <div className="pt-4 border-t border-slate-100">
+          <button 
+            type="button"
+            onClick={() => setShowOrgCreate(!showOrgCreate)}
+            className="text-sm font-bold text-[#fd5523] hover:underline"
+          >
+            {showOrgCreate ? "← Back to personal details" : "Are you setting up for a team? Create an organization"}
+          </button>
+        </div>
+
+        {showOrgCreate && (
+          <div className="mt-4 p-4 rounded-[2rem] bg-slate-50 border border-slate-200">
+            <CreateOrganization 
+              afterCreateOrganizationUrl="/onboarding"
+              appearance={{
+                elements: {
+                  card: "shadow-none border-0 bg-transparent p-0",
+                  navbar: "hidden",
+                }
+              }}
+            />
+          </div>
+        )}
 
         <Button
           type="submit"

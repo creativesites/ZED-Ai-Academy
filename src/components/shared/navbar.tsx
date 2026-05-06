@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { auth } from "@clerk/nextjs/server";
-import { SignInButton, SignUpButton, UserButton } from "@clerk/nextjs";
+import { SignInButton, SignUpButton, UserButton, OrganizationSwitcher } from "@clerk/nextjs";
 import { ArrowRight, BrainCircuit, LayoutDashboard, Mail, MapPin, Menu, Phone, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -103,6 +103,14 @@ export async function Navbar() {
                     <LayoutDashboard className="h-4 w-4 text-[#fd5523]" />
                     Dashboard
                   </Link>
+                  <OrganizationSwitcher 
+                    afterCreateOrganizationUrl="/onboarding"
+                    appearance={{
+                      elements: {
+                        organizationSwitcherTrigger: "rounded-full bg-slate-50 border border-slate-200 px-3 py-1.5 text-xs font-semibold text-[#062e39]",
+                      }
+                    }}
+                  />
                   <UserButton />
                 </>
               ) : (
@@ -171,6 +179,10 @@ export async function Navbar() {
                             <LayoutDashboard className="h-5 w-5 text-[#fd5523]" />
                             Dashboard
                           </Link>
+                          <div className="flex items-center justify-between">
+                            <p className="text-sm font-medium text-slate-600">Team</p>
+                            <OrganizationSwitcher />
+                          </div>
                           <div className="flex items-center justify-between">
                             <p className="text-sm font-medium text-slate-600">Account</p>
                             <UserButton />
