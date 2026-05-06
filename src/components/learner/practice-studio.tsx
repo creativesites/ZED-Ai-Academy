@@ -407,7 +407,7 @@ export function PracticeStudio({
                     <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Objective</p>
                     <p className="text-sm leading-relaxed text-slate-600">{exerciseContext.brief}</p>
                   </div>
-                  {exerciseContext.instructions?.length > 0 && (
+                  {(exerciseContext.instructions?.length ?? 0) > 0 && (
                     <div>
                       <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Steps</p>
                       <div className="space-y-2">
