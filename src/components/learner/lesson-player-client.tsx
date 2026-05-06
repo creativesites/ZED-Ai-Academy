@@ -503,8 +503,6 @@ function MeetingBlock({ content, booking }: { content: Record<string, unknown>, 
     }
   }
 
-    );
-  }
 
   // Handle Booking logic
   const serviceId = content.service_id as string | undefined;
