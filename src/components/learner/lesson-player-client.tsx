@@ -696,7 +696,7 @@ function MeetingBlock({ content, booking }: { content: Record<string, unknown>, 
         </div>
         <Button 
           className="rounded-2xl bg-[#fd5523] px-8 py-6 text-lg font-bold text-white hover:bg-[#ef4a16] shadow-xl shadow-[#fd5523]/20 disabled:opacity-70"
-          onClick={handleJoin}
+          onClick={() => handleJoin()}
           disabled={joining}
         >
           {joining ? (
