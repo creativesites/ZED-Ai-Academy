@@ -19,7 +19,7 @@ import {
   ArrowLeft, ArrowRight, Award, BookOpen, CheckCircle, ChevronLeft, ChevronRight,
   ChevronsLeftRight, Code2, Download, ExternalLink, FileText, GraduationCap,
   HelpCircle, Layers, Lock, Loader2, Menu, MessageCircle, Info, Table, Calendar, Users, ChevronDown,
-  PlayCircle, ShieldCheck, Sparkles, Trophy, Video, X, Zap
+  PlayCircle, ShieldCheck, Sparkles, Trophy, Video, X, Zap, Wand2
 } from "lucide-react";
 import { toast } from "sonner";
 
