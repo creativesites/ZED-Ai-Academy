@@ -46,12 +46,16 @@ export function AiTutor({
   lessonId,
   courseTitle,
   lessonTitle,
+  moduleTitle,
+  sectionTitle,
   onClose,
 }: {
   courseId: string;
   lessonId: string;
   courseTitle: string;
   lessonTitle: string;
+  moduleTitle?: string;
+  sectionTitle?: string;
   onClose: () => void;
 }) {
   const [messages, setMessages] = useState<Message[]>([
@@ -65,6 +69,27 @@ export function AiTutor({
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const hasUserMessages = messages.some((m) => m.role === "user");
+
+  const storageKey = `zed-ai-coach-history-${lessonId}-${sectionTitle || "default"}`;
+
+  // Load history on mount
+  useEffect(() => {
+    const saved = localStorage.getItem(storageKey);
+    if (saved) {
+      try {
+        setMessages(JSON.parse(saved));
+      } catch (e) {
+        console.error("Failed to parse saved chat history", e);
+      }
+    }
+  }, [storageKey]);
+
+  // Save history when messages change
+  useEffect(() => {
+    if (messages.length > 1 || messages[0]?.role === "user") {
+      localStorage.setItem(storageKey, JSON.stringify(messages));
+    }
+  }, [messages, storageKey]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -80,7 +105,13 @@ export function AiTutor({
       const res = await fetch("/api/ai/tutor", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message, courseId, lessonId }),
+        body: JSON.stringify({ 
+          message, 
+          courseId, 
+          lessonId,
+          moduleTitle,
+          sectionTitle
+        }),
       });
 
       if (!res.ok || !res.body) throw new Error("No response");
@@ -130,26 +161,43 @@ export function AiTutor({
       <div className="fixed inset-y-0 right-0 z-50 flex w-full flex-col bg-white shadow-2xl sm:w-[420px] sm:border-l sm:border-slate-200">
 
         {/* Header */}
-        <div className="flex-shrink-0 bg-[#062e39] px-5 py-4">
+        <div className="flex-shrink-0 bg-[#062e39] px-3 py-2">
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-start gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#fd5523]/20">
+              {/* <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#fd5523]/20">
                 <Sparkles className="h-5 w-5 text-[#fd5523]" />
-              </div>
+              </div> */}
               <div className="min-w-0">
                 <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-[#fd5523]/70">AI Coach</p>
-                <h3 className="mt-0.5 line-clamp-1 text-sm font-bold text-white">{lessonTitle}</h3>
+                <h6 className="mt-0.5 line-clamp-1 text-sm font-bold text-white">{lessonTitle}</h6>
                 <p className="mt-0.5 line-clamp-1 text-[11px] text-white/40">{courseTitle}</p>
               </div>
             </div>
-            <button
-              type="button"
-              onClick={onClose}
-              className="shrink-0 rounded-full p-1.5 text-white/40 transition-colors hover:bg-white/10 hover:text-white"
-              aria-label="Close AI coach"
-            >
-              <X className="h-4 w-4" />
-            </button>
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => {
+                  if (confirm("Clear chat history for this section?")) {
+                    setMessages([{
+                      role: "assistant",
+                      content: "I can help you apply this lesson to real work. Try one of the prompts below, or ask me anything about the lesson.",
+                    }]);
+                    localStorage.removeItem(storageKey);
+                  }
+                }}
+                className="shrink-0 rounded-full px-2 py-1 text-[9px] font-bold uppercase tracking-wider text-white/40 transition-colors hover:bg-white/10 hover:text-[#fd5523]"
+              >
+                Clear
+              </button>
+              <button
+                type="button"
+                onClick={onClose}
+                className="shrink-0 rounded-full p-1.5 text-white/40 transition-colors hover:bg-white/10 hover:text-white"
+                aria-label="Close AI coach"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
           </div>
         </div>
 
@@ -181,7 +229,7 @@ export function AiTutor({
               className={`flex gap-2.5 ${msg.role === "user" ? "flex-row-reverse" : "flex-row"}`}
             >
               {/* Avatar */}
-              <div className={`
+              {/* <div className={`
                 mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-bold
                 ${msg.role === "user"
                   ? "bg-[#fd5523] text-white"
@@ -189,11 +237,11 @@ export function AiTutor({
                 }
               `}>
                 {msg.role === "user" ? "You" : <Sparkles className="h-3.5 w-3.5" />}
-              </div>
+              </div> */}
 
               {/* Bubble */}
               <div className={`
-                max-w-[85%] rounded-[1.8rem] px-5 py-4 text-sm leading-relaxed shadow-sm
+                max-w-[95%] rounded-[1.8rem] px-4 py-4 text-sm leading-relaxed shadow-sm
                 ${msg.role === "user"
                   ? "rounded-tr-sm bg-[#fd5523] text-white"
                   : "rounded-tl-sm border border-slate-100 bg-white text-slate-700"

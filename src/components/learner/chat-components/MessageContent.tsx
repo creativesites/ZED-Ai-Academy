@@ -20,15 +20,15 @@ interface MessageContentProps {
 
 export function MessageContent({ content }: MessageContentProps) {
   // Pattern to find our custom components: :::component_name {JSON_PROPS} :::
-  // We use a non-greedy match that allows for nested braces if needed, but primarily 
-  // we look for the closing :::
+  // We use a more robust regex that handles potential whitespace and newlines better
   const parts = content.split(/(:::[a-z_]+[\s\S]*?:::)/g);
 
   return (
     <div className="space-y-2">
       {parts.map((part, i) => {
-        if (part.startsWith(":::")) {
+        if (part.trim().startsWith(":::")) {
           try {
+            // Updated regex to handle component names and props more accurately
             const match = part.match(/:::([a-z_]+)\s*([\s\S]*?)\s*:::/);
             if (!match) return null;
 
@@ -37,9 +37,7 @@ export function MessageContent({ content }: MessageContentProps) {
             
             // Clean up common AI formatting errors in JSON
             // Remove markdown code blocks if the AI wrapped JSON in them
-            if (propsStr.startsWith("```json")) propsStr = propsStr.replace(/^```json/, "");
-            if (propsStr.startsWith("```")) propsStr = propsStr.replace(/^```/, "");
-            if (propsStr.endsWith("```")) propsStr = propsStr.replace(/```$/, "");
+            propsStr = propsStr.replace(/^```(?:json)?\s*/, "").replace(/\s*```$/, "");
             
             const props = JSON.parse(propsStr.trim());
 

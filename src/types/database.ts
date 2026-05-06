@@ -501,7 +501,10 @@ export interface Database {
           user_id: string;
           parent_id: string | null;
           content: string;
+          is_public: boolean;
+          status: "pending" | "approved" | "flagged" | "hidden";
           created_at: string;
+          updated_at: string;
         };
         Insert: {
           course_id: string;
@@ -509,8 +512,14 @@ export interface Database {
           user_id: string;
           parent_id?: string | null;
           content: string;
+          is_public?: boolean;
+          status?: "pending" | "approved" | "flagged" | "hidden";
         };
-        Update: { content?: string };
+        Update: {
+          content?: string;
+          is_public?: boolean;
+          status?: "pending" | "approved" | "flagged" | "hidden";
+        };
         Relationships: R;
       };
       coupons: {

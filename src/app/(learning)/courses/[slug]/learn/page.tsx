@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { notFound, redirect } from "next/navigation";
 import { LessonPlayerClient } from "@/components/learner/lesson-player-client";
 import type { Metadata } from "next";
+import type { Discussion } from "@/types/database";
 
 type PageProps = {
   params: Promise<{ slug: string }>;
@@ -27,7 +28,7 @@ export default async function LearnPage({ params, searchParams }: PageProps) {
   // Get course
   const { data: course } = await supabase
     .from("courses")
-    .select("id, title, slug, status, description, category, level, price_type")
+    .select("id, title, slug, status, description, category, level, price_type, instructor_id")
     .eq("slug", slug)
     .single();
 
@@ -164,14 +165,25 @@ export default async function LearnPage({ params, searchParams }: PageProps) {
   const allDone = allLessonIds.length > 0 && allLessonIds.every((id) => completedSet.has(id));
 
   // Fetch discussions for active lesson
-  const { data: discussionsData } = await supabase
+  // Instructors see all; students see (Public + Approved) OR (Their own)
+  let discussionsQuery = supabase
     .from("discussions")
     .select("*, profiles(full_name, avatar_url)")
-    .eq("lesson_id", activeLessonId)
-    .order("created_at", { ascending: true }) as {
-      data: (import("@/types/database").Discussion & { profiles: { full_name: string | null; avatar_url: string | null } | null })[] | null;
-      error: unknown;
-    };
+    .eq("lesson_id", activeLessonId);
+
+  if (course.instructor_id !== userId) {
+    discussionsQuery = discussionsQuery.or(`is_public.eq.true,user_id.eq.${userId}`);
+  }
+
+  const { data: rawDiscussionsData } = await discussionsQuery.order("created_at", { ascending: true }) as {
+    data: (Discussion & { profiles: { full_name: string | null; avatar_url: string | null } | null })[] | null;
+    error: unknown;
+  };
+
+  // Filter out unapproved public posts for students
+  const discussionsData = course.instructor_id === userId 
+    ? rawDiscussionsData 
+    : rawDiscussionsData?.filter(d => d.user_id === userId || (d.is_public && d.status === 'approved'));
 
   // Fetch practice submissions for this lesson
   const { data: submissionsData } = await supabase

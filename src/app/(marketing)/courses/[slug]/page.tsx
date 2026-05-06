@@ -16,7 +16,10 @@ const SiteLayout = Layout as React.ComponentType<React.PropsWithChildren<{
   headerStyle: number; footerStyle: number; breadcrumbTitle?: string;
 }>>;
 
-type PageProps = { params: Promise<{ slug: string }> };
+type PageProps = { 
+  params: Promise<{ slug: string }>;
+  searchParams: Promise<{ action?: string }>;
+};
 type LessonRow = { id: string; title: string; position: number; is_preview: boolean };
 type ModuleRow = { id: string; title: string; position: number; lessons: LessonRow[] };
 
@@ -28,8 +31,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   return { title: `${data.title} | Zed AI Academy`, description: data.description ?? undefined };
 }
 
-export default async function CourseDetailPage({ params }: PageProps) {
+export default async function CourseDetailPage({ params, searchParams }: PageProps) {
   const { slug } = await params;
+  const { action } = await searchParams;
   const supabase = createClient();
   const { userId } = await auth();
 
@@ -167,6 +171,7 @@ export default async function CourseDetailPage({ params }: PageProps) {
         <span className="hover-btn hover-bx4"></span>
       </Link>
     );
+    const { action } = (await params) as any; // Actually searchParams
     return (
       <ManualEnrollModal
         courseId={course.id}
@@ -175,6 +180,7 @@ export default async function CourseDetailPage({ params }: PageProps) {
         priceLabel={priceLabel}
         userEmail={userEmail}
         userName={userName}
+        autoOpen={action === "enroll"}
       />
     );
   };

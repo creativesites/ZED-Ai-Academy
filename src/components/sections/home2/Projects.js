@@ -27,6 +27,8 @@ const projects = [
     },
 ]
 
+import { Trophy, ExternalLink } from "lucide-react";
+
 export default function Projects() {
     return (
         <>
@@ -40,10 +42,10 @@ export default function Projects() {
                                 <div className="sec-title__tagline">
                                     <div className="line"></div>
                                     <div className="text tg-element-title">
-                                        <h4>Learner Achievements</h4>
+                                        <h4>Student Success</h4>
                                     </div>
                                     <div className="icon">
-                                        <span className="icon-plane2 float-bob-x3"></span>
+                                        <Trophy className="text-[#fd5523]" size={20} />
                                     </div>
                                 </div>
                                 <h2 className="sec-title__title tg-element-title">Real Projects Built <br/>
@@ -75,7 +77,7 @@ export default function Projects() {
                                             <h2><Link href={projects[0].href}>{projects[0].title}</Link></h2>
                                         </div>
                                         <div className="icon">
-                                            <Link href={projects[0].href}><span className="icon-right-arrow21"></span></Link>
+                                            <Link href={projects[0].href}><ExternalLink size={16} /></Link>
                                         </div>
                                     </div>
                                 </div>
@@ -96,7 +98,7 @@ export default function Projects() {
                                                 <h2><Link href={project.href}>{project.title}</Link></h2>
                                             </div>
                                             <div className="icon">
-                                                <Link href={project.href}><span className="icon-right-arrow21"></span></Link>
+                                                <Link href={project.href}><ExternalLink size={16} /></Link>
                                             </div>
                                         </div>
                                     </div>

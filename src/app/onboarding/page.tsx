@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useUser, CreateOrganization } from "@clerk/nextjs";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { completeOnboarding } from "./_actions";
 import { Button } from "@/components/ui/button";
 import { Loader2, ArrowRight, User } from "lucide-react";
@@ -11,6 +11,8 @@ import { toast } from "sonner";
 export default function OnboardingPage() {
   const { user } = useUser();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const enrollCourse = searchParams.get("enroll_course");
   const [loading, setLoading] = React.useState(false);
   const [showOrgCreate, setShowOrgCreate] = React.useState(false);
 
@@ -22,7 +24,7 @@ export default function OnboardingPage() {
         // Forces a token refresh and refreshes the `User` object
         await user?.reload();
         toast.success("Welcome aboard!");
-        router.push("/dashboard");
+        router.push(res.redirectUrl || "/dashboard");
       } else if (res?.error) {
         toast.error(res.error);
       }
@@ -42,6 +44,7 @@ export default function OnboardingPage() {
       </div>
 
       <form action={handleSubmit} className="space-y-6">
+        <input type="hidden" name="enrollCourse" value={enrollCourse || ""} />
         <div className="space-y-1.5">
           <label className="text-xs font-black uppercase tracking-widest text-slate-400">Your Full Name</label>
           <div className="relative">

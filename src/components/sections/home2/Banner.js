@@ -23,29 +23,30 @@ export default async function Banner() {
                 <div className="banner-two__content">
                     <div className="banner-two__content-top wow fadeInLeft" data-wow-delay="0ms" data-wow-duration="1500ms">
                         <div className="title-box">
-                            <h2>MASTER AI TOOLS <br/> <span>IN WEEKS</span></h2>
+                            <h2>MASTER THE AI <br/> <span>REVOLUTION</span></h2>
                         </div>
                     </div>
 
                     <div className="banner-two__content-bottom wow fadeInRight" data-wow-delay="0ms"
                         data-wow-duration="1500ms">
                         <div className="text-box">
-                            <p>Practical AI courses built for Zambian professionals — learn to use ChatGPT,
-                                Midjourney, Claude and more to transform how you work and create.</p>
+                            <p>Zambia's premier academy for applied AI. We don't just teach theory — we give you the 
+                                practical skills to automate your work, create world-class content, and 
+                                lead in the age of intelligence.</p>
                         </div>
 
                         <div className="banner-two__tab-box">
                             <div className="btn-box" style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', marginTop: '30px' }}>
                                 <Link className="thm-btn" href="/courses">
-                                    Browse Courses
+                                    Start Learning Now
                                     <i className="icon-right-arrow21"></i>
                                     <span className="hover-btn hover-bx"></span>
                                     <span className="hover-btn hover-bx2"></span>
                                     <span className="hover-btn hover-bx3"></span>
                                     <span className="hover-btn hover-bx4"></span>
                                 </Link>
-                                <Link className="thm-btn" href="/pricing" style={{ background: 'transparent', border: '2px solid currentColor' }}>
-                                    View Pricing
+                                <Link className="thm-btn" href="/about" style={{ background: 'transparent', border: '2px solid currentColor' }}>
+                                    Our Story
                                     <i className="icon-right-arrow21"></i>
                                     <span className="hover-btn hover-bx"></span>
                                     <span className="hover-btn hover-bx2"></span>

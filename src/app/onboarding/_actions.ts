@@ -46,34 +46,52 @@ export async function completeOnboarding(formData: FormData) {
         last_seen_at: new Date().toISOString(),
       });
 
-    // 4. Enroll in Free Course (if configured)
-    const { data: setting } = await (supabase as any)
-      .from("site_settings")
-      .select("value")
-      .eq("key", "onboarding_course_id")
-      .single();
+    const enrollCourseSlug = formData.get("enrollCourse") as string;
+    let redirectUrl = "/dashboard";
 
-    const courseId = setting?.value as string;
-    if (courseId && courseId !== "00000000-0000-0000-0000-000000000000") {
-      // Check if already enrolled
-      const { data: existing } = await supabase
-        .from("enrollments")
-        .select("id")
-        .eq("user_id", userId)
-        .eq("course_id", courseId)
-        .maybeSingle();
+    // 4. Handle Specific Course Auto-Enrollment (if requested via query param)
+    if (enrollCourseSlug) {
+      const { data: requestedCourse } = await supabase
+        .from("courses")
+        .select("id, slug, price_type")
+        .eq("slug", enrollCourseSlug)
+        .single();
 
-      if (!existing) {
-        await (supabase as any).from("enrollments").insert({
+      if (requestedCourse) {
+        if (requestedCourse.price_type === "free") {
+          // Auto-enroll in free course
+          await (supabase as any).from("enrollments").upsert({
+            user_id: userId,
+            course_id: requestedCourse.id,
+            status: "active",
+            source: "individual_purchase",
+          }, { onConflict: "user_id,course_id" });
+          redirectUrl = `/courses/${requestedCourse.slug}/learn`;
+        } else {
+          // Redirect to paid course page (where popup logic can trigger)
+          redirectUrl = `/courses/${requestedCourse.slug}?action=enroll`;
+        }
+      }
+    } else {
+      // 5. Fallback: Enroll in Global Onboarding Course (if configured)
+      const { data: setting } = await (supabase as any)
+        .from("site_settings")
+        .select("value")
+        .eq("key", "onboarding_course_id")
+        .single();
+
+      const globalCourseId = setting?.value as string;
+      if (globalCourseId && globalCourseId !== "00000000-0000-0000-0000-000000000000") {
+        await (supabase as any).from("enrollments").upsert({
           user_id: userId,
-          course_id: courseId,
+          course_id: globalCourseId,
           status: "active",
           source: "manual_admin",
-        });
+        }, { onConflict: "user_id,course_id" });
       }
     }
 
-    return { success: true };
+    return { success: true, redirectUrl };
   } catch (err: any) {
     console.error("Onboarding Error:", err);
     return { error: err.message || "There was an error updating your profile." };

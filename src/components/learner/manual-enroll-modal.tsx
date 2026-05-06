@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { enrollManual } from "@/actions/enrollments";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,7 @@ type Props = {
   priceLabel: string;
   userEmail: string;
   userName: string;
+  autoOpen?: boolean;
 };
 
 const FOUNDER_WHATSAPP = process.env.NEXT_PUBLIC_FOUNDER_WHATSAPP ?? "260979046745";
@@ -50,6 +51,7 @@ export function ManualEnrollModal({
   priceLabel,
   userEmail,
   userName,
+  autoOpen = false,
 }: Props) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -58,6 +60,12 @@ export function ManualEnrollModal({
   const [step, setStep] = useState<"form" | "success">("form");
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (autoOpen) {
+      handleOpen();
+    }
+  }, [autoOpen]);
 
   function handleOpen() {
     setOpen(true);

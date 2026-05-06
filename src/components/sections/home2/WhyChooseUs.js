@@ -2,6 +2,8 @@
 import { useState } from 'react'
 import CounterUp from "@/components/elements/CounterUp"
 import VideoModal from '@/components/shared/video-modal'
+import { Globe, Zap, Users, Award } from "lucide-react";
+
 export default function WhyChooseUs() {
     const [isOpen, setOpen] = useState(false)
     return (
@@ -11,14 +13,6 @@ export default function WhyChooseUs() {
             <div className="why-choose-two__bg"
                 style={{ backgroundImage: 'url(images/ali.jpg)' }} >
                 <div className="shape3 float-bob-x"><img src="assets/images/shapes/why-choose-v2-shape3.png" alt=""/></div>
-                {/* <div className="why-choose-two__video-box">
-                    <a onClick={() => setOpen(true)} className="video-popup">
-                        <div className="why-choose-two__video-box-icon">
-                            <span className="icon-video"></span>
-                            <i className="ripple"></i>
-                        </div>
-                    </a>
-                </div> */}
             </div>
             <div className="shape1"><img src="assets/images/shapes/why-choose-v2-shape1.png" alt=""/></div>
             <div className="container">
@@ -30,7 +24,7 @@ export default function WhyChooseUs() {
                                 <h4>Why Choose Us</h4>
                             </div>
                             <div className="icon">
-                                <span className="icon-plane2 float-bob-x3"></span>
+                                <Award className="text-[#fd5523]" size={20} />
                             </div>
                         </div>
                         <h2 className="sec-title__title tg-element-title">The AI Academy Built <br/> For
@@ -48,33 +42,17 @@ export default function WhyChooseUs() {
                         </div>
                         <div className="client-box">
                             <ul>
-                                <li>
-                                    <div className="img-box">
-                                        <img src="images/istockphoto-1644128335-612x612-1.jpg" alt=""/>
-                                    </div>
-                                </li>
-                                <li>
-                                    <div className="img-box">
-                                        <img src="images/beauty-charisma-head-shot-portrait-600nw-2647728057.webp" alt=""/>
-                                    </div>
-                                </li>
-                                <li>
-                                    <div className="img-box">
-                                        <img src="images/photo-1522529599102-193c0d76b5b6.avif" alt=""/>
-                                    </div>
-                                </li>
-                                <li>
-                                    <div className="img-box">
-                                        <img src="images/9b2879c1af82d24e1ad2336583952385.jpeg" alt=""/>
-                                    </div>
-                                </li>
+                                <li><div className="img-box"><img src="images/istockphoto-1644128335-612x612-1.jpg" alt=""/></div></li>
+                                <li><div className="img-box"><img src="images/beauty-charisma-head-shot-portrait-600nw-2647728057.webp" alt=""/></div></li>
+                                <li><div className="img-box"><img src="images/photo-1522529599102-193c0d76b5b6.avif" alt=""/></div></li>
+                                <li><div className="img-box"><img src="images/9b2879c1af82d24e1ad2336583952385.jpeg" alt=""/></div></li>
                             </ul>
 
                             <div className="count-text-box count-box">
-                                <h3><CounterUp end={50} /></h3>
+                                <h3><CounterUp end={150} /></h3>
                                 <span className="plus">+</span>
                             </div>
-                            <h3>Happy Learners</h3>
+                            <h3>Active Students</h3>
                         </div>
 
                         <div className="why-choose-two__content-bottom-content wow fadeInRight" data-wow-delay="0ms"
@@ -84,35 +62,31 @@ export default function WhyChooseUs() {
                             <ul>
                                 <li className="why-choose-two__single">
                                     <div className="why-choose-two__single-top">
-                                        <div className="icon">
-                                            <span className="icon-international-shipping"></span>
+                                        <div className="icon" style={{ background: 'rgba(253,85,35,0.1)', color: '#fd5523', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                            <Globe size={24} />
                                         </div>
 
                                         <div className="title">
-                                            <h4>Zambia-First <br/>
-                                                Curriculum</h4>
+                                            <h4>Zambia-First <br/> Curriculum</h4>
                                         </div>
                                     </div>
                                     <div className="text-box">
-                                        <p>Content designed for the Zambian <br/> market and business context
-                                        </p>
+                                        <p>Content designed for the Zambian <br/> market and business context</p>
                                     </div>
                                 </li>
 
                                 <li className="why-choose-two__single">
                                     <div className="why-choose-two__single-top">
-                                        <div className="icon">
-                                            <span className="icon-protection"></span>
+                                        <div className="icon" style={{ background: 'rgba(253,85,35,0.1)', color: '#fd5523', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                            <Zap size={24} />
                                         </div>
 
                                         <div className="title">
-                                            <h4>Practical, Not <br/>
-                                                Theory</h4>
+                                            <h4>Practical, Not <br/> Theory</h4>
                                         </div>
                                     </div>
                                     <div className="text-box">
-                                        <p>Every lesson teaches you something <br/> you can use that same day
-                                        </p>
+                                        <p>Every lesson teaches you something <br/> you can use that same day</p>
                                     </div>
                                 </li>
                             </ul>
@@ -120,8 +94,8 @@ export default function WhyChooseUs() {
                             <ul>
                                 <li className="why-choose-two__single">
                                     <div className="why-choose-two__single-top">
-                                        <div className="icon">
-                                            <span className="icon-professional-services"></span>
+                                        <div className="icon" style={{ background: 'rgba(253,85,35,0.1)', color: '#fd5523', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                            <Users size={24} />
                                         </div>
 
                                         <div className="title">
@@ -129,25 +103,22 @@ export default function WhyChooseUs() {
                                         </div>
                                     </div>
                                     <div className="text-box">
-                                        <p>Learn from practitioners who use <br/> these tools in real work daily
-                                        </p>
+                                        <p>Learn from practitioners who use <br/> these tools in real work daily</p>
                                     </div>
                                 </li>
 
                                 <li className="why-choose-two__single">
                                     <div className="why-choose-two__single-top">
-                                        <div className="icon">
-                                            <span className="icon-tracking"></span>
+                                        <div className="icon" style={{ background: 'rgba(253,85,35,0.1)', color: '#fd5523', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                            <Award size={24} />
                                         </div>
 
                                         <div className="title">
-                                            <h4>Verified <br/>
-                                                Certificates</h4>
+                                            <h4>Verified <br/> Certificates</h4>
                                         </div>
                                     </div>
                                     <div className="text-box">
-                                        <p>Earn a certificate when you complete <br/> any course on the platform
-                                        </p>
+                                        <p>Earn a certificate when you complete <br/> any course on the platform</p>
                                     </div>
                                 </li>
                             </ul>

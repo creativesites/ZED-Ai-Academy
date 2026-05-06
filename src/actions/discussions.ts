@@ -4,7 +4,7 @@ import { auth } from "@clerk/nextjs/server";
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 
-export async function postDiscussion(courseId: string, lessonId: string, content: string, parentId?: string) {
+export async function postDiscussion(courseId: string, lessonId: string, content: string, parentId?: string, isPublic: boolean = true) {
   const { userId } = await auth();
   if (!userId) throw new Error("Sign in to post.");
 
@@ -19,9 +19,23 @@ export async function postDiscussion(courseId: string, lessonId: string, content
     user_id: userId,
     parent_id: parentId ?? null,
     content: trimmed,
+    is_public: isPublic,
   });
 
   if (error) throw new Error(error.message);
+  revalidatePath(`/courses/${courseId}/learn`);
+}
+
+export async function updateDiscussionStatus(id: string, courseId: string, status: "approved" | "flagged" | "hidden") {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Not authenticated.");
+
+  const supabase = createClient();
+  // Check if instructor
+  const { data: course } = await supabase.from("courses").select("instructor_id").eq("id", courseId).single();
+  if (course?.instructor_id !== userId) throw new Error("Only instructors can moderate.");
+
+  await supabase.from("discussions").update({ status }).eq("id", id);
   revalidatePath(`/courses/${courseId}/learn`);
 }
 

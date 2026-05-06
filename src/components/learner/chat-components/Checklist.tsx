@@ -19,11 +19,11 @@ export function Checklist({ title, items }: ChecklistProps) {
   };
 
   return (
-    <div className="my-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-      <h4 className="mb-4 text-sm font-bold text-slate-900 flex items-center gap-2">
+    <div className="my-4 rounded-2xl border border-slate-200 bg-white px-1 py-3 shadow-sm">
+      <h6 className="mb-4 px-2 text-sm font-bold text-slate-900 flex items-center gap-2">
         <CheckCircle2 className="h-4 w-4 text-green-600" />
         {title}
-      </h4>
+      </h6>
       <div className="space-y-2">
         {items.map((item, idx) => (
           <button

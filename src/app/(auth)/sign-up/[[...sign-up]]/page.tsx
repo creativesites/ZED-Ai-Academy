@@ -5,9 +5,14 @@ import { ArrowLeft, Rocket, CheckCircle2 } from "lucide-react";
 
 export const metadata = { title: "Join — Zed AI Academy" };
 
-export default async function SignUpPage() {
+export default async function SignUpPage(props: { searchParams: Promise<{ enroll_course?: string }> }) {
+  const { enroll_course } = await props.searchParams;
   const bgImage = await getSiteAsset("auth_bg", "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200&q=80&auto=format&fit=crop");
   const logoUrl = await getSiteAsset("site_logo", "/images/zed-ai-logo2.png");
+
+  const forceRedirectUrl = enroll_course 
+    ? `/onboarding?enroll_course=${enroll_course}`
+    : "/onboarding";
 
   return (
     <div className="flex min-h-screen bg-white overflow-hidden">
@@ -85,6 +90,7 @@ export default async function SignUpPage() {
 
           <div >
             <SignUp
+              forceRedirectUrl={forceRedirectUrl}
               appearance={{
                 elements: {
                   formButtonPrimary:

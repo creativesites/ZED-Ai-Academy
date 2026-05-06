@@ -1,5 +1,6 @@
 import CounterUp from "@/components/elements/CounterUp"
 import Link from "next/link"
+import { Target } from "lucide-react"
 import { getResolvedPageMediaSlots } from "@/lib/page-media";
 
 export default async function About() {
@@ -57,7 +58,7 @@ export default async function About() {
                                         <h4>About Us</h4>
                                     </div>
                                     <div className="icon">
-                                        <span className="icon-plane2 float-bob-x3"></span>
+                                        <Target className="text-[#fd5523]" size={20} />
                                     </div>
                                 </div>
                                 <h2 className="sec-title__title tg-element-title">Zambia&apos;s AI Learning <br/>
@@ -66,9 +67,10 @@ export default async function About() {
                             </div>
 
                             <div className="about-two__content-text1">
-                                <p>Zed AI Academy is built for Zambian professionals who want applied AI skills — not
-                                    theory. Every course is designed around real tools and real workflows so you can
-                                    start using AI in your work from day one.</p>
+                                <p>Zed AI Academy was founded with a single mission: to ensure Zambian 
+                                    professionals aren't left behind in the global AI race. We believe 
+                                    in democratizing access to world-class AI training, tailored for our local 
+                                    market and economy.</p>
                             </div>
 
                             <div className="about-two__content-text2">

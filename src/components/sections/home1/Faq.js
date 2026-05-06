@@ -1,6 +1,7 @@
 'use client'
 import { useState } from 'react'
 import VideoModal from '@/components/shared/video-modal'
+import { HelpCircle } from "lucide-react";
 
 const faqs = [
     {
@@ -33,9 +34,8 @@ export default function Faq() {
     const [isOpen, setOpen] = useState(false)
     return (
         <>
-
         <section className="faq-one">
-            <div className="shape1 float-bob-x"><img src="images/logo-dark.png" style={{width:'24rem', opacity: '0.5', marginTop: '5rem'}} alt=""/></div>
+            <div className="shape1 float-bob-x"><img src="images/logo-dark.png" style={{width:'24rem', opacity: '0.1', marginTop: '5rem'}} alt=""/></div>
             <div className="container">
                 <div className="row">
                     {/*Start Faq One Content*/}
@@ -46,10 +46,10 @@ export default function Faq() {
                                     <div className="sec-title__tagline">
                                         <div className="line"></div>
                                         <div className="text tg-element-title">
-                                            <h4>Common Questions</h4>
+                                            <h4>Expert Support</h4>
                                         </div>
                                         <div className="icon">
-                                            <span className="icon-plane2 float-bob-x3"></span>
+                                            <HelpCircle className="text-[#fd5523]" size={20} />
                                         </div>
                                     </div>
                                     <h2 className="sec-title__title tg-element-title">Frequently Asked <br/>
@@ -80,53 +80,14 @@ export default function Faq() {
                         <div className="faq-one__img">
                             <div className="faq-one__img-box">
                                 <img src="images/pngtree-native-african-black-man-using-smart-phone-fashion-arab-muslim-photo-image_42278090.jpg" alt="AI learning"/>
-
-                                {/* <div className="faq-one__video-link">
-                                    <a onClick={() => setOpen(true)} className="video-popup">
-                                        <div className="faq-one__video-icon">
-                                            <span className="icon-video"></span>
-                                            <i className="ripple"></i>
-                                        </div>
-                                    </a>
-                                </div> */}
                             </div>
                         </div>
                     </div>
                     {/*End Faq One Img*/}
                 </div>
             </div>
-
-            {/*Start Sliding Text One*/}
-            {/* <div className="sliding-text-one">
-                <div className="sliding-text-one__wrap">
-                    <ul className="sliding-text__list list-unstyled marquee_mode">
-                        <li>
-                            <h2 data-hover="PRACTICAL AI FOR ZAMBIA" className="sliding-text__title">PRACTICAL AI FOR ZAMBIA
-                                <img src="images/zed-ai-logo.png" alt=""/></h2>
-                        </li>
-                        <li>
-                            <h2 data-hover="PRACTICAL AI FOR ZAMBIA" className="sliding-text__title">PRACTICAL AI FOR ZAMBIA
-                                <img src="images/zed-ai-logo.png" alt=""/></h2>
-                        </li>
-                        <li>
-                            <h2 data-hover="PRACTICAL AI FOR ZAMBIA" className="sliding-text__title">PRACTICAL AI FOR ZAMBIA
-                                <img src="images/zed-ai-logo.png" alt=""/></h2>
-                        </li>
-                        <li>
-                            <h2 data-hover="PRACTICAL AI FOR ZAMBIA" className="sliding-text__title">PRACTICAL AI FOR ZAMBIA
-                                <img src="images/zed-ai-logo.png" alt=""/></h2>
-                        </li>
-                        <li>
-                            <h2 data-hover="PRACTICAL AI FOR ZAMBIA" className="sliding-text__title">PRACTICAL AI FOR ZAMBIA
-                                <img src="images/zed-ai-logo.png" alt=""/></h2>
-                        </li>
-                    </ul>
-                </div>
-            </div> */}
-            {/*End Sliding Text One*/}
         </section>
         <VideoModal isOpen={isOpen} onClose={() => setOpen(false)} videoId="Get7rqXYrbQ" />
-
         </>
     )
 }
