@@ -65,7 +65,7 @@ export async function POST(req: Request) {
         logo_url: data.image_url || data.logo_url,
         admin_id: data.created_by, // Clerk provides creator ID
         updated_at: new Date().toISOString(),
-      }, { onConflict: "id" });
+      } as any, { onConflict: "id" });
       if (error) console.error("Org sync error:", error);
     }
 
@@ -79,7 +79,7 @@ export async function POST(req: Request) {
         profile_id: data.public_user_data.user_id,
         status: "active",
         joined_at: new Date().toISOString(),
-      }, { onConflict: "company_id, profile_id" });
+      } as any, { onConflict: "company_id, profile_id" });
     }
 
     if (event.type === "organizationMembership.deleted") {
