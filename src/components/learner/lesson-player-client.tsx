@@ -548,7 +548,7 @@ function MeetingBlock({ content, booking }: { content: Record<string, unknown>, 
               meetingNumber={displayMeetingId}
               passWord={displayPassword}
               signature={signature}
-              sdkKey={sdkKey}
+              sdkKey={sdkKey as string}
               userName={user.fullName || user.username || "Learner"}
               userEmail={user.primaryEmailAddress?.emailAddress || ""}
             />
@@ -667,7 +667,7 @@ function MeetingBlock({ content, booking }: { content: Record<string, unknown>, 
           meetingNumber={meetingId}
           passWord={passWord}
           signature={signature}
-          sdkKey={sdkKey}
+          sdkKey={sdkKey as string}
           userName={user.fullName || user.username || "Learner"}
           userEmail={user.primaryEmailAddress?.emailAddress || ""}
         />
