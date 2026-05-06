@@ -749,8 +749,12 @@ function PracticeExerciseBlock({
   const score = submission?.practice_exercise_scores;
   const [isFormVisible, setIsFormVisible] = useState(!submission);
   const [activeTab, setActiveTab] = useState<'write' | 'preview'>('write');
-  const [isUploading, setIsUploading] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
+
+  const toggleSection = (section: string) => {
+    setExpandedSections(prev => ({ ...prev, [section]: !prev[section] }));
+  };
 
   useEffect(() => {
     if (score?.score >= 80) {
@@ -781,22 +785,21 @@ function PracticeExerciseBlock({
   };
 
   return (
-    <div className="group relative">
-      {/* Animated background gradient */}
-      <div className="absolute -inset-1 rounded-[2.5rem] bg-gradient-to-r from-emerald-400 via-teal-500 to-cyan-500 opacity-0 blur-xl transition-all duration-500 group-hover:opacity-20" />
-      
-      <div className="relative rounded-[2rem] border-2 border-emerald-100 bg-white/90 backdrop-blur-sm p-4 sm:p-6 md:p-8 shadow-2xl shadow-emerald-900/5 transition-all duration-300 hover:shadow-emerald-200/30">
-        {/* Confetti effect for high scores */}
+    <div className="relative w-full max-w-full overflow-hidden">
+      {/* Mobile-first card with progressive enhancement */}
+      <div className="relative rounded-3xl sm:rounded-[2rem] bg-white border border-slate-200/60   transition-all duration-300 overflow-hidden">
+        
+        {/* Confetti overlay */}
         {showConfetti && (
-          <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-[2rem]">
-            {[...Array(20)].map((_, i) => (
+          <div className="absolute inset-0 pointer-events-none z-10 overflow-hidden">
+            {[...Array(15)].map((_, i) => (
               <div
                 key={i}
-                className="absolute animate-bounce"
+                className="absolute text-lg"
                 style={{
                   left: `${Math.random() * 100}%`,
-                  top: `-10%`,
-                  animation: `confetti ${1 + Math.random() * 2}s ease-out forwards`,
+                  top: `-5%`,
+                  animation: `confetti ${1.5 + Math.random() * 2}s ease-out forwards`,
                   animationDelay: `${Math.random() * 0.5}s`,
                 }}
               >
@@ -806,400 +809,348 @@ function PracticeExerciseBlock({
           </div>
         )}
 
-        {/* Header Section */}
-        <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4 sm:gap-6">
-          <div className="flex-1 space-y-4">
-            {/* Title Area */}
-            <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-              <div className="flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-500 text-white shadow-lg shadow-emerald-200 transition-transform duration-300 hover:scale-110">
-                <span className="text-2xl">{getModeIcon(mode)}</span>
+        {/* ==================== HEADER - Mobile Optimized ==================== */}
+        <div className="p-5 sm:p-6 md:p-8">
+          
+          {/* Mode badge + Time estimate - Full width on mobile */}
+          <div className="flex gap-2 mb-4">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-100 text-[11px] font-bold text-purple-700">
+              <span className="text-sm">{getModeIcon(mode)}</span>
+              {mode.replace(/_/g, " ")}
+            </span>
+            {estimatedMinutes && (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-100 text-[11px] font-bold text-amber-700">
+                ⏱️ {estimatedMinutes} min
+              </span>
+            )}
+          </div>
+
+          {/* Title - Stack vertically on mobile */}
+          <div className="space-y-3">
+            <div className="flex items-start gap-3">
+              <div className="flex h-10 w-10 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-500 text-white shadow-md shadow-emerald-200">
+                <span className="text-lg sm:text-xl">🏋️</span>
               </div>
-              <div>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-emerald-50 to-teal-50 px-3 py-1 text-[10px] font-black uppercase tracking-[0.25em] text-emerald-700 border border-emerald-200">
-                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                    Practice Exercise
-                  </span>
-                  {estimatedMinutes && (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-1 text-[10px] font-bold text-amber-700">
-                      ⏱️ {estimatedMinutes} min
-                    </span>
-                  )}
-                </div>
-                <h3 className="mt-2 text-xl sm:text-2xl md:text-3xl font-bold tracking-tight bg-gradient-to-r from-[#062e39] to-teal-700 bg-clip-text text-transparent">
+              <div className="min-w-0 flex-1">
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-600 mb-1">
+                  Practice Exercise
+                </p>
+                <h3 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight text-[#062e39] leading-tight">
                   {title}
                 </h3>
               </div>
             </div>
+          </div>
 
-            {/* Brief */}
-            {brief && (
-              <div className="group/brief relative rounded-2xl bg-gradient-to-br from-slate-50 to-emerald-50/50 p-4 sm:p-5 border border-slate-100">
-                <div className="absolute top-3 right-3 text-lg opacity-0 group-hover/brief:opacity-100 transition-opacity">
-                  💡
-                </div>
-                <p className="text-sm sm:text-base leading-relaxed text-slate-600 pr-8">
+          {/* Brief - Clean card style */}
+          {brief && (
+            <div className="mt-4 p-4 rounded-2xl bg-slate-50 border border-slate-100">
+              <div className="flex items-start gap-2">
+                <span className="text-lg shrink-0 mt-0.5">💡</span>
+                <p className="text-sm text-slate-600 leading-relaxed">
                   {brief}
                 </p>
               </div>
-            )}
-
-            {/* Instructions */}
-            {instructions.length > 0 && (
-              <div className="space-y-3">
-                <h4 className="text-xs font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
-                  <span className="h-0.5 flex-1 bg-gradient-to-r from-emerald-200 to-transparent" />
-                  Steps to Complete
-                  <span className="h-0.5 flex-1 bg-gradient-to-l from-emerald-200 to-transparent" />
-                </h4>
-                <div className="grid sm:grid-cols-2 gap-2 sm:gap-3">
-                  {instructions.map((instruction, idx) => (
-                    <div
-                      key={`${instruction}-${idx}`}
-                      className="group/card flex gap-3 rounded-xl bg-white p-3 sm:p-4 border border-slate-100 shadow-sm transition-all duration-300 hover:shadow-md hover:border-emerald-200 hover:-translate-y-0.5"
-                    >
-                      <span className="flex h-7 w-7 sm:h-8 sm:w-8 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-400 to-teal-500 text-white text-xs font-bold shadow-sm shadow-emerald-200 transition-transform group-hover/card:scale-110">
-                        {idx + 1}
-                      </span>
-                      <span className="text-xs sm:text-sm text-slate-600 leading-relaxed">
-                        {instruction}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Stats Cards - Mobile: horizontal, Desktop: vertical */}
-          <div className="flex flex-row lg:flex-col gap-2 sm:gap-3">
-            <div className="rounded-2xl bg-gradient-to-br from-purple-50 to-pink-50 p-3 sm:p-4 border border-purple-100 flex-1 lg:flex-none hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5">
-              <p className="text-[10px] font-black uppercase tracking-widest text-purple-500">Mode</p>
-              <p className="mt-1 text-xs sm:text-sm font-bold capitalize text-purple-900 flex items-center gap-1">
-                {getModeIcon(mode)} {mode.replace(/_/g, " ")}
-              </p>
             </div>
-            {estimatedMinutes && (
-              <div className="rounded-2xl bg-gradient-to-br from-amber-50 to-orange-50 p-3 sm:p-4 border border-amber-100 flex-1 lg:flex-none hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5">
-                <p className="text-[10px] font-black uppercase tracking-widest text-amber-500">Estimate</p>
-                <p className="mt-1 text-xs sm:text-sm font-bold text-amber-900 flex items-center gap-1">
-                  ⏱️ {estimatedMinutes} min
+          )}
+
+          {/* Instructions - Collapsible on mobile */}
+          {instructions.length > 0 && (
+            <div className="mt-4">
+              <button 
+                onClick={() => toggleSection('instructions')}
+                className="w-full flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100 text-left"
+              >
+                <span className="text-xs font-black uppercase tracking-widest text-slate-500">
+                  📋 Instructions ({instructions.length} steps)
+                </span>
+                <span className={`text-sm transition-transform duration-200 ${expandedSections.instructions ? 'rotate-180' : ''}`}>
+                  ▼
+                </span>
+              </button>
+              
+              <div className={`space-y-2 mt-2 transition-all duration-300 ${
+                expandedSections.instructions !== false ? 'block' : 'hidden'
+              }`}>
+                {instructions.map((instruction, idx) => (
+                  <div
+                    key={`${instruction}-${idx}`}
+                    className="flex gap-3 p-3 rounded-xl bg-white border border-slate-100 active:bg-emerald-50 transition-colors"
+                  >
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-400 to-teal-500 text-white text-xs font-bold">
+                      {idx + 1}
+                    </span>
+                    <span className="text-sm text-slate-600 leading-relaxed">
+                      {instruction}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* ==================== SUBMISSION VIEW - Mobile Optimized ==================== */}
+        {submission && !isFormVisible ? (
+          <div className="px-5 pb-5 sm:px-6 sm:pb-6 md:px-8 md:pb-8 space-y-4 animate-fadeIn">
+            
+            {/* Submission badge */}
+            <div className="flex items-center justify-between p-3 rounded-xl bg-emerald-50 border border-emerald-100">
+              <div className="flex items-center gap-2 min-w-0">
+                <CheckCircle className="h-4 w-4 text-emerald-600 shrink-0" />
+                <span className="text-[11px] font-bold text-emerald-700 truncate">
+                  Attempt #{submission.attempt_number}
+                </span>
+              </div>
+              <span className="text-[10px] text-slate-500 shrink-0 ml-2">
+                {new Date(submission.submitted_at).toLocaleDateString('en-US', {
+                  month: 'short',
+                  day: 'numeric',
+                })}
+              </span>
+            </div>
+
+            {/* Text Response */}
+            {submission.text_response && (
+              <div className="p-4 rounded-xl bg-white border border-slate-200">
+                <p className="text-sm text-slate-600 leading-relaxed italic">
+                  "{submission.text_response}"
                 </p>
               </div>
             )}
-          </div>
-        </div>
 
-        {/* Submission or Form */}
-        {submission && !isFormVisible ? (
-          <div id={`feedback-${blockId}`} className="mt-6 sm:mt-8 space-y-4 sm:space-y-6 animate-fadeIn">
-            {/* Submission Card */}
-            <div className="rounded-[1.5rem] bg-gradient-to-br from-emerald-50/80 to-teal-50/80 p-4 sm:p-6 border-2 border-emerald-100 backdrop-blur-sm">
-              {/* Header */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 sm:mb-6">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-emerald-700">
-                    <CheckCircle className="h-3.5 w-3.5" />
-                    Your Submission
-                  </span>
-                  <span className="inline-flex items-center rounded-full bg-white px-3 py-1.5 text-[10px] font-bold text-emerald-700 border border-emerald-200 shadow-sm">
-                    Attempt #{submission.attempt_number}
-                  </span>
-                </div>
-                <span className="text-[10px] font-bold text-slate-400 flex items-center gap-1">
-                  📅 {new Date(submission.submitted_at).toLocaleDateString('en-US', {
-                    month: 'short',
-                    day: 'numeric',
-                    year: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                  })}
-                </span>
+            {/* Files */}
+            {submission.practice_exercise_files?.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {submission.practice_exercise_files.map((f: any) => (
+                  <div
+                    key={f.id}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-[11px] font-medium text-slate-600"
+                  >
+                    <FileText className="h-3.5 w-3.5 text-emerald-500" />
+                    {f.file_name}
+                  </div>
+                ))}
               </div>
+            )}
 
-              {/* Text Response */}
-              {submission.text_response && (
-                <div className="mb-4 sm:mb-6 group/quote">
-                  <div className="relative rounded-2xl bg-white p-4 sm:p-6 shadow-inner">
-                    <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-emerald-400 to-teal-500 rounded-l-2xl" />
-                    <p className="text-sm sm:text-base text-slate-600 leading-relaxed italic pl-4">
-                      "{submission.text_response}"
+            {/* Score Section */}
+            {score ? (
+              <div className="space-y-4">
+                {/* Score Display - Centered on mobile */}
+                <div className="text-center p-6 rounded-2xl bg-gradient-to-br from-slate-50 to-emerald-50 border border-emerald-100">
+                  <div className={`
+                    inline-flex h-16 w-16 items-center justify-center rounded-2xl
+                    bg-gradient-to-br ${getScoreColor(score.score)}
+                    shadow-lg mb-3
+                  `}>
+                    <span className="text-2xl font-black text-white">
+                      {Math.round(score.score)}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-xl">{getScoreEmoji(score.score)}</span>
+                    <p className="text-lg font-bold text-[#062e39] mt-1">
+                      {score.score >= 90 ? "Outstanding!" : 
+                       score.score >= 80 ? "Excellent!" : 
+                       score.score >= 60 ? "Good Progress" : 
+                       "Keep Learning!"}
                     </p>
-                    <div className="absolute top-3 right-3 text-2xl opacity-20 group-hover/quote:opacity-100 transition-opacity">
-                      📝
-                    </div>
                   </div>
-                </div>
-              )}
-
-              {/* Files */}
-              {submission.practice_exercise_files?.length > 0 && (
-                <div className="flex flex-wrap gap-2 mb-4 sm:mb-6">
-                  {submission.practice_exercise_files.map((f: any) => (
+                  {/* Progress bar */}
+                  <div className="mt-3 h-1.5 bg-slate-200 rounded-full overflow-hidden">
                     <div
-                      key={f.id}
-                      className="group/file flex items-center gap-2 px-3 py-2 rounded-xl bg-white border-2 border-emerald-100 text-[11px] font-medium text-slate-600 hover:border-emerald-300 transition-all duration-200 hover:shadow-md cursor-pointer"
-                    >
-                      <FileText className="h-4 w-4 text-emerald-500 group-hover/file:scale-110 transition-transform" />
-                      {f.file_name}
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* Score Section */}
-              <div className="pt-4 sm:pt-6 border-t-2 border-emerald-100">
-                {score ? (
-                  <div className="space-y-5">
-                    {/* Score Display */}
-                    <div className="flex flex-col sm:flex-row items-center gap-4 p-4 sm:p-6 rounded-2xl bg-white shadow-inner">
-                      <div className={`
-                        flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-2xl
-                        bg-gradient-to-br ${getScoreColor(score.score)}
-                        shadow-lg transform transition-all duration-500 hover:scale-110 hover:rotate-3
-                      `}>
-                        <div className="text-center">
-                          <span className="text-2xl sm:text-3xl font-black text-white">
-                            {Math.round(score.score)}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="text-center sm:text-left">
-                        <div className="flex items-center gap-2 justify-center sm:justify-start">
-                          <span className="text-2xl">{getScoreEmoji(score.score)}</span>
-                          <p className="text-lg sm:text-xl font-bold bg-gradient-to-r from-emerald-700 to-teal-700 bg-clip-text text-transparent">
-                            {score.score >= 90 ? "Outstanding!" : 
-                             score.score >= 80 ? "Excellent Work!" : 
-                             score.score >= 60 ? "Good Progress" : 
-                             "Keep Learning!"}
-                          </p>
-                        </div>
-                        <p className="text-xs text-slate-500 mt-1">AI-Powered Assessment</p>
-                        {/* Score Bar */}
-                        <div className="mt-3 h-2 bg-slate-100 rounded-full overflow-hidden">
-                          <div
-                            className={`h-full bg-gradient-to-r ${getScoreColor(score.score)} rounded-full transition-all duration-1000 ease-out`}
-                            style={{ width: `${score.score}%` }}
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Feedback Summary */}
-                    {score.feedback_summary && (
-                      <div className="relative rounded-2xl bg-gradient-to-br from-emerald-50 to-teal-50 p-4 sm:p-5 border-2 border-emerald-100">
-                        <div className="absolute top-3 right-3 text-lg">🤖</div>
-                        <p className="text-sm sm:text-base text-slate-700 leading-relaxed pr-8">
-                          {score.feedback_summary}
-                        </p>
-                      </div>
-                    )}
-
-                    {/* Strengths & Improvements */}
-                    <div className="grid sm:grid-cols-2 gap-4">
-                      {score.strengths?.length > 0 && (
-                        <div className="space-y-3 relative group">
-                          <div className="absolute -inset-0.5 bg-gradient-to-r from-green-400 to-emerald-500 rounded-2xl opacity-0 group-hover:opacity-20 blur transition-opacity" />
-                          <div className="relative rounded-2xl bg-white p-4 sm:p-5 border-2 border-green-100">
-                            <p className="text-[10px] font-black uppercase tracking-widest text-green-600 flex items-center gap-2 mb-3">
-                              <span className="text-lg">💪</span> Strengths
-                            </p>
-                            <ul className="space-y-2">
-                              {score.strengths.map((s: string, i: number) => (
-                                <li key={i} className="flex items-start gap-2 text-xs sm:text-sm text-slate-600 group/item">
-                                  <CheckCircle className="h-4 w-4 mt-0.5 text-green-500 shrink-0 group-hover/item:scale-110 transition-transform" />
-                                  <span>{s}</span>
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        </div>
-                      )}
-                      {score.improvements?.length > 0 && (
-                        <div className="space-y-3 relative group">
-                          <div className="absolute -inset-0.5 bg-gradient-to-r from-amber-400 to-orange-500 rounded-2xl opacity-0 group-hover:opacity-20 blur transition-opacity" />
-                          <div className="relative rounded-2xl bg-white p-4 sm:p-5 border-2 border-amber-100">
-                            <p className="text-[10px] font-black uppercase tracking-widest text-amber-600 flex items-center gap-2 mb-3">
-                              <span className="text-lg">🎯</span> To Improve
-                            </p>
-                            <ul className="space-y-2">
-                              {score.improvements.map((s: string, i: number) => (
-                                <li key={i} className="flex items-start gap-2 text-xs sm:text-sm text-slate-600 group/item">
-                                  <Info className="h-4 w-4 mt-0.5 text-amber-500 shrink-0 group-hover/item:scale-110 transition-transform" />
-                                  <span>{s}</span>
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        </div>
-                      )}
-                    </div>
+                      className={`h-full bg-gradient-to-r ${getScoreColor(score.score)} rounded-full transition-all duration-1000`}
+                      style={{ width: `${score.score}%` }}
+                    />
                   </div>
-                ) : (
-                  <div className="flex items-center justify-center gap-3 py-8">
-                    <div className="relative">
-                      <Loader2 className="h-8 w-8 animate-spin text-emerald-600" />
-                      <div className="absolute inset-0 animate-ping opacity-20">
-                        <Loader2 className="h-8 w-8 text-emerald-600" />
-                      </div>
-                    </div>
-                    <div>
-                      <p className="text-sm font-bold text-emerald-700">AI Analysis in Progress</p>
-                      <p className="text-xs text-emerald-500">This usually takes 10-30 seconds...</p>
-                    </div>
+                </div>
+
+                {/* Feedback - Collapsible */}
+                {score.feedback_summary && (
+                  <div className="p-4 rounded-xl bg-white border border-emerald-100">
+                    <p className="text-xs font-bold text-emerald-700 mb-1">🤖 AI Feedback</p>
+                    <p className="text-sm text-slate-600 leading-relaxed">
+                      {score.feedback_summary}
+                    </p>
                   </div>
                 )}
-              </div>
-            </div>
 
-            {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+                {/* Strengths & Improvements - Stack on mobile */}
+                <div className="space-y-3">
+                  {score.strengths?.length > 0 && (
+                    <div className="p-4 rounded-xl bg-white border border-green-100">
+                      <p className="text-[11px] font-black uppercase tracking-widest text-green-600 mb-2">
+                        💪 Strengths
+                      </p>
+                      <ul className="space-y-1.5">
+                        {score.strengths.map((s: string, i: number) => (
+                          <li key={i} className="flex items-start gap-2 text-sm text-slate-600">
+                            <CheckCircle className="h-3.5 w-3.5 mt-0.5 text-green-500 shrink-0" />
+                            {s}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {score.improvements?.length > 0 && (
+                    <div className="p-4 rounded-xl bg-white border border-amber-100">
+                      <p className="text-[11px] font-black uppercase tracking-widest text-amber-600 mb-2">
+                        🎯 To Improve
+                      </p>
+                      <ul className="space-y-1.5">
+                        {score.improvements.map((s: string, i: number) => (
+                          <li key={i} className="flex items-start gap-2 text-sm text-slate-600">
+                            <Info className="h-3.5 w-3.5 mt-0.5 text-amber-500 shrink-0" />
+                            {s}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center gap-3 py-6 justify-center">
+                <Loader2 className="h-6 w-6 animate-spin text-emerald-600" />
+                <p className="text-sm font-medium text-emerald-700">AI analyzing your work...</p>
+              </div>
+            )}
+
+            {/* Action Buttons - Full width on mobile */}
+            <div className="flex flex-col gap-2">
               <Button
                 variant="outline"
-                className="flex-1 rounded-xl border-2 border-emerald-200 text-emerald-700 hover:bg-emerald-50 hover:border-emerald-300 transition-all duration-200 group"
+                className="w-full rounded-xl border-2 border-emerald-200 text-emerald-700 hover:bg-emerald-50 text-sm py-5"
                 onClick={() => setIsFormVisible(true)}
               >
-                <span className="group-hover:scale-110 transition-transform mr-2">🔄</span>
-                Try Again
+                🔄 Try Again
               </Button>
               <Button
-                className="flex-1 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white hover:from-emerald-700 hover:to-teal-700 shadow-lg shadow-emerald-200 transition-all duration-200 hover:shadow-xl hover:shadow-emerald-300/50 hover:-translate-y-0.5"
+                className="w-full rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white hover:from-emerald-700 hover:to-teal-700 text-sm py-5 shadow-lg shadow-emerald-200"
               >
-                <span className="mr-2">📤</span>
-                Share Your Work
+                📤 Share Your Work
               </Button>
             </div>
           </div>
         ) : (
-          /* Submission Form */
-          <div id={`form-${blockId}`} className="mt-6 sm:mt-8 animate-fadeIn">
-            <div className="rounded-2xl border-2 border-dashed border-emerald-200 bg-gradient-to-br from-emerald-50/60 to-teal-50/60 p-4 sm:p-6 transition-all duration-300 hover:border-emerald-300 hover:shadow-lg">
-              {/* Form Tabs */}
-              <div className="flex gap-1 mb-4 bg-white/50 rounded-xl p-1">
-                <button
-                  onClick={() => setActiveTab('write')}
-                  className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition-all duration-200 ${
-                    activeTab === 'write'
-                      ? 'bg-white shadow-sm text-emerald-700'
-                      : 'text-slate-500 hover:text-slate-700'
-                  }`}
+          /* ==================== SUBMISSION FORM - Mobile Optimized ==================== */
+          <div className="px-5 pb-5 sm:px-6 sm:pb-6 md:px-8 md:pb-8 animate-fadeIn">
+            <div className="rounded-2xl border-2 border-dashed border-emerald-200 bg-emerald-50/50 p-4 sm:p-5 space-y-4">
+              
+              {/* Studio Button - Prominent on mobile */}
+              {["studio_workbench", "studio_submission", "combined"].includes(mode) && (
+                <Button
+                  type="button"
+                  onClick={() => onLaunchStudio?.()}
+                  className="w-full rounded-xl border-2 border-orange-200 bg-gradient-to-r from-orange-50 to-amber-50 text-orange-700 hover:from-orange-100 hover:to-amber-100 py-4 text-sm font-bold"
                 >
-                  ✍️ Write
-                </button>
-                <button
-                  onClick={() => setActiveTab('preview')}
-                  className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition-all duration-200 ${
-                    activeTab === 'preview'
-                      ? 'bg-white shadow-sm text-emerald-700'
-                      : 'text-slate-500 hover:text-slate-700'
-                  }`}
-                >
-                  👁️ Preview
-                </button>
-              </div>
+                  <Wand2 className="mr-2 h-4 w-4" />
+                  Launch Practice Studio
+                </Button>
+              )}
 
-              <form action={submitPracticeExercise} className="space-y-4 sm:space-y-5">
+              <form action={submitPracticeExercise} className="space-y-4">
                 <input type="hidden" name="exercise_block_id" value={blockId} />
                 <input type="hidden" name="studio_output" id={`studio-output-${blockId}`} />
                 <input type="hidden" name="studio_tool_id" id={`studio-tool-${blockId}`} />
                 <input type="hidden" name="studio_inputs" id={`studio-inputs-${blockId}`} />
 
-                {/* Studio Button */}
-                {["studio_workbench", "studio_submission", "combined"].includes(mode) && (
-                  <div className="relative group/studio">
-                    <div className="absolute -inset-0.5 bg-gradient-to-r from-orange-400 to-red-500 rounded-xl opacity-0 group-hover/studio:opacity-100 blur transition-all duration-300" />
-                    <Button
-                      type="button"
-                      onClick={() => onLaunchStudio?.()}
-                      className="relative w-full sm:w-auto rounded-xl border-2 border-orange-200 text-orange-600 bg-gradient-to-r from-orange-50 to-red-50 hover:from-orange-500 hover:to-red-500 hover:text-white transition-all duration-300 group overflow-hidden"
-                    >
-                      <Wand2 className="mr-2 h-4 w-4 group-hover:rotate-12 transition-transform" />
-                      <span className="relative z-10">Launch Practice Studio</span>
-                      <span className="absolute inset-0 bg-gradient-to-r from-orange-500 to-red-500 opacity-0 group-hover:opacity-100 transition-opacity" />
-                    </Button>
-                  </div>
-                )}
-
-                {/* Text Area */}
-                <label className="block space-y-2">
-                  <span className="text-xs font-black uppercase tracking-widest text-emerald-700 flex items-center gap-2">
-                    <span className="h-1 w-1 rounded-full bg-emerald-500 animate-pulse" />
-                    {activeTab === 'write' ? '✍️ Text Response' : '👁️ Preview Your Response'}
-                  </span>
+                {/* Text Area - Bigger touch target */}
+                <div className="space-y-2">
+                  <label className="text-xs font-black uppercase tracking-widest text-emerald-700">
+                    ✍️ Your Response
+                  </label>
                   <textarea
                     name="text_response"
                     id={`text-response-${blockId}`}
-                    rows={6}
-                    placeholder="Share your thoughts, reflections, or solutions here..."
-                    className="w-full rounded-xl border-2 border-emerald-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none transition-all duration-200 placeholder:text-slate-300 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 hover:border-emerald-300 resize-y min-h-[120px]"
+                    rows={5}
+                    placeholder="Write your answer here..."
+                    className="w-full rounded-xl border-2 border-emerald-200 bg-white px-4 py-3 text-base text-slate-700 outline-none transition-colors placeholder:text-slate-300 focus:border-emerald-500"
                   />
-                  <div className="flex justify-between text-[10px] text-slate-400">
-                    <span>Markdown supported</span>
-                    <span className="flex items-center gap-1">
-                      <span className="h-1 w-1 rounded-full bg-green-500" />
-                      Auto-save enabled
-                    </span>
-                  </div>
-                </label>
+                </div>
 
-                {/* File Upload */}
-                <label className="block space-y-2">
-                  <span className="text-xs font-black uppercase tracking-widest text-emerald-700 flex items-center gap-2">
-                    <span className="h-1 w-1 rounded-full bg-emerald-500 animate-pulse" />
+                {/* File Upload - Touch friendly */}
+                <div className="space-y-2">
+                  <label className="text-xs font-black uppercase tracking-widest text-emerald-700">
                     📎 Upload Evidence
-                  </span>
-                  <div className="relative group/upload">
-                    <input
-                      name="files"
-                      type="file"
-                      multiple
-                      className="block w-full rounded-xl border-2 border-dashed border-emerald-200 bg-white/50 px-4 py-6 text-sm text-slate-600 file:mr-4 file:rounded-xl file:border-2 file:border-emerald-200 file:bg-gradient-to-r file:from-emerald-50 file:to-teal-50 file:px-4 file:py-2 file:text-sm file:font-bold file:text-emerald-700 hover:file:from-emerald-100 hover:file:to-teal-100 transition-all duration-200 cursor-pointer hover:border-emerald-300"
-                    />
-                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-0 group-hover/upload:opacity-100 transition-opacity">
-                      <span className="bg-white/90 px-4 py-2 rounded-xl text-sm font-bold text-emerald-700 shadow-lg">
-                        Drop files here or click to browse
-                      </span>
-                    </div>
+                  </label>
+                  <div className="relative rounded-xl border-2 border-dashed border-emerald-200 bg-white/50 p-4 text-center">
+                    <p className="text-sm text-slate-500 mb-2">Drop files here or tap to browse</p>
+                    <label className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-50 text-[11px] font-bold text-emerald-700 border border-emerald-200 cursor-pointer active:bg-emerald-100 transition-colors">
+                      <span>📁</span>
+                      Choose Files
+                      <input
+                        name="files"
+                        type="file"
+                        multiple
+                        className="hidden"
+                      />
+                    </label>
+                    <p className="text-[10px] text-slate-400 mt-2">Max 10MB each</p>
                   </div>
-                  <p className="text-[10px] text-slate-400">
-                    Supported: PDF, DOCX, images, code files (Max 10MB each)
-                  </p>
-                </label>
+                </div>
 
-                {/* Submit Button */}
-                <Button className="w-full sm:w-auto rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-6 sm:px-8 py-4 sm:py-5 text-white hover:from-emerald-700 hover:to-teal-700 shadow-lg shadow-emerald-200 transition-all duration-300 hover:shadow-xl hover:shadow-emerald-300/50 hover:-translate-y-0.5 group relative overflow-hidden">
-                  <span className="relative z-10 flex items-center justify-center gap-2">
-                    <span className="text-lg group-hover:scale-110 transition-transform">🚀</span>
-                    Submit for AI Feedback
-                    <span className="group-hover:translate-x-1 transition-transform">→</span>
-                  </span>
-                  <div className="absolute inset-0 bg-gradient-to-r from-emerald-700 to-teal-700 opacity-0 group-hover:opacity-100 transition-opacity" />
+                {/* Submit Button - Full width, prominent */}
+                <Button className="w-full rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white hover:from-emerald-700 hover:to-teal-700 py-5 text-sm font-bold shadow-lg shadow-emerald-200/50 active:scale-[0.98] transition-transform">
+                  🚀 Submit for AI Feedback
                 </Button>
               </form>
             </div>
           </div>
         )}
 
-        {/* Progress Indicator */}
+        {/* Progress indicator */}
         {submission && (
-          <div className="mt-4 flex items-center justify-center gap-2">
-            <div className="flex gap-1">
-              {[1, 2, 3].map((step) => (
-                <div
-                  key={step}
-                  className={`h-1.5 w-8 rounded-full transition-all duration-300 ${
-                    step <= submission.attempt_number
-                      ? 'bg-gradient-to-r from-emerald-400 to-teal-500'
-                      : 'bg-slate-200'
-                  }`}
-                />
-              ))}
+          <div className="px-5 pb-5 sm:px-6 sm:pb-6 md:px-8 md:pb-8">
+            <div className="flex items-center gap-3">
+              <div className="flex-1 flex gap-1">
+                {[1, 2, 3].map((step) => (
+                  <div
+                    key={step}
+                    className={`h-1 flex-1 rounded-full transition-all duration-300 ${
+                      step <= submission.attempt_number
+                        ? 'bg-gradient-to-r from-emerald-400 to-teal-500'
+                        : 'bg-slate-200'
+                    }`}
+                  />
+                ))}
+              </div>
+              <span className="text-[10px] font-medium text-slate-400 shrink-0">
+                {submission.attempt_number}/3 attempts
+              </span>
             </div>
-            <span className="text-[10px] font-bold text-slate-400">
-              Attempt {submission.attempt_number} of 3
-            </span>
           </div>
         )}
+      </div>
+
+      {/* Desktop enhancements - Metadata side panel */}
+      <div className="hidden lg:block absolute right-0 top-0 bottom-0 w-64 translate-x-full pl-4">
+        <div className="sticky top-4 space-y-3">
+          <div className="rounded-2xl bg-white border border-slate-200 p-4">
+            <h4 className="text-xs font-black uppercase tracking-widest text-slate-400 mb-3">
+              📊 Learning Path
+            </h4>
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-xs text-slate-600">
+                <span className="h-2 w-2 rounded-full bg-green-500" />
+                Quick Start
+              </div>
+              <div className="flex items-center gap-2 text-xs text-slate-400">
+                <span className="h-2 w-2 rounded-full bg-slate-300" />
+                Frameworks
+              </div>
+              <div className="flex items-center gap-2 text-xs text-slate-400">
+                <span className="h-2 w-2 rounded-full bg-slate-300" />
+                Workflow Build
+              </div>
+              <div className="flex items-center gap-2 text-xs text-slate-400">
+                <span className="h-2 w-2 rounded-full bg-slate-300" />
+                Audit & Ship
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <style>{`
