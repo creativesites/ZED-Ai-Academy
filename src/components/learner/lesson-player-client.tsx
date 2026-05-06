@@ -820,8 +820,12 @@ function CaseStudyBlock({ content }: { content: Record<string, unknown> }) {
   );
 }
 
-function MeetingBlock({ content, booking }: { content: Record<string, unknown>, booking?: any }) {
+function MeetingBlock({ content, bookings }: { content: Record<string, unknown>, bookings: any[] }) {
   const router = useRouter();
+  const serviceId = content.service_id as string | undefined;
+  
+  // Find the most relevant booking for this specific service
+  const booking = bookings?.find(b => b.service_id === serviceId);
   const meetingId = content.meeting_id as string;
   const title = (content.title as string) || "Live Training Session";
   const passWord = content.password as string | undefined;
@@ -860,7 +864,7 @@ function MeetingBlock({ content, booking }: { content: Record<string, unknown>, 
       setJoining(false);
     }
   }
-
+console.log('booking data',booking)
 
   // Handle Booking logic
   const serviceId = content.service_id as string | undefined;
@@ -1617,7 +1621,7 @@ export function LessonPlayerClient({
   existingCertificate,
   discussions,
   practiceSubmissions = [],
-  booking,
+  bookings,
   userId,
   isPreview = false,
   isPartialEnrollment = false,
@@ -1640,7 +1644,7 @@ export function LessonPlayerClient({
   existingCertificate: { id: string; public_id: string; issued_at: string } | null;
   discussions?: DiscussionWithProfile[];
   practiceSubmissions?: any[];
-  booking?: any;
+  bookings?: any[];
   userId?: string | null;
   isPreview?: boolean;
   isPartialEnrollment?: boolean;
@@ -2046,7 +2050,7 @@ export function LessonPlayerClient({
                       {block.type === "expert_note" && <ExpertNoteBlock content={block.content} />}
                       {block.type === "comparison_table" && <ComparisonTableBlock content={block.content} />}
                       {block.type === "case_study" && <CaseStudyBlock content={block.content} />}
-                      {block.type === "meeting" && <MeetingBlock content={block.content} booking={booking} />}
+                      {block.type === "meeting" && <MeetingBlock content={block.content} bookings={bookings || []} />}
                       {block.type === "practice_exercise" && (
                         <PracticeExerciseBlock 
                           blockId={block.id} 
