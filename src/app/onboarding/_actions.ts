@@ -1,17 +1,33 @@
 "use server";
 
 import { auth, clerkClient } from "@clerk/nextjs/server";
+import { cookies } from "next/headers";
 import { createServiceClient } from "@/lib/supabase/server";
+import type { CompanyMemberRole, UserRole } from "@/types/database";
+import { generateUniqueSlug } from "@/lib/utils";
+
+function normalizeSignupRole(rawRole: string | null): UserRole {
+  if (rawRole === "company_admin" || rawRole === "tutor") return "company_admin";
+  if (rawRole === "teacher") return "teacher";
+  return "learner";
+}
+
+function membershipRoleForProfileRole(role: UserRole): CompanyMemberRole {
+  if (role === "company_admin") return "company_admin";
+  if (role === "teacher" || role === "instructor") return "teacher";
+  return "learner";
+}
 
 export async function completeOnboarding(formData: FormData) {
-  const { userId, sessionClaims } = await auth();
+  const { userId, orgId, sessionClaims } = await auth();
 
   if (!userId) {
     return { error: "No signed-in user" };
   }
 
   const fullName = formData.get("fullName") as string;
-  const platform = sessionClaims?.sourse_platform || "web";
+  const claims = sessionClaims as Record<string, unknown> | null;
+  const platform = typeof claims?.source_platform === "string" ? claims.source_platform : "web";
 
   if (!fullName) {
     return { error: "Full name is required" };
@@ -21,24 +37,98 @@ export async function completeOnboarding(formData: FormData) {
   const supabase = createServiceClient();
 
   try {
-    // 1. Update Clerk Metadata
+    const rawRole = formData.get("role") as string | null;
+    const finalRole = normalizeSignupRole(rawRole);
+    
+    // Check form data first, then cookies
+    const cookieStore = await cookies();
+    const tenantSlug = (formData.get("tenantSlug") as string) || cookieStore.get("last_visited_tenant")?.value;
+    
+    const teacherCode = formData.get("teacherCode") as string;
+
+    if (finalRole === "company_admin" && !orgId) {
+      return { error: "Please create your academy before continuing." };
+    }
+
     await client.users.updateUser(userId, {
       publicMetadata: {
         onboardingComplete: true,
+        role: finalRole,
       },
     });
 
-    // 2. Update Profiles table
+    let joinedCompanyId: string | null = null;
+    let joinedCompanySlug: string | null = null;
+
+    // 1. Handle Company Admin Setup
+    if (orgId && finalRole === "company_admin") {
+      const org = await client.organizations.getOrganization({ organizationId: orgId });
+      joinedCompanyId = org.id;
+      // Use clean, unique slug instead of Clerk's default slug (which might have random numbers)
+      joinedCompanySlug = await generateUniqueSlug(supabase, org.name, "companies", org.id);
+
+      await supabase.from("companies").upsert({
+        id: org.id,
+        name: org.name,
+        slug: joinedCompanySlug,
+        logo_url: org.imageUrl,
+        admin_id: userId,
+        updated_at: new Date().toISOString(),
+      }, { onConflict: "id" });
+
+      await supabase.from("company_members").upsert({
+        company_id: org.id,
+        profile_id: userId,
+        status: "active",
+        role: "company_admin",
+        joined_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      }, { onConflict: "company_id, profile_id" });
+    }
+
+    // 2. Handle Tenant Join (Learner or Teacher)
+    if (tenantSlug && finalRole !== "company_admin") {
+      const { data: tenant } = await supabase
+        .from("companies")
+        .select("id, slug, teacher_code")
+        .eq("slug", tenantSlug)
+        .maybeSingle();
+
+      if (tenant) {
+        if (finalRole === "teacher") {
+          const expectedCode = tenant.teacher_code || "0000";
+          if (teacherCode !== expectedCode) {
+            return { error: "Invalid staff access code for this academy." };
+          }
+        }
+
+        joinedCompanyId = tenant.id;
+        joinedCompanySlug = tenant.slug;
+        await supabase.from("company_members").upsert({
+          company_id: tenant.id,
+          profile_id: userId,
+          status: "active",
+          role: membershipRoleForProfileRole(finalRole),
+          joined_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        }, { onConflict: "company_id, profile_id" });
+      }
+    }
+
+    // 3. Update Profiles table
     await supabase
       .from("profiles")
-      .update({
+      .upsert({
+        id: userId,
         full_name: fullName,
+        role: finalRole,
+        company_id: joinedCompanyId, // Default company context
         onboarding_completed: true,
-      })
-      .eq("id", userId);
+        updated_at: new Date().toISOString(),
+      }, { onConflict: "id" });
 
-    // 3. Track Platform
-    await (supabase as any)
+    // 4. Track Platform
+    await supabase
       .from("user_platforms")
       .upsert({
         user_id: userId,
@@ -49,32 +139,42 @@ export async function completeOnboarding(formData: FormData) {
     const enrollCourseSlug = formData.get("enrollCourse") as string;
     let redirectUrl = "/dashboard";
 
-    // 4. Handle Specific Course Auto-Enrollment (if requested via query param)
+    // 5. Handle Specific Course Auto-Enrollment
     if (enrollCourseSlug) {
       const { data: requestedCourse } = await supabase
         .from("courses")
-        .select("id, slug, price_type")
+        .select("id, slug, price_type, company_id")
         .eq("slug", enrollCourseSlug)
         .single();
 
       if (requestedCourse) {
         if (requestedCourse.price_type === "free") {
-          // Auto-enroll in free course
-          await (supabase as any).from("enrollments").upsert({
+          await supabase.from("enrollments").upsert({
             user_id: userId,
             course_id: requestedCourse.id,
+            company_id: requestedCourse.company_id,
             status: "active",
             source: "individual_purchase",
           }, { onConflict: "user_id,course_id" });
+
+          if (requestedCourse.company_id) {
+            await supabase.from("company_members").upsert({
+              company_id: requestedCourse.company_id,
+              profile_id: userId,
+              status: "active",
+              role: "learner",
+              joined_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+            }, { onConflict: "company_id, profile_id" });
+          }
           redirectUrl = `/courses/${requestedCourse.slug}/learn`;
         } else {
-          // Redirect to paid course page (where popup logic can trigger)
           redirectUrl = `/courses/${requestedCourse.slug}?action=enroll`;
         }
       }
     } else {
-      // 5. Fallback: Enroll in Global Onboarding Course (if configured)
-      const { data: setting } = await (supabase as any)
+      // Fallback: Enroll in Global Onboarding Course
+      const { data: setting } = await supabase
         .from("site_settings")
         .select("value")
         .eq("key", "onboarding_course_id")
@@ -82,7 +182,7 @@ export async function completeOnboarding(formData: FormData) {
 
       const globalCourseId = setting?.value as string;
       if (globalCourseId && globalCourseId !== "00000000-0000-0000-0000-000000000000") {
-        await (supabase as any).from("enrollments").upsert({
+        await supabase.from("enrollments").upsert({
           user_id: userId,
           course_id: globalCourseId,
           status: "active",
@@ -91,9 +191,18 @@ export async function completeOnboarding(formData: FormData) {
       }
     }
 
+    // 6. Role-based Redirection
+    if (!enrollCourseSlug && joinedCompanySlug) {
+      if (finalRole === "company_admin") {
+        redirectUrl = `/classroom/${joinedCompanySlug}`;
+      } else {
+        redirectUrl = `/academy/${joinedCompanySlug}/classroom`;
+      }
+    }
+
     return { success: true, redirectUrl };
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("Onboarding Error:", err);
-    return { error: err.message || "There was an error updating your profile." };
+    return { error: err instanceof Error ? err.message : "There was an error updating your profile." };
   }
 }

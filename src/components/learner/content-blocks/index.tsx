@@ -18,15 +18,19 @@ import { MeetingBlock } from "./meeting-block";
 import { PracticeExerciseBlock } from "./practice-exercise-block";
 import { ContentBlock } from "./types";
 
-export function BlockRenderer({ 
-  block, 
-  bookings, 
+export function BlockRenderer({
+  block,
+  bookings,
   practiceSubmissions,
-  onLaunchStudio 
-}: { 
-  block: ContentBlock; 
+  courseId,
+  lessonId,
+  onLaunchStudio
+}: {
+  block: ContentBlock;
   bookings?: any[];
   practiceSubmissions?: any[];
+  courseId?: string;
+  lessonId?: string;
   onLaunchStudio?: (initialTool?: string) => void;
 }) {
   const { type, content, id } = block;
@@ -61,7 +65,7 @@ export function BlockRenderer({
     case "case_study":
       return <CaseStudyBlock content={content} />;
     case "meeting":
-      return <MeetingBlock content={content} bookings={bookings || []} />;
+      return <MeetingBlock content={content} bookings={bookings || []} courseId={courseId} lessonId={lessonId} />;
     case "practice_exercise":
       const submission = practiceSubmissions?.find((s) => s.exercise_block_id === id);
       return (

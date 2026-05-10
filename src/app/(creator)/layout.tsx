@@ -3,6 +3,8 @@ import { redirect } from "next/navigation";
 import { createServiceClient } from "@/lib/supabase/server";
 import { ensureProfile } from "@/lib/supabase/ensure-profile";
 import { requireOnboarding } from "@/lib/require-onboarding";
+import { syncActiveOrganization } from "@/actions/company";
+import { companyAdminNeedsAcademySetup } from "@/lib/company-admin-setup";
 import Header2Wrapper from "@/components/layout/Header2Wrapper";
 import Footer1 from "@/components/layout/footer/Footer1";
 import { NotificationBellServer } from "@/components/shared/notification-bell-server";
@@ -14,8 +16,16 @@ import 'swiper/css/free-mode';
 import { dmSans } from '@/lib/font'
 
 export default async function CreatorLayout({ children }: { children: React.ReactNode }) {
-  const { userId } = await auth();
+  const { userId, orgId } = await auth();
   if (!userId) redirect("/sign-in");
+
+  if (orgId) {
+    try {
+      await syncActiveOrganization();
+    } catch {
+      // non-fatal
+    }
+  }
 
   try {
     await ensureProfile(userId);
@@ -36,8 +46,15 @@ export default async function CreatorLayout({ children }: { children: React.Reac
     .eq("id", userId)
     .single();
 
-  if (!profile || !["instructor", "super_admin"].includes(profile.role)) {
+  if (!profile || !["instructor", "super_admin", "company_admin"].includes(profile.role)) {
     redirect("/dashboard");
+  }
+
+  if (profile?.role === "company_admin") {
+    const needsLaunch = await companyAdminNeedsAcademySetup(userId, orgId);
+    if (needsLaunch) {
+      redirect("/launch-your-academy");
+    }
   }
 
   return (

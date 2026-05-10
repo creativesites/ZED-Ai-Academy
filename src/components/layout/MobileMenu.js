@@ -3,7 +3,8 @@ import Link from "next/link";
 import { useState } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { SignInButton, SignUpButton, UserButton } from "@clerk/nextjs";
-import { X as XClose, Mail, Phone, MapPin, Camera, X as XSocial, Briefcase, ChevronRight, LayoutDashboard, Sparkles } from "lucide-react";
+import { X as XClose, Mail, Phone, MapPin, Camera, X as XSocial, Briefcase, ChevronRight, LayoutDashboard, Sparkles, MessageCircle } from "lucide-react";
+import { LaunchAcademyCTA } from "@/components/layout/LaunchAcademyCTA";
 
 const MobileMenu = ({ handleMobileMenu }) => {
   const [isActive, setIsActive] = useState({ status: false, key: "" });
@@ -19,8 +20,8 @@ const MobileMenu = ({ handleMobileMenu }) => {
     <>
       <div className="mobile-nav__wrapper">
         <div className="mobile-nav__overlay mobile-nav__toggler" onClick={handleMobileMenu}></div>
-        <div className="mobile-nav__content bg-white p-8">
-          <button className="mobile-nav__close absolute top-8 right-8 h-12 w-12 rounded-2xl bg-slate-50 flex items-center justify-center text-[#062e39]" onClick={handleMobileMenu}>
+        <div className="mobile-nav__content bg-gradient-to-br from-[#062e39] to-[#0a4055] p-8">
+          <button className="mobile-nav__close absolute top-8 right-8 h-12 w-12 rounded-2xl bg-gradient-to-br from-[#062e39] to-[#0a4055] flex items-center justify-center text-[#062e39]" onClick={handleMobileMenu}>
             <XClose className="h-6 w-6" />
           </button>
 
@@ -49,7 +50,7 @@ const MobileMenu = ({ handleMobileMenu }) => {
                 )}
               </li>
               <li><Link href="/about" onClick={handleMobileMenu} className="text-2xl font-black text-[#062e39] hover:text-[#fd5523] transition-colors">About</Link></li>
-              <li><Link href="/blog" onClick={handleMobileMenu} className="text-2xl font-black text-[#062e39] hover:text-[#fd5523] transition-colors">Blog</Link></li>
+              {/* <li><Link href="/blog" onClick={handleMobileMenu} className="text-2xl font-black text-[#062e39] hover:text-[#fd5523] transition-colors">Blog</Link></li> */}
               <li><Link href="/contact" onClick={handleMobileMenu} className="text-2xl font-black text-[#062e39] hover:text-[#fd5523] transition-colors">Contact</Link></li>
             </ul>
           </div>
@@ -79,6 +80,7 @@ const MobileMenu = ({ handleMobileMenu }) => {
             <div className="pt-8 border-t border-slate-100">
               {isSignedIn ? (
                 <div className="flex flex-col gap-4">
+                  <LaunchAcademyCTA variant="mobileMenu" />
                   <Link href="/dashboard" onClick={handleMobileMenu} className="flex items-center justify-center gap-3 w-full py-4 rounded-2xl bg-[#062e39] text-white font-bold">
                     <LayoutDashboard className="h-5 w-5" />
                     Student Dashboard
@@ -107,9 +109,15 @@ const MobileMenu = ({ handleMobileMenu }) => {
           )}
 
           <div className="flex gap-4 mt-12">
-            <Link href="#" className="h-12 w-12 rounded-2xl bg-slate-50 text-slate-400 flex items-center justify-center hover:bg-[#fd5523] hover:text-white transition-all"><XSocial className="h-5 w-5" /></Link>
-            <Link href="#" className="h-12 w-12 rounded-2xl bg-slate-50 text-slate-400 flex items-center justify-center hover:bg-[#fd5523] hover:text-white transition-all"><Briefcase className="h-5 w-5" /></Link>
-            <Link href="#" className="h-12 w-12 rounded-2xl bg-slate-50 text-slate-400 flex items-center justify-center hover:bg-[#fd5523] hover:text-white transition-all"><Camera className="h-5 w-5" /></Link>
+            <Link href="https://wa.me/260979046745" target="_blank" className="h-12 w-12 rounded-2xl bg-slate-50 text-slate-400 flex items-center justify-center hover:bg-[#25D366] hover:text-white transition-all">
+              <MessageCircle className="h-5 w-5" />
+            </Link>
+            <Link href="mailto:creativesites263@gmail.com" className="h-12 w-12 rounded-2xl bg-slate-50 text-slate-400 flex items-center justify-center hover:bg-[#fd5523] hover:text-white transition-all">
+              <Mail className="h-5 w-5" />
+            </Link>
+            <Link href="/dashboard" onClick={handleMobileMenu} className="h-12 w-12 rounded-2xl bg-slate-50 text-slate-400 flex items-center justify-center hover:bg-[#062e39] hover:text-white transition-all">
+              <LayoutDashboard className="h-5 w-5" />
+            </Link>
           </div>
         </div>
       </div>

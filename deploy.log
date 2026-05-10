@@ -1,0 +1,9 @@
+Vercel CLI 41.4.0
+Retrieving project…
+Deploying creativesites-projects/zed-ai-academy
+Uploading [--------------------] (0.0B/127.4KB)
+Uploading [=====---------------] (33.6KB/127.4KB)
+Uploading [==========----------] (69.0KB/127.4KB)
+Uploading [================----] (107.1KB/127.4KB)
+Uploading [====================] (127.4KB/127.4KB)
+Error: Your Vercel CLI version is outdated. This endpoint requires version 47.2.2 or later. Please upgrade by running `npm i -g vercel@latest`.

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { auth } from "@clerk/nextjs/server";
 import { SignInButton, SignUpButton, UserButton, OrganizationSwitcher } from "@clerk/nextjs";
-import { ArrowRight, BrainCircuit, LayoutDashboard, Mail, MapPin, Menu, Phone, Sparkles } from "lucide-react";
+import { ArrowRight, BrainCircuit, LayoutDashboard, Mail, MapPin, Menu, Phone, Rocket, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -35,17 +35,24 @@ function BrandLockup() {
 }
 
 export async function Navbar() {
-  const { userId } = await auth();
+  const { userId, orgId } = await auth();
 
   let isAdmin = false;
+  let isLearner = false;
+  let needsAcademyLaunch = false;
   if (userId) {
     const supabase = createServiceClient();
     const { data } = await supabase
       .from("profiles")
-      .select("role")
+      .select("role, onboarding_completed")
       .eq("id", userId)
       .single();
     isAdmin = data?.role === "super_admin" || data?.role === "instructor";
+    isLearner = data?.role === "learner";
+    if (data?.role === "company_admin" && data.onboarding_completed) {
+      const { companyAdminNeedsAcademySetup } = await import("@/lib/company-admin-setup");
+      needsAcademyLaunch = await companyAdminNeedsAcademySetup(userId, orgId);
+    }
   }
 
   return (
@@ -96,6 +103,15 @@ export async function Navbar() {
             <div className="hidden items-center gap-3 lg:flex">
               {userId ? (
                 <>
+                  {needsAcademyLaunch && (
+                    <Link
+                      href="/launch-your-academy"
+                      className="inline-flex items-center gap-2 rounded-full border border-[#fd5523]/40 bg-[#fd5523]/10 px-4 py-2 text-sm font-semibold text-[#fd5523] transition-colors hover:bg-[#fd5523] hover:text-white"
+                    >
+                      <Rocket className="h-4 w-4" />
+                      Open your academy
+                    </Link>
+                  )}
                   <Link
                     href={isAdmin ? "/creator/courses" : "/dashboard"}
                     className="inline-flex items-center gap-2 rounded-full bg-[#062e39] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#0a4055]"
@@ -103,14 +119,15 @@ export async function Navbar() {
                     <LayoutDashboard className="h-4 w-4 text-[#fd5523]" />
                     Dashboard
                   </Link>
-                  <OrganizationSwitcher 
-                    afterCreateOrganizationUrl="/onboarding"
-                    appearance={{
-                      elements: {
-                        organizationSwitcherTrigger: "rounded-full bg-slate-50 border border-slate-200 px-3 py-1.5 text-xs font-semibold text-[#062e39]",
-                      }
-                    }}
-                  />
+                  {!isLearner && (
+                    <OrganizationSwitcher 
+                      appearance={{
+                        elements: {
+                          organizationSwitcherTrigger: "rounded-full bg-slate-50 border border-slate-200 px-3 py-1.5 text-xs font-semibold text-[#062e39]",
+                        }
+                      }}
+                    />
+                  )}
                   <UserButton />
                 </>
               ) : (
@@ -172,6 +189,15 @@ export async function Navbar() {
                     <div className="border-t border-slate-200 px-6 py-5">
                       {userId ? (
                         <div className="space-y-3">
+                          {needsAcademyLaunch && (
+                            <Link
+                              href="/launch-your-academy"
+                              className="flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#fd5523] to-[#ff7a45] px-4 py-3 text-base font-semibold text-white shadow-lg shadow-[#fd5523]/25"
+                            >
+                              <Rocket className="h-5 w-5" />
+                              Open your academy
+                            </Link>
+                          )}
                           <Link
                             href={isAdmin ? "/creator/courses" : "/dashboard"}
                             className="flex items-center gap-2 rounded-2xl border border-[#062e39] bg-[#062e39] px-4 py-3 text-base font-medium text-white"
@@ -179,10 +205,12 @@ export async function Navbar() {
                             <LayoutDashboard className="h-5 w-5 text-[#fd5523]" />
                             Dashboard
                           </Link>
-                          <div className="flex items-center justify-between">
-                            <p className="text-sm font-medium text-slate-600">Team</p>
-                            <OrganizationSwitcher />
-                          </div>
+                          {!isLearner && (
+                            <div className="flex items-center justify-between">
+                              <p className="text-sm font-medium text-slate-600">Team</p>
+                              <OrganizationSwitcher />
+                            </div>
+                          )}
                           <div className="flex items-center justify-between">
                             <p className="text-sm font-medium text-slate-600">Account</p>
                             <UserButton />

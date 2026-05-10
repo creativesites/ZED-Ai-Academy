@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 import {
   ArrowRight, Award, BookOpen, Building2, CalendarDays, Clock3, GraduationCap,
   Image as ImageIcon, Layers, MessageCircle, Play, ShieldCheck,
-  Sparkles, Trophy, UserCheck, Users,
+  Sparkles, Trophy, UserCheck, Users, Settings
 } from "lucide-react";
 import { WhatsAppShare } from "@/components/shared/whatsapp-share";
 import { ReferralWidget } from "@/components/shared/referral-widget";
@@ -42,19 +42,39 @@ export default async function DashboardPage() {
 
   const { data: profileData } = await supabase
     .from("profiles")
-    .select("full_name, role, onboarding_completed")
+    .select("full_name, role, onboarding_completed, company_id")
     .eq("id", userId)
     .single();
 
-  const profile = profileData as { full_name: string | null; role: UserRole; onboarding_completed: boolean } | null;
+  const profile = profileData as { full_name: string | null; role: UserRole; onboarding_completed: boolean; company_id: string | null } | null;
   // Redirect to onboarding if neither flag is set (covers pre-migration rows too)
   if (!profile?.onboarding_completed && !profile?.full_name) redirect("/onboarding");
 
   const role = profile.role;
   const isAdmin = role === "super_admin";
-  const isInstructor = role === "instructor" || isAdmin;
+  const isInstructor = role === "instructor" || role === "teacher" || isAdmin;
   const isCompanyAdmin = role === "company_admin";
   const firstName = profile.full_name?.split(" ")[0] ?? "there";
+
+  let companySlug: string | null = null;
+  const { data: activeMembership } = await supabase
+    .from("company_members")
+    .select("company_id")
+    .eq("profile_id", userId)
+    .eq("status", "active")
+    .order("joined_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  const defaultCompanyId = activeMembership?.company_id ?? profile.company_id;
+  if (defaultCompanyId) {
+    const { data: companyData } = await supabase
+      .from("companies")
+      .select("slug")
+      .eq("id", defaultCompanyId)
+      .single();
+    companySlug = companyData?.slug ?? null;
+  }
 
   // ── Admin stats (super_admin only, uses service client to bypass RLS) ──
   let adminStats: {
@@ -163,7 +183,7 @@ export default async function DashboardPage() {
   // Role label for hero
   const roleLabel =
     isAdmin ? "Super Admin" :
-    role === "instructor" ? "Instructor" :
+    role === "instructor" || role === "teacher" ? "Teacher" :
     isCompanyAdmin ? "Company Admin" :
     "Learning Command Center";
 
@@ -211,6 +231,17 @@ export default async function DashboardPage() {
               >
                 Manage Account
               </Link>
+              {companySlug && (
+                <Link
+                  href={`/classroom/${companySlug}`}
+                  className={cn(
+                    buttonVariants({ variant: "outline" }),
+                    "rounded-full border-2 border-[#fd5523]/50 bg-[#fd5523]/20 px-8 py-7 text-lg font-bold text-[#fd5523] backdrop-blur-md transition-all hover:bg-[#fd5523]/30 flex items-center justify-center"
+                  )}
+                >
+                  Enter Classroom
+                </Link>
+              )}
             </div>
           </div>
         </section>
@@ -329,7 +360,7 @@ export default async function DashboardPage() {
         )}
 
         {/* ── Instructor tools (instructor only, not super_admin — already covered above) ── */}
-        {role === "instructor" && (
+        {(role === "instructor" || role === "teacher") && (
           <section className="space-y-5">
             <div className="flex items-center gap-3 px-1">
               <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#062e39]">
@@ -388,31 +419,72 @@ export default async function DashboardPage() {
         )}
 
         {/* ── Company admin tools ────────────────────────────────────────── */}
-        {isCompanyAdmin && (
-          <section className="space-y-5">
+        {(isCompanyAdmin || isAdmin) && (
+          <section className="space-y-6">
             <div className="flex items-center gap-3 px-1">
               <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#062e39]">
                 <Building2 className="h-4 w-4 text-white" />
               </div>
-              <h2 className="text-2xl font-bold tracking-tight text-[#062e39]">Company Workspace</h2>
+              <h2 className="text-2xl font-bold tracking-tight text-[#062e39]">Academy Management</h2>
             </div>
-            <Link
-              href="/company"
-              className="group marketing-card flex items-center gap-5 rounded-[2rem] border-0 p-6 transition-all hover:-translate-y-1 hover:shadow-xl"
-            >
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
-                <Building2 className="h-5 w-5" />
-              </div>
-              <div className="flex-1">
-                <p className="font-bold text-[#062e39] group-hover:text-[#fd5523] transition-colors">
-                  Company Learning Dashboard
-                </p>
-                <p className="mt-0.5 text-xs text-slate-500">
-                  Manage seats, track team progress, and view analytics
-                </p>
-              </div>
-              <ArrowRight className="h-4 w-4 shrink-0 text-slate-300 transition-colors group-hover:text-[#fd5523]" />
-            </Link>
+            
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <Link
+                href="/creator/settings"
+                className="group marketing-card flex items-center gap-5 rounded-[2rem] border-0 p-6 transition-all hover:-translate-y-1 hover:shadow-xl"
+              >
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#fff6ee] text-[#fd5523]">
+                  <Settings className="h-6 w-6" />
+                </div>
+                <div className="flex-1">
+                  <p className="font-bold text-[#062e39] group-hover:text-[#fd5523] transition-colors">
+                    Edit Academy Identity
+                  </p>
+                  <p className="mt-0.5 text-xs text-slate-500">
+                    Branding, logo, and home customization
+                  </p>
+                </div>
+                <ArrowRight className="h-4 w-4 shrink-0 text-slate-300 transition-colors group-hover:text-[#fd5523]" />
+              </Link>
+
+              {companySlug && (
+                <Link
+                  href={`/classroom/${companySlug}`}
+                  className="group marketing-card flex items-center gap-5 rounded-[2rem] border-0 p-6 transition-all hover:-translate-y-1 hover:shadow-xl"
+                >
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600">
+                    <GraduationCap className="h-6 w-6" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-bold text-[#062e39] group-hover:text-[#fd5523] transition-colors">
+                      Academy Classroom
+                    </p>
+                    <p className="mt-0.5 text-xs text-slate-500">
+                      Manage students, sessions & timetable
+                    </p>
+                  </div>
+                  <ArrowRight className="h-4 w-4 shrink-0 text-slate-300 transition-colors group-hover:text-[#fd5523]" />
+                </Link>
+              )}
+
+              <Link
+                href="/company"
+                className="group marketing-card flex items-center gap-5 rounded-[2rem] border-0 p-6 transition-all hover:-translate-y-1 hover:shadow-xl"
+              >
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
+                  <Building2 className="h-6 w-6" />
+                </div>
+                <div className="flex-1">
+                  <p className="font-bold text-[#062e39] group-hover:text-[#fd5523] transition-colors">
+                    Corporate Dashboard
+                  </p>
+                  <p className="mt-0.5 text-xs text-slate-500">
+                    Manage seats and team analytics
+                  </p>
+                </div>
+                <ArrowRight className="h-4 w-4 shrink-0 text-slate-300 transition-colors group-hover:text-[#fd5523]" />
+              </Link>
+            </div>
           </section>
         )}
 

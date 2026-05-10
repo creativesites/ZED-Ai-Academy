@@ -78,8 +78,8 @@ export function PlanEnrollModal({
         onClick={handleOpen}
         className={
           planName === "Pro"
-            ? "w-full rounded-full bg-white text-[#062e39] hover:bg-[#fff6ee] font-bold h-12"
-            : "w-full rounded-full bg-[#062e39] text-white hover:bg-[#0a3d4b] font-bold h-12"
+            ? "w-full rounded-full bg-white text-[#062e39] hover:bg-[#fff6ee] font-bold h-12 mt-4"
+            : "w-full rounded-full bg-[#062e39] text-white hover:bg-[#0a3d4b] font-bold h-12 mt-4"
         }
       >
         {planName === "Free" ? "Get started free" : `Start ${planName} — ${priceLabel}`}
@@ -138,8 +138,8 @@ export function PlanEnrollModal({
                   <div className="space-y-2">
                     <Label className="text-xs font-bold uppercase tracking-[0.2em] text-slate-400">WhatsApp Number</Label>
                     <div className="relative">
-                       <Phone className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                       <Input
+                      <Phone className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                      <Input
                         type="tel"
                         value={phone}
                         onChange={(e) => setPhone(e.target.value)}
@@ -151,14 +151,14 @@ export function PlanEnrollModal({
                   </div>
 
                   <div className="rounded-[2rem] bg-[#fff6ee] p-6 border border-[#fd5523]/10">
-                     <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm font-bold text-[#062e39] opacity-60">Selected Plan</span>
-                        <span className="text-sm font-bold text-[#fd5523] uppercase tracking-widest">{planName}</span>
-                     </div>
-                     <div className="flex items-center justify-between">
-                        <span className="text-lg font-extrabold text-[#062e39]">Total Due</span>
-                        <span className="text-lg font-extrabold text-[#062e39]">{priceLabel}</span>
-                     </div>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-bold text-[#062e39] opacity-60">Selected Plan</span>
+                      <span className="text-sm font-bold text-[#fd5523] uppercase tracking-widest">{planName}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-lg font-extrabold text-[#062e39]">Total Due</span>
+                      <span className="text-lg font-extrabold text-[#062e39]">{priceLabel}</span>
+                    </div>
                   </div>
 
                   <Button

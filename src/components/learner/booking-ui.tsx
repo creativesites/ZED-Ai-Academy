@@ -33,13 +33,15 @@ type LiveSessionSlotDay = {
 
 type BookingUIProps = {
   serviceId: string;
+  courseId?: string;
+  lessonId?: string;
   onSuccess?: () => void;
   onClose?: () => void;
 };
 
 type Step = "date" | "time" | "details" | "success";
 
-export function LiveSessionBookingUI({ serviceId, onSuccess, onClose }: BookingUIProps) {
+export function LiveSessionBookingUI({ serviceId, courseId, lessonId, onSuccess, onClose }: BookingUIProps) {
   const [step, setStep] = React.useState<Step>("date");
   const [loading, setLoading] = React.useState(true);
   const [service, setService] = React.useState<any>(null);
@@ -89,6 +91,8 @@ export function LiveSessionBookingUI({ serviceId, onSuccess, onClose }: BookingU
     formData.append("starts_at", selectedSlot.starts_at);
     formData.append("ends_at", selectedSlot.ends_at);
     formData.append("timezone", timezone);
+    if (courseId) formData.append("course_id", courseId);
+    if (lessonId) formData.append("lesson_id", lessonId);
 
     try {
       await requestLiveSessionBooking(formData);

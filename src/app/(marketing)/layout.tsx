@@ -3,6 +3,7 @@ import 'swiper/css'
 // import "swiper/css/navigation"
 import "swiper/css/pagination"
 import 'swiper/css/free-mode';
+import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 
 export default function MarketingLayout({
   children,
@@ -11,9 +12,8 @@ export default function MarketingLayout({
 }) {
   return (
     <div className="marketing-shell flex min-h-screen flex-col">
-      {/* <Navbar /> */}
       <main className="flex-1">{children}</main>
-      {/* <Footer /> */}
+      <MobileBottomNav />
     </div>
   );
 }

@@ -42,6 +42,7 @@ import { CaseStudyBlockEditor } from "@/components/creator/blocks/case-study-blo
 import { MeetingBlockEditor } from "@/components/creator/blocks/meeting-block";
 import { PracticeExerciseBlockEditor } from "@/components/creator/blocks/practice-exercise-block";
 import { QuizBuilder } from "@/components/creator/quiz-builder";
+import { AILessonGenerator } from "@/components/creator/ai-lesson-generator";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -462,13 +463,13 @@ export function LessonEditorClient({
           </DndContext>
 
           {blocks.length === 0 && (
-            <div className="flex flex-col items-center justify-center rounded-[3rem] border-2 border-dashed border-slate-200 py-32 text-center">
+            <div className="flex flex-col items-center justify-center rounded-[3rem] border-2 border-dashed border-slate-200 py-24 text-center">
               <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-[2.5rem] bg-[#fff6ee] text-[#fd5523]">
-                <Plus className="h-10 w-10" />
+                <Sparkles className="h-10 w-10" />
               </div>
               <h3 className="text-2xl font-bold text-[#062e39]">Empty Lesson Canvas</h3>
               <p className="mx-auto mt-2 max-w-sm text-slate-500">
-                Start building your lesson by adding blocks from the library on the right.
+                Use the <span className="font-bold text-[#fd5523]">Generate Lesson Content</span> panel on the right to let AI write your full lesson, or add blocks manually from the library.
               </p>
             </div>
           )}
@@ -513,15 +514,11 @@ export function LessonEditorClient({
               </div>
             </div>
 
-            <div className="marketing-outline-card rounded-[2rem] border-0 bg-slate-50/50 p-6">
-              <div className="flex items-center gap-2 text-[#062e39]">
-                <Sparkles className="h-4 w-4 text-[#fd5523]" />
-                <h3 className="text-xs font-bold uppercase tracking-widest">Studio Tip</h3>
-              </div>
-              <p className="mt-3 text-sm leading-relaxed text-slate-500">
-                Mix media types to keep learners engaged. Use Callouts for &quot;Quick Wins&quot; and Tool Spotlights for practical ROI.
-              </p>
-            </div>
+            <AILessonGenerator
+              lessonId={lesson.id}
+              courseId={courseId}
+              lessonTitle={title}
+            />
           </div>
         </aside>
       </div>

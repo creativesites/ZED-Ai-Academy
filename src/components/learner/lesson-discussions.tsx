@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { postDiscussion, deleteDiscussion, updateDiscussionStatus } from "@/actions/discussions";
 import { 
   MessageSquare, Loader2, Reply, Trash2, Send, Globe, Lock, ShieldCheck, 
@@ -45,13 +46,14 @@ function Avatar({ profile, size = "md" }: { profile: DiscussionWithProfile["prof
 }
 
 function DiscussionItem({
-  item, courseId, lessonId, userId, depth,
+  item, courseId, courseSlug, lessonId, userId, depth,
   replies,
   isInstructor = false,
   mini = false,
 }: {
   item: DiscussionWithProfile;
   courseId: string;
+  courseSlug: string;
   lessonId: string;
   userId: string | null;
   depth: number;
@@ -59,21 +61,23 @@ function DiscussionItem({
   isInstructor?: boolean;
   mini?: boolean;
 }) {
+  const router = useRouter();
   const [replyOpen, setReplyOpen] = useState(false);
   const [replyText, setReplyText] = useState("");
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
-  const [moderating, startMod] = useTransition();
+  const [, startMod] = useTransition();
 
   function submitReply() {
     if (!replyText.trim()) return;
     setError(null);
     start(async () => {
       try {
-        await postDiscussion(courseId, lessonId, replyText, item.id, item.is_public);
+        await postDiscussion(courseId, courseSlug, lessonId, replyText, item.id, item.is_public);
         setReplyText("");
         setReplyOpen(false);
         toast.success("Reply posted.");
+        router.refresh();
       } catch (e) {
         setError(e instanceof Error ? e.message : "Failed to post reply.");
       }
@@ -150,14 +154,13 @@ function DiscussionItem({
                 </span>
               )}
             </div>
-
             {(isInstructor || userId === item.user_id) && (
               <DropdownMenu>
-                <DropdownMenuTrigger render={
-                  <button className="h-8 w-8 flex items-center justify-center rounded-full hover:bg-slate-100 transition-colors text-slate-400">
+                <DropdownMenuTrigger render={(props) => (
+                  <button {...props} className="h-8 w-8 flex items-center justify-center rounded-full hover:bg-slate-100 transition-colors text-slate-400">
                     <MoreVertical className="h-4 w-4" />
                   </button>
-                } />
+                )} />
                 <DropdownMenuContent align="end" className="w-48 rounded-xl p-1">
                   {isInstructor && (
                     <>
@@ -235,6 +238,7 @@ function DiscussionItem({
               key={reply.id}
               item={reply}
               courseId={courseId}
+              courseSlug={courseSlug}
               lessonId={lessonId}
               userId={userId}
               depth={depth + 1}
@@ -250,6 +254,7 @@ function DiscussionItem({
 
 export function LessonDiscussions({
   courseId,
+  courseSlug,
   lessonId,
   discussions,
   userId,
@@ -257,12 +262,15 @@ export function LessonDiscussions({
   mini = false,
 }: {
   courseId: string;
+  courseSlug: string;
   lessonId: string;
   discussions: DiscussionWithProfile[];
   userId: string | null;
   isInstructor?: boolean;
   mini?: boolean;
 }) {
+  
+  const router = useRouter();
   const [content, setContent] = useState("");
   const [isPublic, setIsPublic] = useState(true);
   const [pending, start] = useTransition();
@@ -276,9 +284,10 @@ export function LessonDiscussions({
     setError(null);
     start(async () => {
       try {
-        await postDiscussion(courseId, lessonId, content, undefined, isPublic);
+        await postDiscussion(courseId, courseSlug, lessonId, content, undefined, isPublic);
         setContent("");
         toast.success(isPublic ? "Discussion posted." : "Private question sent to tutor.");
+        router.refresh();
       } catch (e) {
         setError(e instanceof Error ? e.message : "Failed to post.");
       }
@@ -297,6 +306,7 @@ export function LessonDiscussions({
                 key={item.id}
                 item={item}
                 courseId={courseId}
+                courseSlug={courseSlug}
                 lessonId={lessonId}
                 userId={userId}
                 depth={0}
@@ -425,6 +435,7 @@ export function LessonDiscussions({
               <DiscussionItem
                 item={item}
                 courseId={courseId}
+                courseSlug={courseSlug}
                 lessonId={lessonId}
                 userId={userId}
                 depth={0}

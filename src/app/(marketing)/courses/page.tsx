@@ -9,6 +9,7 @@ import {
   formatPrice,
   getCourseMeta,
 } from "@/lib/course-experience";
+import { auth } from "@clerk/nextjs/server";
 
 // TypeScript cast so Layout's optional props don't cause strict errors
 const SiteLayout = Layout as React.ComponentType<React.PropsWithChildren<{
@@ -147,6 +148,20 @@ export default async function CoursesPage({
     .order("is_featured", { ascending: false })
     .order("created_at", { ascending: false });
 
+  const { userId, orgId } = await auth();
+  if (userId && orgId) {
+    const { data: member } = await supabase
+      .from("company_members")
+      .select("company_id")
+      .eq("company_id", orgId)
+      .eq("profile_id", userId)
+      .eq("status", "active")
+      .maybeSingle();
+    if (member) {
+      query = query.eq("company_id", orgId);
+    }
+  }
+
   if (category !== "all") query = query.ilike("category", `%${category.replace(/-/g, " ")}%`);
   if (level !== "all") query = query.eq("level", level as "beginner" | "intermediate" | "advanced");
   if (params.q) query = query.or(`title.ilike.%${params.q}%,description.ilike.%${params.q}%`);
@@ -163,13 +178,28 @@ export default async function CoursesPage({
 
   let newCourses: CourseRow[] = [];
   if (!isFiltered) {
-    const { data: newData } = await supabase
+    let newCoursesQuery = supabase
       .from("courses")
       .select("id, slug, title, description, thumbnail_url, category, level, price_type, price_amount, is_featured")
       .eq("status", "published")
       .gte("created_at", thirtyDaysAgo.toISOString())
       .order("created_at", { ascending: false })
-      .limit(6) as { data: CourseRow[] | null };
+      .limit(6);
+      
+    if (userId && orgId) {
+      const { data: member } = await supabase
+        .from("company_members")
+        .select("company_id")
+        .eq("company_id", orgId)
+        .eq("profile_id", userId)
+        .eq("status", "active")
+        .maybeSingle();
+      if (member) {
+        newCoursesQuery = newCoursesQuery.eq("company_id", orgId);
+      }
+    }
+
+    const { data: newData } = await newCoursesQuery as { data: CourseRow[] | null };
     newCourses = newData ?? [];
   }
 

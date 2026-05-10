@@ -74,7 +74,7 @@ export default function Faq() {
                         </div>
                     </div>
                     {/*End Faq One Content*/}
-
+  
                     {/*Start Faq One Img*/}
                     <div className="col-xl-6">
                         <div className="faq-one__img">

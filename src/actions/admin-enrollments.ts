@@ -81,9 +81,11 @@ export async function createManualEnrollment(
       .eq("id", existing.id);
     if (error) throw new Error(error.message);
   } else {
+    const { data: course } = await supabase.from("courses").select("company_id").eq("id", courseId).single();
     const { error } = await supabase.from("enrollments").insert({
       user_id: targetUserId,
       course_id: courseId,
+      company_id: course?.company_id,
       source: "manual_admin",
       status: "active",
       notes: notes ?? null,

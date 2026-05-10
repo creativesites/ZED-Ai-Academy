@@ -520,10 +520,12 @@ export function LessonPlayerClient({
                   <div className="space-y-12">
                     {blocks.map((block) => (
                       <div key={block.id} className="animate-in fade-in slide-in-from-bottom-4 duration-700">
-                        <BlockRenderer 
-                          block={block} 
-                          bookings={bookings} 
+                        <BlockRenderer
+                          block={block}
+                          bookings={bookings}
                           practiceSubmissions={practiceSubmissions}
+                          courseId={course.id}
+                          lessonId={activeLessonId}
                           onLaunchStudio={(initialTool) => handleOpenStudio(
                             block.id, 
                             initialTool, 
@@ -727,6 +729,7 @@ export function LessonPlayerClient({
                         </div>
                         <LessonDiscussions
                           courseId={course.id}
+                          courseSlug={course.slug}
                           lessonId={activeLessonId}
                           discussions={discussions ?? []}
                           userId={userId ?? null}
@@ -741,6 +744,7 @@ export function LessonPlayerClient({
               <div className="max-w-3xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <LessonDiscussions
                   courseId={course.id}
+                  courseSlug={course.slug}
                   lessonId={activeLessonId}
                   discussions={discussions ?? []}
                   userId={userId ?? null}

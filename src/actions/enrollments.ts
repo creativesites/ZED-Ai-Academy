@@ -2,9 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { auth, currentUser } from "@clerk/nextjs/server";
+import { currentUser } from "@clerk/nextjs/server";
 import { createClient } from "@/lib/supabase/server";
 import { sendEnrollmentConfirmation } from "@/lib/email/emailjs";
+import { ensureTenantMembership } from "@/actions/tenants";
 
 export type ManualEnrollResult =
   | { success: true; enrollmentId: string; courseTitle: string; priceLabel: string }
@@ -23,7 +24,7 @@ export async function enrollManual(
 
   const { data: course } = await supabase
     .from("courses")
-    .select("id, title, price_type, price_amount, status, slug")
+    .select("id, title, price_type, price_amount, status, slug, company_id")
     .eq("id", courseId)
     .single();
 
@@ -42,7 +43,7 @@ export async function enrollManual(
     if (existing.status === "pending_payment") return { success: false, error: "already_pending" };
   }
 
-  // Ensure profile exists (in case Clerk webhook is delayed)
+  // Ensure profile exists
   const email = clerkUser.emailAddresses.find((e) => e.id === clerkUser.primaryEmailAddressId)?.emailAddress;
   await supabase.from("profiles").upsert({
     id: userId,
@@ -57,6 +58,7 @@ export async function enrollManual(
     .insert({
       user_id: userId,
       course_id: courseId,
+      company_id: course.company_id,
       source: "individual_purchase",
       status: "pending_payment",
       student_phone: studentPhone,
@@ -66,6 +68,11 @@ export async function enrollManual(
 
   if (error || !enrollment)
     return { success: false, error: error?.message ?? "Enrollment failed" };
+
+  // AUTOMATIC TENANT JOIN ON ENROLLMENT
+  if (course.company_id) {
+    await ensureTenantMembership(userId, course.company_id, "learner");
+  }
 
   const priceLabel = course.price_amount
     ? `ZK ${Number(course.price_amount).toLocaleString()}`
@@ -86,7 +93,7 @@ export async function enrollFree(courseId: string, courseSlug: string) {
 
   const { data: course } = await supabase
     .from("courses")
-    .select("id, title, price_type, status, slug")
+    .select("id, title, price_type, status, slug, company_id")
     .eq("id", courseId)
     .single();
 
@@ -102,7 +109,7 @@ export async function enrollFree(courseId: string, courseSlug: string) {
 
   if (existing) redirect(`/courses/${courseSlug}/learn`);
 
-  // Ensure profile exists (in case Clerk webhook is delayed)
+  // Ensure profile exists
   const email = clerkUser.emailAddresses.find((e) => e.id === clerkUser.primaryEmailAddressId)?.emailAddress;
   await supabase.from("profiles").upsert({
     id: userId,
@@ -115,13 +122,18 @@ export async function enrollFree(courseId: string, courseSlug: string) {
   const { error } = await supabase.from("enrollments").insert({
     user_id: userId,
     course_id: courseId,
+    company_id: course.company_id,
     source: "individual_purchase",
     status: "active",
   });
 
   if (error) throw new Error(error.message);
 
-  // Send confirmation email (non-blocking)
+  // AUTOMATIC TENANT JOIN ON ENROLLMENT
+  if (course.company_id) {
+    await ensureTenantMembership(userId, course.company_id, "learner");
+  }
+
   if (email) {
     const firstName = clerkUser.firstName ?? clerkUser.fullName?.split(" ")[0] ?? "there";
     const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";

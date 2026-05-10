@@ -25,7 +25,7 @@ export default async function LearnPage({ params, searchParams }: PageProps) {
 
   const supabase = createClient();
 
-  // Get course
+  // 1. Get course first (everything else depends on its ID)
   const { data: course } = await supabase
     .from("courses")
     .select("id, title, slug, status, description, category, level, price_type, instructor_id")
@@ -34,13 +34,20 @@ export default async function LearnPage({ params, searchParams }: PageProps) {
 
   if (!course) notFound();
 
-  // Check enrollment
-  let { data: enrollment } = await supabase
-    .from("enrollments")
-    .select("id, status")
-    .eq("user_id", userId)
-    .eq("course_id", course.id)
-    .maybeSingle();
+  // 2. Parallelize queries that depend on course.id or userId
+  const [
+    { data: enrollmentInitial },
+    { data: modulesData },
+    { data: existingCert },
+    { data: bookingsData }
+  ] = await Promise.all([
+    supabase.from("enrollments").select("id, status").eq("user_id", userId).eq("course_id", course.id).maybeSingle(),
+    supabase.from("modules").select("id, title, position, lessons(id, title, position, is_preview)").eq("course_id", course.id).order("position", { ascending: true }),
+    supabase.from("certificates").select("id, public_id, issued_at").eq("user_id", userId).eq("course_id", course.id).maybeSingle(),
+    supabase.from("live_session_bookings").select("*, zoom_meetings(*)").eq("learner_id", userId).in("status", ["requested", "confirmed", "reschedule_requested", "completed"])
+  ]);
+
+  let enrollment = enrollmentInitial;
 
   // Auto-enroll if free
   if (!enrollment && course.price_type === "free") {
@@ -66,26 +73,10 @@ export default async function LearnPage({ params, searchParams }: PageProps) {
     enrollment = newEnrollment;
   }
 
-
-  // Get curriculum with content blocks + quiz data
-  const { data: modulesData } = await supabase
-    .from("modules")
-    .select("id, title, position, lessons(id, title, position, is_preview)")
-    .eq("course_id", course.id)
-    .order("position", { ascending: true }) as {
-      data: {
-        id: string;
-        title: string;
-        position: number;
-        lessons: { id: string; title: string; position: number; is_preview: boolean }[];
-      }[] | null;
-      error: unknown;
-    };
-
   if (!modulesData || modulesData.length === 0) notFound();
 
   // Sort lessons within modules
-  const modules = modulesData.map((m) => ({
+  const modules = modulesData.map((m: any) => ({
     ...m,
     lessons: [...(m.lessons ?? [])].sort((a, b) => a.position - b.position),
   }));
@@ -98,108 +89,65 @@ export default async function LearnPage({ params, searchParams }: PageProps) {
   const activeLessonId = lessonIdParam ?? allLessons[0]?.id;
   if (!activeLessonId) notFound();
 
-  // Allow unenrolled users to view preview lessons; redirect otherwise
+  // Security checks
   const requestedLesson = allLessons.find((l) => l.id === activeLessonId);
   const isPreview = !enrollment;
   if (isPreview && !requestedLesson?.is_preview) redirect(`/courses/${slug}`);
 
-  // Partial enrollment: pending_payment users can only access the first module
   const isPartialEnrollment = enrollment?.status === "pending_payment";
   if (isPartialEnrollment) {
-    const firstModuleLessonIds = new Set(modules[0]?.lessons.map((l) => l.id) ?? []);
+    const firstModuleLessonIds = new Set(modules[0]?.lessons.map((l: any) => l.id) ?? []);
     if (!firstModuleLessonIds.has(activeLessonId)) {
       const firstLesson = modules[0]?.lessons[0];
       if (firstLesson) redirect(`/courses/${slug}/learn?lesson=${firstLesson.id}`);
     }
   }
 
-  // Fetch content blocks for active lesson
-  const { data: blocks } = await supabase
-    .from("content_blocks")
-    .select("id, type, position, content")
-    .eq("lesson_id", activeLessonId)
-    .order("position", { ascending: true });
+  // 3. Parallelize queries that depend on activeLessonId or allLessonIds
+  const isInstructor = course.instructor_id === userId;
 
-  // Fetch quiz for active lesson (if any)
-  const { data: quizData } = await supabase
-    .from("quizzes")
-    .select("id, title, pass_threshold, max_attempts, quiz_questions(id, question, options, correct_indices, explanation, position)")
-    .eq("lesson_id", activeLessonId)
-    .maybeSingle() as {
-      data: {
-        id: string;
-        title: string | null;
-        pass_threshold: number;
-        max_attempts: number;
-        quiz_questions: {
-          id: string;
-          question: string;
-          options: string[];
-          correct_indices: number[];
-          explanation: string | null;
-          position: number;
-        }[];
-      } | null;
-      error: unknown;
-    };
+  const [
+    { data: blocks },
+    { data: quizDataRaw },
+    { data: progressData },
+    { data: rawDiscussionsData },
+    { data: submissionsData }
+  ] = await Promise.all([
+    supabase.from("content_blocks").select("id, type, position, content").eq("lesson_id", activeLessonId).order("position", { ascending: true }),
+    supabase.from("quizzes").select("id, title, pass_threshold, max_attempts, quiz_questions(id, question, options, correct_indices, explanation, position)").eq("lesson_id", activeLessonId).maybeSingle(),
+    supabase.from("lesson_progress").select("lesson_id, completed").eq("user_id", userId).in("lesson_id", allLessonIds),
+    supabase.from("discussions").select("*").eq("lesson_id", activeLessonId).order("created_at", { ascending: true }),
+    supabase.from("practice_exercise_submissions").select("*, practice_exercise_scores(*), practice_exercise_files(*)").eq("user_id", userId).eq("lesson_id", activeLessonId).order("attempt_number", { ascending: false })
+  ]);
 
-  // Fetch progress for all lessons
-  const { data: progressData } = await supabase
-    .from("lesson_progress")
-    .select("lesson_id, completed")
-    .eq("user_id", userId)
-    .in("lesson_id", allLessonIds);
+  // Fetch profiles separately — discussions.user_id has no FK to profiles so the
+  // Supabase join syntax fails; a manual lookup avoids the null-data problem.
+  const discussionUserIds = [...new Set((rawDiscussionsData ?? []).map((d: any) => d.user_id as string))];
+  let profileMap: Record<string, { full_name: string | null; avatar_url: string | null }> = {};
+  if (discussionUserIds.length > 0) {
+    const { data: profilesData } = await supabase
+      .from("profiles")
+      .select("id, full_name, avatar_url")
+      .in("id", discussionUserIds);
+    for (const p of profilesData ?? []) {
+      profileMap[(p as any).id] = { full_name: (p as any).full_name, avatar_url: (p as any).avatar_url };
+    }
+  }
 
+  const quizData = quizDataRaw as any;
   const completedSet = new Set(
     (progressData ?? []).filter((p) => p.completed).map((p) => p.lesson_id)
   );
 
-  // Check if already has certificate
-  const { data: existingCert } = await supabase
-    .from("certificates")
-    .select("id, public_id, issued_at")
-    .eq("user_id", userId)
-    .eq("course_id", course.id)
-    .maybeSingle();
-
   const allDone = allLessonIds.length > 0 && allLessonIds.every((id) => completedSet.has(id));
 
-  // Fetch discussions for active lesson
-  // Instructors see all; students see (Public + Approved) OR (Their own)
-  let discussionsQuery = supabase
-    .from("discussions")
-    .select("*, profiles(full_name, avatar_url)")
-    .eq("lesson_id", activeLessonId);
-
-  if (course.instructor_id !== userId) {
-    discussionsQuery = discussionsQuery.or(`is_public.eq.true,user_id.eq.${userId}`);
-  }
-
-  const { data: rawDiscussionsData } = await discussionsQuery.order("created_at", { ascending: true }) as {
-    data: (Discussion & { profiles: { full_name: string | null; avatar_url: string | null } | null })[] | null;
-    error: unknown;
-  };
-
-  // Filter out unapproved public posts for students
-  const discussionsData = course.instructor_id === userId 
-    ? rawDiscussionsData 
-    : rawDiscussionsData?.filter(d => d.user_id === userId || (d.is_public && d.status === 'approved'));
-
-  // Fetch practice submissions for this lesson
-  const { data: submissionsData } = await supabase
-    .from("practice_exercise_submissions")
-    .select("*, practice_exercise_scores(*), practice_exercise_files(*)")
-    .eq("user_id", userId)
-    .eq("lesson_id", activeLessonId)
-    .order("attempt_number", { ascending: false });
-
-  // Fetch all active bookings for this user in this course
-  const { data: bookingsData } = await supabase
-    .from("live_session_bookings")
-    .select("*, zoom_meetings(*)")
-    .eq("learner_id", userId)
-    .eq("course_id", course.id)
-    .in("status", ["requested", "confirmed", "reschedule_requested", "completed"]);
+  // Filter visibility in JS — avoids failing if is_public/status columns don't yet exist
+  const discussionsData = (isInstructor
+    ? rawDiscussionsData
+    : (rawDiscussionsData ?? []).filter((d: any) =>
+        d.user_id === userId ||
+        (d.is_public !== false && (d.status == null || d.status === "approved"))
+      ))?.map((d: any) => ({ ...d, profiles: profileMap[d.user_id] ?? null })) as any[];
 
   return (
     <LessonPlayerClient

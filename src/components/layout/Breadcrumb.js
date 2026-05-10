@@ -113,7 +113,7 @@ const DEFAULT_HERO = {
 /* ──────────────────────────────────────────────────────────────
    COURSE SLIDER (for courses page hero)
    ────────────────────────────────────────────────────────────── */
-function CourseSlider({ courses }) {
+function CourseSlider({ courses, enrolledCourseIds = [] }) {
     const [activeIdx, setActiveIdx] = useState(0)
     const intervalRef = useRef(null)
 
@@ -183,6 +183,7 @@ function CourseSlider({ courses }) {
                             courseSlug={course.slug}
                             priceType={course.price_type}
                             priceAmount={course.price_amount}
+                            isEnrolled={enrolledCourseIds.includes(course.id)}
                             compact
                         />
                         {course.enrollmentCount > 0 && (
@@ -214,7 +215,7 @@ function CourseSlider({ courses }) {
 /* ──────────────────────────────────────────────────────────────
    FEATURED COURSE CARD (for non-courses pages)
    ────────────────────────────────────────────────────────────── */
-function FeaturedCourseCard({ courses }) {
+function FeaturedCourseCard({ courses, enrolledCourseIds = [] }) {
     // Pick a featured course, or first available
     const course = courses?.find((c) => c.is_featured) || courses?.[0]
     if (!course) return null
@@ -253,6 +254,7 @@ function FeaturedCourseCard({ courses }) {
                     courseSlug={course.slug}
                     priceType={course.price_type}
                     priceAmount={course.price_amount}
+                    isEnrolled={enrolledCourseIds.includes(course.id)}
                 />
             </div>
         </div>
@@ -324,9 +326,14 @@ export default function Breadcrumb({ breadcrumbTitle }) {
         href: "/" + segments.slice(0, idx + 1).join("/"),
         isLast: idx === segments.length - 1,
     }))
+   
 
     return (
-        <section className="breadcrumb-hero" style={{ background: hero.gradient }}>
+        <section className="breadcrumb-hero banner-two" style={{ background: hero.gradient }}>
+            
+            <div className="banner-two__img2 float-bob-x"><img src="assets/images/banner/banner-v2-img2.png" alt=""/></div>
+            <div className="shape1 float-bob-y"><img src="assets/images/shapes/banner-v2-shape1.png" alt=""/></div>
+            <div className="shape2"><img src="assets/images/shapes/banner-v2-shape2.png" alt=""/></div>
             {/* Animated background pattern */}
             <div className={`breadcrumb-hero__pattern breadcrumb-hero__pattern--${hero.pattern}`} />
 
@@ -335,7 +342,7 @@ export default function Breadcrumb({ breadcrumbTitle }) {
                 <span className="breadcrumb-hero__float breadcrumb-hero__float--1" style={{ color: hero.accentColor }}>✦</span>
                 <span className="breadcrumb-hero__float breadcrumb-hero__float--2" style={{ color: hero.accentColor }}>⬡</span>
                 <span className="breadcrumb-hero__float breadcrumb-hero__float--3" style={{ color: hero.accentColor }}>◆</span>
-            </div>
+            </div> 
 
             {/* Glowing orb */}
             <div
@@ -413,10 +420,10 @@ export default function Breadcrumb({ breadcrumbTitle }) {
                     {/* Right column — dynamic panel */}
                     <div className="breadcrumb-hero__right">
                         {hero.rightPanel === "slider" && heroData?.courses && (
-                            <CourseSlider courses={heroData.courses} />
+                            <CourseSlider courses={heroData.courses} enrolledCourseIds={heroData.enrolledCourseIds ?? []} />
                         )}
                         {hero.rightPanel === "featured" && heroData?.courses && (
-                            <FeaturedCourseCard courses={heroData.courses} />
+                            <FeaturedCourseCard courses={heroData.courses} enrolledCourseIds={heroData.enrolledCourseIds ?? []} />
                         )}
                     </div>
                 </div>

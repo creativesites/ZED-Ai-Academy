@@ -20,6 +20,7 @@ import {
   Plus,
   Sparkles,
   WandSparkles,
+  Palette,
 } from "lucide-react";
 import type { Course } from "@/types/database";
 
@@ -32,15 +33,19 @@ const STATUS_COLORS: Record<Course["status"], string> = {
 };
 
 export default async function CreatorCoursesPage() {
-  const { userId } = await auth();
+  const { userId, orgId } = await auth();
   if (!userId) redirect("/sign-in");
 
   const supabase = createClient();
-  const { data: courses } = await supabase
-    .from("courses")
-    .select("*")
-    .eq("instructor_id", userId)
-    .order("created_at", { ascending: false });
+  let query = supabase.from("courses").select("*").order("created_at", { ascending: false });
+
+  if (orgId) {
+    query = query.eq("company_id", orgId);
+  } else {
+    query = query.eq("instructor_id", userId);
+  }
+
+  const { data: courses } = await query;
 
   const publishedCount = courses?.filter((course) => course.status === "published").length ?? 0;
   const draftCount = courses?.filter((course) => course.status === "draft").length ?? 0;
@@ -74,6 +79,16 @@ export default async function CreatorCoursesPage() {
             >
               <WandSparkles className="mr-2 h-4 w-4 text-[#fd8d69]" />
               AI Assistant
+            </Link>
+            <Link
+              href="/creator/settings"
+              className={cn(
+                buttonVariants({ variant: "outline" }),
+                "rounded-full border-white/20 bg-white/10 text-white hover:bg-white/20 flex items-center justify-center px-4 h-10"
+              )}
+            >
+              <Palette className="mr-2 h-4 w-4 text-[#fd8d69]" />
+              Site Settings
             </Link>
             <Link
               href="/admin/images"

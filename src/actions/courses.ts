@@ -71,7 +71,7 @@ async function assertPublishReadiness(supabase: Awaited<ReturnType<typeof create
 }
 
 export async function createCourse(formData: FormData) {
-  const { userId } = await auth();
+  const { userId, orgId } = await auth();
   if (!userId) throw new Error("Unauthorized");
 
   const supabase = createClient();
@@ -104,6 +104,7 @@ export async function createCourse(formData: FormData) {
       category: category || null,
       level: level || null,
       instructor_id: userId,
+      company_id: orgId || null,
       price_type: priceType,
       price_amount: priceAmount,
       status: "draft",
@@ -118,7 +119,7 @@ export async function createCourse(formData: FormData) {
 }
 
 export async function updateCourse(courseId: string, formData: FormData) {
-  const { userId } = await auth();
+  const { userId, orgId } = await auth();
   if (!userId) throw new Error("Unauthorized");
 
   const supabase = createClient();
@@ -137,7 +138,7 @@ export async function updateCourse(courseId: string, formData: FormData) {
       price_amount: priceAmount,
     })
     .eq("id", courseId)
-    .eq("instructor_id", userId);
+    .eq(orgId ? "company_id" : "instructor_id", orgId || userId);
 
   if (error) throw new Error(error.message);
 
@@ -145,7 +146,7 @@ export async function updateCourse(courseId: string, formData: FormData) {
 }
 
 export async function publishCourse(courseId: string, publish: boolean) {
-  const { userId } = await auth();
+  const { userId, orgId } = await auth();
   if (!userId) throw new Error("Unauthorized");
 
   const supabase = createClient();
@@ -158,14 +159,14 @@ export async function publishCourse(courseId: string, publish: boolean) {
     .from("courses")
     .update({ status: publish ? "published" : "draft" })
     .eq("id", courseId)
-    .eq("instructor_id", userId);
+    .eq(orgId ? "company_id" : "instructor_id", orgId || userId);
 
   if (error) throw new Error(error.message);
   revalidatePath(`/creator/courses/${courseId}`);
 }
 
 export async function deleteCourse(courseId: string) {
-  const { userId } = await auth();
+  const { userId, orgId } = await auth();
   if (!userId) throw new Error("Unauthorized");
 
   const supabase = createClient();
@@ -174,7 +175,7 @@ export async function deleteCourse(courseId: string) {
     .from("courses")
     .delete()
     .eq("id", courseId)
-    .eq("instructor_id", userId);
+    .eq(orgId ? "company_id" : "instructor_id", orgId || userId);
 
   if (error) throw new Error(error.message);
   revalidatePath("/creator/courses");

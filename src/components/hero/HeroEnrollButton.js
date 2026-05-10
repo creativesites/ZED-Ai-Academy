@@ -1,22 +1,16 @@
 "use client";
 
+import Link from "next/link";
 import { useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
-/**
- * HeroEnrollButton — Smart enrollment CTA for breadcrumb hero course cards.
- *
- * Flow:
- * - Logged in + free course → server action enrollFree → redirect to learn page
- * - Logged in + paid course → navigate to course detail page
- * - Not logged in → redirect to /sign-up?enroll_course=<slug>
- */
 export function HeroEnrollButton({
   courseId,
   courseSlug,
   priceType,
   priceAmount,
+  isEnrolled = false,
   compact = false,
 }) {
   const { isSignedIn } = useUser();
@@ -26,6 +20,38 @@ export function HeroEnrollButton({
 
   const isFree = priceType === "free";
   const label = isFree ? "Enroll Free" : priceAmount ? `ZMW ${Math.round(priceAmount)}` : "View Course";
+
+  const btnStyle = {
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: "6px",
+    padding: compact ? "8px 16px" : "10px 20px",
+    borderRadius: "100px",
+    border: "none",
+    fontSize: compact ? "12px" : "13px",
+    fontWeight: 700,
+    cursor: "pointer",
+    transition: "all 0.2s ease",
+    whiteSpace: "nowrap",
+    textDecoration: "none",
+  };
+
+  if (isEnrolled) {
+    return (
+      <Link
+        href={`/courses/${courseSlug}/learn`}
+        style={{
+          ...btnStyle,
+          background: "#16a34a",
+          color: "#fff",
+          boxShadow: "0 4px 14px rgba(22,163,74,0.3)",
+        }}
+      >
+        Continue Learning →
+      </Link>
+    );
+  }
 
   const handleClick = async (e) => {
     e.preventDefault();

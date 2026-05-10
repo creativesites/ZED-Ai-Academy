@@ -16,11 +16,13 @@ import { LiveSessionBookingUI } from "./booking-ui";
 
 type BookingModalProps = {
   serviceId: string;
+  courseId?: string;
+  lessonId?: string;
   trigger: React.ReactElement;
   onSuccess?: () => void;
 };
 
-export function BookingModal({ serviceId, trigger, onSuccess }: BookingModalProps) {
+export function BookingModal({ serviceId, courseId, lessonId, trigger, onSuccess }: BookingModalProps) {
   const [open, setOpen] = React.useState(false);
   const isDesktop = useMediaQuery("(min-width: 768px)");
 
@@ -32,12 +34,14 @@ export function BookingModal({ serviceId, trigger, onSuccess }: BookingModalProp
   if (isDesktop) {
     return (
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogTrigger render={trigger} />
+        <DialogTrigger render={(props) => React.cloneElement(trigger, props)} />
         <DialogContent className="sm:max-w-[480px] p-0 overflow-hidden rounded-[2.5rem] border-none shadow-2xl">
-          <LiveSessionBookingUI 
-            serviceId={serviceId} 
-            onSuccess={handleSuccess} 
-            onClose={() => setOpen(false)} 
+          <LiveSessionBookingUI
+            serviceId={serviceId}
+            courseId={courseId}
+            lessonId={lessonId}
+            onSuccess={handleSuccess}
+            onClose={() => setOpen(false)}
           />
         </DialogContent>
       </Dialog>
@@ -46,12 +50,14 @@ export function BookingModal({ serviceId, trigger, onSuccess }: BookingModalProp
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
-      <SheetTrigger render={trigger} />
+      <SheetTrigger render={(props) => React.cloneElement(trigger, props)} />
       <SheetContent side="bottom" className="p-0 h-[85vh] rounded-t-[2.5rem] overflow-hidden border-none shadow-2xl">
-        <LiveSessionBookingUI 
-          serviceId={serviceId} 
-          onSuccess={handleSuccess} 
-          onClose={() => setOpen(false)} 
+        <LiveSessionBookingUI
+          serviceId={serviceId}
+          courseId={courseId}
+          lessonId={lessonId}
+          onSuccess={handleSuccess}
+          onClose={() => setOpen(false)}
         />
       </SheetContent>
     </Sheet>

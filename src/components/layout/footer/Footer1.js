@@ -70,7 +70,7 @@ export default function Footer1() {
                                                     <span className="icon-address"></span>
                                                 </div>
                                                 <div className="text-box">
-                                                    <p>Lusaka, Zambia 🇿🇲<br />Zambia-first AI learning</p>
+                                                    <p>Lusaka, Zambia 🇿🇲<br /></p>
                                                 </div>
                                             </li>
                                             <li>
@@ -79,7 +79,7 @@ export default function Footer1() {
                                                 </div>
                                                 <div className="text-box">
                                                     <p><Link href="mailto:creativesites263@gmail.com">creativesites263@gmail.com</Link></p>
-                                                    <p><Link href="mailto:teams@zedaiacademy.com">teams@zedaiacademy.com</Link></p>
+                                                    {/* <p><Link href="mailto:teams@zedaiacademy.com">teams@zedaiacademy.com</Link></p> */}
                                                 </div>
                                             </li>
                                             <li>
@@ -134,10 +134,10 @@ export default function Footer1() {
                         </div>
                         <div className="footer-one__social-links">
                             <ul>
-                                <li><Link href="#"><span className="icon-twitter1"></span></Link></li>
-                                <li><Link href="#"><span className="icon-linkedin"></span></Link></li>
-                                <li><Link href="#"><span className="icon-instagram"></span></Link></li>
-                                <li><Link href="#"><span className="icon-youtube"></span></Link></li>
+                                <li><Link href="https://x.com/zed_ai_academy"><span className="icon-twitter1"></span></Link></li>
+                                <li><Link href="https://www.linkedin.com/in/winston-tinashe-5939b91b6/"><span className="icon-linkedin"></span></Link></li>
+                                {/* <li><Link href="#"><span className="icon-instagram"></span></Link></li>
+                                <li><Link href="#"><span className="icon-youtube"></span></Link></li> */}
                             </ul>
                         </div>
                     </div>

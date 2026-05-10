@@ -1,12 +1,10 @@
 import { NextResponse } from "next/server";
+import { auth } from "@clerk/nextjs/server";
 import { createClient } from "@/lib/supabase/server";
 
-/**
- * GET /api/hero-data
- * Returns factual platform stats and published courses for the breadcrumb hero.
- */
 export async function GET() {
   const supabase = createClient();
+  const { userId } = await auth();
 
   const { data: courses } = await supabase
     .from("courses")
@@ -46,8 +44,19 @@ export async function GET() {
     enrollmentCount: enrollMap[c.id] ?? 0,
   }));
 
+  let enrolledCourseIds: string[] = [];
+  if (userId) {
+    const { data: myEnrollments } = await supabase
+      .from("enrollments")
+      .select("course_id")
+      .eq("user_id", userId)
+      .eq("status", "active");
+    enrolledCourseIds = (myEnrollments ?? []).map((e) => e.course_id);
+  }
+
   return NextResponse.json({
     courses: enrichedCourses,
+    enrolledCourseIds,
     stats: {
       totalCourses,
       freeCourses,
@@ -56,6 +65,6 @@ export async function GET() {
       totalReviews: allReviews?.length ?? 0,
     },
   }, {
-    headers: { "Cache-Control": "public, s-maxage=60, stale-while-revalidate=120" },
+    headers: { "Cache-Control": "private, no-cache" },
   });
 }

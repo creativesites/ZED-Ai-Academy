@@ -1,3 +1,4 @@
+import { currentUser } from "@clerk/nextjs/server";
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import { HeroEnrollButton } from "@/components/hero/HeroEnrollButton";
@@ -5,6 +6,8 @@ import { BookOpen, Star, Users, ArrowRight, Sparkles } from "lucide-react";
 
 export default async function CoursesSection() {
     const supabase = createClient();
+    const clerkUser = await currentUser();
+    const userId = clerkUser?.id ?? null;
 
     // Fetch featured courses for the home page
     const { data: courses } = await supabase
@@ -13,7 +16,7 @@ export default async function CoursesSection() {
         .eq("status", "published")
         .order("is_featured", { ascending: false })
         .order("created_at", { ascending: false })
-        .limit(3);
+        .limit(3);  
 
     // Fetch enrollment counts for popularity display
     const { data: enrollData } = await supabase
@@ -24,6 +27,20 @@ export default async function CoursesSection() {
     const enrollMap = {};
     for (const e of enrollData ?? []) {
         enrollMap[e.course_id] = (enrollMap[e.course_id] ?? 0) + 1;
+    }
+
+    // Fetch current user's active enrollments for these courses
+    const enrolledCourseIds = new Set();
+    if (userId && courses && courses.length > 0) {
+        const { data: myEnrollments } = await supabase
+            .from("enrollments")
+            .select("course_id")
+            .eq("user_id", userId)
+            .eq("status", "active")
+            .in("course_id", courses.map(c => c.id));
+        for (const e of myEnrollments ?? []) {
+            enrolledCourseIds.add(e.course_id);
+        }
     }
 
     if (!courses || courses.length === 0) return null;
@@ -108,11 +125,12 @@ export default async function CoursesSection() {
                                                 4.9
                                             </div>
                                         </div>
-                                        <HeroEnrollButton 
-                                            courseId={course.id} 
-                                            courseSlug={course.slug} 
-                                            priceType={course.price_type} 
+                                        <HeroEnrollButton
+                                            courseId={course.id}
+                                            courseSlug={course.slug}
+                                            priceType={course.price_type}
                                             priceAmount={course.price_amount}
+                                            isEnrolled={enrolledCourseIds.has(course.id)}
                                             compact
                                         />
                                     </div>

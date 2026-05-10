@@ -40,7 +40,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         className={`${dmSans.variable} ${jetbrainsMono.variable} h-full antialiased`}
       >
         <body className="min-h-full flex flex-col overflow-x-hidden bg-background text-foreground">
-          <NextTopLoader 
+          <NextTopLoader
             color="#fd5523"
             initialPosition={0.08}
             crawlSpeed={200}
@@ -52,7 +52,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             shadow="0 0 10px #fd5523,0 0 5px #fd5523"
           />
           {children}
-          <SiteIntelligenceDock />
+          {/* <SiteIntelligenceDock /> */}
         </body>
       </html>
     </ClerkProvider>

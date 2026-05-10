@@ -42,6 +42,7 @@ import {
 import Link from "next/link";
 import { toast } from "sonner";
 import { AIBlueprintAssistant } from "./ai-blueprint-assistant";
+import { AICurriculumGenerator } from "./ai-curriculum-generator";
 
 type LessonItem = { id: string; title: string; position: number; is_preview: boolean };
 type ModuleItem = { id: string; title: string; position: number; lessons: LessonItem[] };
@@ -484,6 +485,8 @@ export function CurriculumBuilder({
           </Button>
         </div>
       </div>
+
+      <AICurriculumGenerator courseId={courseId} />
 
       <div className="relative">
         <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />

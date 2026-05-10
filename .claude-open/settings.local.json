@@ -1,0 +1,26 @@
+{
+  "env": {
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1",
+    "ANTHROPIC_BASE_URL": "https://openrouter.ai/api",
+    "ANTHROPIC_AUTH_TOKEN": "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",
+    "ANTHROPIC_API_KEY": "",
+    "ANTHROPIC_MODEL": "google/gemma-4-26b-a4b-it",
+    "ANTHROPIC_DEFAULT_SONNET_MODEL": "google/gemma-4-26b-a4b-it",
+    "ANTHROPIC_DEFAULT_OPUS_MODEL": "google/gemma-4-26b-a4b-it",
+    "ANTHROPIC_DEFAULT_HAIKU_MODEL": "google/gemma-4-26b-a4b-it",
+    "ANTHROPIC_SMALL_FAST_MODEL": "google/gemma-4-26b-a4b-it",
+    "CLAUDE_CODE_SUBAGENT_MODEL": "google/gemma-4-26b-a4b-it"
+  },
+  "permissions": {
+    "allow": [
+      "Bash(npm list:*)",
+      "Read(//Users/winstonzulu/Documents/GitHub**)",
+      "Bash(sed -i '' '1130d' ~/.zshrc)",
+      "Bash(/Users/albertbakhoj/.opencode/bin/opencode --version)",
+      "Bash(/Users/albertbakhoj/.opencode/bin/opencode --help)",
+      "Read(//Users/albertbakhoj/.claude/**)",
+      "WebSearch",
+      "Bash(psql *)"
+    ]
+  }
+}

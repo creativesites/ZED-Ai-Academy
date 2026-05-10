@@ -49,7 +49,7 @@ export default function WhyChooseUs() {
                             </ul>
 
                             <div className="count-text-box count-box">
-                                <h3><CounterUp end={150} /></h3>
+                                <h3><CounterUp end={40} /></h3>
                                 <span className="plus">+</span>
                             </div>
                             <h3>Active Students</h3>

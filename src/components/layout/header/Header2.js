@@ -2,21 +2,86 @@
 import { useState, useEffect } from "react";
 import Link from "next/link"
 import { useAuth } from "@clerk/nextjs"
-import { SignInButton, SignUpButton, UserButton } from "@clerk/nextjs"
+import { SignInButton, SignUpButton, UserButton, OrganizationSwitcher } from "@clerk/nextjs"
 import { getSiteAsset } from "@/lib/site-assets";
 import Menu from "../Menu"
 import MobileMenu from "../MobileMenu"
+import { LaunchAcademyCTA } from "@/components/layout/LaunchAcademyCTA"
 import { Search, Menu as MenuIcon, Sparkles } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
 
 function AuthButtons() {
-    const { isSignedIn, isLoaded } = useAuth()
+    const { isSignedIn, isLoaded, userId } = useAuth()
+    const [tenantSlug, setTenantSlug] = useState(null)
+    const [role, setRole] = useState(null)
+
+    useEffect(() => {
+        if (isSignedIn && userId) {
+            const supabase = createClient();
+            
+            async function fetchUserContext() {
+                const { data: profile } = await supabase
+                    .from("profiles")
+                    .select("role, company_id")
+                    .eq("id", userId)
+                    .single();
+                
+                if (profile) {
+                    setRole(profile.role);
+                    
+                    // Fetch latest active company slug
+                    const { data: membership } = await supabase
+                        .from("company_members")
+                        .select("company_id, companies(slug)")
+                        .eq("profile_id", userId)
+                        .eq("status", "active")
+                        .order("joined_at", { ascending: false })
+                        .limit(1)
+                        .maybeSingle();
+                    
+                    if (membership?.companies?.slug) {
+                        setTenantSlug(membership.companies.slug);
+                    } else if (profile.company_id) {
+                        const { data: company } = await supabase
+                            .from("companies")
+                            .select("slug")
+                            .eq("id", profile.company_id)
+                            .maybeSingle();
+                        if (company) setTenantSlug(company.slug);
+                    }
+                }
+            }
+            
+            fetchUserContext();
+        }
+    }, [isSignedIn, userId]);
 
     if (!isLoaded) return null
 
     if (isSignedIn) {
+        const canVisitSite = role === "super_admin" || role === "company_admin";
+
         return (
             <div className="flex items-center gap-4 mx-6">
-                
+                <LaunchAcademyCTA className="hidden md:flex" />
+                {canVisitSite && tenantSlug && (
+                    <Link 
+                        href={`/academy/${tenantSlug}`}
+                        target="_blank"
+                        className="hidden md:flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#fd5523]/10 text-[#fd5523] hover:bg-[#fd5523] hover:text-white transition-all text-[10px] font-black uppercase tracking-widest border border-[#fd5523]/20"
+                    >
+                        <Sparkles className="h-3 w-3" />
+                        Visit Site
+                    </Link>
+                )}
+                <OrganizationSwitcher 
+                    hidePersonal={false}
+                    appearance={{
+                        elements: {
+                            organizationSwitcherTrigger: "focus:outline-none focus:ring-0 shadow-none border-none",
+                        }
+                    }}
+                />
                 <div className="h-10 w-10 rounded-full ring-2 ring-slate-100 overflow-hidden flex items-center justify-center">
                    <UserButton afterSignOutUrl="/" />
                 </div>

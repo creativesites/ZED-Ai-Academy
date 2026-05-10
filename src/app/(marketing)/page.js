@@ -22,14 +22,14 @@ export default function Home() {
                 <CoursesSection />
                 <About />
                 <LearningExperience />
-                <Projects />
+                {/* <Projects /> */}
                 <Cta />
                 {/* <Team /> */}
                 <Testimonial />
                 <Faq />
                 <WhyChooseUs />
                 <Process />
-                <Blog />
+                {/* <Blog /> */}
             </Layout>
         </>
     )

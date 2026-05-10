@@ -116,24 +116,6 @@ export default async function PricingPage() {
   return (
     <Layout headerStyle={2} footerStyle={1} breadcrumbTitle="Pricing Plans">
       <div className="min-h-screen py-20">
-        {/* Hero */}
-        <section className="px-4 sm:px-6 lg:px-8 mb-16">
-          <div className="mx-auto max-w-6xl overflow-hidden rounded-[3rem] border border-slate-200 bg-[#062e39] px-6 py-20 text-center text-white shadow-[0_24px_80px_rgba(6,46,57,0.2)] sm:px-8 sm:py-24 relative">
-             <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]" />
-            <div className="mx-auto max-w-3xl relative z-10">
-              <Badge className="mb-6 border-white/20 bg-white/10 text-[#fd8d69] hover:bg-white/10 px-4 py-1 rounded-full uppercase tracking-widest text-[10px] font-bold">
-              <Zap className="mr-2 h-3.5 w-3.5" /> Zambia-first pricing
-              </Badge>
-              <h1 className="text-5xl font-extrabold tracking-tight text-white sm:text-6xl mb-6">
-              Simple, transparent <span className="text-[#fd5523]">pricing.</span>
-              </h1>
-              <p className="text-xl leading-relaxed text-white/70 max-w-2xl mx-auto">
-                All prices in Zambian Kwacha. Pay securely with MTN MoMo, Airtel Money, or card.
-              </p>
-            </div>
-          </div>
-        </section>
-
         {/* Individual plans */}
         <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:px-8">
           <div className="mb-12 flex items-center gap-4">
@@ -150,19 +132,17 @@ export default async function PricingPage() {
             {INDIVIDUAL_PLANS.map((plan) => (
               <div
                 key={plan.name}
-                className={`relative flex flex-col rounded-[2.5rem] border p-10 transition-all duration-300 hover:scale-[1.02] ${
-                  plan.highlight
+                className={`relative flex flex-col rounded-[2.5rem] border p-6 sm:p-10 transition-all duration-300 hover:scale-[1.02] min-w-0 ${plan.highlight
                     ? "border-[#fd5523]/60 bg-gradient-to-br from-[#062e39] to-[#0a4055] text-white shadow-2xl shadow-[#062e39]/20"
                     : "border-slate-100 bg-white shadow-[0_24px_60px_rgba(6,46,57,0.06)]"
-                }`}
+                  }`}
               >
                 {plan.badge && (
                   <span
-                    className={`absolute -top-4 left-1/2 -translate-x-1/2 rounded-full px-6 py-1.5 text-[10px] font-black uppercase tracking-[0.2em] shadow-xl ${
-                      plan.highlight
+                    className={`absolute -top-4 left-1/2 -translate-x-1/2 rounded-full px-4 sm:px-6 py-1.5 text-[10px] font-black uppercase tracking-[0.2em] shadow-xl whitespace-nowrap ${plan.highlight
                         ? "bg-[#fd5523] text-white"
                         : "bg-[#062e39] text-white"
-                    }`}
+                      }`}
                   >
                     {plan.badge}
                   </span>
@@ -170,15 +150,15 @@ export default async function PricingPage() {
 
                 <div className="mb-8">
                   <p
-                    className={`mb-2 text-xs font-black uppercase tracking-[0.2em] ${
-                      plan.highlight ? "text-[#fd8d69]" : "text-slate-400"
-                    }`}
+                    className={`mb-2 text-xs font-black uppercase tracking-[0.2em] ${plan.highlight ? "text-[#fd8d69]" : "text-slate-400"
+                      }`}
                   >
                     {plan.name}
                   </p>
-                  <div className="flex items-baseline gap-2">
+                  <div className="flex items-baseline gap-2 flex-wrap">
                     <span
-                      className={`text-5xl font-black tracking-tighter ${plan.highlight ? "text-white" : "text-[#062e39]"}`}
+                      className={`text-3xl font-black tracking-tighter break-words ${plan.highlight ? "text-white" : "text-[#062e39]"
+                        }`}
                     >
                       {plan.priceLabel}
                     </span>
@@ -190,15 +170,17 @@ export default async function PricingPage() {
                   </div>
                   {plan.savings && (
                     <p
-                      className={`mt-3 inline-block rounded-full px-3 py-1 text-xs font-bold ${
-                        plan.highlight ? "bg-white/10 text-[#fd8d69]" : "bg-green-50 text-green-600"
-                      }`}
+                      className={`mt-3 inline-block rounded-full px-3 py-1 text-xs font-bold ${plan.highlight
+                          ? "bg-white/10 text-[#fd8d69]"
+                          : "bg-green-50 text-green-600"
+                        }`}
                     >
                       {plan.savings}
                     </p>
                   )}
                   <p
-                    className={`mt-6 text-base leading-relaxed ${plan.highlight ? "text-white/70" : "text-slate-500"}`}
+                    className={`mt-6 text-base leading-relaxed ${plan.highlight ? "text-white/70" : "text-slate-500"
+                      }`}
                   >
                     {plan.description}
                   </p>
@@ -207,13 +189,13 @@ export default async function PricingPage() {
                 <ul className="mb-10 flex-1 space-y-4">
                   {plan.features.map((f) => (
                     <li key={f} className="flex items-start gap-3 text-sm font-medium">
-                      <div className={`mt-0.5 h-5 w-5 rounded-full flex items-center justify-center shrink-0 ${
-                        plan.highlight ? "bg-[#fd5523]/20" : "bg-slate-50"
-                      }`}>
-                        <Check
-                          className={`h-3 w-3 ${
-                            plan.highlight ? "text-[#fd5523]" : "text-[#fd5523]"
+                      <div
+                        className={`mt-0.5 h-5 w-5 rounded-full flex items-center justify-center shrink-0 ${plan.highlight ? "bg-[#fd5523]/20" : "bg-slate-50"
                           }`}
+                      >
+                        <Check
+                          className={`h-3 w-3 ${plan.highlight ? "text-[#fd5523]" : "text-[#fd5523]"
+                            }`}
                         />
                       </div>
                       <span className={plan.highlight ? "text-white/90" : "text-slate-600"}>
@@ -223,7 +205,7 @@ export default async function PricingPage() {
                   ))}
                 </ul>
 
-                <PlanEnrollModal 
+                <PlanEnrollModal
                   planName={plan.name}
                   priceLabel={plan.priceLabel}
                   userName={user?.fullName || ""}
@@ -233,7 +215,7 @@ export default async function PricingPage() {
             ))}
           </div>
 
-          <p className="mt-12 text-center text-sm font-medium text-slate-400">
+          <p className="mt-12 text-center text-sm font-medium text-slate-400 pt-12">
             Individual course purchases also available — buy once, own forever.{" "}
             <Link href="/courses" className="text-[#fd5523] font-bold hover:underline">
               Browse courses →
@@ -262,25 +244,25 @@ export default async function PricingPage() {
 
           <div className="grid gap-12 lg:grid-cols-[1fr_1.4fr]">
             {/* Seat tiers */}
-            <div className="space-y-4">
+            <div className="space-y-4 min-w-0">
               <h3 className="mb-6 text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 px-2">
                 Tiered Seat Pricing
               </h3>
               {TEAM_TIERS.map((tier) => (
                 <div
                   key={tier.seats}
-                  className="flex items-center justify-between rounded-[2rem] border-2 border-slate-50 bg-white p-6 shadow-sm hover:border-[#fd5523]/10 transition-all"
+                  className="flex items-center justify-between rounded-[2rem] border-2 border-slate-50 bg-white p-4 sm:p-6 shadow-sm hover:border-[#fd5523]/10 transition-all gap-3"
                 >
-                  <div>
-                    <p className="text-lg font-bold text-[#062e39]">{tier.seats}</p>
+                  <div className="min-w-0">
+                    <p className="text-base sm:text-lg font-bold text-[#062e39] break-words">{tier.seats}</p>
                     {tier.saving && (
                       <p className="text-xs font-black uppercase text-green-600 mt-1">{tier.saving}</p>
                     )}
                   </div>
-                  <div className="text-right">
+                  <div className="text-right shrink-0">
                     {tier.pricePerSeat ? (
                       <>
-                        <p className="text-2xl font-black text-[#062e39]">
+                        <p className="text-xl sm:text-2xl font-black text-[#062e39]">
                           ZMW {tier.pricePerSeat}
                         </p>
                         <p className="text-[10px] font-bold uppercase text-slate-400">per seat / month</p>
@@ -294,8 +276,8 @@ export default async function PricingPage() {
                 </div>
               ))}
 
-              <div className="mt-8 flex flex-col gap-4 sm:flex-row">
-                <PlanEnrollModal 
+              <div className="mt-8 flex flex-col gap-3 w-full">
+                <PlanEnrollModal
                   planName="Team Starter (5 seats)"
                   priceLabel="ZMW 1,245/mo"
                   userName={user?.fullName || ""}
@@ -303,7 +285,7 @@ export default async function PricingPage() {
                 />
                 <Button
                   variant="outline"
-                  className="flex-1 rounded-full h-12 border-slate-200 text-[#062e39] font-bold hover:bg-slate-50"
+                  className="w-full rounded-full h-12 border-slate-200 text-[#062e39] font-bold hover:bg-slate-50"
                   render={<Link href="mailto:creativesites263@gmail.com" />}
                 >
                   <Mail className="mr-2 h-4 w-4" />
@@ -313,9 +295,9 @@ export default async function PricingPage() {
             </div>
 
             {/* Features */}
-            <div className="rounded-[3rem] border-2 border-[#fd5523]/5 bg-[#fffbf8] p-12 relative overflow-hidden">
+            <div className="rounded-[3rem] border-2 border-[#fd5523]/5 bg-[#fffbf8] p-8 sm:p-12 relative overflow-hidden">
               <div className="absolute top-0 right-0 p-8 opacity-5">
-                 <Building2 className="h-32 w-32 text-[#fd5523]" />
+                <Building2 className="h-32 w-32 text-[#fd5523]" />
               </div>
               <h3 className="mb-8 text-2xl font-bold text-[#062e39] tracking-tight">
                 Everything your team needs to <span className="text-[#fd5523]">succeed.</span>
@@ -329,7 +311,7 @@ export default async function PricingPage() {
                 ))}
               </ul>
 
-              <div className="mt-10 rounded-[2rem] bg-white p-8 shadow-xl shadow-[#fd5523]/5 border border-[#fd5523]/10 relative z-10">
+              <div className="mt-10 rounded-[2rem] bg-white p-6 sm:p-8 shadow-xl shadow-[#fd5523]/5 border border-[#fd5523]/10 relative z-10">
                 <p className="font-bold text-[#062e39] flex items-center gap-2 mb-2">
                   <Zap className="h-4 w-4 text-[#fd5523]" />
                   Need an invoice in ZMW?
@@ -339,6 +321,21 @@ export default async function PricingPage() {
                   team, with support for MTN MoMo and Airtel Money receipts.
                 </p>
               </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Hero */}
+        <section className="px-4 sm:px-6 lg:px-8 mb-16">
+          <div className="mx-auto max-w-6xl overflow-hidden rounded-[3rem] border border-slate-200 bg-[#062e39] px-6 py-20 text-center text-white shadow-[0_24px_80px_rgba(6,46,57,0.2)] sm:px-8 sm:py-24 relative">
+            <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]" />
+            <div className="mx-auto max-w-3xl relative z-10">
+              <h1 className="text-5xl font-extrabold tracking-tight text-white sm:text-6xl mb-6">
+                Simple, transparent <span className="text-[#fd5523]">pricing.</span>
+              </h1>
+              <p className="text-xl leading-relaxed text-white/70 max-w-2xl mx-auto">
+                All prices in Zambian Kwacha. Pay securely with MTN MoMo, Airtel Money, or card.
+              </p>
             </div>
           </div>
         </section>
@@ -378,7 +375,7 @@ export default async function PricingPage() {
                 Join Zambian companies using Zed AI Academy to build practical AI
                 capabilities.
               </p>
-              <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
+              <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-center mt-4">
                 <Button
                   size="lg"
                   className="w-full sm:w-auto px-10 py-8 rounded-full bg-[#fd5523] text-white hover:bg-[#ef4a16] font-bold text-lg shadow-2xl shadow-[#fd5523]/20"
@@ -389,7 +386,7 @@ export default async function PricingPage() {
                 <Button
                   size="lg"
                   variant="outline"
-                  className="w-full sm:w-auto px-10 py-8 rounded-full border-white/20 text-white hover:bg-white/10 hover:text-white font-bold text-lg"
+                  className="w-full sm:w-auto px-10 py-8 rounded-full bg-[#062e39] border-white/20 text-white hover:bg-white/10 hover:text-white font-bold text-lg"
                   render={<Link href="/courses" />}
                 >
                   Browse courses

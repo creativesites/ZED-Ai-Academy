@@ -1,18 +1,47 @@
 import { SignUp } from "@clerk/nextjs";
 import { getSiteAsset } from "@/lib/site-assets";
 import Link from "next/link";
-import { ArrowLeft, Rocket, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, Rocket, CheckCircle2, Building2, GraduationCap, Users } from "lucide-react";
 
 export const metadata = { title: "Join — Zed AI Academy" };
 
-export default async function SignUpPage(props: { searchParams: Promise<{ enroll_course?: string }> }) {
-  const { enroll_course } = await props.searchParams;
+export default async function SignUpPage(props: { searchParams: Promise<{ enroll_course?: string; role?: string; tenant?: string }> }) {
+  const { enroll_course, role, tenant } = await props.searchParams;
   const bgImage = await getSiteAsset("auth_bg", "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200&q=80&auto=format&fit=crop");
-  const logoUrl = await getSiteAsset("site_logo", "/images/zed-ai-logo2.png");
 
-  const forceRedirectUrl = enroll_course 
-    ? `/onboarding?enroll_course=${enroll_course}`
-    : "/onboarding";
+  const normalizedRole = role === "company_admin" || role === "teacher" || role === "student" ? role : null;
+  const redirectParams = new URLSearchParams();
+  if (normalizedRole) redirectParams.set("role", normalizedRole);
+  if (enroll_course) redirectParams.set("enroll_course", enroll_course);
+  if (tenant) redirectParams.set("tenant", tenant);
+  const forceRedirectUrl = `/onboarding${redirectParams.toString() ? `?${redirectParams.toString()}` : ""}`;
+
+  const roleChoices = [
+    {
+      href: "/sign-up?role=student",
+      title: "Student",
+      description: "Join courses, classrooms, and academies as a learner.",
+      icon: GraduationCap,
+    },
+    {
+      href: "/sign-up?role=teacher",
+      title: "Teacher",
+      description: "Join a tenant academy as a teacher from its academy page.",
+      icon: Users,
+    },
+    {
+      href: "/sign-up?role=company_admin",
+      title: "Tutor / School Owner",
+      description: "Create your own academy tenant and manage students.",
+      icon: Building2,
+    },
+  ];
+
+  const roleLabel =
+    normalizedRole === "company_admin" ? "Create your academy owner account" :
+    normalizedRole === "teacher" ? "Create your teacher account" :
+    normalizedRole === "student" ? "Create your student account" :
+    "Choose how you want to join";
 
   return (
     <div className="flex min-h-screen bg-white overflow-hidden">
@@ -82,37 +111,67 @@ export default async function SignUpPage(props: { searchParams: Promise<{ enroll
               alt="Zed AI Academy"
               className="h-20 w-auto"
             />
-            <h2 className="mt-6 text-3xl font-extrabold text-[#062e39] tracking-tight">Create your account</h2>
+            <h2 className="mt-6 text-3xl font-extrabold text-[#062e39] tracking-tight">{roleLabel}</h2>
             <p className="mt-2 text-sm text-slate-500">
-              Start your journey to becoming an AI power user.
+              {normalizedRole ? "You can change account details after signing in." : "This keeps learner and tenant-owner permissions separate."}
             </p>
           </div>
 
-          <div >
-            <SignUp
-              forceRedirectUrl={forceRedirectUrl}
-              appearance={{
-                elements: {
-                  formButtonPrimary:
-                    "bg-[#fd5523] hover:bg-[#ef4a16] text-sm font-bold uppercase tracking-widest h-12 rounded-xl transition-all shadow-lg shadow-[#fd5523]/20",
-                  card: "shadow-none border-0",
-                  headerTitle: "hidden",
-                  headerSubtitle: "hidden",
-                  socialButtonsBlockButton:
-                    "h-12 rounded-xl border-slate-200 hover:bg-slate-50 text-slate-600 transition-all font-semibold",
-                  formFieldInput:
-                    "h-12 rounded-xl border-slate-200 focus:border-[#fd5523]/30 focus:ring-[#fd5523]/20 transition-all",
-                  footerActionLink: "text-[#fd5523] hover:text-[#ef4a16] font-bold",
-                  identityPreviewTextPrimary: "text-[#062e39] font-bold",
-                  rootBox: "w-full",
-                },
-                layout: {
-                  socialButtonsPlacement: "bottom",
-                  showOptionalFields: false,
-                },
-              }}
-            />
-          </div>
+          {!normalizedRole ? (
+            <div className="w-full space-y-3">
+              {roleChoices.map((choice) => {
+                const Icon = choice.icon;
+                const choiceParams = new URLSearchParams(choice.href.split("?")[1]);
+                if (tenant) choiceParams.set("tenant", tenant);
+                if (enroll_course) choiceParams.set("enroll_course", enroll_course);
+                const href = `/sign-up?${choiceParams.toString()}`;
+                return (
+                  <Link
+                    key={choice.href}
+                    href={href}
+                    className="group flex w-full items-center gap-4 rounded-2xl border border-slate-200 bg-white p-4 text-left transition-all hover:border-[#fd5523]/40 hover:bg-[#fff6ee]"
+                  >
+                    <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-slate-50 text-[#fd5523] transition-all group-hover:bg-[#fd5523] group-hover:text-white">
+                      <Icon className="h-6 w-6" />
+                    </span>
+                    <span>
+                      <span className="block font-bold text-[#062e39]">{choice.title}</span>
+                      <span className="mt-1 block text-xs leading-relaxed text-slate-500">{choice.description}</span>
+                    </span>
+                  </Link>
+                );
+              })}
+            </div>
+          ) : (
+            <div>
+              <SignUp
+                forceRedirectUrl={forceRedirectUrl}
+                appearance={{
+                  elements: {
+                    formButtonPrimary:
+                      "bg-[#fd5523] hover:bg-[#ef4a16] text-sm font-bold uppercase tracking-widest h-12 rounded-xl transition-all shadow-lg shadow-[#fd5523]/20",
+                    card: "shadow-none border-0",
+                    headerTitle: "hidden",
+                    headerSubtitle: "hidden",
+                    socialButtonsBlockButton:
+                      "h-12 rounded-xl border-slate-200 hover:bg-slate-50 text-slate-600 transition-all font-semibold",
+                    formFieldInput:
+                      "h-12 rounded-xl border-slate-200 focus:border-[#fd5523]/30 focus:ring-[#fd5523]/20 transition-all",
+                    footerActionLink: "text-[#fd5523] hover:text-[#ef4a16] font-bold",
+                    identityPreviewTextPrimary: "text-[#062e39] font-bold",
+                    rootBox: "w-full",
+                  },
+                  layout: {
+                    socialButtonsPlacement: "bottom",
+                    showOptionalFields: false,
+                  },
+                }}
+              />
+              <Link href="/sign-up" className="mt-4 block text-center text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-[#fd5523]">
+                Choose a different account type
+              </Link>
+            </div>
+          )}
         </div>
       </div>
     </div>

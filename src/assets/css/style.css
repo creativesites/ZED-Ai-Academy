@@ -4398,6 +4398,7 @@ Main Header Three
       margin-top: 20px;
       max-width: 300px;
       width: 100%;
+      z-index: 1002;
   }
 
   .about-two__img2 img {

@@ -28,7 +28,7 @@ export function ComparisonTableBlock({ content }: { content: Record<string, unkn
               {rows.map((row, i) => (
                 <tr key={i} className="hover:bg-slate-50 transition-colors">
                   <td className="px-6 py-5 text-sm font-bold text-[#062e39] bg-slate-50/50">{row.label}</td>
-                  {row.values.map((v, j) => (
+                  {Array.isArray(row.values) && row.values.map((v, j) => (
                     <td key={j} className="px-6 py-5 text-sm">
                       {typeof v === "boolean" ? (
                         v ? <ShieldCheck className="h-5 w-5 text-emerald-500" /> : <X className="h-5 w-5 text-slate-300" />

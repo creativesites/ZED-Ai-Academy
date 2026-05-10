@@ -1,6 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { companyAdminNeedsAcademySetup } from "@/lib/company-admin-setup";
 import Header2Wrapper from "@/components/layout/Header2Wrapper";
 import Footer1 from "@/components/layout/footer/Footer1";
 import "../../../public/assets/css/style.css"
@@ -12,7 +13,7 @@ import { dmSans } from '@/lib/font'
 
 
 export default async function CompanyLayout({ children }: { children: React.ReactNode }) {
-  const { userId } = await auth();
+  const { userId, orgId } = await auth();
   if (!userId) redirect("/sign-in");
 
   const supabase = createClient();
@@ -24,6 +25,13 @@ export default async function CompanyLayout({ children }: { children: React.Reac
 
   if (!profile || !["company_admin", "super_admin"].includes(profile.role)) {
     redirect("/dashboard");
+  }
+
+  if (profile?.role === "company_admin") {
+    const needsLaunch = await companyAdminNeedsAcademySetup(userId, orgId);
+    if (needsLaunch) {
+      redirect("/launch-your-academy");
+    }
   }
 
   return (

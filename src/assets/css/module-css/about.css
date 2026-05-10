@@ -434,8 +434,9 @@ About Two
 
 .about-two__img2 {
     position: absolute;
-    bottom: -185px;
+    bottom: -105px;
     right: 0px;
+    z-index: 3009;
 }
 
 .about-two__content {

@@ -237,3 +237,54 @@ export async function importCourseBlueprint(courseId: string, blueprint: CourseB
   revalidatePath(`/creator/courses/${courseId}`);
   return { success: true };
 }
+
+export type CurriculumModuleInput = {
+  title: string;
+  lessons: { title: string }[];
+};
+
+export async function scaffoldCurriculum(
+  courseId: string,
+  modules: CurriculumModuleInput[]
+) {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
+  const supabase = createClient();
+
+  const { data: course } = await supabase
+    .from("courses")
+    .select("instructor_id")
+    .eq("id", courseId)
+    .single();
+  if (!course || course.instructor_id !== userId) throw new Error("Unauthorized");
+
+  const { data: existing } = await supabase
+    .from("modules")
+    .select("position")
+    .eq("course_id", courseId)
+    .order("position", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  let nextModulePos = (existing?.position ?? 0) + 1;
+
+  for (const mod of modules) {
+    const { data: newMod, error: modErr } = await supabase
+      .from("modules")
+      .insert({ course_id: courseId, title: mod.title, position: nextModulePos++ })
+      .select("id")
+      .single();
+    if (modErr || !newMod) throw new Error(modErr?.message ?? "Failed to create module");
+
+    for (let li = 0; li < mod.lessons.length; li++) {
+      const { error: lesErr } = await supabase
+        .from("lessons")
+        .insert({ module_id: newMod.id, title: mod.lessons[li].title, position: li + 1 });
+      if (lesErr) throw new Error(lesErr.message);
+    }
+  }
+
+  revalidatePath(`/creator/courses/${courseId}`);
+  return { success: true };
+}

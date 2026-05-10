@@ -6,7 +6,8 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[];
 
-export type UserRole = "learner" | "instructor" | "company_admin" | "super_admin";
+export type UserRole = "learner" | "teacher" | "instructor" | "company_admin" | "super_admin";
+export type CompanyMemberRole = "learner" | "teacher" | "instructor" | "company_admin";
 export type CourseStatus = "draft" | "published" | "archived";
 export type PriceType = "free" | "one_time" | "subscription_only" | "both";
 export type CourseLevel = "beginner" | "intermediate" | "advanced";
@@ -78,20 +79,45 @@ export interface Database {
           name: string;
           slug: string;
           logo_url: string | null;
+          primary_color: string | null;
           admin_id: string | null;
+          is_session_active: boolean;
+          active_session_id: string | null;
+          active_room_name: string | null;
+          home_template: string;
+          home_content: Json;
+          teacher_code: string;
           created_at: string;
+          updated_at: string;
         };
         Insert: {
+          id?: string;
           name: string;
           slug: string;
           logo_url?: string | null;
+          primary_color?: string | null;
           admin_id?: string | null;
+          is_session_active?: boolean;
+          active_session_id?: string | null;
+          active_room_name?: string | null;
+          home_template?: string;
+          home_content?: Json;
+          teacher_code?: string;
+          updated_at?: string;
         };
         Update: {
           name?: string;
           slug?: string;
           logo_url?: string | null;
+          primary_color?: string | null;
           admin_id?: string | null;
+          is_session_active?: boolean;
+          active_session_id?: string | null;
+          active_room_name?: string | null;
+          home_template?: string;
+          home_content?: Json;
+          teacher_code?: string;
+          updated_at?: string;
         };
         Relationships: R;
       };
@@ -101,15 +127,25 @@ export interface Database {
           company_id: string;
           profile_id: string;
           status: MemberStatus;
+          role: CompanyMemberRole;
           invited_at: string;
           joined_at: string | null;
+          updated_at: string;
         };
         Insert: {
           company_id: string;
           profile_id: string;
           status?: MemberStatus;
+          role?: CompanyMemberRole;
+          joined_at?: string | null;
+          updated_at?: string;
         };
-        Update: { status?: MemberStatus; joined_at?: string | null };
+        Update: {
+          status?: MemberStatus;
+          role?: CompanyMemberRole;
+          joined_at?: string | null;
+          updated_at?: string;
+        };
         Relationships: R;
       };
       courses: {
@@ -122,6 +158,7 @@ export interface Database {
           category: string | null;
           level: CourseLevel | null;
           instructor_id: string | null;
+          company_id: string | null;
           status: CourseStatus;
           price_type: PriceType;
           price_amount: number | null;
@@ -137,6 +174,7 @@ export interface Database {
           category?: string | null;
           level?: CourseLevel | null;
           instructor_id?: string | null;
+          company_id?: string | null;
           status?: CourseStatus;
           price_type?: PriceType;
           price_amount?: number | null;
@@ -149,6 +187,7 @@ export interface Database {
           thumbnail_url?: string | null;
           category?: string | null;
           level?: CourseLevel | null;
+          company_id?: string | null;
           status?: CourseStatus;
           price_type?: PriceType;
           price_amount?: number | null;
@@ -308,6 +347,7 @@ export interface Database {
           id: string;
           user_id: string;
           course_id: string;
+          company_id: string | null;
           enrolled_at: string;
           completed_at: string | null;
           source: EnrollmentSource;
@@ -319,6 +359,7 @@ export interface Database {
         Insert: {
           user_id: string;
           course_id: string;
+          company_id?: string | null;
           source: EnrollmentSource;
           order_id?: string | null;
           status?: EnrollmentStatus;
@@ -496,7 +537,8 @@ export interface Database {
       discussions: {
         Row: {
           id: string;
-          course_id: string;
+          company_id: string | null;
+          course_id: string | null;
           lesson_id: string | null;
           user_id: string;
           parent_id: string | null;
@@ -507,7 +549,8 @@ export interface Database {
           updated_at: string;
         };
         Insert: {
-          course_id: string;
+          company_id?: string | null;
+          course_id?: string | null;
           lesson_id?: string | null;
           user_id: string;
           parent_id?: string | null;
@@ -517,6 +560,7 @@ export interface Database {
         };
         Update: {
           content?: string;
+          course_id?: string | null;
           is_public?: boolean;
           status?: "pending" | "approved" | "flagged" | "hidden";
         };
@@ -1276,6 +1320,80 @@ export interface Database {
           description?: string | null;
           page?: string;
           updated_at?: string;
+        };
+        Relationships: R;
+      };
+      announcements: {
+        Row: {
+          id: string;
+          company_id: string;
+          author_id: string;
+          title: string;
+          content: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          company_id: string;
+          author_id: string;
+          title: string;
+          content: string;
+          created_at?: string;
+        };
+        Update: {
+          title?: string;
+          content?: string;
+        };
+        Relationships: R;
+      };
+      class_schedules: {
+        Row: {
+          id: string;
+          company_id: string;
+          title: string;
+          description: string | null;
+          starts_at: string;
+          ends_at: string;
+          instructor_id: string | null;
+          schedule_type: "live_session" | "workshop" | "assignment_due" | "other";
+          day_of_week: number | null;
+          start_time_only: string | null;
+          end_time_only: string | null;
+          topics_covered: string | null;
+          is_recurring: boolean;
+          group_id: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          company_id: string;
+          title: string;
+          description?: string | null;
+          starts_at: string;
+          ends_at: string;
+          instructor_id?: string | null;
+          schedule_type?: "live_session" | "workshop" | "assignment_due" | "other";
+          day_of_week?: number | null;
+          start_time_only?: string | null;
+          end_time_only?: string | null;
+          topics_covered?: string | null;
+          is_recurring?: boolean;
+          group_id?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          title?: string;
+          description?: string | null;
+          starts_at?: string;
+          ends_at?: string;
+          instructor_id?: string | null;
+          schedule_type?: "live_session" | "workshop" | "assignment_due" | "other";
+          day_of_week?: number | null;
+          start_time_only?: string | null;
+          end_time_only?: string | null;
+          topics_covered?: string | null;
+          is_recurring?: boolean;
+          group_id?: string | null;
         };
         Relationships: R;
       };

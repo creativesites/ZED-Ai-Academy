@@ -106,9 +106,7 @@ export default function FaqPage() {
               Main FAQ accordion
             ──────────────────────────────────────────*/}
             <section className="faq-one faq-one--faq">
-                <div className="shape1 float-bob-x">
-                    <img src="assets/images/shapes/faq-v1-shape1.png" alt=""/>
-                </div>
+                 <div className="shape1 float-bob-x"><img src="images/logo-dark.png" style={{width:'24rem', opacity: '0.1', marginTop: '5rem'}} alt=""/></div>
                 <div className="container">
                     <div className="row">
 
@@ -164,15 +162,15 @@ export default function FaqPage() {
                         <div className="col-xl-6">
                             <div className="faq-one__img">
                                 <div className="faq-one__img-box">
-                                    <img src={featureImg} alt="AI learning Zambia"/>
-                                    <div className="faq-one__video-link">
+                                    <img src="images/pngtree-native-african-black-man-using-smart-phone-fashion-arab-muslim-photo-image_42278090.jpg" alt="AI learning Zambia"/>
+                                    {/* <div className="faq-one__video-link">
                                         <a onClick={() => setOpen(true)} className="video-popup" style={{ cursor: 'pointer' }}>
                                             <div className="faq-one__video-icon">
                                                 <span className="icon-video"></span>
                                                 <i className="ripple"></i>
                                             </div>
                                         </a>
-                                    </div>
+                                    </div> */}
                                 </div>
                             </div>
 

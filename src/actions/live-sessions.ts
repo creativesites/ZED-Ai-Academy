@@ -154,12 +154,15 @@ export async function requestLiveSessionBooking(formData: FormData) {
   const status = service.requires_instructor_confirmation ? "requested" : "confirmed";
   const now = new Date().toISOString();
 
+  const formCourseId = readString(formData, "course_id") || null;
+  const formLessonId = readString(formData, "lesson_id") || null;
+
   const { data: booking, error } = await supabase
     .from("live_session_bookings")
     .insert({
       service_id: serviceId,
-      course_id: service.course_id,
-      lesson_id: service.lesson_id,
+      course_id: service.course_id ?? formCourseId,
+      lesson_id: service.lesson_id ?? formLessonId,
       instructor_id: service.instructor_id,
       learner_id: userId,
       status,
@@ -184,6 +187,18 @@ export async function requestLiveSessionBooking(formData: FormData) {
   revalidatePath("/dashboard");
   revalidatePath("/creator/live-sessions");
   revalidatePath(`/live-sessions/${serviceId}/book`);
+
+  // Revalidate the learn page so router.refresh() picks up the new booking
+  if (service.course_id) {
+    const { data: courseRow } = await supabase
+      .from("courses")
+      .select("slug")
+      .eq("id", service.course_id)
+      .single();
+    if (courseRow?.slug) {
+      revalidatePath(`/courses/${courseRow.slug}/learn`);
+    }
+  }
 }
 
 export async function confirmLiveSessionBooking(bookingId: string) {

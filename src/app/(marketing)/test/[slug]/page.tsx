@@ -1,14 +1,13 @@
-import { getData } from "@/data/getToken";
 import VideochatClientWrapper from "@/components/VideochatClientWrapper";
 import Script from "next/script";
 
-export default async function Page(props: { params: Promise<{ slug: string }> }) {
-  const params = await props.params;
-  const jwt = await getData(params.slug);
+export default function Page() {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <VideochatClientWrapper slug={params.slug} JWT={jwt} />
-      <Script src="/coi-serviceworker.js" strategy="beforeInteractive" />
+    <main className="flex min-h-screen flex-col items-center justify-center p-6 sm:p-24 bg-slate-50">
+      <div className="w-full max-w-4xl h-[700px] flex flex-col">
+        <VideochatClientWrapper />
+      </div>
+      {/* <Script src="/coi-serviceworker.js" strategy="beforeInteractive" /> */}
     </main>
   );
 }
