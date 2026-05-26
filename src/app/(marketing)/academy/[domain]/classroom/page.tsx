@@ -40,17 +40,21 @@ export default async function TenantClassroomPage({
   const isAdminOrInstructor = access.isSuperAdmin || isTeachingRole(access.tenantRole);
 
   return (
-    <div className="bg-slate-50 min-h-screen py-10">
-      <div className="container max-w-7xl">
-        <div className="mb-8 flex items-center gap-4">
-          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white shadow-sm border border-slate-200">
-            <Building2 className="h-8 w-8 text-[#062e39]" />
+    <div className="bg-slate-50 min-h-screen py-12 md:py-20">
+      <div className="container max-w-7xl px-4">
+        <div className="mb-10 flex flex-col sm:flex-row items-center sm:items-start gap-6 text-center sm:text-left">
+          <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-3xl bg-white shadow-2xl border border-slate-100 p-4">
+            <Building2 className="h-10 w-10 text-[#062e39]" />
           </div>
-          <div>
-            <h1 className="text-3xl font-black text-slate-900 tracking-tight">{company.name} Classroom</h1>
-            <p className="text-slate-500 font-medium text-sm uppercase tracking-widest mt-1">
-              {isAdminOrInstructor ? "Teaching Workspace" : "Student Workspace"}
-            </p>
+          <div className="space-y-1">
+            <h1 className="text-3xl md:text-5xl font-black text-[#062e39] tracking-tight leading-none uppercase">
+              {company.name} <span className="text-[#fd5523]">Classroom</span>
+            </h1>
+            <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 mt-4">
+               <span className="px-4 py-1.5 rounded-full bg-[#fd5523]/10 text-[#fd5523] text-[10px] font-black uppercase tracking-[0.2em] border border-[#fd5523]/10">
+                 {isAdminOrInstructor ? "Teaching Workspace" : "Student Workspace"}
+               </span>
+            </div>
           </div>
         </div>
 

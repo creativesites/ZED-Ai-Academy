@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { auth } from "@clerk/nextjs/server";
 import { createClient } from "@/lib/supabase/server";
-import type { ContentBlockType, Json } from "@/types/database";
+import type { ContentBlockType, Json, CourseLevel } from "@/types/database";
 
 export type BlueprintContentBlock = {
   type: ContentBlockType;
@@ -24,9 +24,13 @@ export type CourseBlueprint = {
   title?: string;
   description?: string;
   category?: string;
-  level?: string;
+  level?: CourseLevel;
   modules: BlueprintModule[];
 };
+
+type ContentBlockRow = { type: ContentBlockType; content: Json; position: number };
+type LessonBlueprintRow = { title: string; position: number; content_blocks?: ContentBlockRow[] | null };
+type ModuleBlueprintRow = { title: string; lessons?: LessonBlueprintRow[] | null };
 
 /**
  * Exports a full course structure as a JSON blueprint and generates an AI prompt.
@@ -72,15 +76,15 @@ export async function exportCourseBlueprint(courseId: string) {
     description: course.description || "",
     category: course.category || "",
     level: course.level || "beginner",
-    modules: (modulesData || []).map((m: any) => ({
+    modules: ((modulesData || []) as ModuleBlueprintRow[]).map((m) => ({
       title: m.title,
       lessons: (m.lessons || [])
-        .sort((a: any, b: any) => a.position - b.position)
-        .map((l: any) => ({
+        .sort((a, b) => a.position - b.position)
+        .map((l) => ({
           title: l.title,
           content_blocks: (l.content_blocks || [])
-            .sort((a: any, b: any) => a.position - b.position)
-            .map((cb: any) => ({
+            .sort((a, b) => a.position - b.position)
+            .map((cb) => ({
               type: cb.type,
               content: cb.content,
             })),
@@ -97,9 +101,33 @@ ${JSON.stringify(blueprint, null, 2)}
 
 INSTRUCTIONS:
 1. Maintain the existing JSON structure.
-2. Ensure every lesson has high-quality content blocks (text, tool_spotlight, comparison_table, etc.).
+2. Ensure every lesson has high-quality content blocks. Use ONLY the valid block types and their exact JSON schemas listed below.
 3. If creating new modules/lessons, ensure they follow a logical pedagogical flow.
 4. Return ONLY the valid JSON object for the updated course.
+
+VALID CONTENT BLOCK TYPES & SCHEMAS:
+- "text": { "html": "<p>Content</p>" }
+- "video": { "youtube_id": "...", "title": "..." }
+- "image": { "url": "...", "caption": "...", "alt": "...", "display": "contained" }
+- "callout": { "variant": "tip|warning|info", "title": "...", "body": "..." }
+- "tool_spotlight": { "name": "...", "description": "...", "url": "...", "icon_url": "..." }
+- "before_after": { "before_url": "...", "after_url": "...", "caption": "..." }
+- "resource": { "file_url": "...", "file_name": "...", "file_size": 0 }
+- "quiz": { "quiz_id": "..." }
+- "ai_prompt": { "prompt": "...", "tool": "ChatGPT", "label": "Try This Prompt" }
+- "steps": { "title": "...", "steps": [{ "title": "...", "body": "..." }] }
+- "checklist": { "title": "...", "items": ["Item 1", "Item 2"] }
+- "key_takeaway": { "title": "Key Takeaways", "points": ["Point 1", "Point 2"] }
+- "expert_note": { "title": "...", "body": "..." }
+- "comparison_table": { "headers": ["Col 1", "Col 2"], "rows": [["Val 1", "Val 2"]] }
+- "case_study": { "title": "...", "context": "...", "action": "...", "result": "..." }
+- "practice_exercise": { "title": "...", "brief": "...", "mode": "text_response", "estimated_minutes": 20, "instructions": ["..."], "deliverables": [{ "type": "text", "label": "Response", "required": true }], "allowed_file_types": ["text/plain"], "max_files": 1, "rubric": [], "ai_scoring_enabled": true, "instructor_review_required": false, "resubmissions_allowed": true }
+- "learning_objectives": { "title": "Learning Objectives", "objectives": ["..."] }
+- "glossary": { "title": "Glossary", "terms": [{ "term": "...", "definition": "..." }] }
+- "discussion_prompt": { "title": "Discussion Prompt", "prompt": "...", "guidance": ["..."], "mode": "group" }
+- "assignment": { "title": "Assignment", "summary": "...", "deliverables": ["..."], "assessment": "...", "estimated_minutes": 30 }
+- "risk_assessment": { "title": "Risk Assessment", "rows": [{ "hazard": "...", "risk": "Low|Medium|High|Critical", "control": "..." }] }
+- "meeting": { "title": "Live Meeting Session", "start_time": "Tomorrow at 10 AM", "meeting_id": "Optional Zoom ID", "service_id": "Optional Bookable Service ID" }
 
 RESPONSE FORMAT:
 {
@@ -114,7 +142,7 @@ RESPONSE FORMAT:
         {
           "title": "...",
           "content_blocks": [
-            { "type": "text", "content": { "body": "..." } },
+            { "type": "text", "content": { "html": "..." } },
             ...
           ]
         }
@@ -144,7 +172,7 @@ export async function importCourseBlueprint(courseId: string, blueprint: CourseB
         title: blueprint.title,
         description: blueprint.description,
         category: blueprint.category,
-        level: blueprint.level as any,
+        level: blueprint.level ?? null,
       })
       .eq("id", courseId);
   }
@@ -154,7 +182,7 @@ export async function importCourseBlueprint(courseId: string, blueprint: CourseB
     const bMod = blueprint.modules[mIdx];
     
     // Check if module exists by title (simple matching for expansion)
-    let { data: existingMod } = await supabase
+    const { data: existingMod } = await supabase
       .from("modules")
       .select("id")
       .eq("course_id", courseId)
@@ -182,7 +210,7 @@ export async function importCourseBlueprint(courseId: string, blueprint: CourseB
     for (let lIdx = 0; lIdx < bMod.lessons.length; lIdx++) {
       const bLess = bMod.lessons[lIdx];
 
-      let { data: existingLess } = await supabase
+      const { data: existingLess } = await supabase
         .from("lessons")
         .select("id")
         .eq("module_id", moduleId)

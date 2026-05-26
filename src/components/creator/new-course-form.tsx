@@ -4,7 +4,6 @@ import { useState } from "react";
 import Link from "next/link";
 import { createCourse } from "@/actions/courses";
 import { CourseBlueprintAssistant } from "@/components/creator/course-blueprint-assistant";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { buttonVariants } from "@/components/ui/button-variants";
 import { cn } from "@/lib/utils";
@@ -13,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { COURSE_CATEGORIES } from "@/lib/course-experience";
+import { COURSE_DOMAIN_PRESETS, type CourseDomainPresetId } from "@/lib/course-domain-presets";
 import { ArrowLeft, Briefcase, CircleDollarSign, Layers, Rocket, ShieldCheck } from "lucide-react";
 
 type Blueprint = {
@@ -36,6 +36,7 @@ export function NewCourseForm() {
   const [priceType, setPriceType] = useState<Blueprint["price_type"]>("free");
   const [priceAmount, setPriceAmount] = useState("");
   const [blueprint, setBlueprint] = useState<Blueprint | null>(null);
+  const [domainPreset, setDomainPreset] = useState<CourseDomainPresetId>("ai-professional");
 
   function applyBlueprint(next: Blueprint) {
     setBlueprint(next);
@@ -44,6 +45,8 @@ export function NewCourseForm() {
     setCategory(next.category);
     setLevel(next.level);
     setPriceType(next.price_type);
+    const matchingPreset = COURSE_DOMAIN_PRESETS.find((preset) => preset.suggestedCategory === next.category);
+    if (matchingPreset) setDomainPreset(matchingPreset.id);
   }
 
   return (
@@ -133,6 +136,32 @@ export function NewCourseForm() {
                       <Layers className="h-5 w-5" />
                     </div>
                     <h3 className="text-lg font-bold uppercase tracking-[0.15em] text-[#062e39]">Professional Fit</h3>
+                  </div>
+
+                  <div className="space-y-3">
+                    <Label className="text-sm font-bold uppercase tracking-widest text-slate-500">Course Track</Label>
+                    <input type="hidden" name="domain_preset" value={domainPreset} />
+                    <div className="grid gap-3 md:grid-cols-2">
+                      {COURSE_DOMAIN_PRESETS.map((preset) => (
+                        <button
+                          key={preset.id}
+                          type="button"
+                          onClick={() => {
+                            setDomainPreset(preset.id);
+                            if (!category) setCategory(preset.suggestedCategory);
+                          }}
+                          className={cn(
+                            "rounded-[1.5rem] border p-4 text-left transition-all",
+                            domainPreset === preset.id
+                              ? "border-[#fd5523] bg-[#fff6ee] shadow-sm"
+                              : "border-slate-200 bg-white hover:border-[#fd5523]/30"
+                          )}
+                        >
+                          <p className="text-sm font-bold text-[#062e39]">{preset.label}</p>
+                          <p className="mt-1 text-xs leading-relaxed text-slate-500">{preset.description}</p>
+                        </button>
+                      ))}
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">

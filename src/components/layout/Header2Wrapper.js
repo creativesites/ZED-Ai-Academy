@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import Header2 from './header/Header2'
 import MobileMenu from './MobileMenu'
 
-export default function Header2Wrapper() {
+export default function Header2Wrapper({ children }) {
     const [scroll, setScroll] = useState(false)
     const [isMobileMenu, setMobileMenu] = useState(false)
 
@@ -24,6 +24,7 @@ export default function Header2Wrapper() {
                 scroll={scroll}
                 isMobileMenu={isMobileMenu}
                 handleMobileMenu={handleMobileMenu}
+                notificationBell={children}
             />
             {isMobileMenu && <MobileMenu handleMobileMenu={handleMobileMenu} />}
         </>

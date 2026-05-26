@@ -1,76 +1,31 @@
-'use client'
-import { useState, useEffect } from "react";
 import { auth } from "@clerk/nextjs/server";
-import { useAuth } from "@clerk/nextjs"
 import { redirect } from "next/navigation";
 import { companyAdminNeedsAcademySetup } from "@/lib/company-admin-setup";
 import { createServiceClient } from "@/lib/supabase/server";
 import { LaunchAcademyClient } from "./launch-academy-client";
-import { createClient } from "@/lib/supabase/client";
-
-// export const metadata = {
-//   title: "Open your academy",
-//   description: "Create your academy organization and start building courses.",
-// };
 
 export default async function LaunchYourAcademyPage() {
-  //const { isSignedIn, userId, orgId } = await auth();
-  const { isSignedIn, isLoaded, userId, orgId } = useAuth()
-  const [tenantSlug, setTenantSlug] = useState(null)
-  const [role, setRole] = useState(null)
-  useEffect(() => {
-    if (isSignedIn && userId) {
-        const supabase = createClient();
-        
-        async function fetchUserContext() {
-            const { data: profile } = await supabase
-                .from("profiles")
-                .select("role, company_id")
-                .eq("id", userId as string)
-                .single();
-            
-            if (profile) {
-                setRole(profile.role);
-                
-                // Fetch latest active company slug
-                const { data: membership } = await supabase
-                    .from("company_members")
-                    .select("company_id, companies(slug)")
-                    .eq("profile_id", userId)
-                    .eq("status", "active")
-                    .order("joined_at", { ascending: false })
-                    .limit(1)
-                    .maybeSingle();
-                
-                if (membership?.companies?.slug) {
-                    setTenantSlug(membership.companies.slug);
-                } else if (profile.company_id) {
-                    const { data: company } = await supabase
-                        .from("companies")
-                        .select("slug")
-                        .eq("id", profile.company_id)
-                        .maybeSingle();
-                    if (company) setTenantSlug(company.slug);
-                }
-            }
-        }
-        
-        fetchUserContext();
-    }
-}, [isSignedIn, userId]);
+  const { userId, orgId } = await auth();
 
   if (!userId) {
     redirect("/sign-in?redirect_url=/launch-your-academy");
   }
 
   const supabase = createServiceClient();
+  
+  // 1. Fetch profile to check role and onboarding
   const { data: profile } = await supabase
     .from("profiles")
-    .select("role, onboarding_completed")
+    .select("role, onboarding_completed, company_id")
     .eq("id", userId)
     .single();
 
-  if (profile?.role !== "company_admin") {
+  if (!profile) {
+    // If no profile exists yet, they need to onboard first
+    redirect("/onboarding?role=company_admin");
+  }
+
+  if (profile.role !== "company_admin" && profile.role !== "super_admin") {
     redirect("/dashboard");
   }
 
@@ -78,9 +33,45 @@ export default async function LaunchYourAcademyPage() {
     redirect("/onboarding?role=company_admin");
   }
 
+  // 2. Check if they already have an academy setup
   const needs = await companyAdminNeedsAcademySetup(userId, orgId);
+  
   if (!needs) {
-    redirect(`/academy/${tenantSlug}/admin`);
+    // Find the slug to redirect to admin
+    let tenantSlug: string | null = null;
+    
+    // Check memberships first
+    const { data: membership } = await supabase
+      .from("company_members")
+      .select("company_id, companies(slug)")
+      .eq("profile_id", userId)
+      .eq("status", "active")
+      .order("joined_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    const membershipData = membership as unknown as {
+      company_id: string;
+      companies: { slug: string } | null;
+    } | null;
+
+    if (membershipData?.companies?.slug) {
+      tenantSlug = membershipData.companies.slug;
+    } else if (profile.company_id) {
+      const { data: company } = await supabase
+        .from("companies")
+        .select("slug")
+        .eq("id", profile.company_id)
+        .maybeSingle();
+      tenantSlug = company?.slug ?? null;
+    }
+
+    if (tenantSlug) {
+      redirect(`/academy/${tenantSlug}/admin`);
+    } else if (orgId) {
+        // If they have an orgId but we couldn't find a slug, maybe it's still syncing
+        // or they just created it.
+    }
   }
 
   return (

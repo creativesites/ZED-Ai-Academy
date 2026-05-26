@@ -6,8 +6,7 @@ import path from "path";
 import { currentUser } from "@clerk/nextjs/server";
 
 const APP_ID = "vpaas-magic-cookie-37a3214c11ef406c81cc165d3d1c2f4f";
-// Decoded from the sample app JWT provided by the user
-const KID = "vpaas-magic-cookie-37a3214c11ef406c81cc165d3d1c2f4f/b91378-SAMPLE_APP"; 
+const KID = "vpaas-magic-cookie-37a3214c11ef406c81cc165d3d1c2f4f/5c30b9"; 
 
 export async function generateJitsiToken(roomName: string, moderator = false) {
   try {
@@ -23,46 +22,35 @@ export async function generateJitsiToken(roomName: string, moderator = false) {
 
     const privateKey = fs.readFileSync(privateKeyPath, "utf8");
 
-    const now = Math.floor(Date.now() / 1000);
-    const exp = now + 7200; // 2 hours
-
-    const payload = {
-      aud: "jitsi",
-      iss: "chat",
-      sub: APP_ID,
-      room: roomName,
-      iat: now,
-      nbf: now,
-      exp: exp,
+    const now = new Date();
+    const jwtToken = jwt.sign({
+      aud: 'jitsi',
       context: {
         user: {
-          name: `${user.firstName || ""} ${user.lastName || ""}`.trim() || user.username || "Anonymous",
-          email: user.emailAddresses[0]?.emailAddress || "",
-          avatar: user.imageUrl || "",
           id: user.id,
-          moderator,
+          name: `${user.firstName || ""} ${user.lastName || ""}`.trim() || user.username || "Anonymous",
+          avatar: user.imageUrl || "",
+          email: user.emailAddresses[0]?.emailAddress || "",
+          moderator: moderator ? 'true' : 'false'
         },
         features: {
-          livestreaming: "true",
-          recording: "true",
-          transcription: "true",
-          "outbound-call": "false",
-          "sip-outbound-call": "false",
-          "file-upload": "true",
-        },
+          livestreaming: 'true',
+          recording: 'true',
+          transcription: 'true',
+          "outbound-call": 'true'
+        }
       },
-    };
-
-    const token = jwt.sign(payload, privateKey, {
-      algorithm: "RS256",
-      header: {
-        kid: KID,
-        typ: "JWT",
-        alg: "RS256",
-      },
+      iss: 'chat',
+      room: '*',
+      sub: APP_ID,
+      exp: Math.round(now.setHours(now.getHours() + 3) / 1000),
+      nbf: (Math.round((new Date).getTime() / 1000) - 10)
+    }, privateKey, { 
+      algorithm: 'RS256', 
+      header: { kid: KID, typ: "JWT", alg: "RS256" } 
     });
 
-    return { success: true, token };
+    return { success: true, token: jwtToken };
   } catch (error: any) {
     console.error("Error generating Jitsi token:", error);
     return { success: false, error: error.message };

@@ -18,6 +18,7 @@ export default async function TenantLayout({
     .eq("slug", domain)
     .single();
 
+
   if (!tenant) {
     notFound();
   }

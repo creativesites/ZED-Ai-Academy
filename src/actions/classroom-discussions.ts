@@ -6,14 +6,14 @@ import { revalidatePath } from "next/cache";
 
 export async function getClassroomDiscussions(companyId: string) {
   const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  if (!userId) return [];
 
   const supabase = createClient();
   // Using the discussions table. We'll need to ensure company_id is a column or use a metadata field.
   // Assuming we use company_id for classroom-wide discussions.
   const { data, error } = await supabase
     .from("discussions")
-    .select("*, profiles(full_name, avatar_url)")
+    .select("*")
     .eq("company_id", companyId)
     .is("lesson_id", null) // Classroom level discussions don't have a lesson_id
     .order("created_at", { ascending: false });
@@ -23,7 +23,24 @@ export async function getClassroomDiscussions(companyId: string) {
     console.error("Discussions fetch error:", error);
     return [];
   }
-  return data;
+  
+  if (!data || data.length === 0) return [];
+  
+  const discussionUserIds = [...new Set(data.map((d: any) => d.user_id as string))];
+  const { data: profilesData } = await supabase
+    .from("profiles")
+    .select("id, full_name, avatar_url")
+    .in("id", discussionUserIds);
+    
+  const profileMap: Record<string, any> = {};
+  for (const p of profilesData ?? []) {
+    profileMap[(p as any).id] = { full_name: (p as any).full_name, avatar_url: (p as any).avatar_url };
+  }
+  
+  return data.map((d: any) => ({
+    ...d,
+    profiles: profileMap[d.user_id] ?? null
+  }));
 }
 
 export async function postClassroomDiscussion(companyId: string, companySlug: string, content: string) {

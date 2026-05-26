@@ -1,0 +1,43 @@
+Retrieving project…
+Deploying creativesites-projects/zed-ai-academy
+Inspect: https://vercel.com/creativesites-projects/zed-ai-academy/2MVAVV5ZSdx5mT4ES43Lc9e4m6of [4s]
+Production: https://zed-ai-academy-2shfhyxkq-creativesites-projects.vercel.app [4s]
+https://zed-ai-academy-2shfhyxkq-creativesites-projects.vercel.appBuilding...
+Building...
+Building: Running build in Washington, D.C., USA (East) – iad1
+Building: Build machine configuration: 2 cores, 8 GB
+Building: Retrieving list of deployment files...
+Building: Downloading 1026 deployment files...
+Building: Restored build cache from previous deployment (9GLB2oA7rfcwXQNJu5GTWn47vaw2)
+Building: Warning: "vercel" found in project dependencies and will be ignored.
+Building: Running "vercel build"
+Building: Vercel CLI 53.3.2
+Building: Installing dependencies...
+Building: up to date in 2s
+Building: 396 packages are looking for funding
+Building: run `npm fund` for details
+Building: Detected Next.js version: 16.2.4
+Building: Running "npm run build"
+Building: > zed-ai-academy@0.1.0 build
+Building: > next build
+Building: Applying modifyConfig from Vercel
+Building: ▲ Next.js 16.2.4 (Turbopack)
+Building: - Experiments (use with caution):
+Building: · serverActions
+Building: ⚠ The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+Building: Creating an optimized production build ...
+Building: ✓ Compiled successfully in 34.8s
+Building: Running TypeScript ...
+Building: Failed to type check.
+Building: ./src/actions/classroom.ts:56:37
+Building: Type error: Property 'id' does not exist on type 'never'.
+Building: 54 |
+Building: 55 |     if (!sessionError && sessionData) {
+Building: > 56 |       activeSessionId = sessionData.id;
+Building: |                                     ^
+Building: 57 |     }
+Building: 58 |   } else {
+Building: 59 |     // Ending a session: update ended_at and calculate duration
+Building: Next.js build worker exited with code: 1 and signal: null
+Building: Error: Command "npm run build" exited with 1
+Error: Command "npm run build" exited with 1

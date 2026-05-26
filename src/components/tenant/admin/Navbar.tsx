@@ -33,7 +33,7 @@ export function TenantAdminNavbar({ slug, name }: { slug: string; name: string }
     { label: "Dashboard", href: `/academy/${slug}/admin`, icon: LayoutDashboard },
     { label: "Classroom", href: `/academy/${slug}/admin/classroom`, icon: BookOpen },
     { label: "Live Sessions", href: `/academy/${slug}/admin/settings/live-sessions`, icon: Video },
-    { label: "Enrollments", href: `/academy/${slug}/admin/enrollments`, icon: GraduationCap },
+    // { label: "Enrollments", href: `/academy/${slug}/admin/enrollments`, icon: GraduationCap },
     { label: "Timetable", href: `/academy/${slug}/admin/classroom?tab=timetable`, icon: Calendar },
     { label: "Branding", href: `/academy/${slug}/admin/settings/site`, icon: Settings },
   ];

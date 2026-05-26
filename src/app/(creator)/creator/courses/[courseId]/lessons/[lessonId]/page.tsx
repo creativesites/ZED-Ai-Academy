@@ -80,7 +80,7 @@ export default async function LessonEditorPage({
   return (
     <>
       <Toaster />
-      <div className="max-w-4xl mx-auto space-y-6">
+      <div className="max-w-100  sm:px-6 lg:px-8 space-y-6">
         {/* Header */}
         <div className="flex items-center gap-3">
           <Button
@@ -88,7 +88,7 @@ export default async function LessonEditorPage({
             className="text-slate-500 hover:text-slate-800"
             render={<Link href={`/creator/courses/${courseId}`} />}
           >
-            <ArrowLeft className="h-4 w-4 mr-1" />
+            <ArrowLeft className="h-4 w-4 mr-1 max-w-100" />
             {course.title}
           </Button>
         </div>

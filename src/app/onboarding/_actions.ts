@@ -57,14 +57,24 @@ export async function completeOnboarding(formData: FormData) {
       },
     });
 
+    // 1. Update Profiles table FIRST to satisfy FK constraints
+    await supabase
+      .from("profiles")
+      .upsert({
+        id: userId,
+        full_name: fullName,
+        role: finalRole,
+        onboarding_completed: true,
+        updated_at: new Date().toISOString(),
+      }, { onConflict: "id" });
+
     let joinedCompanyId: string | null = null;
     let joinedCompanySlug: string | null = null;
 
-    // 1. Handle Company Admin Setup
+    // 2. Handle Company Admin Setup
     if (orgId && finalRole === "company_admin") {
       const org = await client.organizations.getOrganization({ organizationId: orgId });
       joinedCompanyId = org.id;
-      // Use clean, unique slug instead of Clerk's default slug (which might have random numbers)
       joinedCompanySlug = await generateUniqueSlug(supabase, org.name, "companies", org.id);
 
       await supabase.from("companies").upsert({
@@ -86,7 +96,7 @@ export async function completeOnboarding(formData: FormData) {
       }, { onConflict: "company_id, profile_id" });
     }
 
-    // 2. Handle Tenant Join (Learner or Teacher)
+    // 3. Handle Tenant Join (Learner or Teacher)
     if (tenantSlug && finalRole !== "company_admin") {
       const { data: tenant } = await supabase
         .from("companies")
@@ -115,17 +125,15 @@ export async function completeOnboarding(formData: FormData) {
       }
     }
 
-    // 3. Update Profiles table
-    await supabase
-      .from("profiles")
-      .upsert({
-        id: userId,
-        full_name: fullName,
-        role: finalRole,
-        company_id: joinedCompanyId, // Default company context
-        onboarding_completed: true,
-        updated_at: new Date().toISOString(),
-      }, { onConflict: "id" });
+    // 4. Update Profile with company context now that it's established
+    if (joinedCompanyId) {
+      await supabase
+        .from("profiles")
+        .update({
+          company_id: joinedCompanyId,
+        })
+        .eq("id", userId);
+    }
 
     // 4. Track Platform
     await supabase
@@ -194,7 +202,7 @@ export async function completeOnboarding(formData: FormData) {
     // 6. Role-based Redirection
     if (!enrollCourseSlug && joinedCompanySlug) {
       if (finalRole === "company_admin") {
-        redirectUrl = `/classroom/${joinedCompanySlug}`;
+        redirectUrl = `/academy/${joinedCompanySlug}/admin`;
       } else {
         redirectUrl = `/academy/${joinedCompanySlug}/classroom`;
       }

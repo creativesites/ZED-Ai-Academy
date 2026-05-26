@@ -179,12 +179,12 @@ export default function OnboardingPage() {
             </div>
 
             {showOrgCreate && (
-              <div className="mt-4 p-2 rounded-[2rem] bg-slate-50 border border-slate-200">
+              <div className="flex justify-center align-center">
                 <CreateOrganization 
                   afterCreateOrganizationUrl="/onboarding?role=company_admin"
                   appearance={{
                     elements: {
-                      card: "shadow-none border-0 bg-transparent p-0",
+                      card: "shadow-none bg-transparent",
                       navbar: "hidden",
                     }
                   }}

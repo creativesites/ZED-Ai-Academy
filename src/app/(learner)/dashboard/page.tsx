@@ -46,6 +46,7 @@ export default async function DashboardPage() {
     .eq("id", userId)
     .single();
 
+
   const profile = profileData as { full_name: string | null; role: UserRole; onboarding_completed: boolean; company_id: string | null } | null;
   // Redirect to onboarding if neither flag is set (covers pre-migration rows too)
   if (!profile?.onboarding_completed && !profile?.full_name) redirect("/onboarding");
@@ -75,6 +76,10 @@ export default async function DashboardPage() {
       .single();
     companySlug = companyData?.slug ?? null;
   }
+
+  const protocol = process.env.NODE_ENV === "production" ? "https" : "http";
+  const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || "localhost:3000";
+  const tenantBaseUrl = companySlug ? `${protocol}://${companySlug}.${rootDomain}` : "";
 
   // ── Admin stats (super_admin only, uses service client to bypass RLS) ──
   let adminStats: {
@@ -233,10 +238,10 @@ export default async function DashboardPage() {
               </Link>
               {companySlug && (
                 <Link
-                  href={`/classroom/${companySlug}`}
+                  href={`${tenantBaseUrl}/classroom`}
                   className={cn(
                     buttonVariants({ variant: "outline" }),
-                    "rounded-full border-2 border-[#fd5523]/50 bg-[#fd5523]/20 px-8 py-7 text-lg font-bold text-[#fd5523] backdrop-blur-md transition-all hover:bg-[#fd5523]/30 flex items-center justify-center"
+                    "rounded-full border-2 border-[#fd5523]/50 bg-[#fd5523]/20 px-8 py-7 text-lg font-bold text-[#fd5523] backdrop-blur-md transition-all hover:bg-[#fd5523]/30 hover:text-white flex items-center justify-center"
                   )}
                 >
                   Enter Classroom
@@ -430,7 +435,7 @@ export default async function DashboardPage() {
             
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               <Link
-                href="/creator/settings"
+                href={`${tenantBaseUrl}/admin/settings/site`}
                 className="group marketing-card flex items-center gap-5 rounded-[2rem] border-0 p-6 transition-all hover:-translate-y-1 hover:shadow-xl"
               >
                 <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#fff6ee] text-[#fd5523]">
@@ -438,7 +443,7 @@ export default async function DashboardPage() {
                 </div>
                 <div className="flex-1">
                   <p className="font-bold text-[#062e39] group-hover:text-[#fd5523] transition-colors">
-                    Edit Academy Identity
+                    to Identity
                   </p>
                   <p className="mt-0.5 text-xs text-slate-500">
                     Branding, logo, and home customization
@@ -449,7 +454,7 @@ export default async function DashboardPage() {
 
               {companySlug && (
                 <Link
-                  href={`/classroom/${companySlug}`}
+                  href={`${tenantBaseUrl}/classroom`}
                   className="group marketing-card flex items-center gap-5 rounded-[2rem] border-0 p-6 transition-all hover:-translate-y-1 hover:shadow-xl"
                 >
                   <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600">
@@ -468,7 +473,7 @@ export default async function DashboardPage() {
               )}
 
               <Link
-                href="/company"
+                href={`${tenantBaseUrl}/admin`}
                 className="group marketing-card flex items-center gap-5 rounded-[2rem] border-0 p-6 transition-all hover:-translate-y-1 hover:shadow-xl"
               >
                 <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
@@ -476,10 +481,10 @@ export default async function DashboardPage() {
                 </div>
                 <div className="flex-1">
                   <p className="font-bold text-[#062e39] group-hover:text-[#fd5523] transition-colors">
-                    Corporate Dashboard
+                    Academy Dashboard
                   </p>
                   <p className="mt-0.5 text-xs text-slate-500">
-                    Manage seats and team analytics
+                    Manage Academy
                   </p>
                 </div>
                 <ArrowRight className="h-4 w-4 shrink-0 text-slate-300 transition-colors group-hover:text-[#fd5523]" />

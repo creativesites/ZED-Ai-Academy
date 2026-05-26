@@ -4,6 +4,7 @@ import { ensureProfile } from "@/lib/supabase/ensure-profile";
 import { requireOnboarding } from "@/lib/require-onboarding";
 import Header2Wrapper from "@/components/layout/Header2Wrapper";
 import Footer1 from "@/components/layout/footer/Footer1";
+import { NotificationBellServer } from "@/components/shared/notification-bell-server";
 import "../../../public/assets/css/style.css"
 import 'swiper/css'
 import "swiper/css/pagination"
@@ -58,7 +59,9 @@ export default async function LearnerLayout({ children }: { children: React.Reac
 
   return (
     <div className="page-wrapper">
-      <Header2Wrapper />
+      <Header2Wrapper>
+        <NotificationBellServer />
+      </Header2Wrapper>
       <div id="page-content" className="pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:pb-0">
         {children}
       </div>

@@ -1,0 +1,46 @@
+Retrieving project…
+Deploying creativesites-projects/zed-ai-academy
+Uploading [--------------------] (0.0B/18.1KB)
+Uploading [=============-------] (12.6KB/18.1KB)
+Uploading [================----] (15.0KB/18.1KB)
+Uploading [====================] (18.1KB/18.1KB)
+Inspect: https://vercel.com/creativesites-projects/zed-ai-academy/9dDEXEtxtEag1H6fvL9ttiTk2TVf [8s]
+Production: https://zed-ai-academy-7if3ch5ex-creativesites-projects.vercel.app [8s]
+https://zed-ai-academy-7if3ch5ex-creativesites-projects.vercel.appBuilding...
+Building...
+Building: Running build in Washington, D.C., USA (East) – iad1
+Building: Build machine configuration: 2 cores, 8 GB
+Building: Retrieving list of deployment files...
+Building: Downloading 1016 deployment files...
+Building: Restored build cache from previous deployment (5ZFAU7vgobBuK1xjDxiH732TVAzF)
+Building: Running "vercel build"
+Building: Vercel CLI 53.3.1
+Building: Installing dependencies...
+Building: up to date in 2s
+Building: 377 packages are looking for funding
+Building: run `npm fund` for details
+Building: Detected Next.js version: 16.2.4
+Building: Running "npm run build"
+Building: > zed-ai-academy@0.1.0 build
+Building: > next build
+Building: Applying modifyConfig from Vercel
+Building: ▲ Next.js 16.2.4 (Turbopack)
+Building: - Experiments (use with caution):
+Building: · serverActions
+Building: ⚠ The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+Building: Creating an optimized production build ...
+Building: ✓ Compiled successfully in 35.2s
+Building: Running TypeScript ...
+Building: Failed to type check.
+Building: ./src/app/(marketing)/launch-your-academy/page.tsx:46:33
+Building: Type error: Property 'companies' does not exist on type 'never'.
+Building: 44 |                     .maybeSingle();
+Building: 45 |
+Building: > 46 |                 if (membership?.companies?.slug) {
+Building: |                                 ^
+Building: 47 |                     setTenantSlug(membership.companies.slug);
+Building: 48 |                 } else if (profile.company_id) {
+Building: 49 |                     const { data: company } = await supabase
+Building: Next.js build worker exited with code: 1 and signal: null
+Building: Error: Command "npm run build" exited with 1
+Error: Command "npm run build" exited with 1

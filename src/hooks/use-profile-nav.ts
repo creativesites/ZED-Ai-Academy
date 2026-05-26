@@ -2,7 +2,7 @@
 
 import { useAuth } from "@clerk/nextjs";
 import { useEffect, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { getProfileContext } from "@/actions/profile";
 
 export type ProfileNavState = {
   loaded: boolean;
@@ -16,13 +16,14 @@ export type ProfileNavState = {
  * Profile + tenant context for nav (matches server-side company admin guard loosely).
  */
 export function useProfileNav(): ProfileNavState {
-  const { userId, isSignedIn, orgId } = useAuth();
+  const { userId, isSignedIn, orgId, getToken } = useAuth();
   const [role, setRole] = useState<string | null>(null);
   const [tenantSlug, setTenantSlug] = useState<string | null>(null);
   const [onboardingCompleted, setOnboardingCompleted] = useState(false);
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
+   
     if (!isSignedIn || !userId) {
       setRole(null);
       setTenantSlug(null);
@@ -32,50 +33,23 @@ export function useProfileNav(): ProfileNavState {
     }
 
     let cancelled = false;
-    const supabase = createClient();
 
     async function load() {
       if (!userId) return;
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("role, company_id, onboarding_completed")
-        .eq("id", userId)
-        .single();
+      
+      const context = await getProfileContext(userId);
 
-      if (cancelled || !profile) {
+
+      if (cancelled || !context) {
         if (!cancelled) setLoaded(true);
         return;
       }
 
-      setRole(profile.role);
-      setOnboardingCompleted(!!profile.onboarding_completed);
-
-      const { data: membership } = await supabase
-        .from("company_members")
-        .select("company_id")
-        .eq("profile_id", userId)
-        .eq("status", "active")
-        .order("joined_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      const companyId = membership?.company_id ?? profile.company_id;
-      let slug: string | null = null;
-      if (companyId) {
-        const { data: company } = await supabase
-          .from("companies")
-          .select("slug")
-          .eq("id", companyId)
-          .maybeSingle();
-        slug = company?.slug ?? null;
-      }
-
-      if (!cancelled) {
-        setTenantSlug(slug);
-        setLoaded(true);
-      }
+      setRole(context.role);
+      setOnboardingCompleted(context.onboardingCompleted);
+      setTenantSlug(context.tenantSlug);
+      setLoaded(true);
     }
-
     load();
     return () => {
       cancelled = true;
@@ -85,7 +59,6 @@ export function useProfileNav(): ProfileNavState {
   const needsAcademyLaunch =
     loaded &&
     role === "company_admin" &&
-    onboardingCompleted &&
     !orgId &&
     !tenantSlug;
 

@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { BookOpen, Users, Shield, Award, Landmark, History, Search } from "lucide-react";
+import { SharedSections } from "./SharedSections";
 import { CourseCarousel } from "@/components/tenant/CourseCarousel";
 import { joinTenantBySlug } from "@/actions/tenants";
 import Link from "next/link";
@@ -16,7 +17,7 @@ export function ClassicTemplate({ tenant, courses, membership, brandColor, heroT
       <div className="h-2 bg-amber-900/10 w-full" />
 
       {/* Hero */}
-      <section className="pt-24 pb-20 lg:pt-36 lg:pb-32 relative overflow-hidden">
+      <section className="pt-24 px-3 pb-20 lg:pt-36 lg:pb-32 relative overflow-hidden">
         {/* Subtle Paper Texture Overlay */}
         <div className="absolute inset-0 z-0 pointer-events-none opacity-[0.03] bg-[url('https://www.transparenttextures.com/patterns/natural-paper.png')]" />
         
@@ -124,91 +125,16 @@ export function ClassicTemplate({ tenant, courses, membership, brandColor, heroT
         </div>
       </section>
 
-      {/* How it Works */}
-      <section className="py-24 bg-[#fdfbf7] border-y border-amber-100">
-        <div className="container mx-auto px-6 max-w-7xl">
-          <div className="text-center mb-20">
-            <h2 className="text-4xl font-black text-amber-950 tracking-tight mb-4">ACADEMIC PATHWAY</h2>
-            <div className="w-20 h-1 bg-amber-900 mx-auto" />
-          </div>
-          <div className="grid md:grid-cols-3 gap-16">
-            {[
-              { step: "I", title: "SELECT DISCIPLINE", desc: "Identify your area of focus from our curated catalog of masterclasses." },
-              { step: "II", title: "SECURE ENROLLMENT", desc: "Reserve your seat in our next cohort and access preparatory materials." },
-              { step: "III", title: "MASTER THE CRAFT", desc: "Engage in deep study and achieve your academic certification." }
-            ].map((item, idx) => (
-              <div key={idx} className="relative text-center">
-                <div className="text-7xl font-black text-amber-900/5 absolute -top-10 left-1/2 -translate-x-1/2 select-none">{item.step}</div>
-                <h3 className="text-lg font-black text-amber-950 mb-4 relative z-10 tracking-widest">{item.title}</h3>
-                <p className="text-amber-900/60 text-sm leading-relaxed">{item.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* About Tutor */}
-      <section className="py-24 bg-white overflow-hidden">
-        <div className="container mx-auto px-6 max-w-7xl">
-          <div className="grid lg:grid-cols-2 gap-20 items-center">
-            <div className="relative">
-              <div className="absolute -inset-4 border-2 border-amber-900/10 rotate-3" />
-              <div className="relative aspect-square bg-amber-50 overflow-hidden shadow-2xl">
-                {tutorAvatar ? (
-                  <img src={tutorAvatar} alt={tutorName} className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-700" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-amber-900/10">
-                    <Users className="h-20 w-20 text-amber-900/20" />
-                  </div>
-                )}
-                <div className="absolute bottom-0 left-0 right-0 p-8 bg-amber-950/90 text-white backdrop-blur-sm">
-                  <div className="text-[10px] uppercase tracking-[0.4em] opacity-60 mb-2">Lead Instructor</div>
-                  <div className="text-2xl font-black tracking-widest uppercase">{tutorName}</div>
-                </div>
-              </div>
-              <div className="absolute -top-8 -right-8 bg-amber-900 text-white p-6 shadow-2xl rotate-12">
-                <Award className="h-10 w-10" />
-              </div>
-            </div>
-
-            <div>
-              <div className="text-xs font-bold text-amber-900/40 uppercase tracking-[0.4em] mb-6">Distinguished Faculty</div>
-              <h2 className="text-4xl md:text-5xl font-black text-amber-950 tracking-tight mb-10 leading-tight">
-                {content.tutor_tagline || "Learn from industry pioneers"}
-              </h2>
-              <p className="text-xl text-amber-900/70 italic leading-relaxed mb-10">
-                "{tutorBio}"
-              </p>
-              
-              <div className="grid grid-cols-2 gap-8 mb-12">
-                <div className="border-l-4 border-amber-900 pl-6 py-2">
-                  <div className="text-xs font-bold text-amber-900/40 uppercase tracking-widest mb-1">Education</div>
-                  <div className="text-amber-950 font-black">{content.tutor_education || "MSc Mathematics · PhD Education"}</div>
-                </div>
-                <div className="border-l-4 border-amber-900 pl-6 py-2">
-                  <div className="text-xs font-bold text-amber-900/40 uppercase tracking-widest mb-1">Affiliation</div>
-                  <div className="text-amber-950 font-black">{content.tutor_university || "University of Cambridge"}</div>
-                </div>
-              </div>
-
-              <div className="flex flex-wrap gap-12 pt-10 border-t border-amber-100">
-                <div>
-                  <div className="text-2xl font-black text-amber-950">{content.stats_students_tutor || "500+"}</div>
-                  <div className="text-[10px] font-bold text-amber-900/40 uppercase tracking-widest">Alumni</div>
-                </div>
-                <div>
-                  <div className="text-2xl font-black text-amber-950">{content.stats_rating_tutor || "4.9★"}</div>
-                  <div className="text-[10px] font-bold text-amber-900/40 uppercase tracking-widest">Satisfaction</div>
-                </div>
-                <div>
-                  <div className="text-2xl font-black text-amber-950">{content.stats_hours_tutor || "12K+"}</div>
-                  <div className="text-[10px] font-bold text-amber-900/40 uppercase tracking-widest">Clock Hours</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* Shared Sections (How It Works, About Tutor, Sticky Scroll‑Cards, Services) */}
+      <SharedSections
+        brandColor={brandColor}
+        content={content}
+        tutorName={tutorName}
+        tutorBio={tutorBio}
+        tutorAvatar={tutorAvatar}
+        aboutTitle={aboutTitle}
+        aboutText={aboutText}
+      />
 
       {/* Courses Slider */}
       <section className="py-24 border-y border-amber-100 bg-[#fdfbf7]">
@@ -221,43 +147,6 @@ export function ClassicTemplate({ tenant, courses, membership, brandColor, heroT
             <div className="h-px bg-amber-900/20 flex-1 ml-10" />
           </div>
           <CourseCarousel courses={courses} variant="classic" />
-        </div>
-      </section>
-
-      {/* Services Section */}
-      <section className="py-24 bg-white">
-        <div className="container mx-auto px-6 max-w-7xl">
-          <div className="text-center mb-20">
-            <div className="text-xs font-bold text-amber-900/40 uppercase tracking-[0.5em] mb-4">OUR SERVICES</div>
-            <h2 className="text-4xl font-black text-amber-950 tracking-tight">PREMIUM ACADEMIC DELIVERY</h2>
-          </div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-12 mb-20">
-            {[
-              { icon: Landmark, title: "LITURGICAL LECTURES", desc: "Weekly live sessions with deep interactive discourse." },
-              { icon: BookOpen, title: "ONSITE SEMINARS", desc: "In-person academic gatherings at your private location." },
-              { icon: History, title: "ARCHIVAL ACCESS", desc: "Lifetime entry to our recorded library of past sessions." },
-              { icon: Award, title: "HONORARY MENTORSHIP", desc: "Direct 1-on-1 guidance from our senior fellows." },
-              { icon: Shield, title: "EXAM VIGILANCE", desc: "Comprehensive preparation for global examinations." },
-              { icon: Search, title: "SCHOLARLY SUPPORT", desc: "Unlimited research assistance and peer feedback." }
-            ].map((service, idx) => (
-              <div key={idx} className="p-8 border border-amber-900/5 hover:bg-amber-50 transition-all group">
-                <div className="h-12 w-12 flex items-center justify-center bg-amber-900/5 text-amber-900 mb-6 group-hover:bg-amber-900 group-hover:text-white transition-all">
-                  <service.icon className="h-6 w-6" />
-                </div>
-                <h4 className="text-sm font-black tracking-widest text-amber-950 mb-4 uppercase">{service.title}</h4>
-                <p className="text-xs text-amber-900/60 leading-relaxed">{service.desc}</p>
-              </div>
-            ))}
-          </div>
-
-          <div className="text-center">
-            <Link href={`/sign-up?role=student&tenant=${tenant.slug}`}>
-              <Button className="h-16 px-16 rounded-none bg-amber-900 text-white text-lg font-bold tracking-[0.2em] shadow-2xl hover:bg-amber-800 transition-all border-b-4 border-amber-950 active:border-b-0 active:translate-y-1">
-                GET STARTED & SIGN UP
-              </Button>
-            </Link>
-          </div>
         </div>
       </section>
 

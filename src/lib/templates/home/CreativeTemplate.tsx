@@ -4,6 +4,8 @@ import { CourseCard } from "@/components/tenant/CourseCard";
 import { joinTenantBySlug } from "@/actions/tenants";
 
 import { ArrowRight, Award, BookOpen, Check, Globe, History, Layout, Landmark, Rocket, Search, Shield, Users, Zap, Palette, Heart } from "lucide-react";
+import { SharedSections } from "./SharedSections";
+
 
 export function CreativeTemplate({ tenant, courses, membership, brandColor, heroTitle, heroSubtitle, aboutTitle, aboutText, aboutImage, ctaTitle, ctaButton, content, adminProfile }: any) {
   const tutorName = adminProfile?.full_name || "Academy Tutor";
@@ -80,91 +82,16 @@ export function CreativeTemplate({ tenant, courses, membership, brandColor, hero
         </div>
       </section>
 
-      {/* How it Works */}
-      <section className="py-32 bg-white">
-        <div className="container mx-auto px-6 max-w-7xl">
-          <div className="text-center mb-24 relative">
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-pink-100 rounded-full blur-3xl opacity-20" />
-            <h2 className="text-5xl font-black text-fuchsia-900 mb-4 relative z-10">Your Creative Flow</h2>
-            <div className="h-2 w-20 bg-yellow-400 mx-auto rounded-full" />
-          </div>
-          <div className="grid md:grid-cols-3 gap-16">
-            {[
-              { icon: Rocket, t: "Inspiration", d: "Explore our playful landscape of workshops and find the spark that drives you." },
-              { icon: Palette, t: "Expression", d: "Engage in live interactive sessions where we turn complex ideas into art." },
-              { icon: Heart, t: "Reflection", d: "Showcase your progress, get personal feedback, and celebrate your growth." }
-            ].map((item, idx) => (
-              <div key={idx} className="text-center group">
-                <div className="w-20 h-20 bg-fuchsia-50 rounded-[2rem] flex items-center justify-center mx-auto mb-8 group-hover:rotate-12 group-hover:scale-110 transition-all">
-                  <item.icon className="h-10 w-10 text-fuchsia-600" />
-                </div>
-                <h3 className="text-2xl font-black text-fuchsia-900 mb-4 tracking-tight">{item.t}</h3>
-                <p className="text-fuchsia-700/60 leading-relaxed text-sm max-w-xs mx-auto">{item.d}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* About Tutor */}
-      <section className="py-32 bg-yellow-50/30 overflow-hidden">
-        <div className="container mx-auto px-6 max-w-7xl">
-          <div className="grid lg:grid-cols-2 gap-20 items-center">
-            <div className="relative">
-              <div className="absolute -inset-10 bg-fuchsia-100 rounded-full blur-3xl opacity-20" />
-              <div className="relative aspect-square rounded-[5rem] overflow-hidden border-8 border-white shadow-2xl rotate-3 hover:rotate-0 transition-transform duration-700">
-                {tutorAvatar ? (
-                  <img src={tutorAvatar} alt={tutorName} className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full bg-fuchsia-50 flex items-center justify-center">
-                    <Users className="h-24 w-24 text-fuchsia-200" />
-                  </div>
-                )}
-              </div>
-              <div className="absolute -top-10 -right-10 bg-yellow-400 text-fuchsia-900 p-8 rounded-[3rem] shadow-xl rotate-12">
-                <Award className="h-12 w-12" />
-              </div>
-            </div>
-
-            <div className="space-y-10">
-              <div className="space-y-4">
-                <span className="text-fuchsia-600 font-bold uppercase tracking-widest text-xs">Curator & Coach</span>
-                <h2 className="text-5xl md:text-7xl font-black text-fuchsia-900 leading-tight">{tutorName}</h2>
-              </div>
-              
-              <p className="text-2xl font-medium text-fuchsia-800/70 leading-relaxed bg-white/50 p-10 rounded-[3rem] border border-white">
-                "{tutorBio}"
-              </p>
-
-              <div className="grid grid-cols-2 gap-6">
-                <div className="p-6 bg-white rounded-3xl border border-fuchsia-50 shadow-sm">
-                  <div className="text-fuchsia-400 text-[10px] font-black uppercase tracking-widest mb-2">Background</div>
-                  <div className="font-bold text-fuchsia-900 text-sm">{content.tutor_education || "MSc Mathematics · PhD Education"}</div>
-                </div>
-                <div className="p-6 bg-white rounded-3xl border border-fuchsia-50 shadow-sm">
-                  <div className="text-fuchsia-400 text-[10px] font-black uppercase tracking-widest mb-2">Philosophy</div>
-                  <div className="font-bold text-fuchsia-900 text-sm">{content.tutor_university || "Learning by Doing"}</div>
-                </div>
-              </div>
-
-              <div className="flex gap-12 pt-10">
-                <div>
-                  <div className="text-3xl font-black text-fuchsia-900">{content.stats_students_tutor || "500+"}</div>
-                  <div className="text-xs font-bold text-fuchsia-400 uppercase tracking-widest mt-1">Students</div>
-                </div>
-                <div>
-                  <div className="text-3xl font-black text-fuchsia-900">{content.stats_rating_tutor || "4.9★"}</div>
-                  <div className="text-xs font-bold text-fuchsia-400 uppercase tracking-widest mt-1">Rating</div>
-                </div>
-                <div>
-                  <div className="text-3xl font-black text-fuchsia-900">{content.stats_hours_tutor || "12K+"}</div>
-                  <div className="text-xs font-bold text-fuchsia-400 uppercase tracking-widest mt-1">Workshops</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* Shared Sections (How It Works, About Tutor, Sticky Scroll‑Cards, Services) */}
+      <SharedSections
+        brandColor={brandColor}
+        content={content}
+        tutorName={tutorName}
+        tutorBio={tutorBio}
+        tutorAvatar={tutorAvatar}
+        aboutTitle={aboutTitle}
+        aboutText={aboutText}
+      />
 
       {/* Courses Grid playful */}
       <section className="py-32">
@@ -181,45 +108,7 @@ export function CreativeTemplate({ tenant, courses, membership, brandColor, hero
         </div>
       </section>
 
-      {/* Services Section */}
-      <section className="py-32 bg-fuchsia-900 text-white relative overflow-hidden">
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-pink-500 rounded-full blur-[120px] opacity-20" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-yellow-400 rounded-full blur-[120px] opacity-20" />
-        
-        <div className="container mx-auto px-6 max-w-7xl relative z-10">
-          <div className="text-center mb-24">
-            <h2 className="text-5xl md:text-6xl font-black tracking-tighter mb-6 leading-none">Our Palette of Learning</h2>
-            <div className="h-2 bg-yellow-400 w-32 mx-auto rounded-full" />
-          </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-24">
-            {[
-              { icon: Zap, title: "SPARK SESSIONS", desc: "High-energy live interactive classes that ignite new ideas." },
-              { icon: Globe, title: "OFF-SCREEN SYNC", desc: "In-person academic support delivered directly to your creative space." },
-              { icon: History, title: "VAULT OF WONDER", desc: "Instant entry to our complete archive of playful past sessions." },
-              { icon: Users, title: "COHORT CLUBS", desc: "Small, friendly groups where you learn and grow together." },
-              { icon: Shield, title: "EXAM BLOSSOM", desc: "Turning high-pressure exam prep into a path of confidence." },
-              { icon: Rocket, title: "DREAM COACHING", desc: "Direct 1-on-1 focus to help you master your specific craft." }
-            ].map((service, idx) => (
-              <div key={idx} className="p-10 bg-white/10 backdrop-blur-md border border-white/10 rounded-[3rem] hover:bg-white/20 transition-all group">
-                <div className="h-16 w-16 flex items-center justify-center bg-yellow-400 text-fuchsia-900 rounded-2xl mb-8 group-hover:rotate-12 transition-transform">
-                  <service.icon className="h-8 w-8" />
-                </div>
-                <h4 className="text-2xl font-black tracking-tight text-white mb-4 uppercase">{service.title}</h4>
-                <p className="text-pink-100/60 text-sm leading-relaxed">{service.desc}</p>
-              </div>
-            ))}
-          </div>
-
-          <div className="text-center">
-            <Link href={`/sign-up?role=student&tenant=${tenant.slug}`}>
-              <Button className="h-20 px-16 rounded-full bg-white text-fuchsia-900 text-xl font-black shadow-[0_20px_50px_rgba(0,0,0,0.3)] hover:scale-105 transition-all">
-                Join the Adventure
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </section>
 
       {/* CTA */}
       <section className="py-32 container mx-auto px-6">

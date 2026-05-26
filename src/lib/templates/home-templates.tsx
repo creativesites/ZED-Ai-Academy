@@ -24,10 +24,10 @@ type TemplateProps = {
 
 export function TemplateRenderer({ tenant, courses, membership, content, brandColor, template, adminProfile, stats }: TemplateProps) {
   const academyName = tenant.name;
-  const heroTitle = content.hero_title || `Unlock Your Potential at ${academyName}`;
-  const heroSubtitle = content.hero_subtitle || "Join our community of experts and master the skills that matter today.";
-  const aboutTitle = content.about_title || "Our Mission";
-  const aboutText = content.about_text || "We are dedicated to providing world-class education that empowers individuals.";
+  const heroTitle = content.hero_title || `Wisdom in Love & Faith with Maureen Mulenga`;
+  const heroSubtitle = content.hero_subtitle || "Maureen Sinovia Mulenga is a devoted Christian, speaker, entrepreneur, and author of 'Let's Fix'. Join Bloom Academy to discover healing, better standards, and relationships that honor God.";
+  const aboutTitle = content.about_title || "About Maureen Sinovia Mulenga";
+  const aboutText = content.about_text || "Founder of Me and My Sisters and a graduate of UNZA, Maureen writes with warmth, conviction, and vulnerability. Based in Lusaka, she is a faith-rooted relationship voice dedicated to women's empowerment and practical wisdom.";
   const aboutImage = content.about_image || "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=2071&auto=format&fit=crop";
   const ctaTitle = content.cta_title || "Start Your Journey";
   const ctaButton = content.cta_button || "Enroll Now";

@@ -1,0 +1,154 @@
+Retrieving project…
+Deploying creativesites-projects/zed-ai-academy
+Uploading [--------------------] (0.0B/18.1KB)
+Uploading [=====---------------] (5.4KB/18.1KB)
+Uploading [====================] (18.1KB/18.1KB)
+Inspect: https://vercel.com/creativesites-projects/zed-ai-academy/6Jd5bWaSDeQpEnwyCYAAvM5w2VGP [11s]
+Production: https://zed-ai-academy-mcbqfpmk6-creativesites-projects.vercel.app [11s]
+https://zed-ai-academy-mcbqfpmk6-creativesites-projects.vercel.appBuilding...
+Building...
+Building: Running build in Washington, D.C., USA (East) – iad1
+Building: Build machine configuration: 2 cores, 8 GB
+Building: Retrieving list of deployment files...
+Building: Downloading 1017 deployment files...
+Building: Restored build cache from previous deployment (5ZFAU7vgobBuK1xjDxiH732TVAzF)
+Building: Running "vercel build"
+Building: Vercel CLI 53.3.1
+Building: Installing dependencies...
+Building: up to date in 2s
+Building: 377 packages are looking for funding
+Building: run `npm fund` for details
+Building: Detected Next.js version: 16.2.4
+Building: Running "npm run build"
+Building: > zed-ai-academy@0.1.0 build
+Building: > next build
+Building: Applying modifyConfig from Vercel
+Building: ▲ Next.js 16.2.4 (Turbopack)
+Building: - Experiments (use with caution):
+Building: · serverActions
+Building: ⚠ The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+Building: Creating an optimized production build ...
+Building: ✓ Compiled successfully in 33.8s
+Building: Running TypeScript ...
+Building: Finished TypeScript in 23.0s ...
+Building: Collecting page data using 1 worker ...
+Building: Generating static pages using 1 worker (0/45) ...
+Building: Generating static pages using 1 worker (11/45)
+Building: tenantSlug null
+Building: role null
+Building: tenantSlug null
+Building: role null
+Building: logging from mobile bottom tab- isLoaded: false  navLoaded: false
+Building: tenantSlug null
+Building: role null
+Building: tenantSlug null
+Building: role null
+Building: logging from mobile bottom tab- isLoaded: false  navLoaded: false
+Building: logging from mobile bottom tab- isLoaded: false  navLoaded: false
+Building: tenantSlug null
+Building: role null
+Building: tenantSlug null
+Building: role null
+Building: logging from mobile bottom tab- isLoaded: false  navLoaded: false
+Building: logging from mobile bottom tab- isLoaded: false  navLoaded: false
+Building: Generating static pages using 1 worker (22/45)
+Building: logging from mobile bottom tab- isLoaded: false  navLoaded: false
+Building: tenantSlug null
+Building: role null
+Building: tenantSlug null
+Building: role null
+Building: logging from mobile bottom tab- isLoaded: false  navLoaded: false
+Building: logging from mobile bottom tab- isLoaded: false  navLoaded: false
+Building: logging from mobile bottom tab- isLoaded: false  navLoaded: false
+Building: tenantSlug null
+Building: role null
+Building: tenantSlug null
+Building: role null
+Building: logging from mobile bottom tab- isLoaded: false  navLoaded: false
+Building: Generating static pages using 1 worker (33/45)
+Building: ✓ Generating static pages using 1 worker (45/45) in 2.0s
+Building: Finalizing page optimization ...
+Building: Running onBuildComplete from Vercel
+Building: Route (app)
+Building: ┌ ƒ /
+Building: ├ ○ /_not-found
+Building: ├ ○ /about
+Building: ├ ƒ /academy/[domain]
+Building: ├ ƒ /academy/[domain]/admin
+Building: ├ ƒ /academy/[domain]/admin/classroom
+Building: ├ ƒ /academy/[domain]/admin/enrollments
+Building: ├ ƒ /academy/[domain]/admin/live-sessions
+Building: ├ ƒ /academy/[domain]/admin/settings
+Building: ├ ƒ /academy/[domain]/admin/settings/live-sessions
+Building: ├ ƒ /academy/[domain]/admin/settings/site
+Building: ├ ƒ /academy/[domain]/classroom
+Building: ├ ƒ /academy/[domain]/dashboard
+Building: ├ ƒ /admin
+Building: ├ ƒ /admin/contacts
+Building: ├ ƒ /admin/images
+Building: ├ ƒ /admin/settings
+Building: ├ ƒ /admin/students
+Building: ├ ƒ /api/admin/sync-clerk-users
+Building: ├ ƒ /api/ai/generate-course-blueprint
+Building: ├ ƒ /api/ai/generate-curriculum
+Building: ├ ƒ /api/ai/generate-image
+Building: ├ ƒ /api/ai/generate-lesson-content
+Building: ├ ƒ /api/ai/generate-practice-exercise
+Building: ├ ƒ /api/ai/generate-quiz
+Building: ├ ƒ /api/ai/practice-studio
+Building: ├ ƒ /api/ai/site-intelligence
+Building: ├ ƒ /api/ai/tutor
+Building: ├ ƒ /api/hero-data
+Building: ├ ƒ /api/hero-enroll
+Building: ├ ƒ /api/live-sessions/[bookingId]/zoom-signature
+Building: ├ ƒ /api/live-sessions/services/[serviceId]/slots
+Building: ├ ƒ /api/webhooks/clerk
+Building: ├ ƒ /api/webhooks/paychangu
+Building: ├ ƒ /api/zoom/signature
+Building: ├ ○ /blog
+Building: ├ ƒ /blog/[slug]
+Building: ├ ƒ /certificates/[publicId]
+Building: ├ ƒ /company
+Building: ├ ○ /contact
+Building: ├ ƒ /courses
+Building: ├ ƒ /courses/[slug]
+Building: ├ ƒ /courses/[slug]/checkout
+Building: ├ ƒ /courses/[slug]/learn
+Building: ├ ƒ /creator/courses
+Building: ├ ƒ /creator/courses/[courseId]
+Building: ├ ƒ /creator/courses/[courseId]/lessons/[lessonId]
+Building: ├ ƒ /creator/courses/new
+Building: ├ ƒ /creator/live-sessions
+Building: ├ ƒ /creator/practice-submissions
+Building: ├ ƒ /creator/settings
+Building: ├ ƒ /dashboard
+Building: ├ ƒ /dashboard/settings
+Building: ├ ○ /faq
+Building: ├ ○ /forgot-password
+Building: ├ ○ /launch-your-academy
+Building: ├ ƒ /live-sessions/[id]/book
+Building: ├ ƒ /live-sessions/[id]/studio
+Building: ├ ○ /login
+Building: ├ ƒ /onboarding
+Building: ├ ƒ /pricing
+Building: ├ ○ /register
+Building: ├ ƒ /sign-in/[[...sign-in]]
+Building: ├ ƒ /sign-up/[[...sign-up]]
+Building: ├ ○ /test
+Building: ├ ƒ /test/[slug]
+Building: └ ○ /test/canvas
+Building: ƒ Proxy (Middleware)
+Building: ○  (Static)   prerendered as static content
+Building: ƒ  (Dynamic)  server-rendered on demand
+Building: Build Completed in /vercel/output [1m]
+Building: Deploying outputs...
+Building: Deployment completed
+Building: Creating build cache...
+[2K[1A[2K[GProduction: https://zed-ai-academy-mcbqfpmk6-creativesites-projects.vercel.app [2m]
+Completing...
+Aliased: https://zed-ai-academy.vercel.app [2m]
+
+Common next commands:
+- `vercel inspect zed-ai-academy-mcbqfpmk6-creativesites-projects.vercel.app --logs`
+- `vercel redeploy zed-ai-academy-mcbqfpmk6-creativesites-projects.vercel.app`
+> Tip: Run `npx plugins add vercel/vercel-plugin` to enhance your agent experience

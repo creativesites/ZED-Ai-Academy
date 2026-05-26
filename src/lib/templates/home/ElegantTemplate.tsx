@@ -4,6 +4,8 @@ import { CourseCard } from "@/components/tenant/CourseCard";
 import { joinTenantBySlug } from "@/actions/tenants";
 
 import { ArrowRight, Award, BookOpen, Check, Globe, History, Layout, Landmark, Rocket, Search, Shield, Users, Zap, Quote } from "lucide-react";
+import { SharedSections } from "./SharedSections";
+
 
 export function ElegantTemplate({ tenant, courses, membership, brandColor, heroTitle, heroSubtitle, aboutTitle, aboutText, aboutImage, ctaTitle, ctaButton, content, adminProfile }: any) {
   const tutorName = adminProfile?.full_name || "Academy Tutor";
@@ -75,89 +77,16 @@ export function ElegantTemplate({ tenant, courses, membership, brandColor, heroT
         </div>
       </section>
 
-      {/* How it Works */}
-      <section className="py-32 bg-stone-50 border-y border-stone-100">
-        <div className="container mx-auto px-6 max-w-7xl">
-          <div className="text-center mb-24">
-            <h2 className="text-4xl font-light tracking-tight text-stone-900 mb-4">THE CURATION PROCESS</h2>
-            <div className="w-16 h-0.5 bg-stone-800 mx-auto" />
-          </div>
-          <div className="grid md:grid-cols-3 gap-20">
-            {[
-              { step: "Selection", desc: "Identify your path from our carefully chosen catalog of specialized programs." },
-              { step: "Immersion", desc: "Engage in deep, focused study through live discourse or private mentorship." },
-              { step: "Attainment", desc: "Validate your mastery with recognized credentials and portfolio excellence." }
-            ].map((item, idx) => (
-              <div key={idx} className="space-y-8 text-center group">
-                <div className="text-stone-200 text-6xl font-light italic mb-2 select-none group-hover:text-stone-300 transition-colors">0{idx + 1}</div>
-                <h3 className="text-xl font-light text-stone-900 tracking-widest uppercase">{item.step}</h3>
-                <p className="text-stone-500 font-light leading-relaxed text-sm max-w-xs mx-auto italic">"{item.desc}"</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* About Tutor */}
-      <section className="py-32 bg-white">
-        <div className="container mx-auto px-6 max-w-7xl">
-          <div className="grid lg:grid-cols-2 gap-24 items-center">
-            <div className="relative">
-              <div className="absolute inset-0 bg-stone-50 -translate-x-6 -translate-y-6" />
-              <div className="relative aspect-square overflow-hidden shadow-2xl grayscale hover:grayscale-0 transition-all duration-1000">
-                {tutorAvatar ? (
-                  <img src={tutorAvatar} alt={tutorName} className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full bg-stone-100 flex items-center justify-center">
-                    <Users className="h-24 w-24 text-stone-200" />
-                  </div>
-                )}
-              </div>
-              <div className="absolute -bottom-8 -right-8 bg-stone-900 text-white p-10 shadow-2xl">
-                <Award className="h-10 w-10 text-stone-400" />
-              </div>
-            </div>
-
-            <div className="space-y-12">
-              <div className="space-y-4">
-                <div className="text-stone-300 text-[10px] font-bold uppercase tracking-[0.5em]">Lead Academic</div>
-                <h2 className="text-5xl md:text-7xl font-light tracking-tight leading-none text-stone-900">{tutorName}</h2>
-                <div className="h-0.5 w-24 bg-stone-800 mt-6" />
-              </div>
-              
-              <p className="text-2xl font-light text-stone-500 leading-relaxed italic">
-                "{tutorBio}"
-              </p>
-
-              <div className="grid grid-cols-2 gap-12">
-                <div>
-                  <div className="text-stone-300 text-[10px] font-bold uppercase tracking-widest mb-2">Qualifications</div>
-                  <div className="font-light text-stone-800 italic">{content.tutor_education || "MSc Mathematics · PhD Education"}</div>
-                </div>
-                <div>
-                  <div className="text-stone-300 text-[10px] font-bold uppercase tracking-widest mb-2">Institution</div>
-                  <div className="font-light text-stone-800 italic">{content.tutor_university || "University of Cambridge"}</div>
-                </div>
-              </div>
-
-              <div className="flex gap-16 pt-10 border-t border-stone-100">
-                <div>
-                  <div className="text-3xl font-light text-stone-900">{content.stats_students_tutor || "500+"}</div>
-                  <div className="text-[10px] text-stone-300 uppercase tracking-widest mt-1">Scholars</div>
-                </div>
-                <div>
-                  <div className="text-3xl font-light text-stone-900">{content.stats_rating_tutor || "4.9★"}</div>
-                  <div className="text-[10px] text-stone-300 uppercase tracking-widest mt-1">Rating</div>
-                </div>
-                <div>
-                  <div className="text-3xl font-light text-stone-900">{content.stats_hours_tutor || "12K+"}</div>
-                  <div className="text-[10px] text-stone-300 uppercase tracking-widest mt-1">Discourse</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* Shared Sections (How It Works, About Tutor, Sticky Scroll‑Cards, Services) */}
+      <SharedSections
+        brandColor={brandColor}
+        content={content}
+        tutorName={tutorName}
+        tutorBio={tutorBio}
+        tutorAvatar={tutorAvatar}
+        aboutTitle={aboutTitle}
+        aboutText={aboutText}
+      />
 
       {/* Courses Grid */}
       <section className="py-32 bg-stone-50 border-y border-stone-100">
@@ -177,43 +106,7 @@ export function ElegantTemplate({ tenant, courses, membership, brandColor, heroT
         </div>
       </section>
 
-      {/* Services Section */}
-      <section className="py-32 bg-stone-900 text-white relative overflow-hidden">
-        <div className="container mx-auto px-6 max-w-7xl relative z-10">
-          <div className="text-center mb-24">
-            <span className="text-stone-500 font-bold uppercase tracking-[0.5em] text-[10px] mb-4 block">SERVICES</span>
-            <h2 className="text-4xl md:text-5xl font-light tracking-tight mb-4">Academic Delivery</h2>
-            <div className="h-0.5 bg-stone-700 w-24 mx-auto" />
-          </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-12 mb-24">
-            {[
-              { icon: Zap, title: "LIVE DISCOURSE", desc: "Interactive real-time sessions with sophisticated virtual tools." },
-              { icon: Globe, title: "PRIVATE ONSITE", desc: "Exclusive in-person academic support delivered at your location." },
-              { icon: History, title: "ARCHIVAL ACCESS", desc: "Permanent entry to our complete repository of past lectures." },
-              { icon: Users, title: "SCHOLAR COHORTS", desc: "Small, curated peer groups for collaborative academic growth." },
-              { icon: Shield, title: "CERTIFICATION", desc: "Rigorous strategic preparation for global examination standards." },
-              { icon: Rocket, title: "DIRECT MENTOR", desc: "Confidential 1-on-1 link for specialized individual study." }
-            ].map((service, idx) => (
-              <div key={idx} className="p-12 border border-stone-800 hover:bg-stone-800/50 transition-all group">
-                <div className="h-14 w-14 flex items-center justify-center bg-stone-800 text-stone-400 mb-10 group-hover:bg-stone-700 group-hover:text-white transition-all">
-                  <service.icon className="h-6 w-6 font-light" />
-                </div>
-                <h4 className="text-lg font-light tracking-widest text-white mb-6 uppercase">{service.title}</h4>
-                <p className="text-sm text-stone-500 font-light leading-relaxed italic">"{service.desc}"</p>
-              </div>
-            ))}
-          </div>
-
-          <div className="text-center">
-            <Link href={`/sign-up?role=student&tenant=${tenant.slug}`}>
-              <Button className="h-16 px-16 rounded-none bg-white text-stone-900 text-xs font-bold uppercase tracking-[0.4em] hover:bg-stone-100 shadow-2xl transition-all">
-                ENROLL & BEGIN STUDY
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </section>
 
       {/* CTA */}
       <section className="py-32 container mx-auto px-6">

@@ -3,6 +3,8 @@ import Link from "next/link";
 import { CourseCard } from "@/components/tenant/CourseCard";
 import { joinTenantBySlug } from "@/actions/tenants";
 import { Globe, Shield, Users, ArrowRight, Award, BookOpen, Check, History, Layout, Landmark, Rocket, Search, Zap, Briefcase } from "lucide-react";
+import { SharedSections } from "./SharedSections";
+
 
 export function CorporateTemplate({ tenant, courses, membership, brandColor, heroTitle, heroSubtitle, aboutTitle, aboutText, aboutImage, ctaTitle, ctaButton, content, adminProfile }: any) {
   const tutorName = adminProfile?.full_name || "Academy Tutor";
@@ -76,124 +78,17 @@ export function CorporateTemplate({ tenant, courses, membership, brandColor, her
         </div>
       </section>
 
-      {/* How it Works */}
-      <section className="py-32 bg-slate-50/50">
-        <div className="container mx-auto px-6 max-w-7xl">
-          <div className="text-center mb-20">
-            <h2 className="text-4xl font-black text-slate-800 mb-4 tracking-tight">The Implementation Process</h2>
-            <p className="text-slate-500">A structured approach to enterprise-grade learning.</p>
-          </div>
-          <div className="grid md:grid-cols-3 gap-12">
-            {[
-              { icon: Search, t: "Needs Assessment", d: "We identify skill gaps within your organization and recommend targeted curriculum." },
-              { icon: Layout, t: "Deployment", d: "Full access for your team to live sessions, onsite workshops, and self-paced modules." },
-              { icon: Shield, t: "Verification", d: "Measurable progress tracking and industry-recognized certifications for every learner." }
-            ].map((item, idx) => (
-              <div key={idx} className="bg-white p-10 rounded-2xl shadow-sm border border-slate-100 relative group hover:border-blue-200 transition-all">
-                <div className="w-14 h-14 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600 mb-8 group-hover:bg-blue-600 group-hover:text-white transition-all">
-                  <item.icon className="h-7 w-7" />
-                </div>
-                <h3 className="text-xl font-bold text-slate-800 mb-4">{item.t}</h3>
-                <p className="text-slate-500 leading-relaxed text-sm">{item.d}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* Shared Sections (How It Works, About Tutor, Sticky Scroll‑Cards, Services) */}
+      <SharedSections
+        brandColor={brandColor}
+        content={content}
+        tutorName={tutorName}
+        tutorBio={tutorBio}
+        tutorAvatar={tutorAvatar}
+        aboutTitle={aboutTitle}
+        aboutText={aboutText}
+      />
 
-      {/* About Tutor */}
-      <section className="py-32 bg-white">
-        <div className="container mx-auto px-6 max-w-7xl">
-          <div className="grid lg:grid-cols-2 gap-20 items-center">
-            <div className="order-2 lg:order-1">
-              <span className="text-blue-600 font-bold uppercase tracking-widest text-xs mb-4 block">Executive Faculty</span>
-              <h2 className="text-4xl md:text-5xl font-black text-slate-800 mb-8 leading-tight">{tutorName}</h2>
-              <p className="text-xl text-slate-600 leading-relaxed mb-10 font-medium italic underline decoration-blue-200 decoration-4 underline-offset-8">
-                "{tutorBio}"
-              </p>
-              
-              <div className="grid grid-cols-2 gap-8 mb-12">
-                <div className="p-6 bg-slate-50 rounded-xl border border-slate-100">
-                  <div className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-2">Qualifications</div>
-                  <div className="font-bold text-slate-800 text-sm">{content.tutor_education || "MSc Mathematics · PhD Education"}</div>
-                </div>
-                <div className="p-6 bg-slate-50 rounded-xl border border-slate-100">
-                  <div className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-2">Institution</div>
-                  <div className="font-bold text-slate-800 text-sm">{content.tutor_university || "University of Cambridge"}</div>
-                </div>
-              </div>
-
-              <div className="flex gap-16 pt-10 border-t border-slate-100">
-                <div>
-                  <div className="text-2xl font-black text-slate-800">{content.stats_students_tutor || "500+"}</div>
-                  <div className="text-xs font-bold text-slate-400 uppercase tracking-widest">Alumni</div>
-                </div>
-                <div>
-                  <div className="text-2xl font-black text-slate-800">{content.stats_rating_tutor || "4.9★"}</div>
-                  <div className="text-xs font-bold text-slate-400 uppercase tracking-widest">Rating</div>
-                </div>
-                <div>
-                  <div className="text-2xl font-black text-slate-800">{content.stats_hours_tutor || "12K+"}</div>
-                  <div className="text-xs font-bold text-slate-400 uppercase tracking-widest">Hours</div>
-                </div>
-              </div>
-            </div>
-
-            <div className="order-1 lg:order-2 relative">
-              <div className="aspect-[4/5] rounded-2xl overflow-hidden shadow-2xl border-8 border-white grayscale hover:grayscale-0 transition-all duration-700">
-                {tutorAvatar ? (
-                  <img src={tutorAvatar} alt={tutorName} className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full bg-slate-100 flex items-center justify-center">
-                    <Users className="h-24 w-24 text-slate-300" />
-                  </div>
-                )}
-              </div>
-              <div className="absolute -top-6 -right-6 bg-blue-600 text-white p-8 rounded-2xl shadow-xl">
-                <Briefcase className="h-10 w-10" />
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Services Section */}
-      <section className="py-32 bg-slate-800 text-white">
-        <div className="container mx-auto px-6 max-w-7xl">
-          <div className="text-center mb-24">
-            <span className="text-blue-400 font-bold uppercase tracking-widest text-xs mb-4 block">Enterprise Solutions</span>
-            <h2 className="text-4xl md:text-5xl font-black tracking-tight mb-4">Strategic Academic Services</h2>
-            <div className="h-1 bg-blue-500 w-24 mx-auto" />
-          </div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-24">
-            {[
-              { icon: Zap, title: "EXECUTIVE LIVE", desc: "High-level interactive sessions for leadership and specialized teams." },
-              { icon: Globe, title: "ONSITE SEMINARS", desc: "Tailored in-person academic delivery at your corporate headquarters." },
-              { icon: History, title: "DATA ARCHIVE", desc: "Full repository access to all proprietary training and past sessions." },
-              { icon: Shield, title: "ACCREDITATION", desc: "Structured preparation for professional board and certification exams." },
-              { icon: Users, title: "GROUP COHORTS", desc: "Collaborative learning environments designed for team synergy." },
-              { icon: Rocket, title: "DIRECT MENTORSHIP", desc: "Confidential 1-on-1 focus on specific individual requirements." }
-            ].map((service, idx) => (
-              <div key={idx} className="p-10 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-all group">
-                <div className="h-14 w-14 flex items-center justify-center bg-blue-600/20 text-blue-400 rounded-lg mb-8 group-hover:scale-110 transition-transform">
-                  <service.icon className="h-7 w-7" />
-                </div>
-                <h4 className="text-xl font-bold mb-4 tracking-tight">{service.title}</h4>
-                <p className="text-slate-400 text-sm leading-relaxed">{service.desc}</p>
-              </div>
-            ))}
-          </div>
-
-          <div className="text-center">
-            <Link href={`/sign-up?role=student&tenant=${tenant.slug}`}>
-              <Button className="h-16 px-16 rounded-md bg-blue-600 text-white text-lg font-bold hover:bg-blue-700 shadow-2xl transition-all uppercase tracking-widest">
-                Authorize Enrollment
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </section>
 
       {/* Courses Grid */}
       <section className="py-32 bg-white">

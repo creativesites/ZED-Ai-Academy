@@ -1,46 +1,63 @@
 "use server";
 
-import { currentUser } from "@clerk/nextjs/server";
 import { createClient } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
+import { UserRole } from "@/types/database";
+import { auth } from "@clerk/nextjs/server";
+import { revalidatePath } from "next/cache";
+
+export async function getProfileContext(userId: string) {
+  const supabase = createClient();
+  
+  const { data: profile, error } = await supabase
+    .from("profiles")
+    .select("role, company_id, onboarding_completed")
+    .eq("id", userId)
+    .single();
+
+    // console.log('get profile context - profile', profile)
+
+  if (error || !profile) {
+    return null;
+  }
+
+  // Fetch tenant slug if they have a company
+  let tenantSlug: string | null = null;
+  if (profile.company_id) {
+    const { data: company } = await supabase
+      .from("companies")
+      .select("slug")
+      .eq("id", profile.company_id)
+      .maybeSingle();
+    
+    tenantSlug = company?.slug ?? null;
+  }
+
+  return {
+    role: profile.role as UserRole,
+    companyId: profile.company_id,
+    onboardingCompleted: !!profile.onboarding_completed,
+    tenantSlug,
+  };
+}
 
 export async function completeOnboarding(formData: FormData) {
-  const user = await currentUser();
-  if (!user) redirect("/sign-in");
-  const userId = user.id;
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
 
-  const fullName = (formData.get("full_name") as string)?.trim();
-  const level = formData.get("level") as string;
-  const goal = formData.get("goal") as string;
-
-  if (!fullName) throw new Error("Please enter your name.");
-
+  const fullName = formData.get("full_name") as string;
+  
   const supabase = createClient();
-  const email = user.emailAddresses.find((e) => e.id === user.primaryEmailAddressId)?.emailAddress;
-
   const { error } = await supabase
     .from("profiles")
-    .upsert({
-      id: userId,
+    .update({
       full_name: fullName,
-      bio: goal ? `Goal: ${goal}` : null,
-      email: email,
-      avatar_url: user.imageUrl,
       onboarding_completed: true,
       updated_at: new Date().toISOString(),
-    }, { onConflict: "id" });
+    })
+    .eq("id", userId);
 
   if (error) throw new Error(error.message);
 
-  // Recommend a starter course based on level if available
-  const { data: starter } = await supabase
-    .from("courses")
-    .select("slug")
-    .eq("status", "published")
-    .eq("level", (level || "beginner") as import("@/types/database").CourseLevel)
-    .limit(1)
-    .single();
-
-  if (starter) redirect(`/courses/${starter.slug}`);
-  redirect("/courses");
+  revalidatePath("/");
+  return { success: true };
 }

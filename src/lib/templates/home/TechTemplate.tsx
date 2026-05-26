@@ -3,6 +3,8 @@ import Link from "next/link";
 import { Globe, Shield, Zap, ArrowRight, Award, BookOpen, Check, History, Layout, Landmark, Rocket, Search, Users, Terminal, Code, Cpu } from "lucide-react";
 import { CourseCarousel } from "@/components/tenant/CourseCarousel";
 import { joinTenantBySlug } from "@/actions/tenants";
+import { SharedSections } from "./SharedSections";
+
 
 export function TechTemplate({ tenant, courses, membership, brandColor, heroTitle, heroSubtitle, aboutTitle, aboutText, aboutImage, ctaTitle, ctaButton, content, adminProfile }: any) {
   const tutorName = adminProfile?.full_name || "Academy Tutor";
@@ -83,91 +85,16 @@ export function TechTemplate({ tenant, courses, membership, brandColor, heroTitl
         </div>
       </section>
 
-      {/* How it Works */}
-      <section className="py-32 bg-slate-950 relative overflow-hidden">
-        <div className="container mx-auto px-6 max-w-7xl relative z-10">
-          <div className="text-center mb-24">
-            <h2 className="text-5xl font-black text-cyan-400 mb-4 tracking-tighter uppercase">[ Execution Flow ]</h2>
-            <p className="text-cyan-500/40 text-xs uppercase tracking-[0.5em]">Synchronized Deployment Protocol</p>
-          </div>
-          <div className="grid md:grid-cols-3 gap-12">
-            {[
-              { id: "0x01", t: "SCAN", d: "Identify the relevant curriculum nodes from our decentralized academic grid." },
-              { id: "0x02", t: "UPLINK", d: "Connect with lead instructors for high-bandwidth real-time data transfer." },
-              { id: "0x03", t: "EXECUTE", d: "Finalize the learning cycle and commit your achievements to the ledger." }
-            ].map((item, idx) => (
-              <div key={idx} className="p-10 border border-cyan-500/10 bg-slate-900/50 hover:border-cyan-500/40 transition-all group">
-                <div className="text-cyan-500/20 text-xs font-black mb-6 tracking-widest">{item.id}</div>
-                <h3 className="text-2xl font-black text-cyan-400 mb-4 tracking-tight uppercase group-hover:translate-x-2 transition-transform">{item.t}</h3>
-                <p className="text-slate-500 text-sm leading-relaxed">{item.d}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* About Tutor */}
-      <section className="py-32 bg-slate-900 border-y border-cyan-500/10">
-        <div className="container mx-auto px-6 max-w-7xl">
-          <div className="grid lg:grid-cols-2 gap-24 items-center">
-            <div className="relative">
-              <div className="aspect-square bg-slate-950 border border-cyan-500/20 overflow-hidden relative group">
-                {tutorAvatar ? (
-                  <img src={tutorAvatar} alt={tutorName} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <Code className="h-24 w-24 text-cyan-500/10" />
-                  </div>
-                )}
-                <div className="absolute inset-0 border-[16px] border-slate-900/80 pointer-events-none" />
-                <div className="absolute inset-0 border border-cyan-500/30 pointer-events-none scale-[0.98]" />
-              </div>
-              <div className="absolute -bottom-8 -right-8 bg-cyan-500 text-black p-10 shadow-[0_0_30px_rgba(0,255,255,0.3)]">
-                <Award className="h-12 w-12" />
-              </div>
-            </div>
-
-            <div className="space-y-12">
-              <div className="space-y-4">
-                <div className="text-cyan-500 text-xs font-black uppercase tracking-[0.5em]">Lead Architect</div>
-                <h2 className="text-6xl md:text-8xl font-black tracking-tighter leading-none text-cyan-400">{tutorName}</h2>
-              </div>
-              
-              <div className="bg-slate-950 p-10 border border-cyan-500/10">
-                <p className="text-xl text-cyan-300/60 leading-relaxed italic">
-                  "{tutorBio}"
-                </p>
-              </div>
-
-              <div className="grid grid-cols-2 gap-8">
-                <div className="border-l-2 border-cyan-500/30 pl-6">
-                  <div className="text-cyan-500/40 text-[10px] font-black uppercase tracking-widest mb-2">Credentials</div>
-                  <div className="font-bold text-white text-sm">{content.tutor_education || "MSc Mathematics · PhD Education"}</div>
-                </div>
-                <div className="border-l-2 border-cyan-500/30 pl-6">
-                  <div className="text-cyan-500/40 text-[10px] font-black uppercase tracking-widest mb-2">Base Node</div>
-                  <div className="font-bold text-white text-sm">{content.tutor_university || "University of Cambridge"}</div>
-                </div>
-              </div>
-
-              <div className="flex gap-12 pt-10 border-t border-cyan-500/10">
-                <div>
-                  <div className="text-3xl font-black text-cyan-400">{content.stats_students_tutor || "500+"}</div>
-                  <div className="text-[10px] font-black text-cyan-400/40 uppercase tracking-widest mt-1">Nodes</div>
-                </div>
-                <div>
-                  <div className="text-3xl font-black text-cyan-400">{content.stats_rating_tutor || "4.9★"}</div>
-                  <div className="text-[10px] font-black text-cyan-400/40 uppercase tracking-widest mt-1">Uptime</div>
-                </div>
-                <div>
-                  <div className="text-3xl font-black text-cyan-400">{content.stats_hours_tutor || "12K+"}</div>
-                  <div className="text-[10px] font-black text-cyan-400/40 uppercase tracking-widest mt-1">Compute</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* Shared Sections (How It Works, About Tutor, Sticky Scroll‑Cards, Services) */}
+      <SharedSections
+        brandColor={brandColor}
+        content={content}
+        tutorName={tutorName}
+        tutorBio={tutorBio}
+        tutorAvatar={tutorAvatar}
+        aboutTitle={aboutTitle}
+        aboutText={aboutText}
+      />
 
       {/* Courses Slider */}
       <section className="py-32 bg-slate-950">
@@ -182,42 +109,7 @@ export function TechTemplate({ tenant, courses, membership, brandColor, heroTitl
         </div>
       </section>
 
-      {/* Services Section */}
-      <section className="py-32 bg-slate-900 relative overflow-hidden">
-        <div className="container mx-auto px-6 max-w-7xl relative z-10">
-          <div className="text-center mb-24">
-            <h2 className="text-5xl md:text-6xl font-black tracking-tighter mb-6 uppercase leading-none text-cyan-400">System Modules</h2>
-            <div className="h-1 bg-cyan-500 w-32 mx-auto" />
-          </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-24">
-            {[
-              { icon: Zap, title: "CORE LIVE", desc: "Interactive real-time transmission with our architect faculty." },
-              { icon: Globe, title: "LOCAL NODE", desc: "In-person academic deployment directly to your physical coordinates." },
-              { icon: History, title: "DATA VAULT", desc: "Instant retrieval of all legacy session data and resources." },
-              { icon: Users, title: "GRID SWARM", desc: "Small-batch collaborative modules for shared academic compute." },
-              { icon: Shield, title: "PROTOCOL PREP", desc: "Strategic optimization for global standard certification exams." },
-              { icon: Rocket, title: "DIRECT LINK", desc: "Confidential 1-on-1 focus on specific individual requirements." }
-            ].map((service, idx) => (
-              <div key={idx} className="p-10 bg-slate-950 border border-cyan-500/10 hover:border-cyan-500/40 transition-all group">
-                <div className="h-14 w-14 flex items-center justify-center bg-cyan-500/10 text-cyan-400 rounded-none mb-8 group-hover:bg-cyan-500 group-hover:text-black transition-all">
-                  <service.icon className="h-7 w-7" />
-                </div>
-                <h4 className="text-xl font-black tracking-tight text-white mb-4 uppercase">{service.title}</h4>
-                <p className="text-xs text-slate-500 leading-relaxed">{service.desc}</p>
-              </div>
-            ))}
-          </div>
-
-          <div className="text-center">
-            <Link href={`/sign-up?role=student&tenant=${tenant.slug}`}>
-              <Button className="h-20 px-16 rounded-none bg-cyan-500 text-black text-xl font-black uppercase tracking-widest hover:bg-cyan-400 shadow-[0_0_40px_rgba(0,255,255,0.4)] transition-all">
-                Initialize Enrollment
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </section>
 
       {/* CTA */}
       <section className="py-32">

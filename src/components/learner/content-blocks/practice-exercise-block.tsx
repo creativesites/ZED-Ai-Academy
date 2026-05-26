@@ -10,11 +10,13 @@ export function PracticeExerciseBlock({
   content,
   submission,
   onLaunchStudio,
+  previewMode = false,
 }: {
   blockId: string;
   content: Record<string, unknown>;
   submission?: any;
   onLaunchStudio?: (initialTool?: string) => void;
+  previewMode?: boolean;
 }) {
   const title = (content.title as string) || "Practice Exercise";
   const brief = content.brief as string | undefined;
@@ -61,6 +63,75 @@ export function PracticeExerciseBlock({
     if (mode.includes("code")) return "💻";
     return "📝";
   };
+
+  if (previewMode) {
+    return (
+      <div className="relative w-full max-w-full overflow-hidden">
+        <div className="relative overflow-hidden rounded-3xl border border-slate-200/60 bg-white transition-all duration-300 sm:rounded-[2rem]">
+          <div className="p-5 sm:p-6 md:p-8">
+            <div className="mb-4 flex gap-2">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-purple-100 bg-gradient-to-r from-purple-50 to-pink-50 px-3 py-1.5 text-[11px] font-bold text-purple-700">
+                <span className="text-sm">{getModeIcon(mode)}</span>
+                {mode.replace(/_/g, " ")}
+              </span>
+              {estimatedMinutes && (
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-100 bg-gradient-to-r from-amber-50 to-orange-50 px-3 py-1.5 text-[11px] font-bold text-amber-700">
+                  ⏱️ {estimatedMinutes} min
+                </span>
+              )}
+            </div>
+
+            <div className="flex items-start gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-500 text-white shadow-md shadow-emerald-200 sm:h-12 sm:w-12">
+                <span className="text-lg sm:text-xl">🏋️</span>
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="mb-1 text-[10px] font-black uppercase tracking-[0.2em] text-emerald-600">
+                  Practice Exercise
+                </p>
+                <h3 className="text-xl font-bold tracking-tight text-[#062e39] sm:text-2xl">
+                  {title}
+                </h3>
+              </div>
+            </div>
+
+            {brief && (
+              <div className="mt-4 rounded-2xl border border-slate-100 bg-slate-50 p-4">
+                <p className="text-sm leading-relaxed text-slate-600">{brief}</p>
+              </div>
+            )}
+
+            {instructions.length > 0 && (
+              <div className="mt-4 space-y-2">
+                {instructions.slice(0, 3).map((instruction, idx) => (
+                  <div
+                    key={`${instruction}-${idx}`}
+                    className="flex gap-3 rounded-xl border border-slate-100 bg-white p-3"
+                  >
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-400 to-teal-500 text-xs font-bold text-white">
+                      {idx + 1}
+                    </span>
+                    <span className="text-sm leading-relaxed text-slate-600">{instruction}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div className="mt-5 rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-4">
+              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">
+                Learner Response Area
+              </p>
+              <div className="mt-3 space-y-2">
+                <div className="h-3 rounded-full bg-slate-200" />
+                <div className="h-3 w-5/6 rounded-full bg-slate-200" />
+                <div className="h-3 w-2/3 rounded-full bg-slate-200" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="relative w-full max-w-full overflow-hidden">

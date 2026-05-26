@@ -4,8 +4,14 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { scaffoldCurriculum } from "@/actions/course-ai";
 import { Button } from "@/components/ui/button";
-import { Loader2, Sparkles, ChevronDown, ChevronUp, CheckCircle2, BookOpen, Layers } from "lucide-react";
+import { 
+  Loader2, Sparkles, ChevronDown,
+  CheckCircle2, RefreshCcw,
+  BrainCircuit, X
+} from "lucide-react";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
+import { COURSE_DOMAIN_PRESETS, type CourseDomainPresetId } from "@/lib/course-domain-presets";
 
 type GeneratedLesson = { title: string };
 type GeneratedModule = { title: string; lessons: GeneratedLesson[] };
@@ -18,23 +24,23 @@ export function AICurriculumGenerator({ courseId }: { courseId: string }) {
   const [applying, startApply] = useTransition();
   const [preview, setPreview] = useState<GeneratedModule[] | null>(null);
   const [progress, setProgress] = useState("");
+  const [domainPreset, setDomainPreset] = useState<CourseDomainPresetId>("ai-professional");
 
   async function handleGenerate() {
-    if (generating) return;
+    if (generating || !brief.trim()) return;
     setGenerating(true);
     setPreview(null);
-    setProgress("");
     try {
       const res = await fetch("/api/ai/generate-curriculum", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ courseId, brief }),
+        body: JSON.stringify({ courseId, brief, domainPreset }),
       });
       const data = await res.json();
       if (!res.ok || data.error) throw new Error(data.error || "Generation failed");
       setPreview(data.modules);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to generate curriculum");
+      toast.error(err instanceof Error ? err.message : "Failed to generate");
     } finally {
       setGenerating(false);
     }
@@ -42,17 +48,17 @@ export function AICurriculumGenerator({ courseId }: { courseId: string }) {
 
   function handleApply() {
     if (!preview) return;
-    setProgress(`Building ${preview.length} modules and ${totalLessons} lessons…`);
+    setProgress(`Creating ${preview.length} modules...`);
     startApply(async () => {
       try {
         await scaffoldCurriculum(courseId, preview);
-        toast.success("Curriculum scaffolded! All modules and lessons created.");
+        toast.success("Curriculum built successfully!");
         setOpen(false);
         setPreview(null);
-        setProgress("");
         router.refresh();
-      } catch (err) {
-        toast.error(err instanceof Error ? err.message : "Failed to apply curriculum");
+      } catch {
+        toast.error("Failed to build curriculum");
+      } finally {
         setProgress("");
       }
     });
@@ -61,105 +67,152 @@ export function AICurriculumGenerator({ courseId }: { courseId: string }) {
   const totalLessons = preview?.reduce((s, m) => s + m.lessons.length, 0) ?? 0;
 
   return (
-    <div className="rounded-[2rem] border border-[#fd5523]/20 bg-gradient-to-br from-[#fff6ee] to-white shadow-sm">
+    <div className={cn(
+      "relative overflow-hidden rounded-[2.5rem] border transition-all duration-500",
+      open ? "border-[#fd5523]/40 bg-white shadow-2xl shadow-[#fd5523]/5" : "border-slate-100 bg-slate-50/50"
+    )}>
+      {/* Header / Toggle */}
       <button
-        onClick={() => setOpen((o) => !o)}
-        className="flex w-full items-center gap-4 p-5 text-left"
+        onClick={() => setOpen(!open)}
+        className="flex w-full items-center gap-4 p-4 lg:p-6 text-left transition-active active:scale-[0.98]"
       >
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#fd5523] text-white shadow-md">
-          <Sparkles className="h-5 w-5" />
+        <div className={cn(
+          "flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl transition-all duration-500",
+          open ? "bg-[#062e39] text-white rotate-90" : "bg-white text-[#fd5523] shadow-sm border border-slate-100"
+        )}>
+          {open ? <X className="h-5 w-5" /> : <BrainCircuit className="h-6 w-6" />}
         </div>
-        <div className="flex-1">
-          <p className="text-[10px] font-black uppercase tracking-[0.25em] text-[#fd5523]">AI Studio</p>
-          <h3 className="text-base font-bold text-[#062e39]">Generate Curriculum with AI</h3>
+        
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[#fd5523]">AI Co-Pilot</span>
+            {generating && <Loader2 className="h-3 w-3 animate-spin text-[#fd5523]" />}
+          </div>
+          <h3 className="text-sm lg:text-base font-black text-[#062e39] truncate">
+            {preview ? "Review Generated Path" : "Magic Curriculum Builder"}
+          </h3>
         </div>
-        <div className="text-slate-400">
-          {open ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
+
+        <div className={cn(
+          "h-8 w-8 rounded-full border border-slate-200 flex items-center justify-center transition-transform duration-300",
+          open && "rotate-180"
+        )}>
+          <ChevronDown className="h-4 w-4 text-slate-400" />
         </div>
       </button>
 
-      {open && (
-        <div className="border-t border-[#fd5523]/10 px-5 pb-5 pt-4 space-y-4">
-          {!preview ? (
-            <>
-              <p className="text-sm text-slate-500 leading-relaxed">
-                Describe any additional context about your course and AI will scaffold all 4 modules with lessons.
-              </p>
-              <textarea
-                value={brief}
-                onChange={(e) => setBrief(e.target.value)}
-                placeholder="e.g. Focus on non-technical professionals in Zambia who use Excel and WhatsApp daily. Include a module on AI tools for small business."
-                rows={3}
-                className="w-full resize-none rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-[#062e39] placeholder:text-slate-400 focus:border-[#fd5523] focus:outline-none focus:ring-2 focus:ring-[#fd5523]/10"
-              />
-              <Button
-                onClick={handleGenerate}
-                disabled={generating}
-                className="w-full rounded-2xl bg-[#fd5523] py-6 font-bold text-white hover:bg-[#ef4a16]"
-              >
-                {generating ? (
-                  <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Generating curriculum…</>
-                ) : (
-                  <><Sparkles className="mr-2 h-4 w-4" />Generate Curriculum</>
-                )}
-              </Button>
-            </>
-          ) : (
-            <div className="space-y-4">
-              {/* Preview */}
-              <div className="space-y-3 max-h-[400px] overflow-y-auto pr-1">
-                {preview.map((mod, mi) => (
-                  <div key={mi} className="rounded-2xl border border-slate-100 bg-white p-4">
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-[#fff6ee] text-[#fd5523]">
-                        <Layers className="h-3.5 w-3.5" />
-                      </div>
-                      <p className="text-sm font-bold text-[#062e39]">{mod.title}</p>
-                    </div>
-                    <div className="ml-9 space-y-1">
-                      {mod.lessons.map((lesson, li) => (
-                        <div key={li} className="flex items-center gap-2 text-xs text-slate-500">
-                          <BookOpen className="h-3 w-3 shrink-0 text-slate-400" />
-                          {lesson.title}
-                        </div>
-                      ))}
-                    </div>
+      {/* Content Area */}
+      <div className={cn(
+        "grid transition-all duration-500 ease-in-out",
+        open ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
+      )}>
+        <div className="overflow-hidden">
+          <div className="p-4 lg:p-6 pt-0 space-y-6">
+            
+            {!preview ? (
+              <div className="space-y-4 animate-in fade-in slide-in-from-top-2">
+                <div className="relative">
+                  <select
+                    value={domainPreset}
+                    onChange={(e) => setDomainPreset(e.target.value as CourseDomainPresetId)}
+                    className="mb-3 flex h-11 w-full rounded-[1.2rem] border-2 border-slate-100 bg-white px-4 text-sm font-bold text-[#062e39] outline-none transition-all focus:border-[#fd5523]/30 focus:ring-4 focus:ring-[#fd5523]/5"
+                  >
+                    {COURSE_DOMAIN_PRESETS.map((preset) => (
+                      <option key={preset.id} value={preset.id}>
+                        {preset.label}
+                      </option>
+                    ))}
+                  </select>
+                  <textarea
+                    value={brief}
+                    onChange={(e) => setBrief(e.target.value)}
+                    placeholder="Describe your course goal... (e.g. Real Estate marketing for beginners in Lusaka)"
+                    rows={4}
+                    className="w-full resize-none rounded-[1.5rem] border-2 border-slate-100 bg-white px-5 py-4 text-sm font-medium text-[#062e39] transition-all placeholder:text-slate-300 focus:border-[#fd5523]/30 focus:outline-none focus:ring-4 focus:ring-[#fd5523]/5"
+                  />
+                  <div className="absolute bottom-4 right-4 text-[10px] font-bold text-slate-300 uppercase tracking-widest">
+                    {brief.length} chars
                   </div>
-                ))}
-              </div>
+                </div>
 
-              <div className="flex items-center justify-between rounded-2xl bg-[#062e39]/5 px-4 py-2">
-                <p className="text-xs text-slate-500">{preview.length} modules · {totalLessons} lessons</p>
-                <button
-                  onClick={() => setPreview(null)}
-                  className="text-xs font-bold text-[#fd5523] hover:underline"
+                <Button
+                  onClick={handleGenerate}
+                  disabled={generating || !brief.trim()}
+                  className="group w-full h-14 rounded-2xl bg-[#fd5523] hover:bg-[#062e39] text-white shadow-lg shadow-[#fd5523]/20 transition-all duration-300 active:scale-[0.97]"
                 >
-                  Regenerate
-                </button>
+                  {generating ? (
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                  ) : (
+                    <div className="flex items-center gap-2 font-black uppercase tracking-widest text-xs">
+                      <span>Start Generation</span>
+                      <Sparkles className="h-4 w-4 group-hover:rotate-12 transition-transform" />
+                    </div>
+                  )}
+                </Button>
               </div>
+            ) : (
+              /* Preview State */
+              <div className="space-y-6 animate-in zoom-in-95 duration-300">
+                <div className="flex items-center justify-between px-2">
+                  <div className="flex flex-col">
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Structure</span>
+                    <span className="text-xs font-bold text-[#062e39]">{preview.length} Modules • {totalLessons} Lessons</span>
+                  </div>
+                  <button 
+                    onClick={() => setPreview(null)}
+                    className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-[#fd5523] hover:opacity-70 transition-opacity"
+                  >
+                    <RefreshCcw className="h-3 w-3" />
+                    Reset
+                  </button>
+                </div>
 
-              {progress && (
-                <p className="flex items-center gap-2 text-xs text-slate-400">
-                  <Loader2 className="h-3 w-3 animate-spin" />
-                  {progress}
-                </p>
-              )}
+                <div className="space-y-3 max-h-[350px] overflow-y-auto pr-2 scrollbar-hide">
+                  {preview.map((mod, mi) => (
+                    <div key={mi} className="group rounded-[1.5rem] border border-slate-100 bg-slate-50/50 p-4 transition-all hover:bg-white hover:border-[#fd5523]/20">
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-white border border-slate-100 text-[#fd5523] font-black text-xs shadow-sm">
+                          {mi + 1}
+                        </div>
+                        <h4 className="text-sm font-black text-[#062e39] leading-tight">{mod.title}</h4>
+                      </div>
+                      
+                      <div className="space-y-2 ml-11">
+                        {mod.lessons.map((lesson, li) => (
+                          <div key={li} className="flex items-center gap-2 text-[11px] font-bold text-slate-500 uppercase tracking-tight">
+                            <div className="h-1 w-1 rounded-full bg-slate-300" />
+                            {lesson.title}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
 
-              <Button
-                onClick={handleApply}
-                disabled={applying}
-                className="w-full rounded-2xl bg-[#062e39] py-6 font-bold text-white hover:bg-[#062e39]/90"
-              >
-                {applying ? (
-                  <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Building curriculum…</>
-                ) : (
-                  <><CheckCircle2 className="mr-2 h-4 w-4" />Apply to Curriculum</>
-                )}
-              </Button>
-            </div>
-          )}
+                <div className="pt-2">
+                  <Button
+                    onClick={handleApply}
+                    disabled={applying}
+                    className="w-full h-14 rounded-2xl bg-[#062e39] hover:bg-[#fd5523] text-white transition-all duration-500 active:scale-[0.97] group"
+                  >
+                    {applying ? (
+                      <div className="flex items-center gap-3 text-xs font-black uppercase tracking-widest">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <span>{progress || "Building..."}</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2 text-xs font-black uppercase tracking-widest">
+                        <span>Apply to Course</span>
+                        <CheckCircle2 className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                      </div>
+                    )}
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
-      )}
+      </div>
     </div>
   );
 }

@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { auth } from "@clerk/nextjs/server";
 import { createServiceClient } from "@/lib/supabase/server";
+import { ensureTenantMembership } from "@/actions/tenants";
 
 async function requireAdmin() {
   const { userId } = await auth();
@@ -28,12 +29,24 @@ export async function activateEnrollment(enrollmentId: string) {
     .from("enrollments")
     .update({ status: "active" })
     .eq("id", enrollmentId)
-    .select("course_id, user_id, courses(slug)")
+    .select("course_id, user_id, company_id, courses(slug)")
     .single();
 
-  if (error) throw new Error(error.message);
+  if (error || !data) throw new Error(error?.message || "Enrollment not found");
 
-  const slug = (data as unknown as { courses: { slug: string } | null }).courses?.slug;
+  const enrollmentData = data as unknown as {
+    course_id: string;
+    user_id: string;
+    company_id: string | null;
+    courses: { slug: string } | null;
+  };
+
+  // AUTOMATIC TENANT JOIN ON ACTIVATION
+  if (enrollmentData.company_id) {
+    await ensureTenantMembership(enrollmentData.user_id, enrollmentData.company_id, "learner");
+  }
+
+  const slug = enrollmentData.courses?.slug;
   revalidatePath("/admin/students");
   if (slug) {
     revalidatePath(`/courses/${slug}`);
@@ -91,6 +104,11 @@ export async function createManualEnrollment(
       notes: notes ?? null,
     });
     if (error) throw new Error(error.message);
+
+    // AUTOMATIC TENANT JOIN ON MANUAL ENROLLMENT
+    if (course?.company_id) {
+      await ensureTenantMembership(targetUserId, course.company_id, "learner");
+    }
   }
 
   revalidatePath("/admin/students");

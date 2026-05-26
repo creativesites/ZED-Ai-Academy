@@ -8,8 +8,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { getClassroomGroups, createClassroomGroup } from "@/actions/classroom";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { ManageGroupModal } from "./ManageGroupModal";
 
-export function GroupsTab({ companyId }: { companyId: string }) {
+export function GroupsTab({ companyId, companySlug }: { companyId: string, companySlug: string }) {
   const [groups, setGroups] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
@@ -31,7 +32,7 @@ export function GroupsTab({ companyId }: { companyId: string }) {
   async function handleCreateGroup(formData: FormData) {
     try {
       formData.append("companyId", companyId);
-      formData.append("companySlug", "placeholder"); // Normally we'd pass slug
+      formData.append("companySlug", companySlug);
       await createClassroomGroup(formData);
       toast.success("Group created!");
       setOpen(false);
@@ -121,9 +122,7 @@ export function GroupsTab({ companyId }: { companyId: string }) {
                   <span className="text-xs font-bold uppercase tracking-widest text-slate-400 flex items-center gap-1.5">
                     <Info className="h-4 w-4" /> 0 Students
                   </span>
-                  <Button variant="outline" size="sm" className="rounded-lg text-xs font-bold h-8 border-slate-200 text-slate-600 hover:text-[#062e39]">
-                    Manage
-                  </Button>
+                  <ManageGroupModal group={group} companyId={companyId} companySlug={companySlug} />
                 </div>
               </div>
             ))}

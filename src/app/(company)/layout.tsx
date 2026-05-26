@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { companyAdminNeedsAcademySetup } from "@/lib/company-admin-setup";
 import Header2Wrapper from "@/components/layout/Header2Wrapper";
 import Footer1 from "@/components/layout/footer/Footer1";
+import { NotificationBellServer } from "@/components/shared/notification-bell-server";
 import "../../../public/assets/css/style.css"
 import 'swiper/css'
 // import "swiper/css/navigation"
@@ -36,7 +37,9 @@ export default async function CompanyLayout({ children }: { children: React.Reac
 
   return (
     <div className="page-wrapper">
-      <Header2Wrapper />
+      <Header2Wrapper>
+        <NotificationBellServer />
+      </Header2Wrapper>
       <div id="page-content">
         {children}
       </div>

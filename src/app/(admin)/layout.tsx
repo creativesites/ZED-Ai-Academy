@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { createServiceClient } from "@/lib/supabase/server";
 import Header2Wrapper from "@/components/layout/Header2Wrapper";
 import Footer1 from "@/components/layout/footer/Footer1";
+import { NotificationBellServer } from "@/components/shared/notification-bell-server";
 import "../../../public/assets/css/style.css"
 import 'swiper/css'
 // import "swiper/css/navigation"
@@ -21,11 +22,15 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     .eq("id", userId)
     .single();
 
+    console.log('admin layout - profile', profile)
+
   if (!["super_admin", "instructor"].includes(profile?.role ?? "")) redirect("/dashboard");
 
   return (
     <div className="page-wrapper">
-      <Header2Wrapper />
+      <Header2Wrapper>
+        <NotificationBellServer />
+      </Header2Wrapper>
       <div id="page-content">{children}</div>
       <Footer1 />
     </div>

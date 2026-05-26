@@ -39,39 +39,44 @@ export default async function AdminTenantHubPage({
   ] = await Promise.all([
     supabase.from("company_members").select("*", { count: "exact", head: true }).eq("company_id", company.id).eq("role", "learner"),
     supabase.from("courses").select("*", { count: "exact", head: true }).eq("company_id", company.id),
-    supabase.from("class_schedules").select("*").eq("company_id", company.id).order("start_time"),
+    supabase.from("class_schedules").select("*").eq("company_id", company.id).order("starts_at"),
     supabase.from("enrollments").select("id, status, enrolled_at, profiles(full_name, email)").eq("company_id", company.id).order("enrolled_at", { ascending: false }).limit(5)
   ]);
 
   const upcomingClasses = (schedules || []).slice(0, 4);
 
   return (
-    <div className="container max-w-7xl py-12">
-      <div className="mb-12 flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div className="flex items-center gap-6">
-          <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-white shadow-xl border border-slate-100 p-4">
+    <div className="container max-w-7xl px-4 py-8 md:py-12">
+      <div className="mb-10 flex flex-col gap-8 md:flex-row md:items-center justify-between">
+        <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 text-center sm:text-left">
+          <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-[2rem] bg-white shadow-2xl border border-slate-100 p-5">
             {company.logo_url ? (
               <img src={company.logo_url} alt="" className="h-full w-auto object-contain" />
             ) : (
               <Building2 className="h-10 w-10 text-[#062e39]" />
             )}
           </div>
-          <div>
-            <h1 className="text-4xl font-black text-[#062e39] tracking-tight uppercase">{company.name} Hub</h1>
-            <div className="flex items-center gap-3 mt-2">
-               <span className="px-3 py-1 rounded-lg bg-[#fd5523]/10 text-[#fd5523] text-[10px] font-black uppercase tracking-widest border border-[#fd5523]/10">Command Center</span>
-               <Link href={`/academy/${company.slug}`} target="_blank" className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-[#fd5523] flex items-center gap-1 transition-colors">
-                 <Globe className="h-3 w-3" /> zedai.academy/academy/{company.slug}
+          <div className="space-y-1">
+            <h1 className="text-3xl md:text-5xl font-black text-[#062e39] tracking-tight leading-none uppercase">
+              {company.name} <span className="text-[#fd5523]">Hub</span>
+            </h1>
+            <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 mt-4">
+               <span className="px-4 py-1.5 rounded-full bg-[#fd5523]/10 text-[#fd5523] text-[10px] font-black uppercase tracking-[0.2em] border border-[#fd5523]/10">Command Center</span>
+               <Link href={`/academy/${company.slug}`} target="_blank" className="px-4 py-1.5 rounded-full bg-slate-100 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 hover:text-[#fd5523] hover:bg-[#fd5523]/5 flex items-center gap-2 transition-all border border-slate-200">
+                 <Globe className="h-3 w-3" /> Visit Academy
                </Link>
             </div>
           </div>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center justify-center">
            <Link 
             href={`/academy/${company.slug}/admin/classroom?tab=session&action=start`}
-            className="flex items-center gap-2 h-14 px-8 rounded-2xl bg-[#fd5523] text-white text-xs font-black uppercase tracking-widest hover:scale-[1.02] active:scale-95 transition-all shadow-xl shadow-[#fd5523]/20"
+            className="group flex items-center gap-3 h-16 px-10 rounded-[2rem] bg-[#fd5523] text-white text-xs font-black uppercase tracking-[0.2em] hover:scale-[1.02] active:scale-95 transition-all shadow-2xl shadow-[#fd5523]/30"
           >
-            <Play className="h-4 w-4" /> Start Live Class
+            <div className="h-8 w-8 rounded-full bg-white/20 flex items-center justify-center group-hover:scale-110 transition-transform">
+              <Play className="h-4 w-4 fill-current" />
+            </div>
+            Start Live Class
           </Link>
         </div>
       </div>
@@ -82,31 +87,33 @@ export default async function AdminTenantHubPage({
         <div className="lg:col-span-8 space-y-8">
           
           {/* KPI Grid */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             {[
               { label: "Active Students", value: studentCount || 0, icon: Users, accent: "bg-blue-50 text-blue-600" },
               { label: "Total Courses", value: courseCount || 0, icon: BookOpen, accent: "bg-emerald-50 text-emerald-600" },
               { label: "Scheduled Today", value: (schedules || []).length > 0 ? "3 Classes" : "0", icon: Calendar, accent: "bg-amber-50 text-amber-600" },
               { label: "Server Status", value: "Live", icon: Zap, accent: "bg-indigo-50 text-indigo-600" },
             ].map((kpi) => (
-              <div key={kpi.label} className="bg-white rounded-[2rem] p-6 border border-slate-100 shadow-sm">
-                <div className={cn("h-10 w-10 rounded-2xl flex items-center justify-center mb-4", kpi.accent)}>
-                  <kpi.icon className="h-5 w-5" />
+              <div key={kpi.label} className="bg-white rounded-[2rem] p-6 border border-slate-100 shadow-sm hover:shadow-xl transition-all group">
+                <div className={cn("h-12 w-12 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform", kpi.accent)}>
+                  <kpi.icon className="h-6 w-6" />
                 </div>
                 <div className="text-3xl font-black text-[#062e39] tracking-tight">{kpi.value}</div>
-                <div className="text-[10px] font-black uppercase tracking-widest text-slate-400 mt-1">{kpi.label}</div>
+                <div className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mt-2">{kpi.label}</div>
               </div>
             ))}
           </div>
 
           {/* School Timetable Calendar */}
           <div className="space-y-6">
-            <div className="flex items-center justify-between px-2">
-              <h2 className="text-xl font-black text-[#062e39] uppercase tracking-tight flex items-center gap-3">
-                <Calendar className="h-5 w-5 text-[#fd5523]" /> 
+            <div className="flex items-center justify-between px-4">
+              <h2 className="text-2xl font-black text-[#062e39] uppercase tracking-tight flex items-center gap-4">
+                <div className="h-10 w-10 rounded-xl bg-[#fd5523]/10 flex items-center justify-center">
+                  <Calendar className="h-5 w-5 text-[#fd5523]" /> 
+                </div>
                 School Timetable
               </h2>
-              <Link href={`/academy/${company.slug}/admin/classroom?tab=timetable`} className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-[#fd5523] transition-colors">
+              <Link href={`/academy/${company.slug}/admin/classroom?tab=timetable`} className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 hover:text-[#fd5523] transition-colors bg-white px-4 py-2 rounded-full border border-slate-100 shadow-sm">
                 Edit Schedule
               </Link>
             </div>
@@ -129,7 +136,7 @@ export default async function AdminTenantHubPage({
                 {[
                   { label: "New Class", icon: UserPlus, href: `?action=add-student` },
                   { label: "Broadcast", icon: Megaphone, href: `?action=notice` },
-                  { label: "Materials", icon: BookOpen, href: `/creator/courses` },
+                  { label: "Manage Courses", icon: BookOpen, href: `/creator/courses` },
                   { label: "Staff", icon: GraduationCap, href: `?action=staff` },
                 ].map((action) => (
                   <Link 
@@ -155,7 +162,7 @@ export default async function AdminTenantHubPage({
                 {upcomingClasses.length > 0 ? upcomingClasses.map((item: any) => (
                   <div key={item.id} className="flex items-center gap-4 group cursor-pointer">
                     <div className="h-12 w-12 rounded-2xl bg-slate-50 flex flex-col items-center justify-center text-[#fd5523] border border-slate-100 shrink-0 group-hover:bg-[#fd5523] group-hover:text-white transition-all">
-                       <span className="text-[10px] font-black">{item.start_time_only.slice(0, 5)}</span>
+                       <span className="text-[10px] font-black">{item.start_time_only?.slice(0, 5) || "TBA"}</span>
                     </div>
                     <div className="flex-1 min-w-0">
                        <p className="text-sm font-black text-[#062e39] truncate">{item.title}</p>

@@ -1,4 +1,4 @@
-import type { CourseLevel, PriceType } from "@/types/database";
+import type { PriceType } from "@/types/database";
 
 export const COURSE_CATEGORIES = [
   "Prompt Engineering",
@@ -10,6 +10,10 @@ export const COURSE_CATEGORIES = [
   "Computer Vision",
   "Photography",
   "AI Ethics",
+  "Technical & Vocational",
+  "Mining Safety",
+  "Primary School",
+  "Secondary School",
 ] as const;
 
 export const COURSE_CATEGORY_FILTERS = [

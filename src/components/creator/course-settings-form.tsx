@@ -8,10 +8,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Eye, EyeOff, Trash2, ShieldCheck, Save, FileText, Sparkles } from "lucide-react";
+import { Loader2, Eye, EyeOff, Trash2, ShieldCheck, Save, FileText, Sparkles, Upload, X } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
 import { COURSE_CATEGORIES } from "@/lib/course-experience";
+import { uploadMedia } from "@/actions/upload";
 import type { Course } from "@/types/database";
 
 export function CourseSettingsForm({ course }: { course: Course }) {
@@ -20,6 +21,8 @@ export function CourseSettingsForm({ course }: { course: Course }) {
   const [publishPending, startPublish] = useTransition();
   const [deleting, startDelete] = useTransition();
   const [status, setStatus] = useState<Course["status"]>(course.status);
+  const [thumbnailUrl, setThumbnailUrl] = useState(course.thumbnail_url ?? "");
+  const [uploading, setUploading] = useState(false);
 
   function handleSubmit(formData: FormData) {
     startSave(async () => {
@@ -142,17 +145,76 @@ export function CourseSettingsForm({ course }: { course: Course }) {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="thumbnail_url" className="text-sm font-bold uppercase tracking-wider text-slate-500">
-                  Thumbnail URL
+                <Label className="text-sm font-bold uppercase tracking-wider text-slate-500">
+                  Course Cover Image
                 </Label>
-                <Input
-                  id="thumbnail_url"
+                
+                {/* Hidden input to automatically submit the new URL in the parent form */}
+                <input
+                  type="hidden"
                   name="thumbnail_url"
-                  type="url"
-                  defaultValue={course.thumbnail_url ?? ""}
-                  className="h-12 rounded-2xl border-slate-200 bg-white text-base text-[#062e39]"
-                  placeholder="https://..."
+                  value={thumbnailUrl}
                 />
+
+                <div className="relative mt-2">
+                  {uploading ? (
+                    <div className="flex aspect-[16/9] w-full flex-col items-center justify-center rounded-2xl border-2 border-dashed border-[#fd5523]/30 bg-[#fd5523]/5 p-6 text-center">
+                      <Loader2 className="h-8 w-8 animate-spin text-[#fd5523]" />
+                      <p className="mt-2 text-xs font-bold uppercase tracking-wider text-[#062e39] animate-pulse">
+                        Uploading cover image...
+                      </p>
+                    </div>
+                  ) : thumbnailUrl ? (
+                    <div className="group relative aspect-[16/9] w-full overflow-hidden rounded-2xl border border-slate-100 shadow-sm">
+                      <img
+                        src={thumbnailUrl}
+                        alt="Course cover preview"
+                        className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-102"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setThumbnailUrl("")}
+                        className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-black/60 text-white transition-all hover:bg-black hover:scale-105 active:scale-95 shadow-md"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ) : (
+                    <label className="group flex aspect-[16/9] w-full cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50/50 p-6 text-center transition-all hover:border-[#fd5523]/30 hover:bg-[#fd5523]/5">
+                      <Upload className="h-8 w-8 text-slate-400 transition-colors group-hover:text-[#fd5523]" />
+                      <span className="mt-2 text-xs font-bold text-slate-600 group-hover:text-[#062e39]">
+                        Click to upload cover image
+                      </span>
+                      <span className="mt-1 text-[10px] text-slate-400">
+                        PNG, JPG, or WEBP up to 5MB (16:9 recommended)
+                      </span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          setUploading(true);
+                          try {
+                            const formData = new FormData();
+                            formData.append("file", file);
+                            formData.append("courseId", course.id);
+                            formData.append("folder", "thumbnails");
+
+                            const res = await uploadMedia(formData);
+                            setThumbnailUrl(res.url);
+                            toast.success("Cover image uploaded successfully!");
+                          } catch (err) {
+                            toast.error(err instanceof Error ? err.message : "Failed to upload image.");
+                          } finally {
+                            setUploading(false);
+                          }
+                        }}
+                        className="hidden"
+                      />
+                    </label>
+                  )}
+                </div>
               </div>
 
               <div className="grid gap-4 sm:grid-cols-2">

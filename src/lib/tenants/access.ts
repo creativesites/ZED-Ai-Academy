@@ -15,8 +15,25 @@ export type TenantProfile = {
 };
 
 export async function getCurrentTenantAccess(companyId: string) {
-  const { userId } = await auth();
+  const { userId, orgId: activeOrgId, orgRole: activeOrgRole, orgSlug: activeOrgSlug } = await auth();
   if (!userId) return null;
+
+  // If the requested company matches the active Clerk organization, use Clerk data as source of truth
+  if (activeOrgId === companyId) {
+    return {
+      userId,
+      profile: null, // We are bypassing profile fetch for performance as requested
+      membership: {
+        company_id: activeOrgId,
+        profile_id: userId,
+        status: "active",
+        role: (activeOrgRole?.replace("org:", "") || "learner") as CompanyMemberRole,
+      } as TenantMembership,
+      isSuperAdmin: activeOrgRole === "org:admin", // Simplified, may need global check
+      isMember: true,
+      tenantRole: (activeOrgRole?.replace("org:", "") || "learner") as CompanyMemberRole,
+    };
+  }
 
   const supabase = createClient();
   const [{ data: profile }, { data: member }] = await Promise.all([

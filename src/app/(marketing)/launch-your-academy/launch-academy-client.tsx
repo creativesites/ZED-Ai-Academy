@@ -58,12 +58,12 @@ export function LaunchAcademyClient() {
         </li>
       </ol>
 
-      <div className="rounded-[2rem] border border-slate-200 bg-white p-4 shadow-lg shadow-slate-200/60">
+      <div className="flex justify-center align-center">
         <CreateOrganization
           afterCreateOrganizationUrl="/creator/courses"
           appearance={{
             elements: {
-              card: "shadow-none border-0 bg-transparent p-0",
+              card: "shadow-none bg-transparent",
               navbar: "hidden",
               headerTitle: "text-[#062e39] font-black text-lg",
               formButtonPrimary:

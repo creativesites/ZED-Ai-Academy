@@ -1,0 +1,16 @@
+file:///Users/winstonzulu/.nvm/versions/node/v24.15.0/lib/node_modules/vercel/dist/chunks/chunk-JNOMOD7R.js:115
+                throw new ArgError(`option requires argument: ${originalArgName}${extended}`, "ARG_MISSING_REQUIRED_LONGARG");
+                      ^
+
+_ArgError: option requires argument: --token
+    at arg2 (file:///Users/winstonzulu/.nvm/versions/node/v24.15.0/lib/node_modules/vercel/dist/chunks/chunk-JNOMOD7R.js:115:23)
+    at getArgs (file:///Users/winstonzulu/.nvm/versions/node/v24.15.0/lib/node_modules/vercel/dist/chunks/chunk-JNOMOD7R.js:491:33)
+    at getGlobalPathConfig (file:///Users/winstonzulu/.nvm/versions/node/v24.15.0/lib/node_modules/vercel/dist/chunks/chunk-PD5HCBBY.js:52747:16)
+    at file:///Users/winstonzulu/.nvm/versions/node/v24.15.0/lib/node_modules/vercel/dist/chunks/chunk-LOS2AA5C.js:729:19
+    at ModuleJob.run (node:internal/modules/esm/module_job:437:25)
+    at async node:internal/modules/esm/loader:639:26
+    at async file:///Users/winstonzulu/.nvm/versions/node/v24.15.0/lib/node_modules/vercel/dist/vc.js:36:1 {
+  code: 'ARG_MISSING_REQUIRED_LONGARG'
+}
+
+Node.js v24.15.0

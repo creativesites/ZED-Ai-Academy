@@ -84,17 +84,22 @@ The exercise should challenge the learner to apply what they've learned practica
 Return ONLY a valid JSON object with this exact structure:
 {
   "title": "A short, engaging title for the exercise",
-  "brief": "A 1-2 paragraph description of the problem statement and why it matters.",
-  "mode": "one of: 'text_response', 'file_upload', 'combined', or 'studio_submission'",
+  "brief": "A 1-2 paragraph description of the problem statement.",
+  "mode": "text_response" | "file_upload" | "combined",
   "estimated_minutes": number,
-  "instructions": [
-    "Step 1...",
-    "Step 2...",
-    "Step 3..."
+  "instructions": ["Step 1", "Step 2", "..."],
+  "deliverables": [
+    { "type": "text", "label": "Briefly describe your solution", "required": true }
   ],
+  "allowed_file_types": ["image/jpeg", "image/png", "application/pdf"],
+  "max_files": 3,
   "rubric": [
-    { "criterion": "Name of the criterion to grade on", "weight": 20 }
-  ]
+    { "criterion": "Accuracy of the solution", "weight": 50 },
+    { "criterion": "Clarity of communication", "weight": 50 }
+  ],
+  "ai_scoring_enabled": true,
+  "instructor_review_required": false,
+  "resubmissions_allowed": true
 }
 
 Lesson content:

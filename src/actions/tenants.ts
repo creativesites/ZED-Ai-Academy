@@ -1,6 +1,6 @@
 "use server";
 
-import { auth, currentUser } from "@clerk/nextjs/server";
+import { auth, currentUser, clerkClient } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createServiceClient } from "@/lib/supabase/server";
@@ -112,6 +112,35 @@ export async function ensureTenantMembership(
 
   if (error) {
     throw new Error(error.message);
+  }
+
+  // SYNC WITH CLERK
+  // Ensure the user is added to the Clerk organization
+  // Since companyId in DB IS the Clerk Organization ID
+  try {
+    const client = await clerkClient();
+    
+    // Check if membership already exists to avoid 422
+    const memberships = await client.organizations.getOrganizationMembershipList({
+      organizationId: companyId,
+    });
+    
+    const exists = memberships.data.some(m => m.publicUserData?.userId === userId);
+    
+    if (!exists) {
+      // Add as basic member (learner/teacher)
+      // Admins are usually created via organization.created webhook or manual invite
+      await client.organizations.createOrganizationMembership({
+        organizationId: companyId,
+        userId: userId,
+        role: role === "company_admin" ? "org:admin" : "org:member",
+      });
+      console.log(`[Clerk Sync] Added user ${userId} to org ${companyId} as ${role}`);
+    }
+  } catch (clerkError: any) {
+    console.error("[Clerk Sync Error] Failed to add user to organization:", clerkError.message);
+    // We don't throw here to avoid failing the enrollment if only Clerk sync fails,
+    // but ideally we should keep them in sync.
   }
 
   return { success: true };

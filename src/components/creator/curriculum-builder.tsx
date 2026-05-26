@@ -44,7 +44,7 @@ import { toast } from "sonner";
 import { AIBlueprintAssistant } from "./ai-blueprint-assistant";
 import { AICurriculumGenerator } from "./ai-curriculum-generator";
 
-type LessonItem = { id: string; title: string; position: number; is_preview: boolean };
+type LessonItem = { id: string; title: string; position: number; is_preview: boolean; content_block_count?: number };
 type ModuleItem = { id: string; title: string; position: number; lessons: LessonItem[] };
 
 function SortableLesson({
@@ -84,18 +84,23 @@ function SortableLesson({
         onDelete(lesson.id);
         toast.success("Lesson deleted");
       } catch (err) {
-        // If it redirects, this might catch an error that we can ignore or handle
         if (err instanceof Error && err.message.includes("NEXT_REDIRECT")) return;
         toast.error(err instanceof Error ? err.message : "Unable to delete lesson.");
       }
     });
   }
 
+  const blockCount = lesson.content_block_count ?? 0;
+  const contentStatus =
+    blockCount === 0 ? { label: "Empty", classes: "bg-slate-100 text-slate-600" } :
+    blockCount < 3 ? { label: "Started", classes: "bg-amber-100 text-amber-700" } :
+    { label: "Built", classes: "bg-emerald-100 text-emerald-700" };
+
   return (
     <div
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition }}
-      className={`group flex items-center gap-3 rounded-2xl border border-slate-200/60 bg-white p-3 shadow-sm transition-all hover:border-[#fd5523]/30 hover:shadow-md ${
+      className={`group flex flex-wrap items-center gap-2 rounded-xl border border-slate-200/60 bg-white p-3 shadow-sm transition-all hover:border-[#fd5523]/30 hover:shadow-md sm:gap-3 sm:rounded-2xl sm:p-4 ${
         isDragging ? "z-10 opacity-50 ring-2 ring-[#fd5523]" : ""
       }`}
     >
@@ -104,56 +109,70 @@ function SortableLesson({
         {...listeners}
         className="touch-none cursor-grab text-slate-400 hover:text-[#fd5523] active:cursor-grabbing"
       >
-        <GripVertical className="h-5 w-5" />
+        <GripVertical className="h-4 w-4 sm:h-5 sm:w-5" />
       </button>
 
-      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#fff6ee] text-[#fd5523]">
-        <FileText className="h-5 w-5" />
+      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#fff6ee] text-[#fd5523] sm:h-10 sm:w-10 sm:rounded-xl">
+        <FileText className="h-4 w-4 sm:h-5 sm:w-5" />
       </div>
 
       <Link
         href={`/creator/courses/${courseId}/lessons/${lesson.id}`}
-        className="flex-1 truncate text-base font-medium text-[#062e39] transition-colors hover:text-[#fd5523]"
+        className="min-w-0 flex-1 truncate text-sm font-medium text-[#062e39] transition-colors hover:text-[#fd5523] sm:text-base"
       >
-        {lesson.title}
+        <div className="flex min-w-0 flex-col">
+          <span className="truncate">{lesson.title}</span>
+          <div className="mt-1 flex flex-wrap items-center gap-2">
+            <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${contentStatus.classes}`}>
+              {contentStatus.label}
+            </span>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+              {blockCount} block{blockCount === 1 ? "" : "s"}
+            </span>
+          </div>
+        </div>
       </Link>
 
-      <button
-        onClick={togglePreview}
-        disabled={pending}
-        className={`rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wider transition-colors ${
-          lesson.is_preview
-            ? "bg-[#fd5523] text-white hover:bg-[#ef4a16]"
-            : "bg-slate-100 text-slate-700 hover:bg-slate-200 hover:text-slate-900"
-        }`}
-      >
-        {pending ? (
-          <Loader2 className="h-3.5 w-3.5 animate-spin" />
-        ) : lesson.is_preview ? (
-          <span className="inline-flex items-center gap-1.5">
-            <Eye className="h-3 w-3" /> Preview
-          </span>
-        ) : (
-          <span className="inline-flex items-center gap-1.5">
-            <EyeOff className="h-3 w-3" /> Draft
-          </span>
-        )}
-      </button>
-
-      <div className="flex items-center gap-1 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
-        <Link
-          href={`/creator/courses/${courseId}/lessons/${lesson.id}`}
-          className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-50 text-slate-400 transition-all hover:bg-[#062e39] hover:text-white"
-        >
-          <Pencil className="h-4 w-4" />
-        </Link>
+      <div className="flex w-full flex-row items-center justify-between gap-2 pt-2 sm:w-auto sm:pt-0">
         <button
-          onClick={handleDelete}
+          onClick={togglePreview}
           disabled={pending}
-          className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-500"
+          className={`rounded-full px-2 py-1 text-[10px] font-semibold uppercase tracking-wider transition-colors sm:px-3 sm:py-1.5 sm:text-xs ${
+            lesson.is_preview
+              ? "bg-[#fd5523] text-white hover:bg-[#ef4a16]"
+              : "bg-slate-100 text-slate-700 hover:bg-slate-200 hover:text-slate-900"
+          }`}
         >
-          {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+          {pending ? (
+            <Loader2 className="h-3 w-3 animate-spin" />
+          ) : lesson.is_preview ? (
+            <span className="inline-flex items-center gap-1">
+              <Eye className="h-3 w-3" /> 
+              <span className="hidden sm:inline">Preview</span>
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1">
+              <EyeOff className="h-3 w-3" /> 
+              <span className="hidden sm:inline">Draft</span>
+            </span>
+          )}
         </button>
+
+        <div className="flex items-center gap-1">
+          <Link
+            href={`/creator/courses/${courseId}/lessons/${lesson.id}`}
+            className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-50 text-slate-400 transition-all hover:bg-[#062e39] hover:text-white sm:h-8 sm:w-8"
+          >
+            <Pencil className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+          </Link>
+          <button
+            onClick={handleDelete}
+            disabled={pending}
+            className="flex h-7 w-7 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-500 sm:h-8 sm:w-8"
+          >
+            {pending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -254,53 +273,70 @@ function SortableModule({
     <div
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition }}
-      className={`overflow-hidden rounded-[2.5rem] border border-slate-200 bg-[#fffaf6]/50 shadow-sm transition-all ${
+      className={`overflow-hidden rounded-2xl border border-slate-200 bg-[#fffaf6]/50 shadow-sm transition-all sm:rounded-[2rem] ${
         isDragging ? "z-20 opacity-50 ring-4 ring-[#fd5523]/20" : ""
       }`}
     >
-      <div className="group flex items-center gap-3 border-b border-slate-200/60 bg-white px-5 py-4">
-        <button
-          {...attributes}
-          {...listeners}
-          className="touch-none cursor-grab text-slate-400 hover:text-[#fd5523] active:cursor-grabbing"
-        >
-          <GripVertical className="h-5 w-5" />
-        </button>
-
-        <button onClick={() => onExpandedChange(!expanded)} className="text-[#062e39] transition-colors hover:text-[#fd5523]">
-          {expanded ? <ChevronDown className="h-5 w-5" /> : <ChevronRight className="h-5 w-5" />}
-        </button>
-
-        {editing ? (
-          <Input
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            onBlur={handleSaveTitle}
-            onKeyDown={(e) => e.key === "Enter" && handleSaveTitle()}
-            className="h-10 flex-1 border-[#fd5523]/20 bg-white text-lg font-bold text-[#062e39] focus:border-[#fd5523] focus:ring-[#fd5523]"
-            autoFocus
-          />
-        ) : (
-          <div className="flex flex-1 items-center gap-3" onDoubleClick={() => setEditing(true)}>
-            <span className="text-lg font-bold text-[#062e39]">{mod.title}</span>
-            <Badge variant="outline" className="rounded-full border-[#062e39]/10 bg-slate-50 text-slate-500">
-              {lessons.length} Lesson{lessons.length !== 1 ? "s" : ""}
-            </Badge>
-          </div>
-        )}
-
-        <div className="flex items-center gap-2 opacity-0 transition-all group-hover:opacity-100">
-          <button onClick={() => setEditing(true)} className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition-colors hover:bg-[#062e39] hover:text-white">
-            <Pencil className="h-4 w-4" />
+      {/* Module header - stacked on mobile, row on larger screens */}
+      <div className="flex flex-col gap-2 border-b border-slate-200/60 bg-white p-3 sm:flex-row sm:items-center sm:gap-3 sm:p-4 md:p-5">
+        <div className="flex items-center gap-2">
+          <button
+            {...attributes}
+            {...listeners}
+            className="touch-none cursor-grab text-slate-400 hover:text-[#fd5523] active:cursor-grabbing"
+          >
+            <GripVertical className="h-4 w-4 sm:h-5 sm:w-5" />
           </button>
-          <button onClick={handleDeleteModule} className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-500">
-            <Trash2 className="h-4 w-4" />
+
+          <button
+            onClick={() => onExpandedChange(!expanded)}
+            className="text-[#062e39] transition-colors hover:text-[#fd5523]"
+          >
+            {expanded ? <ChevronDown className="h-4 w-4 sm:h-5 sm:w-5" /> : <ChevronRight className="h-4 w-4 sm:h-5 sm:w-5" />}
+          </button>
+        </div>
+
+        <div className="flex-1">
+          {editing ? (
+            <Input
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              onBlur={handleSaveTitle}
+              onKeyDown={(e) => e.key === "Enter" && handleSaveTitle()}
+              className="h-9 flex-1 border-[#fd5523]/20 bg-white text-base font-bold text-[#062e39] focus:border-[#fd5523] focus:ring-[#fd5523] sm:h-10 sm:text-lg"
+              autoFocus
+            />
+          ) : (
+            <div
+              className="flex flex-wrap items-center gap-2 sm:gap-3"
+              onDoubleClick={() => setEditing(true)}
+            >
+              <span className="text-base font-bold text-[#062e39] sm:text-lg">{mod.title}</span>
+              <Badge variant="outline" className="rounded-full border-[#062e39]/10 bg-slate-50 px-2 py-0 text-[10px] text-slate-500 sm:px-2.5 sm:text-xs">
+                {lessons.length} {lessons.length === 1 ? "Lesson" : "Lessons"}
+              </Badge>
+            </div>
+          )}
+        </div>
+
+        <div className="flex items-center justify-end gap-2 border-t border-slate-100 pt-2 sm:border-t-0 sm:pt-0">
+          <button
+            onClick={() => setEditing(true)}
+            className="flex h-7 w-7 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition-colors hover:bg-[#062e39] hover:text-white sm:h-8 sm:w-8"
+          >
+            <Pencil className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+          </button>
+          <button
+            onClick={handleDeleteModule}
+            className="flex h-7 w-7 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-500 sm:h-8 sm:w-8"
+          >
+            <Trash2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
           </button>
         </div>
       </div>
 
       {expanded && (
-        <div className="space-y-3 p-4">
+        <div className="space-y-2 p-3 sm:space-y-3 sm:p-4">
           <DndContext sensors={lessonSensors} collisionDetection={closestCenter} onDragEnd={handleLessonDragEnd}>
             <SortableContext items={lessons.map((l) => l.id)} strategy={verticalListSortingStrategy}>
               {lessons.map((lesson) => (
@@ -322,12 +358,12 @@ function SortableModule({
           </DndContext>
 
           {addingLesson ? (
-            <div className="flex items-center gap-3 rounded-2xl border border-[#fd5523]/20 bg-white p-3 shadow-sm">
+            <div className="flex flex-col gap-3 rounded-xl border border-[#fd5523]/20 bg-white p-3 shadow-sm sm:flex-row sm:items-center sm:rounded-2xl sm:p-4">
               <Input
                 value={lessonTitle}
                 onChange={(e) => setLessonTitle(e.target.value)}
                 placeholder="Name your lesson..."
-                className="h-10 flex-1 border-0 bg-transparent text-base font-medium placeholder:text-slate-400 focus:ring-0"
+                className="h-10 flex-1 border-0 bg-transparent text-sm font-medium placeholder:text-slate-400 focus:ring-0 sm:text-base"
                 onKeyDown={(e) => e.key === "Enter" && handleAddLesson()}
                 autoFocus
                 onBlur={() => {
@@ -337,16 +373,16 @@ function SortableModule({
               <div className="flex gap-2">
                 <Button
                   size="sm"
-                  className="rounded-full bg-[#062e39] px-4 text-white hover:bg-[#0a4055]"
+                  className="h-9 rounded-full bg-[#062e39] px-3 text-sm text-white hover:bg-[#0a4055] sm:px-4"
                   onClick={handleAddLesson}
                   disabled={pending}
                 >
-                  {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save"}
+                  {pending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Save"}
                 </Button>
                 <Button
                   size="sm"
                   variant="ghost"
-                  className="rounded-full text-slate-700 hover:text-slate-900"
+                  className="h-9 rounded-full text-sm text-slate-700 hover:text-slate-900"
                   onClick={() => {
                     setAddingLesson(false);
                     setLessonTitle("");
@@ -359,10 +395,10 @@ function SortableModule({
           ) : (
             <button
               onClick={() => setAddingLesson(true)}
-              className="group flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-slate-200 bg-white py-4 text-sm font-semibold text-slate-600 transition-all hover:border-[#fd5523]/40 hover:bg-[#fff6ee]/50 hover:text-[#fd5523]"
+              className="group flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-slate-200 bg-white py-3 text-sm font-semibold text-slate-600 transition-all hover:border-[#fd5523]/40 hover:bg-[#fff6ee]/50 hover:text-[#fd5523] sm:rounded-2xl sm:py-4 sm:text-base"
             >
-              <Plus className="h-4 w-4 transition-transform group-hover:rotate-90" /> 
-              Add a new lesson to this module
+              <Plus className="h-3.5 w-3.5 transition-transform group-hover:rotate-90 sm:h-4 sm:w-4" /> 
+              Add a new lesson
             </button>
           )}
         </div>
@@ -395,6 +431,14 @@ export function CurriculumBuilder({
 
   const moduleCount = modules.length;
   const lessonCount = modules.reduce((sum, m) => sum + m.lessons.length, 0);
+  const startedLessonCount = modules.reduce(
+    (sum, module) => sum + module.lessons.filter((lesson) => (lesson.content_block_count ?? 0) > 0).length,
+    0
+  );
+  const previewLessonCount = modules.reduce(
+    (sum, module) => sum + module.lessons.filter((lesson) => lesson.is_preview).length,
+    0
+  );
 
   const filteredModules = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -446,39 +490,56 @@ export function CurriculumBuilder({
   }
 
   return (
-    <div className="space-y-6">
-      <div className="marketing-outline-card flex flex-wrap items-center justify-between gap-4 rounded-3xl border-0 p-4">
-        <div className="flex items-center gap-6 text-sm">
+    <div className="space-y-4 sm:space-y-6">
+      {/* Stats bar - stacked on mobile, row on larger */}
+      <div className="flex flex-col gap-3 rounded-2xl border-0 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:rounded-3xl sm:p-5">
+        <div className="flex items-center justify-center gap-6 text-sm">
           <div className="flex items-center gap-2">
-            <Layers className="h-5 w-5 text-[#fd5523]" />
+            <Layers className="h-4 w-4 text-[#fd5523] sm:h-5 sm:w-5" />
             <span className="text-[#062e39]">
-              <span className="text-lg font-bold">{moduleCount}</span> Modules
+              <span className="text-base font-bold sm:text-lg">{moduleCount}</span>{" "}
+              <span className="hidden sm:inline">Modules</span>
             </span>
           </div>
-          <div className="h-6 w-px bg-[#062e39]/10" />
+          <div className="h-5 w-px bg-[#062e39]/10" />
           <div className="flex items-center gap-2">
-            <FileText className="h-5 w-5 text-[#fd5523]" />
+            <FileText className="h-4 w-4 text-[#fd5523] sm:h-5 sm:w-5" />
             <span className="text-[#062e39]">
-              <span className="text-lg font-bold">{lessonCount}</span> Lessons
+              <span className="text-base font-bold sm:text-lg">{lessonCount}</span>{" "}
+              <span className="hidden sm:inline">Lessons</span>
+            </span>
+          </div>
+          <div className="h-5 w-px bg-[#062e39]/10" />
+          <div className="flex items-center gap-2">
+            <Sparkles className="h-4 w-4 text-[#fd5523] sm:h-5 sm:w-5" />
+            <span className="text-[#062e39]">
+              <span className="text-base font-bold sm:text-lg">{startedLessonCount}</span>{" "}
+              <span className="hidden sm:inline">Started</span>
+            </span>
+          </div>
+          <div className="h-5 w-px bg-[#062e39]/10" />
+          <div className="flex items-center gap-2">
+            <Eye className="h-4 w-4 text-[#fd5523] sm:h-5 sm:w-5" />
+            <span className="text-[#062e39]">
+              <span className="text-base font-bold sm:text-lg">{previewLessonCount}</span>{" "}
+              <span className="hidden sm:inline">Previews</span>
             </span>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
           <AIBlueprintAssistant courseId={courseId} />
-          <div className="h-6 w-px bg-[#062e39]/10 mx-2" />
-          <Button 
-            variant="ghost" 
-            className="rounded-full text-[#062e39] hover:bg-[#fff6ee] hover:text-[#fd5523]" 
-            size="sm" 
+          <div className="h-5 w-px bg-[#062e39]/10" />
+          <Button
+            variant="ghost"
+            className="h-8 rounded-full px-2 text-xs text-[#062e39] hover:bg-[#fff6ee] hover:text-[#fd5523] sm:h-9 sm:px-3 sm:text-sm"
             onClick={() => setAllExpanded(true)}
           >
             Expand all
           </Button>
-          <Button 
-            variant="ghost" 
-            className="rounded-full text-[#062e39] hover:bg-[#fff6ee] hover:text-[#fd5523]" 
-            size="sm" 
+          <Button
+            variant="ghost"
+            className="h-8 rounded-full px-2 text-xs text-[#062e39] hover:bg-[#fff6ee] hover:text-[#fd5523] sm:h-9 sm:px-3 sm:text-sm"
             onClick={() => setAllExpanded(false)}
           >
             Collapse all
@@ -488,17 +549,19 @@ export function CurriculumBuilder({
 
       <AICurriculumGenerator courseId={courseId} />
 
+      {/* Search bar */}
       <div className="relative">
-        <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 sm:left-4 sm:h-5 sm:w-5" />
         <Input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Filter modules or lessons..."
-          className="h-14 rounded-2xl border-[#062e39]/10 bg-white pl-12 text-lg font-medium text-[#062e39] shadow-sm transition-all focus:border-[#fd5523] focus:ring-[#fd5523]/10"
+          className="h-11 rounded-xl border-[#062e39]/10 bg-white pl-9 text-sm font-medium text-[#062e39] shadow-sm transition-all focus:border-[#fd5523] focus:ring-[#fd5523]/10 sm:h-14 sm:rounded-2xl sm:pl-12 sm:text-lg"
         />
       </div>
 
-      <div className="space-y-4">
+      {/* Modules list */}
+      <div className="space-y-3 sm:space-y-4">
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleModuleDragEnd}>
           <SortableContext items={filteredModules.map((m) => m.id)} strategy={verticalListSortingStrategy}>
             {filteredModules.map((mod) => (
@@ -515,26 +578,31 @@ export function CurriculumBuilder({
         </DndContext>
       </div>
 
+      {/* Add module button */}
       {addingModule ? (
-        <div className="marketing-outline-card flex flex-wrap items-center gap-4 rounded-[2.5rem] border-2 border-[#fd5523]/20 bg-white p-6 shadow-xl">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#fff6ee] text-[#fd5523]">
-            <Layers className="h-6 w-6" />
+        <div className="flex flex-col gap-3 rounded-2xl border-2 border-[#fd5523]/20 bg-white p-4 shadow-xl sm:flex-row sm:items-center sm:gap-4 sm:rounded-[2.5rem] sm:p-6">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#fff6ee] text-[#fd5523] sm:h-12 sm:w-12 sm:rounded-2xl">
+            <Layers className="h-5 w-5 sm:h-6 sm:w-6" />
           </div>
           <Input
             value={newModuleTitle}
             onChange={(e) => setNewModuleTitle(e.target.value)}
             placeholder="What's this module called?"
-            className="h-12 flex-1 border-0 bg-transparent text-xl font-bold placeholder:text-slate-300 focus:ring-0"
+            className="h-10 flex-1 border-0 bg-transparent text-base font-bold placeholder:text-slate-300 focus:ring-0 sm:h-12 sm:text-xl"
             onKeyDown={(e) => e.key === "Enter" && handleAddModule()}
             autoFocus
           />
           <div className="flex gap-2">
-            <Button className="rounded-full bg-[#fd5523] px-8 text-white hover:bg-[#ef4a16]" onClick={handleAddModule} disabled={pending}>
-              {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Create Module"}
+            <Button
+              className="h-9 rounded-full bg-[#fd5523] px-4 text-sm text-white hover:bg-[#ef4a16] sm:h-11 sm:px-8 sm:text-base"
+              onClick={handleAddModule}
+              disabled={pending}
+            >
+              {pending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Create Module"}
             </Button>
             <Button
               variant="ghost"
-              className="rounded-full text-slate-500"
+              className="h-9 rounded-full text-sm text-slate-500 sm:h-11 sm:text-base"
               onClick={() => {
                 setAddingModule(false);
                 setNewModuleTitle("");
@@ -547,14 +615,14 @@ export function CurriculumBuilder({
       ) : (
         <button
           onClick={() => setAddingModule(true)}
-          className="group flex w-full flex-col items-center justify-center gap-4 rounded-[3rem] border-2 border-dashed border-slate-200 bg-white/40 py-12 text-slate-500 transition-all hover:border-[#fd5523]/50 hover:bg-[#fff6ee]/20 hover:text-[#fd5523]"
+          className="group flex w-full flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-slate-200 bg-white/40 py-8 text-slate-500 transition-all hover:border-[#fd5523]/50 hover:bg-[#fff6ee]/20 hover:text-[#fd5523] sm:gap-4 sm:rounded-[3rem] sm:py-12"
         >
-          <div className="flex h-16 w-16 items-center justify-center rounded-[2rem] bg-white text-slate-300 shadow-sm transition-all group-hover:bg-[#fd5523] group-hover:text-white group-hover:shadow-lg group-hover:shadow-[#fd5523]/30">
-            <Plus className="h-8 w-8 transition-transform group-hover:rotate-90" />
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-slate-300 shadow-sm transition-all group-hover:bg-[#fd5523] group-hover:text-white group-hover:shadow-lg group-hover:shadow-[#fd5523]/30 sm:h-16 sm:w-16 sm:rounded-[2rem]">
+            <Plus className="h-6 w-6 transition-transform group-hover:rotate-90 sm:h-8 sm:w-8" />
           </div>
           <div className="text-center">
-            <p className="text-lg font-bold">Add a new module</p>
-            <p className="text-sm font-medium opacity-60">Organize your course into logical sections</p>
+            <p className="text-base font-bold sm:text-lg">Add a new module</p>
+            <p className="text-xs font-medium opacity-60 sm:text-sm">Organize your course into logical sections</p>
           </div>
         </button>
       )}

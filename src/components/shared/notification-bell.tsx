@@ -47,25 +47,15 @@ export function NotificationBell({ initialNotifications, initialUnread }: {
   }
 
   return (
-    <div style={{ position: "relative", display: "inline-block" }}>
+    <div className="relative inline-block">
       <button
         onClick={toggle}
         aria-label="Notifications"
-        style={{
-          position: "relative", background: "none", border: "none",
-          cursor: "pointer", padding: "8px", borderRadius: "50%",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          color: "#062e39", transition: "background 0.15s",
-        }}
+        className="relative flex items-center justify-center p-2 rounded-full text-[#062e39] hover:bg-[#fff6ee] transition-colors cursor-pointer border-none bg-none"
       >
-        <Bell style={{ width: "22px", height: "22px" }} />
+        <Bell className="w-[22px] h-[22px]" />
         {unread > 0 && (
-          <span style={{
-            position: "absolute", top: "4px", right: "4px",
-            background: "#fd5523", color: "#fff", borderRadius: "50%",
-            width: "16px", height: "16px", fontSize: "10px",
-            fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center",
-          }}>
+          <span className="absolute top-[4px] right-[4px] bg-[#fd5523] text-white rounded-full w-4 h-4 text-[10px] font-bold flex items-center justify-center">
             {unread > 9 ? "9+" : unread}
           </span>
         )}
@@ -76,21 +66,12 @@ export function NotificationBell({ initialNotifications, initialUnread }: {
           {/* Backdrop */}
           <div
             onClick={() => setOpen(false)}
-            style={{ position: "fixed", inset: 0, zIndex: 999 }}
+            className="fixed inset-0 z-[99]"
           />
 
           {/* Dropdown */}
-          <div style={{
-            position: "absolute", right: 0, top: "calc(100% + 8px)",
-            width: "340px", maxHeight: "480px", overflowY: "auto",
-            background: "#fff", border: "1px solid #f0f0f0",
-            borderRadius: "20px", boxShadow: "0 20px 60px rgba(6,46,57,0.12)",
-            zIndex: 1000,
-          }}>
-            <div style={{
-              display: "flex", alignItems: "center", justifyContent: "space-between",
-              padding: "16px 20px", borderBottom: "1px solid #f5f5f5",
-            }}>
+          <div className="absolute right-[-32px] sm:right-0 top-[calc(100%+8px)] w-[290px] xs:w-[340px] max-h-[480px] overflow-y-auto bg-white border border-slate-100 rounded-[20px] shadow-[0_20px_60px_rgba(6,46,57,0.15)] z-[100] animate-in fade-in slide-in-from-top-1 duration-150">
+            <div className="flex items-center justify-between p-4 border-b border-slate-50">
               <p style={{ fontWeight: 700, color: "#062e39", fontSize: "14px", margin: 0 }}>Notifications</p>
               <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
                 <button

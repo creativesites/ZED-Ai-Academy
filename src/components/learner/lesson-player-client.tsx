@@ -23,7 +23,7 @@ import {
   PlayCircle, ShieldCheck, Sparkles, Trophy, Video, X, Zap, Wand2
 } from "lucide-react";
 import { toast } from "sonner";
-import { BlockRenderer, type Lesson, type Module, type ContentBlock, type Quiz } from "./content-blocks";
+import { BlockRenderer, type Lesson, type Module, type ContentBlock, type Quiz } from "@/components/course-blocks";
 
 
 

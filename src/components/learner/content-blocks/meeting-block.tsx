@@ -60,7 +60,35 @@ function Countdown({ targetDate, onComplete }: { targetDate: string; onComplete?
 
 const SESSION_BOOKED_KEY = (serviceId: string) => `zed_booked_${serviceId}`;
 
-export function MeetingBlock({ content, bookings = [], courseId, lessonId }: { content: Record<string, unknown>, bookings?: any[], courseId?: string, lessonId?: string }) {
+export function MeetingBlock({
+  content,
+  bookings = [],
+  courseId,
+  lessonId,
+  previewMode = false,
+}: {
+  content: Record<string, unknown>;
+  bookings?: any[];
+  courseId?: string;
+  lessonId?: string;
+  previewMode?: boolean;
+}) {
+  return <MeetingBlockInner content={content} bookings={bookings} courseId={courseId} lessonId={lessonId} previewMode={previewMode} />;
+}
+
+export function MeetingBlockInner({
+  content,
+  bookings = [],
+  courseId,
+  lessonId,
+  previewMode = false,
+}: {
+  content: Record<string, unknown>;
+  bookings?: any[];
+  courseId?: string;
+  lessonId?: string;
+  previewMode?: boolean;
+}) {
   const router = useRouter();
   const serviceId = content.service_id as string | undefined;
   // Find the most relevant booking for this specific service from server props
@@ -79,6 +107,32 @@ export function MeetingBlock({ content, bookings = [], courseId, lessonId }: { c
     return sessionStorage.getItem(SESSION_BOOKED_KEY(serviceId)) === "1";
   });
   const { user } = useUser();
+
+  if (previewMode) {
+    return (
+      <div className="rounded-[2rem] border border-slate-200 bg-white p-6 md:p-8">
+        <div className="flex flex-col gap-5 sm:flex-row sm:items-start">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#fff6ee] text-[#fd5523] shadow-sm">
+            <Calendar className="h-6 w-6" />
+          </div>
+          <div className="flex-1 space-y-2">
+            <p className="text-[10px] font-black uppercase tracking-[0.25em] text-[#fd5523]">Live Session Preview</p>
+            <h3 className="text-2xl font-bold tracking-tight text-[#062e39]">{title}</h3>
+            <p className="text-sm leading-relaxed text-slate-600">
+              {startTime
+                ? `Learners will see the schedule, countdown, and join flow for ${new Date(startTime).toLocaleString()}.`
+                : "Learners will see the booking or join flow here once session details are configured."}
+            </p>
+            <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-4">
+              <p className="text-xs font-semibold text-slate-500">
+                This preview suppresses live meeting controls and booking actions inside the editor.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   async function handleJoin(idOverride?: string) {
     const targetRoom = idOverride || meetingId || `zed-academy-room-${Math.random().toString(36).slice(2, 7)}`;

@@ -59,10 +59,9 @@ export default async function CreatorLayout({ children }: { children: React.Reac
 
   return (
     <div className="page-wrapper">
-      <Header2Wrapper />
-      <div style={{ position: "fixed", top: "18px", right: "80px", zIndex: 9999 }}>
+      <Header2Wrapper>
         <NotificationBellServer />
-      </div>
+      </Header2Wrapper>
       <div id="page-content">
         {children}
       </div>
