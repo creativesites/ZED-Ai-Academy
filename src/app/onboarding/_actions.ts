@@ -106,8 +106,8 @@ export async function completeOnboarding(formData: FormData) {
 
       if (tenant) {
         if (finalRole === "teacher") {
-          const expectedCode = tenant.teacher_code || "0000";
-          if (teacherCode !== expectedCode) {
+          const expectedCode = tenant.teacher_code;
+          if (!expectedCode || teacherCode !== expectedCode) {
             return { error: "Invalid staff access code for this academy." };
           }
         }

@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect, notFound } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SettingsForm } from "@/components/creator/settings-form";
-import { Building2, Palette } from "lucide-react";
+import { KeyRound, Palette } from "lucide-react";
 
 export const metadata = { title: "Academy Branding — Admin Hub" };
 
@@ -13,13 +13,13 @@ export default async function AcademySettingsPage({
   params: Promise<{ domain: string }>;
 }) {
   const { domain } = await params;
-  const { userId, orgId } = await auth();
+  const { userId } = await auth();
   if (!userId) redirect(`/sign-in?redirect_url=/academy/${domain}/admin/settings`);
 
   const supabase = createClient();
   const { data: company } = await supabase
     .from("companies")
-    .select("id, name, slug, logo_url, primary_color, home_template, home_content")
+    .select("id, name, slug, logo_url, primary_color, home_template, home_content, teacher_code")
     .eq("slug", domain)
     .single();
 
@@ -48,6 +48,25 @@ export default async function AcademySettingsPage({
 
       <div className="grid gap-10">
         <div className="space-y-8">
+          {membership.role === "company_admin" && (
+            <Card className="rounded-[2.5rem] border-0 shadow-xl overflow-hidden bg-white">
+              <CardHeader className="bg-slate-50/50 border-b border-slate-100 p-10">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-xl bg-white flex items-center justify-center shadow-sm text-[#fd5523]">
+                    <KeyRound className="h-5 w-5" />
+                  </div>
+                  <CardTitle className="text-2xl font-black text-[#062e39] uppercase">Staff Access Code</CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent className="p-10 space-y-2">
+                <p className="font-mono text-3xl font-black tracking-[0.4em] text-[#062e39]">{company.teacher_code}</p>
+                <p className="text-sm text-slate-500">
+                  Share this code only with teachers. They enter it when signing up to join this academy as staff.
+                </p>
+              </CardContent>
+            </Card>
+          )}
+
           <Card className="rounded-[2.5rem] border-0 shadow-xl overflow-hidden bg-white">
             <CardHeader className="bg-slate-50/50 border-b border-slate-100 p-10">
               <div className="flex items-center gap-3">

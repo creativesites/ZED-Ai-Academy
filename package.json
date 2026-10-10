@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
   },
   "dependencies": {
     "@base-ui/react": "^1.4.1",
@@ -29,8 +31,6 @@
     "@tiptap/starter-kit": "^3.22.5",
     "@types/jsonwebtoken": "^9.0.10",
     "@zoom/meetingsdk": "^6.0.0",
-    "@zoom/videosdk": "^2.4.2",
-    "@zoom/videosdk-react": "^0.0.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "jsonwebtoken": "^9.0.3",
@@ -70,6 +70,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.2.4",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^3.2.7"
   }
 }

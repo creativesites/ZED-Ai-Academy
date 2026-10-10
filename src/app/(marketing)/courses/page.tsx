@@ -148,6 +148,9 @@ export default async function CoursesPage({
     .order("is_featured", { ascending: false })
     .order("created_at", { ascending: false });
 
+  // Main catalog shows only platform courses; an active academy member sees
+  // their academy's catalog instead. Tenant courses never leak into the main one.
+  let scopedToAcademy = false;
   const { userId, orgId } = await auth();
   if (userId && orgId) {
     const { data: member } = await supabase
@@ -159,12 +162,16 @@ export default async function CoursesPage({
       .maybeSingle();
     if (member) {
       query = query.eq("company_id", orgId);
+      scopedToAcademy = true;
     }
   }
+  if (!scopedToAcademy) query = query.is("company_id", null);
 
   if (category !== "all") query = query.ilike("category", `%${category.replace(/-/g, " ")}%`);
   if (level !== "all") query = query.eq("level", level as "beginner" | "intermediate" | "advanced");
-  if (params.q) query = query.or(`title.ilike.%${params.q}%,description.ilike.%${params.q}%`);
+  // Strip PostgREST filter syntax so the search box can't inject extra filters.
+  const search = params.q?.replace(/[%,()*\\]/g, " ").trim();
+  if (search) query = query.or(`title.ilike.%${search}%,description.ilike.%${search}%`);
 
   const { data: courses } = await query as { data: CourseRow[] | null };
   const totalCount = courses?.length ?? 0;

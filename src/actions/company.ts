@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { generateUniqueSlug } from "@/lib/utils";
+import { requireTenantTeacher } from "@/lib/tenants/access";
 
 export async function syncActiveOrganization() {
   const { userId, orgId } = await auth();
@@ -34,6 +35,8 @@ export async function updateCompanySettings(formData: FormData) {
   const { userId, orgId } = await auth();
   if (!userId) throw new Error("Unauthorized");
   if (!orgId) throw new Error("No active organization selected");
+  // Learners in the org must not be able to change the academy's branding.
+  await requireTenantTeacher(orgId);
 
   const logoUrl = formData.get("logo_url") as string | null;
   const primaryColor = formData.get("primary_color") as string | null;

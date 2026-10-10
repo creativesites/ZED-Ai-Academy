@@ -1,14 +1,15 @@
 "use server";
 
-import { auth, currentUser } from "@clerk/nextjs/server";
-import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { requireTenantMember } from "@/lib/tenants/access";
 
 export async function getClassroomDiscussions(companyId: string) {
-  const { userId } = await auth();
-  if (!userId) return [];
-
-  const supabase = createClient();
+  let supabase;
+  try {
+    ({ supabase } = await requireTenantMember(companyId));
+  } catch {
+    return [];
+  }
   // Using the discussions table. We'll need to ensure company_id is a column or use a metadata field.
   // Assuming we use company_id for classroom-wide discussions.
   const { data, error } = await supabase
@@ -44,13 +45,11 @@ export async function getClassroomDiscussions(companyId: string) {
 }
 
 export async function postClassroomDiscussion(companyId: string, companySlug: string, content: string) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Sign in to post.");
+  const { userId, supabase } = await requireTenantMember(companyId);
 
   const trimmed = content.trim();
   if (!trimmed) throw new Error("Message cannot be empty.");
-
-  const supabase = createClient();
+  if (trimmed.length > 4000) throw new Error("Message is too long.");
 
   // Classroom discussions currently use the 'discussions' table which requires a course_id (NOT NULL).
   // We'll find a valid course_id for this user/company to satisfy the constraint and RLS policies.
@@ -96,5 +95,5 @@ export async function postClassroomDiscussion(companyId: string, companySlug: st
     throw new Error(error.message);
   }
 
-  revalidatePath(`/classroom/${companySlug}`);
+  revalidatePath(`/academy/${companySlug}/classroom`);
 }
