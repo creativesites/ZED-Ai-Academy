@@ -17,6 +17,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { requestLiveSessionBooking } from "@/actions/live-sessions";
+import { downloadIcsFile, getGoogleCalendarUrl } from "@/lib/calendar/calendar-export";
 import { toast } from "sonner";
 
 type LiveSessionSlot = {
@@ -375,8 +376,49 @@ export function LiveSessionBookingUI({ serviceId, courseId, lessonId, onSuccess,
               </div>
             </div>
 
+            {selectedSlot && (
+              <div className="mt-6 flex flex-col gap-2.5 w-full">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    const url = getGoogleCalendarUrl({
+                      title: service.title,
+                      startsAt: selectedSlot.starts_at,
+                      endsAt: selectedSlot.ends_at,
+                      description: "Zed AI Academy Live Session",
+                    });
+                    window.open(url, "_blank");
+                  }}
+                  className="w-full h-11 rounded-xl border-slate-200 text-slate-700 hover:border-[#fd5523] text-xs font-bold gap-2"
+                >
+                  <CalendarIcon className="h-4 w-4 text-[#fd5523]" />
+                  Add to Google Calendar
+                </Button>
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    downloadIcsFile({
+                      title: service.title,
+                      startsAt: selectedSlot.starts_at,
+                      endsAt: selectedSlot.ends_at,
+                      description: "Zed AI Academy Live Session",
+                    });
+                  }}
+                  className="w-full h-11 rounded-xl border-slate-200 text-slate-700 hover:border-[#fd5523] text-xs font-bold gap-2"
+                >
+                  <CalendarIcon className="h-4 w-4 text-[#fd5523]" />
+                  Download .ics Calendar File
+                </Button>
+              </div>
+            )}
+
             <Button 
-              className="mt-10 w-full h-12 rounded-xl bg-[#062e39] text-white font-bold"
+              className="mt-6 w-full h-12 rounded-xl bg-[#062e39] text-white font-bold"
               onClick={onClose}
             >
               Back to Lesson

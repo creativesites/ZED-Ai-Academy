@@ -1,7 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
-import { CalendarDays, Clock3, Users, Video } from "lucide-react";
+import { CalendarDays, Clock3, Users, Video, ShieldCheck } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { LiveSessionStudioClient } from "@/components/live-sessions/live-session-studio-client";
 import type { LiveSessionBooking } from "@/types/database";
@@ -52,14 +52,12 @@ export default async function LiveSessionStudioPage({ params }: PageProps) {
 
   const { data: zoomMeeting } = await supabase
     .from("zoom_meetings")
-    .select("id")
+    .select("zoom_meeting_id")
     .eq("booking_id", booking.id)
     .maybeSingle();
 
-  const canJoin = Boolean(
-    booking.status === "confirmed"
-      && zoomMeeting
-  );
+  // Session is joinable as long as status is confirmed
+  const canJoin = Boolean(booking.status === "confirmed");
 
   return (
     <main className="container" style={{ paddingTop: "60px", paddingBottom: "120px" }}>
@@ -80,7 +78,7 @@ export default async function LiveSessionStudioPage({ params }: PageProps) {
 
       <div className="grid gap-8 lg:grid-cols-[0.75fr_1.25fr]">
         <aside className="space-y-5">
-          <div className="rounded-[2rem] bg-[#062e39] p-6 text-white shadow-xl">
+          <div className="rounded-[2rem] bg-[#062e39] p-6 text-white shadow-xl border border-white/10">
             <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10 text-[#fd5523]">
               <Video className="h-6 w-6" />
             </div>
@@ -100,9 +98,19 @@ export default async function LiveSessionStudioPage({ params }: PageProps) {
               </div>
               <div className="flex gap-3">
                 <Users className="mt-0.5 h-5 w-5 text-[#fd5523]" />
-                <p className="text-sm font-semibold text-slate-700">Learner and instructor only</p>
+                <p className="text-sm font-semibold text-slate-700">1-on-1 Private Session</p>
               </div>
             </div>
+          </div>
+
+          <div className="rounded-[2rem] border border-emerald-100 bg-emerald-50/50 p-6 shadow-sm">
+            <div className="flex items-center gap-2 text-emerald-800 font-bold text-sm">
+              <ShieldCheck className="h-5 w-5 text-emerald-600" />
+              <span>JaaS WebRTC Enabled</span>
+            </div>
+            <p className="mt-2 text-xs text-emerald-700 leading-relaxed">
+              This session uses encrypted peer-to-peer WebRTC streaming with instant room access and real-time attendance logging.
+            </p>
           </div>
 
           {booking.learner_notes && (
@@ -114,12 +122,14 @@ export default async function LiveSessionStudioPage({ params }: PageProps) {
         </aside>
 
         <section>
-          {!zoomMeeting && (
-            <div className="mb-5 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm font-semibold text-amber-900">
-              This booking is confirmed, but a Zoom meeting has not been created yet. Confirm again after Zoom REST credentials are configured.
-            </div>
-          )}
-          <LiveSessionStudioClient bookingId={booking.id} canJoin={canJoin} />
+          <LiveSessionStudioClient
+            bookingId={booking.id}
+            canJoin={canJoin}
+            zoomMeetingId={zoomMeeting?.zoom_meeting_id}
+            startsAt={booking.starts_at}
+            endsAt={booking.ends_at}
+            title={booking.live_session_services?.title ?? "Live Session"}
+          />
         </section>
       </div>
     </main>

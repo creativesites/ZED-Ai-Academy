@@ -6,8 +6,7 @@ import { useUser } from "@clerk/nextjs";
 import { Button } from "@/components/ui/button";
 import { Calendar, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { JaaSMeeting } from "@jitsi/react-sdk";
-import { generateJitsiToken } from "@/actions/jitsi";
+import { LiveSessionRoom } from "@/components/live-sessions/live-session-room";
 import { BookingModal } from "@/components/learner/booking-modal";
 import { toast } from "sonner";
 
@@ -96,11 +95,9 @@ export function MeetingBlockInner({
   const meetingId = content.meeting_id as string;
   const title = (content.title as string) || "Live Training Session";
   const startTime = content.start_time as string | undefined;
-  const APP_ID = "vpaas-magic-cookie-37a3214c11ef406c81cc165d3d1c2f4f";
 
   const [joined, setJoined] = useState(false);
   const [joining, setJoining] = useState(false);
-  const [jwt, setJwt] = useState<string | null>(null);
   // Initialise from sessionStorage so state survives tab-switching and remounts
   const [optimisticBooked, setOptimisticBooked] = useState(() => {
     if (typeof window === "undefined" || !serviceId) return false;
@@ -134,24 +131,10 @@ export function MeetingBlockInner({
     );
   }
 
-  async function handleJoin(idOverride?: string) {
-    const targetRoom = idOverride || meetingId || `zed-academy-room-${Math.random().toString(36).slice(2, 7)}`;
+  function handleJoin() {
     setJoining(true);
-    try {
-      const result = await generateJitsiToken(targetRoom, false);
-      
-      if (result.success && result.token) {
-        setJwt(result.token);
-        setJoined(true);
-        toast.success("Connected to Live Studio!");
-      } else {
-        throw new Error(result.error || "Failed to generate session token");
-      }
-    } catch (error: unknown) {
-      toast.error(error instanceof Error ? error.message : "Failed to connect to Jitsi");
-    } finally {
-      setJoining(false);
-    }
+    setJoined(true);
+    setJoining(false);
   }
   
   // Use either the real booking or our optimistic state
@@ -164,7 +147,6 @@ export function MeetingBlockInner({
     const zoomMeeting = currentBooking.zoom_meetings?.[0] || currentBooking.zoom_meetings;
     
     const displayMeetingId = zoomMeeting?.zoom_meeting_id || meetingId;
-    const displayPassword = zoomMeeting?.zoom_password || (content.password as string | undefined);
 
     if (isRequested) {
       const bookedAt = (currentBooking as any).starts_at
@@ -223,49 +205,16 @@ export function MeetingBlockInner({
       const isLive = startsAt > 0 && endsAt > 0 && now >= (startsAt - 15 * 60_000) && now <= (endsAt + 30 * 60_000);
       const hasEnded = endsAt > 0 && now > (endsAt + 30 * 60_000);
 
-      if (joined && jwt && user) {
+      if (joined && user) {
         return (
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h3 className="text-xl font-bold text-[#062e39] tracking-tight">{title}</h3>
-              <Button variant="ghost" size="sm" onClick={() => setJoined(false)} className="text-slate-400">
-                Exit Session
-              </Button>
-            </div>
-            <div className="rounded-[2rem] overflow-hidden bg-black h-[600px] border border-slate-100 shadow-xl relative">
-              <JaaSMeeting
-                appId={APP_ID}
-                roomName={displayMeetingId}
-                jwt={jwt}
-                configOverwrite={{
-                  startWithAudioMuted: true,
-                  disableInviteFunctions: true,
-                  enableWelcomePage: false,
-                  prejoinPageEnabled: false,
-                }}
-                interfaceConfigOverwrite={{
-                  TOOLBAR_BUTTONS: [
-                    'microphone', 'camera', 'closedcaptions', 'desktop', 'fullscreen',
-                    'fodeviceselection', 'hangup', 'profile', 'chat', 'recording',
-                    'livestreaming', 'etherpad', 'sharedvideo', 'settings', 'raisehand',
-                    'videoquality', 'filmstrip', 'invite', 'feedback', 'stats', 'shortcuts',
-                    'tileview', 'videobackgroundblur', 'download', 'help', 'mute-everyone',
-                    'security'
-                  ],
-                }}
-                onReadyToClose={() => setJoined(false)}
-                getIFrameRef={(iframeRef) => {
-                  iframeRef.style.height = '100%';
-                  iframeRef.style.width = '100%';
-                }}
-                spinner={() => (
-                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 text-white/50 bg-[#062e39]">
-                    <Loader2 className="h-8 w-8 animate-spin" />
-                    <p className="text-sm font-medium">Connecting to Jitsi Studio...</p>
-                  </div>
-                )}
-              />
-            </div>
+          <div className="space-y-4">
+            <LiveSessionRoom
+              bookingId={confirmedBooking.id || displayMeetingId}
+              roomName={displayMeetingId}
+              isInstructor={false}
+              sessionTitle={title}
+              onLeave={() => setJoined(false)}
+            />
           </div>
         );
       }
@@ -280,13 +229,12 @@ export function MeetingBlockInner({
             <p className="mt-2 text-sm text-slate-500">
               This live session occurred on {confirmedBooking.starts_at ? new Date(confirmedBooking.starts_at).toLocaleDateString() : "a past date"}.
             </p>
-            {/* TEMP TEST — remove before launch */}
             <button
-              onClick={() => handleJoin(displayMeetingId)}
+              onClick={handleJoin}
               disabled={joining}
               className="mt-4 text-xs text-slate-400 underline underline-offset-2 hover:text-slate-600 disabled:opacity-50"
             >
-              {joining ? "Connecting…" : "🔧 Test: rejoin room"}
+              {joining ? "Connecting…" : "🔧 Rejoin room"}
             </button>
           </div>
         );
@@ -330,7 +278,7 @@ export function MeetingBlockInner({
                       ? "bg-[#fd5523] hover:bg-[#ef4a16] shadow-[#fd5523]/40 hover:scale-105 active:scale-95"
                       : "bg-white/10 hover:bg-white/20 text-white/40 cursor-not-allowed"
                   )}
-                  onClick={() => handleJoin(displayMeetingId)}
+                  onClick={handleJoin}
                   disabled={joining || !isLive}
                 >
                   {joining ? (
@@ -346,10 +294,9 @@ export function MeetingBlockInner({
             </div>
           </div>
 
-          {/* TEMP TEST — remove before launch */}
           <div className="text-center">
             <button
-              onClick={() => handleJoin(displayMeetingId)}
+              onClick={handleJoin}
               disabled={joining}
               className="text-xs text-slate-400 underline underline-offset-2 hover:text-slate-600 disabled:opacity-50"
             >

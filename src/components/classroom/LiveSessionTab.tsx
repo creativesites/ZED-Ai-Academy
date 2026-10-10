@@ -20,6 +20,7 @@ import {
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
+import { DeviceTestModal } from "@/components/live-sessions/device-test-modal";
 
 interface LiveSessionTabProps {
   companyId: string;
@@ -42,7 +43,7 @@ export function LiveSessionTab({ companyId, isAdminOrInstructor, companySlug }: 
   const [attendance, setAttendance] = useState<any[]>([]);
   const [selectedScheduleId, setSelectedScheduleId] = useState<string | null>(null);
   const [showAttendance, setShowAttendance] = useState(false);
-  const [swUnregistered, setSwUnregistered] = useState(false);
+  const [showDeviceModal, setShowDeviceModal] = useState(false);
 
   const APP_ID = "vpaas-magic-cookie-37a3214c11ef406c81cc165d3d1c2f4f";  
 
@@ -111,21 +112,20 @@ export function LiveSessionTab({ companyId, isAdminOrInstructor, companySlug }: 
     }
   }, [hasJoined, isAdminOrInstructor, activeSessionId, companyId, activeScheduleId]);
 
-  // --- Effect: Service Worker Cleanup (Jitsi Stability) ---
+  // --- Effect: Service Worker Cleanup (Safe without reload loop) ---
   useEffect(() => {
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.getRegistrations().then(registrations => {
         if (registrations.length > 0) {
           Promise.all(registrations.map(r => r.unregister())).then(() => {
-            setSwUnregistered(true);
-            window.location.reload();
+            const reloaded = sessionStorage.getItem("sw_cleaned_up");
+            if (!reloaded) {
+              sessionStorage.setItem("sw_cleaned_up", "true");
+              window.location.reload();
+            }
           });
-        } else {
-          setSwUnregistered(true);
         }
       });
-    } else {
-      setSwUnregistered(true);
     }
   }, []);
 
@@ -277,17 +277,42 @@ export function LiveSessionTab({ companyId, isAdminOrInstructor, companySlug }: 
             </div>
           )}
 
-          <Button 
-            onClick={isAdminOrInstructor && !isSessionActive ? handleStartSession : handleJoinSession}
-            disabled={isInitializing}
-            className="w-full h-16 rounded-2xl bg-[#fd5523] text-white font-black text-lg lg:text-xl hover:bg-[#ef4a16] shadow-xl shadow-[#fd5523]/20 transition-all active:scale-[0.98]"
-          >
-            {isInitializing ? (
-              <Loader2 className="h-6 w-6 animate-spin" />
-            ) : (
-              isAdminOrInstructor && !isSessionActive ? "Start Class Now" : "Join Room"
-            )}
-          </Button>
+          <div className="flex flex-col gap-3">
+            <Button 
+              onClick={isAdminOrInstructor && !isSessionActive ? handleStartSession : handleJoinSession}
+              disabled={isInitializing}
+              className="w-full h-16 rounded-2xl bg-[#fd5523] text-white font-black text-lg lg:text-xl hover:bg-[#ef4a16] shadow-xl shadow-[#fd5523]/20 transition-all active:scale-[0.98]"
+            >
+              {isInitializing ? (
+                <Loader2 className="h-6 w-6 animate-spin" />
+              ) : (
+                isAdminOrInstructor && !isSessionActive ? "Start Class Now" : "Join Room"
+              )}
+            </Button>
+
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setShowDeviceModal(true)}
+              className="w-full h-11 rounded-xl border-slate-200 text-slate-700 hover:border-[#fd5523] text-xs font-bold"
+            >
+              Test Camera & Microphone
+            </Button>
+          </div>
+
+          <DeviceTestModal
+            open={showDeviceModal}
+            onOpenChange={setShowDeviceModal}
+            onConfirmJoin={() => {
+              setShowDeviceModal(false);
+              if (isAdminOrInstructor && !isSessionActive) {
+                handleStartSession();
+              } else {
+                handleJoinSession();
+              }
+            }}
+            sessionTitle="Virtual Classroom Studio"
+          />
         </div>
       </div>
     );
@@ -298,15 +323,9 @@ export function LiveSessionTab({ companyId, isAdminOrInstructor, companySlug }: 
 
   return (
     <div className="flex h-full w-full flex-col bg-[#062e39] text-white relative overflow-hidden">
-      {/* 
-          1. Header Section 
-          - Stacked on Mobile, Row on Desktop
-      */}
+      {/* Header Section */}
       <div className="sticky top-0 z-40 w-full flex flex-col bg-[#062e39]/80 backdrop-blur-md border-b border-white/10">
-        {/* Main Navigation Row */}
         <div className="flex items-center justify-between px-4 lg:px-6 h-16 lg:h-20">
-          
-          {/* Brand & Status Section */}
           <div className="flex items-center gap-3 min-w-0">
             <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-red-500/10 border border-red-500/20 shadow-[0_0_15px_rgba(239,68,68,0.1)]">
               <span className="h-1.5 w-1.5 rounded-full bg-red-500 animate-pulse" />
@@ -317,7 +336,6 @@ export function LiveSessionTab({ companyId, isAdminOrInstructor, companySlug }: 
               <p className="text-xs lg:text-sm font-black text-white uppercase tracking-wider truncate">
                 {companySlug} <span className="text-white/40 font-medium">Studio</span>
               </p>
-              {/* Mobile-only Schedule indicator (under the title) */}
               {activeSchedule && (
                 <div className="lg:hidden flex items-center gap-1 text-[9px] font-bold text-white/40 uppercase tracking-tighter truncate">
                   <span className="text-[#fd5523] opacity-100">●</span> {activeSchedule.title}
@@ -326,11 +344,9 @@ export function LiveSessionTab({ companyId, isAdminOrInstructor, companySlug }: 
             </div>
           </div>
 
-          {/* Admin Actions Section */}
           <div className="flex items-center gap-2">
             {isAdminOrInstructor && (
               <>
-                {/* Attendance Button - Compact on Mobile */}
                 <Button
                   variant="outline"
                   size="sm"
@@ -341,7 +357,6 @@ export function LiveSessionTab({ companyId, isAdminOrInstructor, companySlug }: 
                   <span className="hidden sm:inline text-[10px] font-black uppercase tracking-widest">Attendance</span>
                 </Button>
 
-                {/* End Session - Red accent used carefully */}
                 <Button
                   variant="destructive"
                   size="sm"
@@ -356,7 +371,6 @@ export function LiveSessionTab({ companyId, isAdminOrInstructor, companySlug }: 
           </div>
         </div>
 
-        {/* Desktop-only secondary bar for schedule details */}
         {activeSchedule && (
           <div className="hidden lg:flex items-center px-6 py-2 bg-black/20 border-t border-white/5">
             <div className="flex items-center gap-2 text-[10px] font-bold text-white/50 uppercase tracking-[0.2em]">
@@ -368,12 +382,8 @@ export function LiveSessionTab({ companyId, isAdminOrInstructor, companySlug }: 
         )}
       </div>
 
-      {/* 
-          2. Content Area 
-          - Video occupies full space
-      */}
+      {/* Video Content */}
       <div className="flex-1 relative flex min-h-0">
-        {/* Jitsi Video Container */}
         <div className="flex-1 relative bg-black min-h-[500px]">
           {roomName && jwt && (
             <JaaSMeeting
@@ -402,21 +412,14 @@ export function LiveSessionTab({ companyId, isAdminOrInstructor, companySlug }: 
           )}
         </div>
 
-        {/* 
-            4. Attendance Panel 
-            - Slides in from right
-        */}
+        {/* Attendance Panel Drawer */}
         <div className={cn(
-          // MOBILE: Full screen fixed overlay | DESKTOP: Static inline sidebar
           "fixed inset-0 lg:static z-[100] lg:z-10 w-full bg-[#062e39]/95 lg:bg-[#062e39] backdrop-blur-xl lg:backdrop-blur-none flex flex-col transition-all duration-500 ease-in-out border-l border-white/10 shadow-2xl lg:shadow-none shrink-0 overflow-hidden",
           showAttendance 
             ? "translate-y-0 opacity-100 lg:w-96 lg:translate-y-0" 
             : "translate-y-full opacity-0 lg:w-0 lg:border-none lg:translate-y-0"
         )}>
-          
-          {/* Header: Polished with a "Handle" for Mobile UI feel */}
           <div className="relative p-6 border-b border-white/5 bg-black/40 lg:bg-transparent shrink-0">
-            {/* Mobile Grab Handle */}
             <div className="lg:hidden absolute top-3 left-1/2 -translate-x-1/2 w-12 h-1.5 bg-white/10 rounded-full" />
             
             <div className="flex items-center justify-between mt-2 lg:mt-0">
@@ -442,7 +445,6 @@ export function LiveSessionTab({ companyId, isAdminOrInstructor, companySlug }: 
             </div>
           </div>
 
-          {/* Student List: Using a "Card-in-Card" aesthetic */}
           <div className="flex-1 overflow-y-auto p-4 lg:p-6 space-y-4 scrollbar-hide">
             {students.map((student) => {
                 const record = attendance.find(a => a.profile_id === student.id);
@@ -464,7 +466,6 @@ export function LiveSessionTab({ companyId, isAdminOrInstructor, companySlug }: 
                             </div>
                           )}
                         </div>
-                        {/* Status Indicator Dot */}
                         <div className={cn(
                           "absolute -bottom-1 -right-1 h-4 w-4 rounded-full border-2 border-[#062e39] shadow-lg",
                           status === 'present' ? "bg-emerald-500" : status === 'late' ? "bg-amber-500" : "bg-red-500"
@@ -480,7 +481,6 @@ export function LiveSessionTab({ companyId, isAdminOrInstructor, companySlug }: 
                       </div>
                     </div>
 
-                    {/* Action Grid: High-contrast buttons */}
                     <div className="grid grid-cols-3 gap-2">
                         {(['present', 'late', 'absent'] as const).map((s) => (
                           <button 
@@ -505,7 +505,6 @@ export function LiveSessionTab({ companyId, isAdminOrInstructor, companySlug }: 
                 );
             })}
 
-            {/* Empty State */}
             {students.length === 0 && (
               <div className="py-20 flex flex-col items-center justify-center opacity-20">
                 <Users className="h-12 w-12 text-white mb-4" />
@@ -514,7 +513,6 @@ export function LiveSessionTab({ companyId, isAdminOrInstructor, companySlug }: 
             )}
           </div>
 
-          {/* Mobile Bottom Padding to clear navigation bars */}
           <div className="h-20 lg:hidden shrink-0" />
         </div>
       </div>
