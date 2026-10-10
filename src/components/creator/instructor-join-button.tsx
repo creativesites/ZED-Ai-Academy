@@ -2,13 +2,11 @@
 
 import { useState } from "react";
 import { JaaSMeeting } from "@jitsi/react-sdk";
-import { generateJitsiToken } from "@/actions/jitsi";
+import { getBookingJitsiToken } from "@/actions/jitsi";
 import { Button } from "@/components/ui/button";
 import { Loader2, Video, X, Copy, Check } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-
-const APP_ID = "vpaas-magic-cookie-37a3214c11ef406c81cc165d3d1c2f4f";
 
 type Props = {
   bookingId: string;
@@ -23,18 +21,17 @@ export function InstructorJoinButton({ bookingId, roomName, sessionTitle, learne
   const [joined, setJoined] = useState(false);
   const [joining, setJoining] = useState(false);
   const [jwt, setJwt] = useState<string | null>(null);
+  const [appId, setAppId] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
   async function handleJoin() {
     setJoining(true);
     try {
-      const result = await generateJitsiToken(roomName, true);
-      if (result.success && result.token) {
-        setJwt(result.token);
-        setJoined(true);
-      } else {
-        throw new Error(result.error || "Failed to generate session token");
-      }
+      const result = await getBookingJitsiToken(bookingId);
+      if (!result.success) throw new Error(result.error);
+      setJwt(result.token);
+      setAppId(result.appId);
+      setJoined(true);
     } catch (error: unknown) {
       toast.error(error instanceof Error ? error.message : "Failed to connect");
     } finally {
@@ -52,7 +49,7 @@ export function InstructorJoinButton({ bookingId, roomName, sessionTitle, learne
 
   const isConfirmed = status === "confirmed";
 
-  if (joined && jwt) {
+  if (joined && jwt && appId) {
     return (
       <div className="fixed inset-0 z-50 flex flex-col bg-[#062e39]">
         {/* Header */}
@@ -86,7 +83,7 @@ export function InstructorJoinButton({ bookingId, roomName, sessionTitle, learne
         {/* Meeting iframe */}
         <div className="flex-1 relative min-h-0">
           <JaaSMeeting
-            appId={APP_ID}
+            appId={appId}
             roomName={roomName}
             jwt={jwt}
             configOverwrite={{
@@ -94,6 +91,7 @@ export function InstructorJoinButton({ bookingId, roomName, sessionTitle, learne
               disableInviteFunctions: true,
               enableWelcomePage: false,
               prejoinPageEnabled: false,
+              disableDeepLinking: true,
             }}
             interfaceConfigOverwrite={{
               TOOLBAR_BUTTONS: [

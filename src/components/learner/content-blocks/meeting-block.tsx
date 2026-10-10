@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Calendar, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { JaaSMeeting } from "@jitsi/react-sdk";
-import { generateJitsiToken } from "@/actions/jitsi";
+import { getBookingJitsiToken } from "@/actions/jitsi";
 import { BookingModal } from "@/components/learner/booking-modal";
 import { toast } from "sonner";
 
@@ -96,11 +96,12 @@ export function MeetingBlockInner({
   const meetingId = content.meeting_id as string;
   const title = (content.title as string) || "Live Training Session";
   const startTime = content.start_time as string | undefined;
-  const APP_ID = "vpaas-magic-cookie-37a3214c11ef406c81cc165d3d1c2f4f";
 
   const [joined, setJoined] = useState(false);
   const [joining, setJoining] = useState(false);
   const [jwt, setJwt] = useState<string | null>(null);
+  const [appId, setAppId] = useState<string | null>(null);
+  const [roomName, setRoomName] = useState<string | null>(null);
   // Initialise from sessionStorage so state survives tab-switching and remounts
   const [optimisticBooked, setOptimisticBooked] = useState(() => {
     if (typeof window === "undefined" || !serviceId) return false;
@@ -134,26 +135,28 @@ export function MeetingBlockInner({
     );
   }
 
-  async function handleJoin(idOverride?: string) {
-    const targetRoom = idOverride || meetingId || `zed-academy-room-${Math.random().toString(36).slice(2, 7)}`;
+  // The room and role are decided on the server from the booking.
+  async function handleJoin(_displayId?: string) {
+    if (!booking?.id) {
+      toast.error("No confirmed booking found for this session.");
+      return;
+    }
     setJoining(true);
     try {
-      const result = await generateJitsiToken(targetRoom, false);
-      
-      if (result.success && result.token) {
-        setJwt(result.token);
-        setJoined(true);
-        toast.success("Connected to Live Studio!");
-      } else {
-        throw new Error(result.error || "Failed to generate session token");
-      }
+      const result = await getBookingJitsiToken(booking.id);
+      if (!result.success) throw new Error(result.error);
+      setJwt(result.token);
+      setAppId(result.appId);
+      setRoomName(result.roomName);
+      setJoined(true);
+      toast.success("Connected to Live Studio!");
     } catch (error: unknown) {
-      toast.error(error instanceof Error ? error.message : "Failed to connect to Jitsi");
+      toast.error(error instanceof Error ? error.message : "Failed to connect to the session");
     } finally {
       setJoining(false);
     }
   }
-  
+
   // Use either the real booking or our optimistic state
   const currentBooking = booking || (optimisticBooked ? { status: "requested" } : null);
 
@@ -223,7 +226,7 @@ export function MeetingBlockInner({
       const isLive = startsAt > 0 && endsAt > 0 && now >= (startsAt - 15 * 60_000) && now <= (endsAt + 30 * 60_000);
       const hasEnded = endsAt > 0 && now > (endsAt + 30 * 60_000);
 
-      if (joined && jwt && user) {
+      if (joined && jwt && user && appId && roomName) {
         return (
           <div className="space-y-6">
             <div className="flex items-center justify-between">
@@ -234,14 +237,15 @@ export function MeetingBlockInner({
             </div>
             <div className="rounded-[2rem] overflow-hidden bg-black h-[600px] border border-slate-100 shadow-xl relative">
               <JaaSMeeting
-                appId={APP_ID}
-                roomName={displayMeetingId}
+                appId={appId}
+                roomName={roomName}
                 jwt={jwt}
                 configOverwrite={{
                   startWithAudioMuted: true,
                   disableInviteFunctions: true,
                   enableWelcomePage: false,
                   prejoinPageEnabled: false,
+                  disableDeepLinking: true,
                 }}
                 interfaceConfigOverwrite={{
                   TOOLBAR_BUTTONS: [

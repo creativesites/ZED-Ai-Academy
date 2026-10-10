@@ -42,3 +42,15 @@ next-env.d.ts
 
 # clerk configuration (can include secrets)
 /.clerk/
+!.env.example
+
+# secrets / keys — never commit
+*.pk
+*.key
+/jitsi/
+/google/service-account.json
+
+# local logs & scratch
+*.log
+deployment_*.txt
+/scratch/

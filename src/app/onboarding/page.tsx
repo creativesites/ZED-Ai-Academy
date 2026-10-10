@@ -151,10 +151,10 @@ export default function OnboardingPage() {
               <input
                 type="text"
                 required
-                maxLength={4}
+                maxLength={6}
                 value={teacherCode}
                 onChange={(e) => setTeacherCode(e.target.value.replace(/\D/g, ""))}
-                placeholder="4-digit access code"
+                placeholder="Staff access code"
                 className="h-14 w-full rounded-2xl border border-slate-200 pl-12 pr-4 outline-none focus:border-[#fd5523] focus:ring-4 focus:ring-[#fd5523]/5 transition-all bg-slate-50/50 font-mono tracking-[0.5em] text-lg"
               />
             </div>
