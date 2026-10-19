@@ -5,30 +5,47 @@ import { auth, clerkClient } from "@clerk/nextjs/server";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { generateUniqueSlug } from "@/lib/utils";
 import { requireTenantTeacher } from "@/lib/tenants/access";
+import { ensureTenantMembership } from "@/lib/tenants/membership";
 
 export async function syncActiveOrganization() {
-  const { userId, orgId } = await auth();
+  const { userId, orgId, orgRole } = await auth();
   if (!userId || !orgId) return null;
 
   const supabaseAdmin = createServiceClient();
   const { data: existing } = await supabaseAdmin.from("companies").select("id").eq("id", orgId).maybeSingle();
-  
-  if (existing) return existing;
 
-  // Fetch from Clerk and sync
-  const client = await clerkClient();
-  const org = await client.organizations.getOrganization({ organizationId: orgId });
-  
-  if (org) {
-    const slug = await generateUniqueSlug(supabaseAdmin, org.name, "companies", org.id);
-    await supabaseAdmin.from("companies").upsert({
-      id: org.id,
-      name: org.name,
-      slug: slug,
-      logo_url: org.imageUrl,
-      admin_id: org.createdBy,
-    });
+  if (!existing) {
+    // Fetch from Clerk and sync
+    const client = await clerkClient();
+    const org = await client.organizations.getOrganization({ organizationId: orgId });
+
+    if (org) {
+      const slug = await generateUniqueSlug(supabaseAdmin, org.name, "companies", org.id);
+      await supabaseAdmin.from("companies").upsert({
+        id: org.id,
+        name: org.name,
+        slug: slug,
+        logo_url: org.imageUrl,
+        admin_id: org.createdBy,
+      });
+    }
   }
+
+  // Self-heal a missed Clerk webhook: the organization's admin always gets a
+  // company_admin membership for this academy. ensureTenantMembership never downgrades.
+  if (orgRole === "org:admin") {
+    const { data: member } = await supabaseAdmin
+      .from("company_members")
+      .select("role")
+      .eq("company_id", orgId)
+      .eq("profile_id", userId)
+      .maybeSingle();
+    if (!member) {
+      await ensureTenantMembership(userId, orgId, "company_admin");
+    }
+  }
+
+  return existing;
 }
 
 export async function updateCompanySettings(formData: FormData) {

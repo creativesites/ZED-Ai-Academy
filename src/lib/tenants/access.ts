@@ -14,11 +14,18 @@ export type TenantProfile = {
   company_id: string | null;
 };
 
+/**
+ * Resolve the caller's role in one academy.
+ *
+ * company_members is the source of truth. When the caller has no membership row
+ * at all and is in the matching Clerk organization, we fall back to the Clerk role
+ * so the academy's own admin is never locked out by a missed webhook:
+ *   - Clerk org:admin  → company_admin of THIS academy only
+ *   - any other org role → learner
+ * Clerk roles never grant platform (super admin) permissions.
+ */
 export async function getCurrentTenantAccess(companyId: string) {
-  // company_members is the source of truth for tenant roles. Clerk org roles
-  // (org:admin / org:member) are only sign-in context and never grant academy
-  // or platform permissions.
-  const { userId } = await auth();
+  const { userId, orgId, orgRole } = await auth();
   if (!userId) return null;
 
   const supabase = createClient();
@@ -29,20 +36,25 @@ export async function getCurrentTenantAccess(companyId: string) {
       .select("company_id, profile_id, status, role")
       .eq("company_id", companyId)
       .eq("profile_id", userId)
-      .eq("status", "active")
       .maybeSingle(),
   ]);
 
   const typedProfile = profile as TenantProfile | null;
-  const typedMember = member as TenantMembership | null;
+  const row = member as TenantMembership | null;
+
+  // A deactivated row is an explicit revocation: do not fall back to Clerk.
+  const activeMember = row?.status === "active" ? row : null;
+  const clerkFallback: CompanyMemberRole | null =
+    !row && orgId === companyId ? (orgRole === "org:admin" ? "company_admin" : "learner") : null;
+  const tenantRole = activeMember?.role ?? clerkFallback;
 
   return {
     userId,
     profile: typedProfile,
-    membership: typedMember,
+    membership: activeMember,
     isSuperAdmin: typedProfile?.role === "super_admin",
-    isMember: !!typedMember,
-    tenantRole: typedMember?.role ?? null,
+    isMember: !!activeMember || !!clerkFallback,
+    tenantRole,
   };
 }
 
