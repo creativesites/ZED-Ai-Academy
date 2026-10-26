@@ -54,14 +54,40 @@ export default async function CourseDetailPage({
   if (!userId) redirect("/sign-in");
 
   const supabase = createClient();
-  const { data: course } = await supabase
+  const { data: courseRaw } = await supabase
     .from("courses")
-    .select("*")
+    .select("*, companies(slug)")
     .eq("id", courseId)
-    .eq("instructor_id", userId)
     .single();
 
-  if (!course) notFound();
+  if (!courseRaw) notFound();
+  const course = courseRaw as any;
+
+  // Authorization check: instructor, super_admin, or company_admin/teacher of course.company_id
+  let isAuthorized = course.instructor_id === userId;
+  if (!isAuthorized) {
+    const { data: profile } = await supabase.from("profiles").select("role").eq("id", userId).maybeSingle();
+    if (profile?.role === "super_admin") {
+      isAuthorized = true;
+    } else if (course.company_id) {
+      const { data: member } = await supabase
+        .from("company_members")
+        .select("role")
+        .eq("company_id", course.company_id)
+        .eq("profile_id", userId)
+        .eq("status", "active")
+        .maybeSingle();
+
+      if (member && (member.role === "company_admin" || member.role === "teacher" || member.role === "instructor")) {
+        isAuthorized = true;
+      }
+    }
+  }
+
+  if (!isAuthorized) notFound();
+
+  const comp = Array.isArray(course.companies) ? course.companies[0] : course.companies;
+  const backHref = comp?.slug ? `/academy/${comp.slug}/admin/courses` : "/creator/courses";
 
   const { data: modulesRaw } = (await supabase
     .from("modules")
@@ -198,17 +224,17 @@ export default async function CourseDetailPage({
             size="sm"
             className="h-9 rounded px-2.5 text-slate-500 hover:bg-slate-100 hover:text-[#062e39] transition-colors"
           >
-            <Link href="/creator/courses" className="inline-flex items-center justify-center gap-2 text-sm font-bold">
+            <Link href={backHref} className="inline-flex items-center justify-center gap-2 text-sm font-bold">
               {/* icon and text are tightly locked in a flex row */}
               <ArrowLeft className="h-4 w-4 shrink-0" />
-              <span className="hidden text-sm sm:block">Studio</span>
+              <span className="hidden text-sm sm:block">Courses</span>
               <span className="sm:hidden">Back</span>
             </Link>
           </Button>
           
           <span className="text-slate-300 font-light select-none">/</span>
           
-          <Badge className={`${STATUS_PILL[course.status]} text-xs sm:text-sm font-black tracking-wide px-2.5 py-0.5 rounded-lg shrink-0`}>
+          <Badge className={`${STATUS_PILL[course.status as Course["status"]] || STATUS_PILL.draft} text-xs sm:text-sm font-black tracking-wide px-2.5 py-0.5 rounded-lg shrink-0`}>
             {course.status}
           </Badge>
         </div>

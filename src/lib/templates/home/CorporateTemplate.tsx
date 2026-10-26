@@ -95,7 +95,7 @@ export function CorporateTemplate({ tenant, courses, membership, brandColor, her
         <div className="container mx-auto px-6 max-w-7xl">
           <div className="flex items-center justify-between mb-20">
             <h2 className="text-4xl font-black text-slate-800 tracking-tight">Available Programs</h2>
-            <Link href="/courses" className="text-blue-600 font-bold flex items-center gap-2 group">
+            <Link href="#courses" className="text-blue-600 font-bold flex items-center gap-2 group">
               View Catalog <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
             </Link>
           </div>

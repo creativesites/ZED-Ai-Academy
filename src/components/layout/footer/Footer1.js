@@ -23,8 +23,8 @@ export default function Footer1() {
                                         </Link>
                                     </div>
                                     <p className="footer-one__about-text">
-                                        Zambia&apos;s leading platform for practical AI training — built for professionals
-                                        who want applied skills, not theory.
+                                        The modern multi-tenant AI academy platform — build, launch, and monetize your own
+                                        branded learning academy with built-in AI tutoring and live classrooms.
                                     </p>
                                     <div className="footer-one__about-contact-info">
                                         <div className="icon">
@@ -46,12 +46,11 @@ export default function Footer1() {
                                     </div>
                                     <ul className="footer-one__quick-links-list">
                                         <li><Link href="/"><span className="icon-right-arrow1"></span> Home</Link></li>
-                                        <li><Link href="/courses"><span className="icon-right-arrow1"></span> Browse Courses</Link></li>
+                                        <li><Link href="/#academies"><span className="icon-right-arrow1"></span> Featured Academies</Link></li>
+                                        <li><Link href="/academy/zedai"><span className="icon-right-arrow1"></span> Flagship Academy</Link></li>
+                                        <li><Link href="/launch-your-academy"><span className="icon-right-arrow1"></span> Launch Your Academy</Link></li>
                                         <li><Link href="/pricing"><span className="icon-right-arrow1"></span> Pricing</Link></li>
-                                        <li><Link href="/pricing#teams"><span className="icon-right-arrow1"></span> Team Plans</Link></li>
                                         <li><Link href="/about"><span className="icon-right-arrow1"></span> About Us</Link></li>
-                                        <li><Link href="/blog"><span className="icon-right-arrow1"></span> Blog</Link></li>
-                                        <li><Link href="/faq"><span className="icon-right-arrow1"></span> FAQ</Link></li>
                                         <li><Link href="/contact"><span className="icon-right-arrow1"></span> Contact</Link></li>
                                     </ul>
                                 </div>

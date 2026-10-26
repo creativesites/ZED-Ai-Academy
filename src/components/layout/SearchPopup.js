@@ -84,8 +84,8 @@ export default function SearchPopup({ isPopup, handlePopup }) {
                                             </Link>
                                         ))}
                                     </div>
-                                    <Link href="/courses" onClick={handlePopup} className="block text-center mt-8 text-sm font-bold text-[#fd5523] hover:underline">
-                                        View all courses →
+                                    <Link href="/academy/zedai" onClick={handlePopup} className="block text-center mt-8 text-sm font-bold text-[#fd5523] hover:underline">
+                                        View flagship courses →
                                     </Link>
                                 </>
                             ) : query.trim() && !loading ? (

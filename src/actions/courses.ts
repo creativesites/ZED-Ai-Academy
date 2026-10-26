@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@clerk/nextjs/server";
 import { createClient } from "@/lib/supabase/server";
 import type { CourseLevel, PriceType } from "@/types/database";
+import { ZEDAI_TENANT_ID } from "@/lib/tenants/constants";
 
 function slugify(text: string) {
   return text
@@ -76,6 +77,49 @@ export async function createCourse(formData: FormData) {
 
   const supabase = createClient();
 
+  const explicitCompanyId = (formData.get("company_id") || formData.get("companyId")) as string | null;
+  const tenantSlug = formData.get("tenant_slug") as string | null;
+  const returnTo = formData.get("return_to") as string | null;
+
+  // Determine which tenant owns this course
+  let companyId: string | null = explicitCompanyId || orgId || null;
+
+  if (companyId) {
+    // Verify user has rights in this company (or is super admin)
+    const { data: profile } = await supabase.from("profiles").select("role").eq("id", userId).maybeSingle();
+    if (profile?.role !== "super_admin") {
+      const { data: member } = await supabase
+        .from("company_members")
+        .select("role")
+        .eq("company_id", companyId)
+        .eq("profile_id", userId)
+        .eq("status", "active")
+        .maybeSingle();
+
+      if (!member || (member.role !== "company_admin" && member.role !== "teacher" && member.role !== "instructor")) {
+        throw new Error("You are not authorized to create courses in this academy.");
+      }
+    }
+  } else {
+    const { data: profile } = await supabase.from("profiles").select("role").eq("id", userId).maybeSingle();
+    if (profile?.role === "super_admin") {
+      companyId = ZEDAI_TENANT_ID;
+    } else {
+      // Look up user's active membership where they are an admin or teacher
+      const { data: member } = await supabase
+        .from("company_members")
+        .select("company_id, role")
+        .eq("profile_id", userId)
+        .eq("status", "active")
+        .in("role", ["company_admin", "teacher", "instructor"])
+        .limit(1)
+        .maybeSingle();
+      if (member) companyId = member.company_id;
+    }
+  }
+
+  if (!companyId) throw new Error("Select an academy before creating a course.");
+
   const title = formData.get("title") as string;
   const description = formData.get("description") as string;
   const category = formData.get("category") as string;
@@ -104,7 +148,7 @@ export async function createCourse(formData: FormData) {
       category: category || null,
       level: level || null,
       instructor_id: userId,
-      company_id: orgId || null,
+      company_id: companyId,
       price_type: priceType,
       price_amount: priceAmount,
       status: "draft",
@@ -113,6 +157,16 @@ export async function createCourse(formData: FormData) {
     .single();
 
   if (error) throw new Error(error.message);
+
+  if (returnTo) {
+    revalidatePath(returnTo);
+    redirect(returnTo);
+  }
+
+  if (tenantSlug) {
+    revalidatePath(`/academy/${tenantSlug}/admin/courses`);
+    redirect(`/academy/${tenantSlug}/admin/courses/${course.id}`);
+  }
 
   revalidatePath("/creator/courses");
   redirect(`/creator/courses/${course.id}`);

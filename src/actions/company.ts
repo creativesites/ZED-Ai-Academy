@@ -33,14 +33,55 @@ export async function syncActiveOrganization() {
 export async function updateCompanySettings(formData: FormData) {
   const { userId, orgId } = await auth();
   if (!userId) throw new Error("Unauthorized");
-  if (!orgId) throw new Error("No active organization selected");
 
+  const tenantSlug = formData.get("tenant_slug") as string | null;
   const logoUrl = formData.get("logo_url") as string | null;
   const primaryColor = formData.get("primary_color") as string | null;
   const homeTemplate = formData.get("home_template") as string | null;
   const homeContent = formData.get("home_content") as string | null;
 
-  const supabase = createClient();
+  const supabase = createServiceClient();
+
+  // Resolve target company: tenantSlug takes precedence when editing a specific academy
+  let targetCompanyId: string | null = null;
+
+  if (tenantSlug) {
+    const { data: targetCompany } = await supabase
+      .from("companies")
+      .select("id, admin_id")
+      .eq("slug", tenantSlug)
+      .maybeSingle();
+
+    if (targetCompany) {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", userId)
+        .maybeSingle();
+
+      if (profile?.role === "super_admin" || targetCompany.admin_id === userId) {
+        targetCompanyId = targetCompany.id;
+      } else {
+        const { data: member } = await supabase
+          .from("company_members")
+          .select("role")
+          .eq("company_id", targetCompany.id)
+          .eq("profile_id", userId)
+          .eq("status", "active")
+          .maybeSingle();
+
+        if (member && (member.role === "company_admin" || member.role === "teacher" || member.role === "instructor")) {
+          targetCompanyId = targetCompany.id;
+        }
+      }
+    }
+  } else if (orgId) {
+    targetCompanyId = orgId;
+  }
+
+  if (!targetCompanyId) {
+    throw new Error("No active organization or authorized academy selected.");
+  }
   
   const updates: any = {};
   if (logoUrl !== null) updates.logo_url = logoUrl;
@@ -58,7 +99,7 @@ export async function updateCompanySettings(formData: FormData) {
     const { data: company, error } = await supabase
       .from("companies")
       .update(updates)
-      .eq("id", orgId)
+      .eq("id", targetCompanyId)
       .select("slug")
       .single();
 
@@ -69,6 +110,7 @@ export async function updateCompanySettings(formData: FormData) {
     if (company?.slug) {
       revalidatePath(`/academy/${company.slug}`);
       revalidatePath(`/academy/${company.slug}/admin/settings`);
+      revalidatePath(`/academy/${company.slug}/admin/settings/site`);
     }
   }
 

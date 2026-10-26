@@ -77,16 +77,16 @@ export async function completeOnboarding(formData: FormData) {
       joinedCompanyId = org.id;
       joinedCompanySlug = await generateUniqueSlug(supabase, org.name, "companies", org.id);
 
-      await supabase.from("companies").upsert({
+      const { error: companyError } = await supabase.from("companies").upsert({
         id: org.id,
         name: org.name,
         slug: joinedCompanySlug,
         logo_url: org.imageUrl,
         admin_id: userId,
-        updated_at: new Date().toISOString(),
       }, { onConflict: "id" });
+      if (companyError) throw new Error(`Could not create your academy: ${companyError.message}`);
 
-      await supabase.from("company_members").upsert({
+      const { error: memberError } = await supabase.from("company_members").upsert({
         company_id: org.id,
         profile_id: userId,
         status: "active",
@@ -94,6 +94,7 @@ export async function completeOnboarding(formData: FormData) {
         joined_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       }, { onConflict: "company_id, profile_id" });
+      if (memberError) throw new Error(`Could not add you to your academy: ${memberError.message}`);
     }
 
     // 3. Handle Tenant Join (Learner or Teacher)
@@ -106,7 +107,11 @@ export async function completeOnboarding(formData: FormData) {
 
       if (tenant) {
         if (finalRole === "teacher") {
-          const expectedCode = tenant.teacher_code || "0000";
+          // "0000" is the legacy DB default, i.e. the owner never set a code: treat as not configured.
+          const expectedCode = tenant.teacher_code;
+          if (!expectedCode || expectedCode === "0000") {
+            return { error: "This academy hasn't enabled staff sign-up yet. Ask the owner to set a staff access code." };
+          }
           if (teacherCode !== expectedCode) {
             return { error: "Invalid staff access code for this academy." };
           }
@@ -181,7 +186,7 @@ export async function completeOnboarding(formData: FormData) {
         }
       }
     } else {
-      // Fallback: Enroll in Global Onboarding Course
+      // Fallback: Enroll in Global Onboarding Course if configured
       const { data: setting } = await supabase
         .from("site_settings")
         .select("value")
@@ -190,12 +195,32 @@ export async function completeOnboarding(formData: FormData) {
 
       const globalCourseId = setting?.value as string;
       if (globalCourseId && globalCourseId !== "00000000-0000-0000-0000-000000000000") {
-        await supabase.from("enrollments").upsert({
-          user_id: userId,
-          course_id: globalCourseId,
-          status: "active",
-          source: "manual_admin",
-        }, { onConflict: "user_id,course_id" });
+        const { data: globalCourse } = await supabase
+          .from("courses")
+          .select("id, company_id")
+          .eq("id", globalCourseId)
+          .maybeSingle();
+
+        if (globalCourse) {
+          await supabase.from("enrollments").upsert({
+            user_id: userId,
+            course_id: globalCourse.id,
+            company_id: globalCourse.company_id,
+            status: "active",
+            source: "manual_admin",
+          }, { onConflict: "user_id,course_id" });
+
+          if (globalCourse.company_id) {
+            await supabase.from("company_members").upsert({
+              company_id: globalCourse.company_id,
+              profile_id: userId,
+              status: "active",
+              role: "learner",
+              joined_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+            }, { onConflict: "company_id, profile_id" });
+          }
+        }
       }
     }
 

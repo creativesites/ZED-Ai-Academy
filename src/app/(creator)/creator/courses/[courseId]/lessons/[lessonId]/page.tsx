@@ -40,11 +40,33 @@ export default async function LessonEditorPage({
 
   const { data: course } = await supabase
     .from("courses")
-    .select("title, instructor_id")
+    .select("title, instructor_id, company_id")
     .eq("id", courseId)
     .single();
 
-  if (!course || course.instructor_id !== userId) redirect("/creator/courses");
+  if (!course) notFound();
+
+  let isAuthorized = course.instructor_id === userId;
+  if (!isAuthorized) {
+    const { data: profile } = await supabase.from("profiles").select("role").eq("id", userId).maybeSingle();
+    if (profile?.role === "super_admin") {
+      isAuthorized = true;
+    } else if (course.company_id) {
+      const { data: member } = await supabase
+        .from("company_members")
+        .select("role")
+        .eq("company_id", course.company_id)
+        .eq("profile_id", userId)
+        .eq("status", "active")
+        .maybeSingle();
+
+      if (member && (member.role === "company_admin" || member.role === "teacher" || member.role === "instructor")) {
+        isAuthorized = true;
+      }
+    }
+  }
+
+  if (!isAuthorized) redirect(`/creator/courses/${courseId}`);
 
   const { data: blocks } = await supabase
     .from("content_blocks")

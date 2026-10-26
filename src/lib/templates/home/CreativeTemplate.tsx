@@ -98,7 +98,7 @@ export function CreativeTemplate({ tenant, courses, membership, brandColor, hero
         <div className="container mx-auto px-6 max-w-7xl">
           <div className="flex items-center justify-between mb-20">
             <h2 className="text-5xl font-black text-fuchsia-900 tracking-tight">Colorful Catalog</h2>
-            <Link href="/courses" className="text-fuchsia-600 font-bold flex items-center gap-2 group">
+            <Link href="#courses" className="text-fuchsia-600 font-bold flex items-center gap-2 group">
               See All <ArrowRight className="h-4 w-4 group-hover:translate-x-2 transition-transform" />
             </Link>
           </div>

@@ -103,7 +103,7 @@ export function DarkTemplate({ tenant, courses, membership, brandColor, heroTitl
         <div className="container mx-auto px-6 max-w-7xl">
           <div className="flex items-center justify-between mb-20">
             <h2 className="text-5xl font-black text-white tracking-tighter">DATA CATALOG</h2>
-            <Link href="/courses" className="text-[#fd5523] text-sm font-black uppercase tracking-[0.3em] flex items-center gap-2 group">
+            <Link href="#courses" className="text-[#fd5523] text-sm font-black uppercase tracking-[0.3em] flex items-center gap-2 group">
               View All <ArrowRight className="h-4 w-4 group-hover:translate-x-2 transition-transform" />
             </Link>
           </div>

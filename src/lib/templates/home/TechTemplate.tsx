@@ -101,7 +101,7 @@ export function TechTemplate({ tenant, courses, membership, brandColor, heroTitl
         <div className="container mx-auto px-6 max-w-7xl">
           <div className="flex items-center justify-between mb-20">
             <h2 className="text-5xl font-black text-cyan-400 tracking-tighter uppercase">[ Data Catalog ]</h2>
-            <Link href="/courses" className="text-cyan-500 text-xs font-black uppercase tracking-[0.4em] flex items-center gap-2 group">
+            <Link href="#courses" className="text-cyan-500 text-xs font-black uppercase tracking-[0.4em] flex items-center gap-2 group">
               View All <ArrowRight className="h-4 w-4 group-hover:translate-x-2 transition-transform" />
             </Link>
           </div>

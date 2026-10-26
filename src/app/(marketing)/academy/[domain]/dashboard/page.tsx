@@ -9,6 +9,7 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import type { Enrollment, Course } from "@/types/database";
+import { getCurrentTenantAccess } from "@/lib/tenants/access";
 
 export const metadata = { title: "Student Dashboard" };
 
@@ -32,11 +33,19 @@ export default async function TenantStudentDashboardPage({
   // 1. Fetch Company
   const { data: company } = await supabase
     .from("companies")
-    .select("id, name, slug, logo_url, primary_color")
+    .select("id, name, slug, logo_url, primary_color, admin_id")
     .eq("slug", domain)
     .single();
 
   if (!company) notFound();
+
+  // Enforce tenant membership: non-members cannot view the private tenant dashboard
+  const access = await getCurrentTenantAccess(company.id);
+  const isMember = Boolean(access?.isMember || access?.isSuperAdmin || company.admin_id === userId);
+
+  if (!isMember) {
+    redirect(`/academy/${company.slug}`);
+  }
 
   // 2. Fetch User Profile
   const { data: profile } = await supabase

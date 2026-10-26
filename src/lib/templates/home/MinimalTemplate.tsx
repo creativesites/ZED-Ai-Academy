@@ -107,7 +107,7 @@ export function MinimalTemplate({ tenant, courses, membership, brandColor, heroT
         <div className="container mx-auto px-6 max-w-7xl">
           <div className="flex items-center justify-between mb-20">
              <h2 className="text-4xl font-light text-slate-900">Academic Catalog</h2>
-             <Link href="/courses" className="text-sm font-medium text-slate-400 hover:text-slate-900 transition-colors">
+             <Link href="#courses" className="text-sm font-medium text-slate-400 hover:text-slate-900 transition-colors">
                View All Programs
              </Link>
           </div>

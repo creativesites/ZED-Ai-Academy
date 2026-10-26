@@ -217,8 +217,8 @@ export default async function PricingPage() {
 
           <p className="mt-12 text-center text-sm font-medium text-slate-400 pt-12">
             Individual course purchases also available — buy once, own forever.{" "}
-            <Link href="/courses" className="text-[#fd5523] font-bold hover:underline">
-              Browse courses →
+            <Link href="/academy/zedai" className="text-[#fd5523] font-bold hover:underline">
+              Browse flagship courses →
             </Link>
           </p>
         </section>
@@ -387,9 +387,9 @@ export default async function PricingPage() {
                   size="lg"
                   variant="outline"
                   className="w-full sm:w-auto px-10 py-8 rounded-full bg-[#062e39] border-white/20 text-white hover:bg-white/10 hover:text-white font-bold text-lg"
-                  render={<Link href="/courses" />}
+                  render={<Link href="/academy/zedai" />}
                 >
-                  Browse courses
+                  Browse flagship courses
                 </Button>
               </div>
             </div>

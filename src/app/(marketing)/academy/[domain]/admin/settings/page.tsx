@@ -38,39 +38,24 @@ export default async function AcademySettingsPage({
   }
 
   return (
-    <div className="container max-w-7xl py-12">
-      <div className="mb-10">
-        <h1 className="text-4xl font-black tracking-tight text-[#062e39] uppercase">Academy Identity</h1>
-        <p className="text-slate-500 font-medium mt-2 text-lg">
-          Customize the look and feel of your academy landing page.
+    <div className="container max-w-6xl mx-auto py-10 px-4 sm:px-6 lg:px-8">
+      <div className="mb-8">
+        <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-[#062e39] uppercase">Branding & Design</h1>
+        <p className="text-slate-500 font-medium mt-1 text-sm sm:text-base">
+          Customize your visual identity, landing page templates, and student experience.
         </p>
       </div>
 
-      <div className="grid gap-10">
-        <div className="space-y-8">
-          <Card className="rounded-[2.5rem] border-0 shadow-xl overflow-hidden bg-white">
-            <CardHeader className="bg-slate-50/50 border-b border-slate-100 p-10">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-xl bg-white flex items-center justify-center shadow-sm text-[#fd5523]">
-                  <Palette className="h-5 w-5" />
-                </div>
-                <CardTitle className="text-2xl font-black text-[#062e39] uppercase">Branding & Layout</CardTitle>
-              </div>
-            </CardHeader>
-            <CardContent className="p-10">
-              <SettingsForm 
-                initialData={{
-                  logo_url: company.logo_url || "",
-                  primary_color: company.primary_color || "#fd5523",
-                  home_template: company.home_template,
-                  home_content: company.home_content || {},
-                }}
-                tenantSlug={company.slug}
-              />
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+      <SettingsForm 
+        initialData={{
+          logo_url: company.logo_url || "",
+          primary_color: company.primary_color || "#fd5523",
+          home_template: company.home_template,
+          home_content: company.home_content || {},
+        }}
+        tenantSlug={company.slug}
+        academyName={company.name}
+      />
     </div>
   );
 }

@@ -29,10 +29,10 @@ export default function NotFound() {
           <Button
             variant="outline"
             className="rounded-full border-slate-200 bg-white px-8 py-5 font-bold text-[#062e39] hover:bg-slate-50"
-            render={<Link href="/courses" />}
+            render={<Link href="/#academies" />}
           >
             <BookOpen className="mr-2 h-4 w-4" />
-            Browse Courses
+            Explore Academies
           </Button>
         </div>
       </div>

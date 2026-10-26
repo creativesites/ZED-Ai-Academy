@@ -22,7 +22,17 @@ import {
   DropdownMenuPortal
 } from "@/components/ui/dropdown-menu";
 
-export function StudentsTab({ companyId, isAdminOrInstructor, companySlug }: { companyId: string, isAdminOrInstructor: boolean, companySlug: string }) {
+export function StudentsTab({ 
+  companyId, 
+  isAdminOrInstructor, 
+  companySlug,
+  onViewPerformance,
+}: { 
+  companyId: string;
+  isAdminOrInstructor: boolean;
+  companySlug: string;
+  onViewPerformance?: (studentId?: string) => void;
+}) {
   const [students, setStudents] = useState<any[]>([]);
   const [groups, setGroups] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -138,8 +148,11 @@ export function StudentsTab({ companyId, isAdminOrInstructor, companySlug }: { c
                       </Button>
                     )} />
                     <DropdownMenuContent align="end" className="rounded-2xl p-2 border-slate-100 shadow-xl w-48">
-                      <DropdownMenuItem className="rounded-xl font-bold text-slate-600 flex items-center gap-2 p-3 focus:bg-[#fd5523]/5 focus:text-[#fd5523] cursor-pointer">
-                        <UserCheck className="h-4 w-4" /> View Performance
+                      <DropdownMenuItem 
+                        onClick={() => onViewPerformance?.(student.id)}
+                        className="rounded-xl font-bold text-slate-600 flex items-center gap-2 p-3 focus:bg-[#fd5523]/5 focus:text-[#fd5523] cursor-pointer"
+                      >
+                        <UserCheck className="h-4 w-4" /> View Gradebook & Scores
                       </DropdownMenuItem>
                       <DropdownMenuItem className="rounded-xl font-bold text-slate-600 flex items-center gap-2 p-3 focus:bg-[#fd5523]/5 focus:text-[#fd5523] cursor-pointer">
                         <Shield className="h-4 w-4" /> Change Permissions

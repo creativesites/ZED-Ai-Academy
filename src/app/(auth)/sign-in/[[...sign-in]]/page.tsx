@@ -93,7 +93,7 @@ export default async function SignInPage() {
                   socialButtonsPlacement: "bottom",
                   showOptionalFields: false,
                 },
-              }}
+              } as any}
             />
           </div>
         </div>

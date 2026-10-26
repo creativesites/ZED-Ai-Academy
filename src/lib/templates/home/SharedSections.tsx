@@ -1,7 +1,7 @@
 import React from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Award, BookOpen, Check, Globe, History, Landmark, Search, Shield, Sparkles } from "lucide-react";
+import { ArrowRight, Award, BookOpen, Check, Globe, History, Landmark, Search, Shield, Sparkles, Quote, Star, HelpCircle } from "lucide-react";
 
 
 /**
@@ -115,7 +115,7 @@ export function SharedSections({
                     Education
                   </div>
                   <div className="text-gray-900 font-black">
-                    {content.tutor_education || "MSc Mathematics · PhD Education"}
+                    {content.tutor_education || content.tutor_college || "MSc Computer Science · Applied AI"}
                   </div>
                 </div>
                 <div className="border-l-4 border-primary pl-6 py-2">
@@ -123,7 +123,7 @@ export function SharedSections({
                     Institution
                   </div>
                   <div className="text-gray-900 font-black">
-                    {content.tutor_university || "University of Cambridge"}
+                    {content.tutor_university || "Zed AI Academy Faculty"}
                   </div>
                 </div>
               </div>
@@ -240,6 +240,70 @@ export function SharedSections({
           </div>
         </div>
       </section>
+
+      {/* ------ Testimonials Section (Rendered when testimonials exist) ------ */}
+      {content.testimonials && content.testimonials.length > 0 && (
+        <section className="py-24 bg-gray-50 border-t border-gray-100">
+          <div className="container mx-auto px-6 max-w-7xl">
+            <div className="text-center mb-16">
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white border border-gray-200 text-gray-600 text-[11px] font-black uppercase tracking-[0.2em] mb-4 shadow-sm">
+                <Quote className="h-3.5 w-3.5 text-primary" />
+                Student Experiences
+              </div>
+              <h2 className="text-4xl sm:text-5xl font-black text-gray-900 tracking-tight">
+                Proven Results From Real Learners
+              </h2>
+            </div>
+            <div className="grid md:grid-cols-3 gap-8">
+              {content.testimonials.map((t: any, idx: number) => (
+                <div key={idx} className="p-8 bg-white rounded-3xl border border-gray-200 shadow-sm hover:shadow-xl transition-all space-y-4">
+                  <div className="flex items-center gap-1 text-amber-400">
+                    {Array.from({ length: t.rating || 5 }).map((_, s) => (
+                      <Star key={s} className="h-4 w-4 fill-amber-400 text-amber-400" />
+                    ))}
+                  </div>
+                  <p className="text-gray-600 text-sm leading-relaxed italic">
+                    "{t.content}"
+                  </p>
+                  <div className="pt-4 border-t border-gray-100">
+                    <h5 className="font-black text-gray-900 text-sm">{t.name}</h5>
+                    <p className="text-xs text-gray-400 uppercase tracking-wider">{t.role}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ------ FAQ Section (Rendered when FAQs exist) ------ */}
+      {content.faqs && content.faqs.length > 0 && (
+        <section className="py-24 bg-white border-t border-gray-100">
+          <div className="container mx-auto px-6 max-w-4xl">
+            <div className="text-center mb-16">
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gray-50 border border-gray-200 text-gray-600 text-[11px] font-black uppercase tracking-[0.2em] mb-4 shadow-sm">
+                <HelpCircle className="h-3.5 w-3.5 text-primary" />
+                Answers to Your Questions
+              </div>
+              <h2 className="text-4xl sm:text-5xl font-black text-gray-900 tracking-tight">
+                Frequently Asked Questions
+              </h2>
+            </div>
+            <div className="space-y-4">
+              {content.faqs.map((faq: any, idx: number) => (
+                <div key={idx} className="p-6 bg-gray-50 rounded-2xl border border-gray-200/80 space-y-2">
+                  <h4 className="text-base font-black text-gray-900 flex items-center gap-2">
+                    <span className="text-primary font-mono text-sm">0{idx + 1}.</span> {faq.question}
+                  </h4>
+                  <p className="text-sm text-gray-600 leading-relaxed pl-7">
+                    {faq.answer}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
     </div>
   );
 }

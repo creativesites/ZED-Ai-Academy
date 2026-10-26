@@ -6,12 +6,13 @@ import { NoticeBoardTab } from "./NoticeBoardTab";
 import { TimetableTab } from "./TimetableTab";
 import { DiscussionsTab } from "./DiscussionsTab";
 import { StudentsTab } from "./StudentsTab";
+import { GradebookTab } from "./GradebookTab";
 import { GroupsTab } from "./GroupsTab";
 import { SessionHistoryTab } from "./SessionHistoryTab";
-import { MessageSquare, Video, Calendar, Bell, Users, UsersRound, History } from "lucide-react";
+import { MessageSquare, Video, Calendar, Bell, Users, UsersRound, History, GraduationCap } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-type TabType = "session" | "timetable" | "noticeboard" | "discussions" | "students" | "groups" | "history";
+type TabType = "session" | "timetable" | "noticeboard" | "discussions" | "students" | "gradebook" | "groups" | "history";
 
 interface ClassroomTabsProps {
   companyId: string;
@@ -28,6 +29,7 @@ export function ClassroomTabs({ companyId, isAdminOrInstructor, companySlug }: C
     { id: "noticeboard" as const, label: "Notices", icon: Bell },
     { id: "discussions" as const, label: "Chat", icon: MessageSquare },
     { id: "students" as const, label: "Students", icon: Users, instructorOnly: true },
+    { id: "gradebook" as const, label: "Gradebook", icon: GraduationCap, instructorOnly: true },
     { id: "groups" as const, label: "Groups", icon: UsersRound, instructorOnly: true },
     { id: "history" as const, label: "History", icon: History, instructorOnly: true },
   ];
@@ -110,7 +112,15 @@ export function ClassroomTabs({ companyId, isAdminOrInstructor, companySlug }: C
             <DiscussionsTab companyId={companyId} companySlug={companySlug} />
           )}
           {activeTab === "students" && isAdminOrInstructor && (
-            <StudentsTab companyId={companyId} isAdminOrInstructor={isAdminOrInstructor} companySlug={companySlug} />
+            <StudentsTab 
+              companyId={companyId} 
+              isAdminOrInstructor={isAdminOrInstructor} 
+              companySlug={companySlug}
+              onViewPerformance={() => setActiveTab("gradebook")}
+            />
+          )}
+          {activeTab === "gradebook" && isAdminOrInstructor && (
+            <GradebookTab companyId={companyId} companySlug={companySlug} />
           )}
           {activeTab === "groups" && isAdminOrInstructor && (
             <GroupsTab companyId={companyId} companySlug={companySlug} />

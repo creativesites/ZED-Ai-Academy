@@ -31,7 +31,7 @@ export default function Sidebar({ isSidebar, handleSidebar }) {
                                     <div className="mt-6 flex flex-col gap-2">
                                         <Link href="/dashboard" className="flex items-center gap-3 px-6 py-4 rounded-2xl bg-slate-50 text-[#062e39] font-bold transition-all hover:bg-[#fd5523] hover:text-white group">
                                             <div className="h-2 w-2 rounded-full bg-[#fd5523] group-hover:bg-white" />
-                                            Student Dashboard
+                                            Academies Hub
                                         </Link>
                                         <Link href="/dashboard/settings" className="flex items-center gap-3 px-6 py-4 rounded-2xl bg-slate-50 text-[#062e39] font-bold transition-all hover:bg-[#fd5523] hover:text-white group">
                                             <div className="h-2 w-2 rounded-full bg-[#fd5523] group-hover:bg-white" />
@@ -92,10 +92,10 @@ export default function Sidebar({ isSidebar, handleSidebar }) {
                                 </div>
 
                                 <div className="mt-12 p-8 rounded-[2.5rem] bg-[#062e39] text-white text-center">
-                                     <h5 className="text-lg font-bold mb-3">Ready to Start?</h5>
-                                     <p className="text-white/60 text-sm mb-6 leading-relaxed">Join our next cohort and transform your career with AI.</p>
-                                     <Link href="/courses" className="thm-btn w-full">
-                                        View Courses
+                                     <h5 className="text-lg font-bold mb-3">Launch Your Academy</h5>
+                                     <p className="text-white/60 text-sm mb-6 leading-relaxed">Launch your branded online academy with AI tutoring & live classes.</p>
+                                     <Link href="/launch-your-academy" className="thm-btn w-full">
+                                        Get Started
                                         <i className="icon-right-arrow21"></i>
                                      </Link>
                                 </div>

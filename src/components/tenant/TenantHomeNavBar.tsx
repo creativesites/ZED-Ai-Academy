@@ -10,19 +10,25 @@ import {
     X,
     Settings,
     BookOpen,
+    UserPlus,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { TenantUserButton } from "./TenantUserButton";
+import { TenantAcademySwitcher } from "./TenantAcademySwitcher";
+import { joinTenantBySlug } from "@/actions/tenants";
 
 export default function TenantHomeNavBar({
     tenant,
     template,
     userId,
     role,
+    isMember = false,
 }: {
     tenant: any;
     template: string;
     userId: string;
     role: string;
+    isMember?: boolean;
 }) {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -100,50 +106,71 @@ export default function TenantHomeNavBar({
                     <div className="hidden md:flex items-center gap-1">
                         {userId ? (
                             <>
-                                {tenant.slug && (
-                                    <Link
-                                        href={`/academy/${tenant.slug}/classroom`}
-                                        className={cn(
-                                            "px-3.5 py-1.5 rounded-lg text-[13px] font-semibold transition-colors duration-150",
-                                            isDark
-                                                ? "text-slate-400 hover:text-slate-100 hover:bg-white/[0.06]"
-                                                : "text-slate-500 hover:text-[#062e39] hover:bg-slate-100"
+                                {isMember ? (
+                                    <>
+                                        {tenant.slug && (
+                                            <Link
+                                                href={`/academy/${tenant.slug}/classroom`}
+                                                className={cn(
+                                                    "px-3.5 py-1.5 rounded-lg text-[13px] font-semibold transition-colors duration-150",
+                                                    isDark
+                                                        ? "text-slate-400 hover:text-slate-100 hover:bg-white/[0.06]"
+                                                        : "text-slate-500 hover:text-[#062e39] hover:bg-slate-100"
+                                                )}
+                                            >
+                                                Classroom
+                                            </Link>
                                         )}
-                                    >
-                                        Classroom
-                                    </Link>
+
+                                        {/* Divider */}
+                                        <div
+                                            className={cn(
+                                                "w-px h-5 mx-1 flex-shrink-0",
+                                                isDark ? "bg-white/10" : "bg-slate-200"
+                                            )}
+                                        />
+
+                                        {isAdmin && (
+                                            <Link
+                                                href={`/academy/${tenant.slug}/admin`}
+                                                className={cn(
+                                                    "h-8 px-3.5 rounded-lg text-[12px] font-bold flex items-center gap-1.5 transition-all duration-150 border",
+                                                    isDark
+                                                        ? "border-white/[0.12] text-slate-300 hover:bg-white/[0.05] hover:border-white/25"
+                                                        : "border-slate-300 text-slate-600 hover:bg-slate-50 hover:border-slate-400"
+                                                )}
+                                            >
+                                                <Settings className="h-3.5 w-3.5" />
+                                                Admin
+                                            </Link>
+                                        )}
+
+                                        <Link
+                                            href={`/academy/${tenant.slug}/dashboard`}
+                                            className="h-8 px-4 rounded-lg bg-[#fd5523] hover:bg-[#e84b1c] text-white text-[12px] font-bold flex items-center gap-1.5 transition-all duration-150 hover:-translate-y-px hover:shadow-[0_4px_12px_rgba(253,85,35,0.35)]"
+                                        >
+                                            <LayoutDashboard className="h-3.5 w-3.5" />
+                                            Dashboard
+                                        </Link>
+                                    </>
+                                ) : (
+                                    <form action={joinTenantBySlug} className="inline-block">
+                                        <input type="hidden" name="tenantSlug" value={tenant.slug} />
+                                        <input type="hidden" name="role" value="student" />
+                                        <button
+                                            type="submit"
+                                            className="h-8 px-4 rounded-lg bg-[#fd5523] hover:bg-[#e84b1c] text-white text-[12px] font-bold flex items-center gap-1.5 transition-all duration-150 hover:-translate-y-px hover:shadow-[0_4px_12px_rgba(253,85,35,0.35)] cursor-pointer"
+                                        >
+                                            <UserPlus className="h-3.5 w-3.5" />
+                                            Join Academy
+                                        </button>
+                                    </form>
                                 )}
 
-                                {/* Divider */}
-                                <div
-                                    className={cn(
-                                        "w-px h-5 mx-1 flex-shrink-0",
-                                        isDark ? "bg-white/10" : "bg-slate-200"
-                                    )}
-                                />
-
-                                {isAdmin && (
-                                    <Link
-                                        href={`/academy/${tenant.slug}/admin`}
-                                        className={cn(
-                                            "h-8 px-3.5 rounded-lg text-[12px] font-bold flex items-center gap-1.5 transition-all duration-150 border",
-                                            isDark
-                                                ? "border-white/[0.12] text-slate-300 hover:bg-white/[0.05] hover:border-white/25"
-                                                : "border-slate-300 text-slate-600 hover:bg-slate-50 hover:border-slate-400"
-                                        )}
-                                    >
-                                        <Settings className="h-3.5 w-3.5" />
-                                        Admin
-                                    </Link>
-                                )}
-
-                                <Link
-                                    href={`/academy/${tenant.slug}/dashboard`}
-                                    className="h-8 px-4 rounded-lg bg-[#fd5523] hover:bg-[#e84b1c] text-white text-[12px] font-bold flex items-center gap-1.5 transition-all duration-150 hover:-translate-y-px hover:shadow-[0_4px_12px_rgba(253,85,35,0.35)]"
-                                >
-                                    <LayoutDashboard className="h-3.5 w-3.5" />
-                                    Dashboard
-                                </Link>
+                                <div className="ml-1 pl-2 border-l border-slate-200 dark:border-white/10 flex items-center gap-2">
+                                    <TenantAcademySwitcher currentSlug={tenant.slug} isDark={isDark} />
+                                    <TenantUserButton tenantSlug={tenant.slug} />
+                                </div>
                             </>
                         ) : (
                             <>
@@ -216,53 +243,79 @@ export default function TenantHomeNavBar({
                 <div className="px-4 py-3 flex flex-col gap-1">
                     {userId ? (
                         <>
-                            {tenant.slug && (
-                                <Link
-                                    href={`/academy/${tenant.slug}/classroom`}
-                                    onClick={() => setIsMobileMenuOpen(false)}
-                                    className={cn(
-                                        "flex items-center gap-3 px-3 py-3 rounded-xl text-[14px] font-semibold transition-colors",
-                                        isDark
-                                            ? "text-slate-400 hover:text-slate-100 hover:bg-white/[0.05]"
-                                            : "text-slate-600 hover:text-[#062e39] hover:bg-slate-50"
+                            {isMember ? (
+                                <>
+                                    {tenant.slug && (
+                                        <Link
+                                            href={`/academy/${tenant.slug}/classroom`}
+                                            onClick={() => setIsMobileMenuOpen(false)}
+                                            className={cn(
+                                                "flex items-center gap-3 px-3 py-3 rounded-xl text-[14px] font-semibold transition-colors",
+                                                isDark
+                                                    ? "text-slate-400 hover:text-slate-100 hover:bg-white/[0.05]"
+                                                    : "text-slate-600 hover:text-[#062e39] hover:bg-slate-50"
+                                            )}
+                                        >
+                                            <BookOpen className="h-[18px] w-[18px] flex-shrink-0" />
+                                            Classroom
+                                        </Link>
                                     )}
-                                >
-                                    <BookOpen className="h-[18px] w-[18px] flex-shrink-0" />
-                                    Classroom
-                                </Link>
+
+                                    {isAdmin && (
+                                        <Link
+                                            href={`/academy/${tenant.slug}/admin`}
+                                            onClick={() => setIsMobileMenuOpen(false)}
+                                            className={cn(
+                                                "flex items-center gap-3 px-3 py-3 rounded-xl text-[14px] font-semibold transition-colors",
+                                                isDark
+                                                    ? "text-slate-400 hover:text-slate-100 hover:bg-white/[0.05]"
+                                                    : "text-slate-600 hover:text-[#062e39] hover:bg-slate-50"
+                                            )}
+                                        >
+                                            <Settings className="h-[18px] w-[18px] flex-shrink-0" />
+                                            Admin
+                                        </Link>
+                                    )}
+
+                                    <div
+                                        className={cn(
+                                            "h-px my-1.5",
+                                            isDark ? "bg-white/[0.06]" : "bg-slate-100"
+                                        )}
+                                    />
+
+                                    <Link
+                                        href={`/academy/${tenant.slug}/dashboard`}
+                                        onClick={() => setIsMobileMenuOpen(false)}
+                                        className="h-12 rounded-xl bg-[#fd5523] hover:bg-[#e84b1c] text-white text-[13px] font-bold flex items-center justify-center gap-2 transition-colors"
+                                    >
+                                        <LayoutDashboard className="h-4 w-4" />
+                                        Student Dashboard
+                                    </Link>
+                                </>
+                            ) : (
+                                <form action={joinTenantBySlug} className="w-full">
+                                    <input type="hidden" name="tenantSlug" value={tenant.slug} />
+                                    <input type="hidden" name="role" value="student" />
+                                    <button
+                                        type="submit"
+                                        className="w-full h-12 rounded-xl bg-[#fd5523] hover:bg-[#e84b1c] text-white text-[13px] font-bold flex items-center justify-center gap-2 transition-colors cursor-pointer"
+                                    >
+                                        <UserPlus className="h-4 w-4" />
+                                        Join Academy
+                                    </button>
+                                </form>
                             )}
 
-                            {isAdmin && (
-                                <Link
-                                    href={`/academy/${tenant.slug}/admin`}
-                                    onClick={() => setIsMobileMenuOpen(false)}
-                                    className={cn(
-                                        "flex items-center gap-3 px-3 py-3 rounded-xl text-[14px] font-semibold transition-colors",
-                                        isDark
-                                            ? "text-slate-400 hover:text-slate-100 hover:bg-white/[0.05]"
-                                            : "text-slate-600 hover:text-[#062e39] hover:bg-slate-50"
-                                    )}
-                                >
-                                    <Settings className="h-[18px] w-[18px] flex-shrink-0" />
-                                    Admin
-                                </Link>
-                            )}
+                            <div className="flex items-center justify-between px-3 py-2.5 mt-1 rounded-xl bg-slate-50 dark:bg-white/[0.04]">
+                                <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Switch Academy</span>
+                                <TenantAcademySwitcher currentSlug={tenant.slug} isDark={isDark} />
+                            </div>
 
-                            <div
-                                className={cn(
-                                    "h-px my-1.5",
-                                    isDark ? "bg-white/[0.06]" : "bg-slate-100"
-                                )}
-                            />
-
-                            <Link
-                                href={`/academy/${tenant.slug}/dashboard`}
-                                onClick={() => setIsMobileMenuOpen(false)}
-                                className="h-12 rounded-xl bg-[#fd5523] hover:bg-[#e84b1c] text-white text-[13px] font-bold flex items-center justify-center gap-2 transition-colors"
-                            >
-                                <LayoutDashboard className="h-4 w-4" />
-                                Student Dashboard
-                            </Link>
+                            <div className="flex items-center justify-between px-3 py-2.5 mt-1 rounded-xl bg-slate-50 dark:bg-white/[0.04]">
+                                <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Account & Logout</span>
+                                <TenantUserButton tenantSlug={tenant.slug} />
+                            </div>
                         </>
                     ) : (
                         <>

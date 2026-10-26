@@ -342,6 +342,8 @@ export function MobileBottomNav() {
 
   // ── Academy context ────────────────────────────────────────────────────────
   if (isAcademyPath && academySlug) {
+    const isMemberOfThisAcademy = tenantSlug === academySlug;
+
     const tabs: TabItem[] = [
       {
         href: `/academy/${academySlug}`,
@@ -355,19 +357,24 @@ export function MobileBottomNav() {
         icon: BookOpen,
         active: pathname.startsWith(`/academy/${academySlug}/courses`),
       },
-      {
-        href: `/academy/${academySlug}/classroom`,
-        label: "Class",
-        icon: GraduationCap,
-        active: pathname.startsWith(`/academy/${academySlug}/classroom`),
-      },
-      {
-        href: `/academy/${academySlug}/dashboard`,
-        label: "Dash",
-        icon: LayoutDashboard,
-        active: pathname.startsWith(`/academy/${academySlug}/dashboard`),
-      },
     ];
+
+    if (isMemberOfThisAcademy) {
+      tabs.push(
+        {
+          href: `/academy/${academySlug}/classroom`,
+          label: "Class",
+          icon: GraduationCap,
+          active: pathname.startsWith(`/academy/${academySlug}/classroom`),
+        },
+        {
+          href: `/academy/${academySlug}/dashboard`,
+          label: "Dash",
+          icon: LayoutDashboard,
+          active: pathname.startsWith(`/academy/${academySlug}/dashboard`),
+        }
+      );
+    }
 
     if (isThisAcademyAdmin) {
       tabs.push({

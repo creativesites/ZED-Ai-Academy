@@ -96,7 +96,7 @@ export function ElegantTemplate({ tenant, courses, membership, brandColor, heroT
               <h2 className="text-4xl font-light text-stone-900 tracking-tight">Curated Collections</h2>
               <div className="h-0.5 w-16 bg-stone-800" />
             </div>
-            <Link href="/courses" className="text-stone-400 text-xs font-bold uppercase tracking-[0.3em] hover:text-stone-900 transition-colors flex items-center gap-2">
+            <Link href="#courses" className="text-stone-400 text-xs font-bold uppercase tracking-[0.3em] hover:text-stone-900 transition-colors flex items-center gap-2">
               View Catalog <ArrowRight className="h-4 w-4" />
             </Link>
           </div>

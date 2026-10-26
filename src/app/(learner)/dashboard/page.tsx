@@ -2,37 +2,37 @@ import { auth } from "@clerk/nextjs/server";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import {
+  Building2,
+  GraduationCap,
+  ShieldCheck,
+  ShieldAlert,
+  ArrowRight,
+  PlusCircle,
+  ExternalLink,
+  BookOpen,
+  Calendar,
+  Sparkles,
+  Users,
+} from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { buttonVariants } from "@/components/ui/button-variants";
-import { cn } from "@/lib/utils";
-import {
-  ArrowRight, Award, BookOpen, Building2, CalendarDays, Clock3, GraduationCap,
-  Image as ImageIcon, Layers, MessageCircle, Play, ShieldCheck,
-  Sparkles, Trophy, UserCheck, Users, Settings
-} from "lucide-react";
-import { WhatsAppShare } from "@/components/shared/whatsapp-share";
-import { ReferralWidget } from "@/components/shared/referral-widget";
-import type { Enrollment, Certificate, Course, UserRole } from "@/types/database";
+import type { CompanyMemberRole, UserRole } from "@/types/database";
 
-export const metadata = { title: "Dashboard" };
+export const metadata = { title: "Your Academies — Zed AI Academy" };
+export const dynamic = "force-dynamic";
 
-type EnrollmentWithCourse = Enrollment & {
-  courses: Pick<Course, "id" | "slug" | "title" | "thumbnail_url" | "category"> | null;
+type AcademyCardData = {
+  companyId: string;
+  name: string;
+  slug: string;
+  logoUrl: string | null;
+  primaryColor: string | null;
+  role: CompanyMemberRole;
+  status: string;
+  enrolledCoursesCount: number;
+  totalCoursesCount: number;
 };
-type CertificateWithCourse = Certificate & { courses: { title: string } | null };
-
-function findResumeLesson(
-  modules: { lessons: { id: string; position: number }[] }[],
-  completedIds: Set<string>
-): string | null {
-  for (const mod of modules) {
-    for (const lesson of mod.lessons) {
-      if (!completedIds.has(lesson.id)) return lesson.id;
-    }
-  }
-  return null;
-}
 
 export default async function DashboardPage() {
   const { userId } = await auth();
@@ -40,708 +40,286 @@ export default async function DashboardPage() {
 
   const supabase = createClient();
 
-  const { data: profileData } = await supabase
+  // 1. Fetch user profile
+  const { data: profile } = await supabase
     .from("profiles")
-    .select("full_name, role, onboarding_completed, company_id")
+    .select("full_name, role, onboarding_completed")
     .eq("id", userId)
     .single();
 
+  if (!profile?.onboarding_completed) {
+    redirect("/onboarding");
+  }
 
-  const profile = profileData as { full_name: string | null; role: UserRole; onboarding_completed: boolean; company_id: string | null } | null;
-  // Redirect to onboarding if neither flag is set (covers pre-migration rows too)
-  if (!profile?.onboarding_completed && !profile?.full_name) redirect("/onboarding");
-
-  const role = profile.role;
-  const isAdmin = role === "super_admin";
-  const isInstructor = role === "instructor" || role === "teacher" || isAdmin;
-  const isCompanyAdmin = role === "company_admin";
+  const isSuperAdmin = profile.role === "super_admin";
   const firstName = profile.full_name?.split(" ")[0] ?? "there";
 
-  let companySlug: string | null = null;
-  const { data: activeMembership } = await supabase
+  // 2. Fetch all tenant memberships with company details
+  const { data: memberRows } = await supabase
     .from("company_members")
-    .select("company_id")
+    .select(`
+      company_id,
+      role,
+      status,
+      joined_at,
+      companies (
+        id,
+        name,
+        slug,
+        logo_url,
+        primary_color,
+        status
+      )
+    `)
     .eq("profile_id", userId)
     .eq("status", "active")
-    .order("joined_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+    .order("joined_at", { ascending: false });
 
-  const defaultCompanyId = activeMembership?.company_id ?? profile.company_id;
-  if (defaultCompanyId) {
-    const { data: companyData } = await supabase
-      .from("companies")
-      .select("slug")
-      .eq("id", defaultCompanyId)
-      .single();
-    companySlug = companyData?.slug ?? null;
-  }
+  // 3. For each company, fetch course / enrollment stats
+  const companyIds = (memberRows ?? [])
+    .map((m: any) => m.company_id)
+    .filter(Boolean);
 
-  const protocol = process.env.NODE_ENV === "production" ? "https" : "http";
-  const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || "localhost:3000";
-  const tenantBaseUrl = companySlug ? `${protocol}://${companySlug}.${rootDomain}` : "";
+  const [coursesRes, enrollmentsRes] = await Promise.all([
+    companyIds.length > 0
+      ? supabase.from("courses").select("id, company_id").in("company_id", companyIds)
+      : Promise.resolve({ data: [] }),
+    companyIds.length > 0
+      ? supabase
+          .from("enrollments")
+          .select("id, company_id")
+          .eq("user_id", userId)
+          .in("company_id", companyIds)
+      : Promise.resolve({ data: [] }),
+  ]);
 
-  // ── Admin stats (super_admin only, uses service client to bypass RLS) ──
-  let adminStats: {
-    totalUsers: number;
-    totalEnrollments: number;
-    pendingEnrollments: number;
-    publishedCourses: number;
-  } | null = null;
+  const courseCountMap = new Map<string, number>();
+  (coursesRes.data ?? []).forEach((c: any) => {
+    courseCountMap.set(c.company_id, (courseCountMap.get(c.company_id) ?? 0) + 1);
+  });
 
-  if (isAdmin) {
-    const svc = createServiceClient();
-    const [
-      { count: totalUsers },
-      { count: totalEnrollments },
-      { count: pendingEnrollments },
-      { count: publishedCourses },
-    ] = await Promise.all([
-      svc.from("profiles").select("*", { head: true, count: "exact" }),
-      svc.from("enrollments").select("*", { head: true, count: "exact" }),
-      svc.from("enrollments").select("*", { head: true, count: "exact" }).eq("status", "pending_payment"),
-      svc.from("courses").select("*", { head: true, count: "exact" }).eq("status", "published"),
-    ]);
-    adminStats = {
-      totalUsers: totalUsers ?? 0,
-      totalEnrollments: totalEnrollments ?? 0,
-      pendingEnrollments: pendingEnrollments ?? 0,
-      publishedCourses: publishedCourses ?? 0,
-    };
-  }
+  const enrollCountMap = new Map<string, number>();
+  (enrollmentsRes.data ?? []).forEach((e: any) => {
+    enrollCountMap.set(e.company_id, (enrollCountMap.get(e.company_id) ?? 0) + 1);
+  });
 
-  // ── Learner data (all roles) ──
-  const { data: enrollmentsData } = await supabase
-    .from("enrollments")
-    .select("*, courses(id, slug, title, thumbnail_url, category)")
-    .eq("user_id", userId)
-    .in("status", ["active", "pending_payment"])
-    .order("enrolled_at", { ascending: false });
-
-  const enrollments = (enrollmentsData ?? []) as EnrollmentWithCourse[];
-
-  const { data: certificatesData } = await supabase
-    .from("certificates")
-    .select("*, courses(title)")
-    .eq("user_id", userId);
-
-  const certificates = (certificatesData ?? []) as CertificateWithCourse[];
-
-  const courseIds = enrollments.map((e) => e.course_id);
-  const progressMap: Record<string, { pct: number; resumeLessonId: string | null }> = {};
-
-  if (courseIds.length > 0) {
-    type ModuleRow = { course_id: string; lessons: { id: string; position: number }[] };
-    const { data: modulesRaw } = await supabase
-      .from("modules")
-      .select("course_id, lessons(id, position)")
-      .in("course_id", courseIds)
-      .order("position", { ascending: true });
-    const modulesData = (modulesRaw ?? []) as unknown as ModuleRow[];
-
-    const byCourse: Record<string, { lessons: { id: string; position: number }[] }[]> = {};
-    for (const mod of modulesData) {
-      if (!byCourse[mod.course_id]) byCourse[mod.course_id] = [];
-      byCourse[mod.course_id].push({
-        lessons: [...(mod.lessons ?? [])].sort((a, b) => a.position - b.position),
-      });
-    }
-
-    const allLessonIds = modulesData.flatMap((m) => (m.lessons ?? []).map((l) => l.id));
-    const completedSet: Set<string> = new Set();
-
-    if (allLessonIds.length > 0) {
-      const { data: progressData } = await supabase
-        .from("lesson_progress")
-        .select("lesson_id")
-        .eq("user_id", userId)
-        .eq("completed", true)
-        .in("lesson_id", allLessonIds);
-      (progressData ?? []).forEach((p: { lesson_id: string }) => completedSet.add(p.lesson_id));
-    }
-
-    for (const courseId of courseIds) {
-      const mods = byCourse[courseId] ?? [];
-      const total = mods.reduce((n, m) => n + m.lessons.length, 0);
-      const done = mods.flatMap((m) => m.lessons).filter((l) => completedSet.has(l.id)).length;
-      const pct = total > 0 ? Math.round((done / total) * 100) : 0;
-      progressMap[courseId] = { pct, resumeLessonId: findResumeLesson(mods, completedSet) };
-    }
-  }
-
-  const { data: referralData } = await supabase
-    .from("referrals")
-    .select("referral_code, referred_id, status")
-    .eq("referrer_id", userId);
-
-  const referralRows = referralData ?? [];
-  const referralCode = referralRows.find((r) => r.referral_code)?.referral_code ?? undefined;
-  const referralTotal = referralRows.filter((r) => r.referred_id).length;
-  const referralConverted = referralRows.filter((r) => r.status === "converted").length;
-
-  const completedCount = enrollments.filter((e) => e.completed_at).length;
-  const pendingCount = enrollments.filter(
-    (e) => (e as unknown as { status: string }).status === "pending_payment"
-  ).length;
-  const inProgressCount = Math.max(enrollments.length - completedCount - pendingCount, 0);
-
-  // Role label for hero
-  const roleLabel =
-    isAdmin ? "Super Admin" :
-    role === "instructor" || role === "teacher" ? "Teacher" :
-    isCompanyAdmin ? "Company Admin" :
-    "Learning Command Center";
+  const academies: AcademyCardData[] = (memberRows ?? [])
+    .map((m: any) => {
+      const comp = Array.isArray(m.companies) ? m.companies[0] : m.companies;
+      if (!comp) return null;
+      return {
+        companyId: comp.id,
+        name: comp.name,
+        slug: comp.slug,
+        logoUrl: comp.logo_url,
+        primaryColor: comp.primary_color,
+        role: m.role as CompanyMemberRole,
+        status: comp.status,
+        enrolledCoursesCount: enrollCountMap.get(comp.id) ?? 0,
+        totalCoursesCount: courseCountMap.get(comp.id) ?? 0,
+      };
+    })
+    .filter(Boolean) as AcademyCardData[];
 
   return (
-    <div className="container" style={{ paddingTop: "60px", paddingBottom: "120px" }}>
-      <div className="space-y-12">
+    <div className="min-h-screen bg-slate-50/70 pb-20 pt-8">
+      <div className="container mx-auto px-4 sm:px-6 max-w-6xl">
 
-        {/* ── Hero ──────────────────────────────────────────────────────── */}
-        <section className="marketing-shell mesh-orange noise relative overflow-hidden rounded-[3rem] border-0 p-8 shadow-2xl sm:p-12">
-          <div className="relative z-10 flex flex-wrap items-start justify-between gap-8">
-            <div className="max-w-2xl">
-              <div className="marketing-kicker bg-white/10 text-white">
-                <Sparkles className="mr-2 h-3.5 w-3.5" />
-                {roleLabel}
-              </div>
-              <h1 className="mt-6 text-4xl font-bold text-white tracking-tight sm:text-5xl">
-                Welcome back, {firstName}
-              </h1>
-              <p className="mt-4 text-lg leading-relaxed text-white/70">
-                {isAdmin
-                  ? `Platform overview — ${adminStats?.pendingEnrollments ?? 0} payment${adminStats?.pendingEnrollments !== 1 ? "s" : ""} awaiting confirmation.`
-                  : isInstructor
-                    ? "Manage your courses and track your own learning progress below."
-                    : isCompanyAdmin
-                      ? "Manage your team's learning and track your own progress below."
-                      : `You have ${inProgressCount} course${inProgressCount !== 1 ? "s" : ""} in flight. Keep building your AI edge.`}
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-4">
-              <Link
-                href="/courses"
-                className={cn(
-                  buttonVariants({ variant: "default" }),
-                  "rounded-full bg-white px-10 py-7 text-xl font-bold text-[#062e39] shadow-2xl transition-all hover:bg-white/90 hover:scale-105 active:scale-95 flex items-center justify-center"
-                )}
-              >
-                Browse Courses <ArrowRight className="ml-3 h-6 w-6" />
-              </Link>
-              <Link
-                href="/dashboard/settings"
-                className={cn(
-                  buttonVariants({ variant: "outline" }),
-                  "rounded-full border-2 border-white/30 bg-white/10 px-8 py-7 text-lg font-bold text-white backdrop-blur-md transition-all hover:bg-white/20 flex items-center justify-center"
-                )}
-              >
-                Manage Account
-              </Link>
-              {companySlug && (
-                <Link
-                  href={`${tenantBaseUrl}/classroom`}
-                  className={cn(
-                    buttonVariants({ variant: "outline" }),
-                    "rounded-full border-2 border-[#fd5523]/50 bg-[#fd5523]/20 px-8 py-7 text-lg font-bold text-[#fd5523] backdrop-blur-md transition-all hover:bg-[#fd5523]/30 hover:text-white flex items-center justify-center"
-                  )}
-                >
-                  Enter Classroom
-                </Link>
-              )}
-            </div>
+        {/* Welcome Header */}
+        <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+              Welcome back, {firstName} 👋
+            </h1>
+            <p className="text-sm text-slate-500 mt-1">
+              Select an academy to enter your classroom, review lessons, or manage courses.
+            </p>
           </div>
-        </section>
 
-        {/* ── Admin tools section (super_admin) ─────────────────────────── */}
-        {isAdmin && adminStats && (
-          <section className="space-y-6">
-            <div className="flex items-center gap-3 px-1">
-              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#062e39]">
-                <ShieldCheck className="h-4 w-4 text-white" />
-              </div>
-              <h2 className="text-2xl font-bold tracking-tight text-[#062e39]">Admin Tools</h2>
-            </div>
-
-            {/* KPIs */}
-            <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-              {[
-                { label: "Total Users", value: adminStats.totalUsers, icon: Users, accent: "bg-blue-50 text-blue-600" },
-                { label: "Published Courses", value: adminStats.publishedCourses, icon: Layers, accent: "bg-[#fff6ee] text-[#fd5523]" },
-                { label: "Total Enrolments", value: adminStats.totalEnrollments, icon: GraduationCap, accent: "bg-green-50 text-green-600" },
-                {
-                  label: "Pending Payment",
-                  value: adminStats.pendingEnrollments,
-                  icon: Clock3,
-                  accent: adminStats.pendingEnrollments > 0 ? "bg-amber-50 text-amber-600" : "bg-slate-50 text-slate-400",
-                },
-              ].map((kpi) => (
-                <div key={kpi.label} className="marketing-outline-card rounded-[2rem] border-0 p-5">
-                  <div className={`mb-3 flex h-10 w-10 items-center justify-center rounded-2xl ${kpi.accent}`}>
-                    <kpi.icon className="h-5 w-5" />
-                  </div>
-                  <p className="text-3xl font-bold tracking-tight text-[#062e39]">{kpi.value}</p>
-                  <p className="mt-1 text-xs font-bold uppercase tracking-widest text-slate-400">{kpi.label}</p>
-                </div>
-              ))}
-            </div>
-
-            {/* Tool cards */}
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {[
-                {
-                  label: "Platform Dashboard",
-                  desc: "KPIs, recent signups, and site health",
-                  href: "/admin",
-                  icon: ShieldCheck,
-                  accent: "bg-[#062e39] text-white",
-                  badge: null,
-                },
-                {
-                  label: "Student Management",
-                  desc: "Activate payments, manage access",
-                  href: "/admin/students",
-                  icon: UserCheck,
-                  accent: "bg-amber-50 text-amber-700",
-                  badge: adminStats.pendingEnrollments > 0 ? adminStats.pendingEnrollments : null,
-                },
-                {
-                  label: "Course Builder",
-                  desc: "Create and publish courses",
-                  href: "/creator/courses",
-                  icon: BookOpen,
-                  accent: "bg-[#fff6ee] text-[#fd5523]",
-                  badge: null,
-                },
-                {
-                  label: "Media Library",
-                  desc: "Manage site images and assets",
-                  href: "/admin/images",
-                  icon: ImageIcon,
-                  accent: "bg-slate-50 text-slate-600",
-                  badge: null,
-                },
-                {
-                  label: "Live Sessions",
-                  desc: "Availability and booking requests",
-                  href: "/creator/live-sessions",
-                  icon: CalendarDays,
-                  accent: "bg-green-50 text-green-700",
-                  badge: null,
-                },
-                {
-                  label: "Practice Reviews",
-                  desc: "Exercise submissions and AI feedback",
-                  href: "/creator/practice-submissions",
-                  icon: MessageCircle,
-                  accent: "bg-indigo-50 text-indigo-700",
-                  badge: null,
-                },
-              ].map((tool) => (
-                <Link
-                  key={tool.href}
-                  href={tool.href}
-                  className="group marketing-card flex flex-col gap-4 rounded-[2rem] border-0 p-6 transition-all hover:-translate-y-1 hover:shadow-xl"
-                >
-                  <div className="flex items-start justify-between">
-                    <div className={`flex h-11 w-11 items-center justify-center rounded-2xl ${tool.accent}`}>
-                      <tool.icon className="h-5 w-5" />
-                    </div>
-                    {tool.badge !== null && (
-                      <span className="flex h-6 min-w-[24px] items-center justify-center rounded-full bg-amber-500 px-2 text-[10px] font-bold text-white">
-                        {tool.badge}
-                      </span>
-                    )}
-                  </div>
-                  <div>
-                    <p className="font-bold text-[#062e39] group-hover:text-[#fd5523] transition-colors">
-                      {tool.label}
-                    </p>
-                    <p className="mt-1 text-xs leading-relaxed text-slate-500">{tool.desc}</p>
-                  </div>
-                  <ArrowRight className="h-4 w-4 text-slate-300 transition-colors group-hover:text-[#fd5523]" />
-                </Link>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* ── Instructor tools (instructor only, not super_admin — already covered above) ── */}
-        {(role === "instructor" || role === "teacher") && (
-          <section className="space-y-5">
-            <div className="flex items-center gap-3 px-1">
-              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#062e39]">
-                <BookOpen className="h-4 w-4 text-white" />
-              </div>
-              <h2 className="text-2xl font-bold tracking-tight text-[#062e39]">Course Management</h2>
-            </div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              {[
-                {
-                  label: "Course Builder",
-                  desc: "Create, edit, and publish your courses",
-                  href: "/creator/courses",
-                  icon: BookOpen,
-                  accent: "bg-[#fff6ee] text-[#fd5523]",
-                },
-                {
-                  label: "Student Enrolments",
-                  desc: "View who's enrolled in your courses",
-                  href: "/admin/students",
-                  icon: Users,
-                  accent: "bg-blue-50 text-blue-600",
-                },
-                {
-                  label: "Live Sessions",
-                  desc: "Set availability and confirm bookings",
-                  href: "/creator/live-sessions",
-                  icon: CalendarDays,
-                  accent: "bg-green-50 text-green-700",
-                },
-                {
-                  label: "Practice Reviews",
-                  desc: "Review exercise submissions",
-                  href: "/creator/practice-submissions",
-                  icon: MessageCircle,
-                  accent: "bg-indigo-50 text-indigo-700",
-                },
-              ].map((tool) => (
-                <Link
-                  key={tool.href}
-                  href={tool.href}
-                  className="group marketing-card flex items-center gap-5 rounded-[2rem] border-0 p-6 transition-all hover:-translate-y-1 hover:shadow-xl"
-                >
-                  <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ${tool.accent}`}>
-                    <tool.icon className="h-5 w-5" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-bold text-[#062e39] group-hover:text-[#fd5523] transition-colors">{tool.label}</p>
-                    <p className="mt-0.5 text-xs text-slate-500">{tool.desc}</p>
-                  </div>
-                  <ArrowRight className="h-4 w-4 shrink-0 text-slate-300 transition-colors group-hover:text-[#fd5523]" />
-                </Link>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* ── Company admin tools ────────────────────────────────────────── */}
-        {(isCompanyAdmin || isAdmin) && (
-          <section className="space-y-6">
-            <div className="flex items-center gap-3 px-1">
-              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#062e39]">
-                <Building2 className="h-4 w-4 text-white" />
-              </div>
-              <h2 className="text-2xl font-bold tracking-tight text-[#062e39]">Academy Management</h2>
-            </div>
-            
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="flex items-center gap-3">
+            {isSuperAdmin && (
               <Link
-                href={`${tenantBaseUrl}/admin/settings/site`}
-                className="group marketing-card flex items-center gap-5 rounded-[2rem] border-0 p-6 transition-all hover:-translate-y-1 hover:shadow-xl"
+                href="/superadmin"
+                className="flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold uppercase tracking-wider px-4 py-2.5 rounded-xl shadow-md transition-all hover:scale-105 active:scale-95"
               >
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#fff6ee] text-[#fd5523]">
-                  <Settings className="h-6 w-6" />
-                </div>
-                <div className="flex-1">
-                  <p className="font-bold text-[#062e39] group-hover:text-[#fd5523] transition-colors">
-                    to Identity
-                  </p>
-                  <p className="mt-0.5 text-xs text-slate-500">
-                    Branding, logo, and home customization
-                  </p>
-                </div>
-                <ArrowRight className="h-4 w-4 shrink-0 text-slate-300 transition-colors group-hover:text-[#fd5523]" />
+                <ShieldAlert className="h-4 w-4 text-red-400" />
+                <span>Super Admin Console</span>
               </Link>
+            )}
 
-              {companySlug && (
-                <Link
-                  href={`${tenantBaseUrl}/classroom`}
-                  className="group marketing-card flex items-center gap-5 rounded-[2rem] border-0 p-6 transition-all hover:-translate-y-1 hover:shadow-xl"
-                >
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600">
-                    <GraduationCap className="h-6 w-6" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-bold text-[#062e39] group-hover:text-[#fd5523] transition-colors">
-                      Academy Classroom
-                    </p>
-                    <p className="mt-0.5 text-xs text-slate-500">
-                      Manage students, sessions & timetable
-                    </p>
-                  </div>
-                  <ArrowRight className="h-4 w-4 shrink-0 text-slate-300 transition-colors group-hover:text-[#fd5523]" />
-                </Link>
-              )}
-
-              <Link
-                href={`${tenantBaseUrl}/admin`}
-                className="group marketing-card flex items-center gap-5 rounded-[2rem] border-0 p-6 transition-all hover:-translate-y-1 hover:shadow-xl"
-              >
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
-                  <Building2 className="h-6 w-6" />
-                </div>
-                <div className="flex-1">
-                  <p className="font-bold text-[#062e39] group-hover:text-[#fd5523] transition-colors">
-                    Academy Dashboard
-                  </p>
-                  <p className="mt-0.5 text-xs text-slate-500">
-                    Manage Academy
-                  </p>
-                </div>
-                <ArrowRight className="h-4 w-4 shrink-0 text-slate-300 transition-colors group-hover:text-[#fd5523]" />
-              </Link>
-            </div>
-          </section>
-        )}
-
-        {/* ── Divider between tools and learning (for non-learner roles) ── */}
-        {(isAdmin || isInstructor || isCompanyAdmin) && (
-          <div className="flex items-center gap-4">
-            <div className="h-px flex-1 bg-slate-100" />
-            <span className="text-xs font-bold uppercase tracking-widest text-slate-400">My Learning</span>
-            <div className="h-px flex-1 bg-slate-100" />
-          </div>
-        )}
-
-        {/* ── Learner stats (all roles) ──────────────────────────────────── */}
-        <section className="grid grid-cols-2 gap-6 md:grid-cols-4">
-          {[
-            { label: "Active Stride", value: inProgressCount, icon: Clock3, color: "text-[#fd5523]" },
-            { label: "Mastered", value: completedCount, icon: GraduationCap, color: "text-green-500" },
-            { label: "Certificates", value: certificates.length, icon: Trophy, color: "text-amber-500" },
-            { label: "Total Library", value: enrollments.length, icon: BookOpen, color: "text-blue-500" },
-          ].map((stat) => (
-            <Card key={stat.label} className="marketing-card rounded-[2.5rem] border-0 p-6 shadow-xl">
-              <CardContent className="p-0 space-y-4">
-                <div className={`inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-50 ${stat.color}`}>
-                  <stat.icon className="h-6 w-6" />
-                </div>
-                <div>
-                  <p className="text-4xl font-bold text-[#062e39] tracking-tighter">{stat.value}</p>
-                  <p className="text-sm font-bold uppercase tracking-widest text-slate-400 mt-1">{stat.label}</p>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </section>
-
-        {/* ── Course list ────────────────────────────────────────────────── */}
-        <section className="space-y-6">
-          <div className="flex items-center justify-between px-2">
-            <h2 className="text-3xl font-bold text-[#062e39] tracking-tight">Active Learning</h2>
             <Link
-              href="/courses"
-              className="text-sm font-bold uppercase tracking-widest text-[#fd5523] hover:text-[#ef4a16] transition-colors"
+              href="/launch-your-academy"
+              className="flex items-center gap-2 bg-[#fd5523] hover:bg-[#ea4817] text-white text-xs font-bold uppercase tracking-wider px-4 py-2.5 rounded-xl shadow-md shadow-[#fd5523]/20 transition-all hover:scale-105 active:scale-95"
             >
-              Browse All Curriculums
+              <PlusCircle className="h-4 w-4" />
+              <span>Launch an Academy</span>
             </Link>
           </div>
+        </div>
 
-          {enrollments.length > 0 ? (
-            <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
-              {enrollments.map((enrollment) => {
-                const course = enrollment.courses;
-                if (!course) return null;
-                const prog = progressMap[enrollment.course_id];
-                const pct = prog?.pct ?? 0;
-                const enrollmentStatus = (enrollment as unknown as { status: string }).status;
-                const isPending = enrollmentStatus === "pending_payment";
-                const resumeHref = prog?.resumeLessonId
-                  ? `/courses/${course.slug}/learn?lesson=${prog.resumeLessonId}`
-                  : `/courses/${course.slug}/learn`;
+        {/* Super Admin Notice if applicable */}
+        {isSuperAdmin && (
+          <div className="mb-8 p-4 rounded-2xl bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xl border border-slate-700/60">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl bg-red-500/20 text-red-400 flex items-center justify-center shrink-0 border border-red-500/30">
+                <ShieldAlert className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="font-bold text-sm text-white">Platform Super Administrator</h3>
+                <p className="text-xs text-slate-300">
+                  You have platform-wide access to inspect and manage all academies, suspend tenants, and assign roles.
+                </p>
+              </div>
+            </div>
+            <Link
+              href="/superadmin"
+              className="shrink-0 bg-white/10 hover:bg-white/20 text-white text-xs font-bold px-3.5 py-2 rounded-xl transition-colors border border-white/10 flex items-center gap-1.5"
+            >
+              <span>Open Control Plane</span>
+              <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          </div>
+        )}
 
-                const cardInner = (
-                  <Card
-                    className={`marketing-card h-full overflow-hidden border-0 rounded-[2.5rem] shadow-xl transition-all hover:-translate-y-2 hover:shadow-2xl p-0 ${isPending ? "ring-2 ring-amber-300" : ""}`}
+        {/* Academies Section */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-base font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
+              <Building2 className="h-4 w-4 text-[#fd5523]" />
+              <span>Your Academies ({academies.length})</span>
+            </h2>
+          </div>
+
+          {academies.length === 0 ? (
+            <div className="bg-white rounded-3xl border border-slate-200/80 p-10 text-center shadow-sm">
+              <div className="h-16 w-16 rounded-2xl bg-orange-50 text-[#fd5523] mx-auto flex items-center justify-center mb-4">
+                <Building2 className="h-8 w-8" />
+              </div>
+              <h3 className="text-lg font-bold text-slate-900 mb-1">
+                You haven&apos;t joined any academies yet
+              </h3>
+              <p className="text-sm text-slate-500 max-w-md mx-auto mb-6">
+                Explore available courses in Zed AI Academy or create your own custom-branded teaching platform.
+              </p>
+              <div className="flex items-center justify-center gap-3">
+                <Link
+                  href="/academy/zedai"
+                  className="bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold uppercase tracking-wider px-5 py-2.5 rounded-xl transition-all"
+                >
+                  Visit Zed AI Academy
+                </Link>
+                <Link
+                  href="/launch-your-academy"
+                  className="bg-[#fd5523] hover:bg-[#ea4817] text-white text-xs font-bold uppercase tracking-wider px-5 py-2.5 rounded-xl transition-all shadow-md shadow-[#fd5523]/20"
+                >
+                  Create Your Academy
+                </Link>
+              </div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {academies.map((academy) => {
+                const isAdmin = academy.role === "company_admin";
+                const isTeacher = academy.role === "teacher";
+                const brandColor = academy.primaryColor || "#fd5523";
+
+                return (
+                  <div
+                    key={academy.companyId}
+                    className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm hover:shadow-md transition-all flex flex-col justify-between group"
                   >
-                    <div className="aspect-[16/10] bg-slate-100 overflow-hidden relative">
-                      {course.thumbnail_url ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          src={course.thumbnail_url}
-                          alt={course.title}
-                          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
-                        />
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#fff6ee] to-[#fffaf6]">
-                          <BookOpen className="h-12 w-12 text-[#fd5523]/20" />
+                    <div>
+                      {/* Top Header & Role Badge */}
+                      <div className="flex items-start justify-between gap-3 mb-4">
+                        <div
+                          className="h-12 w-12 rounded-2xl flex items-center justify-center text-white font-bold text-lg shadow-md shrink-0"
+                          style={{ backgroundColor: brandColor }}
+                        >
+                          {academy.logoUrl ? (
+                            <img
+                              src={academy.logoUrl}
+                              alt={academy.name}
+                              className="h-full w-full object-cover rounded-2xl"
+                            />
+                          ) : (
+                            academy.name.charAt(0)
+                          )}
                         </div>
-                      )}
-                      <div className="absolute top-4 left-4">
-                        {course.category && (
-                          <div className="rounded-full bg-white/90 backdrop-blur-md px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest text-[#062e39] shadow-lg">
-                            {course.category}
+
+                        <span
+                          className={`text-[11px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider ${
+                            isAdmin
+                              ? "bg-orange-50 text-orange-700 border border-orange-200/60"
+                              : isTeacher
+                              ? "bg-purple-50 text-purple-700 border border-purple-200/60"
+                              : "bg-emerald-50 text-emerald-700 border border-emerald-200/60"
+                          }`}
+                        >
+                          {isAdmin ? "Admin" : isTeacher ? "Instructor" : "Student"}
+                        </span>
+                      </div>
+
+                      {/* Title & Slug */}
+                      <h3 className="text-lg font-black text-slate-900 tracking-tight group-hover:text-[#fd5523] transition-colors">
+                        {academy.name}
+                      </h3>
+                      <p className="text-xs text-slate-400 font-mono mt-0.5">
+                        /{academy.slug}
+                      </p>
+
+                      {/* Academy Stats */}
+                      <div className="mt-4 pt-4 border-t border-slate-100 flex items-center gap-4 text-xs text-slate-500">
+                        <div className="flex items-center gap-1.5">
+                          <BookOpen className="h-3.5 w-3.5 text-slate-400" />
+                          <span>{academy.totalCoursesCount} Course(s)</span>
+                        </div>
+                        {academy.enrolledCoursesCount > 0 && (
+                          <div className="flex items-center gap-1.5 text-emerald-600 font-medium">
+                            <GraduationCap className="h-3.5 w-3.5" />
+                            <span>{academy.enrolledCoursesCount} Enrolled</span>
                           </div>
                         )}
-                      </div>
-                      <div className="absolute bottom-4 right-4">
-                        <div className={`rounded-full px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest shadow-lg ${
-                          enrollment.completed_at
-                            ? "bg-green-500 text-white"
-                            : isPending
-                              ? "bg-amber-500 text-white"
-                              : "bg-[#fd5523] text-white"
-                        }`}>
-                          {enrollment.completed_at ? "Completed" : isPending ? "Pending Payment" : `${pct}%`}
-                        </div>
                       </div>
                     </div>
 
-                    <CardContent className="space-y-4 p-8">
-                      <h3 className="line-clamp-2 text-xl font-bold text-[#062e39] leading-snug group-hover:text-[#fd5523] transition-colors">
-                        {course.title}
-                      </h3>
-
-                      {!enrollment.completed_at && !isPending && (
-                        <div className="space-y-1.5">
-                          <div className="flex justify-between text-xs font-bold uppercase tracking-wider text-slate-400">
-                            <span>Progress</span>
-                            <span>{pct}%</span>
-                          </div>
-                          <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
-                            <div
-                              className="h-full rounded-full bg-gradient-to-r from-[#fd5523] to-[#fd8d69] transition-all duration-500"
-                              style={{ width: `${pct}%` }}
-                            />
-                          </div>
-                        </div>
-                      )}
-
-                      {isPending && (
-                        <div className="rounded-xl bg-amber-50 border border-amber-200 px-3 py-2.5 text-xs text-amber-700 leading-relaxed">
-                          ⏳ Module 1 unlocked. Full access activates once payment is confirmed.
-                        </div>
-                      )}
-
-                      <div className="flex items-center justify-between pt-1">
-                        {enrollment.completed_at ? (
-                          <div className="flex items-center gap-2 text-green-600 font-bold text-sm">
-                            <div className="h-2 w-2 rounded-full bg-green-500" />
-                            COMPLETED
-                          </div>
-                        ) : isPending ? (
-                          <div className="flex items-center gap-2 text-amber-600 font-bold text-sm">
-                            <div className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
-                            AWAITING PAYMENT
-                          </div>
-                        ) : (
-                          <div className="flex items-center gap-2 text-[#fd5523] font-bold text-sm">
-                            <div className="h-2 w-2 rounded-full bg-[#fd5523] animate-pulse" />
-                            IN PROGRESS
-                          </div>
-                        )}
-                        <div className="flex items-center gap-2 text-slate-400 font-bold text-xs uppercase tracking-widest group-hover:text-[#062e39] transition-colors">
-                          <Play className="h-3 w-3" />
-                          {enrollment.completed_at ? "Review" : isPending ? "Module 1" : "Resume"}
-                        </div>
-                      </div>
-
-                      {isPending && (
-                        <a
-                          href={`https://wa.me/${process.env.NEXT_PUBLIC_FOUNDER_WHATSAPP ?? "260979046745"}?text=${encodeURIComponent(`Hi! I've enrolled in "${course.title}" and I'd like to confirm my payment to unlock full access.`)}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#25D366] py-2.5 text-[13px] font-bold text-white transition-colors hover:bg-[#20bd5a]"
+                    {/* Action Buttons */}
+                    <div className="mt-6 pt-4 border-t border-slate-100 space-y-2">
+                      {isAdmin ? (
+                        <>
+                          <Link
+                            href={`/academy/${academy.slug}/admin`}
+                            className="w-full flex items-center justify-center gap-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold uppercase tracking-wider py-2.5 rounded-xl transition-all"
+                          >
+                            <ShieldCheck className="h-4 w-4 text-orange-400" />
+                            <span>Admin Console</span>
+                          </Link>
+                          <Link
+                            href={`/academy/${academy.slug}/classroom`}
+                            className="w-full flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold uppercase tracking-wider py-2 rounded-xl transition-all"
+                          >
+                            <GraduationCap className="h-4 w-4 text-slate-500" />
+                            <span>Classroom</span>
+                          </Link>
+                        </>
+                      ) : (
+                        <Link
+                          href={`/academy/${academy.slug}/classroom`}
+                          className="w-full flex items-center justify-center gap-2 text-white text-xs font-bold uppercase tracking-wider py-2.5 rounded-xl transition-all shadow-md shadow-orange-500/10"
+                          style={{ backgroundColor: brandColor }}
                         >
-                          <MessageCircle className="h-4 w-4" />
-                          Confirm Payment via WhatsApp
-                        </a>
+                          <GraduationCap className="h-4 w-4" />
+                          <span>Enter Classroom</span>
+                          <ArrowRight className="h-3.5 w-3.5 ml-1" />
+                        </Link>
                       )}
-                    </CardContent>
-                  </Card>
-                );
+                    </div>
 
-                return isPending ? (
-                  <div key={enrollment.id} className="group">
-                    <Link href={resumeHref}>{cardInner}</Link>
                   </div>
-                ) : (
-                  <Link key={enrollment.id} href={resumeHref} className="group">
-                    {cardInner}
-                  </Link>
                 );
               })}
             </div>
-          ) : (
-            <div className="rounded-[3rem] border-2 border-dashed border-slate-200 bg-white py-24 text-center">
-              <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-[2.5rem] bg-[#fff6ee] text-[#fd5523]">
-                <BookOpen className="h-10 w-10" />
-              </div>
-              <h3 className="text-2xl font-bold text-[#062e39]">Your library is empty</h3>
-              <p className="mx-auto mt-3 max-w-sm text-lg text-slate-500 font-medium">
-                Start your professional AI journey today with our curated curriculums.
-              </p>
-              <Link
-                href="/courses"
-                className={cn(
-                  buttonVariants({ variant: "default" }),
-                  "mt-8 rounded-full bg-[#fd5523] px-10 py-7 text-lg font-bold text-white shadow-xl hover:bg-[#ef4a16] flex items-center justify-center"
-                )}
-              >
-                Find Your First Course
-              </Link>
-            </div>
           )}
-        </section>
-
-        {/* ── Referral widget ────────────────────────────────────────────── */}
-        <section>
-          <ReferralWidget
-            initialCode={referralCode}
-            total={referralTotal}
-            converted={referralConverted}
-          />
-        </section>
-
-        {/* ── Certificates ──────────────────────────────────────────────── */}
-        {certificates.length > 0 && (
-          <section className="space-y-8">
-            <h2 className="text-3xl font-bold text-[#062e39] tracking-tight">Your Achievements</h2>
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {certificates.map((cert) => (
-                <Card
-                  key={cert.id}
-                  className="marketing-outline-card rounded-[2.5rem] border-0 bg-slate-50/50 p-8 shadow-sm"
-                >
-                  <div className="space-y-4">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-amber-500 shadow-sm">
-                      <Award className="h-7 w-7" />
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-bold text-[#062e39] leading-tight">
-                        {cert.courses?.title ?? "Course Certificate"}
-                      </h3>
-                      <p className="mt-2 text-sm font-medium text-slate-500">
-                        Issued{" "}
-                        {new Date(cert.issued_at).toLocaleDateString("en-US", {
-                          month: "long",
-                          day: "numeric",
-                          year: "numeric",
-                        })}
-                      </p>
-                    </div>
-                    <div className="flex flex-wrap items-center gap-3">
-                      {cert.file_url && (
-                        <a
-                          href={cert.file_url}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="inline-flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-[#fd5523] hover:text-[#ef4a16] transition-colors"
-                        >
-                          View Certificate <ArrowRight className="h-4 w-4" />
-                        </a>
-                      )}
-                      <WhatsAppShare
-                        url={`${process.env.NEXT_PUBLIC_APP_URL ?? "https://zedai.academy"}/certificates/${cert.public_id}`}
-                        message={`I just earned a certificate for "${cert.courses?.title ?? "a course"}" on Zed AI Academy! 🎓`}
-                        variant="icon"
-                      />
-                    </div>
-                  </div>
-                </Card>
-              ))}
-            </div>
-          </section>
-        )}
+        </div>
 
       </div>
     </div>

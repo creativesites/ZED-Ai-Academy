@@ -5,9 +5,10 @@ import { cn } from "@/lib/utils";
 interface CourseCardProps {
   course: any;
   variant?: "default" | "minimal" | "classic" | "corporate" | "creative" | "tech" | "elegant" | "dark";
+  tenantSlug?: string;
 }
 
-export function CourseCard({ course, variant = "default" }: CourseCardProps) {
+export function CourseCard({ course, variant = "default", tenantSlug }: CourseCardProps) {
   const styles = {
     default: {
       card: "bg-white rounded-[2.5rem] shadow-sm border border-slate-100 hover:shadow-2xl hover:-translate-y-2",
@@ -89,7 +90,13 @@ export function CourseCard({ course, variant = "default" }: CourseCardProps) {
             {formatPrice(course.price_type, course.price_amount)}
           </span>
           <Link
-            href={`/courses/${course.slug}`}
+            href={
+              tenantSlug
+                ? `/academy/${tenantSlug}/courses/${course.slug}`
+                : course.company_slug
+                ? `/academy/${course.company_slug}/courses/${course.slug}`
+                : `/courses/${course.slug}`
+            }
             className={cn("h-12 px-6 rounded-2xl text-white text-xs font-black uppercase tracking-widest flex items-center gap-2 transition-all shadow-lg", s.button)}
           >
             Enrol Now

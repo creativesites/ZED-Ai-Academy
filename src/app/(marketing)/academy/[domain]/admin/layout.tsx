@@ -22,7 +22,7 @@ export default async function TenantAdminLayout({
   const supabase = createClient();
   const { data: company } = await supabase
     .from("companies")
-    .select("id, name, slug")
+    .select("id, name, slug, admin_id")
     .eq("slug", domain)
     .single();
 
@@ -31,10 +31,12 @@ export default async function TenantAdminLayout({
   }
 
   const access = await getCurrentTenantAccess(company.id);
+  const isOwner = company.admin_id === userId;
+  const isStaff = Boolean(access?.isSuperAdmin || isTeachingRole(access?.tenantRole) || isOwner);
   
   // Only Super Admins and Teaching Roles (Company Admin, Teacher) can access the Admin Hub
-  if (!access?.isSuperAdmin && !isTeachingRole(access?.tenantRole)) {
-    redirect(`/academy/${company.slug}/classroom`); // Redirect students to the student classroom
+  if (!isStaff) {
+    redirect(access?.isMember ? `/academy/${company.slug}/classroom` : `/academy/${company.slug}`);
   }
 
   return (

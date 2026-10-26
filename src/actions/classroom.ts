@@ -388,3 +388,324 @@ export async function getSessionHistory(companyId: string) {
   }));
 }
 
+export type GradebookQuizAttempt = {
+  id: string;
+  quiz_id: string;
+  quiz_title: string;
+  score: number;
+  passed: boolean;
+  created_at: string;
+};
+
+export type GradebookCertificate = {
+  id: string;
+  course_id: string;
+  course_title: string;
+  issued_at: string;
+  public_id: string;
+  file_url: string | null;
+};
+
+export type StudentGradebookRecord = {
+  id: string;
+  full_name: string;
+  avatar_url: string | null;
+  email: string;
+  enrolledCourseTitles: string[];
+  totalLessons: number;
+  completedLessons: number;
+  completionPercent: number;
+  quizAttempts: GradebookQuizAttempt[];
+  avgQuizScore: number;
+  passedQuizzesCount: number;
+  certificates: GradebookCertificate[];
+  status: "active" | "completed" | "inactive";
+  lastActive: string | null;
+};
+
+export type AcademyGradebookData = {
+  courses: { id: string; title: string; slug: string; thumbnail_url: string | null }[];
+  students: StudentGradebookRecord[];
+  metrics: {
+    totalStudents: number;
+    avgCompletionRate: number;
+    avgQuizScore: number;
+    certificatesIssued: number;
+  };
+};
+
+/**
+ * Returns comprehensive gradebook data for an academy:
+ * Enrolled students, their lesson completion rates, quiz scores, and certificates.
+ */
+export async function getAcademyGradebook(companyId: string): Promise<AcademyGradebookData> {
+  const { supabase } = await requireTenantTeacher(companyId);
+
+  // 1. Fetch courses belonging to this academy
+  const { data: coursesData } = await supabase
+    .from("courses")
+    .select("id, title, slug, thumbnail_url")
+    .eq("company_id", companyId);
+
+  const courses = coursesData ?? [];
+  const courseIds = courses.map((c) => c.id);
+  const courseTitleMap = new Map(courses.map((c) => [c.id, c.title]));
+
+  // Empty state if no courses exist in this academy yet
+  if (courseIds.length === 0) {
+    return {
+      courses: [],
+      students: [],
+      metrics: { totalStudents: 0, avgCompletionRate: 0, avgQuizScore: 0, certificatesIssued: 0 },
+    };
+  }
+
+  // 2. Fetch modules and lessons to compute curriculum totals
+  const { data: modulesData } = await supabase
+    .from("modules")
+    .select("id, course_id")
+    .in("course_id", courseIds);
+
+  const modules = modulesData ?? [];
+  const moduleIds = modules.map((m) => m.id);
+  const moduleToCourse = new Map(modules.map((m) => [m.id, m.course_id]));
+
+  let lessons: { id: string; module_id: string; title: string }[] = [];
+  if (moduleIds.length > 0) {
+    const { data: lessonsData } = await supabase
+      .from("lessons")
+      .select("id, module_id, title")
+      .in("module_id", moduleIds);
+    lessons = lessonsData ?? [];
+  }
+
+  const lessonIds = lessons.map((l) => l.id);
+  const lessonToCourse = new Map(lessons.map((l) => [l.id, moduleToCourse.get(l.module_id)]));
+  const totalAcademyLessons = lessonIds.length;
+
+  // 3. Fetch quizzes for these lessons
+  let quizzes: { id: string; lesson_id: string; title: string | null; pass_threshold: number }[] = [];
+  if (lessonIds.length > 0) {
+    const { data: quizzesData } = await supabase
+      .from("quizzes")
+      .select("id, lesson_id, title, pass_threshold")
+      .in("lesson_id", lessonIds);
+    quizzes = quizzesData ?? [];
+  }
+
+  const quizIds = quizzes.map((q) => q.id);
+  const quizTitleMap = new Map(quizzes.map((q) => [q.id, q.title || "Lesson Quiz"]));
+
+  // 4. Fetch students (learners in company_members or with active enrollments in this company)
+  const [{ data: memberRows }, { data: enrollmentRows }] = await Promise.all([
+    supabase
+      .from("company_members")
+      .select("profile_id, joined_at")
+      .eq("company_id", companyId)
+      .eq("status", "active")
+      .eq("role", "learner"),
+    supabase
+      .from("enrollments")
+      .select("id, user_id, course_id, enrolled_at, completed_at, status")
+      .eq("company_id", companyId),
+  ]);
+
+  const studentIdSet = new Set<string>();
+  const studentEnrollmentMap = new Map<string, string[]>(); // userId -> courseIds[]
+
+  for (const row of memberRows ?? []) {
+    studentIdSet.add(row.profile_id);
+  }
+
+  for (const row of enrollmentRows ?? []) {
+    studentIdSet.add(row.user_id);
+    const existing = studentEnrollmentMap.get(row.user_id) || [];
+    if (!existing.includes(row.course_id)) {
+      existing.push(row.course_id);
+      studentEnrollmentMap.set(row.user_id, existing);
+    }
+  }
+
+  const studentIds = Array.from(studentIdSet);
+
+  if (studentIds.length === 0) {
+    return {
+      courses,
+      students: [],
+      metrics: { totalStudents: 0, avgCompletionRate: 0, avgQuizScore: 0, certificatesIssued: 0 },
+    };
+  }
+
+  // 5. Fetch profiles, lesson_progress, quiz_attempts, and certificates
+  const [
+    { data: profilesData },
+    { data: progressData },
+    { data: attemptsData },
+    { data: certsData },
+  ] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("id, full_name, avatar_url, email")
+      .in("id", studentIds),
+    lessonIds.length > 0
+      ? supabase
+          .from("lesson_progress")
+          .select("user_id, lesson_id, completed, completed_at")
+          .in("user_id", studentIds)
+          .in("lesson_id", lessonIds)
+          .eq("completed", true)
+      : Promise.resolve({ data: [] }),
+    quizIds.length > 0
+      ? supabase
+          .from("quiz_attempts")
+          .select("id, quiz_id, user_id, score, passed, created_at")
+          .in("user_id", studentIds)
+          .in("quiz_id", quizIds)
+          .order("created_at", { ascending: false })
+      : Promise.resolve({ data: [] }),
+    supabase
+      .from("certificates")
+      .select("id, user_id, course_id, issued_at, public_id, file_url")
+      .in("user_id", studentIds)
+      .in("course_id", courseIds),
+  ]);
+
+  const profiles = profilesData ?? [];
+  const progressRows = progressData ?? [];
+  const attemptRows = attemptsData ?? [];
+  const certRows = certsData ?? [];
+
+  // Group progress by user
+  const progressByUser = new Map<string, Set<string>>();
+  for (const p of progressRows) {
+    if (!p.completed) continue;
+    const userSet = progressByUser.get(p.user_id) || new Set<string>();
+    userSet.add(p.lesson_id);
+    progressByUser.set(p.user_id, userSet);
+  }
+
+  // Group quiz attempts by user
+  const attemptsByUser = new Map<string, GradebookQuizAttempt[]>();
+  for (const a of attemptRows) {
+    const list = attemptsByUser.get(a.user_id) || [];
+    list.push({
+      id: a.id,
+      quiz_id: a.quiz_id,
+      quiz_title: quizTitleMap.get(a.quiz_id) || "Quiz",
+      score: a.score ?? 0,
+      passed: !!a.passed,
+      created_at: a.created_at,
+    });
+    attemptsByUser.set(a.user_id, list);
+  }
+
+  // Group certificates by user
+  const certsByUser = new Map<string, GradebookCertificate[]>();
+  for (const c of certRows) {
+    const list = certsByUser.get(c.user_id) || [];
+    list.push({
+      id: c.id,
+      course_id: c.course_id,
+      course_title: courseTitleMap.get(c.course_id) || "Course",
+      issued_at: c.issued_at,
+      public_id: c.public_id,
+      file_url: c.file_url,
+    });
+    certsByUser.set(c.user_id, list);
+  }
+
+  // Build student records
+  let totalCompletionPercentages = 0;
+  let totalQuizScores = 0;
+  let totalQuizAttemptsCount = 0;
+
+  const students: StudentGradebookRecord[] = profiles.map((p) => {
+    const userCompletedLessons = progressByUser.get(p.id)?.size || 0;
+    const userAttempts = attemptsByUser.get(p.id) || [];
+    const userCerts = certsByUser.get(p.id) || [];
+    const enrolledCourseIds = studentEnrollmentMap.get(p.id) || [];
+
+    // Calculate lessons denominator: either specific enrolled courses or all academy lessons
+    let userTotalLessons = 0;
+    if (enrolledCourseIds.length > 0) {
+      for (const l of lessons) {
+        const cId = lessonToCourse.get(l.id);
+        if (cId && enrolledCourseIds.includes(cId)) {
+          userTotalLessons++;
+        }
+      }
+    }
+    if (userTotalLessons === 0) {
+      userTotalLessons = totalAcademyLessons || 1;
+    }
+
+    const completionPercent = Math.min(
+      100,
+      Math.round((userCompletedLessons / Math.max(1, userTotalLessons)) * 100)
+    );
+    totalCompletionPercentages += completionPercent;
+
+    let avgQuizScore = 0;
+    if (userAttempts.length > 0) {
+      const sum = userAttempts.reduce((acc, curr) => acc + curr.score, 0);
+      avgQuizScore = Math.round(sum / userAttempts.length);
+      totalQuizScores += sum;
+      totalQuizAttemptsCount += userAttempts.length;
+    }
+
+    const passedQuizzesCount = userAttempts.filter((a) => a.passed).length;
+
+    const enrolledCourseTitles = enrolledCourseIds
+      .map((cId) => courseTitleMap.get(cId))
+      .filter((title): title is string => !!title);
+
+    // If no explicit enrollments, indicate General Academy Student
+    if (enrolledCourseTitles.length === 0 && courses.length > 0) {
+      enrolledCourseTitles.push(courses[0].title);
+    }
+
+    const lastAttemptDate = userAttempts[0]?.created_at;
+    const lastCertDate = userCerts[0]?.issued_at;
+    const dates = [lastAttemptDate, lastCertDate].filter(Boolean) as string[];
+    const lastActive = dates.length > 0 ? dates.sort().reverse()[0] : null;
+
+    let status: "active" | "completed" | "inactive" = "active";
+    if (completionPercent >= 100 || userCerts.length > 0) {
+      status = "completed";
+    } else if (completionPercent === 0 && userAttempts.length === 0) {
+      status = "inactive";
+    }
+
+    return {
+      id: p.id,
+      full_name: p.full_name || "Enrolled Student",
+      avatar_url: p.avatar_url,
+      email: p.email || "",
+      enrolledCourseTitles,
+      totalLessons: userTotalLessons,
+      completedLessons: userCompletedLessons,
+      completionPercent,
+      quizAttempts: userAttempts,
+      avgQuizScore,
+      passedQuizzesCount,
+      certificates: userCerts,
+      status,
+      lastActive,
+    };
+  });
+
+  const avgCompletionRate = students.length > 0 ? Math.round(totalCompletionPercentages / students.length) : 0;
+  const avgQuizScore = totalQuizAttemptsCount > 0 ? Math.round(totalQuizScores / totalQuizAttemptsCount) : 0;
+
+  return {
+    courses,
+    students,
+    metrics: {
+      totalStudents: students.length,
+      avgCompletionRate,
+      avgQuizScore,
+      certificatesIssued: certRows.length,
+    },
+  };
+}
+

@@ -159,8 +159,8 @@ export default async function BlogDetailPage({ params }: { params: Promise<{ slu
                     <p className="text-white/60 text-sm leading-relaxed mb-8">
                       Get structured training, expert guidance, and industry-recognised certificates.
                     </p>
-                    <Link href="/courses" className="thm-btn w-full text-center block">
-                      Browse Courses
+                    <Link href="/academy/zedai" className="thm-btn w-full text-center block">
+                      Explore Flagship Academy
                       <i className="icon-right-arrow21"></i>
                     </Link>
                   </div>

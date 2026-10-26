@@ -3,7 +3,7 @@ import Layout from "@/components/layout/Layout"
 import About from "@/components/sections/home2/About"
 import WhyChooseUs from "@/components/sections/home2/WhyChooseUs"
 import Banner from "@/components/sections/home2/Banner"
-import CoursesSection from "@/components/sections/home2/CoursesSection"
+import AcademiesSection from "@/components/sections/home2/AcademiesSection"
 import Blog from "@/components/sections/home2/Blog"
 import Brands from "@/components/sections/home2/Brands"
 import Cta from "@/components/sections/home2/Cta"
@@ -19,7 +19,7 @@ export default function Home() {
         <>
             <Layout headerStyle={2} footerStyle={1}>
                 <Banner />
-                <CoursesSection />
+                <AcademiesSection />
                 <About />
                 <LearningExperience />
                 {/* <Projects /> */}

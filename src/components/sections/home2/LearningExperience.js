@@ -49,8 +49,8 @@ export default function LearningExperience() {
                             and hands-on practice.
                         </p>
                         <div className="mt-4">
-                            <Link href="/courses" className="thm-btn">
-                                Explore the Platform
+                            <Link href="/launch-your-academy" className="thm-btn">
+                                Launch Your Academy
                                 <i className="icon-right-arrow21"></i>
                                 <span className="hover-btn hover-bx"></span>
                                 <span className="hover-btn hover-bx2"></span>

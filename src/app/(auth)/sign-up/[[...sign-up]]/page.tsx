@@ -165,7 +165,7 @@ export default async function SignUpPage(props: { searchParams: Promise<{ enroll
                     socialButtonsPlacement: "bottom",
                     showOptionalFields: false,
                   },
-                }}
+                } as any}
               />
               <Link href="/sign-up" className="mt-4 block text-center text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-[#fd5523]">
                 Choose a different account type

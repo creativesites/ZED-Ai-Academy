@@ -86,7 +86,10 @@ export interface Database {
           active_room_name: string | null;
           home_template: string;
           home_content: Json;
-          teacher_code: string;
+          teacher_code: string | null;
+          status: "active" | "suspended";
+          suspended_reason: string | null;
+          suspended_at: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -102,7 +105,10 @@ export interface Database {
           active_room_name?: string | null;
           home_template?: string;
           home_content?: Json;
-          teacher_code?: string;
+          teacher_code?: string | null;
+          status?: "active" | "suspended";
+          suspended_reason?: string | null;
+          suspended_at?: string | null;
           updated_at?: string;
         };
         Update: {
@@ -116,7 +122,10 @@ export interface Database {
           active_room_name?: string | null;
           home_template?: string;
           home_content?: Json;
-          teacher_code?: string;
+          teacher_code?: string | null;
+          status?: "active" | "suspended";
+          suspended_reason?: string | null;
+          suspended_at?: string | null;
           updated_at?: string;
         };
         Relationships: R;

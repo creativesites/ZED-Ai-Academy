@@ -92,6 +92,8 @@ export function LessonPlayerClient({
     level: string | null;
     price_type?: string | null;
     instructor_id?: string | null;
+    company_slug?: string | null;
+    company_name?: string | null;
   };
   modules: Module[];
   activeLessonId: string;
@@ -205,9 +207,12 @@ export function LessonPlayerClient({
         <div className={cn("p-6 border-b border-white/5", isSidebarCollapsed && "flex justify-center")}>
           {!isSidebarCollapsed ? (
             <div className="space-y-4">
-              <Link href="/dashboard" className="inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] text-white/40 hover:text-[#fd5523] transition-colors group">
+              <Link
+                href={course.company_slug ? `/academy/${course.company_slug}/classroom` : "/dashboard"}
+                className="inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] text-white/40 hover:text-[#fd5523] transition-colors group"
+              >
                 <ArrowLeft className="h-3 w-3 group-hover:-translate-x-1 transition-transform" />
-                Back to Dashboard
+                {course.company_name ? `Back to ${course.company_name}` : "Back to Academies"}
               </Link>
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-[#fd5523] mb-1">
@@ -219,7 +224,11 @@ export function LessonPlayerClient({
               </div>
             </div>
           ) : (
-            <Link href="/dashboard" className="h-10 w-10 flex items-center justify-center rounded-xl bg-white/5 text-[#fd5523] hover:bg-white/10 transition-colors">
+            <Link
+              href={course.company_slug ? `/academy/${course.company_slug}/classroom` : "/dashboard"}
+              className="h-10 w-10 flex items-center justify-center rounded-xl bg-white/5 text-[#fd5523] hover:bg-white/10 transition-colors"
+              title={course.company_name ? `Back to ${course.company_name}` : "Back to Academies"}
+            >
               <ArrowLeft className="h-5 w-5" />
             </Link>
           )}

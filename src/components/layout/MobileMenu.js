@@ -34,7 +34,7 @@ const MobileMenu = ({ handleMobileMenu }) => {
           <div className="mobile-nav__container mb-12">
             <ul className="space-y-4">
               <li><Link href="/" onClick={handleMobileMenu} className="text-2xl font-black text-[#062e39] hover:text-[#fd5523] transition-colors">Home</Link></li>
-              <li><Link href="/courses" onClick={handleMobileMenu} className="text-2xl font-black text-[#062e39] hover:text-[#fd5523] transition-colors">Courses</Link></li>
+              <li><Link href="/#academies" onClick={handleMobileMenu} className="text-2xl font-black text-[#062e39] hover:text-[#fd5523] transition-colors">Academies</Link></li>
               <li>
                 <div className="flex items-center justify-between">
                    <Link href="/pricing" onClick={handleMobileMenu} className="text-2xl font-black text-[#062e39] hover:text-[#fd5523] transition-colors">Pricing</Link>
@@ -83,11 +83,11 @@ const MobileMenu = ({ handleMobileMenu }) => {
                   <LaunchAcademyCTA variant="mobileMenu" />
                   <Link href="/dashboard" onClick={handleMobileMenu} className="flex items-center justify-center gap-3 w-full py-4 rounded-2xl bg-[#062e39] text-white font-bold">
                     <LayoutDashboard className="h-5 w-5" />
-                    Student Dashboard
+                    Academies Hub
                   </Link>
                   <div className="flex items-center justify-center gap-4 py-4 rounded-2xl bg-slate-50">
                     <span className="text-sm font-bold text-slate-500">Manage Account</span>
-                    <UserButton afterSignOutUrl="/" />
+                    <UserButton />
                   </div>
                 </div>
               ) : (

@@ -1,32 +1,30 @@
-import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
-import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
+import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
 
-const isOnboardingRoute = createRouteMatcher(['/onboarding(.*)'])
-const isLaunchAcademyRoute = createRouteMatcher(['/launch-your-academy(.*)'])
+const isOnboardingRoute = createRouteMatcher(['/onboarding(.*)']);
+const isLaunchAcademyRoute = createRouteMatcher(['/launch-your-academy(.*)']);
 
 /** Main marketing site pages — academy owners without an org are nudged to launch first. */
 const isMarketingBrowseRoute = createRouteMatcher([
   '/',
   '/about(.*)',
-  '/courses(.*)',
   '/contact(.*)',
   '/pricing(.*)',
   '/faq(.*)',
   '/blog(.*)',
   '/test(.*)',
-])
+]);
 
 const isPublicRoute = createRouteMatcher([
   '/',
   '/about(.*)',
-  '/courses',
+  '/courses(.*)',
   '/contact',
   '/pricing(.*)',
   '/faq(.*)',
   '/blog(.*)',
   '/academy(.*)',
-  '/courses/([^/]+)',
   '/api/webhooks/(.*)',
   '/sign-in(.*)',
   '/sign-up(.*)',
@@ -34,104 +32,116 @@ const isPublicRoute = createRouteMatcher([
   '/manifest.json',
   '/favicon.ico',
   '/launch-your-academy(.*)',
-])
+]);
 
 function supabaseAdmin() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY
-  if (!url || !key) return null
-  return createClient(url, key, { auth: { persistSession: false } })
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) return null;
+  return createClient(url, key, { auth: { persistSession: false } });
 }
 
-// List of reserved subdomains to prevent tenants from claiming system routes
+// Reserved subdomains that cannot be claimed by tenants
 const RESERVED_SUBDOMAINS = new Set([
   'www', 'api', 'admin', 'app', 'auth', 'mail', 'test', 'dev', 'staging', 'dashboard', 'creator', 'superadmin', 'academy'
-])
+]);
 
 export default clerkMiddleware(async (auth, req: NextRequest) => {
-  const { userId, orgId, redirectToSignIn } = await auth()
-  
+  const { userId, orgId, redirectToSignIn } = await auth();
+
   const url = req.nextUrl;
   const hostname = req.headers.get('host') || '';
   const pathname = url.pathname;
-  
-  // Define the root domain (e.g. localhost:3000 or zedai.com)
+
+  // Determine protocol dynamically (https in production, http in local development)
+  const forwardedProto = req.headers.get('x-forwarded-proto');
+  const protocol = forwardedProto || (url.protocol ? url.protocol.replace(':', '') : 'http');
+
+  // Define the root domain (e.g. localhost:3000 or zedaiacademy.com)
   const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'localhost:3000';
-  
-  // Determine if we are on a subdomain
+
+  // Determine if request is on a tenant subdomain
   const subdomain = hostname.endsWith(`.${rootDomain}`) && !hostname.startsWith('www.')
     ? hostname.replace(`.${rootDomain}`, '')
     : null;
-    
-  const isTenantSubdomain = subdomain && !RESERVED_SUBDOMAINS.has(subdomain);
 
-  // For users visiting /onboarding, don't try to redirect
+  const isTenantSubdomain = Boolean(subdomain && !RESERVED_SUBDOMAINS.has(subdomain));
+
+  // Redirect apex /courses to the platform academy (Zed AI Academy)
+  if (!isTenantSubdomain && (pathname === '/courses' || pathname === '/courses/')) {
+    return NextResponse.redirect(new URL('/academy/zedai', `${protocol}://${hostname}`));
+  }
+
+  // Tenant-first: signed-in users on apex auth / home pages are immediately redirected to their tenant or portal
+  if (userId && !isTenantSubdomain && (pathname === '/' || pathname.startsWith('/sign-in') || pathname.startsWith('/sign-up'))) {
+    return NextResponse.redirect(new URL('/after-sign-in', req.url));
+  }
+
+  // Allow onboarding routes without redirection
   if (userId && isOnboardingRoute(req)) {
-    return NextResponse.next()
+    return NextResponse.next();
   }
 
   if (userId && isLaunchAcademyRoute(req)) {
-    return NextResponse.next()
+    return NextResponse.next();
   }
 
-  // Company admins browsing the marketing site without an academy → dedicated launch flow
+  // Company admins browsing marketing site without an academy are guided to launch
   if (userId && isMarketingBrowseRoute(req) && !req.nextUrl.pathname.startsWith('/academy')) {
-    const admin = supabaseAdmin()
+    const admin = supabaseAdmin();
     if (admin) {
       const { data: profile } = await admin
         .from('profiles')
         .select('role, company_id, onboarding_completed')
         .eq('id', userId)
-        .maybeSingle()
+        .maybeSingle();
 
       if (profile?.role === 'company_admin') {
-        if (!profile.onboarding_completed) {
-          return NextResponse.next()
+        if (!profile.onboarding_completed || orgId) {
+          return NextResponse.next();
         }
-        if (orgId) {
-          return NextResponse.next()
-        }
+
         const { data: membership } = await admin
           .from('company_members')
           .select('company_id')
           .eq('profile_id', userId)
           .eq('status', 'active')
           .limit(1)
-          .maybeSingle()
+          .maybeSingle();
 
         if (!membership?.company_id) {
-          let hasCompany = false
+          let hasCompany = false;
           if (profile.company_id) {
             const { data: company } = await admin
               .from('companies')
               .select('id')
               .eq('id', profile.company_id)
-              .maybeSingle()
-            hasCompany = !!company
+              .maybeSingle();
+            hasCompany = Boolean(company);
           }
           if (!hasCompany) {
-            return NextResponse.redirect(new URL('/launch-your-academy', req.url))
+            return NextResponse.redirect(new URL('/launch-your-academy', req.url));
           }
         }
       }
     }
   }
 
-  // If the user isn't signed in and the route is private, redirect to sign-in
+  // Unauthenticated users trying to access private routes
   if (!userId && !isPublicRoute(req)) {
     if (isTenantSubdomain) {
-      const returnBackUrl = new URL(`/academy/${subdomain}${pathname}${url.search}`, `http://${rootDomain}`).toString();
-      const signInUrl = new URL('/sign-in', `http://${rootDomain}`);
+      const returnBackUrl = new URL(`/academy/${subdomain}${pathname}${url.search}`, `${protocol}://${rootDomain}`).toString();
+      const signInUrl = new URL('/sign-in', `${protocol}://${rootDomain}`);
       signInUrl.searchParams.set('redirect_url', returnBackUrl);
       return NextResponse.redirect(signInUrl);
     }
-    return redirectToSignIn({ returnBackUrl: req.url })
+    return redirectToSignIn({ returnBackUrl: req.url });
   }
 
-  // If the request is for sign-in or sign-up on a subdomain, redirect to the main domain so session cookies are unified
-  if (isTenantSubdomain && (pathname.startsWith('/sign-in') || pathname.startsWith('/sign-up'))) {
-    const targetUrl = new URL(url.pathname, `http://${rootDomain}`);
-    
+  // Unified authentication: redirect sign-in / sign-up on subdomain to root domain with tenant return URL
+  if (isTenantSubdomain && subdomain && (pathname.startsWith('/sign-in') || pathname.startsWith('/sign-up'))) {
+    const targetUrl = new URL(url.pathname, `${protocol}://${rootDomain}`);
+
     const redirectUrlParam = url.searchParams.get('redirect_url');
     if (redirectUrlParam) {
       let absoluteRedirect = redirectUrlParam;
@@ -152,9 +162,12 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
         } catch {}
       }
       targetUrl.searchParams.set('redirect_url', absoluteRedirect);
+    } else {
+      // Default to returning to the tenant classroom/home
+      targetUrl.searchParams.set('redirect_url', `/academy/${subdomain ?? ''}/classroom`);
     }
-    
-    // Copy other params
+
+    // Preserve any role or additional parameters
     url.searchParams.forEach((val, key) => {
       if (key !== 'redirect_url') {
         targetUrl.searchParams.set(key, val);
@@ -165,11 +178,10 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
   }
 
   // Apply Subdomain Rewrite Logic
-  if (isTenantSubdomain) {
+  if (isTenantSubdomain && subdomain) {
     const requestHeaders = new Headers(req.headers);
     requestHeaders.set('x-tenant-slug', subdomain);
 
-    // Rewrite the URL to the internal dynamic folder structure
     return NextResponse.rewrite(
       new URL(`/academy/${subdomain}${pathname}${url.search}`, req.url),
       {
@@ -178,8 +190,8 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
     );
   }
 
-  return NextResponse.next()
-})
+  return NextResponse.next();
+});
 
 export const config = {
   matcher: [
@@ -188,4 +200,4 @@ export const config = {
     // Always run for API routes
     '/(api|trpc)(.*)',
   ],
-}
+};

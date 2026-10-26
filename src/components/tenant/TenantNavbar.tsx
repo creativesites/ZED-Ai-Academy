@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { UserButton, OrganizationSwitcher } from "@clerk/nextjs";
+import { TenantUserButton } from "./TenantUserButton";
+import { TenantAcademySwitcher } from "./TenantAcademySwitcher";
 import { BookOpen, GraduationCap, Layout, Home, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { usePathname } from "next/navigation";
@@ -78,17 +79,11 @@ export function TenantNavbar({
           
           <div className="h-10 w-px bg-slate-100 hidden sm:block" />
 
-          <div className="flex items-center gap-4">
-            <OrganizationSwitcher 
-              hidePersonal={false}
-              appearance={{
-                  elements: {
-                      organizationSwitcherTrigger: "focus:outline-none focus:ring-0 shadow-none border-none bg-slate-50 hover:bg-slate-100 rounded-xl px-3 py-2 transition-all",
-                  }
-              }}
-            />
-            <div className="h-10 w-10 rounded-full ring-2 ring-slate-100 overflow-hidden flex items-center justify-center bg-slate-50">
-              <UserButton />
+          <div className="flex items-center gap-2.5">
+            <TenantAcademySwitcher currentSlug={tenant.slug} variant="navbar" />
+
+            <div className="h-10 w-10 rounded-full ring-2 ring-slate-100 overflow-hidden flex items-center justify-center bg-slate-50 shadow-sm">
+              <TenantUserButton tenantSlug={tenant.slug} />
             </div>
           </div>
         </div>

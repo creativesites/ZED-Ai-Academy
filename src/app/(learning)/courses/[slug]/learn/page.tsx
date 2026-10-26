@@ -26,13 +26,18 @@ export default async function LearnPage({ params, searchParams }: PageProps) {
   const supabase = createClient();
 
   // 1. Get course first (everything else depends on its ID)
-  const { data: course } = await supabase
+  const { data: courseRaw } = await supabase
     .from("courses")
-    .select("id, title, slug, status, description, category, level, price_type, instructor_id")
+    .select("id, title, slug, status, description, category, level, price_type, instructor_id, company_id, companies(slug, name)")
     .eq("slug", slug)
     .single();
 
-  if (!course) notFound();
+  if (!courseRaw) notFound();
+  const course = courseRaw as any;
+
+  const comp = Array.isArray(course.companies)
+    ? course.companies[0]
+    : course.companies;
 
   // 2. Parallelize queries that depend on course.id or userId
   const [
@@ -159,6 +164,8 @@ export default async function LearnPage({ params, searchParams }: PageProps) {
         category: course.category,
         level: course.level,
         price_type: course.price_type,
+        company_slug: comp?.slug ?? null,
+        company_name: comp?.name ?? null,
       }}
       modules={modules}
       activeLessonId={activeLessonId}

@@ -11,28 +11,25 @@ export default function Menu() {
                     <Link href="/">Home</Link>
                 </li>
                 <li>
-                    <Link href="/courses">Courses</Link>
+                    <Link href="/#academies">Academies</Link>
                 </li>
                 <li className="dropdown">
                     <Link href="/pricing">Pricing</Link>
                     <ul>
-                        <li><Link href="/pricing">Individual Plans</Link></li>
-                        <li><Link href="/pricing#teams">Team &amp; Company Plans</Link></li>
+                        <li><Link href="/pricing">Academy Creator Plans</Link></li>
+                        <li><Link href="/pricing#teams">Enterprise &amp; Schools</Link></li>
                     </ul>
                 </li>
                
                 <li>
                     <Link href="/about">About</Link>
                 </li>
-                {/* <li>
-                    <Link href="/blog">Blog</Link>
-                </li> */}
                 <li>
                     <Link href="/contact">Contact</Link>
                 </li>
                 {isSignedIn && (
                     <li><Link className="thm-btn" href="/dashboard" style={{ fontSize: '12px', padding: '2px 18px' }}>
-                    Dashboard
+                    Your Academies
                     <i className="icon-right-arrow21"></i>
                     <span className="hover-btn hover-bx"></span>
                     <span className="hover-btn hover-bx2"></span>

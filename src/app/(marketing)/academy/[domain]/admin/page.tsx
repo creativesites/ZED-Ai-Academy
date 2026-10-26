@@ -136,8 +136,8 @@ export default async function AdminTenantHubPage({
                 {[
                   { label: "New Class", icon: UserPlus, href: `?action=add-student` },
                   { label: "Broadcast", icon: Megaphone, href: `?action=notice` },
-                  { label: "Manage Courses", icon: BookOpen, href: `/creator/courses` },
-                  { label: "Staff", icon: GraduationCap, href: `?action=staff` },
+                  { label: "Courses", icon: BookOpen, href: `/academy/${company.slug}/admin/courses` },
+                  { label: "Staff", icon: GraduationCap, href: `/academy/${company.slug}/admin/staff` },
                 ].map((action) => (
                   <Link 
                     key={action.label}

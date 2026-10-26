@@ -4,39 +4,28 @@ import { createClient } from "@/lib/supabase/server";
 import { UserRole } from "@/types/database";
 import { auth } from "@clerk/nextjs/server";
 import { revalidatePath } from "next/cache";
+import { resolveHome } from "@/lib/tenants/resolve-home";
 
 export async function getProfileContext(userId: string) {
-  const supabase = createClient();
-  
-  const { data: profile, error } = await supabase
-    .from("profiles")
-    .select("role, company_id, onboarding_completed")
-    .eq("id", userId)
-    .single();
+  // Single parallel lookup shared with the post-sign-in redirect (see resolveHome).
+  const home = await resolveHome(userId);
+  if (!home.platformRole) return null;
 
-    // console.log('get profile context - profile', profile)
+  // Prefer the tenant the user administers, else their default / first membership.
+  const tenant =
+    home.memberships.find((m) => m.role === "company_admin") ??
+    home.defaultTenant ??
+    home.memberships[0] ??
+    null;
 
-  if (error || !profile) {
-    return null;
-  }
-
-  // Fetch tenant slug if they have a company
-  let tenantSlug: string | null = null;
-  if (profile.company_id) {
-    const { data: company } = await supabase
-      .from("companies")
-      .select("slug")
-      .eq("id", profile.company_id)
-      .maybeSingle();
-    
-    tenantSlug = company?.slug ?? null;
-  }
+  // Role shown in nav is the per-tenant role (membership), falling back to the platform role.
+  const role = (tenant?.role ?? home.platformRole) as UserRole;
 
   return {
-    role: profile.role as UserRole,
-    companyId: profile.company_id,
-    onboardingCompleted: !!profile.onboarding_completed,
-    tenantSlug,
+    role,
+    companyId: tenant?.companyId ?? null,
+    onboardingCompleted: home.onboardingCompleted,
+    tenantSlug: tenant?.slug ?? null,
   };
 }
 

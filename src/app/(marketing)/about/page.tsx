@@ -74,20 +74,17 @@ export default function AboutPage() {
                                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-8">
                                     <Link 
                                         className="thm-btn px-8 sm:px-10 py-4 sm:py-7 rounded-full shadow-2xl shadow-[#fd5523]/20 w-full sm:w-auto text-center" 
-                                        href="/courses"
+                                        href="/launch-your-academy"
                                     >
-                                        Browse Courses
+                                        Launch Your Academy
                                         <i className="icon-right-arrow21"></i>
                                     </Link>
-                                    <div className="flex items-center gap-4">
-                                        <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-[#fff2e9] flex items-center justify-center text-[#fd5523]">
-                                            <Phone className="h-4 w-4 sm:h-5 sm:w-5" />
-                                        </div>
-                                        <div>
-                                            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Admissions</p>
-                                            <p className="text-xs sm:text-sm font-bold text-[#062e39]">0979 046 745</p>
-                                        </div>
-                                    </div>
+                                    <Link 
+                                        className="text-xs sm:text-sm font-bold text-[#062e39] hover:text-[#fd5523] transition-colors py-2" 
+                                        href="/academy/zedai"
+                                    >
+                                        Visit Flagship Academy →
+                                    </Link>
                                 </div>
                             </div>
                         </div>
@@ -169,12 +166,17 @@ export default function AboutPage() {
                 <div className="container max-w-6xl mx-auto rounded-[3rem] sm:rounded-[4rem] bg-[#fd5523] p-8 sm:p-12 lg:p-20 text-white text-center relative overflow-hidden shadow-2xl shadow-[#fd5523]/30">
                     <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]" />
                     <div className="relative z-10">
-                        <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black mb-4 sm:mb-6 tracking-tight">Start Your AI Journey Today</h2>
-                        <p className="text-white/80 text-base sm:text-lg lg:text-xl max-w-2xl mx-auto mt-4 sm:mt-6">Join 500+ Zambian professionals mastering the tools of the future.</p>
-                        <Link href="/courses" className="inline-flex items-center gap-3 px-8 sm:px-12 py-3 sm:py-4 rounded-full bg-white text-[#fd5523] font-black text-base sm:text-lg hover:scale-105 transition-all shadow-2xl shadow-white/20 mt-8 sm:mt-12">
-                            Explore All Courses
-                            <ArrowRight className="h-5 w-5 sm:h-6 sm:w-6" />
-                        </Link>
+                        <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black mb-4 sm:mb-6 tracking-tight">Build & Launch Your AI Academy Today</h2>
+                        <p className="text-white/80 text-base sm:text-lg lg:text-xl max-w-2xl mx-auto mt-4 sm:mt-6">Empower your educators and students with custom branding, AI tutors, and live classrooms.</p>
+                        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-8 sm:mt-12">
+                            <Link href="/launch-your-academy" className="inline-flex items-center gap-3 px-8 sm:px-12 py-3 sm:py-4 rounded-full bg-white text-[#fd5523] font-black text-base sm:text-lg hover:scale-105 transition-all shadow-2xl shadow-white/20">
+                                Launch Your Academy
+                                <ArrowRight className="h-5 w-5 sm:h-6 sm:w-6" />
+                            </Link>
+                            <Link href="/academy/zedai" className="inline-flex items-center gap-2 px-8 py-3 sm:py-4 rounded-full bg-white/10 hover:bg-white/20 text-white font-bold text-base transition-all">
+                                Explore Courses
+                            </Link>
+                        </div>
                     </div>
                 </div>
             </section>

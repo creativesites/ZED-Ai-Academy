@@ -27,7 +27,17 @@ type Blueprint = {
   module_outline: string[];
 };
 
-export function NewCourseForm() {
+interface NewCourseFormProps {
+  companyId?: string;
+  tenantSlug?: string;
+  cancelHref?: string;
+}
+
+export function NewCourseForm({
+  companyId,
+  tenantSlug,
+  cancelHref,
+}: NewCourseFormProps = {}) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [thumbnailUrl, setThumbnailUrl] = useState("");
@@ -49,12 +59,14 @@ export function NewCourseForm() {
     if (matchingPreset) setDomainPreset(matchingPreset.id);
   }
 
+  const backLink = cancelHref || (tenantSlug ? `/academy/${tenantSlug}/admin/courses` : "/creator/courses");
+
   return (
     <div className="space-y-10">
       <div className="flex items-center justify-between gap-6">
         <div className="flex items-center gap-4">
           <Link
-            href="/creator/courses"
+            href={backLink}
             className={cn(
               buttonVariants({ variant: "ghost" }),
               "rounded-full h-12 w-12 p-0 text-slate-400 hover:bg-[#062e39] hover:text-white transition-all flex items-center justify-center"
@@ -76,6 +88,8 @@ export function NewCourseForm() {
           <Card className="marketing-card rounded-[3rem] border-0 p-4 shadow-xl">
             <CardContent className="p-8">
               <form action={createCourse} className="space-y-10">
+                {companyId && <input type="hidden" name="company_id" value={companyId} />}
+                {tenantSlug && <input type="hidden" name="tenant_slug" value={tenantSlug} />}
                 <section className="space-y-6">
                   <div className="flex items-center gap-3">
                     <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#fff6ee] text-[#fd5523]">

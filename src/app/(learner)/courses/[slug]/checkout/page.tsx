@@ -103,16 +103,23 @@ export default async function CheckoutPage({ params }: Props) {
 
   const supabase = createClient();
 
-  const { data: course } = await supabase
+  const { data: courseRaw } = await supabase
     .from("courses")
-    .select("id, title, description, thumbnail_url, category, level, price_type, price_amount, slug")
+    .select("id, title, description, thumbnail_url, category, level, price_type, price_amount, slug, company_id, companies(slug)")
     .eq("slug", slug)
     .eq("status", "published")
     .single();
 
+  const course = courseRaw as any;
+
   if (!course) notFound();
   if (course.price_type === "free") redirect(`/courses/${slug}`);
   if (!course.price_amount) redirect(`/courses/${slug}`);
+
+  const comp = Array.isArray(course.companies)
+    ? course.companies[0]
+    : course.companies;
+  const tenantSlug = comp?.slug || "zedai";
 
   // Already enrolled?
   const { data: existing } = await supabase
@@ -131,7 +138,7 @@ export default async function CheckoutPage({ params }: Props) {
 
       {/* Back */}
       <Link
-        href={`/courses/${slug}`}
+        href={`/academy/${tenantSlug}/courses/${slug}`}
         className={cn(
           buttonVariants({ variant: "ghost" }),
           "mb-8 rounded-full text-slate-500 hover:bg-[#fff6ee] hover:text-[#062e39] flex items-center justify-center w-fit h-9 px-3"

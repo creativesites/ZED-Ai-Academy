@@ -47,26 +47,27 @@ export function ModernTemplate(props: {
     success: string;
   };
 }) {
-  // Default static content for Bllom Academy
-  const defaultHeroTitle = "Bllom Academy";
-  const defaultHeroSubtitle = "An English teaching academy (Secondary students)";
-  const defaultAboutTitle = "About Maureen Sinovia Mulenga";
-  const defaultAboutText = `Maureen Sinovia Mulenga is a devoted Christian, speaker, entrepreneur, and founder of Me and My Sisters. Her book "Let's Fix" is written from testimony, reflection, and a practical desire to help readers love with more wisdom.\n\nShe writes with warmth, conviction, and vulnerability, drawing readers toward healing, better standards, and relationships that honor God.`;
-  const defaultTutorName = "Mulenga Maureen";
-  const defaultTutorBio = `Faith-rooted relationship voice\nPublic speaker and creator\nWomen's empowerment advocate\nFounder of Me and My Sisters\nAuthored "Let's Fix"`;
-
   const { 
     tenant, courses, membership, brandColor, heroTitle, heroSubtitle, 
     aboutTitle, aboutText, aboutImage, ctaTitle, ctaButton, 
     content, adminProfile, stats 
   } = props;
+
+  const academyName = tenant?.name || "Zed AI Academy";
+  const defaultHeroTitle = `Welcome to ${academyName}`;
+  const defaultHeroSubtitle = "Master practical artificial intelligence, modern workflows, and certified high-demand skills.";
+  const defaultAboutTitle = `About ${academyName}`;
+  const defaultAboutText = `${academyName} is dedicated to delivering world-class curriculum, hands-on mentorship, and transformative learning experiences built for real-world impact.`;
+  const defaultTutorName = "Lead Instructor";
+  const defaultTutorBio = "Experienced educator and industry practitioner committed to student success and practical mastery.";
+
   // Apply default static content when not provided
   const finalHeroTitle = heroTitle || defaultHeroTitle;
   const finalHeroSubtitle = heroSubtitle || defaultHeroSubtitle;
   const finalAboutTitle = aboutTitle || defaultAboutTitle;
   const finalAboutText = aboutText || defaultAboutText;
-  const finalTutorName = adminProfile?.full_name || defaultTutorName;
-  const finalTutorBio = adminProfile?.bio || defaultTutorBio;
+  const finalTutorName = adminProfile?.full_name || content.tutor_name || defaultTutorName;
+  const finalTutorBio = adminProfile?.bio || content.tutor_bio || defaultTutorBio;
 
   const showHeroImage = !!content.hero_image;
   const tutorName = content.tutor_name || adminProfile?.full_name || defaultTutorName;
@@ -304,7 +305,7 @@ export function ModernTemplate(props: {
               </p>
             </div>
             <Link
-              href="/courses"
+              href="#courses"
               className="inline-flex items-center gap-3 px-8 py-4 rounded-2xl bg-[#062e39] text-white font-black uppercase tracking-widest text-xs hover:bg-[#0a4a5c] transition-colors group"
             >
               Explore All{" "}

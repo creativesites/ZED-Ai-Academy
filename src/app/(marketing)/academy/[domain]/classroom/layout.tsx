@@ -8,7 +8,7 @@ import { getProfileContext } from "@/actions/profile";
 import TenantHomeNavBar from "@/components/tenant/TenantHomeNavBar";  
 
 
-export default async function TenantAdminLayout({
+export default async function TenantClassroomLayout({
   children,
   params,
 }: {
@@ -34,15 +34,23 @@ export default async function TenantAdminLayout({
   }
 
   const access = await getCurrentTenantAccess(company.id);
+  const isMember = Boolean(access?.isSuperAdmin || access?.isMember || company.admin_id === userId);
+  const tenantRole = access?.tenantRole || (company.admin_id === userId ? "company_admin" : "");
   
-  // Only Super Admins and Teaching Roles (Company Admin, Teacher) can access the Admin Hub
-  if (!access?.isSuperAdmin && !isTeachingRole(access?.tenantRole)) {
-    redirect(`/academy/${company.slug}/classroom`); // Redirect students to the student classroom
+  // Students and staff must be members (or platform super admins) to access the classroom
+  if (!isMember) {
+    redirect(`/academy/${company.slug}`);
   }
 
   return (
     <div className="bg-slate-50 min-h-screen">
-       <TenantHomeNavBar tenant={company} template={"modern"} userId={userId || ""} role={access?.tenantRole || ""} />
+      <TenantHomeNavBar 
+        tenant={company} 
+        template={"modern"} 
+        userId={userId || ""} 
+        role={tenantRole} 
+        isMember={true} 
+      />
       <main>
         {children}
       </main>

@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { verifyWebhook } from "@/lib/payments/paychangu";
 import { sendPaymentConfirmation } from "@/lib/email/emailjs";
+import { ensureTenantMembership } from "@/actions/tenants";
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
@@ -74,10 +75,18 @@ export async function POST(req: NextRequest) {
       .single(),
     supabase
       .from("courses")
-      .select("title, slug")
+      .select("title, slug, company_id")
       .eq("id", order.course_id!)
       .single(),
   ]);
+
+  if (courseResult.data?.company_id) {
+    try {
+      await ensureTenantMembership(order.user_id, courseResult.data.company_id, "learner");
+    } catch (membershipErr) {
+      console.error("[PayChangu Webhook] Failed to ensure tenant membership:", membershipErr);
+    }
+  }
 
   const profileEmail = profileResult.data?.email;
   if (profileEmail && profileResult.data && courseResult.data) {
