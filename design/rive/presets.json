@@ -1,0 +1,67 @@
+{
+  "lin": {
+    "name": "Lín Lǎoshī",
+    "skinColor": "#E8B48F",
+    "skinShadeColor": "#C98D6A",
+    "hairColor": "#2A2230",
+    "outfitPrimary": "#2FA37F",
+    "outfitSecondary": "#FFF4E2",
+    "accentColor": "#FFB547",
+    "hairStyle": "bob",
+    "outfitStyle": "cardigan",
+    "prop": "none",
+    "faceStyle": "lin"
+  },
+  "sofia": {
+    "name": "Sofía",
+    "skinColor": "#8B5A3C",
+    "skinShadeColor": "#6A4029",
+    "hairColor": "#1C1410",
+    "outfitPrimary": "#C4572E",
+    "outfitSecondary": "#FFF1E0",
+    "accentColor": "#E8A93A",
+    "hairStyle": "curly",
+    "outfitStyle": "blouse_stripe",
+    "prop": "menu",
+    "faceStyle": "sofia"
+  },
+  "camille": {
+    "name": "Camille",
+    "skinColor": "#9A6641",
+    "skinShadeColor": "#774C2F",
+    "hairColor": "#2A1A12",
+    "outfitPrimary": "#F0705A",
+    "outfitSecondary": "#F7F4FF",
+    "accentColor": "#1F2F6B",
+    "hairStyle": "bun",
+    "outfitStyle": "blazer",
+    "prop": "croissant",
+    "faceStyle": "camille"
+  },
+  "tendai": {
+    "name": "Nurse Tendai",
+    "skinColor": "#5F3B27",
+    "skinShadeColor": "#43271A",
+    "hairColor": "#14100E",
+    "outfitPrimary": "#1FA3A0",
+    "outfitSecondary": "#F4F7F7",
+    "accentColor": "#FF8A3D",
+    "hairStyle": "short",
+    "outfitStyle": "scrubs",
+    "prop": "stethoscope",
+    "faceStyle": "tendai"
+  },
+  "tinashe": {
+    "name": "Tinashe",
+    "faceStyle": "tinashe",
+    "skinColor": "#7A4A30",
+    "skinShadeColor": "#5A3320",
+    "hairColor": "#14100E",
+    "outfitPrimary": "#2F4A6B",
+    "outfitSecondary": "#F4F7FA",
+    "accentColor": "#F4F7FA",
+    "hairStyle": "short",
+    "outfitStyle": "blazer",
+    "prop": "book"
+  }
+}

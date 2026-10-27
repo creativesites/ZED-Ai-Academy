@@ -1,0 +1,39 @@
+<!doctype html><meta charset="utf-8"><title>auto2</title>
+<body><canvas id="c" width="600" height="750"></canvas><pre id="out">start</pre>
+<script type="module">
+import RiveCanvas from "./v247/canvas_advanced.mjs";
+const out = [];
+const finish = (x) => { document.getElementById('out').textContent = 'RESULT ' + JSON.stringify(x); };
+(async () => {
+  try {
+    const wasmBinary = await (await fetch("http://localhost:8765/v247/rive.wasm")).arrayBuffer();
+    const R = await RiveCanvas({ wasmBinary, locateFile: (f) => "http://localhost:8765/v247/" + f });
+    const buf = await (await fetch(location.search.includes('f=') ? new URLSearchParams(location.search).get('f') : 'zai_teacher.riv')).arrayBuffer();
+    const file = await R.load(new Uint8Array(buf));
+    const canvas = document.getElementById('c');
+    const renderer = R.makeRenderer(canvas);
+    const ab = file.artboardByName('Teacher');
+    const sm = new R.StateMachineInstance(ab.stateMachineByName('TeacherSM'), ab);
+    const vm = file.viewModelByName('TeacherVM');
+    const inst = vm.defaultInstance();
+    ab.bindViewModelInstance(inst); sm.bindViewModelInstance(inst);
+    const frame = { n: 0 };
+    const step = () => { sm.advance(1 / 60); ab.advance(1 / 60); frame.n++; for (let i = 0, k = sm.stateChangedCount(); i < k; i++) { const nm = sm.stateChangedNameByIndex(i); if (!/^(idle_|saccade|blink|viseme|hair|outfit|prop|steam|mood|listen|think|talk)/.test(nm)) out.push(['ST', frame.n, nm]); }
+      const c = sm.reportedEventCount(); for (let i = 0; i < c; i++) { const e = sm.reportedEventAt(i); const ev = e.event || e; out.push(['EV', frame.n, ev.name, JSON.stringify(ev.properties || ev.customProperties || {})]); } };
+    const run = (n) => { for (let i = 0; i < n; i++) step(); };
+    const fire = (g, tone) => { out.push(['fire', frame.n, g, tone || '']); inst.enum('gesture').value = g; if (tone) inst.enum('toneShape').value = tone; inst.trigger('playGesture').trigger(); };
+    run(30);
+    // A: fire during the previous gesture's blend-out (nod = 54 f; gestureEnd at 53, blend-out ~11 f)
+    out.push(['-- A nod then wave during blend-out']); fire('nod'); run(55); fire('wave'); run(140);
+    // B: fire during blend-in of the previous trigger
+    out.push(['-- B wave then nod 3f later (blend-in)']); fire('wave'); run(3); fire('nod'); run(120);
+    // C: back-to-back counts, second fired right at the end of the first
+    out.push(['-- C count 1 then count 3 at end']); inst.number('countTo').value = 1; fire('count'); run(86); inst.number('countTo').value = 3; fire('count'); run(220);
+    // draw timing
+    const t0 = performance.now();
+    for (let i = 0; i < 120; i++) { step(); renderer.clear(); ab.draw(renderer); renderer.flush(); }
+    out.push(['draw120ms', Math.round(performance.now() - t0)]);
+    finish(out);
+  } catch (e) { finish({ error: String(e), out }); }
+})();
+</script>
