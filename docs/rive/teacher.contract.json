@@ -1,0 +1,110 @@
+{
+  "$comment": "Single source of truth for the ZAI teacher Rive files and the app code that drives them. Rive artists/agents build to these exact names. App code (src/lib/avatar/contract.ts) is generated from or checked against this file. Bump `version` on any breaking rename.",
+  "version": "1.0.0",
+  "files": { "teacher": "zai_teacher.riv", "scenes": "zai_scenes.riv" },
+  "artboards": {
+    "Teacher": {
+      "size": [1200, 1500],
+      "background": "transparent",
+      "framing": "half-body, waist up; top of head ~120 from top; waist cut at bottom edge",
+      "safeAreas": { "portrait": [0, 0, 1200, 1500], "landscapeCrop": [0, 360, 1200, 1140], "captionOverlay": [0, 1250, 1200, 1500] },
+      "stateMachine": "TeacherSM",
+      "viewModel": "TeacherVM"
+    },
+    "TeacherBust": {
+      "size": [512, 512],
+      "background": "transparent",
+      "framing": "head and shoulders, for chat bubbles, notifications, dashboard",
+      "stateMachine": "BustSM",
+      "viewModel": "TeacherVM",
+      "uses": ["mood", "viseme", "speaking", "listening", "lookX", "lookY", "colors", "hairStyle", "outfitStyle", "reducedMotion"]
+    },
+    "Scene_TeaHouse": { "size": [2400, 1500], "stateMachine": "SceneSM", "viewModel": "SceneVM", "language": "zh" },
+    "Scene_Cafe": { "size": [2400, 1500], "stateMachine": "SceneSM", "viewModel": "SceneVM", "language": "es" },
+    "Scene_Rooftop": { "size": [2400, 1500], "stateMachine": "SceneSM", "viewModel": "SceneVM", "language": "fr" },
+    "Scene_Clinic": { "size": [2400, 1500], "stateMachine": "SceneSM", "viewModel": "SceneVM", "language": "any" }
+  },
+  "viewModels": {
+    "TeacherVM": {
+      "gesture": { "type": "enum", "enum": "Gesture", "default": "idle" },
+      "playGesture": { "type": "trigger", "note": "App sets `gesture` then fires this. Re-firing restarts the gesture." },
+      "toneShape": { "type": "enum", "enum": "ToneShape", "default": "t1", "note": "Read when gesture = trace_tone" },
+      "countTo": { "type": "number", "min": 1, "max": 5, "default": 3, "note": "Read when gesture = count" },
+      "mood": { "type": "enum", "enum": "Mood", "default": "warm" },
+      "moodIntensity": { "type": "number", "min": 0, "max": 100, "default": 70 },
+      "viseme": { "type": "number", "min": 0, "max": 8, "default": 0, "note": "Integer mouth shape, see Viseme table. Updated up to 60x/s by app." },
+      "speaking": { "type": "boolean", "default": false, "note": "Adds talking beats on the body layer and enables mouth layer" },
+      "listening": { "type": "boolean", "default": false, "note": "Lean-in loop, attentive eyes, nods scaled by voiceLevel" },
+      "thinking": { "type": "boolean", "default": false, "note": "Waiting for AI reply: eyes up, small hmm loop. Hides latency." },
+      "voiceLevel": { "type": "number", "min": 0, "max": 100, "default": 0, "note": "Learner mic level while listening" },
+      "lookX": { "type": "number", "min": -100, "max": 100, "default": 0, "note": "-100 = character's right (screen left), 100 = screen right" },
+      "lookY": { "type": "number", "min": -100, "max": 100, "default": 0, "note": "-100 = down, 100 = up" },
+      "reducedMotion": { "type": "boolean", "default": false, "note": "Halve secondary motion and gesture amplitude, no bouncing" },
+      "skinColor": { "type": "color", "default": "#E8B48F" },
+      "skinShadeColor": { "type": "color", "default": "#C98D6A" },
+      "hairColor": { "type": "color", "default": "#2A2230" },
+      "outfitPrimary": { "type": "color", "default": "#2FA37F" },
+      "outfitSecondary": { "type": "color", "default": "#FFF4E2" },
+      "accentColor": { "type": "color", "default": "#FFB547" },
+      "hairStyle": { "type": "enum", "enum": "HairStyle", "default": "bob" },
+      "outfitStyle": { "type": "enum", "enum": "OutfitStyle", "default": "cardigan" },
+      "prop": { "type": "enum", "enum": "Prop", "default": "none" }
+    },
+    "SceneVM": {
+      "timeOfDay": { "type": "number", "min": 0, "max": 100, "default": 70, "note": "0 = midday, 70 = golden/dusk, 100 = night" },
+      "parallaxX": { "type": "number", "min": -100, "max": 100, "default": 0, "note": "App drives from pointer/gyro; layers shift by depth" },
+      "parallaxY": { "type": "number", "min": -100, "max": 100, "default": 0 },
+      "celebrate": { "type": "trigger", "note": "Scene-level flourish: lanterns sway, lights brighten for 1.5 s" },
+      "ambience": { "type": "boolean", "default": true, "note": "Ambient loops (lantern sway, steam, birds, stars). Off when reducedMotion." },
+      "reducedMotion": { "type": "boolean", "default": false }
+    }
+  },
+  "enums": {
+    "Gesture": ["idle", "wave", "nod", "head_shake", "explain", "point_card", "point_left", "point_right", "thumbs_up", "clap", "think", "listen", "celebrate", "count", "shrug", "beckon", "trace_tone", "oops"],
+    "ToneShape": ["t1", "t2", "t3", "t4", "neutral", "rise", "fall"],
+    "Mood": ["neutral", "warm", "happy", "proud", "curious", "surprised", "concerned", "playful"],
+    "HairStyle": ["bob", "curly", "bun", "short", "braids"],
+    "OutfitStyle": ["cardigan", "blouse_stripe", "blazer", "scrubs"],
+    "Prop": ["none", "tea_cup", "book", "menu", "croissant", "clipboard", "stethoscope"]
+  },
+  "visemes": [
+    { "value": 0, "name": "rest", "examples": "silence, pauses" },
+    { "value": 1, "name": "AA", "examples": "a in father, Mandarin a, Spanish a" },
+    { "value": 2, "name": "EH", "examples": "e in bed, French è, Mandarin e (ê)" },
+    { "value": 3, "name": "EE", "examples": "ee in see, i, y, Mandarin i" },
+    { "value": 4, "name": "OH", "examples": "o in go, Spanish o, French o/ô" },
+    { "value": 5, "name": "OO", "examples": "oo in food, u, w, Mandarin u and ü, French u" },
+    { "value": 6, "name": "MBP", "examples": "m, b, p (lips closed)" },
+    { "value": 7, "name": "FV", "examples": "f, v (top teeth on lower lip)" },
+    { "value": 8, "name": "CONS", "examples": "s, t, d, n, k, g, l, r, zh, ch, sh, x, j, q (teeth slightly open)" }
+  ],
+  "events": {
+    "gestureStart": { "properties": { "gesture": "string" }, "fire": "first frame of any gesture" },
+    "gesturePeak": { "properties": { "gesture": "string" }, "fire": "the expressive moment: hand reaches card (point_card), thumb fully up, wave apex, clap contact. App syncs UI to it (card launch, sparkle, sound)." },
+    "gestureEnd": { "properties": { "gesture": "string" }, "fire": "back in idle pose" },
+    "traceStart": { "properties": { "toneShape": "string" }, "fire": "fingertip begins following the tone path" },
+    "traceEnd": { "properties": { "toneShape": "string" }, "fire": "fingertip finishes the tone path" }
+  },
+  "toneTrace": {
+    "$comment": "The fingertip of the character's left hand (screen right) follows these paths with a Follow Path constraint. The app draws a glowing trail along the same path in sync with traceStart/traceEnd, so the path must match. Coordinates are normalized inside traceBox: x 0..1 left to right, y 0..1 top (high pitch) to bottom (low pitch).",
+    "traceBox": [760, 360, 1120, 720],
+    "durationMs": { "t1": 900, "t2": 900, "t3": 1100, "t4": 800, "neutral": 400, "rise": 1300, "fall": 1100 },
+    "paths": {
+      "t1": [[0, 0.03], [1, 0.03]],
+      "t2": [[0, 0.5], [0.5, 0.36], [1, 0.03]],
+      "t3": [[0, 0.75], [0.45, 0.97], [1, 0.25]],
+      "t4": [[0, 0.03], [1, 0.97]],
+      "neutral": [[0.4, 0.75], [0.6, 0.78]],
+      "rise": [[0, 0.62], [0.6, 0.58], [1, 0.08]],
+      "fall": [[0, 0.2], [0.5, 0.35], [1, 0.9]]
+    },
+    "pitchNote": "Mandarin tone contours on the Chao 1-5 scale: t1 55, t2 35, t3 214, t4 51. y = 1 - (chao - 1) / 4, inset by 0.03 so the fingertip stays inside the box."
+  },
+  "anchors": {
+    "$comment": "Artboard-space points the app uses to position UI next to the character. Agent confirms final values in the QA report.",
+    "cardTarget": [180, 640],
+    "headCenter": [600, 520],
+    "mouthCenter": [600, 690]
+  },
+  "budgets": { "teacherRivMaxKB": 600, "scenesRivMaxKBEach": 900, "targetFps": 60, "lowEndDevice": "2019-era Android mid-range phone in Chrome, canvas renderer" }
+}

@@ -1,0 +1,5 @@
+build/
+*/build/
+qa/v247/
+qa/rive.wasm
+qa/canvas_advanced.mjs
