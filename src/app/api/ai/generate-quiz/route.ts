@@ -1,6 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { createClient } from "@/lib/supabase/server";
 import { GEMINI_MODEL, gemini } from "@/lib/ai/gemini";
+import { blocksToText } from "@/lib/course-blocks/block-to-text";
 import { NextRequest } from "next/server";
 
 type GeneratedQuestion = {
@@ -60,26 +61,14 @@ export async function POST(req: NextRequest) {
     .eq("lesson_id", lessonId)
     .order("position", { ascending: true });
 
-  const contentParts: string[] = [];
-  for (const block of blocks ?? []) {
-    const content = block.content as Record<string, unknown>;
-    if (block.type === "text" && typeof content.html === "string") {
-      const text = content.html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
-      if (text) contentParts.push(text);
-    } else if (block.type === "video") {
-      const title = typeof content.title === "string" ? content.title : "";
-      if (title) contentParts.push(`Video lesson: ${title}`);
-    }
-  }
+  const lessonContent = blocksToText(blocks ?? [], { maxChars: 8000 });
 
-  if (contentParts.length === 0) {
+  if (!lessonContent) {
     return Response.json(
       { error: "No lesson content found to generate questions from" },
       { status: 422 }
     );
   }
-
-  const lessonContent = contentParts.join("\n\n").slice(0, 8000);
 
   const systemInstruction = `You are an expert quiz writer for professional training products.
 
