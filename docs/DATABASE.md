@@ -244,6 +244,28 @@ UNIQUE(subscription_id, profile_id)
 
 ---
 
+## ZAI Tutor tables
+
+Migration: `supabase/migrations/20261101000000_zai_tutor.sql` (written, not applied). Ids for tenants and users are `text` (`companies.id`, `profiles.id`). Current user is `auth.jwt() ->> 'sub'`. Staff means an active `company_members` row with role `company_admin`, `teacher` or `instructor`. Helpers: `is_company_member`, `is_company_staff`, `is_own_tutor_session`, `is_staff_visible_tutor_session`.
+
+| Table | Purpose | Who reads / writes |
+|---|---|---|
+| `ai_personas` | Teacher characters (Rive variant, voice, personality prompt, languages) | Members read. Staff write. Also readable when a published platform scenario uses it. |
+| `practice_scenarios` | Scenes to practise. `visibility` is `course`, `tenant_library` or `platform`. `style` is `scene`, `guided_lesson` or `oral_check`. | Members read published rows. Staff read and write all rows. Anyone signed in reads published `platform` rows. |
+| `tutor_assignments` | A scenario assigned to the whole academy (`group_id` NULL) or to a classroom group | Members read the academy-wide rows and rows for groups they belong to. Staff write. |
+| `tutor_sessions` | One run of a scenario. `origin` is `lesson`, `assignment`, `practice`, `ask` or `placement`. | Learners manage their own rows. Staff read only under the privacy split below. |
+| `tutor_turns` | One exchange in a session, with learner text, timing and teacher events | Same as `tutor_sessions` |
+| `tutor_reports` | Post-session report (scores are guidance only). Written by the server. | Same as `tutor_sessions`. Clients never write. |
+| `learner_language_profiles` | Level estimate, framework, can-do list and shared memory per tenant, user and language | Learner reads and writes own row. Staff have no policy yet (open question). |
+| `vocab_items`, `learner_vocab` | Tenant vocabulary and per-learner spaced-repetition state (`ease`, `interval_days`, `due_at`) | Members read items. Staff write items. Learners read and write own SRS rows. |
+| `exam_frameworks` | Reference seed: HSK 2.0, HSK 3.0, HSKK, DELE (CEFR), DELF/DALF | Any signed-in user reads. No client writes. |
+| `tutor_settings` | One row per tenant: Practice Room on/off, free minutes per month, allowed modes, enabled personas | Members read. Staff write. |
+| `ai_usage_ledger` | Metered AI usage (kind, units, estimated cost) | Staff read their tenant's rows. The server writes with the service role. |
+
+**Privacy split.** Lesson, assignment, shared and flagged sessions are visible to the tenant's staff. Practice, ask and placement sessions stay private to the learner. Staff see aggregates only, from the server. `shared_with_teacher` is set by the learner.
+
+**Storage.** `tutor-audio` is private. Each learner manages objects under their own Clerk `sub` folder. `tutor-tts-cache` is public read, and clients cannot write to it.
+
 ## RLS Policy Summary
 
 | Table | Learner reads | Learner writes | Instructor reads | Instructor writes | Admin |
