@@ -96,7 +96,7 @@ export default async function DashboardPage() {
     getUpcomingUserClasses(),
   ]);
 
-  const activeLiveClass = upcomingClasses.find((c: any) => c.companies?.is_session_active);
+  const activeLiveClass = (upcomingClasses as any[])?.find((c: any) => c.companies?.is_session_active);
 
   const courseCountMap = new Map<string, number>();
   (coursesRes.data ?? []).forEach((c: any) => {

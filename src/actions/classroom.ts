@@ -364,12 +364,13 @@ export async function postClassSchedule(formData: FormData) {
 export async function sendScheduleReminder(companyId: string, scheduleId: string, companySlug: string) {
   const { userId, supabase } = await requireInstructor(companyId);
 
-  const { data: schedule } = await supabase
+  const { data: rawSchedule } = await supabase
     .from("class_schedules")
     .select("*, companies(name)")
     .eq("id", scheduleId)
     .single();
 
+  const schedule = rawSchedule as any;
   if (!schedule) throw new Error("Schedule not found");
 
   let studentIds: string[] = [];
@@ -417,7 +418,7 @@ export async function sendScheduleReminder(companyId: string, scheduleId: string
   return { count: studentIds.length, message: `Reminder sent to ${studentIds.length} student(s)!` };
 }
 
-export async function getUpcomingUserClasses() {
+export async function getUpcomingUserClasses(): Promise<any[]> {
   const { userId } = await auth();
   if (!userId) return [];
 
