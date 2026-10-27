@@ -14,10 +14,12 @@ import {
   Calendar,
   Sparkles,
   Users,
+  Video,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import type { CompanyMemberRole, UserRole } from "@/types/database";
+import { getUpcomingUserClasses } from "@/actions/classroom";
 
 export const metadata = { title: "Your Academies — Zed AI Academy" };
 export const dynamic = "force-dynamic";
@@ -80,7 +82,7 @@ export default async function DashboardPage() {
     .map((m: any) => m.company_id)
     .filter(Boolean);
 
-  const [coursesRes, enrollmentsRes] = await Promise.all([
+  const [coursesRes, enrollmentsRes, upcomingClasses] = await Promise.all([
     companyIds.length > 0
       ? supabase.from("courses").select("id, company_id").in("company_id", companyIds)
       : Promise.resolve({ data: [] }),
@@ -91,7 +93,10 @@ export default async function DashboardPage() {
           .eq("user_id", userId)
           .in("company_id", companyIds)
       : Promise.resolve({ data: [] }),
+    getUpcomingUserClasses(),
   ]);
+
+  const activeLiveClass = upcomingClasses.find((c: any) => c.companies?.is_session_active);
 
   const courseCountMap = new Map<string, number>();
   (coursesRes.data ?? []).forEach((c: any) => {
@@ -136,7 +141,15 @@ export default async function DashboardPage() {
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
+            <Link
+              href="/dashboard/schedule"
+              className="flex items-center gap-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200/90 text-xs font-bold uppercase tracking-wider px-4 py-2.5 rounded-xl shadow-sm transition-all hover:scale-105 active:scale-95"
+            >
+              <Calendar className="h-4 w-4 text-[#fd5523]" />
+              <span>School Timetable</span>
+            </Link>
+
             {isSuperAdmin && (
               <Link
                 href="/superadmin"
@@ -156,6 +169,34 @@ export default async function DashboardPage() {
             </Link>
           </div>
         </div>
+
+        {/* Active Live Session Banner */}
+        {activeLiveClass && (
+          <div className="mb-8 p-4 sm:p-5 rounded-2xl sm:rounded-3xl bg-gradient-to-r from-red-600 via-[#fd5523] to-orange-500 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xl shadow-red-500/20">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-2xl bg-white/20 text-white flex items-center justify-center shrink-0">
+                <Video className="h-5 w-5 sm:h-6 sm:w-6" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="h-2 w-2 rounded-full bg-white animate-ping" />
+                  <span className="text-[10px] font-black uppercase tracking-widest text-white/90">Live Class in Session</span>
+                </div>
+                <h3 className="font-bold text-base sm:text-lg text-white">
+                  {activeLiveClass.title} · {activeLiveClass.companies?.name}
+                </h3>
+              </div>
+            </div>
+            <Link
+              href={`/academy/${activeLiveClass.companies?.slug}/classroom?tab=session&scheduleId=${activeLiveClass.id}`}
+              className="shrink-0 bg-white hover:bg-slate-100 text-red-600 font-black text-xs uppercase tracking-wider px-5 py-3 rounded-xl transition-all shadow-md flex items-center justify-center gap-1.5"
+            >
+              <Video className="h-4 w-4 text-red-600" />
+              <span>Join Live Class Now</span>
+              <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          </div>
+        )}
 
         {/* Super Admin Notice if applicable */}
         {isSuperAdmin && (
@@ -293,24 +334,42 @@ export default async function DashboardPage() {
                             <ShieldCheck className="h-4 w-4 text-orange-400" />
                             <span>Admin Console</span>
                           </Link>
-                          <Link
-                            href={`/academy/${academy.slug}/classroom`}
-                            className="w-full flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold uppercase tracking-wider py-2 rounded-xl transition-all"
-                          >
-                            <GraduationCap className="h-4 w-4 text-slate-500" />
-                            <span>Classroom</span>
-                          </Link>
+                          <div className="grid grid-cols-2 gap-2">
+                            <Link
+                              href={`/academy/${academy.slug}/classroom`}
+                              className="flex items-center justify-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold uppercase tracking-wider py-2 rounded-xl transition-all"
+                            >
+                              <GraduationCap className="h-3.5 w-3.5 text-slate-500" />
+                              <span>Classroom</span>
+                            </Link>
+                            <Link
+                              href={`/academy/${academy.slug}/classroom?tab=timetable`}
+                              className="flex items-center justify-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold uppercase tracking-wider py-2 rounded-xl transition-all"
+                            >
+                              <Calendar className="h-3.5 w-3.5 text-[#fd5523]" />
+                              <span>Timetable</span>
+                            </Link>
+                          </div>
                         </>
                       ) : (
-                        <Link
-                          href={`/academy/${academy.slug}/classroom`}
-                          className="w-full flex items-center justify-center gap-2 text-white text-xs font-bold uppercase tracking-wider py-2.5 rounded-xl transition-all shadow-md shadow-orange-500/10"
-                          style={{ backgroundColor: brandColor }}
-                        >
-                          <GraduationCap className="h-4 w-4" />
-                          <span>Enter Classroom</span>
-                          <ArrowRight className="h-3.5 w-3.5 ml-1" />
-                        </Link>
+                        <div className="space-y-2">
+                          <Link
+                            href={`/academy/${academy.slug}/classroom`}
+                            className="w-full flex items-center justify-center gap-2 text-white text-xs font-bold uppercase tracking-wider py-2.5 rounded-xl transition-all shadow-md shadow-orange-500/10"
+                            style={{ backgroundColor: brandColor }}
+                          >
+                            <GraduationCap className="h-4 w-4" />
+                            <span>Enter Classroom</span>
+                            <ArrowRight className="h-3.5 w-3.5 ml-1" />
+                          </Link>
+                          <Link
+                            href={`/academy/${academy.slug}/classroom?tab=timetable`}
+                            className="w-full flex items-center justify-center gap-2 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200/80 text-xs font-bold uppercase tracking-wider py-2 rounded-xl transition-all"
+                          >
+                            <Calendar className="h-3.5 w-3.5 text-[#fd5523]" />
+                            <span>View School Timetable</span>
+                          </Link>
+                        </div>
                       )}
                     </div>
 

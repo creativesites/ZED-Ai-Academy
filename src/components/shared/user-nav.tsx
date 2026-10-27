@@ -12,7 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { LayoutDashboard, BookOpen, LogOut, Settings } from "lucide-react";
+import { LayoutDashboard, BookOpen, LogOut, Settings, Calendar } from "lucide-react";
 
 export function UserNav({ user }: { user: User }) {
   const router = useRouter();
@@ -50,6 +50,13 @@ export function UserNav({ user }: { user: User }) {
         >
           <LayoutDashboard className="h-4 w-4" />
           Dashboard
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          render={<Link href="/dashboard/schedule" />}
+          className="flex items-center gap-2 cursor-pointer hover:bg-muted"
+        >
+          <Calendar className="h-4 w-4 text-[#fd5523]" />
+          School Timetable
         </DropdownMenuItem>
         <DropdownMenuItem
           render={<Link href="/dashboard" />}
