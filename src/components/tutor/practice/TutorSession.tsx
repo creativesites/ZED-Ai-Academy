@@ -104,6 +104,7 @@ export function TutorSession({
   const [level, setLevel] = useState(0);
   const [elapsedMs, setElapsedMs] = useState(0);
   const [soundBlocked, setSoundBlocked] = useState(false);
+  const [muted, setMuted] = useState(false);
 
   const [report, setReport] = useState<TutorReportContent | null>(null);
   const [words, setWords] = useState<CardItem[]>([]);
@@ -393,6 +394,7 @@ export function TutorSession({
     }
 
     sessionIdRef.current = data.sessionId;
+    audioRef.current?.setLanguage(data.persona.languages?.[0]);
     modeRef.current = data.mode === "text" ? "text" : "voice";
     setMode(modeRef.current);
     setTeacherName(data.persona.displayName ?? data.persona.name);
@@ -442,6 +444,13 @@ export function TutorSession({
     setReport(null);
     setWords([]);
     void handleStart();
+  };
+
+  const toggleMute = () => {
+    const next = !muted;
+    audioRef.current?.unlock();
+    audioRef.current?.setMuted(next);
+    setMuted(next);
   };
 
   const enableSound = () => {
@@ -556,6 +565,8 @@ export function TutorSession({
             error={error}
             soundBlocked={soundBlocked}
             onEnableSound={enableSound}
+            muted={muted}
+            onToggleMute={toggleMute}
             teacherName={teacherName}
           />
           {ending && error && (

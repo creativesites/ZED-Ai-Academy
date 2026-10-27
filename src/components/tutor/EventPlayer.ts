@@ -202,7 +202,8 @@ export class EventPlayer {
     this.avatar.setSpeaking(true);
     this.ui.onCaption(ev.text, ev.romanization, ev.translation);
 
-    if (ev.audioUrl && this.speak) {
+    // The hook plays the line's audio, or a browser voice when the line has none.
+    if (this.speak) {
       const controller = new AbortController();
       this.speechAbort = controller;
       let outcome: SpeakOutcome;

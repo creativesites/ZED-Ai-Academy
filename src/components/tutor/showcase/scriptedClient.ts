@@ -4,6 +4,7 @@
 
 import type { CompleteResponse, Result, StartResponse, TurnResponse, TutorApiClient } from "@/components/tutor/practice/api";
 import { demoScenario, type DemoScenario } from "@/lib/tutor/demo-scenarios";
+import { demoVoiceUrl, scriptedVoiceUrls } from "@/lib/tutor/demo-voice";
 import type { TutorEvent } from "@/lib/tutor/events";
 
 const START_DELAY_MS = 500;
@@ -11,7 +12,28 @@ const TURN_DELAY_MS = 900;
 const REPORT_DELAY_MS = 700;
 
 const wait = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
-const clone = (events: readonly TutorEvent[]): TutorEvent[] => events.map((e) => ({ ...e }) as TutorEvent);
+/** A copy of one scripted turn, with each say line pointing at its cached Gemini voice. */
+function voiced(scenario: DemoScenario, turn: number): TutorEvent[] {
+  let sayIndex = 0;
+  return scenario.scripted.turns[turn].map((e) =>
+    e.type === "say" ? { ...e, audioUrl: demoVoiceUrl(scenario, turn, sayIndex++, e.text) } : ({ ...e } as TutorEvent),
+  );
+}
+
+/**
+ * Asks for every line's voice in the background, so later lines are cached by the time they play.
+ * The first visitor after a deploy renders them; everyone after gets them from the CDN.
+ */
+function warmVoices(scenario: DemoScenario): void {
+  if (typeof fetch === "undefined") return;
+  // One at a time: TTS rate limits are low, and the lines play in this order anyway.
+  void (async () => {
+    for (const url of scriptedVoiceUrls(scenario).slice(1)) {
+      const res = await fetch(url).catch(() => null);
+      if (!res || res.status === 503) return; // Gemini not configured: the browser voice is used.
+    }
+  })();
+}
 
 function endsSession(events: readonly TutorEvent[]): boolean {
   return events.some((e) => e.type === "end_session");
@@ -27,6 +49,7 @@ export function createScriptedClient(scenarioKey: string): TutorApiClient {
   return {
     async start(): Promise<Result<StartResponse>> {
       index = 0;
+      warmVoices(scenario);
       await wait(START_DELAY_MS);
       return {
         ok: true,
@@ -46,7 +69,7 @@ export function createScriptedClient(scenarioKey: string): TutorApiClient {
             goal: scenario.goal,
             maxMinutes: scenario.maxMinutes,
           },
-          openingEvents: clone(script.turns[0]),
+          openingEvents: voiced(scenario, 0),
         },
       };
     },
@@ -61,7 +84,7 @@ export function createScriptedClient(scenarioKey: string): TutorApiClient {
           data: { turnIdx: index, learnerText: null, events: [{ type: "end_session" }], ended: true, endReason: "model_end" },
         };
       }
-      const events = clone(script.turns[index]);
+      const events = voiced(scenario, index);
       const ended = endsSession(events);
       return {
         ok: true,

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent, type PointerEvent } from "react";
+import { Volume2, VolumeX } from "lucide-react";
 import { MAX_RECORDING_MS } from "@/lib/tutor/recording";
 import styles from "./practice.module.css";
 
@@ -30,6 +31,8 @@ type ComposerProps = {
   error: string | null;
   soundBlocked: boolean;
   onEnableSound: () => void;
+  muted: boolean;
+  onToggleMute: () => void;
   teacherName: string;
 };
 
@@ -57,6 +60,8 @@ export function Composer(props: ComposerProps) {
     error,
     soundBlocked,
     onEnableSound,
+    muted,
+    onToggleMute,
     teacherName,
   } = props;
 
@@ -139,14 +144,26 @@ export function Composer(props: ComposerProps) {
             </button>
           ))}
         </div>
-        <button
-          type="button"
-          onClick={onEnd}
-          disabled={ending}
-          className="rounded-full border border-[var(--line-strong)] bg-[var(--soft)] px-4 py-1.5 text-[13px] font-semibold text-[var(--ink)] hover:bg-[var(--soft-hover)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus)] disabled:opacity-50"
-        >
-          {ending ? "Ending..." : "End"}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={onToggleMute}
+            aria-pressed={muted}
+            aria-label={muted ? `Turn ${teacherName}'s voice on` : `Mute ${teacherName}`}
+            className="inline-flex items-center gap-1.5 rounded-full border border-[var(--line-strong)] bg-[var(--soft)] px-3 py-1.5 text-[13px] font-semibold text-[var(--ink)] hover:bg-[var(--soft-hover)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus)]"
+          >
+            {muted ? <VolumeX className="h-4 w-4" aria-hidden="true" /> : <Volume2 className="h-4 w-4" aria-hidden="true" />}
+            {muted ? "Sound off" : "Sound on"}
+          </button>
+          <button
+            type="button"
+            onClick={onEnd}
+            disabled={ending}
+            className="rounded-full border border-[var(--line-strong)] bg-[var(--soft)] px-4 py-1.5 text-[13px] font-semibold text-[var(--ink)] hover:bg-[var(--soft-hover)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus)] disabled:opacity-50"
+          >
+            {ending ? "Ending..." : "End"}
+          </button>
+        </div>
       </div>
 
       <div aria-live="polite" className="min-h-[1.5rem] text-sm text-[var(--ink)]">

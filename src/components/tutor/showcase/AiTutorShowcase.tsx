@@ -190,7 +190,7 @@ export function AiTutorShowcase({ signedIn }: { signedIn: boolean }) {
         </div>
         <p className="mt-3 text-center text-xs text-slate-500">
           {mode === "watch"
-            ? `Watch mode plays a scripted lesson with ${cast.label.split(" · ")[0]}. The learner lines are scripted, so no account or model call is needed.`
+            ? `Watch mode plays a scripted lesson with ${cast.label.split(" · ")[0]}. The learner lines are scripted, so no account is needed. Turn your sound on.`
             : "Your replies go to the teacher for this demo only. Nothing is saved, and the report is a guide, not a grade."}
         </p>
       </section>
