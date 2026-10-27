@@ -140,6 +140,25 @@ export default async function LearnPage({ params, searchParams }: PageProps) {
   }
 
   const quizData = quizDataRaw as any;
+  let initialQuizAttempt = null;
+  if (quizData?.id && userId) {
+    const { data: attempt } = await supabase
+      .from("quiz_attempts")
+      .select("id, score, passed, answers, created_at")
+      .eq("quiz_id", quizData.id)
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    initialQuizAttempt = attempt
+      ? {
+          score: attempt.score,
+          passed: attempt.passed,
+          answers: (attempt.answers as Record<string, number[]>) ?? undefined,
+        }
+      : null;
+  }
+
   const completedSet = new Set(
     (progressData ?? []).filter((p) => p.completed).map((p) => p.lesson_id)
   );
@@ -176,6 +195,7 @@ export default async function LearnPage({ params, searchParams }: PageProps) {
         content: Record<string, unknown>;
       }[]}
       quiz={quizData}
+      initialQuizAttempt={initialQuizAttempt}
       completedLessonIds={[...completedSet]}
       allDone={allDone}
       existingCertificate={existingCert ?? null}

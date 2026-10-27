@@ -40,13 +40,38 @@ type AttemptResult = {
 export function QuizPlayer({
   quiz,
   questions,
+  initialAttempt,
+  lessonId,
+  courseSlug,
+  onPassed,
 }: {
   quiz: Quiz;
   questions: Question[];
+  initialAttempt?: {
+    score: number;
+    passed: boolean;
+    answers?: Record<string, number[]>;
+  } | null;
+  lessonId?: string;
+  courseSlug?: string;
+  onPassed?: (score: number) => void;
 }) {
-  const [answers, setAnswers] = useState<Record<string, number[]>>({});
-  const [result, setResult] = useState<AttemptResult | null>(null);
-  const [submitted, setSubmitted] = useState(false);
+  const [answers, setAnswers] = useState<Record<string, number[]>>(
+    initialAttempt?.answers ?? {}
+  );
+  const [result, setResult] = useState<AttemptResult | null>(
+    initialAttempt
+      ? {
+          score: initialAttempt.score,
+          passed: initialAttempt.passed,
+          correctAnswers: questions.reduce((acc, q) => {
+            acc[q.id] = q.correct_indices;
+            return acc;
+          }, {} as Record<string, number[]>),
+        }
+      : null
+  );
+  const [submitted, setSubmitted] = useState(Boolean(initialAttempt?.passed));
   const [submitting, startSubmit] = useTransition();
 
   function toggleAnswer(questionId: string, optionIdx: number) {
@@ -72,9 +97,15 @@ export function QuizPlayer({
 
     startSubmit(async () => {
       try {
-        const res = await saveQuizAttempt(quiz.id, answers);
+        const res = await saveQuizAttempt(quiz.id, answers, lessonId, courseSlug);
         setResult(res);
         setSubmitted(true);
+        if (res.passed) {
+          toast.success(`🎉 Great job! You scored ${res.score}% and passed the quiz!`);
+          onPassed?.(res.score);
+        } else {
+          toast.error(`Score: ${res.score}%. You need ${quiz.pass_threshold}% to pass.`);
+        }
       } catch (err) {
         toast.error(err instanceof Error ? err.message : "Failed to submit quiz");
       }
@@ -216,7 +247,16 @@ export function QuizPlayer({
                   <Trophy className="h-10 w-10" />
                 </div>
                 <h4 className="text-3xl font-bold tracking-tight mb-2">Mastery Confirmed!</h4>
-                <p className="text-green-50 font-medium mb-8">You scored {result.score}% — you&apos;ve cleared the bar.</p>
+                <p className="text-green-50 font-medium mb-6">You scored {result.score}% — you&apos;ve cleared the pass threshold ({quiz.pass_threshold}%).</p>
+                <div className="flex flex-wrap items-center justify-center gap-3">
+                  <Button
+                    onClick={handleRetry}
+                    className="rounded-xl border border-white/30 bg-white/15 px-6 py-2.5 text-sm font-semibold text-white hover:bg-white/25 transition-all shadow-sm"
+                  >
+                    <RotateCcw className="mr-2 h-4 w-4" />
+                    Retake for Practice
+                  </Button>
+                </div>
               </>
             ) : (
               <>

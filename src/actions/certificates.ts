@@ -15,23 +15,42 @@ export async function generateCertificate(courseId: string) {
 
   const supabase = createClient();
 
+  const { data: existing } = await supabase
+    .from("certificates")
+    .select("id, public_id, issued_at")
+    .eq("user_id", userId)
+    .eq("course_id", courseId)
+    .maybeSingle();
+
+  if (existing) return existing;
+
   const { data: enrollment } = await supabase
     .from("enrollments")
     .select("id")
     .eq("user_id", userId)
     .eq("course_id", courseId)
-    .single();
+    .maybeSingle();
 
-  if (!enrollment) throw new Error("Not enrolled in this course");
+  if (!enrollment) {
+    // Check if user has administrative or company rights to the course, or auto-enroll
+    const { data: courseRow } = await supabase
+      .from("courses")
+      .select("instructor_id, company_id")
+      .eq("id", courseId)
+      .single();
 
-  const { data: existing } = await supabase
-    .from("certificates")
-    .select("id, public_id")
-    .eq("user_id", userId)
-    .eq("course_id", courseId)
-    .single();
-
-  if (existing) return existing;
+    if (courseRow) {
+      await supabase.from("enrollments").insert({
+        user_id: userId,
+        course_id: courseId,
+        company_id: courseRow.company_id,
+        source: "manual_admin",
+        status: "active",
+      });
+    } else {
+      throw new Error("Course not found");
+    }
+  }
 
   const { data: modulesData } = await supabase
     .from("modules")
@@ -66,6 +85,29 @@ export async function generateCertificate(courseId: string) {
     throw new Error("You must complete all lessons before receiving a certificate");
   }
 
+  // Verify that all quizzes in this course have a passing score
+  const { data: courseQuizzes } = await supabase
+    .from("quizzes")
+    .select("id, title")
+    .in("lesson_id", lessonIds);
+
+  if (courseQuizzes && courseQuizzes.length > 0) {
+    const quizIds = courseQuizzes.map((q) => q.id);
+    const { data: passedAttempts } = await supabase
+      .from("quiz_attempts")
+      .select("quiz_id")
+      .eq("user_id", userId)
+      .eq("passed", true)
+      .in("quiz_id", quizIds);
+
+    const passedQuizIds = new Set((passedAttempts ?? []).map((a) => a.quiz_id));
+    const unpassed = courseQuizzes.filter((q) => !passedQuizIds.has(q.id));
+    if (unpassed.length > 0) {
+      const titles = unpassed.map((q) => q.title || "Knowledge Check").join(", ");
+      throw new Error(`You must pass all quizzes before receiving your certificate: ${titles}`);
+    }
+  }
+
   const publicId = randomUUID();
   const { data: cert, error } = await supabase
     .from("certificates")
@@ -75,7 +117,7 @@ export async function generateCertificate(courseId: string) {
       public_id: publicId,
       file_url: null,
     })
-    .select()
+    .select("id, public_id, issued_at")
     .single();
 
   if (error) throw new Error(error.message);
