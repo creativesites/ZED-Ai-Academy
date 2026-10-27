@@ -5,7 +5,13 @@ import { buildSystemPrompt, type TutorPromptMode } from "./prompt.ts";
 import { generateTurnJson, synthesizeCachedSpeech } from "./gemini-calls.ts";
 import { personaVoiceName, toPromptPersona, toPromptScenario, type SessionContext, type TutorSessionRow } from "./session-context.ts";
 import { recordUsage } from "./usage.ts";
-import { runTutorTurn, type TurnPipelineResult, type TurnPipelineDeps } from "./turn-pipeline.ts";
+import {
+  DEBUG_RAW_OUTPUT_TYPE,
+  fallbackLanguageFor,
+  runTutorTurn,
+  type TurnPipelineDeps,
+  type TurnPipelineResult,
+} from "./turn-pipeline.ts";
 
 // Wires the real Gemini, TTS, storage, metering and database dependencies into the turn pipeline.
 // Used by the session start route (opening turn) and the turn route.
@@ -74,11 +80,16 @@ export async function runSessionTurn(input: {
       return speech.url;
     },
     saveTurn: async (turn) => {
+      // The events jsonb holds the teacher events. When the model output was unusable, the raw text
+      // is appended as a debug entry that the contract does not define; clients must ignore it.
+      const stored: unknown[] = turn.rawOutput
+        ? [...turn.events, { type: DEBUG_RAW_OUTPUT_TYPE, raw: turn.rawOutput }]
+        : turn.events;
       const { error } = await supabase.from("tutor_turns").insert({
         session_id: session.id,
         idx: turn.idx,
         learner_text: turn.learnerText,
-        events: turn.events as unknown as Json,
+        events: stored as unknown as Json,
         latency_ms: turn.latencyMs,
       });
       if (error) {
@@ -98,6 +109,7 @@ export async function runSessionTurn(input: {
       systemInstruction: sessionSystemPrompt(ctx, mode),
       voice: personaVoiceName(ctx.persona),
       history: ctx.history,
+      fallbackLanguage: fallbackLanguageFor(ctx.skillLanguage ?? ctx.profileLanguage),
     },
     deps,
   );

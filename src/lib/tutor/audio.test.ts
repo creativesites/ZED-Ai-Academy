@@ -36,11 +36,18 @@ test("pcmToWav does not modify its input", () => {
   assert.deepEqual([...pcm], [9, 9, 9, 9]);
 });
 
-test("cache key is a stable sha256 hex of voice and text", () => {
-  const key = ttsCacheKey("Kore", "你好");
+test("cache key is a stable sha256 hex of TTS model, voice and text", () => {
+  const key = ttsCacheKey("gemini-3.8-flash-lite-tts", "Kore", "你好");
   assert.match(key, /^[0-9a-f]{64}$/);
-  assert.equal(key, ttsCacheKey("Kore", "你好"));
-  assert.notEqual(key, ttsCacheKey("Puck", "你好"));
-  assert.notEqual(key, ttsCacheKey("Kore", "你好!"));
-  assert.equal(ttsCachePath("Kore", "你好"), `${key}.wav`);
+  assert.equal(key, ttsCacheKey("gemini-3.8-flash-lite-tts", "Kore", "你好"));
+  assert.notEqual(key, ttsCacheKey("gemini-3.8-flash-lite-tts", "Puck", "你好"));
+  assert.notEqual(key, ttsCacheKey("gemini-3.8-flash-lite-tts", "Kore", "你好!"));
+  assert.equal(ttsCachePath("gemini-3.8-flash-lite-tts", "Kore", "你好"), `${key}.wav`);
+});
+
+test("changing the TTS model changes the cache key, so old audio is not reused", () => {
+  assert.notEqual(
+    ttsCacheKey("gemini-3.8-flash-lite-tts", "Kore", "你好"),
+    ttsCacheKey("gemini-4.0-tts", "Kore", "你好"),
+  );
 });

@@ -21,7 +21,14 @@ export type TurnPipelineDeps = {
   /** TTS for one `say` line. Returns the public audio URL, or null when synthesis is unavailable. */
   synthesize: (text: string, voice: string) => Promise<string | null>;
   /** Persists the turn row. */
-  saveTurn: (turn: { idx: number; learnerText: string | null; events: TutorEvent[]; latencyMs: number }) => Promise<void>;
+  /** `rawOutput` is the model's unusable reply when the fallback was used. Storage keeps it for debugging. */
+  saveTurn: (turn: {
+    idx: number;
+    learnerText: string | null;
+    events: TutorEvent[];
+    latencyMs: number;
+    rawOutput?: string;
+  }) => Promise<void>;
 };
 
 export type TurnPipelineInput = {
@@ -32,6 +39,8 @@ export type TurnPipelineInput = {
   learnerText: string | null;
   /** Used as the user message when there is no learner text (the opening turn). */
   openingInstruction: string;
+  /** Language of the fallback apology when the model gives no valid event. */
+  fallbackLanguage: FallbackLanguage;
   systemInstruction: string;
   voice: string;
   history: HistoryTurn[];
@@ -44,8 +53,10 @@ export type TurnPipelineResult = {
   endReason?: "time_box" | "turn_limit" | "model_end";
   /** Model events dropped by validation. */
   dropped: number;
-  /** Set when the model reply was missing or not valid JSON. The turn is still stored, with no events. */
+  /** Set when the model reply was missing or not valid JSON. */
   parseError?: string;
+  /** True when no valid model event was left, so the fallback events were used. */
+  fallback: boolean;
   latencyMs: number;
 };
 
@@ -78,7 +89,7 @@ export async function runTutorTurn(input: TurnPipelineInput, deps: TurnPipelineD
     const summary = endReason === "time_box" ? TIME_UP_SUMMARY : TURN_LIMIT_SUMMARY;
     const events: TutorEvent[] = [{ type: "end_session", summary }];
     await deps.saveTurn({ idx: input.idx, learnerText: input.learnerText, events, latencyMs: 0 });
-    return { idx: input.idx, events, ended: true, endReason, dropped: 0, latencyMs: 0 };
+    return { idx: input.idx, events, ended: true, endReason, dropped: 0, fallback: false, latencyMs: 0 };
   }
 
   const contents = buildContents(input.history, input.learnerText, input.openingInstruction);
@@ -88,16 +99,26 @@ export async function runTutorTurn(input: TurnPipelineInput, deps: TurnPipelineD
   let events: TutorEvent[] = [];
   let dropped = 0;
   let parseError: string | undefined;
-  if (response.text === undefined || response.text.trim() === "") {
+  const rawText = response.text !== undefined && response.text.trim() !== "" ? response.text : undefined;
+  if (rawText === undefined) {
     parseError = "empty model response";
   } else {
-    const parsed = parseTutorTurn(response.text);
+    const parsed = parseTutorTurn(rawText);
     if (parsed.ok) {
       events = parsed.events;
       dropped = parsed.dropped;
     } else {
       parseError = parsed.error;
     }
+  }
+
+  // No valid event at all: the learner still hears the teacher. The raw output is kept for debugging.
+  let fallback = false;
+  let rawOutput: string | undefined;
+  if (events.length === 0) {
+    fallback = true;
+    events = fallbackTurnEvents(input.fallbackLanguage);
+    rawOutput = rawText;
   }
 
   // Each `say` line gets audio. A TTS failure leaves the line as text only.
@@ -110,7 +131,7 @@ export async function runTutorTurn(input: TurnPipelineInput, deps: TurnPipelineD
   );
 
   const modelEnded = events.some((e) => e.type === "end_session");
-  await deps.saveTurn({ idx: input.idx, learnerText: input.learnerText, events, latencyMs });
+  await deps.saveTurn({ idx: input.idx, learnerText: input.learnerText, events, latencyMs, rawOutput });
 
   return {
     idx: input.idx,
@@ -119,8 +140,34 @@ export async function runTutorTurn(input: TurnPipelineInput, deps: TurnPipelineD
     endReason: modelEnded ? "model_end" : undefined,
     dropped,
     parseError,
+    fallback,
     latencyMs,
   };
+}
+
+export type FallbackLanguage = "zh" | "es" | "fr" | "en";
+
+const FALLBACK_LINES: Record<FallbackLanguage, { text: string; translation?: string }> = {
+  zh: { text: "不好意思，请再说一遍。", translation: "Sorry, could you say that again?" },
+  es: { text: "Perdona, ¿puedes repetirlo?", translation: "Sorry, can you repeat that?" },
+  fr: { text: "Pardon, vous pouvez répéter ?", translation: "Sorry, could you repeat that?" },
+  en: { text: "Sorry, could you say that again?" },
+};
+
+/** Events used when the model gave no valid event: one spoken apology in the target language, and a thinking gesture. */
+export function fallbackTurnEvents(language: FallbackLanguage): TutorEvent[] {
+  const line = FALLBACK_LINES[language];
+  return [
+    line.translation === undefined
+      ? { type: "say", text: line.text }
+      : { type: "say", text: line.text, translation: line.translation },
+    { type: "gesture", name: "think" },
+  ];
+}
+
+/** Maps a session's language pack (or persona language) to a fallback language. Unknown languages use English. */
+export function fallbackLanguageFor(language: string | null | undefined): FallbackLanguage {
+  return language === "zh" || language === "es" || language === "fr" ? language : "en";
 }
 
 /**
@@ -152,10 +199,18 @@ export function buildContents(
   return contents;
 }
 
-/** Stored events without audio URLs, so history stays small. Non-array values become an empty list. */
+/** Type of the debug entry that storage appends when the model output was unusable. Never sent back to the model. */
+export const DEBUG_RAW_OUTPUT_TYPE = "debug_raw_output";
+
+/**
+ * Stored events without audio URLs or debug entries, so history stays small and the model only sees
+ * what the teacher said. Non-array values become an empty list.
+ */
 export function eventsForHistory(events: unknown): unknown[] {
   if (!Array.isArray(events)) return [];
-  return events.map((e) => {
+  return events
+    .filter((e) => !(typeof e === "object" && e !== null && (e as { type?: unknown }).type === DEBUG_RAW_OUTPUT_TYPE))
+    .map((e) => {
     if (typeof e === "object" && e !== null && "audioUrl" in e) {
       const copy: Record<string, unknown> = { ...(e as Record<string, unknown>) };
       delete copy.audioUrl;

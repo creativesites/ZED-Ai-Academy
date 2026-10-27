@@ -93,18 +93,18 @@ export type SynthesizedSpeech = {
 };
 
 /**
- * Speech for one line, cached in the tutor-tts-cache bucket under sha256(voice + text).
+ * Speech for one line, cached in the tutor-tts-cache bucket under sha256(model + voice + text).
  * A cache hit costs nothing. A miss calls TTS, wraps the raw PCM in a WAV header and uploads it.
  */
 export async function synthesizeCachedSpeech(text: string, voice: string): Promise<SynthesizedSpeech> {
   const supabase = createServiceClient();
-  const path = ttsCachePath(voice, text);
+  const model = modelFor("tutorTts");
+  const path = ttsCachePath(model, voice, text);
   const url = supabase.storage.from(TTS_BUCKET).getPublicUrl(path).data.publicUrl;
 
   const hit = await fetch(url, { method: "HEAD" }).then((r) => r.ok).catch(() => false);
-  if (hit) return { url, cached: true, model: "" };
+  if (hit) return { url, cached: true, model };
 
-  const model = modelFor("tutorTts");
   const response = await gemini.models.generateContent({
     model,
     contents: [{ role: "user", parts: [{ text }] }],

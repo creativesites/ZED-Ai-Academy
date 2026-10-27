@@ -2,6 +2,7 @@ import "server-only";
 import { createServiceClient } from "@/lib/supabase/server";
 import { blocksToText } from "@/lib/course-blocks/block-to-text";
 import type { Database } from "@/types/database";
+import { parseMemory } from "../memory.ts";
 import { profileLanguage } from "../progress.ts";
 import { skillPackLanguage } from "../skill-packs.ts";
 import type { PromptLearnerProfile, PromptPersona, PromptScenario } from "./prompt.ts";
@@ -15,27 +16,7 @@ export type TutorSessionRow = Tables["tutor_sessions"]["Row"];
 export type ScenarioRow = Tables["practice_scenarios"]["Row"];
 export type PersonaRow = Tables["ai_personas"]["Row"];
 
-export type LearnerMemory = {
-  recentMistakes: { said: string; correct: string; category: string }[];
-  notes: string[];
-};
-
 export const LESSON_CONTEXT_MAX_CHARS = 24_000;
-
-export function parseMemory(raw: unknown): LearnerMemory {
-  const obj = typeof raw === "object" && raw !== null && !Array.isArray(raw) ? (raw as Record<string, unknown>) : {};
-  const recentMistakes = Array.isArray(obj.recentMistakes)
-    ? obj.recentMistakes.flatMap((m) => {
-        if (typeof m !== "object" || m === null) return [];
-        const r = m as Record<string, unknown>;
-        return typeof r.said === "string" && typeof r.correct === "string" && typeof r.category === "string"
-          ? [{ said: r.said, correct: r.correct, category: r.category }]
-          : [];
-      })
-    : [];
-  const notes = Array.isArray(obj.notes) ? obj.notes.filter((n): n is string => typeof n === "string") : [];
-  return { recentMistakes, notes };
-}
 
 export function toPromptScenario(scenario: ScenarioRow): PromptScenario {
   const beats = Array.isArray(scenario.beats) ? (scenario.beats as { id?: unknown; goal?: unknown }[]) : [];

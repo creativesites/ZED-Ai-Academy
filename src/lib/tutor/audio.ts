@@ -43,13 +43,14 @@ export function pcmToWav(pcm: Uint8Array, sampleRate: number, channels = 1, bits
 }
 
 /**
- * Cache key for a synthesized line: sha256 of voice and text, hex encoded.
+ * Cache key for a synthesized line: sha256 of the TTS model id, voice and text, hex encoded.
+ * Including the model means a model change never serves audio made by the previous one.
  * The object path is `<key>.wav` in the tutor-tts-cache bucket.
  */
-export function ttsCacheKey(voice: string, text: string): string {
-  return createHash("sha256").update(`${voice}\n${text}`, "utf8").digest("hex");
+export function ttsCacheKey(model: string, voice: string, text: string): string {
+  return createHash("sha256").update(`${model}\n${voice}\n${text}`, "utf8").digest("hex");
 }
 
-export function ttsCachePath(voice: string, text: string): string {
-  return `${ttsCacheKey(voice, text)}.wav`;
+export function ttsCachePath(model: string, voice: string, text: string): string {
+  return `${ttsCacheKey(model, voice, text)}.wav`;
 }
