@@ -25,6 +25,10 @@ export const PROPS = ["none", "tea_cup", "book", "menu", "croissant", "clipboard
 
 export type Prop = (typeof PROPS)[number];
 
+export const FACE_STYLES = ["lin", "sofia", "camille", "tendai", "tinashe"] as const;
+
+export type FaceStyle = (typeof FACE_STYLES)[number];
+
 export const VISEMES = [
   {
     value: 0,
