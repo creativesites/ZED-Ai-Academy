@@ -1,5 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
-import { GEMINI_MODEL, gemini } from "@/lib/ai/gemini";
+import { gemini } from "@/lib/ai/gemini";
+import { modelFor } from "@/lib/ai/models";
 import { NextRequest } from "next/server";
 
 export async function POST(req: NextRequest) {
@@ -55,7 +56,7 @@ VALID SCHEMAS REFERENCE:
 Return ONLY the updated JSON block content:`;
 
     const response = await gemini.models.generateContent({
-      model: GEMINI_MODEL,
+      model: modelFor("editBlock"),
       contents: prompt,
       config: { maxOutputTokens: 2500, responseMimeType: "application/json" },
     });

@@ -1,6 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { createClient } from "@/lib/supabase/server";
-import { GEMINI_MODEL, gemini } from "@/lib/ai/gemini";
+import { gemini } from "@/lib/ai/gemini";
+import { modelFor } from "@/lib/ai/models";
 import { NextRequest } from "next/server";
 import { getCourseDomainPreset } from "@/lib/course-domain-presets";
 
@@ -61,7 +62,7 @@ Rules:
 
   try {
     const response = await gemini.models.generateContent({
-      model: GEMINI_MODEL,
+      model: modelFor("curriculum"),
       contents: prompt,
       config: { maxOutputTokens: 2000, responseMimeType: "application/json" },
     });

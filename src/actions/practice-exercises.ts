@@ -3,7 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { auth } from "@clerk/nextjs/server";
 import { createServiceClient } from "@/lib/supabase/server";
-import { gemini, GEMINI_MODEL } from "@/lib/ai/gemini";
+import { gemini } from "@/lib/ai/gemini";
+import { modelFor } from "@/lib/ai/models";
 import type { Json } from "@/types/database";
 
 const BUCKET = "practice-submissions";
@@ -80,7 +81,7 @@ Return JSON with:
 }`;
 
   const result = await gemini.models.generateContent({
-    model: GEMINI_MODEL,
+    model: modelFor("practiceScoring"),
     contents: [{ role: "user", parts: [{ text: prompt }] }],
     config: {
       temperature: 0.2,
@@ -240,7 +241,7 @@ export async function submitPracticeExercise(formData: FormData) {
         feedback_summary: score.feedback_summary ?? null,
         strengths: (score.strengths ?? []) as Json,
         improvements: (score.improvements ?? []) as Json,
-        model: GEMINI_MODEL,
+        model: modelFor("practiceScoring"),
         confidence: typeof score.confidence === "number" ? score.confidence : null,
         needs_instructor_review: needsReview,
         raw_ai_response: score as Json,

@@ -1,6 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { createClient } from "@/lib/supabase/server";
-import { GEMINI_MODEL, gemini } from "@/lib/ai/gemini";
+import { gemini } from "@/lib/ai/gemini";
+import { modelFor } from "@/lib/ai/models";
 import { NextRequest } from "next/server";
 
 export async function POST(req: NextRequest) {
@@ -93,7 +94,7 @@ STYLE:
 
   try {
     let response = await gemini.models.generateContent({
-      model: GEMINI_MODEL,
+      model: modelFor("siteIntelligence"),
       contents,
       config: {
         systemInstruction: systemPrompt,
@@ -149,7 +150,7 @@ STYLE:
       });
 
       const stream = await gemini.models.generateContentStream({
-        model: GEMINI_MODEL,
+        model: modelFor("siteIntelligence"),
         contents,
         config: {
           systemInstruction: systemPrompt,
@@ -162,7 +163,7 @@ STYLE:
 
     // If no tool call, just stream the original message (or re-run as stream for better UX)
     const stream = await gemini.models.generateContentStream({
-      model: GEMINI_MODEL,
+      model: modelFor("siteIntelligence"),
       contents,
       config: {
         systemInstruction: systemPrompt,

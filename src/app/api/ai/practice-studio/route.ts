@@ -1,5 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
-import { gemini, GEMINI_MODEL } from "@/lib/ai/gemini";
+import { gemini } from "@/lib/ai/gemini";
+import { modelFor } from "@/lib/ai/models";
 import { NextRequest } from "next/server";
 
 interface ToolConfig {
@@ -98,7 +99,7 @@ export async function POST(req: NextRequest) {
   const userPrompt = toolConfig.buildUserPrompt(inputs as Record<string, string>);
 
   const stream = await gemini.models.generateContentStream({
-    model: GEMINI_MODEL,
+    model: modelFor("practiceStudio"),
     contents: [{ role: "user", parts: [{ text: userPrompt }] }],
     config: { systemInstruction: systemPrompt, temperature: 0.7 },
   });
