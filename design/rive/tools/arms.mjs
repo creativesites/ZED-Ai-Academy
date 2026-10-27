@@ -62,9 +62,22 @@ export function handFist(s) {
     capsule(s * 40, 44, 30, 62, -s * 1.1);
   return handShape('HandFist', s, geoms);
 }
-export const HAND_POSES = ['open', 'point', 'thumb', 'fist'];
+// n extended fingers (index first, then middle, ring, pinky; thumb joins at 5)
+export function handCount(n, s) {
+  const xs = [s * 46, s * 16, -s * 16, -s * 46];            // index, middle, ring, pinky (index nearest the thumb)
+  const lens = [112, 126, 116, 92], rots = [s * -0.1, s * -0.03, s * 0.04, s * 0.11];
+  let g = ell(0, 64, 118, 116, 'Palm'), grooves = '';
+  for (let i = 0; i < 4; i++) g += i < n ? capsule(xs[i], 84, 28, lens[i] - 8, rots[i]) : ell(xs[i], 118 + (i % 2) * 4, 30, 40);
+  for (let i = 0; i < 3; i++) if (i + 1 < n) {
+    const gx = (xs[i] + xs[i + 1]) / 2;
+    grooves += `<Shape name="Groove"><PointsPath isClosed="false"><StraightVertex x="${f(gx)}" y="96"/><StraightVertex x="${f(gx + (rots[i] + rots[i + 1]) * 40)}" y="${f(60 + Math.min(lens[i], lens[i + 1]) * 0.75)}"/></PointsPath><Stroke thickness="5" cap="round"><SolidColor colorValue="${argb('3A1A12', 0.34)}"/></Stroke></Shape>`;
+  }
+  g += n >= 5 ? capsule(s * 56, 44, 30, 72, -s * 1.0) : capsule(s * 30, 70, 30, 50, -s * 1.25);
+  return grooves + handShape(`HandCount${n}`, s, g);
+}
+export const HAND_POSES = ['open', 'point', 'thumb', 'fist', 'count_1', 'count_2', 'count_3', 'count_4', 'count_5'];
 function handPoses(side, s) {
-  const mk = { open: handOpen, point: handPoint, thumb: handThumb, fist: handFist };
+  const mk = { open: handOpen, point: handPoint, thumb: handThumb, fist: handFist, count_1: (x) => handCount(1, x), count_2: (x) => handCount(2, x), count_3: (x) => handCount(3, x), count_4: (x) => handCount(4, x), count_5: (x) => handCount(5, x) };
   return `<Solo activeComponentId="${ID(`hand_open_${side}`)}" name="HandPose${side}" id="${ID(`HandSolo${side}`)}">` +
     HAND_POSES.map((p) => `<Node name="${p}" id="${ID(`hand_${p}_${side}`)}">${mk[p](s)}</Node>`).join('') + `</Solo>`;
 }

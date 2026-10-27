@@ -23,13 +23,12 @@ const finish = (x) => { document.getElementById('out').textContent = 'RESULT ' +
     const run = (n) => { for (let i = 0; i < n; i++) step(); };
     const fire = (g, tone) => { out.push(['fire', frame.n, g, tone || '']); inst.enum('gesture').value = g; if (tone) inst.enum('toneShape').value = tone; inst.trigger('playGesture').trigger(); };
     run(30);
-    const seq = [['wave'], ['nod'], ['head_shake'], ['explain'], ['point_card'], ['point_left'], ['point_right'], ['thumbs_up'], ['clap'], ['think'], ['listen'], ['celebrate'], ['shrug'], ['beckon'], ['oops']];
-    for (const [g] of seq) { out.push(['--', g]); fire(g); run(200); }
-    for (const n of [1, 3, 5]) { inst.number('countTo').value = n; out.push(['-- count', n]); fire('count'); run(220); }
-    for (const t of ['t1', 't2', 't3', 't4', 'neutral', 'rise', 'fall']) { out.push(['-- trace', t]); fire('trace_tone', t); run(170); }
-    out.push(['-- interrupt wave -> nod @20f']); fire('wave'); run(20); fire('nod'); run(120);
-    out.push(['-- reduced motion wave']); inst.boolean('reducedMotion').value = true; fire('wave'); run(130); inst.boolean('reducedMotion').value = false;
-    out.push(['-- idle cancel']); fire('celebrate'); run(30); fire('idle'); run(40);
+    // A: fire during the previous gesture's blend-out (nod = 54 f; gestureEnd at 53, blend-out ~11 f)
+    out.push(['-- A nod then wave during blend-out']); fire('nod'); run(55); fire('wave'); run(140);
+    // B: fire during blend-in of the previous trigger
+    out.push(['-- B wave then nod 3f later (blend-in)']); fire('wave'); run(3); fire('nod'); run(120);
+    // C: back-to-back counts, second fired right at the end of the first
+    out.push(['-- C count 1 then count 3 at end']); inst.number('countTo').value = 1; fire('count'); run(86); inst.number('countTo').value = 3; fire('count'); run(220);
     // draw timing
     const t0 = performance.now();
     for (let i = 0; i < 120; i++) { step(); renderer.clear(); ab.draw(renderer); renderer.flush(); }

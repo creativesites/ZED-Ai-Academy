@@ -4,7 +4,7 @@
 
 let counter = 200;
 export const nid = () => `0:${counter++}`;
-const named = {};
+export const named = {};
 export let NS = '';
 export const setNs = (n) => { NS = n; };
 export const ID = (name) => (named[NS + name] ||= nid());
@@ -145,3 +145,7 @@ export function cylinder(cx, cy, hw, o = {}) {
     { linear: { x1: cx + hw, y1: cy, x2: cx + hw * 0.72, y2: cy, stops: [[0, argb(rimC, rim)], [1, argb(rimC, 0)]] } },
   ];
 }
+
+// Solo whose active child is chosen by a 1-frame animation
+export const soloXml = (name, firstId, inner) => `<Solo activeComponentId="${firstId}" name="${name}" id="${ID(name)}">${inner}</Solo>`;
+export const nodeXml = (name, id, inner) => `<Node name="${name}" id="${id}">${inner}</Node>`;

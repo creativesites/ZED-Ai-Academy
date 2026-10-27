@@ -13,9 +13,9 @@ function opening(w, ut, lt, dy = 0) {
 }
 
 const K = 1.32;
-function openMouth(name, o) {
+function openMouth(name, o, st) {
   const { teethOverLip = false } = o;
-  const w = o.w * K, ut = o.ut * K, lt = o.lt * K, teethTop = (o.teethTop || 0) * K, teethBot = (o.teethBot || 0) * K, tongue = (o.tongue || 0) * K, dy = o.dy || 0, lipW = (o.lipW || 20) * 1.15;
+  const w = o.w * K * st.mw, ut = o.ut * K, lt = o.lt * K, teethTop = (o.teethTop || 0) * K, teethBot = (o.teethBot || 0) * K, tongue = (o.tongue || 0) * K, dy = o.dy || 0, lipW = (o.lipW || 20) * 1.15 * st.lip;
   const openId = nid();
   const pts = opening(w, ut, lt, dy);
   const clip = `<ClippingShape sourceId="${openId}"/>`;
@@ -45,11 +45,11 @@ function openMouth(name, o) {
     fills: [{ linear: { x1: MX, y1: MY + dy - ut, x2: MX, y2: MY + dy + lt, stops: [[0, argb(CAV)], [1, argb(CAV2)]] } }],
   }));
   return parts.join('');
-  }, { id: ID(name) });
+  }, { id: ID(name + '_' + st.key) });
 }
 
-function closedMouth(name, o) {
-  const w = o.w * K, smile = (o.smile ?? 10) * K, thick = (o.thick ?? 18) * 1.2, press = !!o.press;
+function closedMouth(name, o, st) {
+  const w = o.w * K * st.mw, smile = (o.smile ?? 10) * K, thick = (o.thick ?? 18) * 1.2 * st.lip, press = !!o.press;
   return group(name, MX, MY, () => {
   const parts = [];
   const line = [[MX - w, MY - smile * 0.2], [MX - w * 0.5, MY + smile * 0.55], [MX, MY + smile * 0.75], [MX + w * 0.5, MY + smile * 0.55], [MX + w, MY - smile * 0.2]];
@@ -68,21 +68,21 @@ function closedMouth(name, o) {
   parts.push(blob({ name: 'DimpleL', pts: [[MX - w - 14, MY - 6], [MX - w - 6, MY + 4], [MX - w + 2, MY + 6]], closed: false, strokes: [{ w: 4, solid: argb('7A3A2A', 0.35) }] }));
   parts.push(blob({ name: 'DimpleR', pts: [[MX + w + 14, MY - 6], [MX + w + 6, MY + 4], [MX + w - 2, MY + 6]], closed: false, strokes: [{ w: 4, solid: argb('7A3A2A', 0.35) }] }));
   return parts.join('');
-  }, { id: ID(name) });
+  }, { id: ID(name + '_' + st.key) });
 }
 
 // index = viseme value 0..8
 export const VISEME_NAMES = ['rest', 'AA', 'EH', 'EE', 'OH', 'OO', 'MBP', 'FV', 'CONS'];
-export function visemes() {
+export function visemes(st) {
   return [
-    closedMouth('v0_rest', { w: 46, smile: 14 }),
-    openMouth('v1_AA', { w: 52, ut: 24, lt: 66, teethTop: 22, tongue: 20 }),
-    openMouth('v2_EH', { w: 60, ut: 20, lt: 40, teethTop: 20, tongue: 12 }),
-    openMouth('v3_EE', { w: 66, ut: 14, lt: 24, teethTop: 16, teethBot: 12 }),
-    openMouth('v4_OH', { w: 34, ut: 34, lt: 50, teethTop: 10, tongue: 14, lipW: 24 }),
-    openMouth('v5_OO', { w: 22, ut: 22, lt: 28, tongue: 8, lipW: 28 }),
-    closedMouth('v6_MBP', { w: 42, smile: 2, thick: 22, press: true }),
-    openMouth('v7_FV', { w: 50, ut: 10, lt: 26, teethTop: 20, teethOverLip: true, lipW: 18 }),
-    openMouth('v8_CONS', { w: 54, ut: 14, lt: 20, teethTop: 14, teethBot: 10 }),
+    closedMouth('v0_rest', { w: 46, smile: 14 }, st),
+    openMouth('v1_AA', { w: 52, ut: 24, lt: 66, teethTop: 22, tongue: 20 }, st),
+    openMouth('v2_EH', { w: 60, ut: 20, lt: 40, teethTop: 20, tongue: 12 }, st),
+    openMouth('v3_EE', { w: 66, ut: 14, lt: 24, teethTop: 16, teethBot: 12 }, st),
+    openMouth('v4_OH', { w: 34, ut: 34, lt: 50, teethTop: 10, tongue: 14, lipW: 24 }, st),
+    openMouth('v5_OO', { w: 22, ut: 22, lt: 28, tongue: 8, lipW: 28 }, st),
+    closedMouth('v6_MBP', { w: 42, smile: 2, thick: 22, press: true }, st),
+    openMouth('v7_FV', { w: 50, ut: 10, lt: 26, teethTop: 20, teethOverLip: true, lipW: 18 }, st),
+    openMouth('v8_CONS', { w: 54, ut: 14, lt: 20, teethTop: 14, teethBot: 10 }, st),
   ];
 }

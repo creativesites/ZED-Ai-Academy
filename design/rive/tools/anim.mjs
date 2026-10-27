@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { ID, nid, f, VM, NS, setNs, posOf } from './lib.mjs';
 import { SHOULDER, UPPER, FORE, TIP } from './arms.mjs';
 import { HAIR, OUTFIT, PROP } from './variants.mjs';
+import { FACE_STYLES, FS } from './faces.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const contract = JSON.parse(fs.readFileSync(path.join(here, '../../../docs/rive/teacher.contract.json'), 'utf8'));
@@ -92,6 +93,7 @@ const HAND_OPEN = (s) => ID(`hand_open_${s}`);
 // ---------------------------------------------------------------------------------------------
 function armPose(side, tx, ty, len, o = {}) {
   const r = reach(side, tx, ty, len, o.dy || 0);
+  if (o.pointAngle != null) o = { ...o, wrist: o.pointAngle - (r.sh + r.el) };   // absolute hand direction (pi = fingers up)
   return { [`Shoulder${side}.rotation`]: r.sh, [`Elbow${side}.rotation`]: r.el, [`Wrist${side}.rotation`]: o.wrist ?? 0 };
 }
 const REST_POSE = () => ({ ...REST });
@@ -127,12 +129,15 @@ function build(name, frames, keys, { events = {}, hands = {}, rm = false, loop =
   }
   // events
   const label = events.label || name;
-  for (const [ev, fr] of [['gestureStart', 1], ['gesturePeak', events.peak], ['gestureEnd', frames - 1], ...(events.extra || [])]) {
+  const evList = [['gestureStart', 1], ['gestureEnd', frames - 1], ...(events.extra || [])];
+  if (events.peaks) evList.push(['gesturePeak', events.peaks]); else if (events.peak != null) evList.push(['gesturePeak', events.peak]);
+  for (const [ev, fr0] of evList) {
+    const fr = Array.isArray(fr0) ? fr0[0] : fr0;
     if (fr == null) continue;
     const evName = typeof ev === 'string' ? ev : ev[0];
     const strVal = events.strFor ? events.strFor(evName) : label;
     tracks.push([`${evName}.${evName.startsWith('trace') ? 'toneShape' : 'gesture'}`, 'propertyValue', [[Math.max(0, fr - 1), strVal]]]);
-    tracks.push([evName, 'trigger', [[fr]]]);
+    tracks.push([evName, 'trigger', (Array.isArray(fr0) ? fr0 : [fr0]).map((x) => [x])]);
   }
   return anim(name + (rm ? '_rm' : ''), frames, loop, tracks);
 }
@@ -245,15 +250,19 @@ defGesture('oops', 84, () => {
   ];
 }, { events: { peak: 20 } });
 
-// count: raise the right hand and pulse once per number
+// count: raise the right hand; fingers appear one by one (1 -> n), one gesturePeak per finger
 for (let n = 1; n <= 5; n++) {
-  defGesture(`count_${n}`, 40 + n * 32, () => {
-    const t = armPose('R', 980, 760, 90, { wrist: 0.08 });
-    const ks = [[0, REST_POSE(), 'o'], [22, P(t), 'back']];
-    for (let i = 0; i < n; i++) ks.push([30 + i * 30, { 'WristR.rotation': -0.2 }, 'io'], [42 + i * 30, { 'WristR.rotation': 0.25 }, 'io']);
-    ks.push([40 + n * 32 - 16, P(t), 'io']);
+  const T0 = 24, STEP = 30;                       // 0.5 s per finger
+  const frames = T0 + n * STEP + 34;
+  const peaks = Array.from({ length: n }, (_, i) => T0 + (i + 1) * STEP);
+  defGesture(`count_${n}`, frames, () => {
+    const t = armPose('R', 985, 830, 0, { pointAngle: Math.PI + 0.06 });
+    const ks = [[0, REST_POSE(), 'o'], [T0 - 4, P(t), 'back']];
+    const wr = t['WristR.rotation'];
+    peaks.forEach((fr) => ks.push([fr, { 'WristR.rotation': wr + 0.08 }, 'io'], [fr + 12, { 'WristR.rotation': wr }, 'io']));
+    ks.push([T0 + n * STEP + 14, P(t), 'io']);
     return ks;
-  }, { hands: { R: [[4, n === 1 ? 'point' : 'open']] }, events: { peak: 30, extra: [] } });
+  }, { hands: { R: [[T0 - 6, 'fist'], ...peaks.map((fr, i) => [fr - 4, `count_${i + 1}`])] }, events: { peaks } });
 }
 
 // trace_tone: bake IK along the contract path so the fingertip follows it exactly
@@ -319,6 +328,20 @@ const layer = (name, body) => `<StateMachineLayer name="${name}" id="${ID('layer
 const loopLayer = (name, animId) => { const s = nid(); return layer(name, `<AnyState x="0" y="-150"/><EntryState><StateTransition stateToId="${s}"/></EntryState><AnimationState x="220" animationId="${animId}" id="${s}"/>`); };
 
 
+
+// faceStyle: 1-frame holds selecting nose/lips/face/lash/brow shapes and the eye form
+function faceStyleAnims() {
+  FACE_STYLES.forEach((st) => anim(`face_${st}`, 1, 'oneShot', [
+    ['FaceSolo', 'activeComponentId', [[0, ID(`face_${st}`)]]], ['NoseSolo', 'activeComponentId', [[0, ID(`nose_${st}`)]]],
+    ['MouthStyleSolo', 'activeComponentId', [[0, ID(`ms_${st}`)]]], ['LashSolo', 'activeComponentId', [[0, ID(`lash_${st}`)]]],
+    ['BrowShapeLSolo', 'activeComponentId', [[0, ID(`bs_${st}_L`)]]], ['BrowShapeRSolo', 'activeComponentId', [[0, ID(`bs_${st}_R`)]]],
+    ['BeardSolo', 'activeComponentId', [[0, ID(st === 'tinashe' ? 'bd_beard' : 'bd_none')]]], ['EarringNode', 'opacity', [[0, st === 'tinashe' ? 0 : 1, 'l']]],
+    ['EyeFormL', 'scaleX', [[0, FS[st].eye.sx, 'l']]], ['EyeFormR', 'scaleX', [[0, FS[st].eye.sx, 'l']]],
+    ['EyeFormL', 'scaleY', [[0, FS[st].eye.sy, 'l']]], ['EyeFormR', 'scaleY', [[0, FS[st].eye.sy, 'l']]],
+    ['EyeFormL', 'rotation', [[0, FS[st].eye.rot, 'l']]], ['EyeFormR', 'rotation', [[0, -FS[st].eye.rot, 'l']]],
+  ]));
+}
+
 export function buildAnimations() {
   const R = REST;
   const idleTracks = (amp, dur, ph) => {
@@ -346,7 +369,7 @@ export function buildAnimations() {
 
   // visemes
   const vnames = ['v0_rest', 'v1_AA', 'v2_EH', 'v3_EE', 'v4_OH', 'v5_OO', 'v6_MBP', 'v7_FV', 'v8_CONS'];
-  vnames.forEach((n, i) => anim(`viseme_${i}`, 1, 'oneShot', [['MouthSolo', 'activeComponentId', [[0, ID(n)]]]]));
+  vnames.forEach((n, i) => anim(`viseme_${i}`, 1, 'oneShot', FACE_STYLES.map((st) => [`MouthSolo_${st}`, 'activeComponentId', [[0, ID(`${n}_${st}`)]]])));
 
   // look joystick ranges
   anim('look_x', 100, 'oneShot', [['IrisL', 'x', [[0, -17, 'l'], [50, 0, 'l'], [100, 17, 'l']]], ['IrisR', 'x', [[0, -17, 'l'], [50, 0, 'l'], [100, 17, 'l']]], ['HeadAim', 'x', [[0, -9, 'l'], [50, 0, 'l'], [100, 9, 'l']]]]);
@@ -379,6 +402,7 @@ export function buildAnimations() {
     ['WristR', 'rotation', [[0, R['WristR.rotation'], 'io'], [80, R['WristR.rotation'] - 0.2, 'io'], [150, R['WristR.rotation'] + 0.1, 'io'], [216, R['WristR.rotation'], 'io']]],
   ]);
 
+  faceStyleAnims();
   // variants: 1-frame holds that select the Solo children
   HAIR.forEach((h) => anim(`hair_${h}`, 1, 'oneShot', [['HairBackSolo', 'activeComponentId', [[0, ID(`hb_${h}`)]]], ['HairFrontSolo', 'activeComponentId', [[0, ID(`hf_${h}`)]]]]));
   OUTFIT.forEach((o) => anim(`outfit_${o}`, 1, 'oneShot', [['OutfitSolo', 'activeComponentId', [[0, ID(`of_${o === 'blouse_stripe' ? 'blouse' : o}`)]]], ['EarSolo', 'activeComponentId', [[0, ID(o === 'blouse_stripe' ? 'ear_hoops' : 'ear_studs')]]]]));
@@ -438,7 +462,7 @@ export function buildAnimations() {
       let c = cTrig('playGesture') + cEnum('gesture', 'Gesture', enumOf(n)) + cBool('reducedMotion', rm);
       if (n.startsWith('trace_')) c += cEnum('toneShape', 'ToneShape', n.slice(6));
       if (n.startsWith('count_')) c += cNum('countTo', 'equal', n.slice(6));
-      gTransitions.push(trans(gStates[n + (rm ? '_rm' : '')], 150, c));
+      gTransitions.push(trans(gStates[n + (rm ? '_rm' : '')], 150, c, ' enableEarlyExit="true"'));
     }
   }
   gTransitions.push(trans(gEmpty, 150, cTrig('playGesture') + cEnum('gesture', 'Gesture', 'idle')));
@@ -448,10 +472,10 @@ export function buildAnimations() {
 
   const enumLayer = (name, enumName, values, prefix) => {
     const st = values.map(() => nid());
-    return layer(name, `<AnyState x="0" y="-150">${values.map((v, i) => trans(st[i], 0, cEnum(name.toLowerCase() === 'prop' ? 'prop' : name === 'Hair' ? 'hairStyle' : 'outfitStyle', enumName, v))).join('')}</AnyState>` +
+    return layer(name, `<AnyState x="0" y="-150">${values.map((v, i) => trans(st[i], 0, cEnum(name === 'Prop' ? 'prop' : name === 'Hair' ? 'hairStyle' : name === 'FaceStyle' ? 'faceStyle' : 'outfitStyle', enumName, v))).join('')}</AnyState>` +
       `<EntryState><StateTransition stateToId="${st[0]}"/></EntryState>` + values.map((v, i) => `<AnimationState x="${220 + (i % 4) * 220}" y="${Math.floor(i / 4) * 120}" animationId="${anims[prefix + v]}" id="${st[i]}"/>`).join(''));
   };
-  layers += enumLayer('Hair', 'HairStyle', HAIR, 'hair_') + enumLayer('Outfit', 'OutfitStyle', OUTFIT, 'outfit_') + enumLayer('Prop', 'Prop', PROP, 'prop_') + loopLayer('Steam', anims.steam);
+  layers += enumLayer('FaceStyle', 'FaceStyle', FACE_STYLES, 'face_') + enumLayer('Hair', 'HairStyle', HAIR, 'hair_') + enumLayer('Outfit', 'OutfitStyle', OUTFIT, 'outfit_') + enumLayer('Prop', 'Prop', PROP, 'prop_') + loopLayer('Steam', anims.steam);
 
   const smId = ID('TeacherSM');
   const sm = `<StateMachine name="TeacherSM" id="${smId}">${layers}</StateMachine>`;
@@ -485,10 +509,11 @@ export function buildBustAnimations() {
   const sac = (a, b) => [[0, 0, 'h'], [70, a, 'h'], [150, b, 'h'], [230, -a, 'h'], [340, 0, 'h'], [400, b * 0.5, 'h'], [520, 0, 'h'], [600, 0, 'h']];
   anim('saccade', 600, 'loop', [['GazeL', 'x', sac(2.5, -2)], ['GazeR', 'x', sac(2.5, -2)], ['GazeL', 'y', sac(-1.5, 1.5)], ['GazeR', 'y', sac(-1.5, 1.5)]]);
   const vnames = ['v0_rest', 'v1_AA', 'v2_EH', 'v3_EE', 'v4_OH', 'v5_OO', 'v6_MBP', 'v7_FV', 'v8_CONS'];
-  vnames.forEach((n, i) => anim(`viseme_${i}`, 1, 'oneShot', [['MouthSolo', 'activeComponentId', [[0, ID(n)]]]]));
+  vnames.forEach((n, i) => anim(`viseme_${i}`, 1, 'oneShot', FACE_STYLES.map((st) => [`MouthSolo_${st}`, 'activeComponentId', [[0, ID(`${n}_${st}`)]]])));
   anim('look_x', 100, 'oneShot', [['IrisL', 'x', [[0, -17, 'l'], [50, 0, 'l'], [100, 17, 'l']]], ['IrisR', 'x', [[0, -17, 'l'], [50, 0, 'l'], [100, 17, 'l']]], ['HeadAim', 'x', [[0, -9, 'l'], [50, 0, 'l'], [100, 9, 'l']]]]);
   anim('look_y', 100, 'oneShot', [['IrisL', 'y', [[0, -16, 'l'], [50, 0, 'l'], [100, 16, 'l']]], ['IrisR', 'y', [[0, -16, 'l'], [50, 0, 'l'], [100, 16, 'l']]], ['HeadAim', 'y', [[0, -8, 'l'], [50, 0, 'l'], [100, 8, 'l']]]]);
   Object.keys(MOODS).forEach(moodAnim);
+  faceStyleAnims();
   const nod = (amp) => [[0, 0, 'io'], [30, amp, 'io'], [60, 0, 'io'], [96, amp * 0.7, 'io'], [130, 0, 'io'], [168, amp, 'io'], [200, 0, 'io'], [240, 0, 'io']];
   const lt = (amp) => [['HeadAim', 'y', nod(amp)], ['HeadAim', 'rotation', [[0, 0.05, 'io'], [120, 0.07, 'io'], [240, 0.05, 'io']]], ['BrowL', 'y', [[0, -9, 'io'], [240, -9, 'io']]], ['BrowR', 'y', [[0, -9, 'io'], [240, -9, 'io']]], ['EyeL', 'scaleY', [[0, 1.05, 'io'], [240, 1.05, 'io']]], ['EyeR', 'scaleY', [[0, 1.05, 'io'], [240, 1.05, 'io']]]];
   anim('listen_a', 240, 'loop', lt(3)); anim('listen_b', 240, 'loop', lt(15));
@@ -514,7 +539,7 @@ export function buildBustAnimations() {
   layers += layer('Mouth', `<AnyState x="0" y="-150">${vs.map((s, i) => trans(s, 30, cNum('viseme', 'equal', i))).join('')}</AnyState><EntryState><StateTransition stateToId="${vs[0]}"/></EntryState>` +
     vs.map((s, i) => `<AnimationState x="${220 + (i % 3) * 220}" y="${Math.floor(i / 3) * 120}" animationId="${A('viseme_' + i)}" id="${s}"/>`).join(''));
   const enumLayer = (name, prop, enumName, values, prefix) => { const st = values.map(() => nid()); return layer(name, `<AnyState x="0" y="-150">${values.map((v, i) => trans(st[i], 0, cEnum(prop, enumName, v))).join('')}</AnyState><EntryState><StateTransition stateToId="${st[0]}"/></EntryState>` + values.map((v, i) => `<AnimationState x="${220 + (i % 4) * 220}" y="${Math.floor(i / 4) * 120}" animationId="${A(prefix + v)}" id="${st[i]}"/>`).join('')); };
-  layers += enumLayer('Hair', 'hairStyle', 'HairStyle', HAIR, 'hair_') + enumLayer('Outfit', 'outfitStyle', 'OutfitStyle', OUTFIT, 'outfit_');
+  layers += enumLayer('FaceStyle', 'faceStyle', 'FaceStyle', FACE_STYLES, 'face_') + enumLayer('Hair', 'hairStyle', 'HairStyle', HAIR, 'hair_') + enumLayer('Outfit', 'outfitStyle', 'OutfitStyle', OUTFIT, 'outfit_');
   const smId = ID('BustSM');
   const sm = `<StateMachine name="BustSM" id="${smId}">${layers}</StateMachine>`;
   const cx = ID('conv_lookX'), cy = ID('conv_lookY');

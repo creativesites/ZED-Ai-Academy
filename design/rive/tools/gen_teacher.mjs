@@ -3,7 +3,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { group, ID, nid, VM, f, argb, setNs } from './lib.mjs';
+import { group, ID, nid, VM, f, argb, setNs, soloXml, nodeXml, named } from './lib.mjs';
+import { FACE_STYLES, FS, noseVariant, lashVariant, beard } from './faces.mjs';
 import * as A from './art.mjs';
 import { arm } from './arms.mjs';
 import * as V from './variants.mjs';
@@ -43,22 +44,24 @@ const VMID = VM.id;
 const viewModelXml = `${enumXml}<ViewModel defaultInstanceId="0:41" name="TeacherVM" id="${VMID}">${propXml}<ViewModelInstance exports="true" name="Default" id="0:41">${instXml}</ViewModelInstance></ViewModel>`;
 
 // ---- art --------------------------------------------------------------------------------------
-const mouthSolo = () => group('MouthRig', 600, 690, () => `<Solo activeComponentId="${ID('v0_rest')}" name="Mouth" id="${ID('MouthSolo')}">${visemes().join('')}</Solo>`, { id: ID('MouthRig') });
-
+const mouthSolo = () => group('MouthRig', 600, 690, () => soloXml('MouthStyleSolo', ID('ms_lin'),
+  FACE_STYLES.map((st) => nodeXml(`mouth_${st}`, ID(`ms_${st}`), `<Solo activeComponentId="${ID(`v0_rest_${st}`)}" name="Mouth_${st}" id="${ID(`MouthSolo_${st}`)}">${visemes({ ...FS[st], key: st }).join('')}</Solo>`)).join('')), { id: ID('MouthRig') });
+// everything from the contract's faceStyle that is not animated per-frame: nose, lashes, face shape, beard
+const noseSolo = () => soloXml('NoseSolo', ID('nose_lin'), FACE_STYLES.map((st) => nodeXml(st, ID(`nose_${st}`), noseVariant(st, A.nose()))).join(''));
+const lashSolo = () => soloXml('LashSolo', ID('lash_lin'), FACE_STYLES.map((st) => nodeXml(st, ID(`lash_${st}`), lashVariant(st, 'L') + lashVariant(st, 'R'))).join(''));
+const faceSolo = () => soloXml('FaceSolo', ID('face_lin'), FACE_STYLES.map((st) => nodeXml(st, ID(`face_${st}`), A.faceBase(st))).join(''));
+const beardSolo = () => soloXml('BeardSolo', ID('bd_none'), nodeXml('none', ID('bd_none'), '') + nodeXml('beard', ID('bd_beard'), beard()));
+const headParts = () => {
+  const hairF = A.hairFront();
+  return nodeXml('EarringNode', ID('EarringNode'), soloXml('EarSolo', ID('ear_studs'), V.earringVariants(A.earrings()))) + A.ears() +
+    A.brow('L') + A.brow('R') +
+    soloXml('HairFrontSolo', ID('hf_bob'), V.hairFrontVariants(hairF.front + hairF.shadow)) +
+    lashSolo() + A.eye('L') + A.eye('R') + mouthSolo() + noseSolo() + A.cheeks() + beardSolo() + faceSolo() +
+    soloXml('HairBackSolo', ID('hb_bob'), V.hairBackVariants(A.hairBack()));
+};
 const solo = (name, firstId, inner) => `<Solo activeComponentId="${firstId}" name="${name}" id="${ID(name)}">${inner}</Solo>`;
 const body = group('BodyLean', 600, 1500, () => group('Body', 600, 1500, () => {
-  const head = group('HeadAim', 600, 850, () => group('Head', 600, 850, () => {
-    const hairF = A.hairFront();
-    return solo('EarSolo', ID('ear_studs'), V.earringVariants(A.earrings())) + A.ears() +
-      A.brow('L') + A.brow('R') +
-      solo('HairFrontSolo', ID('hf_bob'), V.hairFrontVariants(hairF.front + hairF.shadow)) +
-      A.lashesAndBrows() +
-      A.eye('L') + A.eye('R') +
-      mouthSolo() +
-      A.nose() + A.cheeks() +
-      A.faceBase() +
-      solo('HairBackSolo', ID('hb_bob'), V.hairBackVariants(A.hairBack()));
-  }, { id: ID('Head') }), { id: ID('HeadAim') });
+  const head = group('HeadAim', 600, 850, () => group('Head', 600, 850, headParts, { id: ID('Head') }), { id: ID('HeadAim') });
   const handProp = () => solo('HandPropSolo', ID('hp_none'), V.handProps('L'));
   return arm('R') + arm('L', handProp) + head + A.neck() + solo('NeckPropSolo', ID('np_none'), V.neckProps()) + solo('OutfitSolo', ID('of_cardigan'), V.outfitVariants(A.torso()));
 }, { id: ID('Body') }), { id: ID('BodyLean') });
@@ -78,14 +81,7 @@ const artboard = `
 // ---- TeacherBust artboard (512 x 512, head + shoulders) --------------------------------------
 setNs('b_');
 const bustBody = group('BustRoot', 600, 850, () => {
-  const head = group('HeadAim', 600, 850, () => group('Head', 600, 850, () => {
-    const hairF = A.hairFront();
-    return solo('EarSolo', ID('ear_studs'), V.earringVariants(A.earrings())) + A.ears() +
-      A.brow('L') + A.brow('R') +
-      solo('HairFrontSolo', ID('hf_bob'), V.hairFrontVariants(hairF.front + hairF.shadow)) +
-      A.lashesAndBrows() + A.eye('L') + A.eye('R') + mouthSolo() + A.nose() + A.cheeks() + A.faceBase() +
-      solo('HairBackSolo', ID('hb_bob'), V.hairBackVariants(A.hairBack()));
-  }, { id: ID('Head') }), { id: ID('HeadAim') });
+  const head = group('HeadAim', 600, 850, () => group('Head', 600, 850, headParts, { id: ID('Head') }), { id: ID('HeadAim') });
   return head + A.neck() + solo('NeckPropSolo', ID('np_none'), V.neckProps()) + solo('OutfitSolo', ID('of_cardigan'), V.outfitVariants(A.torso()));
 }, { id: ID('BustRoot'), pos: [256, 402], attrs: ' scaleX="0.54" scaleY="0.54"' });
 const bustAnim = buildBustAnimations();
@@ -107,6 +103,12 @@ rml = rml.replace(/@@([A-Za-z0-9_]+)/g, (m, key) => {
   return ID(key);
 });
 
+{ // sanity: every referenced objectId must be declared
+  const declared = new Set([...rml.matchAll(/ id="(0:\d+)"/g)].map((m) => m[1]));
+  const missing = new Set([...rml.matchAll(/objectId="(0:\d+)"/g)].map((m) => m[1]).filter((i) => !declared.has(i)));
+  const inv = Object.fromEntries(Object.entries(named).map(([k, v]) => [v, k]));
+  if (missing.size) console.error('MISSING ids:', [...missing].map((i) => `${i}=${inv[i]}`).join(', '));
+}
 const out = path.join(here, '../teacher/scene.rml');
 fs.writeFileSync(out, rml.replace(/></g, '>\n<'));
 console.log(`wrote ${out} (${(rml.length / 1024).toFixed(0)} KB)`);

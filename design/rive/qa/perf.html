@@ -1,0 +1,42 @@
+<!doctype html><meta charset="utf-8"><title>perf</title>
+<body style="margin:0;background:#22163a">
+<div style="position:relative;width:1200px;height:750px">
+  <canvas id="scene" width="1200" height="750" style="position:absolute;left:0;top:0;width:1200px;height:750px"></canvas>
+  <canvas id="teacher" width="600" height="750" style="position:absolute;left:300px;top:0;width:600px;height:750px"></canvas>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@rive-app/canvas@2.47.1/rive.js"></script>
+<script>
+window.__ready = false; window.__result = null;
+const params = new URLSearchParams(location.search);
+const SECS = +(params.get('secs') || 10);
+let scene, teacher, ti;
+const loaded = { s: false, t: false };
+scene = new rive.Rive({ src: 'zai_scenes.riv', canvas: document.getElementById('scene'), artboard: 'Scene_TeaHouse', stateMachines: 'SceneSM', autoplay: true, autoBind: true,
+  onLoad() { scene.resizeDrawingSurfaceToCanvas(); loaded.s = true; } });
+teacher = new rive.Rive({ src: params.get('teacher') || 'zai_teacher.riv', canvas: document.getElementById('teacher'), artboard: 'Teacher', stateMachines: 'TeacherSM', autoplay: true, autoBind: true,
+  onLoad() { teacher.resizeDrawingSurfaceToCanvas(); ti = teacher.viewModelInstance; loaded.t = true; } });
+const events = [];
+teacher.on(rive.EventType.RiveEvent, (e) => events.push(e.data.name));
+window.__run = async () => {
+  while (!(loaded.s && loaded.t)) await new Promise((r) => setTimeout(r, 50));
+  await new Promise((r) => setTimeout(r, 1500));
+  const gestures = ['wave', 'explain', 'point_card', 'thumbs_up', 'celebrate', 'clap', 'nod', 'shrug'];
+  ti.boolean('speaking').value = true;                         // talk beats + lip-sync running
+  const dts = []; let last = performance.now(), gi = 0, lastG = 0, lastV = 0; const t0 = last;
+  await new Promise((resolve) => {
+    const tick = (now) => {
+      dts.push(now - last); last = now;
+      if (now - lastV > 33) { ti.number('viseme').value = Math.floor(Math.random() * 9); lastV = now; }   // ~30 Hz viseme stream
+      if (now - lastG > 1800) { ti.enum('gesture').value = gestures[gi++ % gestures.length]; ti.trigger('playGesture').trigger(); lastG = now; }
+      if (now - t0 < SECS * 1000) requestAnimationFrame(tick); else resolve();
+    };
+    requestAnimationFrame(tick);
+  });
+  dts.shift();
+  const sorted = [...dts].sort((a, b) => a - b);
+  const mean = dts.reduce((a, b) => a + b, 0) / dts.length;
+  const steady = dts.filter((d) => d < 250), steadyMean = steady.reduce((a, b) => a + b, 0) / steady.length;
+  window.__result = { frames: dts.length, secs: SECS, avgFps: +(1000 / mean).toFixed(1), steadyFps: +(1000 / steadyMean).toFixed(1), medianFrameMs: +sorted[Math.floor(sorted.length / 2)].toFixed(1), hitchesOver250ms: dts.length - steady.length, p95FrameMs: +sorted[Math.floor(sorted.length * 0.95)].toFixed(1), worstFrameMs: +sorted[sorted.length - 1].toFixed(1), over33ms: dts.filter((d) => d > 33.4).length, eventsSeen: events.length, riveEvents: [...new Set(events)] };
+};
+window.__run();
+</script>

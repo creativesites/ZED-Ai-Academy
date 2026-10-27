@@ -1,6 +1,8 @@
 // Lín Lǎoshī — 3D-look character art (vector, gradient-lit). Coordinates are absolute
 // artboard pixels on the 1200 x 1500 Teacher artboard (rest pose).
 import { blob, ellipse, rrect, group, volume, cylinder, argb, nid, ID, f, O, rel, pushOrigin, popOrigin } from './lib.mjs';
+import { FACE_PTS, FACE_STYLES, browVariant } from './faces.mjs';
+import { soloXml, nodeXml } from './lib.mjs';
 
 const INK = '1B1020';          // darkest tone (no pure black)
 const SHADE = '2A0F2E';         // shadow tint (deep dusk plum)
@@ -21,10 +23,10 @@ const FACE = [
   [700, 818], [600, 838], [500, 818], [408, 752], [350, 652], [328, 544], [336, 432], [388, 332], [478, 262],
 ];
 
-export function faceBase() {
+export function faceBase(style = 'lin') {
   const cx = 600, cy = 560, r = 300;
   return blob({
-    name: 'Face', pts: FACE, k: 1,
+    name: 'Face', pts: FACE_PTS[style], k: 1,
     fills: [
       skin(),
       ...volume(cx, cy, r, { shadow: 0.42, hi: 0.26, bounce: 0.2, rim: 0.45, tint: '5A2030' }),
@@ -67,7 +69,7 @@ export function cheeks() {
     const s = side === 'L' ? -1 : 1, cx = 600 + s * 128, cy = 668;
     return ellipse({
       name: `Cheek${side}`, cx, cy, rx: 70, ry: 48, id: ID(`Cheek${side}`), attrs: ' opacity="0.7"',
-      fills: [{ radial: { cx, cy, r: 70, stops: [[0, argb('FF6F6A', 0.5)], [0.55, argb('FF6F6A', 0.2)], [1, argb('FF6F6A', 0)]] } }],
+      fills: [{ radial: { cx, cy, r: 70, stops: [[0, argb('E0644C', 0.46)], [0.55, argb('E0644C', 0.18)], [1, argb('E0644C', 0)]] } }],
     });
   };
   return mk('R') + mk('L');
@@ -90,7 +92,7 @@ export function eye(side) {
   const s = side === 'L' ? -1 : 1, cx = 600 + s * 98, cy = 548, rx = 54, ry = 68;
   const openId = ID(`Eye${side}Opening`);
   const clip = `<ClippingShape sourceId="${openId}"/>`;
-  return group(`Eye${side}`, cx, cy, () => {
+  return group(`Eye${side}`, cx, cy, () => group(`EyeForm${side}`, cx, cy, () => {
     const parts = [];
     // Lid (skin) rests above the eye opening and slides down to blink; clipped to the opening.
     parts.push(group(`Lid${side}`, cx, cy, () =>
@@ -119,7 +121,7 @@ export function eye(side) {
         { linear: { x1: cx, y1: cy - ry, x2: cx, y2: cy - ry * 0.1, stops: [[0, argb(SHADE, 0.55)], [1, argb(SHADE, 0)]] } }],
     }));
     return parts.join('');
-  }, { id: ID(`Eye${side}`) });
+  }, { id: ID(`EyeForm${side}`) }), { id: ID(`Eye${side}`) });
 }
 
 export function lashesAndBrows() {
@@ -137,10 +139,8 @@ export function lashesAndBrows() {
 
 export function brow(side) {
   const s = side === 'L' ? -1 : 1, cx = 600 + s * 100, cy = 452;
-  const pts = s < 0 ? [[cx - 56, cy + 10], [cx - 20, cy - 8], [cx + 28, cy - 12], [cx + 56, cy + 2]] : [[cx - 56, cy + 2], [cx - 28, cy - 12], [cx + 20, cy - 8], [cx + 56, cy + 10]];
   return group(`Brow${side}`, cx, cy, () =>
-    blob({ name: 'BrowBound', pts, closed: false, strokes: [{ w: 24, solid: argb('2A2230'), bind: 'hairColor' }] }) +
-    blob({ name: 'BrowHi', pts: pts.map(([x, y]) => [x - 3, y - 5]), closed: false, strokes: [{ w: 6, solid: argb('FFFFFF', 0.22) }] }),
+    soloXml(`BrowShape${side}Solo`, ID(`bs_lin_${side}`), FACE_STYLES.map((st) => nodeXml(st, ID(`bs_${st}_${side}`), browVariant(st, side))).join('')),
   { id: ID(`Brow${side}`) });
 }
 
