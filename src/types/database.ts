@@ -31,6 +31,14 @@ export type LiveSessionBookingStatus =
 export type AvailabilityExceptionKind = "unavailable" | "extra_available";
 export type PracticeSubmissionStatus = "draft" | "submitted" | "scored" | "needs_review" | "reviewed";
 export type PracticeReviewStatus = "reviewed" | "resubmission_requested";
+export type TutorMode = "live" | "voice" | "text";
+export type TutorOrigin = "lesson" | "assignment" | "practice" | "ask" | "placement";
+export type TutorSessionStatus = "active" | "completed" | "abandoned" | "flagged";
+export type TutorScenarioVisibility = "course" | "tenant_library" | "platform";
+export type TutorScenarioStyle = "scene" | "guided_lesson" | "oral_check";
+export type TutorScenarioStatus = "draft" | "published" | "archived";
+export type TutorVocabSource = "lesson" | "mistake" | "manual";
+export type TutorUsageKind = "live_audio_in" | "live_audio_out" | "tts" | "transcribe" | "llm" | "image";
 
 type R = [];
 
@@ -1406,6 +1414,466 @@ export interface Database {
         };
         Relationships: R;
       };
+      exam_frameworks: {
+        Row: {
+          id: string;
+          language: string;
+          label: string;
+          levels: Json;
+          speaking_tasks: Json;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id: string;
+          language: string;
+          label: string;
+          levels?: Json;
+          speaking_tasks?: Json;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          language?: string;
+          label?: string;
+          levels?: Json;
+          speaking_tasks?: Json;
+          updated_at?: string;
+        };
+        Relationships: R;
+      };
+      ai_personas: {
+        Row: {
+          id: string;
+          company_id: string;
+          name: string;
+          display_name: string | null;
+          languages: string[];
+          rive_variant: Json;
+          voice: Json;
+          personality_prompt: string;
+          default_scene: string | null;
+          is_active: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          company_id: string;
+          name: string;
+          display_name?: string | null;
+          languages?: string[];
+          rive_variant?: Json;
+          voice?: Json;
+          personality_prompt: string;
+          default_scene?: string | null;
+          is_active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          company_id?: string;
+          name?: string;
+          display_name?: string | null;
+          languages?: string[];
+          rive_variant?: Json;
+          voice?: Json;
+          personality_prompt?: string;
+          default_scene?: string | null;
+          is_active?: boolean;
+          updated_at?: string;
+        };
+        Relationships: R;
+      };
+      practice_scenarios: {
+        Row: {
+          id: string;
+          company_id: string;
+          course_id: string | null;
+          lesson_id: string | null;
+          skill_pack: string;
+          persona_id: string | null;
+          title: string;
+          goal: string;
+          beats: Json;
+          target_items: Json;
+          level: string | null;
+          exam_task: string | null;
+          max_minutes: number;
+          allowed_modes: TutorMode[];
+          scene: string | null;
+          visibility: TutorScenarioVisibility;
+          style: TutorScenarioStyle;
+          status: TutorScenarioStatus;
+          created_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          company_id: string;
+          course_id?: string | null;
+          lesson_id?: string | null;
+          skill_pack: string;
+          persona_id?: string | null;
+          title: string;
+          goal: string;
+          beats?: Json;
+          target_items?: Json;
+          level?: string | null;
+          exam_task?: string | null;
+          max_minutes?: number;
+          allowed_modes?: TutorMode[];
+          scene?: string | null;
+          visibility?: TutorScenarioVisibility;
+          style?: TutorScenarioStyle;
+          status?: TutorScenarioStatus;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          course_id?: string | null;
+          lesson_id?: string | null;
+          skill_pack?: string;
+          persona_id?: string | null;
+          title?: string;
+          goal?: string;
+          beats?: Json;
+          target_items?: Json;
+          level?: string | null;
+          exam_task?: string | null;
+          max_minutes?: number;
+          allowed_modes?: TutorMode[];
+          scene?: string | null;
+          visibility?: TutorScenarioVisibility;
+          style?: TutorScenarioStyle;
+          status?: TutorScenarioStatus;
+          updated_at?: string;
+        };
+        Relationships: R;
+      };
+      tutor_assignments: {
+        Row: {
+          id: string;
+          company_id: string;
+          scenario_id: string;
+          group_id: string | null;
+          due_at: string | null;
+          assigned_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          company_id: string;
+          scenario_id: string;
+          group_id?: string | null;
+          due_at?: string | null;
+          assigned_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          group_id?: string | null;
+          due_at?: string | null;
+          assigned_by?: string | null;
+          updated_at?: string;
+        };
+        Relationships: R;
+      };
+      tutor_sessions: {
+        Row: {
+          id: string;
+          company_id: string;
+          user_id: string;
+          scenario_id: string | null;
+          origin: TutorOrigin;
+          lesson_id: string | null;
+          assignment_id: string | null;
+          mode: TutorMode;
+          mode_changes: Json;
+          started_at: string;
+          ended_at: string | null;
+          learner_speaking_ms: number;
+          teacher_speaking_ms: number;
+          status: TutorSessionStatus;
+          shared_with_teacher: boolean;
+          audio_path: string | null;
+          consent_audio: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          company_id: string;
+          user_id: string;
+          scenario_id?: string | null;
+          origin: TutorOrigin;
+          lesson_id?: string | null;
+          assignment_id?: string | null;
+          mode: TutorMode;
+          mode_changes?: Json;
+          started_at?: string;
+          ended_at?: string | null;
+          learner_speaking_ms?: number;
+          teacher_speaking_ms?: number;
+          status?: TutorSessionStatus;
+          shared_with_teacher?: boolean;
+          audio_path?: string | null;
+          consent_audio?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          scenario_id?: string | null;
+          mode?: TutorMode;
+          mode_changes?: Json;
+          ended_at?: string | null;
+          learner_speaking_ms?: number;
+          teacher_speaking_ms?: number;
+          status?: TutorSessionStatus;
+          shared_with_teacher?: boolean;
+          audio_path?: string | null;
+          consent_audio?: boolean;
+          updated_at?: string;
+        };
+        Relationships: R;
+      };
+      tutor_turns: {
+        Row: {
+          id: number;
+          session_id: string;
+          idx: number;
+          learner_text: string | null;
+          learner_audio_ms: number | null;
+          events: Json;
+          latency_ms: number | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: number;
+          session_id: string;
+          idx: number;
+          learner_text?: string | null;
+          learner_audio_ms?: number | null;
+          events?: Json;
+          latency_ms?: number | null;
+          created_at?: string;
+        };
+        Update: {
+          learner_text?: string | null;
+          learner_audio_ms?: number | null;
+          events?: Json;
+          latency_ms?: number | null;
+        };
+        Relationships: R;
+      };
+      tutor_reports: {
+        Row: {
+          session_id: string;
+          scores: Json;
+          strengths: Json;
+          mistakes: Json;
+          tone_stats: Json;
+          next_scenario_id: string | null;
+          created_at: string;
+        };
+        Insert: {
+          session_id: string;
+          scores?: Json;
+          strengths?: Json;
+          mistakes?: Json;
+          tone_stats?: Json;
+          next_scenario_id?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          scores?: Json;
+          strengths?: Json;
+          mistakes?: Json;
+          tone_stats?: Json;
+          next_scenario_id?: string | null;
+        };
+        Relationships: R;
+      };
+      learner_language_profiles: {
+        Row: {
+          company_id: string;
+          user_id: string;
+          language: string;
+          level_estimate: string | null;
+          framework: string | null;
+          can_do: Json;
+          memory: Json;
+          streak_days: number;
+          last_practice_date: string | null;
+          total_speaking_ms: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          company_id: string;
+          user_id: string;
+          language: string;
+          level_estimate?: string | null;
+          framework?: string | null;
+          can_do?: Json;
+          memory?: Json;
+          streak_days?: number;
+          last_practice_date?: string | null;
+          total_speaking_ms?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          level_estimate?: string | null;
+          framework?: string | null;
+          can_do?: Json;
+          memory?: Json;
+          streak_days?: number;
+          last_practice_date?: string | null;
+          total_speaking_ms?: number;
+          updated_at?: string;
+        };
+        Relationships: R;
+      };
+      vocab_items: {
+        Row: {
+          id: string;
+          company_id: string;
+          language: string;
+          term: string;
+          pron: string | null;
+          meaning: string | null;
+          level: string | null;
+          audio_path: string | null;
+          examples: Json;
+          tags: string[];
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          company_id: string;
+          language: string;
+          term: string;
+          pron?: string | null;
+          meaning?: string | null;
+          level?: string | null;
+          audio_path?: string | null;
+          examples?: Json;
+          tags?: string[];
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          language?: string;
+          term?: string;
+          pron?: string | null;
+          meaning?: string | null;
+          level?: string | null;
+          audio_path?: string | null;
+          examples?: Json;
+          tags?: string[];
+          updated_at?: string;
+        };
+        Relationships: R;
+      };
+      learner_vocab: {
+        Row: {
+          user_id: string;
+          vocab_id: string;
+          company_id: string;
+          due_at: string;
+          interval_days: number;
+          ease: number;
+          reps: number;
+          lapses: number;
+          source: TutorVocabSource;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          user_id: string;
+          vocab_id: string;
+          company_id: string;
+          due_at?: string;
+          interval_days?: number;
+          ease?: number;
+          reps?: number;
+          lapses?: number;
+          source: TutorVocabSource;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          due_at?: string;
+          interval_days?: number;
+          ease?: number;
+          reps?: number;
+          lapses?: number;
+          source?: TutorVocabSource;
+          updated_at?: string;
+        };
+        Relationships: R;
+      };
+      tutor_settings: {
+        Row: {
+          company_id: string;
+          practice_room_enabled: boolean;
+          free_practice_minutes_per_month: number;
+          allowed_modes: TutorMode[];
+          enabled_persona_ids: string[] | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          company_id: string;
+          practice_room_enabled?: boolean;
+          free_practice_minutes_per_month?: number;
+          allowed_modes?: TutorMode[];
+          enabled_persona_ids?: string[] | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          practice_room_enabled?: boolean;
+          free_practice_minutes_per_month?: number;
+          allowed_modes?: TutorMode[];
+          enabled_persona_ids?: string[] | null;
+          updated_at?: string;
+        };
+        Relationships: R;
+      };
+      ai_usage_ledger: {
+        Row: {
+          id: number;
+          company_id: string;
+          user_id: string | null;
+          session_id: string | null;
+          model: string;
+          kind: TutorUsageKind;
+          units: number;
+          unit: string;
+          est_cost_usd: number | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: number;
+          company_id: string;
+          user_id?: string | null;
+          session_id?: string | null;
+          model: string;
+          kind: TutorUsageKind;
+          units: number;
+          unit: string;
+          est_cost_usd?: number | null;
+          created_at?: string;
+        };
+        Update: Record<string, never>;
+        Relationships: R;
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;
@@ -1445,3 +1913,15 @@ export type Discussion = Database["public"]["Tables"]["discussions"]["Row"];
 export type Coupon = Database["public"]["Tables"]["coupons"]["Row"];
 export type Referral = Database["public"]["Tables"]["referrals"]["Row"];
 export type SiteAsset = Database["public"]["Tables"]["site_assets"]["Row"];
+export type ExamFramework = Database["public"]["Tables"]["exam_frameworks"]["Row"];
+export type AiPersona = Database["public"]["Tables"]["ai_personas"]["Row"];
+export type PracticeScenario = Database["public"]["Tables"]["practice_scenarios"]["Row"];
+export type TutorAssignment = Database["public"]["Tables"]["tutor_assignments"]["Row"];
+export type TutorSession = Database["public"]["Tables"]["tutor_sessions"]["Row"];
+export type TutorTurn = Database["public"]["Tables"]["tutor_turns"]["Row"];
+export type TutorReport = Database["public"]["Tables"]["tutor_reports"]["Row"];
+export type LearnerLanguageProfile = Database["public"]["Tables"]["learner_language_profiles"]["Row"];
+export type VocabItem = Database["public"]["Tables"]["vocab_items"]["Row"];
+export type LearnerVocab = Database["public"]["Tables"]["learner_vocab"]["Row"];
+export type TutorSettings = Database["public"]["Tables"]["tutor_settings"]["Row"];
+export type AiUsageLedgerEntry = Database["public"]["Tables"]["ai_usage_ledger"]["Row"];
