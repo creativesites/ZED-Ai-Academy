@@ -1,7 +1,7 @@
 # Language Learning & AI Teacher Avatars — Plan
 
 Date: 2026-10-27
-Status: Draft for discussion (nothing here is built yet)
+Status: Draft for discussion (nothing here is built yet). Updated 2026-10-27: target languages confirmed, avatar section rewritten around Rive, prototype added.
 
 ## 1. Why this exists
 
@@ -65,7 +65,7 @@ Learners don't become fluent because they rarely speak, they're scared of being 
 - **Memory:** the teacher remembers names, goals and past mistakes across sessions.
 - **The report card after each scene:** "You spoke for 4m 12s. 3 things you did well. 2 phrases to fix" (with tap-to-hear corrections). New words go into the deck automatically.
 - **The teacher reacts physically:** nods while listening, leans in when the learner hesitates, waves at the start, thumbs-up on a good answer, points to a vocabulary card that appears on screen.
-- **Code-switching help:** learner can say "how do I say…" in English (or Shona) and the teacher helps, then switches back.
+- **Code-switching help:** learner can say "how do I say…" in English and the teacher helps, then switches back.
 - **Healthcare crossover:** the same engine runs a **simulated patient** for the healthcare courses (see §8). One build, two product lines.
 
 ### 3.5 A learner's day (target)
@@ -161,74 +161,132 @@ src/lib/avatar/        // avatar provider interface (see §5)
 
 Swapping to another model vendor later then means a new file in `providers/` plus registry changes, the same idea as `src/lib/payments/`.
 
-## 5. Avatar strategy
+### 4.6 Three practice tiers, one teacher
 
-### 5.1 The requirement
+Learners on different plans get different "brains" behind the **same** avatar. Moving up a tier never changes the character, the scene or the gestures, only how fast and natural the conversation is.
 
-"Top-notch animated, with actions, talking head, gestures." There are three ways to get there. They differ a lot in realism, control, cost and **bandwidth**, and bandwidth matters most in Zimbabwe.
-
-| Approach | Examples | Gestures & actions | Realism | Our cost per speaking minute | Learner data use |
-|---|---|---|---|---|---|
-| **A. 3D rigged avatar rendered in the browser**, driven by Gemini Live audio | Three.js + a TalkingHead-style engine; VRM / GLB characters; custom characters commissioned in Blender / Character Creator; Mixamo-style animation clips | **Full control**: hands, body, pointing, props, scene background, all triggered by tool calls | Stylised (Pixar-ish), can be very polished | ~0 extra (only Gemini audio) | Low: audio only |
-| **B1. Gemini 3.8 Live Avatar** (native video output) | `response_modalities=["VIDEO"]`, stock avatars or custom reference image | Facial expressions + lip-sync. No documented hand/body gesture control. | Photoreal | ~$0.37/min avatar video on top of audio (third-party figures, introductory pricing until 31 Dec 2026, verify) | High: 24 FPS video stream |
-| **B2. Streaming avatar vendors** | HeyGen LiveAvatar, Anam, Tavus, Simli, D-ID | Mostly face/upper body; limited scripted gestures | Photoreal | Roughly $0.05–$0.35/min depending on vendor (vendor-reported, verify) | High: video stream |
-| **C. Pre-rendered avatar video** | HeyGen, Synthesia, Akool | Scripted | Photoreal | Per-video, one-off | Medium (cacheable) |
+| Tier | How a turn works | Models | Feels like | Rough cost per 10-min scene |
+|---|---|---|---|---|
+| **Text** (cheapest) | Learner types. LLM replies with text + action tags. TTS voices the reply (optional; scripted lines come from cache). | `gemini-3.8-flash` (or `3.5-flash-lite`), `3.8-flash-lite-tts` | Chatting with a teacher who speaks back | ~$0.01–0.03 |
+| **Voice** (default) | Learner holds to talk. `gemini-3.5-transcribe` turns it into text (with word timings for feedback). LLM replies with JSON `{ say, gesture, mood, card }`. TTS speaks it; the avatar lip-syncs to that audio. | Transcribe → `3.8-flash` → `3.8-flash-lite-tts` | Walkie-talkie: natural, but turn-based (1–3 s gap) | ~$0.05–0.15 |
+| **Live** (premium) | Full-duplex audio straight to `gemini-3.8-live`. Learner can interrupt. Gestures arrive as non-blocking tool calls. | `gemini-3.8-live` (+ `3.8-flash` for the report) | A real video call | ~$0.10–0.30 |
 
 Notes:
+- The Voice tier's LLM output contract is the same shape as the Live tier's tool calls (`gesture`, `set_expression`, `show_card`, `trace_tone`, `note_mistake`), so the avatar code doesn't care which tier is running.
+- Scripted lines (lesson dialogues, greetings, vocab audio) are generated once with `gemini-3.8-flash-tts` and cached in Supabase Storage. A large share of teacher speech in a structured course costs nothing per play.
+- Live costs more and must sit behind quotas per plan (`ai_usage_ledger`).
+- Cost ranges are estimates from third-party pricing summaries (TTS ≈ $9 per 1M audio tokens at 25 tokens/s, about $0.81 per hour of generated speech). The Phase 0 spike replaces them with measured numbers.
 
-- **Gemini Live Avatar** is GA as of September 2026 but is documented under Google Cloud / Gemini Enterprise. Custom faces need enterprise allowlisting. It is **face-only** as documented, so it does not meet the "gestures and actions" requirement by itself.
-- I could not find a platform called "Thrive" in avatar search results. **Did you mean Tavus?** (It's a common premium choice.) If it's a different product, send me the link and I'll evaluate it against this table.
+## 5. Avatar strategy
 
-### 5.2 Recommendation
+Prototype of the target experience (motion, gestures, scene, tiers): **[ZAI Speaking Room prototype](https://claude.ai/artifact/3Aedw8JvF77KP3Qdi6vL8m)**. A copy of the page lives in `docs/prototypes/speaking-room.html`. Its character is drawn in code as a stand-in for real Rive art; the motion system, gesture vocabulary and event stream are what we'd build.
 
-**Build Approach A as the default teacher, keep B as a premium "face-to-face" mode behind the same interface, and use C only for lecture-style course videos.**
+### 5.1 What "feels really good" means here
 
-Why A is the right default for this product:
+Talking heads have been around for years. The bar for 2026 is a **half-body character who acts**:
+- **Half-body framing** (waist up) so hands and arms can talk: wave, count on fingers, point at a card, cup an ear, trace a tone in the air.
+- **Listening is as important as speaking.** Nods, eye contact, leaning in when the learner hesitates, a curious brow. This runs on the device and costs nothing.
+- **Fourth-wall moments.** Vocabulary cards fly out of her hand into the UI. Her finger draws the Mandarin tone contour as a glowing trail.
+- **A place, not a background.** Each scenario has a scene with depth and light: a tea house moon-gate at dusk, a Seville café at golden hour, a Paris rooftop at blue hour. Floating script characters (汉字, ñ, é) drift in the air.
+- **One character everywhere.** The same teacher in the lesson player, the Speaking Room, notifications and the mobile app.
 
-1. **It's the only option that truly delivers gestures and actions.** We own the skeleton, so the teacher can wave, point at a card, hold a stethoscope, pick up a menu.
-2. **Bandwidth.** Learners on Econet/NetOne mobile data can't afford a 24 FPS video stream for 10 minutes a day. Audio-only is roughly 10–20x lighter.
-3. **Cost.** No per-minute avatar fee. At scale, photoreal streaming can cost more than the course price.
-4. **Brand and culture.** We can commission characters that look and dress like Zimbabwean teachers and nurses, with tenant-specific uniforms and logos. Stock photoreal avatars rarely fit.
-5. **No uncanny valley.** A polished stylised character is warmer for a language learner than an almost-real face, and safer with minors.
-6. **Works offline-ish.** Character assets are cached once (target < 5 MB per character, compressed GLB + KTX2 textures).
+### 5.2 Options compared
 
-Where B wins: a premium tier for corporate clients who want a photoreal "digital human", or marketing demos. Because the avatar sits behind an interface, adding it later is a contained job.
+| Option | What it is | Gestures / body | Look | Runtime cost | Data use | Web + mobile | Authoring effort |
+|---|---|---|---|---|---|---|---|
+| **Rive** (2D vector, state machines) | Rigged 2D character; state machine + data binding driven by our code | **Full** (bones, meshes, any gesture an animator builds) | Premium illustrated, "animated film" | None (runs on device, ~78 KB WASM runtime + small .riv) | Very low | Web, React Native, Flutter, iOS, Android from **one file** | Medium: needs a good Rive animator; you already have a Rive + agent pipeline from Meeting Mind |
+| **3D real-time** (Three.js + VRM/GLB) | Rigged 3D character rendered in WebGL | Full (body rig + blendshapes) | Stylised 3D, camera moves, real lighting | None per minute; GPU-heavy on low-end phones | Low after a 3–10 MB first load | Web strong; native needs a separate engine | High: modelling, rigging, blendshapes, animation clips. Ready Player Me shut down in January 2026, so no free avatar pipeline |
+| **Photoreal streaming** (Gemini 3.8 Live Avatar, Tavus, HeyGen LiveAvatar, Anam, Simli) | Server renders a realistic face, streams video | Face/upper body; little or no gesture control | Photoreal | ~$0.05–0.37+/min on top of AI audio | High (live video) | Web via WebRTC/SDK | Low (vendor does it), but little control |
+| **Pre-rendered video** (HeyGen, Synthesia) | Generated MP4 lectures | Scripted | Photoreal | Per video | Medium | Any | Low; not interactive |
+| **Game engine** (Unity WebGL, Unreal MetaHuman + pixel streaming) | Full 3D engine | Full | Highest-end 3D | High (cloud GPUs for streaming) | High | Heavy | Very high; not justified here |
 
-### 5.3 Avatar engine design
+Proof point for Rive: Duolingo's AI "Video Call with Lily" runs on Rive's state machine for real-time character animation and lip-sync.
+
+### 5.3 Recommendation: Rive for the teacher, photoreal as an optional premium later
+
+**Use Rive for every tier.** Reasons:
+1. **It's the only option that gives a polished, acting, half-body character at zero per-minute cost** and works on cheap Android phones on mobile data.
+2. **One `.riv` file runs in the Next.js web app and in a future React Native/Flutter app**, so the teacher is identical everywhere.
+3. **State machines + data binding map 1:1 to our AI events.** The model says `gesture("point")`; we set one view-model property; the animator's state machine handles blending.
+4. **Tenant personas without new art.** Colours (skin, hair, outfit, accent), name badge and props can be data-bound, so one rig produces many teachers. A Zimbabwean healthcare tenant can have nurses in their own uniform colours.
+5. **You already know it.** The Meeting Mind workflow (an agent plans the character, another drives the Rive tooling) can be reused, with a human animator doing the final polish pass on hero characters.
+
+**Keep 3D as a later option** if a tenant specifically wants depth and camera moves. **Keep photoreal as an optional premium** ("Face-to-face" mode) for corporate buyers, behind the same `AvatarDriver` interface. Gemini Live Avatar is documented as face-only, enterprise-gated for custom faces, and about $0.37 per speaking minute on introductory pricing, so it shouldn't be the default.
+
+### 5.4 Rive character spec (hand this to the animator)
+
+One artboard per character, `Teacher_HalfBody`, framed waist-up, designed for portrait (phone) and landscape (desktop) crops.
+
+**View model properties (data binding)** the app writes to:
+
+| Property | Type | Values / notes |
+|---|---|---|
+| `gesture` | enum + trigger | `idle, wave, nod, explain, point_left, point_right, thumbs_up, think, listen, celebrate, count_1_2_3, shrug, trace_tone` |
+| `toneShape` | enum | `t1, t2, t3, t4, rise, fall` (drives the hand path for `trace_tone`) |
+| `mood` | enum | `neutral, happy, curious, surprised, concerned, proud` (face blend, brows, cheeks) |
+| `viseme` | number 0–8 | `rest, A, E, I, O, U, M/B/P, F/V, generic consonant`. Instant or very short transitions |
+| `speaking` | bool | Adds talking gestures (small hand beats) on the body layer |
+| `listening` | bool | Lean-in, nods on learner voice activity, attentive eyes |
+| `lookX`, `lookY` | number −1…1 | Eye/head target (look at card, at learner, up when thinking) |
+| `voiceLevel` | number 0–1 | Learner mic level, drives nod intensity |
+| `skin`, `hair`, `outfit`, `accent` | colour | Tenant/persona customisation |
+
+**State machine layers:** Body (gestures over an idle loop with breathing and weight shifts), Face (mood blend), Mouth (viseme), Eyes (auto-blink + saccades + look target), Props (optional: tea cup, stethoscope, menu, clipboard).
+
+**Rules:** every gesture returns to idle on its own; gestures blend over each other (a nod while pointing); file size target under 500 KB per character.
+
+**Lip-sync:** viseme values come from our code, not Rive. In Voice/Text tiers we analyse the TTS audio as it plays (energy + spectral bands, which works for any language, including tonal Mandarin). In Live we do the same on the streamed audio. Output-transcription timestamps can refine it later.
+
+### 5.5 The scene ("the whole page must be magical")
+
+- **Layered parallax backdrop** per scenario (Rive or layered SVG/WebGL): far sky, mid silhouettes, near frame (moon gate, arch, window), lights (lanterns, sun, stars) with a slow day-cycle.
+- **Ambient particles**: drifting glyphs from the target language and soft fireflies; reduced on low-end devices and for `prefers-reduced-motion`.
+- **Glass UI** floating over the scene: captions (hanzi + tone-coloured pinyin + translation), flashcards, mic/waveform, report card.
+- **Celebration moments**: confetti, sparkle on thumbs-up, card flying into the deck.
+- **Sound design** (later): soft room tone per scene, a chime for new words.
+
+### 5.6 Mandarin-specific moments (the owner will notice these)
+
+- **Tone colours** on all pinyin (tone 1 red, 2 orange, 3 green, 4 blue, the convention Pleco users know).
+- **Tone tracing**: the teacher draws the contour in the air while saying the syllable.
+- **Tone sandhi** taught visibly: 你好 is written nǐ hǎo but said ní hǎo (3 + 3 → 2 + 3); the prototype shows this.
+- **Pitch comparison**: the learner's pitch line drawn over the teacher's after each attempt. Pitch extraction runs in the browser (autocorrelation), so it is fast and free; Gemini adds the coaching words.
+- **Stroke order** for characters in `vocab_set` blocks (e.g. the open-source Hanzi Writer library).
+- Spanish and French get the same treatment for stress, question intonation, nasal vowels and liaison.
+
+### 5.7 Avatar engine interface
 
 ```ts
 // src/lib/avatar/types.ts
 interface AvatarDriver {
   mount(el: HTMLElement, persona: Persona): Promise<void>;
-  speak(audio: AudioChunkStream, visemes?: VisemeStream): void; // lip-sync
-  gesture(name: GestureName): void;
-  setExpression(mood: Mood, intensity?: number): void;
-  setListening(active: boolean): void;  // ambient nods / eye contact
+  speak(audio: MediaStream | HTMLAudioElement): void; // drives visemes from audio
+  gesture(name: GestureName, opts?: { toneShape?: ToneShape }): void;
+  setMood(mood: Mood): void;
+  setListening(active: boolean, voiceLevel?: number): void;
+  lookAt(x: number, y: number): void;
   dispose(): void;
 }
-// Implementations: ThreeDAvatarDriver (default), GeminiVideoAvatarDriver, VendorStreamAvatarDriver
+// Implementations: RiveAvatarDriver (default), VideoAvatarDriver (photoreal vendor or Gemini Live Avatar, later)
 ```
 
-- **Lip-sync:** derive visemes from the audio amplitude/spectrum in real time on the client (works for any language, including Shona). Output transcription with timestamps can refine it.
-- **Gestures:** a library of ~20 animation clips (greeting, nod, point, count-on-fingers, think, celebrate, concerned, explain-with-hands), blended over an idle loop.
-- **Low-end fallback:** a 2D illustrated/Lottie or Rive version of the same character for older phones, and an "audio only" toggle. Detect device capability on first load.
-- **Personas** (DB, per tenant): name, character model, voice (Gemini voice name), personality prompt, languages taught, default gestures, backdrop (classroom, clinic, market).
+### 5.8 Character production plan
 
-### 5.4 Character production
-
-Options, cheapest first:
-1. Start with open VRM/GLB characters to build and test the engine (weeks 1–3).
-2. Commission 2–4 original characters (e.g. a language teacher, a nurse/doctor, a patient set) from a 3D artist: rigged, with ARKit blendshapes for facial animation. Budget roughly a few hundred to a couple of thousand USD per character, depending on quality. This is the single biggest lever on "feels top-notch".
-3. Tenant custom characters as a paid add-on.
+1. **Week 1–2:** brief and concept art for 3 teachers (Mandarin, Spanish, French) + 1 healthcare persona. Decide the illustration style with the client.
+2. **Week 2–4:** build the first character in Rive: rig, idle, 6 gestures, 5 moods, visemes. Use your agent + Rive tooling flow for structure; a human animator polishes timing and appeal.
+3. **Week 4+:** remaining characters reuse the rig; personas change via data binding.
+4. Budget: roughly a few hundred to a couple of thousand USD per hero character for professional animation polish (estimate; get quotes).
 
 ## 6. Language-specific risks to resolve first
 
-1. **Shona and Ndebele are not on the Gemini Live API language list** (99 languages; nearby supported ones include Zulu, Swahili, Southern Sotho, Tswana, Afrikaans). Ndebele is close to Zulu, which helps with comprehension but is not the same.
-   - If the company teaches **English, French, Portuguese, Chinese, Swahili** etc. to Zimbabweans → fully supported.
-   - If the company teaches **Shona/Ndebele** (e.g. to expats, NGO staff, diaspora kids) → we need a spike: test Gemini Live + Transcribe on Shona anyway (unsupported ≠ unusable), and plan a fallback of human-recorded audio, scripted dialogues and teacher-reviewed speaking submissions.
-   - The learner's **native** language being Shona/Ndebele matters less: explanations can be in English, and code-switching in input often still works. Test it.
-2. **Accent fairness:** test recognition on Zimbabwean-accented English and French early. Use `custom_vocabulary` for names, places and medical terms.
-3. **Hallucinated grammar rules:** the teacher's explanations must be grounded in the course content and a per-language reference (grammar notes per CEFR level injected into the system prompt). Keep the human teacher in the loop through flagged sessions.
+Confirmed with the founder: the client mainly teaches **Mandarin Chinese**, plus **Spanish and French**. All three are on the Gemini Live API's supported language list, so the earlier Shona/Ndebele risk doesn't block launch.
+
+Remaining checks for Phase 0:
+1. **Mandarin tone accuracy:** test how well Live and Transcribe hear tone errors from beginners. Expect to rely on our own client-side pitch analysis for tone feedback, with Gemini for explanations.
+2. **Learner accents:** test Zimbabwean learners speaking Mandarin, Spanish and French. Use `custom_vocabulary` for names, places and course terms.
+3. **Explanations in the support language:** confirm English explanations (and code-switching) work well in a Mandarin session.
+4. **Grounded grammar:** inject per-level grammar notes from the course into the system prompt so the teacher doesn't invent rules. Flagged sessions go to the human teacher's review queue.
+5. **HSK / DELE / DELF alignment:** map levels to HSK for Mandarin and CEFR for Spanish/French so progress means something to learners and the client.
 
 ## 7. How it integrates into the platform
 
@@ -273,7 +331,7 @@ The existing AI generators (`generate-lesson-content`, `generate-curriculum`, `g
 
 ### 7.4 Teacher / admin surfaces
 
-- **Classroom gradebook:** new columns for speaking minutes, scene completion and weakest skill per learner; class heatmap of common mistakes ("14 of 20 learners confuse he/she" — very common for Shona speakers, since Shona pronouns don't mark gender).
+- **Classroom gradebook:** new columns for speaking minutes, scene completion and weakest skill per learner; class heatmap of common mistakes ("14 of 20 learners flatten the 3rd tone in 很好").
 - **Review queue:** conversations the AI flagged (low confidence, learner distress, inappropriate content) or that learners asked a human to look at. Teacher can add a voice note.
 - **Assignments:** assign a scenario as warm-up before a live class or homework after; ties into the existing timetable.
 - **Tenant admin:** manage personas, set quotas per plan, see AI cost per learner.
@@ -313,13 +371,16 @@ Ordered by value:
 
 ## 10. Cost sketch (verify before quoting to the client)
 
-Rough, using third-party summaries of Gemini pricing (audio in ≈ $3 / 1M tokens, audio out ≈ $12 / 1M, ~25 audio tokens per second):
+Rough, from third-party summaries of Gemini pricing (audio in ≈ $3 / 1M tokens, Live audio out ≈ $12 / 1M, TTS audio out ≈ $9 / 1M, ~25 audio tokens per second). The avatar adds nothing because Rive renders on the device.
 
-- **10-minute Conversation Scene, 3D avatar (Approach A):** on the order of **$0.10–$0.30** including the report, depending on how much history is re-billed per turn.
-- **Same scene with Gemini Live Avatar (B1):** add roughly $0.37 per minute the avatar speaks → about **$2+**.
-- **Per learner per month** at 20 scenes: roughly **$2–6 with A** vs **$40+ with B1**.
+| Tier | Per 10-min scene | Per learner per month (20 scenes) |
+|---|---|---|
+| Text | ~$0.01–0.03 | ~$0.20–0.60 |
+| Voice | ~$0.05–0.15 | ~$1–3 |
+| Live | ~$0.10–0.30 | ~$2–6 |
+| Live + photoreal avatar (optional) | ~$2+ | ~$40+ |
 
-This is the main commercial reason to make A the default: it keeps a monthly subscription viable in the Zimbabwean market. Real numbers come from the Phase 0 spike with `ai_usage_ledger` turned on.
+This is why Rive is the default and photoreal is an optional extra: it keeps a subscription viable in Zimbabwe. Real numbers come from the Phase 0 spike with `ai_usage_ledger` turned on.
 
 ## 11. Privacy, safety, compliance
 
@@ -333,16 +394,16 @@ This is the main commercial reason to make A the default: it keeps a monthly sub
 
 ### Phase 0 — Spikes (1–2 weeks). Answers the risky questions.
 - Gemini Live voice loop in the browser with ephemeral tokens, from Harare/Lusaka network conditions: measure latency and data use.
-- Prototype 3D avatar driven by Live audio, with 5 gestures triggered by tool calls.
-- Test Shona/Ndebele and Zimbabwean-accented English/French with Live + Transcribe.
+- First Rive character (placeholder art is fine) driven by Live audio and by TTS audio, with 5 gestures triggered by tool calls / JSON tags.
+- Test Mandarin tone recognition and Zimbabwean-accented Mandarin/Spanish/French with Live + Transcribe; prototype browser pitch tracking.
 - Try Gemini Live Avatar (if we can get Enterprise access) and one vendor (Tavus or HeyGen LiveAvatar) side by side for the premium tier decision.
 - Turn on usage logging to get real per-session cost.
-- **Output:** go/no-go on languages offered, final avatar choice, real cost per scene.
+- **Output:** confirmed tier design, Rive pipeline proven end to end, real cost per scene.
 
 ### Phase 1 — Speaking MVP (3–4 weeks). The demo that wins the client.
-- `src/lib/ai` registry + Live session API (token minting, quota, completion).
+- `src/lib/ai` registry + Live session API (token minting, quota, completion) + Voice-tier turn API (transcribe → LLM JSON → TTS).
 - Tables: `ai_personas`, `practice_scenarios`, `practice_conversations`, `practice_feedback`, `learner_language_profiles`, `ai_usage_ledger`.
-- Avatar engine v1 (one commissioned or placeholder character, ~10 gestures, 2D/audio fallback).
+- `RiveAvatarDriver` v1 with the first polished character (~10 gestures, 5 moods, visemes) and the tea-house scene.
 - `speaking_scenario` block + Speaking Room page + post-session report card.
 - Placement conversation.
 
@@ -355,29 +416,36 @@ This is the main commercial reason to make A the default: it keeps a monthly sub
 
 ### Phase 3 — Healthcare simulation + polish (3–4 weeks).
 - Simulated patient personas and rubric feedback.
-- Commissioned character set (teacher, nurse, doctor, patients) with tenant branding.
+- Remaining Rive characters (Spanish, French teachers; nurse, doctor, patients) via the shared rig and data-bound colours.
 - Persona memory across sessions, streaks, CEFR can-do progress, WhatsApp reminders.
 
 ### Phase 4 — Premium and scale.
-- Photoreal avatar tier (Gemini Live Avatar or vendor) behind `AvatarDriver`.
+- Optional photoreal "Face-to-face" mode (Gemini Live Avatar or a vendor) behind `AvatarDriver`.
 - Numeric pronunciation scoring provider (after benchmarking).
 - Live class captions/translation.
 - Second AI provider behind the registry.
 
 Course studio improvements from §9 are spread across phases: 1–3 in Phase 1, 6–8 in Phase 2, the rest in Phase 3.
 
-## 13. Open questions for you (and the Zimbabwean client)
+## 13. Open questions for you (and the client)
 
-1. **Which languages** does the company teach, and to whom? (English/French/Portuguese/Chinese to Zimbabweans vs Shona/Ndebele to others changes Phase 0 a lot.)
-2. **"Thrive"**: did you mean Tavus, or another platform? A link helps.
-3. **Sell vs build-for-them:** do they become a tenant on ZAI Academy (recommended, it's what the tenant architecture is for), or do they need a separate white-label deployment?
-4. **Audience:** adults, healthcare professionals, school children? This affects avatar style, safety defaults and pricing.
-5. **Devices and data:** mostly Android phones on mobile data? This confirms the audio-first/3D decision.
-6. **Pricing model:** does AI speaking practice come bundled in course fees, or as a monthly add-on with a minutes quota?
-7. **Gemini Enterprise access:** do we have, or want, a Google Cloud / Gemini Enterprise account (needed for Live Avatar and some quotas)?
-8. **Character budget** for commissioned 3D teachers.
+Answered: languages are **Mandarin, Spanish, French**. Avatar platform: Rive is recommended (see §5), pending your sign-off after the prototype.
+
+1. **Illustration style:** after seeing the prototype, warmer/rounder (Duolingo-like), more realistic-illustrated, or anime-influenced?
+2. **Sell vs build-for-them:** tenant on ZAI Academy (recommended) or a separate white-label deployment?
+3. **Audience:** adults, professionals (healthcare), or children? Affects style, safety defaults, pricing.
+4. **Tier packaging:** which tier comes with a course purchase, and which are monthly upgrades with minute quotas?
+5. **Exams:** do their Mandarin learners target HSK? Spanish DELE, French DELF?
+6. **Character budget** for a human Rive animator's polish pass on hero characters.
+7. **Mobile app:** is a native app planned? (Rive makes the teacher portable either way.)
 
 ## Sources
+
+- Rive and Duolingo's Video Call with Lily: https://rive.app/blog/duolingo-s-ai-powered-video-call-brings-lily-to-life
+- Rive lip-sync with state machine + viseme input (community guide): https://dev.to/uianimation/how-to-build-real-time-ai-lip-sync-using-rive-state-machine-viseme-data-26o7
+- Rive runtime size and mascot architecture (community guide): https://dev.to/uianimation/engineering-interactive-mascots-with-rives-state-machine-and-runtime-architecture-4e2h
+- Ready Player Me shutdown (Jan 2026): https://genies.com/blog/ready-player-me-shutdown
+- Gemini 3.8 Flash TTS pricing (third party): https://docs.litellm.ai/blog/gemini_3_8_flash_tts
 
 - Gemini API models list: https://ai.google.dev/gemini-api/docs/models
 - Live API capabilities, languages and session limits: https://ai.google.dev/gemini-api/docs/live-api/capabilities
