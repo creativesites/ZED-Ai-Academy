@@ -362,9 +362,10 @@ CREATE TRIGGER set_tutor_settings_updated_at
 
 -- ============================================================
 -- 4. SEED: EXAM FRAMEWORKS (reference data, no client writes)
---    Labels and task descriptions are placeholders to be checked
---    against the official syllabi before launch. No vocabulary
---    counts or pass marks are stored here on purpose.
+--    Level codes and labels are factual. Speaking task descriptions are
+--    placeholders; each carries a TODO(verify) marker and must be checked
+--    against the official syllabus before launch. Seeds are kept minimal on
+--    purpose: no vocabulary counts, pass marks or band boundaries.
 -- ============================================================
 
 INSERT INTO public.exam_frameworks (id, language, label, levels, speaking_tasks) VALUES
@@ -381,7 +382,7 @@ INSERT INTO public.exam_frameworks (id, language, label, levels, speaking_tasks)
   '[]'::jsonb
 ),
 (
-  'hsk3', 'zh', 'HSK 3.0 (9 levels in 3 bands: beginning, intermediate, advanced)',
+  'hsk3', 'zh', 'HSK 3.0',
   '[
     {"code":"L1","label":"HSK 3.0 Level 1"},
     {"code":"L2","label":"HSK 3.0 Level 2"},
@@ -393,6 +394,7 @@ INSERT INTO public.exam_frameworks (id, language, label, levels, speaking_tasks)
     {"code":"L8","label":"HSK 3.0 Level 8"},
     {"code":"L9","label":"HSK 3.0 Level 9"}
   ]'::jsonb,
+  -- TODO(verify): check against official syllabus before launch. Speaking tasks intentionally empty.
   '[]'::jsonb
 ),
 (
@@ -402,11 +404,12 @@ INSERT INTO public.exam_frameworks (id, language, label, levels, speaking_tasks)
     {"code":"intermediate","label":"HSKK Intermediate"},
     {"code":"advanced","label":"HSKK Advanced"}
   ]'::jsonb,
-  '[
-    {"code":"hskk-beginner","label":"HSKK Beginner","description":"Short spoken answers to personal questions and sentence repetition."},
-    {"code":"hskk-intermediate","label":"HSKK Intermediate","description":"Spoken answers to questions and a short prepared talk on a familiar topic."},
-    {"code":"hskk-advanced","label":"HSKK Advanced","description":"Extended spoken discussion of a given topic with opinions and reasons."}
-  ]'::jsonb
+  -- TODO(verify): check against official syllabus before launch.
+  '[{"code":"hskk-beginner","label":"HSKK Beginner","description":"Short spoken answers to personal questions."}]'::jsonb ||
+  -- TODO(verify): check against official syllabus before launch.
+  '[{"code":"hskk-intermediate","label":"HSKK Intermediate","description":"Spoken answers and a short prepared talk on a familiar topic."}]'::jsonb ||
+  -- TODO(verify): check against official syllabus before launch.
+  '[{"code":"hskk-advanced","label":"HSKK Advanced","description":"Extended spoken discussion of a given topic with opinions and reasons."}]'::jsonb
 ),
 (
   'cefr_es_dele', 'es', 'DELE (CEFR A1-C2)',
@@ -418,9 +421,8 @@ INSERT INTO public.exam_frameworks (id, language, label, levels, speaking_tasks)
     {"code":"C1","label":"C1"},
     {"code":"C2","label":"C2"}
   ]'::jsonb,
-  '[
-    {"code":"dele-oral-interaction","label":"Oral expression and interaction","description":"Role-play and dialogue tasks matched to the level."}
-  ]'::jsonb
+  -- TODO(verify): check against official syllabus before launch.
+  '[{"code":"dele-oral-interaction","label":"Oral expression and interaction","description":"Role-play and dialogue tasks matched to the level."}]'::jsonb
 ),
 (
   'cefr_fr_delf', 'fr', 'DELF (A1-B2) and DALF (C1-C2)',
@@ -432,9 +434,8 @@ INSERT INTO public.exam_frameworks (id, language, label, levels, speaking_tasks)
     {"code":"C1","label":"DALF C1"},
     {"code":"C2","label":"DALF C2"}
   ]'::jsonb,
-  '[
-    {"code":"delf-oral-production","label":"Oral production and interaction","description":"Monologue and dialogue tasks matched to the level."}
-  ]'::jsonb
+  -- TODO(verify): check against official syllabus before launch.
+  '[{"code":"delf-oral-production","label":"Oral production and interaction","description":"Monologue and dialogue tasks matched to the level."}]'::jsonb
 )
 ON CONFLICT (id) DO NOTHING;
 
@@ -444,7 +445,8 @@ ON CONFLICT (id) DO NOTHING;
 --    company_members / tutor_sessions without RLS recursion.
 -- ============================================================
 
--- Active member of the tenant (any role).
+-- Active member of an active tenant (any role). A suspended tenant (companies.status
+-- = 'suspended', see 20260527000000) yields false, so its members lose access.
 CREATE OR REPLACE FUNCTION public.is_company_member(p_company_id text)
 RETURNS boolean
 LANGUAGE sql
@@ -455,13 +457,16 @@ AS $$
   SELECT EXISTS (
     SELECT 1
     FROM public.company_members cm
+    JOIN public.companies co ON co.id = cm.company_id
     WHERE cm.company_id = p_company_id
       AND cm.profile_id = (auth.jwt() ->> 'sub')
       AND cm.status = 'active'
+      AND co.status = 'active'
   );
 $$;
 
--- Active staff of the tenant: company_admin, teacher or instructor.
+-- Active staff (company_admin, teacher or instructor) of an active tenant.
+-- Suspended tenants yield false.
 CREATE OR REPLACE FUNCTION public.is_company_staff(p_company_id text)
 RETURNS boolean
 LANGUAGE sql
@@ -472,10 +477,12 @@ AS $$
   SELECT EXISTS (
     SELECT 1
     FROM public.company_members cm
+    JOIN public.companies co ON co.id = cm.company_id
     WHERE cm.company_id = p_company_id
       AND cm.profile_id = (auth.jwt() ->> 'sub')
       AND cm.status = 'active'
       AND cm.role IN ('company_admin', 'teacher', 'instructor')
+      AND co.status = 'active'
   );
 $$;
 
@@ -694,6 +701,13 @@ CREATE POLICY "Learners update own language profiles"
     AND public.is_company_member(company_id)
   );
 
+-- ---- learner_language_profiles (staff): tenant staff read the profiles of learners in their
+--      tenant (level, streak, minutes, can_do, memory). Staff never write these rows. ----
+DROP POLICY IF EXISTS "Tenant staff read learner language profiles" ON public.learner_language_profiles;
+CREATE POLICY "Tenant staff read learner language profiles"
+  ON public.learner_language_profiles FOR SELECT TO authenticated
+  USING (public.is_company_staff(company_id));
+
 -- ---- vocab_items: tenant members read; tenant staff write. ----
 DROP POLICY IF EXISTS "Tenant members can read vocab items" ON public.vocab_items;
 CREATE POLICY "Tenant members can read vocab items"
@@ -752,11 +766,19 @@ CREATE POLICY "Tenant staff read AI usage"
   ON public.ai_usage_ledger FOR SELECT TO authenticated
   USING (public.is_company_staff(company_id));
 
+-- Learners read their own usage rows (for example, remaining free minutes). Still no client writes.
+DROP POLICY IF EXISTS "Learners read own AI usage" ON public.ai_usage_ledger;
+CREATE POLICY "Learners read own AI usage"
+  ON public.ai_usage_ledger FOR SELECT TO authenticated
+  USING (user_id = (auth.jwt() ->> 'sub'));
+
 -- ============================================================
 -- 7. STORAGE
 -- ============================================================
 
--- Private bucket for learner audio. Folder convention: tutor-audio/{clerk_user_id}/{session_id}/{file}
+-- Private bucket for learner audio.
+-- Path convention: tutor-audio/<learner_sub>/<session_id>/<file>
+--   folder 1 = the learner's Clerk sub; folder 2 = tutor_sessions.id (uuid).
 INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 VALUES (
   'tutor-audio',
@@ -803,6 +825,22 @@ CREATE POLICY "Learners delete own tutor audio"
     AND (storage.foldername(name))[1] = (auth.jwt() ->> 'sub')
   );
 
+-- Staff read tutor audio only for sessions they can already see (privacy split).
+-- The folder name is cast to uuid only after a regex check. CASE guarantees the
+-- cast is not evaluated for non-uuid or missing folders (AND does not guarantee order).
+DROP POLICY IF EXISTS "Staff read tutor audio of staff-visible sessions" ON storage.objects;
+CREATE POLICY "Staff read tutor audio of staff-visible sessions"
+  ON storage.objects FOR SELECT TO authenticated
+  USING (
+    bucket_id = 'tutor-audio'
+    AND CASE
+      WHEN (storage.foldername(name))[2]
+           ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+        THEN public.is_staff_visible_tutor_session(((storage.foldername(name))[2])::uuid)
+      ELSE false
+    END
+  );
+
 -- Public-read cache for synthesized speech. No client writes: only the service role
 -- writes here, and it bypasses RLS.
 INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
@@ -819,5 +857,59 @@ DROP POLICY IF EXISTS "Public can read tutor tts cache" ON storage.objects;
 CREATE POLICY "Public can read tutor tts cache"
   ON storage.objects FOR SELECT TO public
   USING (bucket_id = 'tutor-tts-cache');
+
+-- ============================================================
+-- 8. PLATFORM-TENANT GUARD
+--    Only the platform tenant may write visibility='platform' scenarios, and a platform
+--    scenario may only use a persona owned by the platform tenant. The platform tenant is
+--    found by companies.slug = 'zedai' (see 20260526000000); no org id is hardcoded.
+-- ============================================================
+
+CREATE OR REPLACE FUNCTION public.platform_tenant_id()
+RETURNS text
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT co.id FROM public.companies co WHERE co.slug = 'zedai' LIMIT 1;
+$$;
+
+CREATE OR REPLACE FUNCTION public.guard_platform_scenarios()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_platform text := public.platform_tenant_id();
+  v_persona_company text;
+BEGIN
+  IF NEW.visibility = 'platform' THEN
+    IF v_platform IS NULL OR NEW.company_id IS DISTINCT FROM v_platform THEN
+      RAISE EXCEPTION 'platform scenarios can only be written by the platform tenant (companies.slug = ''zedai'')'
+        USING ERRCODE = 'insufficient_privilege';
+    END IF;
+
+    IF NEW.persona_id IS NOT NULL THEN
+      SELECT p.company_id INTO v_persona_company
+      FROM public.ai_personas p
+      WHERE p.id = NEW.persona_id;
+
+      IF v_persona_company IS DISTINCT FROM v_platform THEN
+        RAISE EXCEPTION 'a platform scenario can only use a persona owned by the platform tenant'
+          USING ERRCODE = 'insufficient_privilege';
+      END IF;
+    END IF;
+  END IF;
+
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS guard_platform_scenarios ON public.practice_scenarios;
+CREATE TRIGGER guard_platform_scenarios
+  BEFORE INSERT OR UPDATE ON public.practice_scenarios
+  FOR EACH ROW EXECUTE FUNCTION public.guard_platform_scenarios();
 
 COMMIT;

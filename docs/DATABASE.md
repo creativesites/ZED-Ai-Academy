@@ -256,15 +256,27 @@ Migration: `supabase/migrations/20261101000000_zai_tutor.sql` (written, not appl
 | `tutor_sessions` | One run of a scenario. `origin` is `lesson`, `assignment`, `practice`, `ask` or `placement`. | Learners manage their own rows. Staff read only under the privacy split below. |
 | `tutor_turns` | One exchange in a session, with learner text, timing and teacher events | Same as `tutor_sessions` |
 | `tutor_reports` | Post-session report (scores are guidance only). Written by the server. | Same as `tutor_sessions`. Clients never write. |
-| `learner_language_profiles` | Level estimate, framework, can-do list and shared memory per tenant, user and language | Learner reads and writes own row. Staff have no policy yet (open question). |
+| `learner_language_profiles` | Level estimate, framework, can-do list and shared memory per tenant, user and language | Learner reads and writes own row. Tenant staff read the profiles of their tenant's learners. Staff never write. |
 | `vocab_items`, `learner_vocab` | Tenant vocabulary and per-learner spaced-repetition state (`ease`, `interval_days`, `due_at`) | Members read items. Staff write items. Learners read and write own SRS rows. |
 | `exam_frameworks` | Reference seed: HSK 2.0, HSK 3.0, HSKK, DELE (CEFR), DELF/DALF | Any signed-in user reads. No client writes. |
 | `tutor_settings` | One row per tenant: Practice Room on/off, free minutes per month, allowed modes, enabled personas | Members read. Staff write. |
-| `ai_usage_ledger` | Metered AI usage (kind, units, estimated cost) | Staff read their tenant's rows. The server writes with the service role. |
+| `ai_usage_ledger` | Metered AI usage (kind, units, estimated cost) | Learners read their own rows (for example, remaining free minutes). Staff read their tenant's rows. The server writes with the service role. |
 
-**Privacy split.** Lesson, assignment, shared and flagged sessions are visible to the tenant's staff. Practice, ask and placement sessions stay private to the learner. Staff see aggregates only, from the server. `shared_with_teacher` is set by the learner.
+**Privacy split.** Lesson, assignment, shared and flagged sessions are visible to the tenant's staff, including their turns, reports and audio. Practice, ask and placement sessions stay private to the learner. `shared_with_teacher` is set by the learner.
 
-**Storage.** `tutor-audio` is private. Each learner manages objects under their own Clerk `sub` folder. `tutor-tts-cache` is public read, and clients cannot write to it.
+**Suspended tenants.** The membership helpers return false when `companies.status = 'suspended'` (see `20260527000000`). Staff and members of a suspended tenant lose tutor access. A learner can still read their own session rows, because that policy checks ownership only.
+
+**Platform tenant guard.** Only the platform tenant (`companies.slug = 'zedai'`, found at write time, no hardcoded id) can write `visibility = 'platform'` scenarios. A platform scenario can only use a persona owned by the platform tenant. A `BEFORE INSERT OR UPDATE` trigger on `practice_scenarios` (`guard_platform_scenarios`) enforces this and raises a clear error. Platform rows are readable by any signed-in user, not by anon.
+
+**Storage.** `tutor-audio` is private. Path convention:
+
+```
+tutor-audio/<learner_sub>/<session_id>/<file>
+```
+
+- Folder 1 is the learner's Clerk `sub`. The learner can insert, read, update and delete objects in it.
+- Folder 2 is `tutor_sessions.id`. Staff read an object only when `is_staff_visible_tutor_session` is true for that session. Non-uuid or missing folder names are checked with a regex before the cast, so they never raise an error. They are simply not readable by staff.
+- Clients cannot write to `tutor-tts-cache`, which is public read.
 
 ## RLS Policy Summary
 
