@@ -2,6 +2,7 @@ import { auth } from "@clerk/nextjs/server";
 import { createClient } from "@/lib/supabase/server";
 import { gemini } from "@/lib/ai/gemini";
 import { modelFor } from "@/lib/ai/models";
+import { blocksToText } from "@/lib/course-blocks/block-to-text";
 import { NextRequest } from "next/server";
 
 export async function POST(req: NextRequest) {
@@ -28,51 +29,9 @@ export async function POST(req: NextRequest) {
       .order("position", { ascending: true });
 
     if (blocks && blocks.length > 0) {
-      const parts: string[] = [];
-      for (const block of blocks) {
-        const content = block.content as Record<string, unknown>;
-        
-        switch (block.type) {
-          case "text":
-            if (typeof content.html === "string") {
-              const text = content.html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
-              if (text) parts.push(text);
-            }
-            break;
-          case "ai_prompt":
-            if (content.prompt) parts.push(`AI Prompt: ${content.prompt}`);
-            break;
-          case "steps":
-            const steps = content.steps as { title: string; body: string }[];
-            if (steps?.length) {
-              parts.push(`Steps:\n${steps.map((s, i) => `${i + 1}. ${s.title}: ${s.body}`).join("\n")}`);
-            }
-            break;
-          case "checklist":
-            const items = content.items as string[];
-            if (items?.length) {
-              parts.push(`Checklist:\n- ${items.join("\n- ")}`);
-            }
-            break;
-          case "key_takeaway":
-            const points = content.points as string[];
-            if (points?.length) {
-              parts.push(`Key Takeaways:\n- ${points.join("\n- ")}`);
-            }
-            break;
-          case "expert_note":
-            if (content.note) parts.push(`Expert Note: ${content.note}`);
-            break;
-          case "case_study":
-            if (content.title) parts.push(`Case Study: ${content.title}\n${content.body}\nOutcome: ${content.outcome}`);
-            break;
-          case "video":
-            if (content.title) parts.push(`Video: ${content.title}`);
-            break;
-        }
-      }
-      if (parts.length > 0) {
-        lessonContext = `\n\n=== LESSON CONTENT ===\n${parts.join("\n\n")}\n========================`;
+      const lessonText = blocksToText(blocks, { maxChars: 24000 });
+      if (lessonText) {
+        lessonContext = `\n\n=== LESSON CONTENT ===\n${lessonText}\n========================`;
       }
     }
   }
