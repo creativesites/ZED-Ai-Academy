@@ -182,7 +182,7 @@ Notes:
 
 ## 5. Avatar strategy
 
-Prototype of the target experience (motion, gestures, scene, tiers): **[ZAI Speaking Room prototype](https://claude.ai/artifact/3Aedw8JvF77KP3Qdi6vL8m)**. A copy of the page lives in `docs/prototypes/speaking-room.html`. Its character is drawn in code as a stand-in for real Rive art; the motion system, gesture vocabulary and event stream are what we'd build.
+Prototype of the target experience (motion, gestures, scene, tiers): **[ZAI Practice Room prototype](https://claude.ai/artifact/3Aedw8JvF77KP3Qdi6vL8m)**. A copy of the page lives in `docs/prototypes/speaking-room.html`. Its character is drawn in code as a stand-in for real Rive art; the motion system, gesture vocabulary and event stream are what we'd build.
 
 ### 5.1 What "feels really good" means here
 
@@ -191,7 +191,7 @@ Talking heads have been around for years. The bar for 2026 is a **half-body char
 - **Listening is as important as speaking.** Nods, eye contact, leaning in when the learner hesitates, a curious brow. This runs on the device and costs nothing.
 - **Fourth-wall moments.** Vocabulary cards fly out of her hand into the UI. Her finger draws the Mandarin tone contour as a glowing trail.
 - **A place, not a background.** Each scenario has a scene with depth and light: a tea house moon-gate at dusk, a Seville café at golden hour, a Paris rooftop at blue hour. Floating script characters (汉字, ñ, é) drift in the air.
-- **One character everywhere.** The same teacher in the lesson player, the Speaking Room, notifications and the mobile app.
+- **One character everywhere.** The same teacher in the lesson player, the Practice Room, notifications and the mobile app.
 
 ### 5.2 Options compared
 
@@ -318,7 +318,7 @@ Add to `content_blocks_type_check`, the editor's `BLOCK_META`, the shared render
 | `vocab_set` | Words + translations + images (AI can fill all of it; audio auto-generated) | Flip cards with audio, "add to my deck" |
 | `dialogue` | Script with speakers (AI-assisted), optional translation toggle | Multi-voice audio player with karaoke-style highlighting, "play role A" mode |
 | `pronunciation_drill` | List of phrases, focus sounds | Pronunciation Gym inside the lesson |
-| `speaking_scenario` | Pick or create a `practice_scenario` + persona | "Start conversation" → avatar scene in the lesson |
+| `tutor_session` | Pick or create a `practice_scenario` + persona | "Start conversation" → avatar scene in the lesson |
 | `listening_check` | Audio (generated or uploaded) + questions | Listen, answer, replay slower |
 | `grammar_note` | Rule, examples, common mistakes | Card with audio examples; grounding source for the AI teacher |
 | `shadowing` | Clip + transcript | Speak-along with comparison |
@@ -328,7 +328,7 @@ The existing AI generators (`generate-lesson-content`, `generate-curriculum`, `g
 ### 7.3 Learner surfaces
 
 - **Lesson player:** language blocks render inline; a floating "Practise speaking" button opens the scene for the current lesson.
-- **Speaking Room** (`/practice` under the tenant): the daily home for practice. Persona greeting, today's scene, deck review count, streak, CEFR progress.
+- **Practice Room** (`/practice` under the tenant): the daily home for practice. Persona greeting, today's scene, deck review count, streak, CEFR progress.
 - **Dashboard:** speaking minutes, can-do statements, words mastered, next live class.
 - **Report history:** every conversation with transcript, corrections and replay.
 
@@ -407,7 +407,7 @@ This is why Rive is the default and photoreal is an optional extra: it keeps a s
 - `src/lib/ai` registry + Live session API (token minting, quota, completion) + Voice-tier turn API (transcribe → LLM JSON → TTS).
 - Tables: `ai_personas`, `practice_scenarios`, `practice_conversations`, `practice_feedback`, `learner_language_profiles`, `ai_usage_ledger`.
 - `RiveAvatarDriver` v1 with the first polished character (~10 gestures, 5 moods, visemes) and the tea-house scene.
-- `speaking_scenario` block + Speaking Room page + post-session report card.
+- `tutor_session` block + Practice Room page + post-session report card.
 - Placement conversation.
 
 ### Phase 2 — Full language course toolkit (4–5 weeks).
