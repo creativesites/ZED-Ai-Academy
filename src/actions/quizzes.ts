@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { auth } from "@clerk/nextjs/server";
 import { createClient } from "@/lib/supabase/server";
 import type { Json } from "@/types/database";
+import { pendingRequiredTutorScenarios } from "@/lib/tutor/server/required-tutor-blocks";
 
 export async function createQuiz(lessonId: string, courseId: string) {
   const { userId } = await auth();
@@ -150,7 +151,13 @@ export async function saveQuizAttempt(
   answers: Record<string, number[]>,
   lessonId?: string,
   courseSlug?: string
-): Promise<{ score: number; passed: boolean; correctAnswers: Record<string, number[]> }> {
+): Promise<{
+  score: number;
+  passed: boolean;
+  correctAnswers: Record<string, number[]>;
+  /** Passed, but the lesson has required speaking practice still to do, so it was not marked complete. */
+  lessonBlocked?: boolean;
+}> {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
 
@@ -194,7 +201,10 @@ export async function saveQuizAttempt(
 
   // If passed and lessonId is available, auto-mark lesson complete in lesson_progress
   const targetLessonId = lessonId || quiz.lesson_id;
-  if (passed && targetLessonId) {
+  // Same gate as the manual "Complete" action: required tutor_session blocks must be finished first.
+  const lessonBlocked =
+    passed && targetLessonId ? (await pendingRequiredTutorScenarios(supabase, targetLessonId, userId)).length > 0 : false;
+  if (passed && targetLessonId && !lessonBlocked) {
     const { data: existingProgress } = await supabase
       .from("lesson_progress")
       .select("id, completed")
@@ -223,5 +233,5 @@ export async function saveQuizAttempt(
     }
   }
 
-  return { score, passed, correctAnswers };
+  return { score, passed, correctAnswers, lessonBlocked };
 }

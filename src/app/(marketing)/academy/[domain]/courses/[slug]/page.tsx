@@ -26,7 +26,13 @@ type PageProps = {
   searchParams: Promise<{ action?: string }>;
 };
 
-type LessonRow = { id: string; title: string; position: number; is_preview: boolean };
+type LessonRow = {
+  id: string;
+  title: string;
+  position: number;
+  is_preview: boolean;
+  content_blocks?: { type: string }[];
+};
 type ModuleRow = { id: string; title: string; position: number; lessons: LessonRow[] };
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
@@ -80,7 +86,7 @@ export default async function TenantCourseDetailPage({ params, searchParams }: P
   // 4. Fetch Modules & Lessons
   const { data: modulesRaw } = await supabase
     .from("modules")
-    .select("id, title, position, lessons(id, title, position, is_preview)")
+    .select("id, title, position, lessons(id, title, position, is_preview, content_blocks(type))")
     .eq("course_id", course.id)
     .order("position", { ascending: true });
 
@@ -90,6 +96,10 @@ export default async function TenantCourseDetailPage({ params, searchParams }: P
   }));
 
   const totalLessons = modules.reduce((acc, m) => acc + m.lessons.length, 0);
+  // Same query as above: shows the "Features the AI tutor" badge when any lesson has a tutor_session block.
+  const hasTutorSession = modules.some((m) =>
+    m.lessons.some((l) => (l.content_blocks ?? []).some((b) => b.type === "tutor_session")),
+  );
 
   // 5. Check Active Enrollment
   let isEnrolled = false;
@@ -154,6 +164,12 @@ export default async function TenantCourseDetailPage({ params, searchParams }: P
                   </span>
                 )}
               </div>
+
+              {hasTutorSession && (
+                <span className="inline-flex items-center rounded-full bg-cyan-50 px-3 py-1 text-[11px] font-bold text-cyan-700">
+                  Features the AI tutor
+                </span>
+              )}
 
               <h1 className="text-2xl sm:text-4xl font-black text-slate-900 tracking-tight leading-tight">
                 {course.title}

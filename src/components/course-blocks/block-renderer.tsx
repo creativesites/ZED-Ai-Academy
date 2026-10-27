@@ -21,6 +21,8 @@ import { GlossaryBlock } from "@/components/learner/content-blocks/glossary-bloc
 import { DiscussionPromptBlock } from "@/components/learner/content-blocks/discussion-prompt-block";
 import { AssignmentBlock } from "@/components/learner/content-blocks/assignment-block";
 import { RiskAssessmentBlock } from "@/components/learner/content-blocks/risk-assessment-block";
+import { TutorSessionBlock } from "@/components/learner/content-blocks/tutor-session-block";
+import { parseTutorSessionBlock, type TutorScenarioView } from "@/lib/tutor/tutor-session-block";
 
 export type Lesson = { id: string; title: string; position: number; is_preview: boolean };
 export type Module = { id: string; title: string; position: number; lessons: Lesson[] };
@@ -43,6 +45,14 @@ export type Quiz = {
   quiz_questions: QuizQuestion[];
 } | null;
 
+export type TutorBlockState = {
+  /** Published scenarios for this lesson's tutor_session blocks, keyed by scenario id. */
+  scenarios: Record<string, TutorScenarioView>;
+  /** Scenario ids the learner has completed in this lesson. */
+  completedScenarioIds: string[];
+  onComplete: (scenarioId: string) => void;
+};
+
 export function BlockRenderer({
   block,
   bookings,
@@ -51,6 +61,7 @@ export function BlockRenderer({
   lessonId,
   onLaunchStudio,
   previewMode = false,
+  tutor,
 }: {
   block: ContentBlock;
   bookings?: unknown[];
@@ -59,6 +70,7 @@ export function BlockRenderer({
   lessonId?: string;
   onLaunchStudio?: (initialTool?: string) => void;
   previewMode?: boolean;
+  tutor?: TutorBlockState;
 }) {
   const { type, content, id } = block;
 
@@ -123,6 +135,18 @@ export function BlockRenderer({
       return <AssignmentBlock content={content} />;
     case "risk_assessment":
       return <RiskAssessmentBlock content={content} />;
+    case "tutor_session": {
+      const scenarioId = parseTutorSessionBlock(content)?.scenarioId;
+      return (
+        <TutorSessionBlock
+          content={content}
+          lessonId={lessonId}
+          scenario={scenarioId ? tutor?.scenarios[scenarioId] : undefined}
+          done={!!scenarioId && !!tutor?.completedScenarioIds.includes(scenarioId)}
+          onComplete={tutor?.onComplete}
+        />
+      );
+    }
     default:
       return (
         <div className="rounded-xl border border-dashed border-slate-200 p-4 text-sm text-slate-400">

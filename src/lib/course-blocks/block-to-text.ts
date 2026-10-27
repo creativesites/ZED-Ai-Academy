@@ -293,6 +293,13 @@ const RENDERERS: Record<ContentBlockType, Renderer> = {
       .filter((r) => r.length > 0);
     return titled("Risk assessment", plain(c.title), [bullets(rows)]);
   },
+
+  // The scenario (goal, beats) lives in practice_scenarios and is not in the block, so the text uses the
+  // teacher's title, then the intro, so the lesson-grounded tutor knows the practice exists.
+  tutor_session: (c) => {
+    const label = plain(c.title) || plain(c.intro).split("\n")[0] || "practice scene set by the teacher";
+    return `Speaking practice with the AI tutor: ${label}`;
+  },
 };
 
 const RENDERER_BY_TYPE = new Map<string, Renderer>(Object.entries(RENDERERS));

@@ -5,6 +5,8 @@ import { auth, currentUser } from "@clerk/nextjs/server";
 import { createClient } from "@/lib/supabase/server";
 import { randomUUID } from "crypto";
 import { sendCertificateIssued } from "@/lib/email/emailjs";
+import { pendingRequiredTutorScenarios } from "@/lib/tutor/server/required-tutor-blocks";
+import { REQUIRED_TUTOR_HINT } from "@/lib/tutor/tutor-session-block";
 
 type LessonRow = { id: string };
 type ProgressRow = { lesson_id: string; completed: boolean };
@@ -160,6 +162,9 @@ export async function markLessonComplete(lessonId: string, courseSlug: string) {
   if (!userId) throw new Error("Unauthorized");
 
   const supabase = createClient();
+  if ((await pendingRequiredTutorScenarios(supabase, lessonId, userId)).length > 0) {
+    throw new Error(REQUIRED_TUTOR_HINT);
+  }
 
   const { data: existing } = await supabase
     .from("lesson_progress")

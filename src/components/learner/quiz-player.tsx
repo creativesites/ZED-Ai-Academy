@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { REQUIRED_TUTOR_HINT } from "@/lib/tutor/tutor-session-block";
 
 type Question = {
   id: string;
@@ -100,7 +101,11 @@ export function QuizPlayer({
         const res = await saveQuizAttempt(quiz.id, answers, lessonId, courseSlug);
         setResult(res);
         setSubmitted(true);
-        if (res.passed) {
+        if (res.passed && res.lessonBlocked) {
+          // Passed, but the lesson still needs its required speaking practice. The lesson stays open.
+          toast.success(`🎉 Great job! You scored ${res.score}% and passed the quiz!`);
+          toast.info(REQUIRED_TUTOR_HINT);
+        } else if (res.passed) {
           toast.success(`🎉 Great job! You scored ${res.score}% and passed the quiz!`);
           onPassed?.(res.score);
         } else {
