@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { TenantUserButton } from "./TenantUserButton";
 import { TenantAcademySwitcher } from "./TenantAcademySwitcher";
-import { BookOpen, GraduationCap, Layout, Home, Search } from "lucide-react";
+import { BookOpen, GraduationCap, Layout, Home, Mic, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { usePathname } from "next/navigation";
 
@@ -24,6 +24,7 @@ export function TenantNavbar({
     { name: "Dashboard", href: `/academy/${tenant.slug}/dashboard`, icon: Layout },
     { name: "Classroom", href: `/academy/${tenant.slug}/classroom`, icon: GraduationCap },
     { name: "All Courses", href: `/academy/${tenant.slug}/courses`, icon: BookOpen },
+    { name: "Practice", href: `/academy/${tenant.slug}/practice`, icon: Mic },
   ];
 
   return (

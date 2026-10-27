@@ -18,11 +18,28 @@ export interface PlayerUI {
   onAdvance?(beat: string): void;
 }
 
+export type SaySpeechEvent = Extract<TutorEvent, { type: "say" }>;
+
+/**
+ * Plays a `say` line's audio and drives the mouth while it plays. Resolves "played" when the audio
+ * finished, "stopped" when `signal` aborted, and "unavailable" when it could not start (for example
+ * autoplay was blocked), in which case the player falls back to the text timeline.
+ */
+export type SpeakHook = (
+  event: SaySpeechEvent,
+  avatar: AvatarDriver,
+  signal: AbortSignal,
+) => Promise<SpeakOutcome>;
+
+export type SpeakOutcome = "played" | "stopped" | "unavailable";
+
 export interface EventPlayerOptions {
   avatar: AvatarDriver;
   ui: PlayerUI;
   /** Called before each event is played, for logs and debugging. */
   onEventStart?: (event: TutorEvent) => void;
+  /** Real audio for `say` events that carry audioUrl. Without it, every line uses the text timeline. */
+  speak?: SpeakHook;
 }
 
 type Pending = {
@@ -35,6 +52,8 @@ export class EventPlayer {
   private readonly avatar: AvatarDriver;
   private readonly ui: PlayerUI;
   private readonly onEventStart?: (event: TutorEvent) => void;
+  private readonly speak?: SpeakHook;
+  private speechAbort: AbortController | null = null;
   private token = 0;
   private pending = new Set<Pending>();
   private prev: TutorEvent | undefined;
@@ -45,6 +64,7 @@ export class EventPlayer {
     this.avatar = opts.avatar;
     this.ui = opts.ui;
     this.onEventStart = opts.onEventStart;
+    this.speak = opts.speak;
   }
 
   /** Plays events in order. Resolves when the turn ends, is stopped, or hits end_session. */
@@ -64,6 +84,8 @@ export class EventPlayer {
   /** Cancels the running turn. Pending waits resolve as cancelled and timers are cleared. */
   stop(): void {
     this.token++;
+    this.speechAbort?.abort();
+    this.speechAbort = null;
     for (const entry of [...this.pending]) this.settle(entry, false);
     this.avatar.setSpeaking(false);
     this.avatar.setListening(false);
@@ -179,6 +201,26 @@ export class EventPlayer {
     this.avatar.setListening(false);
     this.avatar.setSpeaking(true);
     this.ui.onCaption(ev.text, ev.romanization, ev.translation);
+
+    if (ev.audioUrl && this.speak) {
+      const controller = new AbortController();
+      this.speechAbort = controller;
+      let outcome: SpeakOutcome;
+      try {
+        outcome = await this.speak(ev, this.avatar, controller.signal);
+      } catch {
+        outcome = "unavailable";
+      } finally {
+        if (this.speechAbort === controller) this.speechAbort = null;
+      }
+      if (!alive() || outcome === "stopped") return false;
+      if (outcome === "played") {
+        this.avatar.setViseme(0);
+        this.avatar.setSpeaking(false);
+        return true;
+      }
+      // "unavailable": fall through to the text timeline below.
+    }
 
     const schedule = scheduleVisemes(visemeTimelineFromText(ev.text));
     const start = Date.now();

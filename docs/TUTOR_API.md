@@ -17,11 +17,14 @@ Body:
   "lessonId": "uuid (required for lesson)",
   "assignmentId": "uuid (required for assignment)",
   "micPermission": "granted | denied | prompt",
-  "rttMs": 120
+  "rttMs": 120,
+  "preferMode": "voice | text (optional)"
 }
 ```
 
 `ask` and `placement` origins are not accepted yet.
+
+`preferMode` is an optional hint. When it is present and the scenario allows that mode, it overrides the mode the policy would pick (for example Live). When the scenario does not allow it, the hint is ignored and the policy decides. The web client sends `voice`, or `text` when the mic is denied, because the Live client is not built yet.
 
 Response 200, live:
 
@@ -151,5 +154,5 @@ Token minting is metered as a zero-unit `llm` row. Audio seconds are metered on 
 4. **Side effects can partly fail after the report is claimed.** Usage, profile and vocabulary writes run after the report row is stored. If one of them fails, a retry will not re-apply it, and the gap needs a manual fix.
 5. **`ask` and `placement` origins are not supported** by `POST /api/tutor/sessions` yet.
 6. **`next_scenario_id` is always null** in reports.
-7. **Not built here:** the learner-facing client, the Live client wiring described above, and a unit test for `sessionLimitReason` (it is covered through the pipeline tests).
+7. **Not built yet:** the Live client wiring described above, and a unit test for `sessionLimitReason` (it is covered through the pipeline tests). The web Practice Room client (Voice and Text) is in `src/components/tutor/practice/` and the `/practice` routes. It does not call Live. It sends `preferMode`, so a Live-allowed scenario starts in Voice. Known web gaps: the report carries no audio for mistakes, so "Hear it" only appears if a `audioUrl` is added later. Free-practice minutes are not shown yet. Browsers that can only record MP4 (some older Safari versions) get a 415 from the turn endpoint, and the client then suggests text mode.
 8. **Gemini and Supabase paths are type-checked only.** The transcription model, TTS output format and Live token flow have not been exercised against the live API.

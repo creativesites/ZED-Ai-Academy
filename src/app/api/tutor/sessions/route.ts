@@ -2,7 +2,7 @@ import { auth } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { createServiceClient } from "@/lib/supabase/server";
-import { chooseStartMode } from "@/lib/tutor/mode-policy";
+import { applyModePreference, chooseStartMode } from "@/lib/tutor/mode-policy";
 import { resolveTutorAccess } from "@/lib/tutor/server/access";
 import { mintLiveToken } from "@/lib/tutor/server/gemini-calls";
 import { loadSessionContext, personaVoiceName, type SessionContext, type TutorSessionRow } from "@/lib/tutor/server/session-context";
@@ -31,6 +31,8 @@ const startSchema = z
     assignmentId: z.string().uuid().optional(),
     micPermission: z.enum(["granted", "denied", "prompt"]),
     rttMs: z.number().min(0).max(60_000).optional(),
+    // Optional client hint. Honoured only when the scenario allows that mode.
+    preferMode: z.enum(["voice", "text"]).optional(),
   })
   .superRefine((body, ctx) => {
     if (body.origin === "lesson" && !body.lessonId) {
@@ -70,11 +72,15 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Access denied", reason: access.reason }, { status: access.status });
   }
 
-  const mode = chooseStartMode({
+  const mode = applyModePreference({
+    chosen: chooseStartMode({
+      allowedModes: access.allowedModes,
+      micPermission: body.micPermission,
+      rttMs: body.rttMs,
+      liveMinutesLeft: access.liveMinutesLeft,
+    }),
     allowedModes: access.allowedModes,
-    micPermission: body.micPermission,
-    rttMs: body.rttMs,
-    liveMinutesLeft: access.liveMinutesLeft,
+    preferMode: body.preferMode,
   });
 
   const { data: row, error: insertError } = await createServiceClient()

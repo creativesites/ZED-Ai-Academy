@@ -55,6 +55,20 @@ export function chooseStartMode(input: ChooseStartModeInput): Mode {
 }
 
 /**
+ * Applies a client's preferred starting mode. The preference wins only when the scenario allows it;
+ * otherwise the policy's own choice stands. Used by POST /api/tutor/sessions for `preferMode`.
+ */
+export function applyModePreference(input: {
+  chosen: Mode;
+  allowedModes: Mode[];
+  preferMode?: Mode;
+}): Mode {
+  const { chosen, allowedModes, preferMode } = input;
+  if (preferMode && allowedModes.includes(preferMode)) return preferMode;
+  return chosen;
+}
+
+/**
  * Returns the mode to move to, or null to stay put.
  * - live -> voice when RTT, packet loss or consecutive errors cross the thresholds.
  * - voice -> text after enough consecutive errors.
