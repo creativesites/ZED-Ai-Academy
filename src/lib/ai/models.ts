@@ -1,7 +1,7 @@
 import "server-only";
 
 // Gemini model per AI task. Override one task with GEMINI_MODEL_<TASK> (e.g. GEMINI_MODEL_LESSON_CONTENT),
-// or every task with GEMINI_MODEL_DEFAULT. Env overrides take effect without a code deploy.
+// or every text task with GEMINI_MODEL_DEFAULT. Env overrides take effect without a code deploy.
 
 export type AiTask =
   | "tutor" | "practiceStudio" | "editBlock" | "siteIntelligence" | "brandingAssistant" // interactive, latency-sensitive
@@ -30,9 +30,7 @@ function envValue(name: string): string | undefined {
 
 export function modelFor(task: AiTask): string {
   const snake = task.replace(/([a-z0-9])([A-Z])/g, "$1_$2").toUpperCase();
-  return (
-    envValue(`GEMINI_MODEL_${snake}`) ??
-    envValue("GEMINI_MODEL_DEFAULT") ??
-    DEFAULT_MODELS[task]
-  );
+  // The image model is a different model family, so the text-wide default never applies to it.
+  const fallback = task === "image" ? undefined : envValue("GEMINI_MODEL_DEFAULT");
+  return envValue(`GEMINI_MODEL_${snake}`) ?? fallback ?? DEFAULT_MODELS[task];
 }
