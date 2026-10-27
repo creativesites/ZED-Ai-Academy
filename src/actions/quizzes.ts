@@ -122,9 +122,34 @@ export async function deleteQuestion(
   revalidatePath(`/creator/courses/${courseId}/lessons/${lessonId}`);
 }
 
+export async function getLatestQuizAttempt(quizId: string) {
+  const { userId } = await auth();
+  if (!userId) return null;
+
+  const supabase = createClient();
+  const { data } = await supabase
+    .from("quiz_attempts")
+    .select("id, score, passed, answers, created_at")
+    .eq("quiz_id", quizId)
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  return data as {
+    id: string;
+    score: number;
+    passed: boolean;
+    answers: Record<string, number[]>;
+    created_at: string;
+  } | null;
+}
+
 export async function saveQuizAttempt(
   quizId: string,
-  answers: Record<string, number[]>
+  answers: Record<string, number[]>,
+  lessonId?: string,
+  courseSlug?: string
 ): Promise<{ score: number; passed: boolean; correctAnswers: Record<string, number[]> }> {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
@@ -133,7 +158,7 @@ export async function saveQuizAttempt(
 
   const { data: quiz } = await supabase
     .from("quizzes")
-    .select("pass_threshold")
+    .select("id, lesson_id, pass_threshold")
     .eq("id", quizId)
     .single();
 
@@ -166,6 +191,37 @@ export async function saveQuizAttempt(
     score,
     passed,
   });
+
+  // If passed and lessonId is available, auto-mark lesson complete in lesson_progress
+  const targetLessonId = lessonId || quiz.lesson_id;
+  if (passed && targetLessonId) {
+    const { data: existingProgress } = await supabase
+      .from("lesson_progress")
+      .select("id, completed")
+      .eq("user_id", userId)
+      .eq("lesson_id", targetLessonId)
+      .maybeSingle();
+
+    if (existingProgress) {
+      if (!existingProgress.completed) {
+        await supabase
+          .from("lesson_progress")
+          .update({ completed: true, completed_at: new Date().toISOString() })
+          .eq("id", existingProgress.id);
+      }
+    } else {
+      await supabase.from("lesson_progress").insert({
+        user_id: userId,
+        lesson_id: targetLessonId,
+        completed: true,
+        completed_at: new Date().toISOString(),
+      });
+    }
+
+    if (courseSlug) {
+      revalidatePath(`/courses/${courseSlug}/learn`);
+    }
+  }
 
   return { score, passed, correctAnswers };
 }
