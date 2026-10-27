@@ -1,5 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
-import { GEMINI_MODEL, gemini } from "@/lib/ai/gemini";
+import { gemini } from "@/lib/ai/gemini";
+import { modelFor } from "@/lib/ai/models";
 import { NextRequest } from "next/server";
 
 export async function POST(req: NextRequest) {
@@ -53,7 +54,7 @@ ${brief}`;
 
   try {
     const response = await gemini.models.generateContent({
-      model: GEMINI_MODEL,
+      model: modelFor("courseBlueprint"),
       contents: prompt,
       config: {
         systemInstruction,

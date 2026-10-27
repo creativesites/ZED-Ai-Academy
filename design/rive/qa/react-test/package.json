@@ -1,0 +1,8 @@
+{
+  "name": "zai-rive-react-test",
+  "private": true,
+  "description": "QA harness: loads zai_teacher.riv with @rive-app/react-canvas, fires gestures repeatedly and records events",
+  "scripts": { "build": "esbuild test.jsx --bundle --outfile=dist/test.js --define:process.env.NODE_ENV=\\\"production\\\"" },
+  "dependencies": { "@rive-app/react-canvas": "4.37.1", "react": "18.3.1", "react-dom": "18.3.1" },
+  "devDependencies": { "esbuild": "0.25.0" }
+}

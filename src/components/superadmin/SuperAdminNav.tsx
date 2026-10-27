@@ -20,6 +20,7 @@ const NAV_ITEMS = [
   { name: "Academies", href: "/superadmin/tenants", icon: Building2 },
   { name: "Users & Roles", href: "/superadmin/users", icon: Users },
   { name: "Courses", href: "/superadmin/courses", icon: BookOpen },
+  { name: "Avatar Lab", href: "/superadmin/avatar-lab", icon: Sparkles },
   { name: "Settings", href: "/superadmin/settings", icon: Settings },
 ];
 

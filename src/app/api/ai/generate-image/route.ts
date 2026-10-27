@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { gemini } from "@/lib/ai/gemini";
+import { modelFor } from "@/lib/ai/models";
 import { createServiceClient } from "@/lib/supabase/server";
 import { v4 as uuidv4 } from "uuid";
 
@@ -23,7 +24,7 @@ export async function POST(req: NextRequest) {
       return new NextResponse("Missing prompt", { status: 400 });
     }
 
-    const MODEL = "gemini-3.1-flash-image-preview";
+    const MODEL = modelFor("image");
     let contents: any[] = [];
 
     if (editImageId) {

@@ -1,6 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { createClient } from "@/lib/supabase/server";
-import { GEMINI_MODEL, gemini } from "@/lib/ai/gemini";
+import { gemini } from "@/lib/ai/gemini";
+import { modelFor } from "@/lib/ai/models";
 import { NextRequest } from "next/server";
 import { getCourseDomainPreset } from "@/lib/course-domain-presets";
 
@@ -100,7 +101,7 @@ Return ONLY a valid JSON object:
 
   try {
     const response = await gemini.models.generateContent({
-      model: GEMINI_MODEL,
+      model: modelFor("lessonContent"),
       contents: prompt,
       config: { maxOutputTokens: 3500, responseMimeType: "application/json" },
     });

@@ -1,5 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
-import { GEMINI_MODEL, gemini } from "@/lib/ai/gemini";
+import { gemini } from "@/lib/ai/gemini";
+import { modelFor } from "@/lib/ai/models";
 import { NextRequest } from "next/server";
 
 export async function POST(req: NextRequest) {
@@ -71,7 +72,7 @@ Return a single JSON object with this exact shape:
 }`;
 
       const response = await gemini.models.generateContent({
-        model: GEMINI_MODEL,
+        model: modelFor("brandingAssistant"),
         contents: prompt,
         config: {
           systemInstruction,
@@ -106,7 +107,7 @@ Instruction: ${instruction}
 Provide the enhanced version now as JSON.`;
 
       const response = await gemini.models.generateContent({
-        model: GEMINI_MODEL,
+        model: modelFor("brandingAssistant"),
         contents: prompt,
         config: {
           systemInstruction,

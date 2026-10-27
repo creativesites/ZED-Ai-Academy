@@ -6,7 +6,12 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "gen:tutor-contract": "node scripts/gen-tutor-contract.mjs",
+    "test:tutor": "node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test \"src/lib/tutor/**/*.test.ts\"",
+    "sync:rive": "node scripts/sync-rive.mjs",
+    "check:rive": "node scripts/sync-rive.mjs --check",
+    "test:rive": "node scripts/rive-check/run.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.4.1",
@@ -19,6 +24,7 @@
     "@google/genai": "^1.29.0",
     "@hookform/resolvers": "^5.2.2",
     "@jitsi/react-sdk": "^1.4.4",
+    "@rive-app/canvas": "2.47.1",
     "@supabase/ssr": "^0.10.2",
     "@supabase/supabase-js": "^2.105.1",
     "@tiptap/extension-code-block-lowlight": "^3.22.5",

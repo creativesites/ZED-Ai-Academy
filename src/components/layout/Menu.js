@@ -22,6 +22,9 @@ export default function Menu() {
                 </li>
                
                 <li>
+                    <Link href="/ai-tutor">AI Tutor</Link>
+                </li>
+                <li>
                     <Link href="/about">About</Link>
                 </li>
                 <li>
