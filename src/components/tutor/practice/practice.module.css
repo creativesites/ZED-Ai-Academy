@@ -1,51 +1,51 @@
-/* Dusk scene for the Practice Room. Colours follow docs/prototypes/speaking-room.html and are scoped
-   to this module so the rest of the app keeps its light tokens. */
+/* Practice Room theme. Light and warm, to match the rest of the site; the painted Rive scene is the
+   only colourful surface. Tokens are scoped to this module so components read them as var(--...). */
 
 .room {
-  --sky-top: #160f36;
-  --sky-mid: #2a1745;
-  --sky-low: #40204d;
-  --glow: #ffb867;
+  --bg-top: #fffaf6;
+  --bg-low: #fff1e6;
+  --glow: #fd5523;
   --glow-2: #ff7a8a;
-  --ink: #f5ecff;
-  --ink-dim: #c7b6dd;
-  --ink-faint: #8f7aa8;
-  --panel: rgba(28, 18, 52, 0.62);
-  --panel-line: rgba(255, 255, 255, 0.1);
-  --accent: #7ee0c3;
-  --accent-ink: #0d2a24;
-  --t1: #ff6b6b;
-  --t2: #ffb347;
-  --t3: #5fd38d;
-  --t4: #6aa8ff;
+  --ink: #062e39;
+  --ink-dim: #475569;
+  --ink-faint: #64748b;
+  --panel: rgba(255, 255, 255, 0.86);
+  --panel-line: rgba(6, 46, 57, 0.1);
+  --line: rgba(6, 46, 57, 0.1);
+  --line-strong: rgba(6, 46, 57, 0.18);
+  --soft: #fff7f1;
+  --soft-hover: #ffeadd;
+  --focus: #fd5523;
+  --accent: #15805f;
+  --accent-ink: #ffffff;
+  --t1: #dc2626;
+  --t2: #c2410c;
+  --t3: #15803d;
+  --t4: #2563eb;
 
   position: relative;
   isolation: isolate;
   min-height: 100dvh;
   color: var(--ink);
-  background-color: var(--sky-top);
-  background-image: linear-gradient(180deg, var(--sky-top) 0%, var(--sky-mid) 55%, var(--sky-low) 100%);
-  color-scheme: dark;
+  background-color: var(--bg-top);
+  background-image: linear-gradient(180deg, var(--bg-top) 0%, var(--bg-low) 100%);
+  color-scheme: light;
 }
 
 .room::before {
-  /* Soft rim light behind the teacher. */
+  /* Soft warm light behind the teacher. */
   content: "";
   position: absolute;
   inset: 0;
   z-index: -1;
   pointer-events: none;
-  background: radial-gradient(
-    60% 45% at 50% 32%,
-    rgba(255, 184, 103, 0.42),
-    rgba(255, 122, 138, 0.14) 55%,
-    transparent 100%
-  );
+  background: radial-gradient(60% 45% at 50% 32%, rgba(253, 85, 35, 0.12), rgba(255, 181, 71, 0.08) 55%, transparent 100%);
 }
 
 .glass {
   background: var(--panel);
   border: 1px solid var(--panel-line);
+  box-shadow: 0 12px 32px rgba(6, 46, 57, 0.08);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
 }
@@ -55,13 +55,13 @@
   overflow: hidden;
   border-radius: 28px;
   border: 1px solid var(--panel-line);
-  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.35), inset 0 0 120px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 24px 60px rgba(6, 46, 57, 0.16);
 }
 
 .card {
-  background: linear-gradient(160deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.05));
-  border: 1px solid rgba(255, 255, 255, 0.22);
-  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.35), 0 0 40px rgba(255, 184, 103, 0.25);
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid var(--line);
+  box-shadow: 0 18px 44px rgba(6, 46, 57, 0.18), 0 0 32px rgba(253, 85, 35, 0.16);
   transform-origin: 140% 60%;
   transition:
     transform 0.55s cubic-bezier(0.2, 1.4, 0.4, 1),
@@ -76,7 +76,7 @@
 
 .micDot {
   position: relative;
-  background: var(--glow-2);
+  background: #ffffff;
 }
 
 .micDot::after {
@@ -84,7 +84,7 @@
   position: absolute;
   inset: -6px;
   border-radius: 9999px;
-  border: 2px solid var(--glow-2);
+  border: 2px solid rgba(255, 255, 255, 0.85);
   animation: ping 1.4s ease-out infinite;
 }
 
@@ -109,7 +109,11 @@
 
 .primaryButton {
   background: var(--glow);
-  color: #2a1406;
+  color: #ffffff;
+}
+
+.primaryButton:hover:not(:disabled):not([data-active="true"]) {
+  background: #ef4a16;
 }
 
 .holdButton {

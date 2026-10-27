@@ -4,7 +4,7 @@ import { useEffect, useRef } from "react";
 import { PERSONA_PRESETS, type PersonaPresetKey } from "@/components/tutor/avatar/persona-presets";
 import { TeacherStage, type TeacherStageHandle } from "@/components/tutor/avatar/TeacherStage";
 import { useReducedMotion } from "@/components/tutor/practice/use-reduced-motion";
-import type { SceneArtboard } from "@/lib/tutor/rive-driver";
+import { DAYLIGHT_TIME_OF_DAY, type SceneArtboard } from "@/lib/tutor/rive-driver";
 
 // The hero teacher: idles on her scene, and waves once after a short pause. Renders through
 // TeacherStage, so the Rive teacher is used with the placeholder as fallback. Reduced motion keeps
@@ -28,10 +28,11 @@ export function HeroTeacher({ scene = "Scene_TeaHouse", preset = "lin", label }:
   }, [reducedMotion]);
 
   return (
-    <div className="relative aspect-[4/5] w-full max-w-[420px] overflow-hidden rounded-[28px] border border-white/10 shadow-[0_24px_60px_rgba(22,15,54,0.35)]">
+    <div className="relative aspect-[4/5] w-full max-w-[420px] overflow-hidden rounded-[28px] border border-slate-200 bg-[#fff2e9] shadow-[0_24px_60px_rgba(6,46,57,0.16)]">
       <TeacherStage
         ref={ref}
         scene={scene}
+        timeOfDay={DAYLIGHT_TIME_OF_DAY}
         persona={look}
         reducedMotion={reducedMotion}
         label={label}

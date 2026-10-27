@@ -479,7 +479,7 @@ export function TutorSession({
   if (phase === "intro" || phase === "starting") {
     return (
       <div className={`${styles.room} flex min-h-[100dvh] flex-col justify-center px-4 py-8`}>
-        <SceneBackdrop className="absolute inset-0 h-full w-full" />
+        <SceneBackdrop scene={scene} className="absolute inset-0 h-full w-full" />
         <div className="relative z-10">
           <StartPanel
             info={info}
@@ -496,7 +496,7 @@ export function TutorSession({
   if (phase === "report" && report) {
     return (
       <div className={`${styles.room} flex min-h-[100dvh] flex-col justify-center px-4 py-8`}>
-        <SceneBackdrop className="absolute inset-0 h-full w-full" />
+        <SceneBackdrop scene={scene} className="absolute inset-0 h-full w-full" />
         <div className="relative z-10">
           <ReportCard
             report={report}
@@ -516,7 +516,7 @@ export function TutorSession({
 
   return (
     <div className={`${styles.room} flex min-h-[100dvh] flex-col`}>
-      <SceneBackdrop className="absolute inset-0 h-full w-full" />
+      <SceneBackdrop scene={scene} className="absolute inset-0 h-full w-full" />
       <div className="relative z-10 mx-auto flex w-full max-w-[640px] flex-1 flex-col gap-3 px-3 pb-[max(16px,env(safe-area-inset-bottom))] pt-[max(12px,env(safe-area-inset-top))] sm:px-4">
         <SpeakingStage
           avatarRef={avatarRef}
@@ -562,12 +562,12 @@ export function TutorSession({
             <button
               type="button"
               onClick={() => void finalize(turnsRef.current > 0 ? "completed" : "abandoned")}
-              className={`${styles.primaryButton} mt-3 w-full rounded-2xl px-5 py-3 text-sm font-bold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#ffb867]`}
+              className={`${styles.primaryButton} mt-3 w-full rounded-2xl px-5 py-3 text-sm font-bold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus)]`}
             >
               Try again
             </button>
           )}
-          <p className="mt-3 text-center text-[11px] text-[#8f7aa8]">
+          <p className="mt-3 text-center text-[11px] text-[var(--ink-faint)]">
             {goal ? `Goal: ${goal}` : null}
             {goal ? " · " : null}
             Up to {maxMinutes} min

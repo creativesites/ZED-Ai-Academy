@@ -133,7 +133,7 @@ export function Composer(props: ComposerProps) {
               aria-selected={mode === m}
               onClick={() => onModeChange(m)}
               disabled={m === "voice" && micBlocked}
-              className={`${mode === m ? styles.accentButton : "text-[#c7b6dd]"} rounded-full px-4 py-1.5 text-[13px] font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#ffb867] disabled:opacity-50`}
+              className={`${mode === m ? styles.accentButton : "text-[var(--ink-dim)]"} rounded-full px-4 py-1.5 text-[13px] font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus)] disabled:opacity-50`}
             >
               {MODE_LABEL[m]}
             </button>
@@ -143,26 +143,26 @@ export function Composer(props: ComposerProps) {
           type="button"
           onClick={onEnd}
           disabled={ending}
-          className="rounded-full border border-white/15 bg-white/5 px-4 py-1.5 text-[13px] font-semibold text-[#f5ecff] hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#ffb867] disabled:opacity-50"
+          className="rounded-full border border-[var(--line-strong)] bg-[var(--soft)] px-4 py-1.5 text-[13px] font-semibold text-[var(--ink)] hover:bg-[var(--soft-hover)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus)] disabled:opacity-50"
         >
           {ending ? "Ending..." : "End"}
         </button>
       </div>
 
-      <div aria-live="polite" className="min-h-[1.5rem] text-sm text-[#f5ecff]">
+      <div aria-live="polite" className="min-h-[1.5rem] text-sm text-[var(--ink)]">
         <span className="font-semibold">{status}</span>
         {listenHint && (
-          <span className="ml-2 text-[#7ee0c3]">
+          <span className="ml-2 text-[var(--accent)]">
             {listenHint.expect ? `Try “${listenHint.expect}”` : null}
             {listenHint.expect && listenHint.hint ? " · " : null}
             {listenHint.hint ?? null}
           </span>
         )}
-        {lastSaid && <span className="block text-[13px] text-[#c7b6dd]">You said: “{lastSaid}”</span>}
+        {lastSaid && <span className="block text-[13px] text-[var(--ink-dim)]">You said: “{lastSaid}”</span>}
       </div>
 
       {error && (
-        <p role="alert" className="rounded-xl border border-red-300/30 bg-red-500/15 px-3 py-2 text-sm text-red-100">
+        <p role="alert" className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
           {error}
         </p>
       )}
@@ -171,7 +171,7 @@ export function Composer(props: ComposerProps) {
         <button
           type="button"
           onClick={onEnableSound}
-          className="rounded-xl border border-white/15 bg-white/10 px-3 py-2 text-left text-sm text-[#f5ecff] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#ffb867]"
+          className="rounded-xl border border-[var(--line-strong)] bg-[var(--soft-hover)] px-3 py-2 text-left text-sm text-[var(--ink)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus)]"
         >
           Sound is blocked. Tap to hear {teacherName}.
         </button>
@@ -191,7 +191,7 @@ export function Composer(props: ComposerProps) {
             onPointerCancel={onPointerUp}
             onLostPointerCapture={() => recording && onHoldEnd()}
             onContextMenu={(e) => e.preventDefault()}
-            className={`${styles.holdButton} ${styles.glass} flex w-full max-w-[420px] items-center justify-center gap-3 rounded-full px-5 py-4 text-base font-bold text-[#f5ecff] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#ffb867] disabled:opacity-50 data-[active=true]:bg-[#ff7a8a] data-[active=true]:text-[#2a0b10]`}
+            className={`${styles.holdButton} ${styles.primaryButton} flex w-full max-w-[420px] items-center justify-center gap-3 rounded-full px-5 py-4 text-base font-bold shadow-[0_14px_30px_rgba(253,85,35,0.28)] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus)] disabled:opacity-50 data-[active=true]:bg-[#ff7a8a] data-[active=true]:text-[#2a0b10]`}
           >
             <span className={`${styles.micDot} inline-block h-8 w-8 flex-none rounded-full`} aria-hidden="true" />
             <span className="flex h-7 items-center gap-1" aria-hidden="true">
@@ -213,7 +213,7 @@ export function Composer(props: ComposerProps) {
                     : "Hold to talk (wait for your turn)"}
             </span>
           </button>
-          <p className="text-xs text-[#c7b6dd]">Hold the button or press Space. Clips are up to 30 seconds.</p>
+          <p className="text-xs text-[var(--ink-dim)]">Hold the button or press Space. Clips are up to 30 seconds.</p>
         </div>
       ) : (
         <form onSubmit={submit} className="flex w-full min-w-0 items-center gap-2">
@@ -230,12 +230,12 @@ export function Composer(props: ComposerProps) {
             disabled={!canType}
             autoComplete="off"
             placeholder={canType ? "Type your reply" : "Wait for the teacher"}
-            className={`${styles.glass} w-full min-w-0 flex-1 rounded-2xl px-4 py-3 text-[15px] text-[#f5ecff] placeholder:text-[#8f7aa8] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#ffb867] disabled:opacity-50`}
+            className={`${styles.glass} w-full min-w-0 flex-1 rounded-2xl px-4 py-3 text-[15px] text-[var(--ink)] placeholder:text-[var(--ink-faint)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus)] disabled:opacity-50`}
           />
           <button
             type="submit"
             disabled={!canType || draft.trim().length === 0}
-            className={`${styles.primaryButton} rounded-2xl px-5 py-3 text-sm font-bold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#ffb867] disabled:opacity-50`}
+            className={`${styles.primaryButton} rounded-2xl px-5 py-3 text-sm font-bold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus)] disabled:opacity-50`}
           >
             Send
           </button>

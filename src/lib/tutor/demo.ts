@@ -1,5 +1,6 @@
 import { DEMO_SCENARIO_KEYS, type DemoScenarioKey } from "./demo-scenarios.ts";
 import type { TutorEvent } from "./events.ts";
+import { LEARNER_AUDIO_TYPES } from "./recording.ts";
 import type { HistoryTurn } from "./server/turn-pipeline.ts";
 
 // Pure logic for the stateless showcase demo API (POST /api/tutor/demo/turn and /report): request
@@ -11,7 +12,7 @@ export const DEMO_MAX_LEARNER_TURNS = 12;
 export const DEMO_MAX_TEXT_CHARS = 500;
 export const DEMO_MAX_TUTOR_CHARS = 1000;
 export const DEMO_AUDIO_MAX_BYTES = 2 * 1024 * 1024;
-export const DEMO_AUDIO_TYPES: readonly string[] = ["audio/webm", "audio/ogg", "audio/wav", "audio/x-wav", "audio/wave"];
+export const DEMO_AUDIO_TYPES: readonly string[] = LEARNER_AUDIO_TYPES;
 /** Best-effort per-user budget. Counted per server instance, so a serverless fleet allows more in total. */
 export const DEMO_TURNS_PER_HOUR = 40;
 export const DEMO_WINDOW_MS = 60 * 60_000;

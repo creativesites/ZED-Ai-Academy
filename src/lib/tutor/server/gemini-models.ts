@@ -1,8 +1,9 @@
 import "server-only";
-import { Modality } from "@google/genai";
+import { Modality, ThinkingLevel } from "@google/genai";
 import { gemini } from "@/lib/ai/gemini";
 import { modelFor } from "@/lib/ai/models";
 import { parsePcmSampleRate, pcmToWav } from "../audio.ts";
+import { geminiAudioMimeType } from "../recording.ts";
 import { REPORT_JSON_SCHEMA, REPORT_SYSTEM_PROMPT } from "../report-model.ts";
 import { TUTOR_TURN_JSON_SCHEMA } from "../turn-schema.ts";
 import type { GenContent, TurnGenerateResult } from "./turn-pipeline.ts";
@@ -25,7 +26,10 @@ export async function generateTurnJson(input: {
       responseMimeType: "application/json",
       responseJsonSchema: TUTOR_TURN_JSON_SCHEMA,
       temperature: 0.8,
-      maxOutputTokens: 2048,
+      // Gemini 3.x thinks by default, and thinking tokens count against maxOutputTokens. A 2048 cap
+      // left too little room for the JSON, so every turn fell back to "could you say that again".
+      thinkingConfig: { thinkingLevel: ThinkingLevel.LOW },
+      maxOutputTokens: 8192,
     },
   });
   return { text: response.text, totalTokens: response.usageMetadata?.totalTokenCount, model };
@@ -44,7 +48,7 @@ export async function transcribeLearnerAudio(input: {
   mimeType: string;
 }): Promise<{ text: string; model: string; totalTokens?: number; fellBack: boolean }> {
   const parts = [
-    { inlineData: { data: input.bytes.toString("base64"), mimeType: input.mimeType } },
+    { inlineData: { data: input.bytes.toString("base64"), mimeType: geminiAudioMimeType(input.mimeType) } },
     { text: TRANSCRIBE_INSTRUCTION },
   ];
 
@@ -128,7 +132,8 @@ export async function generateReportJson(input: {
       responseMimeType: "application/json",
       responseJsonSchema: REPORT_JSON_SCHEMA,
       temperature: 0.3,
-      maxOutputTokens: 2048,
+      thinkingConfig: { thinkingLevel: ThinkingLevel.LOW },
+      maxOutputTokens: 8192,
     },
   });
   return { text: response.text, totalTokens: response.usageMetadata?.totalTokenCount, model };

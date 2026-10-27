@@ -72,8 +72,14 @@ export async function runDemoTurn(input: {
       now: () => Date.now(),
       generate: generateTurnJson,
       synthesize: async (line, voice) => {
-        const speech = await synthesizeSpeechWav(line, voice);
-        return demoSpeechDataUrl(speech.wav);
+        try {
+          const speech = await synthesizeSpeechWav(line, voice);
+          return demoSpeechDataUrl(speech.wav);
+        } catch (err) {
+          // The pipeline falls back to text-timed lip-sync. Log it, or a broken TTS model goes unnoticed.
+          console.warn("[tutor] demo TTS failed:", err);
+          return null;
+        }
       },
       saveTurn: async () => undefined,
     },

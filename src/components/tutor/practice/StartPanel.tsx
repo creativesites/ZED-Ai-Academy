@@ -35,41 +35,41 @@ export function StartPanel({ info, micPermission, starting, error, onStart }: St
   return (
     <section aria-labelledby="start-title" className={`${styles.glass} mx-auto grid w-full max-w-[560px] gap-4 rounded-[28px] p-5 sm:p-7`}>
       <div className="grid gap-1">
-        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#c7b6dd]">Practice Room</p>
-        <h1 id="start-title" className="font-heading text-2xl font-semibold leading-tight text-[#f5ecff]">
+        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--ink-dim)]">Practice Room</p>
+        <h1 id="start-title" className="font-heading text-2xl font-semibold leading-tight text-[var(--ink)]">
           {info ? info.title : "Practice session"}
         </h1>
-        {info && <p className="text-sm text-[#c7b6dd]">With {info.teacherName}</p>}
+        {info && <p className="text-sm text-[var(--ink-dim)]">With {info.teacherName}</p>}
       </div>
 
       {info?.goal && (
-        <div className="grid gap-1 rounded-2xl border border-white/10 bg-white/5 p-4">
-          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#8f7aa8]">Goal</p>
-          <p className="text-[15px] leading-relaxed text-[#f5ecff]">{info.goal}</p>
+        <div className="grid gap-1 rounded-2xl border border-[var(--line)] bg-[var(--soft)] p-4">
+          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--ink-faint)]">Goal</p>
+          <p className="text-[15px] leading-relaxed text-[var(--ink)]">{info.goal}</p>
         </div>
       )}
 
-      <dl className="grid gap-2 text-sm text-[#c7b6dd] sm:grid-cols-3">
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
-          <dt className="text-xs uppercase tracking-[0.12em] text-[#8f7aa8]">Mode</dt>
-          <dd className="mt-0.5 font-semibold text-[#7ee0c3]">{startMode === "voice" ? "Voice" : "Text"}</dd>
+      <dl className="grid gap-2 text-sm text-[var(--ink-dim)] sm:grid-cols-3">
+        <div className="rounded-2xl border border-[var(--line)] bg-[var(--soft)] p-3">
+          <dt className="text-xs uppercase tracking-[0.12em] text-[var(--ink-faint)]">Mode</dt>
+          <dd className="mt-0.5 font-semibold text-[var(--accent)]">{startMode === "voice" ? "Voice" : "Text"}</dd>
         </div>
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
-          <dt className="text-xs uppercase tracking-[0.12em] text-[#8f7aa8]">Time box</dt>
-          <dd className="mt-0.5 font-semibold text-[#f5ecff]">{info ? `${info.maxMinutes} min` : "Up to 8 min"}</dd>
+        <div className="rounded-2xl border border-[var(--line)] bg-[var(--soft)] p-3">
+          <dt className="text-xs uppercase tracking-[0.12em] text-[var(--ink-faint)]">Time box</dt>
+          <dd className="mt-0.5 font-semibold text-[var(--ink)]">{info ? `${info.maxMinutes} min` : "Up to 8 min"}</dd>
         </div>
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
-          <dt className="text-xs uppercase tracking-[0.12em] text-[#8f7aa8]">Mic check</dt>
-          <dd className="mt-0.5 text-[13px] text-[#f5ecff]">{MIC_TEXT[micPermission]}</dd>
+        <div className="rounded-2xl border border-[var(--line)] bg-[var(--soft)] p-3">
+          <dt className="text-xs uppercase tracking-[0.12em] text-[var(--ink-faint)]">Mic check</dt>
+          <dd className="mt-0.5 text-[13px] text-[var(--ink)]">{MIC_TEXT[micPermission]}</dd>
         </div>
       </dl>
 
-      <p className="text-xs text-[#c7b6dd]">
+      <p className="text-xs text-[var(--ink-dim)]">
         Live conversation is coming soon. This session runs in {startMode === "voice" ? "Voice" : "Text"} mode.
       </p>
 
       {error && (
-        <p role="alert" className="rounded-xl border border-red-300/30 bg-red-500/15 px-3 py-2 text-sm text-red-100">
+        <p role="alert" className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
           {error}
         </p>
       )}
@@ -79,7 +79,7 @@ export function StartPanel({ info, micPermission, starting, error, onStart }: St
         onClick={onStart}
         disabled={starting}
         aria-busy={starting}
-        className={`${styles.primaryButton} rounded-2xl px-5 py-3.5 text-base font-bold shadow-lg shadow-black/20 transition-transform hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#ffb867] disabled:opacity-60 disabled:hover:translate-y-0`}
+        className={`${styles.primaryButton} rounded-2xl px-5 py-3.5 text-base font-bold shadow-[0_14px_30px_rgba(253,85,35,0.28)] transition-transform hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus)] disabled:opacity-60 disabled:hover:translate-y-0`}
       >
         {starting ? "Connecting to your teacher..." : error ? "Try again" : "Start session"}
       </button>
