@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { createContentBlock } from "@/actions/content-blocks";
 import { Button } from "@/components/ui/button";
 import { Loader2, Sparkles, Wand2 } from "lucide-react";
@@ -10,15 +11,26 @@ import { COURSE_DOMAIN_PRESETS, type CourseDomainPresetId } from "@/lib/course-d
 
 type GeneratedBlock = { type: ContentBlockType; content: Json };
 
+// Same shape as the block type used by the lesson editor.
+export type CreatedContentBlock = {
+  id: string;
+  type: ContentBlockType;
+  position: number;
+  content: Json;
+};
+
 export function AILessonGenerator({
   lessonId,
   courseId,
   lessonTitle,
+  onBlocksCreated,
 }: {
   lessonId: string;
   courseId: string;
   lessonTitle: string;
+  onBlocksCreated?: (blocks: CreatedContentBlock[]) => void;
 }) {
+  const router = useRouter();
   const [brief, setBrief] = useState("");
   const [generating, setGenerating] = useState(false);
   const [progress, setProgress] = useState("");
@@ -36,6 +48,9 @@ export function AILessonGenerator({
     if (generating) return;
     setGenerating(true);
     setProgress("Analyzing curriculum objectives…");
+    // Rows created so far; passed to the parent even if a later block fails.
+    const created: CreatedContentBlock[] = [];
+    let interval: ReturnType<typeof setInterval> | undefined;
     try {
       // Small simulated steps to make the AI feel responsive and magical
       const steps = [
@@ -45,9 +60,9 @@ export function AILessonGenerator({
         "Adding callouts & learning objectives…",
         "Saving content blocks to your workspace…"
       ];
-      
+
       let stepIdx = 0;
-      const interval = setInterval(() => {
+      interval = setInterval(() => {
         if (stepIdx < steps.length - 1) {
           setProgress(steps[stepIdx]);
           stepIdx++;
@@ -60,11 +75,9 @@ export function AILessonGenerator({
         body: JSON.stringify({ lessonId, courseId, brief, domainPreset }),
       });
       clearInterval(interval);
+      interval = undefined;
 
-      
-      
       const data = await res.json();
-      console.log("generate lessn response", JSON.stringify(data))
       if (!res.ok || data.error) throw new Error(data.error || "Generation failed");
 
       const blocks: GeneratedBlock[] = data.blocks;
@@ -73,15 +86,28 @@ export function AILessonGenerator({
       for (let i = 0; i < blocks.length; i++) {
         const block = blocks[i];
         setProgress(`Adding ${block.type} section…`);
-        await createContentBlock(lessonId, courseId, block.type, block.content);
+        const row = await createContentBlock(lessonId, courseId, block.type, block.content);
+        created.push({
+          id: row.id,
+          type: row.type as ContentBlockType,
+          position: row.position,
+          content: row.content as Json,
+        });
       }
 
+      onBlocksCreated?.(created);
       toast.success("Lesson content generated successfully!");
-      window.location.reload();
+      if (!onBlocksCreated) router.refresh();
+      setProgress("");
+      setGenerating(false);
     } catch (err) {
+      // Keep whatever was saved before the failure.
+      if (created.length > 0) onBlocksCreated?.(created);
       toast.error(err instanceof Error ? err.message : "Failed to generate content");
       setProgress("");
       setGenerating(false);
+    } finally {
+      if (interval) clearInterval(interval);
     }
   }
 

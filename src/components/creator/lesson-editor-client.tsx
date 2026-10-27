@@ -47,7 +47,7 @@ import { DiscussionPromptBlockEditor } from "@/components/creator/blocks/discuss
 import { AssignmentBlockEditor } from "@/components/creator/blocks/assignment-block";
 import { RiskAssessmentBlockEditor } from "@/components/creator/blocks/risk-assessment-block";
 import { QuizBuilder } from "@/components/creator/quiz-builder";
-import { AILessonGenerator } from "@/components/creator/ai-lesson-generator";
+import { AILessonGenerator, type CreatedContentBlock } from "@/components/creator/ai-lesson-generator";
 import { LessonPreviewPane } from "@/components/creator/lesson-preview-pane";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -192,6 +192,7 @@ function LessonEditorSidebarContent({
   lessonId,
   courseId,
   lessonTitle,
+  onBlocksCreated,
 }: {
   groups: { heading: string; types: ContentBlockType[] }[];
   hasQuiz: boolean;
@@ -200,6 +201,7 @@ function LessonEditorSidebarContent({
   lessonId: string;
   courseId: string;
   lessonTitle: string;
+  onBlocksCreated: (blocks: CreatedContentBlock[]) => void;
 }) {
   return (
     <div className="space-y-6">
@@ -242,7 +244,7 @@ function LessonEditorSidebarContent({
         </div>
       </div>
 
-      <AILessonGenerator lessonId={lessonId} courseId={courseId} lessonTitle={lessonTitle} />
+      <AILessonGenerator lessonId={lessonId} courseId={courseId} lessonTitle={lessonTitle} onBlocksCreated={onBlocksCreated} />
     </div>
   );
 }
@@ -407,6 +409,7 @@ function SortableBlock({
 
   return (
     <div
+      id={`block-${block.id}`}
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition }}
       className={`group overflow-hidden rounded-2xl border-2 transition-all sm:rounded-[2rem] ${
@@ -680,6 +683,17 @@ export function LessonEditorClient({
     });
   }
 
+  function handleBlocksCreated(created: CreatedContentBlock[]) {
+    if (created.length === 0) return;
+    setBlocks((prev) => [...prev, ...created]);
+    // Wait for the new blocks to render before scrolling to the first one.
+    requestAnimationFrame(() => {
+      document
+        .getElementById(`block-${created[0].id}`)
+        ?.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+  }
+
   const hasQuiz = blocks.some((b) => b.type === "quiz");
 
   return (
@@ -720,6 +734,7 @@ export function LessonEditorClient({
                 lessonId={lesson.id}
                 courseId={courseId}
                 lessonTitle={title}
+                onBlocksCreated={handleBlocksCreated}
               />
             </div>
           </div>
@@ -861,6 +876,7 @@ export function LessonEditorClient({
                 lessonId={lesson.id}
                 courseId={courseId}
                 lessonTitle={title}
+                onBlocksCreated={handleBlocksCreated}
               />
             </div>
 
@@ -873,6 +889,7 @@ export function LessonEditorClient({
                 lessonId={lesson.id}
                 courseId={courseId}
                 lessonTitle={title}
+                onBlocksCreated={handleBlocksCreated}
               />
             </div>
           </aside>
