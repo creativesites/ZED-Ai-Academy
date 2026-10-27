@@ -1,0 +1,2766 @@
+<Rive version="1" kind="fragment">
+<Artboard defaultStateMachineId="0:235" viewModelId="0:40" viewModelInstanceId="0:41" styleId="0:900" x="0" width="2400" height="1500" name="Scene_TeaHouse" id="0:237">
+<LayoutComponentStyle name="Style" id="0:900"/>
+<Shape opacity="0.3" x="1200" y="750" name="NightTint">
+<Rectangle width="2400" height="1500" originX="0.5" originY="0.5" cornerRadiusTL="0" name="Path"/>
+<Fill>
+<SolidColor colorValue="FF0A0A30"/>
+</Fill>
+<DataBindContext sourcePathIds="0:40-0:200" propertyKey="18" converterId="0:228"/>
+</Shape>
+<Shape x="1200" y="750" name="Flash" id="0:229" opacity="0">
+<Rectangle width="2400" height="1500" originX="0.5" originY="0.5" cornerRadiusTL="0" name="Path"/>
+<Fill>
+<RadialGradient startX="0" startY="150" endX="1500" endY="150">
+<GradientStop colorValue="73FFE9B0" position="0"/>
+<GradientStop colorValue="00FFE9B0" position="1"/>
+</RadialGradient>
+</Fill>
+</Shape>
+<Node name="L_glow" id="0:223">
+<DataBindContext sourcePathIds="0:40-0:201" propertyKey="13" converterId="0:224"/>
+<DataBindContext sourcePathIds="0:40-0:202" propertyKey="14" converterId="0:225"/>
+<Shape x="1200" y="1500" name="WarmFloorGlow" id="0:222">
+<Ellipse width="2200" height="2200" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<RadialGradient startX="0" startY="0" endX="1100" endY="0">
+<GradientStop colorValue="59FFB867" position="0"/>
+<GradientStop colorValue="1FFFB867" position="0.5"/>
+<GradientStop colorValue="00FFB867" position="1"/>
+</RadialGradient>
+</Fill>
+</Shape>
+<Shape x="1200" y="1362" name="TableEdge">
+<Rectangle width="2600" height="14" originX="0.5" originY="0.5" cornerRadiusTL="7" name="Path"/>
+<Fill>
+<SolidColor colorValue="80FFC47A"/>
+</Fill>
+</Shape>
+<Shape x="1200" y="1480" name="Table">
+<Rectangle width="2600" height="240" originX="0.5" originY="0.5" cornerRadiusTL="0" name="Path"/>
+<Fill>
+<LinearGradient startX="-1200" startY="-120" endX="-1200" endY="120">
+<GradientStop colorValue="FF7A4A38" position="0"/>
+<GradientStop colorValue="FF3A2020" position="1"/>
+</LinearGradient>
+</Fill>
+</Shape>
+</Node>
+<Node name="L_frame" id="0:219">
+<DataBindContext sourcePathIds="0:40-0:201" propertyKey="13" converterId="0:220"/>
+<DataBindContext sourcePathIds="0:40-0:202" propertyKey="14" converterId="0:221"/>
+<Node x="2070" y="-40" name="LanternR" id="0:218">
+<Shape x="0" y="75" name="Cord">
+<PointsPath isClosed="false" name="Path">
+<CubicDetachedVertex x="0" y="-75" inRotation="4.71" inDistance="25" outRotation="1.57" outDistance="25"/>
+<CubicDetachedVertex x="0" y="75" inRotation="4.71" inDistance="25" outRotation="1.57" outDistance="25"/>
+</PointsPath>
+<Stroke thickness="5" cap="round" join="round">
+<SolidColor colorValue="FF3A1A2A"/>
+</Stroke>
+</Shape>
+<Shape x="0" y="150" name="CapT">
+<Rectangle width="78" height="16" originX="0.5" originY="0.5" cornerRadiusTL="6" name="Path"/>
+<Fill>
+<SolidColor colorValue="FF3A1A2A"/>
+</Fill>
+</Shape>
+<Shape x="0" y="216" name="Body">
+<Ellipse width="124" height="152" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="FFE8453C"/>
+</Fill>
+<Fill>
+<RadialGradient startX="0" startY="0" endX="80" endY="0">
+<GradientStop colorValue="F2FFD27A" position="0"/>
+<GradientStop colorValue="66FF7A3A" position="0.55"/>
+<GradientStop colorValue="8C7A1020" position="1"/>
+</RadialGradient>
+</Fill>
+<Fill>
+<LinearGradient startX="-62" startY="-176" endX="62" endY="-176">
+<GradientStop colorValue="40FFFFFF" position="0"/>
+<GradientStop colorValue="00FFFFFF" position="0.5"/>
+<GradientStop colorValue="663A0010" position="1"/>
+</LinearGradient>
+</Fill>
+</Shape>
+<Shape x="-21" y="216" name="Rib">
+<PointsPath isClosed="false" name="Path">
+<CubicDetachedVertex x="9" y="-58" inRotation="5.01" inDistance="10.12" outRotation="1.87" outDistance="10.12"/>
+<CubicDetachedVertex x="-9" y="0" inRotation="4.71" inDistance="19.33" outRotation="1.57" outDistance="19.33"/>
+<CubicDetachedVertex x="9" y="58" inRotation="4.41" inDistance="10.12" outRotation="1.27" outDistance="10.12"/>
+</PointsPath>
+<Stroke thickness="3" cap="round" join="round">
+<SolidColor colorValue="737A1020"/>
+</Stroke>
+</Shape>
+<Shape x="0" y="216" name="Rib">
+<PointsPath isClosed="false" name="Path">
+<CubicDetachedVertex x="0" y="-58" inRotation="4.71" inDistance="9.67" outRotation="1.57" outDistance="9.67"/>
+<CubicDetachedVertex x="0" y="0" inRotation="4.71" inDistance="19.33" outRotation="1.57" outDistance="19.33"/>
+<CubicDetachedVertex x="0" y="58" inRotation="4.71" inDistance="9.67" outRotation="1.57" outDistance="9.67"/>
+</PointsPath>
+<Stroke thickness="3" cap="round" join="round">
+<SolidColor colorValue="737A1020"/>
+</Stroke>
+</Shape>
+<Shape x="21" y="216" name="Rib">
+<PointsPath isClosed="false" name="Path">
+<CubicDetachedVertex x="-9" y="-58" inRotation="4.41" inDistance="10.12" outRotation="1.27" outDistance="10.12"/>
+<CubicDetachedVertex x="9" y="0" inRotation="4.71" inDistance="19.33" outRotation="1.57" outDistance="19.33"/>
+<CubicDetachedVertex x="-9" y="58" inRotation="5.01" inDistance="10.12" outRotation="1.87" outDistance="10.12"/>
+</PointsPath>
+<Stroke thickness="3" cap="round" join="round">
+<SolidColor colorValue="737A1020"/>
+</Stroke>
+</Shape>
+<Shape x="0" y="290" name="CapB">
+<Rectangle width="60" height="14" originX="0.5" originY="0.5" cornerRadiusTL="6" name="Path"/>
+<Fill>
+<SolidColor colorValue="FF3A1A2A"/>
+</Fill>
+</Shape>
+<Shape x="0" y="321" name="Tassel">
+<PointsPath isClosed="false" name="Path">
+<CubicDetachedVertex x="0" y="-25" inRotation="4.71" inDistance="8.33" outRotation="1.57" outDistance="8.33"/>
+<CubicDetachedVertex x="0" y="25" inRotation="4.71" inDistance="8.33" outRotation="1.57" outDistance="8.33"/>
+</PointsPath>
+<Stroke thickness="7" cap="round" join="round">
+<SolidColor colorValue="FFFFC060"/>
+</Stroke>
+</Shape>
+</Node>
+<Node x="330" y="-40" name="LanternL" id="0:217">
+<Shape x="0" y="90" name="Cord">
+<PointsPath isClosed="false" name="Path">
+<CubicDetachedVertex x="0" y="-90" inRotation="4.71" inDistance="30" outRotation="1.57" outDistance="30"/>
+<CubicDetachedVertex x="0" y="90" inRotation="4.71" inDistance="30" outRotation="1.57" outDistance="30"/>
+</PointsPath>
+<Stroke thickness="5" cap="round" join="round">
+<SolidColor colorValue="FF3A1A2A"/>
+</Stroke>
+</Shape>
+<Shape x="0" y="180" name="CapT">
+<Rectangle width="78" height="16" originX="0.5" originY="0.5" cornerRadiusTL="6" name="Path"/>
+<Fill>
+<SolidColor colorValue="FF3A1A2A"/>
+</Fill>
+</Shape>
+<Shape x="0" y="246" name="Body">
+<Ellipse width="124" height="152" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="FFE8453C"/>
+</Fill>
+<Fill>
+<RadialGradient startX="0" startY="0" endX="80" endY="0">
+<GradientStop colorValue="F2FFD27A" position="0"/>
+<GradientStop colorValue="66FF7A3A" position="0.55"/>
+<GradientStop colorValue="8C7A1020" position="1"/>
+</RadialGradient>
+</Fill>
+<Fill>
+<LinearGradient startX="-62" startY="-206" endX="62" endY="-206">
+<GradientStop colorValue="40FFFFFF" position="0"/>
+<GradientStop colorValue="00FFFFFF" position="0.5"/>
+<GradientStop colorValue="663A0010" position="1"/>
+</LinearGradient>
+</Fill>
+</Shape>
+<Shape x="-21" y="246" name="Rib">
+<PointsPath isClosed="false" name="Path">
+<CubicDetachedVertex x="9" y="-58" inRotation="5.01" inDistance="10.12" outRotation="1.87" outDistance="10.12"/>
+<CubicDetachedVertex x="-9" y="0" inRotation="4.71" inDistance="19.33" outRotation="1.57" outDistance="19.33"/>
+<CubicDetachedVertex x="9" y="58" inRotation="4.41" inDistance="10.12" outRotation="1.27" outDistance="10.12"/>
+</PointsPath>
+<Stroke thickness="3" cap="round" join="round">
+<SolidColor colorValue="737A1020"/>
+</Stroke>
+</Shape>
+<Shape x="0" y="246" name="Rib">
+<PointsPath isClosed="false" name="Path">
+<CubicDetachedVertex x="0" y="-58" inRotation="4.71" inDistance="9.67" outRotation="1.57" outDistance="9.67"/>
+<CubicDetachedVertex x="0" y="0" inRotation="4.71" inDistance="19.33" outRotation="1.57" outDistance="19.33"/>
+<CubicDetachedVertex x="0" y="58" inRotation="4.71" inDistance="9.67" outRotation="1.57" outDistance="9.67"/>
+</PointsPath>
+<Stroke thickness="3" cap="round" join="round">
+<SolidColor colorValue="737A1020"/>
+</Stroke>
+</Shape>
+<Shape x="21" y="246" name="Rib">
+<PointsPath isClosed="false" name="Path">
+<CubicDetachedVertex x="-9" y="-58" inRotation="4.41" inDistance="10.12" outRotation="1.27" outDistance="10.12"/>
+<CubicDetachedVertex x="9" y="0" inRotation="4.71" inDistance="19.33" outRotation="1.57" outDistance="19.33"/>
+<CubicDetachedVertex x="-9" y="58" inRotation="5.01" inDistance="10.12" outRotation="1.87" outDistance="10.12"/>
+</PointsPath>
+<Stroke thickness="3" cap="round" join="round">
+<SolidColor colorValue="737A1020"/>
+</Stroke>
+</Shape>
+<Shape x="0" y="320" name="CapB">
+<Rectangle width="60" height="14" originX="0.5" originY="0.5" cornerRadiusTL="6" name="Path"/>
+<Fill>
+<SolidColor colorValue="FF3A1A2A"/>
+</Fill>
+</Shape>
+<Shape x="0" y="351" name="Tassel">
+<PointsPath isClosed="false" name="Path">
+<CubicDetachedVertex x="0" y="-25" inRotation="4.71" inDistance="8.33" outRotation="1.57" outDistance="8.33"/>
+<CubicDetachedVertex x="0" y="25" inRotation="4.71" inDistance="8.33" outRotation="1.57" outDistance="8.33"/>
+</PointsPath>
+<Stroke thickness="7" cap="round" join="round">
+<SolidColor colorValue="FFFFC060"/>
+</Stroke>
+</Shape>
+</Node>
+<Shape x="1200" y="700" name="GateRingHi">
+<Ellipse width="1292" height="1292" originX="0.5" originY="0.5" name="Path"/>
+<Stroke thickness="6" cap="round" join="round">
+<SolidColor colorValue="80FFC47A"/>
+</Stroke>
+</Shape>
+<Shape x="1200" y="700" name="GateRing">
+<Ellipse width="1240" height="1240" originX="0.5" originY="0.5" name="Path"/>
+<Stroke thickness="46" cap="round" join="round">
+<LinearGradient startX="-600" startY="-600" endX="600" endY="600">
+<GradientStop colorValue="FF8A3A3A" position="0"/>
+<GradientStop colorValue="FFB8553E" position="0.5"/>
+<GradientStop colorValue="FF5A2230" position="1"/>
+</LinearGradient>
+</Stroke>
+</Shape>
+<Shape x="1200" y="700" name="MoonGateWall">
+<Rectangle x="0" y="0" width="2600" height="1700" originX="0.5" originY="0.5" name="Slab"/>
+<Ellipse x="0" y="0" width="1240" height="1240" originX="0.5" originY="0.5" name="Hole"/>
+<Fill fillRule="evenOdd">
+<LinearGradient startX="0" startY="-700" endX="0" endY="800">
+<GradientStop colorValue="FF3A2046" position="0"/>
+<GradientStop colorValue="FF241230" position="1"/>
+</LinearGradient>
+</Fill>
+</Shape>
+</Node>
+<Node name="L_mid" id="0:214">
+<DataBindContext sourcePathIds="0:40-0:201" propertyKey="13" converterId="0:215"/>
+<DataBindContext sourcePathIds="0:40-0:202" propertyKey="14" converterId="0:216"/>
+<Shape x="1990" y="830" name="Pagoda">
+<PointsPath isClosed="true" name="Path">
+<StraightVertex x="-90" y="150"/>
+<StraightVertex x="-90" y="-10"/>
+<StraightVertex x="-130" y="-30"/>
+<StraightVertex x="-30" y="-60"/>
+<StraightVertex x="-50" y="-110"/>
+<StraightVertex x="0" y="-150"/>
+<StraightVertex x="50" y="-110"/>
+<StraightVertex x="30" y="-60"/>
+<StraightVertex x="130" y="-30"/>
+<StraightVertex x="90" y="-10"/>
+<StraightVertex x="90" y="150"/>
+</PointsPath>
+<Fill>
+<SolidColor colorValue="FF2A1A48"/>
+</Fill>
+</Shape>
+<Shape x="1200" y="1210" name="HillsMid">
+<PointsPath isClosed="true" name="Path">
+<StraightVertex x="-1240" y="330"/>
+<CubicDetachedVertex x="-1000" y="-230" inRotation="2.29" inDistance="99.21" outRotation="-0.85" outDistance="99.21"/>
+<CubicDetachedVertex x="-680" y="-310" inRotation="3.16" inDistance="79.34" outRotation="0.01" outDistance="79.34"/>
+<CubicDetachedVertex x="-320" y="-220" inRotation="3.11" inDistance="84.03" outRotation="-0.03" outDistance="84.03"/>
+<CubicDetachedVertex x="40" y="-330" inRotation="3.13" inDistance="81.67" outRotation="-0.01" outDistance="81.67"/>
+<CubicDetachedVertex x="380" y="-230" inRotation="3.17" inDistance="84.03" outRotation="0.03" outDistance="84.03"/>
+<CubicDetachedVertex x="760" y="-310" inRotation="3.16" inDistance="84.01" outRotation="0.01" outDistance="84.01"/>
+<CubicDetachedVertex x="1100" y="-220" inRotation="4.07" inDistance="93.33" outRotation="0.93" outDistance="93.33"/>
+<StraightVertex x="1240" y="330"/>
+</PointsPath>
+<Fill>
+<SolidColor colorValue="FF3E2760"/>
+</Fill>
+<Fill>
+<LinearGradient startX="-1200" startY="-390" endX="-1200" endY="10">
+<GradientStop colorValue="1AFFFFFF" position="0"/>
+<GradientStop colorValue="40000000" position="1"/>
+</LinearGradient>
+</Fill>
+</Shape>
+</Node>
+<Node name="L_far" id="0:211">
+<DataBindContext sourcePathIds="0:40-0:201" propertyKey="13" converterId="0:212"/>
+<DataBindContext sourcePathIds="0:40-0:202" propertyKey="14" converterId="0:213"/>
+<Shape x="1200" y="980" name="HazeFar">
+<Ellipse width="1800" height="1800" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<RadialGradient startX="0" startY="0" endX="900" endY="0">
+<GradientStop colorValue="47FF9A6A" position="0"/>
+<GradientStop colorValue="19FF9A6A" position="0.5"/>
+<GradientStop colorValue="00FF9A6A" position="1"/>
+</RadialGradient>
+</Fill>
+</Shape>
+<Shape x="1200" y="1130" name="HillsFar">
+<PointsPath isClosed="true" name="Path">
+<StraightVertex x="-1240" y="410"/>
+<CubicDetachedVertex x="-900" y="-270" inRotation="2.27" inDistance="119.21" outRotation="-0.87" outDistance="119.21"/>
+<CubicDetachedVertex x="-580" y="-370" inRotation="3.11" inDistance="74.7" outRotation="-0.03" outDistance="74.7"/>
+<CubicDetachedVertex x="-260" y="-290" inRotation="3.08" inDistance="74.81" outRotation="-0.06" outDistance="74.81"/>
+<CubicDetachedVertex x="60" y="-410" inRotation="3.11" inDistance="77.04" outRotation="-0.03" outDistance="77.04"/>
+<CubicDetachedVertex x="400" y="-310" inRotation="3.17" inDistance="74.7" outRotation="0.03" outDistance="74.7"/>
+<CubicDetachedVertex x="700" y="-390" inRotation="3.17" inDistance="75.87" outRotation="0.03" outDistance="75.87"/>
+<CubicDetachedVertex x="1050" y="-290" inRotation="4.12" inDistance="112.61" outRotation="0.98" outDistance="112.61"/>
+<StraightVertex x="1240" y="410"/>
+</PointsPath>
+<Fill>
+<SolidColor colorValue="FF5A3A78"/>
+</Fill>
+<Fill>
+<LinearGradient startX="-1200" startY="-430" endX="-1200" endY="-30">
+<GradientStop colorValue="26FFFFFF" position="0"/>
+<GradientStop colorValue="40000000" position="1"/>
+</LinearGradient>
+</Fill>
+</Shape>
+</Node>
+<Node name="L_sky" id="0:208">
+<DataBindContext sourcePathIds="0:40-0:201" propertyKey="13" converterId="0:209"/>
+<DataBindContext sourcePathIds="0:40-0:202" propertyKey="14" converterId="0:210"/>
+<Shape x="1700" y="470" name="Moon">
+<Ellipse width="192" height="192" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="FFFFF0D2"/>
+</Fill>
+<Fill>
+<RadialGradient startX="-30" startY="-30" endX="80" endY="-30">
+<GradientStop colorValue="99FFFFFF" position="0"/>
+<GradientStop colorValue="00FFFFFF" position="1"/>
+</RadialGradient>
+</Fill>
+<Fill>
+<LinearGradient startX="-100" startY="10" endX="100" endY="10">
+<GradientStop colorValue="008A5A7A" position="0.6"/>
+<GradientStop colorValue="668A5A7A" position="1"/>
+</LinearGradient>
+</Fill>
+</Shape>
+<Shape x="1700" y="470" name="MoonGlow" id="0:207">
+<Ellipse width="660" height="660" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<RadialGradient startX="0" startY="0" endX="330" endY="0">
+<GradientStop colorValue="8CFFD9A0" position="0"/>
+<GradientStop colorValue="31FFD9A0" position="0.5"/>
+<GradientStop colorValue="00FFD9A0" position="1"/>
+</RadialGradient>
+</Fill>
+</Shape>
+<Node x="0" y="0" name="Stars" id="0:206">
+<Shape x="0.13" y="554.04" name="Star">
+<Ellipse width="6.02" height="6.02" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="9AFFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="1750.49" y="328.97" name="Star">
+<Ellipse width="6.31" height="6.31" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="DFFFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="1812.18" y="334.85" name="Star">
+<Ellipse width="8.79" height="8.79" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="D1FFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="1960.22" y="160.36" name="Star">
+<Ellipse width="6.62" height="6.62" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="DAFFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="1675.31" y="51.25" name="Star">
+<Ellipse width="8.79" height="8.79" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="BBFFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="2213.76" y="488.3" name="Star">
+<Ellipse width="4.86" height="4.86" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="C1FFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="2215.6" y="419.33" name="Star">
+<Ellipse width="8.51" height="8.51" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="C9FFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="2188.79" y="546.83" name="Star">
+<Ellipse width="6.61" height="6.61" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="AAFFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="2009.21" y="212.71" name="Star">
+<Ellipse width="5.07" height="5.07" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="A5FFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="1028.33" y="191.03" name="Star">
+<Ellipse width="10.56" height="10.56" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="C7FFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="1750.25" y="529.15" name="Star">
+<Ellipse width="4.41" height="4.41" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="A2FFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="1345.51" y="315.1" name="Star">
+<Ellipse width="6.95" height="6.95" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="98FFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="2181.53" y="51.83" name="Star">
+<Ellipse width="6.56" height="6.56" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="ABFFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="1594.61" y="556.12" name="Star">
+<Ellipse width="7.6" height="7.6" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="95FFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="973.49" y="184.48" name="Star">
+<Ellipse width="6.55" height="6.55" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="B6FFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="798.17" y="328.36" name="Star">
+<Ellipse width="8.3" height="8.3" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="9DFFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="2175.59" y="285.55" name="Star">
+<Ellipse width="10.04" height="10.04" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="D0FFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="1522.44" y="319.42" name="Star">
+<Ellipse width="7.53" height="7.53" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="D7FFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="2254.97" y="250.1" name="Star">
+<Ellipse width="8.96" height="8.96" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="A0FFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="1408.46" y="223.34" name="Star">
+<Ellipse width="6.31" height="6.31" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="B1FFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="1907.33" y="528.98" name="Star">
+<Ellipse width="4.78" height="4.78" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="E8FFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="186.55" y="255.95" name="Star">
+<Ellipse width="5.08" height="5.08" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="89FFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="2390.89" y="147.6" name="Star">
+<Ellipse width="8.43" height="8.43" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="92FFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="1097.06" y="363.89" name="Star">
+<Ellipse width="4.96" height="4.96" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="F5FFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="2122.96" y="536.53" name="Star">
+<Ellipse width="10.2" height="10.2" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="F3FFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="1826.71" y="179.74" name="Star">
+<Ellipse width="4.07" height="4.07" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="9FFFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="182.5" y="20.92" name="Star">
+<Ellipse width="8.32" height="8.32" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="9DFFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="1778.76" y="303.83" name="Star">
+<Ellipse width="8.81" height="8.81" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="9EFFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="2117.01" y="156.39" name="Star">
+<Ellipse width="6.62" height="6.62" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="F2FFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="284.09" y="303.77" name="Star">
+<Ellipse width="4.02" height="4.02" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="F4FFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="1528.64" y="554.83" name="Star">
+<Ellipse width="4.15" height="4.15" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="F2FFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="451.52" y="581.87" name="Star">
+<Ellipse width="7.96" height="7.96" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="D6FFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="639.05" y="149.21" name="Star">
+<Ellipse width="5.46" height="5.46" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="C7FFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="125.63" y="466.27" name="Star">
+<Ellipse width="8.9" height="8.9" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="DBFFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="1195.65" y="38.98" name="Star">
+<Ellipse width="4.77" height="4.77" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="F5FFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="313.82" y="418.96" name="Star">
+<Ellipse width="10.25" height="10.25" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="84FFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="2119.53" y="519.59" name="Star">
+<Ellipse width="10.95" height="10.95" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="F9FFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="1835.72" y="263.37" name="Star">
+<Ellipse width="5.74" height="5.74" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="DCFFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="2117.32" y="251.01" name="Star">
+<Ellipse width="5.64" height="5.64" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="B3FFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="2128.76" y="344.09" name="Star">
+<Ellipse width="6.46" height="6.46" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="CFFFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="1763.74" y="214.31" name="Star">
+<Ellipse width="9.08" height="9.08" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="B5FFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="476.7" y="200.79" name="Star">
+<Ellipse width="10.9" height="10.9" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="FEFFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="1517.78" y="525.87" name="Star">
+<Ellipse width="10.43" height="10.43" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="99FFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="1548.52" y="98.53" name="Star">
+<Ellipse width="7.48" height="7.48" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="C7FFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="1851.36" y="568.54" name="Star">
+<Ellipse width="7.37" height="7.37" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="97FFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="1072.01" y="116.34" name="Star">
+<Ellipse width="8.64" height="8.64" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="C2FFF6E0"/>
+</Fill>
+</Shape>
+</Node>
+<Shape x="1200" y="750" name="Sky">
+<Rectangle width="2400" height="1500" originX="0.5" originY="0.5" cornerRadiusTL="0" name="Path"/>
+<Fill>
+<LinearGradient startX="-1200" startY="-750" endX="-1200" endY="750">
+<GradientStop colorValue="FF160F36" position="0"/>
+<GradientStop colorValue="FF3A1C56" position="0.45"/>
+<GradientStop colorValue="FFC2506A" position="0.75"/>
+<GradientStop colorValue="FFFFB867" position="1"/>
+</LinearGradient>
+</Fill>
+</Shape>
+</Node>
+<StateMachine name="SceneSM" id="0:235">
+<StateMachineLayer name="Ambient">
+<ExitState x="0" y="-300"/>
+<AnyState x="0" y="-150">
+<StateTransition stateToId="0:234" duration="300">
+<TransitionViewModelCondition>
+<TransitionPropertyViewModelComparator>
+<BindablePropertyBoolean>
+<DataBindContext sourcePathIds="0:40-0:205" propertyKey="634"/>
+</BindablePropertyBoolean>
+</TransitionPropertyViewModelComparator>
+<TransitionValueBooleanComparator value="true"/>
+</TransitionViewModelCondition>
+</StateTransition>
+<StateTransition stateToId="0:234" duration="300">
+<TransitionViewModelCondition>
+<TransitionPropertyViewModelComparator>
+<BindablePropertyBoolean>
+<DataBindContext sourcePathIds="0:40-0:204" propertyKey="634"/>
+</BindablePropertyBoolean>
+</TransitionPropertyViewModelComparator>
+<TransitionValueBooleanComparator value="false"/>
+</TransitionViewModelCondition>
+</StateTransition>
+</AnyState>
+<EntryState>
+<StateTransition stateToId="0:232"/>
+</EntryState>
+<AnimationState x="220" animationId="0:226" id="0:232">
+<StateTransition stateToId="0:234" duration="300">
+<TransitionViewModelCondition>
+<TransitionPropertyViewModelComparator>
+<BindablePropertyBoolean>
+<DataBindContext sourcePathIds="0:40-0:205" propertyKey="634"/>
+</BindablePropertyBoolean>
+</TransitionPropertyViewModelComparator>
+<TransitionValueBooleanComparator value="true"/>
+</TransitionViewModelCondition>
+</StateTransition>
+<StateTransition stateToId="0:234" duration="300">
+<TransitionViewModelCondition>
+<TransitionPropertyViewModelComparator>
+<BindablePropertyBoolean>
+<DataBindContext sourcePathIds="0:40-0:204" propertyKey="634"/>
+</BindablePropertyBoolean>
+</TransitionPropertyViewModelComparator>
+<TransitionValueBooleanComparator value="false"/>
+</TransitionViewModelCondition>
+</StateTransition>
+</AnimationState>
+<AnimationState x="460" id="0:234">
+<StateTransition stateToId="0:232" duration="300">
+<TransitionViewModelCondition>
+<TransitionPropertyViewModelComparator>
+<BindablePropertyBoolean>
+<DataBindContext sourcePathIds="0:40-0:205" propertyKey="634"/>
+</BindablePropertyBoolean>
+</TransitionPropertyViewModelComparator>
+<TransitionValueBooleanComparator value="false"/>
+</TransitionViewModelCondition>
+<TransitionViewModelCondition>
+<TransitionPropertyViewModelComparator>
+<BindablePropertyBoolean>
+<DataBindContext sourcePathIds="0:40-0:204" propertyKey="634"/>
+</BindablePropertyBoolean>
+</TransitionPropertyViewModelComparator>
+<TransitionValueBooleanComparator value="true"/>
+</TransitionViewModelCondition>
+</StateTransition>
+</AnimationState>
+</StateMachineLayer>
+<StateMachineLayer name="Celebrate">
+<ExitState x="0" y="-300"/>
+<AnyState x="0" y="-150">
+<StateTransition stateToId="0:233" duration="100">
+<TransitionViewModelCondition>
+<TransitionPropertyViewModelComparator>
+<BindablePropertyTrigger>
+<DataBindContext sourcePathIds="0:40-0:203" propertyKey="686"/>
+</BindablePropertyTrigger>
+</TransitionPropertyViewModelComparator>
+<TransitionValueTriggerComparator/>
+</TransitionViewModelCondition>
+</StateTransition>
+</AnyState>
+<EntryState>
+<StateTransition stateToId="0:231"/>
+</EntryState>
+<AnimationState x="220" id="0:231"/>
+<BlendStateDirect x="460" id="0:233">
+<BlendAnimationDirect animationId="0:230" blendSource="1" mixValue="1"/>
+<BlendAnimationDirect animationId="0:227" blendSource="1" mixValue="1"/>
+<BlendStateTransition stateToId="0:231" enableExitTime="true" exitTimeIsPercetange="true" exitTime="100" duration="300"/>
+</BlendStateDirect>
+</StateMachineLayer>
+</StateMachine>
+<LinearAnimation loopValue="loop" duration="300" fps="60" name="ambient" id="0:226">
+<KeyedObject objectId="0:217">
+<KeyedProperty property="rotation">
+<KeyFrameDouble value="-0.06" frame="0" interpolationType="cubic">
+<CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1"/>
+</KeyFrameDouble>
+<KeyFrameDouble value="0.06" frame="150" interpolationType="cubic">
+<CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1"/>
+</KeyFrameDouble>
+<KeyFrameDouble value="-0.06" frame="300" interpolationType="cubic">
+<CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1"/>
+</KeyFrameDouble>
+</KeyedProperty>
+</KeyedObject>
+<KeyedObject objectId="0:218">
+<KeyedProperty property="rotation">
+<KeyFrameDouble value="0.06" frame="0" interpolationType="cubic">
+<CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1"/>
+</KeyFrameDouble>
+<KeyFrameDouble value="-0.06" frame="150" interpolationType="cubic">
+<CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1"/>
+</KeyFrameDouble>
+<KeyFrameDouble value="0.06" frame="300" interpolationType="cubic">
+<CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1"/>
+</KeyFrameDouble>
+</KeyedProperty>
+</KeyedObject>
+<KeyedObject objectId="0:207">
+<KeyedProperty property="opacity">
+<KeyFrameDouble value="0.7" frame="0" interpolationType="cubic">
+<CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1"/>
+</KeyFrameDouble>
+<KeyFrameDouble value="1" frame="150" interpolationType="cubic">
+<CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1"/>
+</KeyFrameDouble>
+<KeyFrameDouble value="0.7" frame="300" interpolationType="cubic">
+<CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1"/>
+</KeyFrameDouble>
+</KeyedProperty>
+</KeyedObject>
+<KeyedObject objectId="0:206">
+<KeyedProperty property="opacity">
+<KeyFrameDouble value="0.6" frame="0" interpolationType="cubic">
+<CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1"/>
+</KeyFrameDouble>
+<KeyFrameDouble value="1" frame="75" interpolationType="cubic">
+<CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1"/>
+</KeyFrameDouble>
+<KeyFrameDouble value="0.6" frame="150" interpolationType="cubic">
+<CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1"/>
+</KeyFrameDouble>
+</KeyedProperty>
+</KeyedObject>
+</LinearAnimation>
+<LinearAnimation loopValue="oneShot" duration="100" fps="60" name="celebrate" id="0:227">
+<KeyedObject objectId="0:222">
+<KeyedProperty property="opacity">
+<KeyFrameDouble value="1" frame="0" interpolationType="cubic">
+<CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1"/>
+</KeyFrameDouble>
+<KeyFrameDouble value="1" frame="30" interpolationType="cubic">
+<CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1"/>
+</KeyFrameDouble>
+<KeyFrameDouble value="1" frame="100" interpolationType="cubic">
+<CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1"/>
+</KeyFrameDouble>
+</KeyedProperty>
+</KeyedObject>
+<KeyedObject objectId="0:217">
+<KeyedProperty property="rotation">
+<KeyFrameDouble value="-0.16" frame="0" interpolationType="cubic">
+<CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1"/>
+</KeyFrameDouble>
+<KeyFrameDouble value="0.16" frame="50" interpolationType="cubic">
+<CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1"/>
+</KeyFrameDouble>
+<KeyFrameDouble value="-0.16" frame="100" interpolationType="cubic">
+<CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1"/>
+</KeyFrameDouble>
+</KeyedProperty>
+</KeyedObject>
+<KeyedObject objectId="0:218">
+<KeyedProperty property="rotation">
+<KeyFrameDouble value="0.16" frame="0" interpolationType="cubic">
+<CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1"/>
+</KeyFrameDouble>
+<KeyFrameDouble value="-0.16" frame="50" interpolationType="cubic">
+<CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1"/>
+</KeyFrameDouble>
+<KeyFrameDouble value="0.16" frame="100" interpolationType="cubic">
+<CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1"/>
+</KeyFrameDouble>
+</KeyedProperty>
+</KeyedObject>
+</LinearAnimation>
+<LinearAnimation loopValue="oneShot" duration="100" fps="60" name="flash" id="0:230">
+<KeyedObject objectId="0:229">
+<KeyedProperty property="opacity">
+<KeyFrameDouble value="0" frame="0" interpolationType="cubic">
+<CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1"/>
+</KeyFrameDouble>
+<KeyFrameDouble value="1" frame="18" interpolationType="cubic">
+<CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1"/>
+</KeyFrameDouble>
+<KeyFrameDouble value="0" frame="100" interpolationType="cubic">
+<CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1"/>
+</KeyFrameDouble>
+</KeyedProperty>
+</KeyedObject>
+</LinearAnimation>
+</Artboard>
+<Artboard defaultStateMachineId="0:256" viewModelId="0:40" viewModelInstanceId="0:41" styleId="0:901" x="2600" width="2400" height="1500" name="Scene_Cafe" id="0:258">
+<LayoutComponentStyle name="Style" id="0:901"/>
+<Shape opacity="0.3" x="1200" y="750" name="NightTint">
+<Rectangle width="2400" height="1500" originX="0.5" originY="0.5" cornerRadiusTL="0" name="Path"/>
+<Fill>
+<SolidColor colorValue="FF0A0A30"/>
+</Fill>
+<DataBindContext sourcePathIds="0:40-0:200" propertyKey="18" converterId="0:249"/>
+</Shape>
+<Shape x="1200" y="750" name="Flash" id="0:250" opacity="0">
+<Rectangle width="2400" height="1500" originX="0.5" originY="0.5" cornerRadiusTL="0" name="Path"/>
+<Fill>
+<RadialGradient startX="0" startY="150" endX="1500" endY="150">
+<GradientStop colorValue="73FFE9B0" position="0"/>
+<GradientStop colorValue="00FFE9B0" position="1"/>
+</RadialGradient>
+</Fill>
+</Shape>
+<Node name="L_glow" id="0:246">
+<DataBindContext sourcePathIds="0:40-0:201" propertyKey="13" converterId="0:224"/>
+<DataBindContext sourcePathIds="0:40-0:202" propertyKey="14" converterId="0:225"/>
+<Shape x="1200" y="1480" name="WarmFloorGlow" id="0:245">
+<Ellipse width="2000" height="2000" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<RadialGradient startX="0" startY="0" endX="1000" endY="0">
+<GradientStop colorValue="66FFB060" position="0"/>
+<GradientStop colorValue="24FFB060" position="0.5"/>
+<GradientStop colorValue="00FFB060" position="1"/>
+</RadialGradient>
+</Fill>
+</Shape>
+<Shape x="1200" y="1490" name="Sill">
+<Rectangle width="2600" height="200" originX="0.5" originY="0.5" cornerRadiusTL="0" name="Path"/>
+<Fill>
+<LinearGradient startX="-1200" startY="-110" endX="-1200" endY="110">
+<GradientStop colorValue="FFA8603E" position="0"/>
+<GradientStop colorValue="FF4A2230" position="1"/>
+</LinearGradient>
+</Fill>
+</Shape>
+</Node>
+<Node name="L_frame" id="0:244">
+<DataBindContext sourcePathIds="0:40-0:201" propertyKey="13" converterId="0:220"/>
+<DataBindContext sourcePathIds="0:40-0:202" propertyKey="14" converterId="0:221"/>
+<Shape x="1200" y="900" name="ArchTrim">
+<Rectangle width="1040" height="1500" originX="0.5" originY="0.5" cornerRadiusTL="520" name="Path"/>
+<Stroke thickness="36" cap="round" join="round">
+<LinearGradient startX="-1200" startY="-750" endX="-1200" endY="600">
+<GradientStop colorValue="FFFFD9A0" position="0"/>
+<GradientStop colorValue="FFC8804A" position="1"/>
+</LinearGradient>
+</Stroke>
+</Shape>
+<Shape x="1200" y="750" name="ArchWall">
+<Rectangle x="0" y="0" width="2700" height="1700" originX="0.5" originY="0.5" name="Slab"/>
+<Rectangle x="0" y="150" width="1040" height="1500" originX="0.5" originY="0.5" cornerRadiusTL="520" name="Arch"/>
+<Fill fillRule="evenOdd">
+<LinearGradient startX="0" startY="-800" endX="0" endY="800">
+<GradientStop colorValue="FFC0603E" position="0"/>
+<GradientStop colorValue="FF8A3A38" position="1"/>
+</LinearGradient>
+</Fill>
+</Shape>
+</Node>
+<Node x="0" y="0" name="Swallows" id="0:243">
+<Shape x="500" y="518" name="Swallow">
+<PointsPath isClosed="false" name="Path">
+<CubicDetachedVertex x="-22" y="-6" inRotation="3.64" inDistance="4.18" outRotation="0.5" outDistance="4.18"/>
+<CubicDetachedVertex x="0" y="6" inRotation="3.14" inDistance="7.33" outRotation="0" outDistance="7.33"/>
+<CubicDetachedVertex x="22" y="-6" inRotation="2.64" inDistance="4.18" outRotation="-0.5" outDistance="4.18"/>
+</PointsPath>
+<Stroke thickness="5" cap="round" join="round">
+<SolidColor colorValue="CC2A1030"/>
+</Stroke>
+</Shape>
+<Shape x="640" y="468" name="Swallow">
+<PointsPath isClosed="false" name="Path">
+<CubicDetachedVertex x="-22" y="-6" inRotation="3.64" inDistance="4.18" outRotation="0.5" outDistance="4.18"/>
+<CubicDetachedVertex x="0" y="6" inRotation="3.14" inDistance="7.33" outRotation="0" outDistance="7.33"/>
+<CubicDetachedVertex x="22" y="-6" inRotation="2.64" inDistance="4.18" outRotation="-0.5" outDistance="4.18"/>
+</PointsPath>
+<Stroke thickness="5" cap="round" join="round">
+<SolidColor colorValue="CC2A1030"/>
+</Stroke>
+</Shape>
+<Shape x="560" y="608" name="Swallow">
+<PointsPath isClosed="false" name="Path">
+<CubicDetachedVertex x="-22" y="-6" inRotation="3.64" inDistance="4.18" outRotation="0.5" outDistance="4.18"/>
+<CubicDetachedVertex x="0" y="6" inRotation="3.14" inDistance="7.33" outRotation="0" outDistance="7.33"/>
+<CubicDetachedVertex x="22" y="-6" inRotation="2.64" inDistance="4.18" outRotation="-0.5" outDistance="4.18"/>
+</PointsPath>
+<Stroke thickness="5" cap="round" join="round">
+<SolidColor colorValue="CC2A1030"/>
+</Stroke>
+</Shape>
+</Node>
+<Node name="L_mid" id="0:242">
+<DataBindContext sourcePathIds="0:40-0:201" propertyKey="13" converterId="0:215"/>
+<DataBindContext sourcePathIds="0:40-0:202" propertyKey="14" converterId="0:216"/>
+<Shape x="2030" y="1070" name="Orange">
+<Ellipse width="36" height="36" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="FFFF9A2A"/>
+</Fill>
+<Fill>
+<RadialGradient startX="-5" startY="-6" endX="11" endY="-6">
+<GradientStop colorValue="B3FFE0A0" position="0"/>
+<GradientStop colorValue="00FFE0A0" position="1"/>
+</RadialGradient>
+</Fill>
+</Shape>
+<Shape x="2110" y="960" name="Orange">
+<Ellipse width="36" height="36" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="FFFF9A2A"/>
+</Fill>
+<Fill>
+<RadialGradient startX="-5" startY="-6" endX="11" endY="-6">
+<GradientStop colorValue="B3FFE0A0" position="0"/>
+<GradientStop colorValue="00FFE0A0" position="1"/>
+</RadialGradient>
+</Fill>
+</Shape>
+<Shape x="1950" y="1030" name="Orange">
+<Ellipse width="36" height="36" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="FFFF9A2A"/>
+</Fill>
+<Fill>
+<RadialGradient startX="-5" startY="-6" endX="11" endY="-6">
+<GradientStop colorValue="B3FFE0A0" position="0"/>
+<GradientStop colorValue="00FFE0A0" position="1"/>
+</RadialGradient>
+</Fill>
+</Shape>
+<Shape x="2060" y="1000" name="Orange">
+<Ellipse width="36" height="36" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="FFFF9A2A"/>
+</Fill>
+<Fill>
+<RadialGradient startX="-5" startY="-6" endX="11" endY="-6">
+<GradientStop colorValue="B3FFE0A0" position="0"/>
+<GradientStop colorValue="00FFE0A0" position="1"/>
+</RadialGradient>
+</Fill>
+</Shape>
+<Shape x="1980" y="950" name="Orange">
+<Ellipse width="36" height="36" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="FFFF9A2A"/>
+</Fill>
+<Fill>
+<RadialGradient startX="-5" startY="-6" endX="11" endY="-6">
+<GradientStop colorValue="B3FFE0A0" position="0"/>
+<GradientStop colorValue="00FFE0A0" position="1"/>
+</RadialGradient>
+</Fill>
+</Shape>
+<Shape x="2020" y="1060" name="Foliage">
+<Ellipse width="260" height="260" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="FF3A5A32"/>
+</Fill>
+<Fill>
+<RadialGradient startX="-30" startY="-40" endX="100" endY="-40">
+<GradientStop colorValue="669AC46A" position="0"/>
+<GradientStop colorValue="731A2A18" position="1"/>
+</RadialGradient>
+</Fill>
+</Shape>
+<Shape x="2130" y="1000" name="Foliage">
+<Ellipse width="220" height="220" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="FF3A5A32"/>
+</Fill>
+<Fill>
+<RadialGradient startX="-30" startY="-40" endX="80" endY="-40">
+<GradientStop colorValue="669AC46A" position="0"/>
+<GradientStop colorValue="731A2A18" position="1"/>
+</RadialGradient>
+</Fill>
+</Shape>
+<Shape x="1930" y="990" name="Foliage">
+<Ellipse width="200" height="200" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="FF3A5A32"/>
+</Fill>
+<Fill>
+<RadialGradient startX="-30" startY="-40" endX="70" endY="-40">
+<GradientStop colorValue="669AC46A" position="0"/>
+<GradientStop colorValue="731A2A18" position="1"/>
+</RadialGradient>
+</Fill>
+</Shape>
+<Shape x="2020" y="930" name="Foliage">
+<Ellipse width="240" height="240" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="FF3A5A32"/>
+</Fill>
+<Fill>
+<RadialGradient startX="-30" startY="-40" endX="90" endY="-40">
+<GradientStop colorValue="669AC46A" position="0"/>
+<GradientStop colorValue="731A2A18" position="1"/>
+</RadialGradient>
+</Fill>
+</Shape>
+<Shape x="1690" y="830" name="BellHole">
+<Ellipse width="52" height="72" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="8CFFB060"/>
+</Fill>
+</Shape>
+<Shape x="1690" y="870" name="Tower">
+<PointsPath isClosed="true" name="Path">
+<StraightVertex x="-40" y="230"/>
+<StraightVertex x="-40" y="-90"/>
+<StraightVertex x="-70" y="-110"/>
+<StraightVertex x="0" y="-230"/>
+<StraightVertex x="70" y="-110"/>
+<StraightVertex x="40" y="-90"/>
+<StraightVertex x="40" y="230"/>
+</PointsPath>
+<Fill>
+<SolidColor colorValue="FF4A2238"/>
+</Fill>
+</Shape>
+<Shape x="1200" y="1295" name="RoofsMid">
+<PointsPath isClosed="true" name="Path">
+<StraightVertex x="-1240" y="245"/>
+<CubicDetachedVertex x="-1050" y="-205" inRotation="2.37" inDistance="80.03" outRotation="-0.78" outDistance="80.03"/>
+<CubicDetachedVertex x="-750" y="-235" inRotation="3.16" inDistance="71.18" outRotation="0.02" outDistance="71.18"/>
+<CubicDetachedVertex x="-440" y="-195" inRotation="3.12" inDistance="70.01" outRotation="-0.02" outDistance="70.01"/>
+<CubicDetachedVertex x="-150" y="-245" inRotation="3.14" inDistance="74.67" outRotation="0" outDistance="74.67"/>
+<CubicDetachedVertex x="200" y="-195" inRotation="3.16" inDistance="81.67" outRotation="0.01" outDistance="81.67"/>
+<CubicDetachedVertex x="550" y="-235" inRotation="3.14" inDistance="99.17" outRotation="0" outDistance="99.17"/>
+<CubicDetachedVertex x="1050" y="-195" inRotation="3.75" inDistance="98.06" outRotation="0.61" outDistance="98.06"/>
+<StraightVertex x="1240" y="245"/>
+</PointsPath>
+<Fill>
+<SolidColor colorValue="FF5A2A3E"/>
+</Fill>
+<Fill>
+<LinearGradient startX="-1200" startY="-395" endX="-1200" endY="5">
+<GradientStop colorValue="1AFFFFFF" position="0"/>
+<GradientStop colorValue="40000000" position="1"/>
+</LinearGradient>
+</Fill>
+</Shape>
+</Node>
+<Node name="L_far" id="0:241">
+<DataBindContext sourcePathIds="0:40-0:201" propertyKey="13" converterId="0:212"/>
+<DataBindContext sourcePathIds="0:40-0:202" propertyKey="14" converterId="0:213"/>
+<Shape x="1200" y="1245" name="RoofsFar">
+<PointsPath isClosed="true" name="Path">
+<StraightVertex x="-1240" y="295"/>
+<CubicDetachedVertex x="-1000" y="-255" inRotation="2.32" inDistance="92.45" outRotation="-0.82" outDistance="92.45"/>
+<CubicDetachedVertex x="-700" y="-285" inRotation="3.16" inDistance="70.01" outRotation="0.02" outDistance="70.01"/>
+<CubicDetachedVertex x="-400" y="-245" inRotation="3.12" inDistance="70.01" outRotation="-0.02" outDistance="70.01"/>
+<CubicDetachedVertex x="-100" y="-295" inRotation="3.14" inDistance="75.83" outRotation="0" outDistance="75.83"/>
+<CubicDetachedVertex x="250" y="-245" inRotation="3.16" inDistance="81.67" outRotation="0.01" outDistance="81.67"/>
+<CubicDetachedVertex x="600" y="-285" inRotation="3.14" inDistance="87.5" outRotation="0" outDistance="87.5"/>
+<CubicDetachedVertex x="1000" y="-245" inRotation="3.88" inDistance="100.77" outRotation="0.74" outDistance="100.77"/>
+<StraightVertex x="1240" y="295"/>
+</PointsPath>
+<Fill>
+<SolidColor colorValue="FF8A3A4A"/>
+</Fill>
+<Fill>
+<LinearGradient startX="-1200" startY="-445" endX="-1200" endY="-45">
+<GradientStop colorValue="1FFFFFFF" position="0"/>
+<GradientStop colorValue="40000000" position="1"/>
+</LinearGradient>
+</Fill>
+</Shape>
+</Node>
+<Node name="L_sky" id="0:240">
+<DataBindContext sourcePathIds="0:40-0:201" propertyKey="13" converterId="0:209"/>
+<DataBindContext sourcePathIds="0:40-0:202" propertyKey="14" converterId="0:210"/>
+<Shape x="1200" y="960" name="Sun">
+<Ellipse width="300" height="300" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="FFFFF1C8"/>
+</Fill>
+<Fill>
+<RadialGradient startX="-30" startY="-30" endX="130" endY="-30">
+<GradientStop colorValue="B3FFFFFF" position="0"/>
+<GradientStop colorValue="00FFFFFF" position="1"/>
+</RadialGradient>
+</Fill>
+</Shape>
+<Shape x="1200" y="960" name="SunGlow" id="0:239">
+<Ellipse width="1240" height="1240" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<RadialGradient startX="0" startY="0" endX="620" endY="0">
+<GradientStop colorValue="B3FFE0A0" position="0"/>
+<GradientStop colorValue="3EFFE0A0" position="0.5"/>
+<GradientStop colorValue="00FFE0A0" position="1"/>
+</RadialGradient>
+</Fill>
+</Shape>
+<Shape x="1200" y="750" name="Sky">
+<Rectangle width="2400" height="1500" originX="0.5" originY="0.5" cornerRadiusTL="0" name="Path"/>
+<Fill>
+<LinearGradient startX="-1200" startY="-750" endX="-1200" endY="750">
+<GradientStop colorValue="FF3A1A4A" position="0"/>
+<GradientStop colorValue="FFC2506A" position="0.4"/>
+<GradientStop colorValue="FFFF9A5A" position="0.7"/>
+<GradientStop colorValue="FFFFD08A" position="1"/>
+</LinearGradient>
+</Fill>
+</Shape>
+</Node>
+<StateMachine name="SceneSM" id="0:256">
+<StateMachineLayer name="Ambient">
+<ExitState x="0" y="-300"/>
+<AnyState x="0" y="-150">
+<StateTransition stateToId="0:255" duration="300">
+<TransitionViewModelCondition>
+<TransitionPropertyViewModelComparator>
+<BindablePropertyBoolean>
+<DataBindContext sourcePathIds="0:40-0:205" propertyKey="634"/>
+</BindablePropertyBoolean>
+</TransitionPropertyViewModelComparator>
+<TransitionValueBooleanComparator value="true"/>
+</TransitionViewModelCondition>
+</StateTransition>
+<StateTransition stateToId="0:255" duration="300">
+<TransitionViewModelCondition>
+<TransitionPropertyViewModelComparator>
+<BindablePropertyBoolean>
+<DataBindContext sourcePathIds="0:40-0:204" propertyKey="634"/>
+</BindablePropertyBoolean>
+</TransitionPropertyViewModelComparator>
+<TransitionValueBooleanComparator value="false"/>
+</TransitionViewModelCondition>
+</StateTransition>
+</AnyState>
+<EntryState>
+<StateTransition stateToId="0:253"/>
+</EntryState>
+<AnimationState x="220" animationId="0:247" id="0:253">
+<StateTransition stateToId="0:255" duration="300">
+<TransitionViewModelCondition>
+<TransitionPropertyViewModelComparator>
+<BindablePropertyBoolean>
+<DataBindContext sourcePathIds="0:40-0:205" propertyKey="634"/>
+</BindablePropertyBoolean>
+</TransitionPropertyViewModelComparator>
+<TransitionValueBooleanComparator value="true"/>
+</TransitionViewModelCondition>
+</StateTransition>
+<StateTransition stateToId="0:255" duration="300">
+<TransitionViewModelCondition>
+<TransitionPropertyViewModelComparator>
+<BindablePropertyBoolean>
+<DataBindContext sourcePathIds="0:40-0:204" propertyKey="634"/>
+</BindablePropertyBoolean>
+</TransitionPropertyViewModelComparator>
+<TransitionValueBooleanComparator value="false"/>
+</TransitionViewModelCondition>
+</StateTransition>
+</AnimationState>
+<AnimationState x="460" id="0:255">
+<StateTransition stateToId="0:253" duration="300">
+<TransitionViewModelCondition>
+<TransitionPropertyViewModelComparator>
+<BindablePropertyBoolean>
+<DataBindContext sourcePathIds="0:40-0:205" propertyKey="634"/>
+</BindablePropertyBoolean>
+</TransitionPropertyViewModelComparator>
+<TransitionValueBooleanComparator value="false"/>
+</TransitionViewModelCondition>
+<TransitionViewModelCondition>
+<TransitionPropertyViewModelComparator>
+<BindablePropertyBoolean>
+<DataBindContext sourcePathIds="0:40-0:204" propertyKey="634"/>
+</BindablePropertyBoolean>
+</TransitionPropertyViewModelComparator>
+<TransitionValueBooleanComparator value="true"/>
+</TransitionViewModelCondition>
+</StateTransition>
+</AnimationState>
+</StateMachineLayer>
+<StateMachineLayer name="Celebrate">
+<ExitState x="0" y="-300"/>
+<AnyState x="0" y="-150">
+<StateTransition stateToId="0:254" duration="100">
+<TransitionViewModelCondition>
+<TransitionPropertyViewModelComparator>
+<BindablePropertyTrigger>
+<DataBindContext sourcePathIds="0:40-0:203" propertyKey="686"/>
+</BindablePropertyTrigger>
+</TransitionPropertyViewModelComparator>
+<TransitionValueTriggerComparator/>
+</TransitionViewModelCondition>
+</StateTransition>
+</AnyState>
+<EntryState>
+<StateTransition stateToId="0:252"/>
+</EntryState>
+<AnimationState x="220" id="0:252"/>
+<BlendStateDirect x="460" id="0:254">
+<BlendAnimationDirect animationId="0:251" blendSource="1" mixValue="1"/>
+<BlendAnimationDirect animationId="0:248" blendSource="1" mixValue="1"/>
+<BlendStateTransition stateToId="0:252" enableExitTime="true" exitTimeIsPercetange="true" exitTime="100" duration="300"/>
+</BlendStateDirect>
+</StateMachineLayer>
+</StateMachine>
+<LinearAnimation loopValue="loop" duration="300" fps="60" name="ambient" id="0:247">
+<KeyedObject objectId="0:239">
+<KeyedProperty property="opacity">
+<KeyFrameDouble value="0.75" frame="0" interpolationType="cubic">
+<CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1"/>
+</KeyFrameDouble>
+<KeyFrameDouble value="1" frame="75" interpolationType="cubic">
+<CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1"/>
+</KeyFrameDouble>
+<KeyFrameDouble value="0.75" frame="150" interpolationType="cubic">
+<CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1"/>
+</KeyFrameDouble>
+</KeyedProperty>
+</KeyedObject>
+<KeyedObject objectId="0:243">
+<KeyedProperty property="x">
+<KeyFrameDouble value="-120" frame="0" interpolationType="cubic">
+<CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1"/>
+</KeyFrameDouble>
+<KeyFrameDouble value="140" frame="150" interpolationType="cubic">
+<CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1"/>
+</KeyFrameDouble>
+<KeyFrameDouble value="-120" frame="300" interpolationType="cubic">
+<CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1"/>
+</KeyFrameDouble>
+</KeyedProperty>
+</KeyedObject>
+<KeyedObject objectId="0:243">
+<KeyedProperty property="y">
+<KeyFrameDouble value="0" frame="0" interpolationType="cubic">
+<CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1"/>
+</KeyFrameDouble>
+<KeyFrameDouble value="-50" frame="150" interpolationType="cubic">
+<CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1"/>
+</KeyFrameDouble>
+<KeyFrameDouble value="0" frame="300" interpolationType="cubic">
+<CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1"/>
+</KeyFrameDouble>
+</KeyedProperty>
+</KeyedObject>
+</LinearAnimation>
+<LinearAnimation loopValue="oneShot" duration="100" fps="60" name="celebrate" id="0:248">
+<KeyedObject objectId="0:239">
+<KeyedProperty property="opacity">
+<KeyFrameDouble value="1" frame="0" interpolationType="cubic">
+<CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1"/>
+</KeyFrameDouble>
+<KeyFrameDouble value="1" frame="40" interpolationType="cubic">
+<CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1"/>
+</KeyFrameDouble>
+<KeyFrameDouble value="1" frame="100" interpolationType="cubic">
+<CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1"/>
+</KeyFrameDouble>
+</KeyedProperty>
+</KeyedObject>
+</LinearAnimation>
+<LinearAnimation loopValue="oneShot" duration="100" fps="60" name="flash" id="0:251">
+<KeyedObject objectId="0:250">
+<KeyedProperty property="opacity">
+<KeyFrameDouble value="0" frame="0" interpolationType="cubic">
+<CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1"/>
+</KeyFrameDouble>
+<KeyFrameDouble value="1" frame="18" interpolationType="cubic">
+<CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1"/>
+</KeyFrameDouble>
+<KeyFrameDouble value="0" frame="100" interpolationType="cubic">
+<CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1"/>
+</KeyFrameDouble>
+</KeyedProperty>
+</KeyedObject>
+</LinearAnimation>
+</Artboard>
+<Artboard defaultStateMachineId="0:276" viewModelId="0:40" viewModelInstanceId="0:41" styleId="0:902" x="5200" width="2400" height="1500" name="Scene_Rooftop" id="0:278">
+<LayoutComponentStyle name="Style" id="0:902"/>
+<Shape opacity="0.3" x="1200" y="750" name="NightTint">
+<Rectangle width="2400" height="1500" originX="0.5" originY="0.5" cornerRadiusTL="0" name="Path"/>
+<Fill>
+<SolidColor colorValue="FF0A0A30"/>
+</Fill>
+<DataBindContext sourcePathIds="0:40-0:200" propertyKey="18" converterId="0:269"/>
+</Shape>
+<Shape x="1200" y="750" name="Flash" id="0:270" opacity="0">
+<Rectangle width="2400" height="1500" originX="0.5" originY="0.5" cornerRadiusTL="0" name="Path"/>
+<Fill>
+<RadialGradient startX="0" startY="150" endX="1500" endY="150">
+<GradientStop colorValue="73FFE9B0" position="0"/>
+<GradientStop colorValue="00FFE9B0" position="1"/>
+</RadialGradient>
+</Fill>
+</Shape>
+<Node name="L_glow" id="0:266">
+<DataBindContext sourcePathIds="0:40-0:201" propertyKey="13" converterId="0:224"/>
+<DataBindContext sourcePathIds="0:40-0:202" propertyKey="14" converterId="0:225"/>
+<Shape x="1200" y="1500" name="WarmFloorGlow" id="0:265">
+<Ellipse width="2000" height="2000" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<RadialGradient startX="0" startY="0" endX="1000" endY="0">
+<GradientStop colorValue="40FFB0A0" position="0"/>
+<GradientStop colorValue="16FFB0A0" position="0.5"/>
+<GradientStop colorValue="00FFB0A0" position="1"/>
+</RadialGradient>
+</Fill>
+</Shape>
+<Shape x="1200" y="1500" name="RailBase">
+<Rectangle width="2600" height="60" originX="0.5" originY="0.5" cornerRadiusTL="10" name="Path"/>
+<Fill>
+<SolidColor colorValue="FF141838"/>
+</Fill>
+</Shape>
+<Shape x="1200" y="1300" name="RailTop">
+<Rectangle width="2600" height="40" originX="0.5" originY="0.5" cornerRadiusTL="20" name="Path"/>
+<Fill>
+<LinearGradient startX="-1200" startY="-20" endX="-1200" endY="20">
+<GradientStop colorValue="FFB8BEE0" position="0"/>
+<GradientStop colorValue="FF3A4070" position="1"/>
+</LinearGradient>
+</Fill>
+</Shape>
+<Shape x="2220" y="1400" name="Baluster">
+<Rectangle width="26" height="200" originX="0.5" originY="0.5" cornerRadiusTL="12" name="Path"/>
+<Fill>
+<LinearGradient startX="-13" startY="-1400" endX="13" endY="-1400">
+<GradientStop colorValue="FF8A90B8" position="0"/>
+<GradientStop colorValue="FF1A2040" position="1"/>
+</LinearGradient>
+</Fill>
+</Shape>
+<Shape x="2000" y="1400" name="Baluster">
+<Rectangle width="26" height="200" originX="0.5" originY="0.5" cornerRadiusTL="12" name="Path"/>
+<Fill>
+<LinearGradient startX="-13" startY="-1400" endX="13" endY="-1400">
+<GradientStop colorValue="FF8A90B8" position="0"/>
+<GradientStop colorValue="FF1A2040" position="1"/>
+</LinearGradient>
+</Fill>
+</Shape>
+<Shape x="1780" y="1400" name="Baluster">
+<Rectangle width="26" height="200" originX="0.5" originY="0.5" cornerRadiusTL="12" name="Path"/>
+<Fill>
+<LinearGradient startX="-13" startY="-1400" endX="13" endY="-1400">
+<GradientStop colorValue="FF8A90B8" position="0"/>
+<GradientStop colorValue="FF1A2040" position="1"/>
+</LinearGradient>
+</Fill>
+</Shape>
+<Shape x="1560" y="1400" name="Baluster">
+<Rectangle width="26" height="200" originX="0.5" originY="0.5" cornerRadiusTL="12" name="Path"/>
+<Fill>
+<LinearGradient startX="-13" startY="-1400" endX="13" endY="-1400">
+<GradientStop colorValue="FF8A90B8" position="0"/>
+<GradientStop colorValue="FF1A2040" position="1"/>
+</LinearGradient>
+</Fill>
+</Shape>
+<Shape x="860" y="1400" name="Baluster">
+<Rectangle width="26" height="200" originX="0.5" originY="0.5" cornerRadiusTL="12" name="Path"/>
+<Fill>
+<LinearGradient startX="-13" startY="-1400" endX="13" endY="-1400">
+<GradientStop colorValue="FF8A90B8" position="0"/>
+<GradientStop colorValue="FF1A2040" position="1"/>
+</LinearGradient>
+</Fill>
+</Shape>
+<Shape x="640" y="1400" name="Baluster">
+<Rectangle width="26" height="200" originX="0.5" originY="0.5" cornerRadiusTL="12" name="Path"/>
+<Fill>
+<LinearGradient startX="-13" startY="-1400" endX="13" endY="-1400">
+<GradientStop colorValue="FF8A90B8" position="0"/>
+<GradientStop colorValue="FF1A2040" position="1"/>
+</LinearGradient>
+</Fill>
+</Shape>
+<Shape x="420" y="1400" name="Baluster">
+<Rectangle width="26" height="200" originX="0.5" originY="0.5" cornerRadiusTL="12" name="Path"/>
+<Fill>
+<LinearGradient startX="-13" startY="-1400" endX="13" endY="-1400">
+<GradientStop colorValue="FF8A90B8" position="0"/>
+<GradientStop colorValue="FF1A2040" position="1"/>
+</LinearGradient>
+</Fill>
+</Shape>
+<Shape x="200" y="1400" name="Baluster">
+<Rectangle width="26" height="200" originX="0.5" originY="0.5" cornerRadiusTL="12" name="Path"/>
+<Fill>
+<LinearGradient startX="-13" startY="-1400" endX="13" endY="-1400">
+<GradientStop colorValue="FF8A90B8" position="0"/>
+<GradientStop colorValue="FF1A2040" position="1"/>
+</LinearGradient>
+</Fill>
+</Shape>
+</Node>
+<Node name="L_frame" id="0:264">
+<DataBindContext sourcePathIds="0:40-0:201" propertyKey="13" converterId="0:220"/>
+<DataBindContext sourcePathIds="0:40-0:202" propertyKey="14" converterId="0:221"/>
+<Shape x="1200" y="690" name="WindowTrim">
+<Rectangle width="1210" height="1310" originX="0.5" originY="0.5" cornerRadiusTL="44" name="Path"/>
+<Stroke thickness="36" cap="round" join="round">
+<SolidColor colorValue="FFE4E6F6"/>
+</Stroke>
+<Stroke thickness="8" cap="round" join="round">
+<SolidColor colorValue="80FFD9A0"/>
+</Stroke>
+</Shape>
+<Shape x="1200" y="920" name="Mullion">
+<PointsPath isClosed="false" name="Path">
+<CubicDetachedVertex x="-590" y="0" inRotation="3.14" inDistance="196.67" outRotation="0" outDistance="196.67"/>
+<CubicDetachedVertex x="590" y="0" inRotation="3.14" inDistance="196.67" outRotation="0" outDistance="196.67"/>
+</PointsPath>
+<Stroke thickness="22" cap="round" join="round">
+<LinearGradient startX="-590" startY="0" endX="-550" endY="0">
+<GradientStop colorValue="FFD8DCF0" position="0"/>
+<GradientStop colorValue="FF7A80A8" position="1"/>
+</LinearGradient>
+</Stroke>
+</Shape>
+<Shape x="1200" y="520" name="Mullion">
+<PointsPath isClosed="false" name="Path">
+<CubicDetachedVertex x="-590" y="0" inRotation="3.14" inDistance="196.67" outRotation="0" outDistance="196.67"/>
+<CubicDetachedVertex x="590" y="0" inRotation="3.14" inDistance="196.67" outRotation="0" outDistance="196.67"/>
+</PointsPath>
+<Stroke thickness="22" cap="round" join="round">
+<LinearGradient startX="-590" startY="0" endX="-550" endY="0">
+<GradientStop colorValue="FFD8DCF0" position="0"/>
+<GradientStop colorValue="FF7A80A8" position="1"/>
+</LinearGradient>
+</Stroke>
+</Shape>
+<Shape x="1600" y="710" name="Mullion">
+<PointsPath isClosed="false" name="Path">
+<CubicDetachedVertex x="0" y="-620" inRotation="4.71" inDistance="206.67" outRotation="1.57" outDistance="206.67"/>
+<CubicDetachedVertex x="0" y="620" inRotation="4.71" inDistance="206.67" outRotation="1.57" outDistance="206.67"/>
+</PointsPath>
+<Stroke thickness="22" cap="round" join="round">
+<LinearGradient startX="0" startY="-620" endX="40" endY="620">
+<GradientStop colorValue="FFD8DCF0" position="0"/>
+<GradientStop colorValue="FF7A80A8" position="1"/>
+</LinearGradient>
+</Stroke>
+</Shape>
+<Shape x="800" y="710" name="Mullion">
+<PointsPath isClosed="false" name="Path">
+<CubicDetachedVertex x="0" y="-620" inRotation="4.71" inDistance="206.67" outRotation="1.57" outDistance="206.67"/>
+<CubicDetachedVertex x="0" y="620" inRotation="4.71" inDistance="206.67" outRotation="1.57" outDistance="206.67"/>
+</PointsPath>
+<Stroke thickness="22" cap="round" join="round">
+<LinearGradient startX="0" startY="-620" endX="40" endY="620">
+<GradientStop colorValue="FFD8DCF0" position="0"/>
+<GradientStop colorValue="FF7A80A8" position="1"/>
+</LinearGradient>
+</Stroke>
+</Shape>
+<Shape x="1200" y="710" name="Mullion">
+<PointsPath isClosed="false" name="Path">
+<CubicDetachedVertex x="0" y="-620" inRotation="4.71" inDistance="206.67" outRotation="1.57" outDistance="206.67"/>
+<CubicDetachedVertex x="0" y="620" inRotation="4.71" inDistance="206.67" outRotation="1.57" outDistance="206.67"/>
+</PointsPath>
+<Stroke thickness="22" cap="round" join="round">
+<LinearGradient startX="0" startY="-620" endX="40" endY="620">
+<GradientStop colorValue="FFD8DCF0" position="0"/>
+<GradientStop colorValue="FF7A80A8" position="1"/>
+</LinearGradient>
+</Stroke>
+</Shape>
+<Shape x="1200" y="750" name="WindowWall">
+<Rectangle x="0" y="0" width="2700" height="1700" originX="0.5" originY="0.5" name="Slab"/>
+<Rectangle x="0" y="-60" width="1180" height="1280" originX="0.5" originY="0.5" cornerRadiusTL="40" name="Opening"/>
+<Fill fillRule="evenOdd">
+<LinearGradient startX="0" startY="-800" endX="0" endY="800">
+<GradientStop colorValue="FF2A3060" position="0"/>
+<GradientStop colorValue="FF141838" position="1"/>
+</LinearGradient>
+</Fill>
+</Shape>
+</Node>
+<Node name="L_mid" id="0:263">
+<DataBindContext sourcePathIds="0:40-0:201" propertyKey="13" converterId="0:215"/>
+<DataBindContext sourcePathIds="0:40-0:202" propertyKey="14" converterId="0:216"/>
+<Shape x="2000" y="1005" name="LitWindow">
+<Rectangle width="26" height="36" originX="0.5" originY="0.5" cornerRadiusTL="5" name="Path"/>
+<Fill>
+<SolidColor colorValue="D9FFD27A"/>
+</Fill>
+</Shape>
+<Shape x="1650" y="990" name="LitWindow">
+<Rectangle width="26" height="36" originX="0.5" originY="0.5" cornerRadiusTL="5" name="Path"/>
+<Fill>
+<SolidColor colorValue="D9FFD27A"/>
+</Fill>
+</Shape>
+<Shape x="560" y="1010" name="LitWindow">
+<Rectangle width="26" height="36" originX="0.5" originY="0.5" cornerRadiusTL="5" name="Path"/>
+<Fill>
+<SolidColor colorValue="D9FFD27A"/>
+</Fill>
+</Shape>
+<Shape x="250" y="1000" name="LitWindow">
+<Rectangle width="26" height="36" originX="0.5" originY="0.5" cornerRadiusTL="5" name="Path"/>
+<Fill>
+<SolidColor colorValue="D9FFD27A"/>
+</Fill>
+</Shape>
+<Shape x="1200" y="1315" name="Roofs">
+<PointsPath isClosed="true" name="Path">
+<StraightVertex x="-1240" y="225"/>
+<CubicDetachedVertex x="-1080" y="-185" inRotation="2.32" inDistance="71.81" outRotation="-0.82" outDistance="71.81"/>
+<CubicDetachedVertex x="-820" y="-225" inRotation="3.16" inDistance="60.68" outRotation="0.02" outDistance="60.68"/>
+<CubicDetachedVertex x="-560" y="-175" inRotation="3.16" inDistance="60.68" outRotation="0.02" outDistance="60.68"/>
+<CubicDetachedVertex x="-300" y="-215" inRotation="3.14" inDistance="100.33" outRotation="0" outDistance="100.33"/>
+<CubicDetachedVertex x="300" y="-175" inRotation="3.14" inDistance="100.33" outRotation="0" outDistance="100.33"/>
+<CubicDetachedVertex x="560" y="-215" inRotation="3.14" inDistance="70" outRotation="0" outDistance="70"/>
+<CubicDetachedVertex x="900" y="-175" inRotation="3.16" inDistance="63.01" outRotation="0.02" outDistance="63.01"/>
+<CubicDetachedVertex x="1100" y="-205" inRotation="4.01" inDistance="61.25" outRotation="0.87" outDistance="61.25"/>
+<StraightVertex x="1240" y="225"/>
+</PointsPath>
+<Fill>
+<SolidColor colorValue="FF1A2250"/>
+</Fill>
+<Fill>
+<LinearGradient startX="-1200" startY="-365" endX="-1200" endY="35">
+<GradientStop colorValue="1AFFFFFF" position="0"/>
+<GradientStop colorValue="40000000" position="1"/>
+</LinearGradient>
+</Fill>
+</Shape>
+</Node>
+<Node name="L_far" id="0:262">
+<DataBindContext sourcePathIds="0:40-0:201" propertyKey="13" converterId="0:212"/>
+<DataBindContext sourcePathIds="0:40-0:202" propertyKey="14" converterId="0:213"/>
+<Shape x="1932" y="460" name="TowerBeacon">
+<Ellipse width="18" height="18" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="FFFFE9A0"/>
+</Fill>
+</Shape>
+<Shape x="1932" y="765" name="Tower">
+<PointsPath isClosed="true" name="Path">
+<StraightVertex x="-92" y="295"/>
+<StraightVertex x="-52" y="35"/>
+<StraightVertex x="-12" y="-205"/>
+<StraightVertex x="0" y="-295"/>
+<StraightVertex x="12" y="-205"/>
+<StraightVertex x="52" y="35"/>
+<StraightVertex x="92" y="295"/>
+<StraightVertex x="58" y="295"/>
+<StraightVertex x="28" y="95"/>
+<StraightVertex x="0" y="95"/>
+<StraightVertex x="-28" y="95"/>
+<StraightVertex x="-58" y="295"/>
+</PointsPath>
+<Fill>
+<SolidColor colorValue="FF1A2050"/>
+</Fill>
+<Fill>
+<LinearGradient startX="-92" startY="-765" endX="92" endY="-765">
+<GradientStop colorValue="1FFFFFFF" position="0"/>
+<GradientStop colorValue="4D000000" position="1"/>
+</LinearGradient>
+</Fill>
+</Shape>
+<Shape x="1200" y="1270" name="CityFar">
+<PointsPath isClosed="true" name="Path">
+<StraightVertex x="-1240" y="270"/>
+<CubicDetachedVertex x="-1020" y="-230" inRotation="2.28" inDistance="82.76" outRotation="-0.87" outDistance="82.76"/>
+<CubicDetachedVertex x="-780" y="-270" inRotation="3.16" inDistance="60.68" outRotation="0.02" outDistance="60.68"/>
+<CubicDetachedVertex x="-500" y="-220" inRotation="3.16" inDistance="65.34" outRotation="0.02" outDistance="65.34"/>
+<CubicDetachedVertex x="-220" y="-260" inRotation="3.14" inDistance="81.67" outRotation="0" outDistance="81.67"/>
+<CubicDetachedVertex x="200" y="-220" inRotation="3.13" inDistance="84.01" outRotation="-0.01" outDistance="84.01"/>
+<CubicDetachedVertex x="500" y="-270" inRotation="3.14" inDistance="70" outRotation="0" outDistance="70"/>
+<CubicDetachedVertex x="800" y="-220" inRotation="3.18" inDistance="64.21" outRotation="0.04" outDistance="64.21"/>
+<CubicDetachedVertex x="1050" y="-250" inRotation="3.98" inDistance="76.83" outRotation="0.84" outDistance="76.83"/>
+<StraightVertex x="1240" y="270"/>
+</PointsPath>
+<Fill>
+<SolidColor colorValue="FF2A3068"/>
+</Fill>
+<Fill>
+<LinearGradient startX="-1200" startY="-420" endX="-1200" endY="-20">
+<GradientStop colorValue="1AFFFFFF" position="0"/>
+<GradientStop colorValue="40000000" position="1"/>
+</LinearGradient>
+</Fill>
+</Shape>
+</Node>
+<Node name="L_sky" id="0:261">
+<DataBindContext sourcePathIds="0:40-0:201" propertyKey="13" converterId="0:209"/>
+<DataBindContext sourcePathIds="0:40-0:202" propertyKey="14" converterId="0:210"/>
+<Shape x="1200" y="1100" name="HorizonGlow">
+<Ellipse width="1800" height="1800" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<RadialGradient startX="0" startY="0" endX="900" endY="0">
+<GradientStop colorValue="52FFB0B0" position="0"/>
+<GradientStop colorValue="1DFFB0B0" position="0.5"/>
+<GradientStop colorValue="00FFB0B0" position="1"/>
+</RadialGradient>
+</Fill>
+</Shape>
+<Node x="0" y="0" name="Stars" id="0:260">
+<Shape x="0.39" y="688.44" name="Star">
+<Ellipse width="10.07" height="10.07" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="D0FFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="451.47" y="542.35" name="Star">
+<Ellipse width="10.92" height="10.92" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="A0FFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="636.54" y="569.41" name="Star">
+<Ellipse width="4.37" height="4.37" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="F3FFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="1080.65" y="656.15" name="Star">
+<Ellipse width="4.86" height="4.86" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="8FFFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="225.93" y="153.88" name="Star">
+<Ellipse width="4.36" height="4.36" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="B3FFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="1841.29" y="385.78" name="Star">
+<Ellipse width="6.58" height="6.58" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="C4FFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="1846.81" y="68.3" name="Star">
+<Ellipse width="10.52" height="10.52" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="DDFFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="1766.37" y="655.25" name="Star">
+<Ellipse width="4.82" height="4.82" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="80FFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="1227.63" y="897.11" name="Star">
+<Ellipse width="7.2" height="7.2" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="F1FFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="684.98" y="797.31" name="Star">
+<Ellipse width="9.68" height="9.68" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="D5FFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="450.76" y="573.86" name="Star">
+<Ellipse width="5.23" height="5.23" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="E8FFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="1636.54" y="478.5" name="Star">
+<Ellipse width="5.85" height="5.85" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="C9FFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="1744.58" y="156.53" name="Star">
+<Ellipse width="4.67" height="4.67" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="84FFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="2383.83" y="698.01" name="Star">
+<Ellipse width="7.81" height="7.81" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="BFFFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="520.48" y="767.2" name="Star">
+<Ellipse width="4.65" height="4.65" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="A2FFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="2394.52" y="539.53" name="Star">
+<Ellipse width="9.89" height="9.89" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="D9FFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="1726.76" y="342.42" name="Star">
+<Ellipse width="8.12" height="8.12" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="F3FFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="2167.32" y="498.37" name="Star">
+<Ellipse width="7.6" height="7.6" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="88FFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="1964.92" y="179.25" name="Star">
+<Ellipse width="4.87" height="4.87" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="E0FFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="1825.39" y="56.07" name="Star">
+<Ellipse width="10.94" height="10.94" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="96FFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="921.99" y="573.08" name="Star">
+<Ellipse width="6.33" height="6.33" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="BAFFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="559.66" y="206.17" name="Star">
+<Ellipse width="7.23" height="7.23" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="9DFFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="2372.68" y="597.41" name="Star">
+<Ellipse width="10.28" height="10.28" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="B7FFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="891.17" y="703.09" name="Star">
+<Ellipse width="6.89" height="6.89" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="E1FFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="1568.87" y="607.83" name="Star">
+<Ellipse width="8.59" height="8.59" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="DCFFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="680.12" y="745.38" name="Star">
+<Ellipse width="4.22" height="4.22" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="DEFFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="547.49" y="14.23" name="Star">
+<Ellipse width="9.95" height="9.95" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="D8FFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="536.27" y="426.59" name="Star">
+<Ellipse width="4.44" height="4.44" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="DBFFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="1551.03" y="637.88" name="Star">
+<Ellipse width="4.85" height="4.85" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="D7FFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="852.28" y="426.33" name="Star">
+<Ellipse width="4.06" height="4.06" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="DEFFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="2185.91" y="692.05" name="Star">
+<Ellipse width="4.44" height="4.44" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="D9FFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="1354.57" y="816.53" name="Star">
+<Ellipse width="8.87" height="8.87" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="84FFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="1917.15" y="604.81" name="Star">
+<Ellipse width="8.39" height="8.39" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="D8FFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="376.89" y="284.36" name="Star">
+<Ellipse width="4.71" height="4.71" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="92FFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="1186.95" y="97.39" name="Star">
+<Ellipse width="6.32" height="6.32" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="E0FFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="941.47" y="66.59" name="Star">
+<Ellipse width="8.75" height="8.75" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="8EFFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="1558.58" y="529.85" name="Star">
+<Ellipse width="10.85" height="10.85" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="EEFFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="707.17" y="240.34" name="Star">
+<Ellipse width="9.21" height="9.21" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="97FFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="1551.95" y="183.46" name="Star">
+<Ellipse width="8.93" height="8.93" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="9BFFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="1586.29" y="611.93" name="Star">
+<Ellipse width="4.38" height="4.38" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="EEFFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="491.22" y="14.51" name="Star">
+<Ellipse width="5.23" height="5.23" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="A2FFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="1430.11" y="842.28" name="Star">
+<Ellipse width="10.7" height="10.7" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="FDFFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="2153.33" y="558.75" name="Star">
+<Ellipse width="9.28" height="9.28" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="CCFFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="2245.55" y="371.49" name="Star">
+<Ellipse width="7.45" height="7.45" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="D5FFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="754.09" y="755.19" name="Star">
+<Ellipse width="7.12" height="7.12" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="C7FFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="816.02" y="453.49" name="Star">
+<Ellipse width="10.91" height="10.91" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="C8FFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="1642.96" y="472.99" name="Star">
+<Ellipse width="5.9" height="5.9" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="8BFFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="606.33" y="79.47" name="Star">
+<Ellipse width="10.28" height="10.28" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="CFFFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="1459.84" y="160.22" name="Star">
+<Ellipse width="10.11" height="10.11" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="DAFFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="2348.92" y="265.89" name="Star">
+<Ellipse width="5.58" height="5.58" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="A8FFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="1124.64" y="674.24" name="Star">
+<Ellipse width="9.11" height="9.11" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="85FFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="2103.99" y="77.32" name="Star">
+<Ellipse width="6" height="6" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="E6FFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="413.07" y="628.19" name="Star">
+<Ellipse width="4.78" height="4.78" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="B4FFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="577.95" y="298.98" name="Star">
+<Ellipse width="5.78" height="5.78" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="83FFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="1956.3" y="755.15" name="Star">
+<Ellipse width="8.03" height="8.03" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="B3FFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="1455.97" y="32.01" name="Star">
+<Ellipse width="9.11" height="9.11" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="AFFFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="2356.48" y="248.35" name="Star">
+<Ellipse width="4.15" height="4.15" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="A9FFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="457.56" y="231.89" name="Star">
+<Ellipse width="5.28" height="5.28" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="D8FFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="1014.99" y="831.55" name="Star">
+<Ellipse width="7.2" height="7.2" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="E3FFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="1262.81" y="336.18" name="Star">
+<Ellipse width="8.41" height="8.41" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="E7FFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="1227.81" y="218.47" name="Star">
+<Ellipse width="9.73" height="9.73" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="F7FFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="1603.97" y="403.29" name="Star">
+<Ellipse width="10.87" height="10.87" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="9CFFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="576.61" y="849.59" name="Star">
+<Ellipse width="4.09" height="4.09" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="82FFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="576.94" y="253.89" name="Star">
+<Ellipse width="8.92" height="8.92" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="E2FFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="797.71" y="269.7" name="Star">
+<Ellipse width="6.17" height="6.17" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="C8FFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="2129.6" y="368.55" name="Star">
+<Ellipse width="10.9" height="10.9" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="DBFFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="105.84" y="206.7" name="Star">
+<Ellipse width="7.44" height="7.44" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="BDFFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="1685.46" y="157.11" name="Star">
+<Ellipse width="10.97" height="10.97" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="F2FFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="448.62" y="591.62" name="Star">
+<Ellipse width="7.75" height="7.75" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="FBFFF6E0"/>
+</Fill>
+</Shape>
+<Shape x="754.04" y="420.44" name="Star">
+<Ellipse width="10.1" height="10.1" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="F5FFF6E0"/>
+</Fill>
+</Shape>
+</Node>
+<Shape x="1200" y="750" name="Sky">
+<Rectangle width="2400" height="1500" originX="0.5" originY="0.5" cornerRadiusTL="0" name="Path"/>
+<Fill>
+<LinearGradient startX="-1200" startY="-750" endX="-1200" endY="750">
+<GradientStop colorValue="FF0A1030" position="0"/>
+<GradientStop colorValue="FF1F2F6A" position="0.5"/>
+<GradientStop colorValue="FF5A5A9A" position="0.85"/>
+<GradientStop colorValue="FFE8A0A0" position="1"/>
+</LinearGradient>
+</Fill>
+</Shape>
+</Node>
+<StateMachine name="SceneSM" id="0:276">
+<StateMachineLayer name="Ambient">
+<ExitState x="0" y="-300"/>
+<AnyState x="0" y="-150">
+<StateTransition stateToId="0:275" duration="300">
+<TransitionViewModelCondition>
+<TransitionPropertyViewModelComparator>
+<BindablePropertyBoolean>
+<DataBindContext sourcePathIds="0:40-0:205" propertyKey="634"/>
+</BindablePropertyBoolean>
+</TransitionPropertyViewModelComparator>
+<TransitionValueBooleanComparator value="true"/>
+</TransitionViewModelCondition>
+</StateTransition>
+<StateTransition stateToId="0:275" duration="300">
+<TransitionViewModelCondition>
+<TransitionPropertyViewModelComparator>
+<BindablePropertyBoolean>
+<DataBindContext sourcePathIds="0:40-0:204" propertyKey="634"/>
+</BindablePropertyBoolean>
+</TransitionPropertyViewModelComparator>
+<TransitionValueBooleanComparator value="false"/>
+</TransitionViewModelCondition>
+</StateTransition>
+</AnyState>
+<EntryState>
+<StateTransition stateToId="0:273"/>
+</EntryState>
+<AnimationState x="220" animationId="0:267" id="0:273">
+<StateTransition stateToId="0:275" duration="300">
+<TransitionViewModelCondition>
+<TransitionPropertyViewModelComparator>
+<BindablePropertyBoolean>
+<DataBindContext sourcePathIds="0:40-0:205" propertyKey="634"/>
+</BindablePropertyBoolean>
+</TransitionPropertyViewModelComparator>
+<TransitionValueBooleanComparator value="true"/>
+</TransitionViewModelCondition>
+</StateTransition>
+<StateTransition stateToId="0:275" duration="300">
+<TransitionViewModelCondition>
+<TransitionPropertyViewModelComparator>
+<BindablePropertyBoolean>
+<DataBindContext sourcePathIds="0:40-0:204" propertyKey="634"/>
+</BindablePropertyBoolean>
+</TransitionPropertyViewModelComparator>
+<TransitionValueBooleanComparator value="false"/>
+</TransitionViewModelCondition>
+</StateTransition>
+</AnimationState>
+<AnimationState x="460" id="0:275">
+<StateTransition stateToId="0:273" duration="300">
+<TransitionViewModelCondition>
+<TransitionPropertyViewModelComparator>
+<BindablePropertyBoolean>
+<DataBindContext sourcePathIds="0:40-0:205" propertyKey="634"/>
+</BindablePropertyBoolean>
+</TransitionPropertyViewModelComparator>
+<TransitionValueBooleanComparator value="false"/>
+</TransitionViewModelCondition>
+<TransitionViewModelCondition>
+<TransitionPropertyViewModelComparator>
+<BindablePropertyBoolean>
+<DataBindContext sourcePathIds="0:40-0:204" propertyKey="634"/>
+</BindablePropertyBoolean>
+</TransitionPropertyViewModelComparator>
+<TransitionValueBooleanComparator value="true"/>
+</TransitionViewModelCondition>
+</StateTransition>
+</AnimationState>
+</StateMachineLayer>
+<StateMachineLayer name="Celebrate">
+<ExitState x="0" y="-300"/>
+<AnyState x="0" y="-150">
+<StateTransition stateToId="0:274" duration="100">
+<TransitionViewModelCondition>
+<TransitionPropertyViewModelComparator>
+<BindablePropertyTrigger>
+<DataBindContext sourcePathIds="0:40-0:203" propertyKey="686"/>
+</BindablePropertyTrigger>
+</TransitionPropertyViewModelComparator>
+<TransitionValueTriggerComparator/>
+</TransitionViewModelCondition>
+</StateTransition>
+</AnyState>
+<EntryState>
+<StateTransition stateToId="0:272"/>
+</EntryState>
+<AnimationState x="220" id="0:272"/>
+<BlendStateDirect x="460" id="0:274">
+<BlendAnimationDirect animationId="0:271" blendSource="1" mixValue="1"/>
+<BlendAnimationDirect animationId="0:268" blendSource="1" mixValue="1"/>
+<BlendStateTransition stateToId="0:272" enableExitTime="true" exitTimeIsPercetange="true" exitTime="100" duration="300"/>
+</BlendStateDirect>
+</StateMachineLayer>
+</StateMachine>
+<LinearAnimation loopValue="loop" duration="240" fps="60" name="ambient" id="0:267">
+<KeyedObject objectId="0:260">
+<KeyedProperty property="opacity">
+<KeyFrameDouble value="0.55" frame="0" interpolationType="cubic">
+<CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1"/>
+</KeyFrameDouble>
+<KeyFrameDouble value="1" frame="60" interpolationType="cubic">
+<CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1"/>
+</KeyFrameDouble>
+<KeyFrameDouble value="0.55" frame="120" interpolationType="cubic">
+<CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1"/>
+</KeyFrameDouble>
+</KeyedProperty>
+</KeyedObject>
+<KeyedObject objectId="0:265">
+<KeyedProperty property="opacity">
+<KeyFrameDouble value="0.8" frame="0" interpolationType="cubic">
+<CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1"/>
+</KeyFrameDouble>
+<KeyFrameDouble value="1" frame="120" interpolationType="cubic">
+<CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1"/>
+</KeyFrameDouble>
+<KeyFrameDouble value="0.8" frame="240" interpolationType="cubic">
+<CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1"/>
+</KeyFrameDouble>
+</KeyedProperty>
+</KeyedObject>
+</LinearAnimation>
+<LinearAnimation loopValue="oneShot" duration="100" fps="60" name="celebrate" id="0:268">
+<KeyedObject objectId="0:265">
+<KeyedProperty property="opacity">
+<KeyFrameDouble value="1" frame="0" interpolationType="cubic">
+<CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1"/>
+</KeyFrameDouble>
+<KeyFrameDouble value="1" frame="40" interpolationType="cubic">
+<CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1"/>
+</KeyFrameDouble>
+<KeyFrameDouble value="1" frame="100" interpolationType="cubic">
+<CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1"/>
+</KeyFrameDouble>
+</KeyedProperty>
+</KeyedObject>
+</LinearAnimation>
+<LinearAnimation loopValue="oneShot" duration="100" fps="60" name="flash" id="0:271">
+<KeyedObject objectId="0:270">
+<KeyedProperty property="opacity">
+<KeyFrameDouble value="0" frame="0" interpolationType="cubic">
+<CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1"/>
+</KeyFrameDouble>
+<KeyFrameDouble value="1" frame="18" interpolationType="cubic">
+<CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1"/>
+</KeyFrameDouble>
+<KeyFrameDouble value="0" frame="100" interpolationType="cubic">
+<CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1"/>
+</KeyFrameDouble>
+</KeyedProperty>
+</KeyedObject>
+</LinearAnimation>
+</Artboard>
+<Artboard defaultStateMachineId="0:298" viewModelId="0:40" viewModelInstanceId="0:41" styleId="0:903" x="7800" width="2400" height="1500" name="Scene_Clinic" id="0:300">
+<LayoutComponentStyle name="Style" id="0:903"/>
+<Shape opacity="0.3" x="1200" y="750" name="NightTint">
+<Rectangle width="2400" height="1500" originX="0.5" originY="0.5" cornerRadiusTL="0" name="Path"/>
+<Fill>
+<SolidColor colorValue="FF3A4A8A"/>
+</Fill>
+<DataBindContext sourcePathIds="0:40-0:200" propertyKey="18" converterId="0:291"/>
+</Shape>
+<Shape x="1200" y="750" name="Flash" id="0:292" opacity="0">
+<Rectangle width="2400" height="1500" originX="0.5" originY="0.5" cornerRadiusTL="0" name="Path"/>
+<Fill>
+<RadialGradient startX="0" startY="150" endX="1500" endY="150">
+<GradientStop colorValue="73FFE9B0" position="0"/>
+<GradientStop colorValue="00FFE9B0" position="1"/>
+</RadialGradient>
+</Fill>
+</Shape>
+<Node name="L_glow" id="0:288">
+<DataBindContext sourcePathIds="0:40-0:201" propertyKey="13" converterId="0:224"/>
+<DataBindContext sourcePathIds="0:40-0:202" propertyKey="14" converterId="0:225"/>
+<Shape x="1200" y="700" name="SoftLight" id="0:287">
+<Ellipse width="2400" height="2400" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<RadialGradient startX="0" startY="0" endX="1200" endY="0">
+<GradientStop colorValue="40FFFFFF" position="0"/>
+<GradientStop colorValue="16FFFFFF" position="0.5"/>
+<GradientStop colorValue="00FFFFFF" position="1"/>
+</RadialGradient>
+</Fill>
+</Shape>
+<Shape x="1200" y="1490" name="Counter">
+<Rectangle width="2600" height="200" originX="0.5" originY="0.5" cornerRadiusTL="0" name="Path"/>
+<Fill>
+<LinearGradient startX="-1200" startY="-100" endX="-1200" endY="110">
+<GradientStop colorValue="FFF4F8F8" position="0"/>
+<GradientStop colorValue="FFB8CCCA" position="1"/>
+</LinearGradient>
+</Fill>
+</Shape>
+</Node>
+<Node name="L_frame" id="0:286">
+<DataBindContext sourcePathIds="0:40-0:201" propertyKey="13" converterId="0:220"/>
+<DataBindContext sourcePathIds="0:40-0:202" propertyKey="14" converterId="0:221"/>
+<Node x="2140" y="1360" name="PlantR" id="0:285">
+<Shape x="137.87" y="-24.31" name="Frond">
+<PointsPath isClosed="false" name="Path">
+<CubicDetachedVertex x="-137.87" y="24.31" inRotation="2.87" inDistance="16.91" outRotation="-0.27" outDistance="16.91"/>
+<CubicDetachedVertex x="-40" y="-2.43" inRotation="2.97" inDistance="46.67" outRotation="-0.17" outDistance="46.67"/>
+<CubicDetachedVertex x="137.87" y="-24.31" inRotation="3.02" inDistance="29.87" outRotation="-0.12" outDistance="29.87"/>
+</PointsPath>
+<Stroke thickness="30" cap="round" join="round">
+<LinearGradient startX="-137.87" startY="24.31" endX="137.87" endY="-24.31">
+<GradientStop colorValue="FF2E7A52" position="0"/>
+<GradientStop colorValue="FF7ACB8A" position="1"/>
+</LinearGradient>
+</Stroke>
+</Shape>
+<Shape x="130.23" y="-109.27" name="Frond">
+<PointsPath isClosed="false" name="Path">
+<CubicDetachedVertex x="-130.23" y="109.27" inRotation="2.21" inDistance="25.05" outRotation="-0.93" outDistance="25.05"/>
+<CubicDetachedVertex x="-40" y="-10.93" inRotation="2.44" inDistance="56.67" outRotation="-0.7" outDistance="56.67"/>
+<CubicDetachedVertex x="130.23" y="-109.27" inRotation="2.62" inDistance="32.77" outRotation="-0.52" outDistance="32.77"/>
+</PointsPath>
+<Stroke thickness="28" cap="round" join="round">
+<LinearGradient startX="-130.23" startY="109.27" endX="130.23" endY="-109.27">
+<GradientStop colorValue="FF2E7A52" position="0"/>
+<GradientStop colorValue="FF7ACB8A" position="1"/>
+</LinearGradient>
+</Stroke>
+</Shape>
+<Shape x="68.4" y="-187.94" name="Frond">
+<PointsPath isClosed="false" name="Path">
+<CubicDetachedVertex x="-68.4" y="187.94" inRotation="1.71" inDistance="34.78" outRotation="-1.43" outDistance="34.78"/>
+<CubicDetachedVertex x="-40" y="-18.79" inRotation="1.92" inDistance="66.67" outRotation="-1.22" outDistance="66.67"/>
+<CubicDetachedVertex x="68.4" y="-187.94" inRotation="2.14" inDistance="33.48" outRotation="-1" outDistance="33.48"/>
+</PointsPath>
+<Stroke thickness="26" cap="round" join="round">
+<LinearGradient startX="-68.4" startY="187.94" endX="68.4" endY="-187.94">
+<GradientStop colorValue="FF2E7A52" position="0"/>
+<GradientStop colorValue="FF7ACB8A" position="1"/>
+</LinearGradient>
+</Stroke>
+</Shape>
+<Shape x="-32.16" y="-137.87" name="Frond">
+<PointsPath isClosed="false" name="Path">
+<CubicDetachedVertex x="32.16" y="137.87" inRotation="1.17" inDistance="27.46" outRotation="-1.97" outDistance="27.46"/>
+<CubicDetachedVertex x="-32.16" y="-13.79" inRotation="1.4" inDistance="46.67" outRotation="-1.75" outDistance="46.67"/>
+<CubicDetachedVertex x="-16.47" y="-137.87" inRotation="1.7" inDistance="20.85" outRotation="-1.45" outDistance="20.85"/>
+</PointsPath>
+<Stroke thickness="24" cap="round" join="round">
+<LinearGradient startX="32.16" startY="137.87" endX="-16.47" endY="-137.87">
+<GradientStop colorValue="FF2E7A52" position="0"/>
+<GradientStop colorValue="FF7ACB8A" position="1"/>
+</LinearGradient>
+</Stroke>
+</Shape>
+<Shape x="-109.27" y="-130.23" name="Frond">
+<PointsPath isClosed="false" name="Path">
+<CubicDetachedVertex x="109.27" y="130.23" inRotation="0.76" inDistance="34.48" outRotation="-2.38" outDistance="34.48"/>
+<CubicDetachedVertex x="-40" y="-13.02" inRotation="0.87" inDistance="56.67" outRotation="-2.27" outDistance="56.67"/>
+<CubicDetachedVertex x="-109.27" y="-130.23" inRotation="1.04" inDistance="22.69" outRotation="-2.1" outDistance="22.69"/>
+</PointsPath>
+<Stroke thickness="22" cap="round" join="round">
+<LinearGradient startX="109.27" startY="130.23" endX="-109.27" endY="-130.23">
+<GradientStop colorValue="FF2E7A52" position="0"/>
+<GradientStop colorValue="FF7ACB8A" position="1"/>
+</LinearGradient>
+</Stroke>
+</Shape>
+<Shape x="-187.94" y="-68.4" name="Frond">
+<PointsPath isClosed="false" name="Path">
+<CubicDetachedVertex x="187.94" y="68.4" inRotation="0.32" inDistance="40.01" outRotation="-2.82" outDistance="40.01"/>
+<CubicDetachedVertex x="-40" y="-6.84" inRotation="0.35" inDistance="66.67" outRotation="-2.79" outDistance="66.67"/>
+<CubicDetachedVertex x="-187.94" y="-68.4" inRotation="0.39" inDistance="26.71" outRotation="-2.75" outDistance="26.71"/>
+</PointsPath>
+<Stroke thickness="20" cap="round" join="round">
+<LinearGradient startX="187.94" startY="68.4" endX="-187.94" endY="-68.4">
+<GradientStop colorValue="FF2E7A52" position="0"/>
+<GradientStop colorValue="FF7ACB8A" position="1"/>
+</LinearGradient>
+</Stroke>
+</Shape>
+<Shape x="0" y="70" name="Pot">
+<Rectangle width="200" height="150" originX="0.5" originY="0.5" cornerRadiusTL="30" name="Path"/>
+<Fill>
+<SolidColor colorValue="FFE8DCCB"/>
+</Fill>
+<Fill>
+<LinearGradient startX="-100" startY="-1430" endX="100" endY="-1430">
+<GradientStop colorValue="4DFFFFFF" position="0"/>
+<GradientStop colorValue="4D3A2A20" position="1"/>
+</LinearGradient>
+</Fill>
+</Shape>
+</Node>
+<Node x="260" y="1360" name="PlantL" id="0:284">
+<Shape x="-137.87" y="-24.31" name="Frond">
+<PointsPath isClosed="false" name="Path">
+<CubicDetachedVertex x="137.87" y="24.31" inRotation="0.27" inDistance="16.91" outRotation="-2.87" outDistance="16.91"/>
+<CubicDetachedVertex x="40" y="-2.43" inRotation="0.17" inDistance="46.67" outRotation="-2.97" outDistance="46.67"/>
+<CubicDetachedVertex x="-137.87" y="-24.31" inRotation="0.12" inDistance="29.87" outRotation="-3.02" outDistance="29.87"/>
+</PointsPath>
+<Stroke thickness="30" cap="round" join="round">
+<LinearGradient startX="137.87" startY="24.31" endX="-137.87" endY="-24.31">
+<GradientStop colorValue="FF2E7A52" position="0"/>
+<GradientStop colorValue="FF7ACB8A" position="1"/>
+</LinearGradient>
+</Stroke>
+</Shape>
+<Shape x="-130.23" y="-109.27" name="Frond">
+<PointsPath isClosed="false" name="Path">
+<CubicDetachedVertex x="130.23" y="109.27" inRotation="0.93" inDistance="25.05" outRotation="-2.21" outDistance="25.05"/>
+<CubicDetachedVertex x="40" y="-10.93" inRotation="0.7" inDistance="56.67" outRotation="-2.44" outDistance="56.67"/>
+<CubicDetachedVertex x="-130.23" y="-109.27" inRotation="0.52" inDistance="32.77" outRotation="-2.62" outDistance="32.77"/>
+</PointsPath>
+<Stroke thickness="28" cap="round" join="round">
+<LinearGradient startX="130.23" startY="109.27" endX="-130.23" endY="-109.27">
+<GradientStop colorValue="FF2E7A52" position="0"/>
+<GradientStop colorValue="FF7ACB8A" position="1"/>
+</LinearGradient>
+</Stroke>
+</Shape>
+<Shape x="-68.4" y="-187.94" name="Frond">
+<PointsPath isClosed="false" name="Path">
+<CubicDetachedVertex x="68.4" y="187.94" inRotation="1.43" inDistance="34.78" outRotation="-1.71" outDistance="34.78"/>
+<CubicDetachedVertex x="40" y="-18.79" inRotation="1.22" inDistance="66.67" outRotation="-1.92" outDistance="66.67"/>
+<CubicDetachedVertex x="-68.4" y="-187.94" inRotation="1" inDistance="33.48" outRotation="-2.14" outDistance="33.48"/>
+</PointsPath>
+<Stroke thickness="26" cap="round" join="round">
+<LinearGradient startX="68.4" startY="187.94" endX="-68.4" endY="-187.94">
+<GradientStop colorValue="FF2E7A52" position="0"/>
+<GradientStop colorValue="FF7ACB8A" position="1"/>
+</LinearGradient>
+</Stroke>
+</Shape>
+<Shape x="32.16" y="-137.87" name="Frond">
+<PointsPath isClosed="false" name="Path">
+<CubicDetachedVertex x="-32.16" y="137.87" inRotation="1.97" inDistance="27.46" outRotation="-1.17" outDistance="27.46"/>
+<CubicDetachedVertex x="32.16" y="-13.79" inRotation="1.75" inDistance="46.67" outRotation="-1.4" outDistance="46.67"/>
+<CubicDetachedVertex x="16.47" y="-137.87" inRotation="1.45" inDistance="20.85" outRotation="-1.7" outDistance="20.85"/>
+</PointsPath>
+<Stroke thickness="24" cap="round" join="round">
+<LinearGradient startX="-32.16" startY="137.87" endX="16.47" endY="-137.87">
+<GradientStop colorValue="FF2E7A52" position="0"/>
+<GradientStop colorValue="FF7ACB8A" position="1"/>
+</LinearGradient>
+</Stroke>
+</Shape>
+<Shape x="109.27" y="-130.23" name="Frond">
+<PointsPath isClosed="false" name="Path">
+<CubicDetachedVertex x="-109.27" y="130.23" inRotation="2.38" inDistance="34.48" outRotation="-0.76" outDistance="34.48"/>
+<CubicDetachedVertex x="40" y="-13.02" inRotation="2.27" inDistance="56.67" outRotation="-0.87" outDistance="56.67"/>
+<CubicDetachedVertex x="109.27" y="-130.23" inRotation="2.1" inDistance="22.69" outRotation="-1.04" outDistance="22.69"/>
+</PointsPath>
+<Stroke thickness="22" cap="round" join="round">
+<LinearGradient startX="-109.27" startY="130.23" endX="109.27" endY="-130.23">
+<GradientStop colorValue="FF2E7A52" position="0"/>
+<GradientStop colorValue="FF7ACB8A" position="1"/>
+</LinearGradient>
+</Stroke>
+</Shape>
+<Shape x="187.94" y="-68.4" name="Frond">
+<PointsPath isClosed="false" name="Path">
+<CubicDetachedVertex x="-187.94" y="68.4" inRotation="2.82" inDistance="40.01" outRotation="-0.32" outDistance="40.01"/>
+<CubicDetachedVertex x="40" y="-6.84" inRotation="2.79" inDistance="66.67" outRotation="-0.35" outDistance="66.67"/>
+<CubicDetachedVertex x="187.94" y="-68.4" inRotation="2.75" inDistance="26.71" outRotation="-0.39" outDistance="26.71"/>
+</PointsPath>
+<Stroke thickness="20" cap="round" join="round">
+<LinearGradient startX="-187.94" startY="68.4" endX="187.94" endY="-68.4">
+<GradientStop colorValue="FF2E7A52" position="0"/>
+<GradientStop colorValue="FF7ACB8A" position="1"/>
+</LinearGradient>
+</Stroke>
+</Shape>
+<Shape x="0" y="70" name="Pot">
+<Rectangle width="200" height="150" originX="0.5" originY="0.5" cornerRadiusTL="30" name="Path"/>
+<Fill>
+<SolidColor colorValue="FFE8DCCB"/>
+</Fill>
+<Fill>
+<LinearGradient startX="-100" startY="-1430" endX="100" endY="-1430">
+<GradientStop colorValue="4DFFFFFF" position="0"/>
+<GradientStop colorValue="4D3A2A20" position="1"/>
+</LinearGradient>
+</Fill>
+</Shape>
+</Node>
+</Node>
+<Node name="L_mid" id="0:283">
+<DataBindContext sourcePathIds="0:40-0:201" propertyKey="13" converterId="0:215"/>
+<DataBindContext sourcePathIds="0:40-0:202" propertyKey="14" converterId="0:216"/>
+<Shape x="1200" y="1030" name="Sill">
+<Rectangle width="1240" height="36" originX="0.5" originY="0.5" cornerRadiusTL="12" name="Path"/>
+<Fill>
+<LinearGradient startX="-1200" startY="-20" endX="-1200" endY="20">
+<GradientStop colorValue="FFFFFFFF" position="0"/>
+<GradientStop colorValue="FFB8CCCA" position="1"/>
+</LinearGradient>
+</Fill>
+</Shape>
+<Shape x="1200" y="600" name="WindowTrim">
+<Rectangle width="1118" height="838" originX="0.5" originY="0.5" cornerRadiusTL="34" name="Path"/>
+<Stroke thickness="26" cap="round" join="round">
+<SolidColor colorValue="FFF4F8F8"/>
+</Stroke>
+</Shape>
+<Shape x="1200" y="600" name="MullH">
+<PointsPath isClosed="false" name="Path">
+<CubicDetachedVertex x="-550" y="0" inRotation="3.14" inDistance="183.33" outRotation="0" outDistance="183.33"/>
+<CubicDetachedVertex x="550" y="0" inRotation="3.14" inDistance="183.33" outRotation="0" outDistance="183.33"/>
+</PointsPath>
+<Stroke thickness="18" cap="round" join="round">
+<SolidColor colorValue="FFF4F8F8"/>
+</Stroke>
+</Shape>
+<Shape x="1200" y="600" name="MullV">
+<PointsPath isClosed="false" name="Path">
+<CubicDetachedVertex x="0" y="-410" inRotation="4.71" inDistance="136.67" outRotation="1.57" outDistance="136.67"/>
+<CubicDetachedVertex x="0" y="410" inRotation="4.71" inDistance="136.67" outRotation="1.57" outDistance="136.67"/>
+</PointsPath>
+<Stroke thickness="18" cap="round" join="round">
+<SolidColor colorValue="FFF4F8F8"/>
+</Stroke>
+</Shape>
+<Shape x="1000" y="380" name="SunBeam" id="0:282">
+<Ellipse width="1040" height="1040" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<RadialGradient startX="0" startY="0" endX="520" endY="0">
+<GradientStop colorValue="99FFFFFF" position="0"/>
+<GradientStop colorValue="36FFFFFF" position="0.5"/>
+<GradientStop colorValue="00FFFFFF" position="1"/>
+</RadialGradient>
+</Fill>
+</Shape>
+<Shape x="1400" y="420" name="Cloud">
+<Ellipse width="320" height="100" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="D9FFFFFF"/>
+</Fill>
+</Shape>
+<Shape x="1500" y="1020" name="Hedge2">
+<Ellipse width="600" height="280" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="FF96C8A4"/>
+</Fill>
+</Shape>
+<Shape x="800" y="1000" name="Hedge1">
+<Ellipse width="520" height="260" originX="0.5" originY="0.5" name="Path"/>
+<Fill>
+<SolidColor colorValue="FFA8D4B0"/>
+</Fill>
+</Shape>
+<Shape x="1200" y="600" name="WindowGlass">
+<Rectangle width="1100" height="820" originX="0.5" originY="0.5" cornerRadiusTL="28" name="Path"/>
+<Fill>
+<LinearGradient startX="-1200" startY="-410" endX="-1200" endY="410">
+<GradientStop colorValue="FFDDF0FF" position="0"/>
+<GradientStop colorValue="FFF4FAFF" position="0.6"/>
+<GradientStop colorValue="FFFFFFFF" position="1"/>
+</LinearGradient>
+</Fill>
+<Fill>
+<RadialGradient startX="-300" startY="-260" endX="220" endY="-260">
+<GradientStop colorValue="CCFFFFFF" position="0"/>
+<GradientStop colorValue="00FFFFFF" position="1"/>
+</RadialGradient>
+</Fill>
+</Shape>
+</Node>
+<Node name="L_sky" id="0:280">
+<DataBindContext sourcePathIds="0:40-0:201" propertyKey="13" converterId="0:209"/>
+<DataBindContext sourcePathIds="0:40-0:202" propertyKey="14" converterId="0:210"/>
+<Shape x="1200" y="750" name="Wall">
+<Rectangle width="2400" height="1500" originX="0.5" originY="0.5" cornerRadiusTL="0" name="Path"/>
+<Fill>
+<LinearGradient startX="-1200" startY="-750" endX="-1200" endY="750">
+<GradientStop colorValue="FFEAF4F2" position="0"/>
+<GradientStop colorValue="FFCFE6E4" position="1"/>
+</LinearGradient>
+</Fill>
+</Shape>
+</Node>
+<StateMachine name="SceneSM" id="0:298">
+<StateMachineLayer name="Ambient">
+<ExitState x="0" y="-300"/>
+<AnyState x="0" y="-150">
+<StateTransition stateToId="0:297" duration="300">
+<TransitionViewModelCondition>
+<TransitionPropertyViewModelComparator>
+<BindablePropertyBoolean>
+<DataBindContext sourcePathIds="0:40-0:205" propertyKey="634"/>
+</BindablePropertyBoolean>
+</TransitionPropertyViewModelComparator>
+<TransitionValueBooleanComparator value="true"/>
+</TransitionViewModelCondition>
+</StateTransition>
+<StateTransition stateToId="0:297" duration="300">
+<TransitionViewModelCondition>
+<TransitionPropertyViewModelComparator>
+<BindablePropertyBoolean>
+<DataBindContext sourcePathIds="0:40-0:204" propertyKey="634"/>
+</BindablePropertyBoolean>
+</TransitionPropertyViewModelComparator>
+<TransitionValueBooleanComparator value="false"/>
+</TransitionViewModelCondition>
+</StateTransition>
+</AnyState>
+<EntryState>
+<StateTransition stateToId="0:295"/>
+</EntryState>
+<AnimationState x="220" animationId="0:289" id="0:295">
+<StateTransition stateToId="0:297" duration="300">
+<TransitionViewModelCondition>
+<TransitionPropertyViewModelComparator>
+<BindablePropertyBoolean>
+<DataBindContext sourcePathIds="0:40-0:205" propertyKey="634"/>
+</BindablePropertyBoolean>
+</TransitionPropertyViewModelComparator>
+<TransitionValueBooleanComparator value="true"/>
+</TransitionViewModelCondition>
+</StateTransition>
+<StateTransition stateToId="0:297" duration="300">
+<TransitionViewModelCondition>
+<TransitionPropertyViewModelComparator>
+<BindablePropertyBoolean>
+<DataBindContext sourcePathIds="0:40-0:204" propertyKey="634"/>
+</BindablePropertyBoolean>
+</TransitionPropertyViewModelComparator>
+<TransitionValueBooleanComparator value="false"/>
+</TransitionViewModelCondition>
+</StateTransition>
+</AnimationState>
+<AnimationState x="460" id="0:297">
+<StateTransition stateToId="0:295" duration="300">
+<TransitionViewModelCondition>
+<TransitionPropertyViewModelComparator>
+<BindablePropertyBoolean>
+<DataBindContext sourcePathIds="0:40-0:205" propertyKey="634"/>
+</BindablePropertyBoolean>
+</TransitionPropertyViewModelComparator>
+<TransitionValueBooleanComparator value="false"/>
+</TransitionViewModelCondition>
+<TransitionViewModelCondition>
+<TransitionPropertyViewModelComparator>
+<BindablePropertyBoolean>
+<DataBindContext sourcePathIds="0:40-0:204" propertyKey="634"/>
+</BindablePropertyBoolean>
+</TransitionPropertyViewModelComparator>
+<TransitionValueBooleanComparator value="true"/>
+</TransitionViewModelCondition>
+</StateTransition>
+</AnimationState>
+</StateMachineLayer>
+<StateMachineLayer name="Celebrate">
+<ExitState x="0" y="-300"/>
+<AnyState x="0" y="-150">
+<StateTransition stateToId="0:296" duration="100">
+<TransitionViewModelCondition>
+<TransitionPropertyViewModelComparator>
+<BindablePropertyTrigger>
+<DataBindContext sourcePathIds="0:40-0:203" propertyKey="686"/>
+</BindablePropertyTrigger>
+</TransitionPropertyViewModelComparator>
+<TransitionValueTriggerComparator/>
+</TransitionViewModelCondition>
+</StateTransition>
+</AnyState>
+<EntryState>
+<StateTransition stateToId="0:294"/>
+</EntryState>
+<AnimationState x="220" id="0:294"/>
+<BlendStateDirect x="460" id="0:296">
+<BlendAnimationDirect animationId="0:293" blendSource="1" mixValue="1"/>
+<BlendAnimationDirect animationId="0:290" blendSource="1" mixValue="1"/>
+<BlendStateTransition stateToId="0:294" enableExitTime="true" exitTimeIsPercetange="true" exitTime="100" duration="300"/>
+</BlendStateDirect>
+</StateMachineLayer>
+</StateMachine>
+<LinearAnimation loopValue="loop" duration="300" fps="60" name="ambient" id="0:289">
+<KeyedObject objectId="0:284">
+<KeyedProperty property="rotation">
+<KeyFrameDouble value="-0.03" frame="0" interpolationType="cubic">
+<CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1"/>
+</KeyFrameDouble>
+<KeyFrameDouble value="0.03" frame="150" interpolationType="cubic">
+<CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1"/>
+</KeyFrameDouble>
+<KeyFrameDouble value="-0.03" frame="300" interpolationType="cubic">
+<CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1"/>
+</KeyFrameDouble>
+</KeyedProperty>
+</KeyedObject>
+<KeyedObject objectId="0:285">
+<KeyedProperty property="rotation">
+<KeyFrameDouble value="0.03" frame="0" interpolationType="cubic">
+<CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1"/>
+</KeyFrameDouble>
+<KeyFrameDouble value="-0.03" frame="150" interpolationType="cubic">
+<CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1"/>
+</KeyFrameDouble>
+<KeyFrameDouble value="0.03" frame="300" interpolationType="cubic">
+<CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1"/>
+</KeyFrameDouble>
+</KeyedProperty>
+</KeyedObject>
+<KeyedObject objectId="0:282">
+<KeyedProperty property="opacity">
+<KeyFrameDouble value="0.55" frame="0" interpolationType="cubic">
+<CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1"/>
+</KeyFrameDouble>
+<KeyFrameDouble value="0.9" frame="150" interpolationType="cubic">
+<CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1"/>
+</KeyFrameDouble>
+<KeyFrameDouble value="0.55" frame="300" interpolationType="cubic">
+<CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1"/>
+</KeyFrameDouble>
+</KeyedProperty>
+</KeyedObject>
+</LinearAnimation>
+<LinearAnimation loopValue="oneShot" duration="100" fps="60" name="celebrate" id="0:290">
+<KeyedObject objectId="0:287">
+<KeyedProperty property="opacity">
+<KeyFrameDouble value="1" frame="0" interpolationType="cubic">
+<CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1"/>
+</KeyFrameDouble>
+<KeyFrameDouble value="1" frame="40" interpolationType="cubic">
+<CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1"/>
+</KeyFrameDouble>
+<KeyFrameDouble value="1" frame="100" interpolationType="cubic">
+<CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1"/>
+</KeyFrameDouble>
+</KeyedProperty>
+</KeyedObject>
+</LinearAnimation>
+<LinearAnimation loopValue="oneShot" duration="100" fps="60" name="flash" id="0:293">
+<KeyedObject objectId="0:292">
+<KeyedProperty property="opacity">
+<KeyFrameDouble value="0" frame="0" interpolationType="cubic">
+<CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1"/>
+</KeyFrameDouble>
+<KeyFrameDouble value="1" frame="18" interpolationType="cubic">
+<CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1"/>
+</KeyFrameDouble>
+<KeyFrameDouble value="0" frame="100" interpolationType="cubic">
+<CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1"/>
+</KeyFrameDouble>
+</KeyedProperty>
+</KeyedObject>
+</LinearAnimation>
+</Artboard>
+<ViewModel defaultInstanceId="0:41" name="SceneVM" id="0:40">
+<ViewModelPropertyNumber name="timeOfDay" id="0:200"/>
+<ViewModelPropertyNumber name="parallaxX" id="0:201"/>
+<ViewModelPropertyNumber name="parallaxY" id="0:202"/>
+<ViewModelPropertyTrigger name="celebrate" id="0:203"/>
+<ViewModelPropertyBoolean name="ambience" id="0:204"/>
+<ViewModelPropertyBoolean name="reducedMotion" id="0:205"/>
+<ViewModelInstance exports="true" name="Default" id="0:41">
+<ViewModelInstanceNumber propertyValue="70" viewModelPropertyId="0:200"/>
+<ViewModelInstanceNumber propertyValue="0" viewModelPropertyId="0:201"/>
+<ViewModelInstanceNumber propertyValue="0" viewModelPropertyId="0:202"/>
+<ViewModelInstanceTrigger propertyValue="0" viewModelPropertyId="0:203"/>
+<ViewModelInstanceBoolean propertyValue="true" viewModelPropertyId="0:204"/>
+<ViewModelInstanceBoolean propertyValue="false" viewModelPropertyId="0:205"/>
+</ViewModelInstance>
+</ViewModel>
+<DataConverterRangeMapper minInput="-100" maxInput="100" minOutput="-14" maxOutput="14" clampLower="true" clampUpper="true" name="px_sky" id="0:209"/>
+<DataConverterRangeMapper minInput="-100" maxInput="100" minOutput="-7" maxOutput="7" clampLower="true" clampUpper="true" name="py_sky" id="0:210"/>
+<DataConverterRangeMapper minInput="-100" maxInput="100" minOutput="-34" maxOutput="34" clampLower="true" clampUpper="true" name="px_far" id="0:212"/>
+<DataConverterRangeMapper minInput="-100" maxInput="100" minOutput="-17" maxOutput="17" clampLower="true" clampUpper="true" name="py_far" id="0:213"/>
+<DataConverterRangeMapper minInput="-100" maxInput="100" minOutput="-62" maxOutput="62" clampLower="true" clampUpper="true" name="px_mid" id="0:215"/>
+<DataConverterRangeMapper minInput="-100" maxInput="100" minOutput="-31" maxOutput="31" clampLower="true" clampUpper="true" name="py_mid" id="0:216"/>
+<DataConverterRangeMapper minInput="-100" maxInput="100" minOutput="-104" maxOutput="104" clampLower="true" clampUpper="true" name="px_frame" id="0:220"/>
+<DataConverterRangeMapper minInput="-100" maxInput="100" minOutput="-52" maxOutput="52" clampLower="true" clampUpper="true" name="py_frame" id="0:221"/>
+<DataConverterRangeMapper minInput="-100" maxInput="100" minOutput="-150" maxOutput="150" clampLower="true" clampUpper="true" name="px_glow" id="0:224"/>
+<DataConverterRangeMapper minInput="-100" maxInput="100" minOutput="-75" maxOutput="75" clampLower="true" clampUpper="true" name="py_glow" id="0:225"/>
+<DataConverterRangeMapper minInput="0" maxInput="100" minOutput="0" maxOutput="0.36" clampLower="true" clampUpper="true" name="tod_tint_0" id="0:228"/>
+<DataConverterRangeMapper minInput="0" maxInput="100" minOutput="0" maxOutput="0.36" clampLower="true" clampUpper="true" name="tod_tint_1" id="0:249"/>
+<DataConverterRangeMapper minInput="0" maxInput="100" minOutput="0" maxOutput="0.36" clampLower="true" clampUpper="true" name="tod_tint_2" id="0:269"/>
+<DataConverterRangeMapper minInput="0" maxInput="100" minOutput="0" maxOutput="0.18" clampLower="true" clampUpper="true" name="tod_tint_3" id="0:291"/>
+</Rive>

@@ -10,6 +10,7 @@ import {
   MOODS,
   OUTFIT_STYLES,
   PROPS,
+  FACE_STYLES,
   RIVE_EVENTS,
   SCENE_VM_PROPS,
   TEACHER_VM_PROPS,
@@ -21,7 +22,7 @@ import {
 // Only the parts of the JSON these tests compare against.
 type ContractFixture = {
   version: string;
-  enums: Record<"Gesture" | "ToneShape" | "Mood" | "HairStyle" | "OutfitStyle" | "Prop", string[]>;
+  enums: Record<"Gesture" | "ToneShape" | "Mood" | "HairStyle" | "OutfitStyle" | "Prop" | "FaceStyle", string[]>;
   visemes: { value: number; name: string }[];
   viewModels: Record<"TeacherVM" | "SceneVM", Record<string, unknown>>;
   events: Record<string, unknown>;
@@ -42,6 +43,7 @@ test("enum arrays match the contract JSON exactly", () => {
   assert.deepEqual([...HAIR_STYLES], contract.enums.HairStyle);
   assert.deepEqual([...OUTFIT_STYLES], contract.enums.OutfitStyle);
   assert.deepEqual([...PROPS], contract.enums.Prop);
+  assert.deepEqual([...FACE_STYLES], contract.enums.FaceStyle);
 });
 
 test("visemes match the contract values and names in order", () => {

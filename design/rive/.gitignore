@@ -1,0 +1,9 @@
+build/
+**/build/
+node_modules/
+**/node_modules/
+qa/v247/
+qa/rive.wasm
+qa/canvas_advanced.mjs
+qa/**/*.riv
+qa/**/dist/

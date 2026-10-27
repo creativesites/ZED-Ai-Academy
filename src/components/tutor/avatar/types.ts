@@ -1,4 +1,5 @@
 import type {
+  FaceStyle,
   Gesture,
   HairStyle,
   Mood,
@@ -29,7 +30,7 @@ export type AvatarEvent = {
   toneShape?: ToneShape;
 };
 
-/** Colour and costume fields of TeacherVM, with defaults taken from the contract. */
+/** Colour, costume and face fields of TeacherVM, with defaults taken from the contract. */
 export type PersonaLook = {
   skinColor: string;
   skinShadeColor: string;
@@ -40,6 +41,8 @@ export type PersonaLook = {
   hairStyle: HairStyle;
   outfitStyle: OutfitStyle;
   prop: Prop;
+  /** Contract 1.1.0. The placeholder ignores it; the Rive teacher uses it. */
+  faceStyle: FaceStyle;
 };
 
 export const DEFAULT_PERSONA_LOOK: PersonaLook = {
@@ -52,6 +55,7 @@ export const DEFAULT_PERSONA_LOOK: PersonaLook = {
   hairStyle: TEACHER_VM_PROPS.hairStyle.default,
   outfitStyle: TEACHER_VM_PROPS.outfitStyle.default,
   prop: TEACHER_VM_PROPS.prop.default,
+  faceStyle: TEACHER_VM_PROPS.faceStyle.default,
 };
 
 export type AvatarProps = {

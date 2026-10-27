@@ -2,13 +2,18 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
-import { PlaceholderTeacher } from "./PlaceholderTeacher";
+import { TeacherStage } from "./TeacherStage";
+import type { TeacherStageHandle } from "./TeacherStage";
+import type { TeacherEngine } from "./Teacher";
+import { PERSONA_PRESETS } from "./persona-presets";
+import type { PersonaPresetKey } from "./persona-presets";
 import { DEFAULT_PERSONA_LOOK } from "./types";
 import type { AvatarDriver, AvatarEvent, PersonaLook } from "./types";
 import { EventPlayer } from "@/components/tutor/EventPlayer";
 import type { CardItem, PlayerUI } from "@/components/tutor/EventPlayer";
 import {
   CONTRACT_VERSION,
+  FACE_STYLES,
   GESTURES,
   HAIR_STYLES,
   MOODS,
@@ -19,9 +24,12 @@ import {
 import type { Gesture, Mood, ToneShape, VisemeValue } from "@/lib/tutor/contract.generated";
 import { parseTutorTurn } from "@/lib/tutor/events";
 import type { TutorEvent } from "@/lib/tutor/events";
+import { SCENE_ARTBOARDS } from "@/lib/tutor/rive-driver";
+import type { SceneArtboard } from "@/lib/tutor/rive-driver";
 
-// Staff-only lab for the placeholder teacher. Every gesture, mood, viseme, persona field and the
-// EventPlayer can be driven by hand here, so the Rive deliveries can be checked against the contract.
+// Staff-only lab for the teacher. Every gesture, mood, viseme, persona field, renderer option and the
+// EventPlayer can be driven by hand here. It runs the Rive teacher by default, with the SVG placeholder
+// one switch away, so both can be checked against the same contract.
 
 const SAMPLE_TURN: unknown = {
   events: [
@@ -106,7 +114,7 @@ const BTN = "rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-xs fo
 const BTN_PRIMARY = "rounded-lg bg-[#fd5523] px-3 py-1.5 text-xs font-bold text-white shadow shadow-[#fd5523]/20 hover:bg-[#ea4817] disabled:opacity-40";
 
 export function AvatarLab() {
-  const avatarRef = useRef<AvatarDriver | null>(null);
+  const avatarRef = useRef<TeacherStageHandle | null>(null);
   const playerRef = useRef<EventPlayer | null>(null);
   const seq = useRef(0);
   const t0 = useRef<number | null>(null);
@@ -131,6 +139,12 @@ export function AvatarLab() {
   const [lookX, setLookX] = useState(0);
   const [lookY, setLookY] = useState(0);
   const [persona, setPersona] = useState<PersonaLook>(DEFAULT_PERSONA_LOOK);
+  const [presetKey, setPresetKey] = useState<PersonaPresetKey | null>(null);
+  const [engine, setEngine] = useState<TeacherEngine>("rive");
+  const [scene, setScene] = useState<SceneArtboard | "none">("Scene_TeaHouse");
+  const [ambience, setAmbience] = useState(true);
+  const [fps, setFps] = useState<number | null>(null);
+  const [slowNote, setSlowNote] = useState(false);
 
   const log = useCallback((kind: LogKind, text: string) => {
     const now = performance.now();
@@ -228,8 +242,8 @@ export function AvatarLab() {
           <p className="text-xs font-bold uppercase tracking-wider text-amber-400">Staff only</p>
           <h1 className="text-2xl font-black tracking-tight text-white sm:text-3xl">Avatar Lab</h1>
           <p className="mt-1 max-w-2xl text-sm text-slate-400">
-            Drive the placeholder teacher directly. It implements the same AvatarDriver interface the Rive teacher will
-            use, so anything that works here should work there.
+            Drive the teacher directly. The Rive teacher and the SVG placeholder both implement AvatarDriver, so anything
+            that works on one should work on the other. Switch the engine in Renderer.
           </p>
         </div>
         <span className="inline-flex w-fit items-center rounded-full border border-emerald-400/30 bg-emerald-400/10 px-3 py-1 font-mono text-xs font-semibold text-emerald-300">
@@ -240,11 +254,30 @@ export function AvatarLab() {
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]">
         {/* Stage */}
         <div className="relative min-h-[520px] overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-b from-[#160f36] via-[#2a1745] to-[#40204d] shadow-2xl shadow-black/40">
+          <TeacherStage
+            ref={avatarRef}
+            engine={engine}
+            scene={engine === "rive" && scene !== "none" ? scene : null}
+            ambience={ambience}
+            persona={persona}
+            reducedMotion={reducedMotion}
+            onEvent={handleAvatarEvent}
+            onFps={setFps}
+            onLowPerformance={() => setSlowNote(true)}
+            wrapClassName="absolute inset-y-0 right-0 flex w-[72%] items-center justify-center pt-10"
+            teacherClassName="h-[440px] w-full max-w-[360px]"
+            label="Animated AI teacher (Avatar Lab)"
+          />
           <div className="pointer-events-none absolute -top-24 left-1/2 h-80 w-80 -translate-x-1/2 rounded-full bg-[#ffb867]/15 blur-3xl" />
           <div className="absolute left-4 top-4 flex items-center gap-2">
             <span className="rounded-full bg-black/30 px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest text-amber-200">
-              Placeholder
+              {engine === "rive" ? "Rive" : "Placeholder"}
             </span>
+            {engine === "rive" && fps !== null && (
+              <span className="rounded-full bg-black/30 px-2.5 py-1 font-mono text-[10px] font-bold text-slate-200">
+                {Math.round(fps)} fps
+              </span>
+            )}
             {playing && (
               <span className="rounded-full bg-emerald-400/20 px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest text-emerald-200">
                 Playing turn
@@ -257,16 +290,6 @@ export function AvatarLab() {
               {whiteboard}
             </div>
           )}
-
-          <div className="absolute inset-y-0 right-0 flex w-[72%] items-center justify-center pt-10">
-            <PlaceholderTeacher
-              ref={avatarRef}
-              className="h-[440px] w-full max-w-[360px]"
-              persona={persona}
-              reducedMotion={reducedMotion}
-              onEvent={handleAvatarEvent}
-            />
-          </div>
 
           {card && (
             <div className="absolute left-4 top-1/3 w-[34%] min-w-[120px] rounded-2xl border border-white/20 bg-[#fbf3e6] p-3 text-[#2a1745] shadow-xl">
@@ -296,6 +319,57 @@ export function AvatarLab() {
 
         {/* Controls */}
         <div className="grid gap-4 sm:grid-cols-2">
+          <Section title="Renderer">
+            <div className="flex flex-wrap items-center gap-3 text-xs text-slate-300">
+              <label className="flex items-center gap-2">
+                engine
+                <select
+                  className={FIELD}
+                  value={engine}
+                  onChange={(e) => {
+                    setEngine(e.target.value as TeacherEngine);
+                    setFps(null);
+                  }}
+                >
+                  <option value="rive">rive</option>
+                  <option value="placeholder">placeholder</option>
+                </select>
+              </label>
+              <label className="flex items-center gap-2">
+                scene
+                <select
+                  className={FIELD}
+                  value={scene}
+                  disabled={engine !== "rive"}
+                  onChange={(e) => setScene(e.target.value as SceneArtboard | "none")}
+                >
+                  <option value="none">none</option>
+                  {SCENE_ARTBOARDS.map((s) => (
+                    <option key={s} value={s}>
+                      {s}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+            <div className="flex flex-wrap items-center gap-3 text-xs text-slate-300">
+              <Toggle label="ambience" checked={ambience} onChange={setAmbience} />
+              <button
+                type="button"
+                className={BTN}
+                disabled={engine !== "rive"}
+                onClick={() => avatarRef.current?.celebrate()}
+              >
+                celebrate scene
+              </button>
+              <span className="font-mono text-slate-300">fps {fps === null ? "--" : Math.round(fps)}</span>
+            </div>
+            <p className="text-[11px] text-slate-400">
+              fps is the page animation loop, read every 2 s after a 1 s settle and a 3 s warm-up.
+              {slowNote && engine === "rive" ? " Under 45 fps for two windows: ambience is now off for this session." : ""}
+            </p>
+          </Section>
+
           <Section title="Gestures">
             <div className="grid grid-cols-3 gap-1.5">
               {GESTURES.map((g: Gesture) => (
@@ -453,6 +527,22 @@ export function AvatarLab() {
           </Section>
 
           <Section title="Persona">
+            <div className="flex flex-wrap gap-2">
+              {PERSONA_PRESETS.map((preset) => (
+                <button
+                  key={preset.key}
+                  type="button"
+                  aria-pressed={presetKey === preset.key}
+                  className={`${BTN} ${presetKey === preset.key ? "border-amber-300/70 bg-amber-300/15" : ""}`}
+                  onClick={() => {
+                    setPersona(preset.look);
+                    setPresetKey(preset.key);
+                  }}
+                >
+                  {preset.label}
+                </button>
+              ))}
+            </div>
             <div className="grid grid-cols-2 gap-2 text-xs text-slate-300">
               {COLOR_FIELDS.map((f) => (
                 <label key={f.key} className="flex items-center justify-between gap-2">
@@ -461,12 +551,28 @@ export function AvatarLab() {
                     type="color"
                     className="h-7 w-12 cursor-pointer rounded border border-white/15 bg-transparent"
                     value={persona[f.key] as string}
-                    onChange={(e) => setPersona((p) => ({ ...p, [f.key]: e.target.value }))}
+                    onChange={(e) => {
+                      setPresetKey(null);
+                      setPersona((p) => ({ ...p, [f.key]: e.target.value }));
+                    }}
                   />
                 </label>
               ))}
             </div>
             <div className="flex flex-wrap gap-2 text-xs text-slate-300">
+              <select
+                className={FIELD}
+                value={persona.faceStyle}
+                aria-label="faceStyle"
+                onChange={(e) => {
+                  setPresetKey(null);
+                  setPersona((p) => ({ ...p, faceStyle: e.target.value as PersonaLook["faceStyle"] }));
+                }}
+              >
+                {FACE_STYLES.map((s) => (
+                  <option key={s}>{s}</option>
+                ))}
+              </select>
               <select
                 className={FIELD}
                 value={persona.hairStyle}
@@ -496,7 +602,14 @@ export function AvatarLab() {
                   <option key={s}>{s}</option>
                 ))}
               </select>
-              <button type="button" className={BTN} onClick={() => setPersona(DEFAULT_PERSONA_LOOK)}>
+              <button
+                type="button"
+                className={BTN}
+                onClick={() => {
+                  setPersona(DEFAULT_PERSONA_LOOK);
+                  setPresetKey(null);
+                }}
+              >
                 Reset look
               </button>
             </div>

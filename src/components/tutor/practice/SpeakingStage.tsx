@@ -1,9 +1,12 @@
 "use client";
 
 import type { Ref } from "react";
-import { PlaceholderTeacher } from "@/components/tutor/avatar/PlaceholderTeacher";
-import type { AvatarDriver, AvatarEvent } from "@/components/tutor/avatar/types";
+import { TeacherStage } from "@/components/tutor/avatar/TeacherStage";
+import type { TeacherStageHandle } from "@/components/tutor/avatar/TeacherStage";
+import type { TeacherEngine } from "@/components/tutor/avatar/Teacher";
+import type { AvatarEvent, PersonaLook } from "@/components/tutor/avatar/types";
 import type { CardItem } from "@/components/tutor/EventPlayer";
+import type { SceneArtboard } from "@/lib/tutor/rive-driver";
 import { toneSegments } from "@/lib/tutor/romanization";
 import styles from "./practice.module.css";
 
@@ -36,9 +39,14 @@ export function toneClass(tone: 0 | 1 | 2 | 3 | 4): string {
 }
 
 type SpeakingStageProps = {
-  avatarRef: Ref<AvatarDriver>;
+  avatarRef: Ref<TeacherStageHandle>;
   onAvatarEvent: (e: AvatarEvent) => void;
   reducedMotion: boolean;
+  /** Rive teacher by default. "placeholder" keeps the SVG teacher. */
+  engine?: TeacherEngine;
+  /** Backdrop scene for the Rive engine. */
+  scene?: SceneArtboard;
+  look?: Partial<PersonaLook>;
   teacherName: string;
   sceneTitle: string;
   modeLabel: string;
@@ -52,6 +60,9 @@ export function SpeakingStage({
   avatarRef,
   onAvatarEvent,
   reducedMotion,
+  engine = "rive",
+  scene = "Scene_TeaHouse",
+  look,
   teacherName,
   sceneTitle,
   modeLabel,
@@ -65,14 +76,17 @@ export function SpeakingStage({
       aria-label={`Scene: ${sceneTitle}`}
       className={`${styles.stage} relative mx-auto aspect-[4/5] w-full max-w-[560px] min-h-[300px] bg-[radial-gradient(120%_90%_at_50%_100%,rgba(255,255,255,.06),transparent_60%)] sm:aspect-[5/5.4]`}
     >
-      <div className="absolute inset-0 flex items-end justify-center pb-[34%] pt-[14%]">
-        <PlaceholderTeacher
-          ref={avatarRef}
-          className="h-full w-full"
-          reducedMotion={reducedMotion}
-          onEvent={onAvatarEvent}
-        />
-      </div>
+      <TeacherStage
+        ref={avatarRef}
+        engine={engine}
+        scene={scene}
+        persona={look}
+        reducedMotion={reducedMotion}
+        onEvent={onAvatarEvent}
+      />
+
+      {/* A soft scrim behind the top labels keeps them readable on the bright scenes. */}
+      <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-[#120a26]/55 to-transparent" />
 
       <div className="pointer-events-none absolute inset-x-3 top-3 flex items-start justify-between gap-2">
         <div className={`${styles.glass} grid gap-0 rounded-2xl px-3 py-2`}>
@@ -80,10 +94,10 @@ export function SpeakingStage({
           <div className="text-xs text-[#c7b6dd]">{sceneTitle}</div>
         </div>
         <div className="flex flex-wrap justify-end gap-1.5">
-          <span className="rounded-full border border-white/10 bg-white/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider text-[#c7b6dd]">
+          <span className="rounded-full border border-white/10 bg-[#120a26]/60 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider text-[#c7b6dd]">
             AI teacher
           </span>
-          <span className={`${styles.accent} rounded-full border border-white/10 bg-white/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider`}>
+          <span className={`${styles.accent} rounded-full border border-white/10 bg-[#120a26]/60 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider`}>
             {modeLabel}
           </span>
         </div>
