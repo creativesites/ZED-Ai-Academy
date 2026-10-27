@@ -11,10 +11,13 @@ export const metadata = {
 
 export default async function AdminClassroomPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ domain: string }>;
+  searchParams: Promise<{ tab?: string }>;
 }) {
   const { domain } = await params;
+  const { tab } = await searchParams;
   const { userId } = await auth();
 
   if (!userId) {
@@ -63,6 +66,7 @@ export default async function AdminClassroomPage({
           companyId={company.id} 
           isAdminOrInstructor={isAdminOrInstructor} 
           companySlug={company.slug}
+          initialTab={tab as any}
         />
       </div>
     </div>

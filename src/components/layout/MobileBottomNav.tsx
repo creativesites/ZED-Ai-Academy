@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { useAuth } from "@clerk/nextjs";
 import {
   BookOpen, Home, LayoutDashboard, Rocket,
-  LogIn, Globe, GraduationCap, MoreHorizontal,
+  LogIn, Globe, GraduationCap, MoreHorizontal, Calendar,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useProfileNav } from "@/hooks/use-profile-nav";
@@ -368,6 +368,12 @@ export function MobileBottomNav() {
           active: pathname.startsWith(`/academy/${academySlug}/classroom`),
         },
         {
+          href: `/academy/${academySlug}/classroom?tab=timetable`,
+          label: "Timetable",
+          icon: Calendar,
+          active: pathname.startsWith(`/academy/${academySlug}/classroom`) && typeof window !== "undefined" && window.location.search.includes("tab=timetable"),
+        },
+        {
           href: `/academy/${academySlug}/dashboard`,
           label: "Dash",
           icon: LayoutDashboard,
@@ -391,8 +397,9 @@ export function MobileBottomNav() {
   // ── Authenticated global nav ───────────────────────────────────────────────
   const tabs: TabItem[] = [
     { href: "/",          label: "Home",      icon: Home,            active: pathActive("/") },
+    { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, active: pathname === "/dashboard" },
+    { href: "/dashboard/schedule", label: "Schedule", icon: Calendar, active: pathname?.startsWith("/dashboard/schedule") ?? false },
     { href: "/courses",   label: "Courses",   icon: BookOpen,        active: pathActive("/courses") },
-    { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, active: pathActive("/dashboard") },
   ];
 
   if (needsAcademyLaunch) {

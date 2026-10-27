@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { createContentBlock } from "@/actions/content-blocks";
+import { createContentBlocksBatch } from "@/actions/content-blocks";
 import { Button } from "@/components/ui/button";
 import { Loader2, Sparkles, Wand2 } from "lucide-react";
 import { toast } from "sonner";
@@ -10,14 +10,23 @@ import { COURSE_DOMAIN_PRESETS, type CourseDomainPresetId } from "@/lib/course-d
 
 type GeneratedBlock = { type: ContentBlockType; content: Json };
 
+export type SavedBlock = {
+  id: string;
+  type: ContentBlockType;
+  position: number;
+  content: Json;
+};
+
 export function AILessonGenerator({
   lessonId,
   courseId,
   lessonTitle,
+  onBlocksGenerated,
 }: {
   lessonId: string;
   courseId: string;
   lessonTitle: string;
+  onBlocksGenerated?: (newBlocks: SavedBlock[]) => void;
 }) {
   const [brief, setBrief] = useState("");
   const [generating, setGenerating] = useState(false);
@@ -68,16 +77,24 @@ export function AILessonGenerator({
       if (!res.ok || data.error) throw new Error(data.error || "Generation failed");
 
       const blocks: GeneratedBlock[] = data.blocks;
-      setProgress(`Creating ${blocks.length} content blocks…`);
+      setProgress(`Saving ${blocks.length} generated content blocks…`);
 
-      for (let i = 0; i < blocks.length; i++) {
-        const block = blocks[i];
-        setProgress(`Adding ${block.type} section…`);
-        await createContentBlock(lessonId, courseId, block.type, block.content);
+      const created = await createContentBlocksBatch(lessonId, courseId, blocks);
+
+      toast.success(`Successfully generated and added ${created.length} content blocks!`);
+      if (onBlocksGenerated && created.length > 0) {
+        onBlocksGenerated(
+          created.map((b) => ({
+            id: b.id,
+            type: b.type as ContentBlockType,
+            position: b.position,
+            content: b.content as Json,
+          }))
+        );
       }
-
-      toast.success("Lesson content generated successfully!");
-      window.location.reload();
+      setBrief("");
+      setProgress("");
+      setGenerating(false);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to generate content");
       setProgress("");

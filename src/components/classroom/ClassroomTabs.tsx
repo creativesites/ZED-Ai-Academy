@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { LiveSessionTab } from "./LiveSessionTab";
 import { NoticeBoardTab } from "./NoticeBoardTab";
 import { TimetableTab } from "./TimetableTab";
@@ -18,10 +18,17 @@ interface ClassroomTabsProps {
   companyId: string;
   isAdminOrInstructor: boolean;
   companySlug: string;
+  initialTab?: TabType;
 }
 
-export function ClassroomTabs({ companyId, isAdminOrInstructor, companySlug }: ClassroomTabsProps) {
-  const [activeTab, setActiveTab] = useState<TabType>("session");
+export function ClassroomTabs({ companyId, isAdminOrInstructor, companySlug, initialTab = "session" }: ClassroomTabsProps) {
+  const [activeTab, setActiveTab] = useState<TabType>(initialTab);
+
+  useEffect(() => {
+    if (initialTab) {
+      setActiveTab(initialTab);
+    }
+  }, [initialTab]);
 
   const tabs = [
     { id: "session" as const, label: "Live", icon: Video }, // Shortened labels for mobile

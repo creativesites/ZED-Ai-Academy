@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Bell, BookOpen, Award, Sparkles, X } from "lucide-react";
+import Link from "next/link";
+import { Bell, BookOpen, Award, Sparkles, Video, Clock, Calendar, X } from "lucide-react";
 import { getNotifications, markAllRead, markRead } from "@/actions/notifications";
 import type { Notification } from "@/types/database";
 
@@ -9,6 +10,9 @@ const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   enrollment: BookOpen,
   certificate: Award,
   course_update: Sparkles,
+  live_session: Video,
+  live_session_reminder: Clock,
+  class_schedule: Calendar,
   default: Bell,
 };
 
@@ -98,14 +102,18 @@ export function NotificationBell({ initialNotifications, initialUnread }: {
               <div>
                 {notifications.map((n) => {
                   const Icon = ICONS[n.type] ?? ICONS.default;
-                  return (
+                  const targetUrl =
+                    (n.data as any)?.url ||
+                    ((n.data as any)?.company_slug ? `/academy/${(n.data as any).company_slug}/classroom` : null);
+
+                  const content = (
                     <div
                       key={n.id}
                       style={{
                         display: "flex", gap: "12px", padding: "14px 20px",
                         borderBottom: "1px solid #f9f9f9",
                         background: n.read ? "#fff" : "#fffbf8",
-                        cursor: "default",
+                        cursor: targetUrl ? "pointer" : "default",
                       }}
                     >
                       <div style={{
@@ -127,6 +135,21 @@ export function NotificationBell({ initialNotifications, initialUnread }: {
                       )}
                     </div>
                   );
+
+                  if (targetUrl) {
+                    return (
+                      <Link
+                        key={n.id}
+                        href={targetUrl}
+                        onClick={() => setOpen(false)}
+                        className="block hover:bg-slate-50 transition-colors"
+                      >
+                        {content}
+                      </Link>
+                    );
+                  }
+
+                  return content;
                 })}
               </div>
             )}

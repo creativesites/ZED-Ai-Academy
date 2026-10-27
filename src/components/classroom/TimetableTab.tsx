@@ -4,10 +4,17 @@ import { useState, useEffect } from "react";
 import { 
   CalendarDays, Plus, Clock, Loader2, Calendar, BookOpen, 
   User, Sparkles, Filter, ChevronRight, X, Info, LayoutGrid,
-  Users
+  Users, Bell, Video, ExternalLink, Download
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { getClassSchedules, postClassSchedule, getClassroomGroups, deleteClassSchedule, duplicateClassSchedule } from "@/actions/classroom";
+import { 
+  getClassSchedules, 
+  postClassSchedule, 
+  getClassroomGroups, 
+  deleteClassSchedule, 
+  duplicateClassSchedule,
+  sendScheduleReminder,
+} from "@/actions/classroom";
 import { 
   Dialog, 
   DialogContent, 
@@ -33,6 +40,67 @@ const DAYS = [
   "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"
 ];
 
+function getGoogleCalendarUrl(lesson: any, companySlug: string) {
+  const title = encodeURIComponent(lesson.title || "Live Class");
+  const details = encodeURIComponent(
+    `${lesson.topics_covered ? `Topics: ${lesson.topics_covered}\n\n` : ""}Join live classroom: ${typeof window !== "undefined" ? window.location.origin : ""}/academy/${companySlug}/classroom?tab=session`
+  );
+  const location = encodeURIComponent("Zed AI Academy - Classroom");
+
+  let startIso = "";
+  let endIso = "";
+  if (lesson.is_recurring && lesson.start_time_only) {
+    const today = new Date();
+    const targetDay = lesson.day_of_week || 1;
+    const currentDay = today.getDay() === 0 ? 7 : today.getDay();
+    let diff = targetDay - currentDay;
+    if (diff < 0) diff += 7;
+    const targetDate = new Date(today.getTime() + diff * 86400000);
+    const [sh, sm] = (lesson.start_time_only || "10:00").split(":");
+    const [eh, em] = (lesson.end_time_only || "11:00").split(":");
+    targetDate.setHours(Number(sh), Number(sm), 0, 0);
+    startIso = targetDate.toISOString().replace(/-|:|\.\d\d\d/g, "");
+    const endDate = new Date(targetDate);
+    endDate.setHours(Number(eh), Number(em), 0, 0);
+    endIso = endDate.toISOString().replace(/-|:|\.\d\d\d/g, "");
+  } else if (lesson.starts_at) {
+    startIso = new Date(lesson.starts_at).toISOString().replace(/-|:|\.\d\d\d/g, "");
+    endIso = new Date(lesson.ends_at || lesson.starts_at).toISOString().replace(/-|:|\.\d\d\d/g, "");
+  }
+
+  const recurrence = lesson.is_recurring ? "&recur=RRULE:FREQ=WEEKLY" : "";
+  return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${startIso}/${endIso}&details=${details}&location=${location}${recurrence}`;
+}
+
+function downloadIcsFile(lesson: any, companySlug: string) {
+  const title = lesson.title || "Live Class";
+  const desc = (lesson.topics_covered || "Live Class Session").replace(/\n/g, "\\n");
+  const classroomUrl = `${typeof window !== "undefined" ? window.location.origin : ""}/academy/${companySlug}/classroom?tab=session`;
+
+  const icsContent = [
+    "BEGIN:VCALENDAR",
+    "VERSION:2.0",
+    "PRODID:-//Zed AI Academy//Timetable//EN",
+    "CALSCALE:GREGORIAN",
+    "BEGIN:VEVENT",
+    `SUMMARY:${title}`,
+    `DESCRIPTION:${desc}\\n\\nJoin URL: ${classroomUrl}`,
+    `URL:${classroomUrl}`,
+    "STATUS:CONFIRMED",
+    ...(lesson.is_recurring ? ["RRULE:FREQ=WEEKLY"] : []),
+    "END:VEVENT",
+    "END:VCALENDAR",
+  ].join("\r\n");
+
+  const blob = new Blob([icsContent], { type: "text/calendar;charset=utf-8" });
+  const link = document.createElement("a");
+  link.href = window.URL.createObjectURL(blob);
+  link.setAttribute("download", `${title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}.ics`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  toast.success("Calendar event (.ics) downloaded!");
+}
 
 export function TimetableTab({ companyId, isAdminOrInstructor, companySlug }: { companyId: string, isAdminOrInstructor: boolean, companySlug: string }) {
   const [schedules, setSchedules] = useState<any[]>([]);
@@ -41,6 +109,7 @@ export function TimetableTab({ companyId, isAdminOrInstructor, companySlug }: { 
   const [isPosting, setIsPosting] = useState(false);
   const [open, setOpen] = useState(false);
   const [isRecurring, setIsRecurring] = useState(true);
+  const [sendingReminder, setSendingReminder] = useState(false);
   
   // Lesson Detail View
   const [selectedLesson, setSelectedLesson] = useState<any | null>(null);
@@ -48,6 +117,18 @@ export function TimetableTab({ companyId, isAdminOrInstructor, companySlug }: { 
   // Time Validation Helpers
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
+
+  async function handleSendReminder(scheduleId: string) {
+    setSendingReminder(true);
+    try {
+      const res = await sendScheduleReminder(companyId, scheduleId, companySlug);
+      toast.success(res.message);
+    } catch (err: any) {
+      toast.error(err.message || "Failed to send reminder");
+    } finally {
+      setSendingReminder(false);
+    }
+  }
 
   useEffect(() => {
     async function load() {
@@ -343,13 +424,21 @@ export function TimetableTab({ companyId, isAdminOrInstructor, companySlug }: { 
                             </div>
                             
                             {/* Action Button - Full width on mobile, auto on desktop */}
-                            <div className="mt-4 lg:mt-0 lg:ml-4">
-                               <Button 
+                            <div className="mt-4 lg:mt-0 lg:ml-4 flex flex-wrap items-center gap-2">
+                              <a
+                                href={`/academy/${companySlug}/classroom?tab=session&scheduleId=${lesson.id}`}
+                                className="h-10 sm:h-12 px-5 sm:px-6 rounded-xl bg-[#fd5523] text-white font-black text-[10px] sm:text-xs uppercase tracking-widest hover:bg-[#ef4a16] transition-all shadow-md shadow-[#fd5523]/20 flex items-center justify-center gap-1.5"
+                              >
+                                <Video className="h-3.5 w-3.5" />
+                                <span>Join Room</span>
+                              </a>
+                              <Button 
                                 onClick={() => setSelectedLesson(lesson)}
-                                className="w-full lg:w-auto h-10 sm:h-12 px-6 sm:px-8 rounded-xl bg-[#062e39] text-white font-black text-[10px] sm:text-xs uppercase tracking-widest hover:bg-[#fd5523] transition-all shadow-lg"
-                               >
-                                 View Details
-                               </Button>
+                                variant="outline"
+                                className="h-10 sm:h-12 px-4 sm:px-6 rounded-xl border-slate-200 text-[#062e39] font-black text-[10px] sm:text-xs uppercase tracking-widest hover:bg-slate-100 transition-all"
+                              >
+                                Details
+                              </Button>
                             </div>
                           </div>
                         </div>
@@ -424,13 +513,53 @@ export function TimetableTab({ companyId, isAdminOrInstructor, companySlug }: { 
                  </div>
               </div>
 
+              {/* Direct Join & Calendar Action Strip */}
+              <div className="space-y-3 pt-2">
+                 <a
+                   href={`/academy/${companySlug}/classroom?tab=session&scheduleId=${selectedLesson?.id}`}
+                   className="w-full flex items-center justify-center gap-2 h-14 rounded-2xl bg-[#fd5523] text-white font-black text-sm uppercase tracking-widest hover:bg-[#ef4a16] transition-all shadow-xl shadow-[#fd5523]/25"
+                 >
+                   <Video className="h-5 w-5" />
+                   Enter Live Classroom
+                 </a>
+
+                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                   <a
+                     href={selectedLesson ? getGoogleCalendarUrl(selectedLesson, companySlug) : "#"}
+                     target="_blank"
+                     rel="noopener noreferrer"
+                     className="flex items-center justify-center gap-2 h-11 rounded-xl bg-slate-50 text-[#062e39] font-bold text-xs hover:bg-slate-100 border border-slate-200 transition-all"
+                   >
+                     <Calendar className="h-4 w-4 text-[#fd5523]" />
+                     Add to Google Calendar
+                   </a>
+
+                   <button
+                     type="button"
+                     onClick={() => selectedLesson && downloadIcsFile(selectedLesson, companySlug)}
+                     className="flex items-center justify-center gap-2 h-11 rounded-xl bg-slate-50 text-[#062e39] font-bold text-xs hover:bg-slate-100 border border-slate-200 transition-all"
+                   >
+                     <Download className="h-4 w-4 text-slate-500" />
+                     Download iCal (.ics)
+                   </button>
+                 </div>
+              </div>
+
               {/* Action Buttons - Column on mobile, row on tablet */}
-              <div className="pt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
-                 <Button onClick={() => setSelectedLesson(null)} className="h-12 sm:h-14 rounded-2xl bg-slate-100 text-[#062e39] font-black text-xs sm:text-sm uppercase tracking-widest hover:bg-slate-200 transition-all">
+              <div className="pt-2 grid grid-cols-1 sm:grid-cols-4 gap-2.5">
+                 <Button onClick={() => setSelectedLesson(null)} className="h-12 rounded-xl bg-slate-100 text-[#062e39] font-black text-xs uppercase tracking-widest hover:bg-slate-200 transition-all">
                     Close
                  </Button>
                  {isAdminOrInstructor && (
                    <>
+                     <Button 
+                       onClick={() => selectedLesson && handleSendReminder(selectedLesson.id)}
+                       disabled={sendingReminder}
+                       className="h-12 rounded-xl bg-amber-500 text-white font-black text-xs uppercase tracking-widest hover:bg-amber-600 transition-all shadow-sm"
+                     >
+                        {sendingReminder ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Bell className="h-4 w-4 mr-1" />}
+                        Remind Class
+                     </Button>
                      <Button onClick={async () => {
                        if (!selectedLesson) return;
                        try {
@@ -442,7 +571,7 @@ export function TimetableTab({ companyId, isAdminOrInstructor, companySlug }: { 
                        } catch (e: any) {
                          toast.error(e.message);
                        }
-                     }} className="h-12 sm:h-14 rounded-2xl bg-indigo-50 text-indigo-600 font-black text-xs sm:text-sm uppercase tracking-widest hover:bg-indigo-100 transition-all border border-indigo-100">
+                     }} className="h-12 rounded-xl bg-indigo-50 text-indigo-600 font-black text-xs uppercase tracking-widest hover:bg-indigo-100 transition-all border border-indigo-100">
                         Duplicate
                      </Button>
                      <Button onClick={async () => {
@@ -456,7 +585,7 @@ export function TimetableTab({ companyId, isAdminOrInstructor, companySlug }: { 
                        } catch (e: any) {
                          toast.error(e.message);
                        }
-                     }} className="h-12 sm:h-14 rounded-2xl bg-red-50 text-red-600 font-black text-xs sm:text-sm uppercase tracking-widest hover:bg-red-100 transition-all border border-red-100">
+                     }} className="h-12 rounded-xl bg-red-50 text-red-600 font-black text-xs uppercase tracking-widest hover:bg-red-100 transition-all border border-red-100">
                         Cancel
                      </Button>
                    </>

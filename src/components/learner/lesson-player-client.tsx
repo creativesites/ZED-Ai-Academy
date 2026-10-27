@@ -73,6 +73,7 @@ export function LessonPlayerClient({
   activeLessonId,
   blocks,
   quiz,
+  initialQuizAttempt,
   completedLessonIds,
   allDone,
   existingCertificate,
@@ -99,6 +100,11 @@ export function LessonPlayerClient({
   activeLessonId: string;
   blocks: ContentBlock[];
   quiz: Quiz;
+  initialQuizAttempt?: {
+    score: number;
+    passed: boolean;
+    answers?: Record<string, number[]>;
+  } | null;
   completedLessonIds: string[];
   allDone: boolean;
   existingCertificate: { id: string; public_id: string; issued_at: string } | null;
@@ -111,6 +117,7 @@ export function LessonPlayerClient({
 }) {
   const router = useRouter();
   const [completed, setCompleted] = useState(new Set(completedLessonIds));
+  const [certificate, setCertificate] = useState(existingCertificate);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [tutorOpen, setTutorOpen] = useState(false);
   const [studioOpen, setStudioOpen] = useState(false);
@@ -184,7 +191,8 @@ export function LessonPlayerClient({
     startCertify(async () => {
       try {
         const cert = await generateCertificate(course.id);
-        toast.success("Certificate issued.");
+        setCertificate(cert);
+        toast.success("🎉 Certificate successfully issued!");
         router.push(`/certificates/${cert.public_id}`);
       } catch (error) {
         toast.error(error instanceof Error ? error.message : "Could not issue certificate.");
@@ -558,6 +566,13 @@ export function LessonPlayerClient({
                             <QuizPlayer
                               quiz={quiz}
                               questions={[...quiz.quiz_questions].sort((a, b) => a.position - b.position)}
+                              initialAttempt={initialQuizAttempt}
+                              lessonId={activeLessonId}
+                              courseSlug={course.slug}
+                              onPassed={(score) => {
+                                setCompleted((prev) => new Set([...prev, activeLessonId]));
+                                toast.success(`🎉 Knowledge Check Passed (${score}%)! Lesson marked as completed.`);
+                              }}
                             />
                           </div>
                         )}
@@ -565,42 +580,70 @@ export function LessonPlayerClient({
                     ))}
                   </div>
 
+                  {/* Standalone Knowledge Check if no explicit quiz block was in content_blocks */}
+                  {!blocks.some((b) => b.type === "quiz") && quiz && quiz.quiz_questions?.length > 0 && (
+                    <div className="bg-white rounded-[2.5rem] p-6 md:p-10 shadow-xl border border-slate-100 my-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                      <div className="flex items-center gap-4 mb-8">
+                        <div className="h-12 w-12 rounded-2xl bg-indigo-50 flex items-center justify-center">
+                          <HelpCircle className="h-6 w-6 text-indigo-600" />
+                        </div>
+                        <div>
+                          <h3 className="text-2xl font-bold text-[#062e39]">Knowledge Check</h3>
+                          <p className="text-sm text-slate-500">Test your understanding of these concepts to complete the lesson.</p>
+                        </div>
+                      </div>
+                      <QuizPlayer
+                        quiz={quiz}
+                        questions={[...quiz.quiz_questions].sort((a, b) => a.position - b.position)}
+                        initialAttempt={initialQuizAttempt}
+                        lessonId={activeLessonId}
+                        courseSlug={course.slug}
+                        onPassed={(score) => {
+                          setCompleted((prev) => new Set([...prev, activeLessonId]));
+                          toast.success(`🎉 Knowledge Check Passed (${score}%)! Lesson marked as completed.`);
+                        }}
+                      />
+                    </div>
+                  )}
+
                   {/* Completion Actions */}
                   <section className="bg-[#062e39] rounded-[3rem] p-12 text-center relative overflow-hidden group">
                     <div className="absolute inset-0 mesh-orange opacity-10" />
                     
                     <div className="relative z-10 max-w-xl mx-auto">
-                      {allDone && !existingCertificate && !isPreview ? (
-                        <div className="space-y-6">
-                          <div className="h-20 w-20 mx-auto bg-[#fd5523]/20 rounded-[2rem] flex items-center justify-center animate-bounce">
-                            <Trophy className="h-10 w-10 text-[#fd5523]" />
+                      {(allDone || (totalLessons > 0 && doneCount === totalLessons)) && !certificate && !isPreview ? (
+                        <div className="space-y-6 animate-in zoom-in-95 duration-500">
+                          <div className="h-20 w-20 mx-auto bg-gradient-to-br from-[#fd5523] to-[#e04313] rounded-[2rem] flex items-center justify-center shadow-xl shadow-[#fd5523]/30 animate-bounce">
+                            <Trophy className="h-10 w-10 text-white" />
                           </div>
-                          <h3 className="text-3xl font-bold text-white">Legendary Work!</h3>
-                          <p className="text-white/60">You have mastered the entire course. Claim your verified certificate now.</p>
+                          <h3 className="text-3xl font-bold text-white tracking-tight">Legendary Work!</h3>
+                          <p className="text-white/70 max-w-md mx-auto">
+                            You have mastered every lesson and assessment in this course. Claim your official verified certificate now.
+                          </p>
                           <Button 
                             onClick={handleGetCertificate}
                             disabled={certifying}
-                            className="w-full py-8 rounded-[2rem] bg-[#fd5523] text-white text-lg font-bold hover:bg-[#ef4a16] shadow-2xl shadow-[#fd5523]/30"
+                            className="w-full py-8 rounded-[2rem] bg-[#fd5523] text-white text-lg font-bold hover:bg-[#ef4a16] shadow-2xl shadow-[#fd5523]/30 transition-all hover:scale-[1.01]"
                           >
                             {certifying ? <Loader2 className="mr-2 h-6 w-6 animate-spin" /> : <Award className="mr-3 h-6 w-6" />}
-                            Claim My Certificate
+                            Claim My Verified Certificate
                           </Button>
                         </div>
-                      ) : existingCertificate && !isPreview ? (
+                      ) : certificate && !isPreview ? (
                         <div className="space-y-6">
-                          <div className="h-20 w-20 mx-auto bg-green-500/20 rounded-[2rem] flex items-center justify-center">
-                            <Award className="h-10 w-10 text-green-400" />
+                          <div className="h-20 w-20 mx-auto bg-emerald-500/20 rounded-[2rem] flex items-center justify-center">
+                            <Award className="h-10 w-10 text-emerald-400" />
                           </div>
                           <h3 className="text-3xl font-bold text-white">Course Certified</h3>
-                          <p className="text-white/60">You have successfully completed this course.</p>
+                          <p className="text-white/70">You have earned your verified certificate for this course.</p>
                           <Link 
-                            href={`/certificates/${existingCertificate.public_id}`}
+                            href={`/certificates/${certificate.public_id}`}
                             className={cn(
                               buttonVariants({ variant: "default" }),
-                              "w-full py-8 rounded-[2rem] bg-white text-[#062e39] text-lg font-bold hover:bg-slate-100 flex items-center justify-center"
+                              "w-full py-8 rounded-[2rem] bg-white text-[#062e39] text-lg font-bold hover:bg-slate-100 flex items-center justify-center shadow-xl"
                             )}
                           >
-                            View Certificate
+                            View Verified Certificate
                           </Link>
                         </div>
                       ) : isDone ? (

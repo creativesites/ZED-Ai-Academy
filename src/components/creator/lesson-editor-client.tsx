@@ -81,6 +81,7 @@ import {
   MessagesSquare,
   ClipboardCheck,
   ShieldAlert,
+  Smartphone,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -192,6 +193,7 @@ function LessonEditorSidebarContent({
   lessonId,
   courseId,
   lessonTitle,
+  onBlocksGenerated,
 }: {
   groups: { heading: string; types: ContentBlockType[] }[];
   hasQuiz: boolean;
@@ -200,6 +202,7 @@ function LessonEditorSidebarContent({
   lessonId: string;
   courseId: string;
   lessonTitle: string;
+  onBlocksGenerated?: (newBlocks: Block[]) => void;
 }) {
   return (
     <div className="space-y-6">
@@ -242,7 +245,12 @@ function LessonEditorSidebarContent({
         </div>
       </div>
 
-      <AILessonGenerator lessonId={lessonId} courseId={courseId} lessonTitle={lessonTitle} />
+      <AILessonGenerator
+        lessonId={lessonId}
+        courseId={courseId}
+        lessonTitle={lessonTitle}
+        onBlocksGenerated={onBlocksGenerated}
+      />
     </div>
   );
 }
@@ -611,6 +619,7 @@ export function LessonEditorClient({
   const [blocks, setBlocks] = useState(initialBlocks);
   const [title, setTitle] = useState(lesson.title);
   const [isPreview, setIsPreview] = useState(lesson.is_preview);
+  const [activeTab, setActiveTab] = useState<"editor" | "preview">("editor");
   const [savingMeta, startSaveMeta] = useTransition();
   const [adding, startAdd] = useTransition();
   const [, startReorder] = useTransition();
@@ -720,6 +729,10 @@ export function LessonEditorClient({
                 lessonId={lesson.id}
                 courseId={courseId}
                 lessonTitle={title}
+                onBlocksGenerated={(newBlocks) => {
+                  setBlocks((prev) => [...prev, ...newBlocks]);
+                  setShowMobileSidebar(false);
+                }}
               />
             </div>
           </div>
@@ -802,10 +815,47 @@ export function LessonEditorClient({
           </div>
         </section>
 
+        {/* Responsive Studio View Switcher (Tabs on Mobile/Tablet) */}
+        <div className="flex xl:hidden items-center justify-center p-1.5 rounded-2xl bg-slate-100/90 border border-slate-200/80 shadow-inner mx-auto max-w-sm">
+          <button
+            type="button"
+            onClick={() => setActiveTab("editor")}
+            className={cn(
+              "flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-bold transition-all",
+              activeTab === "editor"
+                ? "bg-[#062e39] text-white shadow-md"
+                : "text-slate-600 hover:text-[#062e39]"
+            )}
+          >
+            <Pencil className="h-3.5 w-3.5" />
+            <span>Studio Canvas</span>
+            <span className="text-[10px] opacity-75 font-normal">({blocks.length})</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab("preview")}
+            className={cn(
+              "flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-bold transition-all",
+              activeTab === "preview"
+                ? "bg-[#fd5523] text-white shadow-md"
+                : "text-slate-600 hover:text-[#062e39]"
+            )}
+          >
+            <Smartphone className="h-3.5 w-3.5" />
+            <span>Device Preview</span>
+            <span className="flex h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse ml-0.5" />
+          </button>
+        </div>
+
         {/* Main Grid: Content Stack + Preview/Tools */}
-        <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_380px] max-w-100">
+        <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_460px] 2xl:grid-cols-[minmax(0,1fr)_520px] w-full">
           {/* Content Blocks */}
-          <div className="space-y-4 sm:space-y-6 max-w-100 ">
+          <div
+            className={cn(
+              "space-y-4 sm:space-y-6 w-full min-w-0",
+              activeTab === "preview" && "hidden xl:block"
+            )}
+          >
             <div className="flex items-center justify-between px-4">
               <h2 className="text-lg font-bold text-[#062e39] sm:text-xl">Content Stack</h2>
               <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 sm:text-xs">{blocks.length} Blocks</p>
@@ -838,13 +888,18 @@ export function LessonEditorClient({
                 </div>
                 <h3 className="text-xl font-bold text-[#062e39] sm:text-2xl">Empty Lesson Canvas</h3>
                 <p className="mx-auto mt-2 max-w-xs px-2 text-sm text-slate-500 sm:max-w-sm sm:text-base">
-                  Tap the <span className="font-bold text-[#fd5523]">+ button</span> (bottom right) to add your first content block.
+                  Tap the <span className="font-bold text-[#fd5523]">+ button</span> (bottom right) or use AI Co-Author to add your first content block.
                 </p>
               </div>
             )}
           </div>
 
-          <aside className="space-y-6">
+          <aside
+            className={cn(
+              "space-y-6 w-full min-w-0",
+              activeTab === "editor" && "hidden xl:block"
+            )}
+          >
             <LessonPreviewPane
               title={title}
               moduleTitle={moduleTitle}
@@ -852,7 +907,7 @@ export function LessonEditorClient({
               quiz={quiz}
             />
 
-            <div className="hidden sm:block xl:hidden">
+            <div className="space-y-6">
               <LessonEditorSidebarContent
                 groups={TOOLBAR_GROUPS}
                 hasQuiz={hasQuiz}
@@ -861,18 +916,7 @@ export function LessonEditorClient({
                 lessonId={lesson.id}
                 courseId={courseId}
                 lessonTitle={title}
-              />
-            </div>
-
-            <div className="hidden xl:block xl:sticky xl:top-8 xl:space-y-6">
-              <LessonEditorSidebarContent
-                groups={TOOLBAR_GROUPS}
-                hasQuiz={hasQuiz}
-                adding={adding}
-                addBlock={addBlock}
-                lessonId={lesson.id}
-                courseId={courseId}
-                lessonTitle={title}
+                onBlocksGenerated={(newBlocks) => setBlocks((prev) => [...prev, ...newBlocks])}
               />
             </div>
           </aside>

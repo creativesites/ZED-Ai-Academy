@@ -1,6 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { auth } from "@clerk/nextjs/server";
+import { createClient } from "@/lib/supabase/server";
 import { requireTenantMember, requireTenantTeacher } from "@/lib/tenants/access";
 
 type ClassScheduleInsert = {
@@ -36,7 +38,7 @@ export async function getCompanySessionState(companyId: string) {
 }
 
 export async function toggleClassroomSession(companyId: string, companySlug: string, active: boolean, roomName: string | null = null, scheduleId: string | null = null) {
-  const { supabase } = await requireInstructor(companyId);
+  const { supabase, userId } = await requireInstructor(companyId);
 
   let activeSessionId = null;
 
@@ -54,6 +56,39 @@ export async function toggleClassroomSession(companyId: string, companySlug: str
       
     if (!sessionError && sessionData) {
       activeSessionId = (sessionData as any).id;
+    }
+
+    // Notify active academy members that live class has started
+    try {
+      const { data: company } = await supabase.from("companies").select("name").eq("id", companyId).maybeSingle();
+      const { data: members } = await supabase
+        .from("company_members")
+        .select("profile_id")
+        .eq("company_id", companyId)
+        .eq("status", "active");
+
+      const studentIds = (members ?? [])
+        .map((m: any) => m.profile_id)
+        .filter((pid: string) => pid && pid !== userId);
+
+      if (studentIds.length > 0) {
+        const companyName = company?.name || "Your Academy";
+        const notifications = studentIds.map((pid: string) => ({
+          user_id: pid,
+          type: "live_session",
+          title: `🔴 Live Class is in Session!`,
+          body: `Instructor has started the live classroom session for ${companyName}. Tap to join now!`,
+          data: {
+            company_id: companyId,
+            company_slug: companySlug,
+            schedule_id: scheduleId,
+            url: `/academy/${companySlug}/classroom?tab=session`,
+          },
+        }));
+        await supabase.from("notifications").insert(notifications as any);
+      }
+    } catch (notifErr) {
+      console.error("Failed to dispatch live session notifications:", notifErr);
     }
   } else {
     // Ending a session: update ended_at and calculate duration
@@ -269,10 +304,143 @@ export async function postClassSchedule(formData: FormData) {
     insertData.ends_at = formData.get("endsAt") as string;
   }
 
-  const { error } = await supabase.from("class_schedules").insert(insertData);
+  const { data: newSchedule, error } = await supabase
+    .from("class_schedules")
+    .insert(insertData)
+    .select()
+    .single();
 
   if (error) throw new Error(error.message);
+
+  // Notify students of newly scheduled class
+  try {
+    const { data: company } = await supabase.from("companies").select("name").eq("id", companyId).maybeSingle();
+    let studentIds: string[] = [];
+
+    if (groupId && groupId !== "all") {
+      const { data: groupMembers } = await supabase
+        .from("classroom_group_members")
+        .select("profile_id")
+        .eq("group_id", groupId);
+      studentIds = (groupMembers ?? []).map((m: any) => m.profile_id).filter((pid: string) => pid && pid !== userId);
+    } else {
+      const { data: members } = await supabase
+        .from("company_members")
+        .select("profile_id")
+        .eq("company_id", companyId)
+        .eq("status", "active");
+      studentIds = (members ?? [])
+        .map((m: any) => m.profile_id)
+        .filter((pid: string) => pid && pid !== userId);
+    }
+
+    if (studentIds.length > 0) {
+      const timeDesc = isRecurring
+        ? `Every ${["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"][(insertData.day_of_week || 1) - 1]} at ${insertData.start_time_only}`
+        : `on ${new Date(insertData.starts_at).toLocaleString()}`;
+
+      const notifications = studentIds.map((pid: string) => ({
+        user_id: pid,
+        type: "class_schedule",
+        title: `📅 New Live Class: ${title}`,
+        body: `Scheduled ${timeDesc} for ${company?.name || "your academy"}. View your timetable.`,
+        data: {
+          schedule_id: newSchedule?.id,
+          company_id: companyId,
+          company_slug: companySlug,
+          url: `/academy/${companySlug}/classroom?tab=timetable`,
+        },
+      }));
+      await supabase.from("notifications").insert(notifications as any);
+    }
+  } catch (notifErr) {
+    console.error("Failed to notify students of new schedule:", notifErr);
+  }
+
   revalidatePath(`/academy/${companySlug}/admin/classroom`);
+  return newSchedule;
+}
+
+export async function sendScheduleReminder(companyId: string, scheduleId: string, companySlug: string) {
+  const { userId, supabase } = await requireInstructor(companyId);
+
+  const { data: rawSchedule } = await supabase
+    .from("class_schedules")
+    .select("*, companies(name)")
+    .eq("id", scheduleId)
+    .single();
+
+  const schedule = rawSchedule as any;
+  if (!schedule) throw new Error("Schedule not found");
+
+  let studentIds: string[] = [];
+
+  if (schedule.group_id) {
+    const { data: groupMembers } = await supabase
+      .from("classroom_group_members")
+      .select("profile_id")
+      .eq("group_id", schedule.group_id);
+    studentIds = (groupMembers ?? []).map((m: any) => m.profile_id).filter((pid: string) => pid && pid !== userId);
+  } else {
+    const { data: members } = await supabase
+      .from("company_members")
+      .select("profile_id")
+      .eq("company_id", companyId)
+      .eq("status", "active");
+    studentIds = (members ?? [])
+      .map((m: any) => m.profile_id)
+      .filter((pid: string) => pid && pid !== userId);
+  }
+
+  if (studentIds.length === 0) {
+    return { count: 0, message: "No active students to notify." };
+  }
+
+  const companyName = (schedule as any).companies?.name || "your academy";
+  const timeDesc = schedule.start_time_only ? `at ${schedule.start_time_only}` : "starting soon";
+
+  const notifications = studentIds.map((pid: string) => ({
+    user_id: pid,
+    type: "live_session_reminder",
+    title: `⏰ Reminder: ${schedule.title} Starts Soon`,
+    body: `Your live class with ${companyName} is scheduled ${timeDesc}. Tap to enter the classroom.`,
+    data: {
+      schedule_id: scheduleId,
+      company_id: companyId,
+      company_slug: companySlug,
+      url: `/academy/${companySlug}/classroom?tab=session`,
+    },
+  }));
+
+  const { error } = await supabase.from("notifications").insert(notifications as any);
+  if (error) throw new Error(error.message);
+
+  return { count: studentIds.length, message: `Reminder sent to ${studentIds.length} student(s)!` };
+}
+
+export async function getUpcomingUserClasses(): Promise<any[]> {
+  const { userId } = await auth();
+  if (!userId) return [];
+
+  const supabase = createClient();
+  const { data: memberships } = await supabase
+    .from("company_members")
+    .select("company_id, companies(id, name, slug, logo_url, is_session_active, active_room_name)")
+    .eq("profile_id", userId)
+    .eq("status", "active");
+
+  if (!memberships || memberships.length === 0) return [];
+
+  const companyIds = memberships.map((m: any) => m.company_id);
+
+  const { data: schedules } = await supabase
+    .from("class_schedules")
+    .select("*, companies(id, name, slug, is_session_active, active_room_name)")
+    .in("company_id", companyIds)
+    .order("day_of_week", { ascending: true })
+    .order("start_time_only", { ascending: true });
+
+  return schedules ?? [];
 }
 
 // Attendance

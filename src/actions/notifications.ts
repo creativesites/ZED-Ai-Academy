@@ -67,3 +67,24 @@ export async function insertNotification({
     data: (data ?? {}) as import("@/types/database").Json,
   });
 }
+
+export async function createPersonalReminder({
+  title,
+  body,
+  url,
+}: {
+  title: string;
+  body: string;
+  url?: string;
+}) {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+  await insertNotification({
+    userId,
+    type: "live_session_reminder",
+    title: `⏰ Reminder: ${title}`,
+    body,
+    data: url ? { url } : undefined,
+  });
+  return { success: true };
+}
