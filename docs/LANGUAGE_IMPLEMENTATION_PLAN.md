@@ -12,7 +12,7 @@ Builds on: `docs/LANGUAGE_LEARNING_PLAN.md` (the why and what), `docs/rive/TEACH
 | AI | Gemini 3.8 family now (Live, Flash, Flash TTS) + 3.5 Transcribe, behind a provider registry |
 | Tiers | **Not tiered yet.** Build Text, Voice and Live as **modes** of one engine. Modes double as automatic fallbacks. Tiers can later map plans to allowed modes. |
 | Exams | Align to HSK (with HSKK speaking), DELE and DELF/DALF |
-| Mobile | Yes: React Native (Expo) app sharing the same Rive file and engine code |
+| Mobile | Later. **Web (Next.js) first**: everything must be testable and showcased on the site before the mobile app starts. The Expo app (M3) reuses the same Rive file and engine code. |
 | Name | **ZAI Tutor** (code: `tutor`). It absorbs today's text AI tutor (`/api/ai/tutor`), which becomes ZAI Tutor's Text mode. |
 | Two ways to use it | **Tutor-led lessons** set by a teacher inside a course, and **Practice Room** free practice. Both run on the same session engine (§2.5). |
 | Scope beyond languages | The system is called **ZAI Tutor**; its engine is subject-agnostic, so healthcare, mining safety and other programs can reuse it |
@@ -35,6 +35,8 @@ Builds on: `docs/LANGUAGE_LEARNING_PLAN.md` (the why and what), `docs/rive/TEACH
             personas · scenarios · sessions · turns · feedback          ephemeral token; server ↔ Flash, TTS,
             profiles · vocab/SRS · exam maps · usage ledger              Transcribe)
 ```
+
+**Showcase (decided 2026-10-27):** a public `/ai-tutor` page (scripted demo for anyone, live demo for signed-in users, no DB needed) plus a seeded free demo course "ZAI Tutor Showcase: Speak from Day One" using the `tutor_session` block once the tutor schema is applied.
 
 **Code location (decided 2026-10-27):** the shared core starts as `src/lib/tutor/` (pure TS, relative imports only, `node --test` tests) so the web build doesn't change yet. It moves to `packages/tutor-core` with npm workspaces at the start of M3 (mobile), when a second consumer exists. New tables are prefixed `tutor_` (e.g. `tutor_sessions`), and the old broken `practice_sessions` table is left alone until it's dropped.
 
