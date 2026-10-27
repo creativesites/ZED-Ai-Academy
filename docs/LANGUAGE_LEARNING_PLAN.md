@@ -3,6 +3,9 @@
 Date: 2026-10-27
 Status: Draft for discussion (nothing here is built yet). Updated 2026-10-27: target languages confirmed, avatar section rewritten around Rive, prototype added.
 
+> **Next docs:** the build plan is in `docs/LANGUAGE_IMPLEMENTATION_PLAN.md`. The character brief for the Rive agent is in `docs/rive/TEACHER_RIVE_BRIEF.md`, and the contract it builds to is `docs/rive/teacher.contract.json`.
+> **Decisions (2026-10-27):** Duolingo-like warm style with original characters; no paid tiers yet (Text/Voice/Live ship as modes and automatic fallbacks); align to HSK/HSKK, DELE and DELF; mobile app planned; the engine is subject-agnostic, so other programs can reuse it.
+
 ## 1. Why this exists
 
 A Zimbabwean training company that runs **healthcare** and **language** courses may license or commission ZAI Academy. Language learning needs one thing the platform does not offer yet: **a lot of speaking practice with fast, kind feedback.** Live classes and course content already cover input. Practice is the gap.
@@ -161,7 +164,7 @@ src/lib/avatar/        // avatar provider interface (see §5)
 
 Swapping to another model vendor later then means a new file in `providers/` plus registry changes, the same idea as `src/lib/payments/`.
 
-### 4.6 Three practice tiers, one teacher
+### 4.6 Three practice modes, one teacher (tiers later)
 
 Learners on different plans get different "brains" behind the **same** avatar. Moving up a tier never changes the character, the scene or the gestures, only how fast and natural the conversation is.
 
@@ -429,15 +432,12 @@ Course studio improvements from §9 are spread across phases: 1–3 in Phase 1, 
 
 ## 13. Open questions for you (and the client)
 
-Answered: languages are **Mandarin, Spanish, French**. Avatar platform: Rive is recommended (see §5), pending your sign-off after the prototype.
+Answered: languages are **Mandarin, Spanish, French**; avatar is **Rive** in a Duolingo-like warm style; no tiers yet (modes only); exams **HSK/HSKK, DELE, DELF**; **mobile app yes**. Still open:
 
-1. **Illustration style:** after seeing the prototype, warmer/rounder (Duolingo-like), more realistic-illustrated, or anime-influenced?
-2. **Sell vs build-for-them:** tenant on ZAI Academy (recommended) or a separate white-label deployment?
-3. **Audience:** adults, professionals (healthcare), or children? Affects style, safety defaults, pricing.
-4. **Tier packaging:** which tier comes with a course purchase, and which are monthly upgrades with minute quotas?
-5. **Exams:** do their Mandarin learners target HSK? Spanish DELE, French DELF?
-6. **Character budget** for a human Rive animator's polish pass on hero characters.
-7. **Mobile app:** is a native app planned? (Rive makes the teacher portable either way.)
+1. **Sell vs build-for-them:** tenant on ZAI Academy (recommended) or a separate white-label deployment?
+2. **Audience:** adults, professionals (healthcare), or children? Affects style, safety defaults, pricing.
+3. **HSK version** the client's learners sit (HSK 2.0 levels 1–6 or the HSK 3.0 standard), and pilot cohort size.
+4. **Character budget** for a human Rive animator's polish pass on hero characters.
 
 ## Sources
 
