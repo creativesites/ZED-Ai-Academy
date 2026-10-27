@@ -13,14 +13,12 @@ import type { TutorReportContent } from "@/lib/tutor/report-model";
 import { shouldSendRecording } from "@/lib/tutor/recording";
 import { MAX_SPEAKING_MS, SpeakingTimeAccumulator } from "@/lib/tutor/speaking-time";
 import {
-  completeTutorSession,
   detectMicPermission,
+  httpTutorClient,
   measureRttMs,
-  sendTutorAudio,
-  sendTutorText,
-  startTutorSession,
   type MicPermission,
   type SessionOriginInput,
+  type TutorApiClient,
 } from "./api";
 import { Composer, type InputMode } from "./Composer";
 import { LearnerRecorder, RecorderError, type RecordingResult } from "./learner-recorder";
@@ -49,6 +47,8 @@ export type TutorSessionProps = {
   scene?: SceneArtboard;
   /** Teacher look (colours, costume, face). Defaults to the contract default look. */
   look?: Partial<PersonaLook>;
+  /** Backend for start, turn and complete. Defaults to the HTTP session API. The showcase injects its own. */
+  client?: TutorApiClient;
   /** Start-screen details that the server page already knows. All optional. */
   preview?: {
     teacherName?: string;
@@ -76,8 +76,10 @@ export function TutorSession({
   engine,
   scene,
   look,
+  client,
 }: TutorSessionProps) {
   const reducedMotion = useReducedMotion();
+  const api = client ?? httpTutorClient;
 
   const [phase, setPhase] = useState<Phase>("intro");
   const [error, setError] = useState<string | null>(null);
@@ -221,7 +223,7 @@ export function TutorSession({
         learnerSpeakingMs: learnerTimeRef.current.totals().learnerSpeakingMs,
         teacherSpeakingMs: Math.min(MAX_SPEAKING_MS, Math.max(0, Math.round(played - teacherBaseRef.current))),
       };
-      const res = await completeTutorSession(sessionId, totals, turnsRef.current > 0 ? status : "abandoned");
+      const res = await api.complete(sessionId, totals, turnsRef.current > 0 ? status : "abandoned");
       if (!res.ok) {
         endingRef.current = false;
         setError(tutorErrorMessage(res.failure, "complete"));
@@ -231,7 +233,7 @@ export function TutorSession({
       setReport(res.data.report);
       setPhaseBoth("report");
     },
-    [setPhaseBoth],
+    [api, setPhaseBoth],
   );
 
   // One exchange: send the learner's turn, then play the teacher's reply.
@@ -251,10 +253,12 @@ export function TutorSession({
       avatarRef.current?.setThinking(true);
       if (input.kind === "audio") learnerTimeRef.current.addLearnerMs(input.clip.durationMs);
 
-      const res =
+      const res = await api.turn(
+        sessionId,
         input.kind === "text"
-          ? await sendTutorText(sessionId, input.text)
-          : await sendTutorAudio(sessionId, input.clip.blob, input.clip.mimeType);
+          ? { kind: "text", text: input.text }
+          : { kind: "audio", blob: input.clip.blob, mimeType: input.clip.mimeType },
+      );
 
       avatarRef.current?.setThinking(false);
       setThinking(false);
@@ -278,7 +282,7 @@ export function TutorSession({
       await speakEvents(res.data.events);
       if (pendingEndRef.current) void finalize("completed");
     },
-    [speakEvents, finalize],
+    [api, speakEvents, finalize],
   );
 
   const handleClip = useCallback(
@@ -362,9 +366,10 @@ export function TutorSession({
     const permission = await detectMicPermission();
     setMicPermission(permission);
     setMicBlocked(permission === "denied");
-    const rttMs = await measureRttMs();
+    // A custom client (the showcase) makes no network calls, so skip the round-trip probe.
+    const rttMs = client ? undefined : await measureRttMs();
 
-    const res = await startTutorSession({
+    const res = await api.start({
       origin,
       scenarioId,
       lessonId,
@@ -413,7 +418,7 @@ export function TutorSession({
     setPhaseBoth("live");
     await speakEvents(data.openingEvents ?? []);
     if (pendingEndRef.current) void finalize("completed");
-  }, [origin, scenarioId, lessonId, assignmentId, setPhaseBoth, speakEvents, finalize]);
+  }, [api, client, origin, scenarioId, lessonId, assignmentId, setPhaseBoth, speakEvents, finalize]);
 
   const changeMode = (next: InputMode) => {
     if (next === modeRef.current) return;

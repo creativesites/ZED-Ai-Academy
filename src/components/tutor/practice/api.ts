@@ -139,3 +139,36 @@ export function completeTutorSession(
     body: JSON.stringify({ ...totals, status }),
   });
 }
+
+// The seam between the session UI and its backend. The HTTP client below is the default. The public
+// showcase injects a demo client (signed-in, stateless demo API) or a scripted one (no network).
+export type TutorStartRequest = {
+  origin: SessionOriginInput;
+  scenarioId?: string;
+  lessonId?: string;
+  assignmentId?: string;
+  micPermission: MicPermission;
+  rttMs?: number;
+  preferMode?: "voice" | "text";
+};
+
+export type TutorTurnRequest = { kind: "text"; text: string } | { kind: "audio"; blob: Blob; mimeType: string };
+
+export type TutorApiClient = {
+  start(input: TutorStartRequest): Promise<Result<StartResponse>>;
+  turn(sessionId: string, input: TutorTurnRequest): Promise<Result<TurnResponse>>;
+  complete(
+    sessionId: string,
+    totals: { learnerSpeakingMs: number; teacherSpeakingMs: number },
+    status: "completed" | "abandoned",
+  ): Promise<Result<CompleteResponse>>;
+};
+
+export const httpTutorClient: TutorApiClient = {
+  start: startTutorSession,
+  turn: (sessionId, input) =>
+    input.kind === "text"
+      ? sendTutorText(sessionId, input.text)
+      : sendTutorAudio(sessionId, input.blob, input.mimeType),
+  complete: completeTutorSession,
+};

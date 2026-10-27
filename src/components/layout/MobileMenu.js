@@ -49,6 +49,7 @@ const MobileMenu = ({ handleMobileMenu }) => {
                   </ul>
                 )}
               </li>
+              <li><Link href="/ai-tutor" onClick={handleMobileMenu} className="text-2xl font-black text-[#062e39] hover:text-[#fd5523] transition-colors">AI Tutor</Link></li>
               <li><Link href="/about" onClick={handleMobileMenu} className="text-2xl font-black text-[#062e39] hover:text-[#fd5523] transition-colors">About</Link></li>
               {/* <li><Link href="/blog" onClick={handleMobileMenu} className="text-2xl font-black text-[#062e39] hover:text-[#fd5523] transition-colors">Blog</Link></li> */}
               <li><Link href="/contact" onClick={handleMobileMenu} className="text-2xl font-black text-[#062e39] hover:text-[#fd5523] transition-colors">Contact</Link></li>

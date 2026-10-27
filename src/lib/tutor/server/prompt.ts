@@ -20,6 +20,8 @@ export type PromptScenario = {
   targetItems: { text: string; pron?: string; meaning?: string }[];
   level?: string | null;
   examTask?: string | null;
+  /** Extra role instructions for the teacher in this scenario (the showcase's training simulation). */
+  roleNotes?: string | null;
   maxMinutes: number;
 };
 
@@ -91,6 +93,7 @@ function scenarioBlock(scenario: PromptScenario): string {
     `Goal: ${scenario.goal}`,
     scenario.level ? `Level: ${scenario.level}` : null,
     scenario.examTask ? `Exam task: ${scenario.examTask}` : null,
+    scenario.roleNotes ? `Role in this session: ${scenario.roleNotes}` : null,
     `Time box: ${scenario.maxMinutes} minutes.`,
     `Beats (advance by id):\n${beats}`,
     `Target items to practise: ${targets}`,

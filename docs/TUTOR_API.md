@@ -156,3 +156,51 @@ Token minting is metered as a zero-unit `llm` row. Audio seconds are metered on 
 6. **`next_scenario_id` is always null** in reports.
 7. **Not built yet:** the Live client wiring described above, and a unit test for `sessionLimitReason` (it is covered through the pipeline tests). The web Practice Room client (Voice and Text) is in `src/components/tutor/practice/` and the `/practice` routes. It does not call Live. It sends `preferMode`, so a Live-allowed scenario starts in Voice. Known web gaps: the report carries no audio for mistakes, so "Hear it" only appears if a `audioUrl` is added later. Free-practice minutes are not shown yet. Browsers that can only record MP4 (some older Safari versions) get a 415 from the turn endpoint, and the client then suggests text mode.
 8. **Gemini and Supabase paths are type-checked only.** The transcription model, TTS output format and Live token flow have not been exercised against the live API.
+
+## Showcase / demo endpoints
+
+The public ZAI Tutor showcase at `/ai-tutor` uses two stateless routes. They need no database and write nothing. The scenarios are in code (`src/lib/tutor/demo-scenarios.ts`), and the limits and validation are in `src/lib/tutor/demo.ts`.
+
+Every route needs a Clerk session (401 otherwise). The kill switch is the env var `TUTOR_DEMO_ENABLED`: the demo is on unless it is exactly `false`, and when it is off both routes return 503.
+
+### `POST /api/tutor/demo/turn`
+
+JSON body:
+
+```json
+{ "scenarioKey": "zh-tea-house", "history": [{ "role": "tutor", "text": "..." }, { "role": "learner", "text": "..." }], "text": "optional learner words", "elapsedMs": 61000 }
+```
+
+Or `multipart/form-data` with an `audio` file (webm, ogg or wav, 2 MB at most) and string fields `scenarioKey`, `history` (JSON), and optionally `elapsedMs`.
+
+`scenarioKey` is one of `zh-tea-house`, `es-cafe`, `fr-boulangerie`, `health-intake`. `history` is the transcript the client holds in memory, without the current turn. Omit `text` for the opening turn. `elapsedMs` is the client's time since the demo started, used only for the time box.
+
+Response 200: `{ "learnerText": "transcript or typed text", "events": [TeacherEvent], "ended": false, "endReason": null }`. `endReason` is `time_box`, `turn_limit` or `model_end`.
+
+The prompt builder and turn pipeline run with in-memory dependencies. Each `say` line is synthesized and returned inline as a `data:audio/wav;base64,...` URL. No storage is used.
+
+### `POST /api/tutor/demo/report`
+
+Body: `{ "scenarioKey": "...", "history": [...] }`. Response 200: `{ "report": TutorReportContent }`, from the existing report model with no database writes.
+
+### Limits and errors
+
+| Limit | Value |
+|---|---|
+| History | at most 24 entries; 400 above that |
+| Learner text | 500 characters; tutor text 1000 characters in history |
+| Learner turns per demo | 12. A turn past that ends the session with `end_session` and `endReason: "turn_limit"`, with no model call. The 12th learner turn gets a wrap-up instruction. |
+| Time box | the scenario's `maxMinutes` (6), from `elapsedMs`. Ends with `endReason: "time_box"`. |
+| Audio | 2 MB; webm, ogg or wav. 415 for other types, 413 when too large, 422 when no speech was found. |
+| Budget | 40 demo model calls per user per hour (turn and report routes share it). 429 with `Retry-After` when exceeded. |
+
+The budget is an in-memory counter per Clerk user. It is per server instance, so on serverless each instance keeps its own count and the total allowed is higher than 40 per user. It is a brake on cost, not a hard quota.
+
+Status codes: 400 invalid body, 401 not signed in, 413 audio too large, 415 unsupported audio, 422 no speech or nothing to report, 429 budget spent, 502 model or TTS failed (retry), 503 demo paused.
+
+### Client wiring
+
+The showcase injects a client into `TutorSession` through its optional `client` prop (`TutorApiClient` in `src/components/tutor/practice/api.ts`). Without the prop the session uses the HTTP session API above.
+
+- `createDemoClient()` (`src/components/tutor/showcase/demoClient.ts`) calls these two routes and keeps the history in memory.
+- `createScriptedClient(key)` (`src/components/tutor/showcase/scriptedClient.ts`) plays the scenario's scripted turns and canned report with no network. Its learner lines are scripted.
