@@ -1,9 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { AvatarDriver, AvatarEvent } from "@/components/tutor/avatar/types";
+import type { AvatarDriver } from "@/components/tutor/avatar/types";
+import type { TeacherStageHandle } from "@/components/tutor/avatar/TeacherStage";
+import type { TeacherEngine } from "@/components/tutor/avatar/Teacher";
+import type { AvatarEvent, PersonaLook } from "@/components/tutor/avatar/types";
 import { EventPlayer, type CardItem, type PlayerUI } from "@/components/tutor/EventPlayer";
 import type { TutorEvent } from "@/lib/tutor/events";
+import type { SceneArtboard } from "@/lib/tutor/rive-driver";
 import { tutorErrorMessage } from "@/lib/tutor/client-errors";
 import type { TutorReportContent } from "@/lib/tutor/report-model";
 import { shouldSendRecording } from "@/lib/tutor/recording";
@@ -39,6 +43,12 @@ export type TutorSessionProps = {
   assignmentId?: string;
   /** Called with the report when the learner taps Done on the report card. */
   onExit?: (report: TutorReportContent) => void;
+  /** Teacher renderer. The Rive teacher is the default; "placeholder" is the SVG fallback. */
+  engine?: TeacherEngine;
+  /** Backdrop scene for the Rive teacher. Defaults to the tea house. */
+  scene?: SceneArtboard;
+  /** Teacher look (colours, costume, face). Defaults to the contract default look. */
+  look?: Partial<PersonaLook>;
   /** Start-screen details that the server page already knows. All optional. */
   preview?: {
     teacherName?: string;
@@ -56,7 +66,17 @@ type TurnInput = { kind: "text"; text: string } | { kind: "audio"; clip: Recordi
 const ALL_MODES: InputMode[] = ["voice", "text"];
 const LEVEL_UPDATE_MS = 100;
 
-export function TutorSession({ origin, scenarioId, lessonId, assignmentId, onExit, preview }: TutorSessionProps) {
+export function TutorSession({
+  origin,
+  scenarioId,
+  lessonId,
+  assignmentId,
+  onExit,
+  preview,
+  engine,
+  scene,
+  look,
+}: TutorSessionProps) {
   const reducedMotion = useReducedMotion();
 
   const [phase, setPhase] = useState<Phase>("intro");
@@ -87,7 +107,7 @@ export function TutorSession({ origin, scenarioId, lessonId, assignmentId, onExi
   const [words, setWords] = useState<CardItem[]>([]);
 
   // Refs hold what the event callbacks and the recorder need without re-creating them.
-  const avatarRef = useRef<AvatarDriver | null>(null);
+  const avatarRef = useRef<TeacherStageHandle | null>(null);
   const playerRef = useRef<EventPlayer | null>(null);
   const audioRef = useRef<TeacherAudio | null>(null);
   const recorderRef = useRef<LearnerRecorder | null>(null);
@@ -497,6 +517,9 @@ export function TutorSession({ origin, scenarioId, lessonId, assignmentId, onExi
           avatarRef={avatarRef}
           onAvatarEvent={avatarEvent}
           reducedMotion={reducedMotion}
+          engine={engine}
+          scene={scene}
+          look={look}
           teacherName={teacherName}
           sceneTitle={sceneTitle}
           modeLabel={mode === "voice" ? "Voice" : "Text"}

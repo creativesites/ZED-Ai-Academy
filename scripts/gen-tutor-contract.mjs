@@ -83,6 +83,8 @@ parts.push(constArray("OUTFIT_STYLES", enums.OutfitStyle));
 parts.push("export type OutfitStyle = (typeof OUTFIT_STYLES)[number];\n");
 parts.push(constArray("PROPS", enums.Prop));
 parts.push("export type Prop = (typeof PROPS)[number];\n");
+parts.push(constArray("FACE_STYLES", enums.FaceStyle));
+parts.push("export type FaceStyle = (typeof FACE_STYLES)[number];\n");
 parts.push(`export const VISEMES = ${lit(visemes)} as const;\n`);
 parts.push(`export type VisemeValue = ${visemeValues.join(" | ")};\n`);
 parts.push(`export const TEACHER_VM_PROPS = ${lit(pickProps(contract.viewModels.TeacherVM))} as const;\n`);
