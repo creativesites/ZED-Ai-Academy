@@ -37,7 +37,13 @@ CREATE TABLE public.courses (
   instructor_id text REFERENCES public.profiles(id),
   slug         text UNIQUE NOT NULL,
   title        text NOT NULL,
+  description  text,
+  category     text,
+  level        text,
   status       text NOT NULL DEFAULT 'draft',
+  price_type   text NOT NULL DEFAULT 'one_time',
+  price_amount numeric,
+  is_featured  boolean NOT NULL DEFAULT false,
   created_at   timestamptz NOT NULL DEFAULT now(),
   updated_at   timestamptz NOT NULL DEFAULT now()
 );
@@ -53,7 +59,28 @@ CREATE TABLE public.lessons (
   id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   module_id   uuid NOT NULL REFERENCES public.modules(id) ON DELETE CASCADE,
   title       text NOT NULL,
-  position    int NOT NULL
+  position    int NOT NULL,
+  is_preview  boolean NOT NULL DEFAULT false
+);
+
+-- Pre-tutor_session constraint, copied from 20260518000000_expand_course_studio_block_types.sql.
+-- 20261102000000_tutor_session_block.sql must replace it.
+CREATE TABLE public.content_blocks (
+  id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  lesson_id   uuid NOT NULL REFERENCES public.lessons(id) ON DELETE CASCADE,
+  type        text NOT NULL,
+  position    int NOT NULL,
+  content     jsonb NOT NULL DEFAULT '{}'::jsonb,
+  created_at  timestamptz NOT NULL DEFAULT now(),
+  CONSTRAINT content_blocks_type_check
+    CHECK (type IN (
+      'video', 'text', 'quiz', 'resource',
+      'image', 'callout', 'tool_spotlight', 'before_after',
+      'ai_prompt', 'steps', 'checklist', 'key_takeaway',
+      'expert_note', 'comparison_table', 'case_study', 'meeting',
+      'practice_exercise', 'learning_objectives', 'glossary',
+      'discussion_prompt', 'assignment', 'risk_assessment'
+    ))
 );
 
 CREATE TABLE public.enrollments (

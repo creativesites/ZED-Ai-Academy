@@ -4,6 +4,12 @@ import { notFound, redirect } from "next/navigation";
 import { LessonPlayerClient } from "@/components/learner/lesson-player-client";
 import type { Metadata } from "next";
 import type { Discussion } from "@/types/database";
+import {
+  parseTutorSessionBlock,
+  scenarioViewFromRow,
+  type TutorScenarioRow,
+  type TutorScenarioView,
+} from "@/lib/tutor/tutor-session-block";
 
 type PageProps = {
   params: Promise<{ slug: string }>;
@@ -159,6 +165,45 @@ export default async function LearnPage({ params, searchParams }: PageProps) {
       : null;
   }
 
+  // Speaking practice placed in this lesson: the published scenarios it points at, and the ones this
+  // learner has already completed in this lesson (tutor_sessions rows are written by /complete).
+  const tutorScenarioIds = [
+    ...new Set(
+      (blocks ?? []).flatMap((b) => {
+        if (b.type !== "tutor_session") return [];
+        const parsed = parseTutorSessionBlock(b.content);
+        return parsed ? [parsed.scenarioId] : [];
+      })
+    ),
+  ];
+  const [tutorScenarioRows, tutorDoneRows] = tutorScenarioIds.length > 0
+    ? await Promise.all([
+        supabase
+          .from("practice_scenarios")
+          .select("id, title, goal, style, scene, max_minutes, allowed_modes, ai_personas(name, display_name, rive_variant)")
+          .in("id", tutorScenarioIds)
+          .eq("status", "published"),
+        supabase
+          .from("tutor_sessions")
+          .select("scenario_id")
+          .eq("user_id", userId)
+          .eq("lesson_id", activeLessonId)
+          .eq("origin", "lesson")
+          .eq("status", "completed"),
+      ])
+    : [{ data: [] }, { data: [] }];
+  const tutorScenarios: Record<string, TutorScenarioView> = {};
+  for (const row of (tutorScenarioRows.data ?? []) as unknown as TutorScenarioRow[]) {
+    tutorScenarios[row.id] = scenarioViewFromRow(row);
+  }
+  const tutorCompletedScenarioIds = [
+    ...new Set(
+      ((tutorDoneRows.data ?? []) as { scenario_id: string | null }[])
+        .map((r) => r.scenario_id)
+        .filter((id): id is string => !!id)
+    ),
+  ];
+
   const completedSet = new Set(
     (progressData ?? []).filter((p) => p.completed).map((p) => p.lesson_id)
   );
@@ -205,6 +250,8 @@ export default async function LearnPage({ params, searchParams }: PageProps) {
       userId={userId}
       isPreview={isPreview}
       isPartialEnrollment={isPartialEnrollment}
+      tutorScenarios={tutorScenarios}
+      tutorCompletedScenarioIds={tutorCompletedScenarioIds}
     />
   );
 }

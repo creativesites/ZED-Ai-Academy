@@ -46,6 +46,7 @@ import { GlossaryBlockEditor } from "@/components/creator/blocks/glossary-block"
 import { DiscussionPromptBlockEditor } from "@/components/creator/blocks/discussion-prompt-block";
 import { AssignmentBlockEditor } from "@/components/creator/blocks/assignment-block";
 import { RiskAssessmentBlockEditor } from "@/components/creator/blocks/risk-assessment-block";
+import { TutorSessionBlockEditor } from "@/components/creator/blocks/tutor-session-block";
 import { QuizBuilder } from "@/components/creator/quiz-builder";
 import { AILessonGenerator } from "@/components/creator/ai-lesson-generator";
 import { LessonPreviewPane } from "@/components/creator/lesson-preview-pane";
@@ -82,6 +83,7 @@ import {
   ClipboardCheck,
   ShieldAlert,
   Smartphone,
+  Mic,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -135,6 +137,7 @@ const BLOCK_META: Record<ContentBlockType, { label: string; icon: React.ElementT
   discussion_prompt: { label: "Discussion",  icon: MessagesSquare,         color: "text-sky-700",     bgColor: "bg-sky-50" },
   assignment:     { label: "Assignment",     icon: ClipboardCheck,         color: "text-emerald-700", bgColor: "bg-emerald-50" },
   risk_assessment:{ label: "Risk",           icon: ShieldAlert,            color: "text-red-600",     bgColor: "bg-red-50" },
+  tutor_session:  { label: "Speaking",       icon: Mic,                    color: "text-cyan-700",    bgColor: "bg-cyan-50" },
 };
 
 const TOOLBAR_GROUPS: { heading: string; types: ContentBlockType[] }[] = [
@@ -143,6 +146,7 @@ const TOOLBAR_GROUPS: { heading: string; types: ContentBlockType[] }[] = [
   { heading: "Practical Learning", types: ["ai_prompt", "steps", "checklist", "key_takeaway", "practice_exercise", "assignment"] },
   { heading: "Classroom & School", types: ["learning_objectives", "glossary", "discussion_prompt"] },
   { heading: "Technical & Safety", types: ["risk_assessment"] },
+  { heading: "AI Tutor", types: ["tutor_session"] },
   { heading: "Advanced Learning", types: ["expert_note", "comparison_table", "case_study"] },
   { heading: "Live & Assessment", types: ["meeting", "quiz"] },
 ];
@@ -183,6 +187,7 @@ const DEFAULT_CONTENT: Record<ContentBlockType, Json> = {
   discussion_prompt: { title: "Discussion Prompt", prompt: "", guidance: [""], mode: "group" } as Json,
   assignment:     { title: "Assignment", summary: "", deliverables: [""], assessment: "", estimated_minutes: 30 } as Json,
   risk_assessment:{ title: "Risk Assessment", rows: [{ hazard: "", risk: "Medium", control: "" }] } as Json,
+  tutor_session:  { scenarioId: "", style: "scene", required: false, title: "", intro: "" } as Json,
 };
 
 function LessonEditorSidebarContent({
@@ -322,6 +327,8 @@ function BlockEditor({
     return <AssignmentBlockEditor content={asTyped(c)} onChange={emit} />;
   if (block.type === "risk_assessment")
     return <RiskAssessmentBlockEditor content={asTyped(c)} onChange={emit} />;
+  if (block.type === "tutor_session")
+    return <TutorSessionBlockEditor content={asTyped(c)} courseId={courseId} lessonId={lessonId} onChange={emit} />;
   if (block.type === "quiz")
     return <QuizBuilder lessonId={block.id} courseId={courseId} initialQuiz={quiz ?? null} initialQuestions={quiz?.quiz_questions ?? []} />;
 

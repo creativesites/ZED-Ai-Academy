@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { BlockRenderer, type Lesson, type Module, type ContentBlock, type Quiz } from "@/components/course-blocks";
+import { parseTutorSessionBlock, type TutorScenarioView } from "@/lib/tutor/tutor-session-block";
 
 
 
@@ -83,6 +84,8 @@ export function LessonPlayerClient({
   userId,
   isPreview = false,
   isPartialEnrollment = false,
+  tutorScenarios = {},
+  tutorCompletedScenarioIds = [],
 }: {
   course: {
     id: string;
@@ -114,9 +117,12 @@ export function LessonPlayerClient({
   userId?: string | null;
   isPreview?: boolean;
   isPartialEnrollment?: boolean;
+  tutorScenarios?: Record<string, TutorScenarioView>;
+  tutorCompletedScenarioIds?: string[];
 }) {
   const router = useRouter();
   const [completed, setCompleted] = useState(new Set(completedLessonIds));
+  const [tutorDone, setTutorDone] = useState(new Set(tutorCompletedScenarioIds));
   const [certificate, setCertificate] = useState(existingCertificate);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [tutorOpen, setTutorOpen] = useState(false);
@@ -174,6 +180,15 @@ export function LessonPlayerClient({
   const nextLessonAllowed =
     nextLesson && !isLessonLocked(nextLesson.id) ? nextLesson : null;
 
+  // Required speaking practice in this lesson that the learner has not finished yet. Only scenarios
+  // that are available are counted; a missing scenario cannot block completion (the server applies the same rule).
+  const pendingRequiredTutor = blocks.flatMap((b) => {
+    if (b.type !== "tutor_session") return [];
+    const parsed = parseTutorSessionBlock(b.content);
+    if (!parsed?.required || !tutorScenarios[parsed.scenarioId]) return [];
+    return tutorDone.has(parsed.scenarioId) ? [] : [parsed.scenarioId];
+  });
+
   function handleMarkComplete() {
     startMark(async () => {
       try {
@@ -181,10 +196,15 @@ export function LessonPlayerClient({
         setCompleted((prev) => new Set([...prev, activeLessonId]));
         toast.success("Lesson marked as complete.");
         if (nextLessonAllowed) router.push(`/courses/${course.slug}/learn?lesson=${nextLessonAllowed.id}`);
-      } catch {
-        toast.error("Failed to mark lesson complete.");
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : "Failed to mark lesson complete.");
       }
     });
+  }
+
+  function handleTutorComplete(scenarioId: string) {
+    setTutorDone((prev) => new Set([...prev, scenarioId]));
+    toast.success("Speaking practice complete.");
   }
 
   function handleGetCertificate() {
@@ -543,6 +563,11 @@ export function LessonPlayerClient({
                           practiceSubmissions={practiceSubmissions}
                           courseId={course.id}
                           lessonId={activeLessonId}
+                          tutor={{
+                            scenarios: tutorScenarios,
+                            completedScenarioIds: [...tutorDone],
+                            onComplete: handleTutorComplete,
+                          }}
                           onLaunchStudio={(initialTool) => handleOpenStudio(
                             block.id, 
                             initialTool, 
@@ -670,9 +695,14 @@ export function LessonPlayerClient({
                         <div className="space-y-6">
                           <h3 className="text-3xl font-bold text-white">Mastered this?</h3>
                           <p className="text-white/60">Mark this lesson as complete to progress towards your certificate.</p>
-                          <Button 
+                          {pendingRequiredTutor.length > 0 && (
+                            <p className="text-sm font-semibold text-[#fd5523]">
+                              Finish the required speaking practice above to complete this lesson.
+                            </p>
+                          )}
+                          <Button
                             onClick={handleMarkComplete}
-                            disabled={marking}
+                            disabled={marking || pendingRequiredTutor.length > 0}
                             className="w-full py-8 rounded-[2rem] bg-[#fd5523] text-white text-lg font-bold hover:bg-[#ef4a16] shadow-2xl shadow-[#fd5523]/30 group"
                           >
                             {marking ? <Loader2 className="mr-2 h-6 w-6 animate-spin" /> : <CheckCircle className="mr-3 h-6 w-6" />}
