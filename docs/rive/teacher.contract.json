@@ -1,6 +1,6 @@
 {
   "$comment": "Single source of truth for the ZAI teacher Rive files and the app code that drives them. Rive artists/agents build to these exact names. App code (src/lib/avatar/contract.ts) is generated from or checked against this file. Bump `version` on any breaking rename.",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "files": {
     "teacher": "zai_teacher.riv",
     "scenes": "zai_scenes.riv"
@@ -108,9 +108,9 @@
     "pitchNote": "Mandarin tone contours on the Chao 1-5 scale: t1 55, t2 35, t3 214, t4 51. y = 1 - (chao - 1) / 4, inset by 0.03 so the fingertip stays inside the box."
   },
   "anchors": {
-    "$comment": "Artboard-space points the app uses to position UI next to the character. Agent confirms final values in the QA report.",
+    "$comment": "Artboard-space points the app uses to position UI next to the character. Agent confirms final values in the QA report. 1.0.1: headCenter updated to the Rive v1 measurement.",
     "cardTarget": [180, 640],
-    "headCenter": [600, 520],
+    "headCenter": [600, 545],
     "mouthCenter": [600, 690]
   },
   "budgets": {
