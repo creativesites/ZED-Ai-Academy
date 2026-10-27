@@ -36,6 +36,8 @@ Builds on: `docs/LANGUAGE_LEARNING_PLAN.md` (the why and what), `docs/rive/TEACH
             profiles · vocab/SRS · exam maps · usage ledger              Transcribe)
 ```
 
+**Code location (decided 2026-10-27):** the shared core starts as `src/lib/tutor/` (pure TS, relative imports only, `node --test` tests) so the web build doesn't change yet. It moves to `packages/tutor-core` with npm workspaces at the start of M3 (mobile), when a second consumer exists. New tables are prefixed `tutor_` (e.g. `tutor_sessions`), and the old broken `practice_sessions` table is left alone until it's dropped.
+
 Rules that carry over from the existing codebase:
 - Auth is **Clerk**; DB writes go through server actions/routes using the service client with explicit authorization checks (same pattern as `src/actions/practice-exercises.ts`).
 - New RLS policies use `(auth.jwt() ->> 'sub')`, **never `auth.uid()`** (Clerk IDs are text). Several existing policies still use `auth.uid()` (e.g. `20260508000000_company_branding.sql`); audit them in WS0.
