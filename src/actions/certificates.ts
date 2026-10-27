@@ -5,52 +5,11 @@ import { auth, currentUser } from "@clerk/nextjs/server";
 import { createClient } from "@/lib/supabase/server";
 import { randomUUID } from "crypto";
 import { sendCertificateIssued } from "@/lib/email/emailjs";
-import { parseTutorSessionBlock } from "@/lib/tutor/tutor-session-block";
+import { pendingRequiredTutorScenarios } from "@/lib/tutor/server/required-tutor-blocks";
+import { REQUIRED_TUTOR_HINT } from "@/lib/tutor/tutor-session-block";
 
 type LessonRow = { id: string };
 type ProgressRow = { lesson_id: string; completed: boolean };
-
-/**
- * Required tutor_session blocks in the lesson must each have a completed lesson session for their
- * scenario. Blocks whose scenario is not published are skipped, the same rule the lesson player uses.
- */
-async function assertRequiredTutorSessionsDone(
-  supabase: ReturnType<typeof createClient>,
-  lessonId: string,
-  userId: string,
-) {
-  const { data: blocks } = await supabase
-    .from("content_blocks")
-    .select("content")
-    .eq("lesson_id", lessonId)
-    .eq("type", "tutor_session");
-  const requiredIds = (blocks ?? []).flatMap((b) => {
-    const parsed = parseTutorSessionBlock(b.content);
-    return parsed?.required ? [parsed.scenarioId] : [];
-  });
-  if (requiredIds.length === 0) return;
-
-  const { data: published } = await supabase
-    .from("practice_scenarios")
-    .select("id")
-    .in("id", requiredIds)
-    .eq("status", "published");
-  const gating = (published ?? []).map((r) => r.id);
-  if (gating.length === 0) return;
-
-  const { data: done } = await supabase
-    .from("tutor_sessions")
-    .select("scenario_id")
-    .eq("user_id", userId)
-    .eq("lesson_id", lessonId)
-    .eq("origin", "lesson")
-    .eq("status", "completed")
-    .in("scenario_id", gating);
-  const doneIds = new Set((done ?? []).map((r) => r.scenario_id));
-  if (gating.some((id) => !doneIds.has(id))) {
-    throw new Error("Finish the required speaking practice before you complete this lesson.");
-  }
-}
 
 export async function generateCertificate(courseId: string) {
   const { userId } = await auth();
@@ -203,7 +162,9 @@ export async function markLessonComplete(lessonId: string, courseSlug: string) {
   if (!userId) throw new Error("Unauthorized");
 
   const supabase = createClient();
-  await assertRequiredTutorSessionsDone(supabase, lessonId, userId);
+  if ((await pendingRequiredTutorScenarios(supabase, lessonId, userId)).length > 0) {
+    throw new Error(REQUIRED_TUTOR_HINT);
+  }
 
   const { data: existing } = await supabase
     .from("lesson_progress")

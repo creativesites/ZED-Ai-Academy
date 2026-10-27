@@ -39,6 +39,8 @@ export type ResolveTutorAccessInput = {
   assignmentId?: string;
 };
 
+const STAFF_ROLES = ["company_admin", "teacher", "instructor"];
+
 export const DEFAULT_TUTOR_SETTINGS = {
   practice_room_enabled: true,
   free_practice_minutes_per_month: 60,
@@ -111,25 +113,41 @@ export async function resolveTutorAccess(input: ResolveTutorAccessInput): Promis
   const { data: scenario } = await supabase.from("practice_scenarios").select("*").eq("id", scenarioId).maybeSingle();
   if (!scenario) return deny("scenario_not_found");
 
-  // 3. Tenant. Platform scenarios belong to the platform tenant, so the learner's own tenant is used.
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("company_id")
-    .eq("id", input.userId)
-    .maybeSingle();
-  const companyId = scenario.visibility === "platform" ? profile?.company_id ?? null : scenario.company_id;
+  // 3. Tenant the session runs under.
+  //  - lesson: the lesson's course tenant (learners need no membership row; staff may preview).
+  //  - practice/assignment with a platform scenario: the learner's profile tenant when active, else any
+  //    active membership, else (practice only) the platform tenant, on its settings.
+  //  - otherwise: the scenario's own tenant, which the learner must be an active member of.
+  const [{ data: profile }, { data: memberships }, { data: platform }] = await Promise.all([
+    supabase.from("profiles").select("company_id").eq("id", input.userId).maybeSingle(),
+    supabase.from("company_members").select("company_id, role").eq("profile_id", input.userId).eq("status", "active"),
+    supabase.from("companies").select("id").eq("slug", "zedai").maybeSingle(),
+  ]);
+  const platformId = platform?.id ?? null;
+  const activeRoles = new Map((memberships ?? []).map((m) => [m.company_id, m.role as string]));
+
+  let companyId: string | null;
+  let fallback = false;
+  if (input.origin === "lesson") {
+    const { data: course } = lesson?.courseId
+      ? await supabase.from("courses").select("company_id").eq("id", lesson.courseId).maybeSingle()
+      : { data: null };
+    companyId = course?.company_id ?? platformId;
+  } else if (scenario.visibility === "platform") {
+    if (profile?.company_id && activeRoles.has(profile.company_id)) companyId = profile.company_id;
+    else if (memberships && memberships.length > 0) companyId = memberships[0].company_id;
+    else if (input.origin === "practice") {
+      companyId = platformId;
+      fallback = true;
+    } else companyId = profile?.company_id ?? null;
+  } else {
+    companyId = scenario.company_id;
+  }
   if (!companyId) return deny("not_tenant_member");
 
-  const [{ data: membership }, { data: company }] = await Promise.all([
-    supabase
-      .from("company_members")
-      .select("profile_id")
-      .eq("company_id", companyId)
-      .eq("profile_id", input.userId)
-      .eq("status", "active")
-      .maybeSingle(),
-    supabase.from("companies").select("status").eq("id", companyId).maybeSingle(),
-  ]);
+  const member = fallback || activeRoles.has(companyId);
+  const staff = STAFF_ROLES.includes(activeRoles.get(companyId) ?? "");
+  const { data: company } = await supabase.from("companies").select("status").eq("id", companyId).maybeSingle();
 
   // 4. Enrollment in the course that governs this session.
   const governingCourseId =
@@ -186,9 +204,15 @@ export async function resolveTutorAccess(input: ResolveTutorAccessInput): Promis
       status: scenario.status,
       visibility: scenario.visibility,
       courseId: scenario.course_id,
+      companyId: scenario.company_id,
       allowedModes: scenario.allowed_modes,
     },
-    tenant: { member: !!membership, active: company?.status === "active" },
+    tenant: {
+      member,
+      active: company?.status === "active",
+      staff,
+      fallback,
+    },
     enrolledInCourse,
     lesson,
     assignment: assignment

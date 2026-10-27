@@ -17,6 +17,7 @@ function base(overrides: Partial<TutorAccessFacts> = {}): TutorAccessFacts {
       status: "published",
       visibility: "tenant_library",
       courseId: null,
+      companyId: "co-1",
       allowedModes: ["live", "voice", "text"],
     },
     tenant: { member: true, active: true },
@@ -228,4 +229,92 @@ test("remainingFreeMinutes is never negative and handles fractions", () => {
 test("startOfMonthUtc returns the first instant of the UTC month", () => {
   assert.equal(startOfMonthUtc(new Date("2026-10-27T15:42:00Z")), "2026-10-01T00:00:00.000Z");
   assert.equal(startOfMonthUtc(new Date("2026-12-31T23:59:59Z")), "2026-12-01T00:00:00.000Z");
+});
+
+// ---- Access by origin (lesson tenant, staff preview, practice fallback) ----
+
+function lessonFacts(overrides: Partial<TutorAccessFacts> = {}): TutorAccessFacts {
+  return base({
+    origin: "lesson",
+    lesson: { exists: true, courseId: "course-1" },
+    companyId: "co-course",
+    tenant: { member: false, active: true },
+    enrolledInCourse: false,
+    ...overrides,
+  });
+}
+
+test("enrolled learner with no company membership can run a lesson session", () => {
+  const facts = lessonFacts({ enrolledInCourse: true });
+  facts.scenario.visibility = "course";
+  facts.scenario.courseId = "course-1";
+  assert.equal(decideTutorAccess(facts).ok, true);
+});
+
+test("enrolled learner can use a platform scenario in a lesson without a membership row", () => {
+  const facts = lessonFacts({ enrolledInCourse: true });
+  facts.scenario.visibility = "platform";
+  assert.equal(decideTutorAccess(facts).ok, true);
+});
+
+test("active staff of the course tenant can preview a lesson without enrolling", () => {
+  const facts = lessonFacts({ tenant: { member: true, active: true, staff: true } });
+  facts.scenario.visibility = "course";
+  facts.scenario.courseId = "course-1";
+  assert.equal(decideTutorAccess(facts).ok, true);
+});
+
+test("an outsider (not enrolled, not staff) is denied a lesson session", () => {
+  const facts = lessonFacts({ tenant: { member: true, active: true, staff: false } });
+  assert.deepEqual(decideTutorAccess(facts), { ok: false, reason: "not_enrolled" });
+  const platform = lessonFacts();
+  platform.scenario.visibility = "platform";
+  assert.deepEqual(decideTutorAccess(platform), { ok: false, reason: "not_enrolled" });
+});
+
+test("a lesson's tenant library scenario must belong to the course's tenant", () => {
+  const same = lessonFacts({ enrolledInCourse: true });
+  same.scenario.visibility = "tenant_library";
+  same.scenario.companyId = "co-course";
+  assert.equal(decideTutorAccess(same).ok, true);
+
+  const other = lessonFacts({ enrolledInCourse: true });
+  other.scenario.visibility = "tenant_library";
+  other.scenario.companyId = "co-other";
+  assert.deepEqual(decideTutorAccess(other), { ok: false, reason: "scenario_not_in_library" });
+});
+
+test("a lesson session in an inactive tenant is denied", () => {
+  const facts = lessonFacts({ enrolledInCourse: true, tenant: { member: false, active: false } });
+  facts.scenario.visibility = "platform";
+  assert.deepEqual(decideTutorAccess(facts), { ok: false, reason: "tenant_inactive" });
+});
+
+test("practice with no membership falls back to the platform tenant for platform scenarios", () => {
+  const facts = base({ tenant: { member: true, active: true, fallback: true }, companyId: "co-platform" });
+  facts.scenario.visibility = "platform";
+  const decision = decideTutorAccess(facts);
+  assert.equal(decision.ok, true);
+  if (decision.ok) assert.equal(decision.liveMinutesLeft, 60);
+});
+
+test("practice with no membership cannot use a tenant library scenario", () => {
+  const facts = base({ tenant: { member: true, active: true, fallback: true }, companyId: "co-platform" });
+  facts.scenario.visibility = "tenant_library";
+  assert.deepEqual(decideTutorAccess(facts), { ok: false, reason: "not_tenant_member" });
+});
+
+test("practice with no membership and no fallback is denied", () => {
+  const facts = base({ tenant: { member: false, active: true } });
+  facts.scenario.visibility = "platform";
+  assert.deepEqual(decideTutorAccess(facts), { ok: false, reason: "not_tenant_member" });
+});
+
+test("practice fallback still respects free minutes on the platform tenant's settings", () => {
+  const facts = base({
+    tenant: { member: true, active: true, fallback: true },
+    practiceUsedMs: 60 * 60_000,
+  });
+  facts.scenario.visibility = "platform";
+  assert.deepEqual(decideTutorAccess(facts), { ok: false, reason: "free_minutes_exhausted" });
 });

@@ -28,6 +28,9 @@ export const tutorSessionBlockSchema = z.object({
 
 export type TutorSessionBlock = z.infer<typeof tutorSessionBlockSchema>;
 
+/** Shown to the learner (and returned by the server) when a required practice blocks lesson completion. */
+export const REQUIRED_TUTOR_HINT = "Finish the required speaking practice before you complete this lesson.";
+
 /** Returns the parsed block, or null when the stored content is missing or not valid. Never throws. */
 export function parseTutorSessionBlock(content: unknown): TutorSessionBlock | null {
   const result = tutorSessionBlockSchema.safeParse(content);

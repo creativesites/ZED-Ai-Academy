@@ -24,7 +24,11 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { BlockRenderer, type Lesson, type Module, type ContentBlock, type Quiz } from "@/components/course-blocks";
-import { parseTutorSessionBlock, type TutorScenarioView } from "@/lib/tutor/tutor-session-block";
+import {
+  parseTutorSessionBlock,
+  REQUIRED_TUTOR_HINT,
+  type TutorScenarioView,
+} from "@/lib/tutor/tutor-session-block";
 
 
 
@@ -696,9 +700,7 @@ export function LessonPlayerClient({
                           <h3 className="text-3xl font-bold text-white">Mastered this?</h3>
                           <p className="text-white/60">Mark this lesson as complete to progress towards your certificate.</p>
                           {pendingRequiredTutor.length > 0 && (
-                            <p className="text-sm font-semibold text-[#fd5523]">
-                              Finish the required speaking practice above to complete this lesson.
-                            </p>
+                            <p className="text-sm font-semibold text-[#fd5523]">{REQUIRED_TUTOR_HINT}</p>
                           )}
                           <Button
                             onClick={handleMarkComplete}

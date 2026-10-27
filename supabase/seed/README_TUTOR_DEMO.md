@@ -32,13 +32,31 @@ Each file is idempotent and can be re-run.
 
 Step 3 needs a company with `slug = 'zedai'` (the platform tenant). If there is none, the file only prints a NOTICE and inserts nothing.
 
-## Before learners can use it
+## Access rules for this demo
 
-The tutor API checks access before it starts a session (`src/lib/tutor/server/access.ts`). For this demo:
+The tutor API decides access in `src/lib/tutor/entitlements.ts` (pure rules) with facts gathered in `src/lib/tutor/server/access.ts`.
 
-- A learner must have an **active enrollment** in the course to start a lesson session. Free courses still need an enrollment row.
-- A platform scenario is only usable when the learner's own `profiles.company_id` is an **active member** of that tenant (`company_members.status = 'active'`). Learners with no tenant get `not_tenant_member`.
-- Teachers who preview the block are checked the same way, so a teacher who is not enrolled in the course gets `not_enrolled` in the preview.
+- **Lesson sessions** (the block in the lesson player) run under the **course's tenant**. An enrolled learner (active `enrollments` row) can start one without a `company_members` row. Active staff of that tenant (company_admin, teacher, instructor) can preview without enrolling. Anyone else gets `not_enrolled`.
+- Inside a lesson, a platform scenario works for any enrolled learner. A tenant-library scenario must belong to the course's tenant. A course-only scenario must belong to the lesson's course.
+- **Practice sessions** (the Practice Room, outside lessons) on a platform scenario use the learner's active tenant, or, if they have no active membership anywhere, the platform tenant (`companies.slug = 'zedai'`) and its `tutor_settings`. Free-practice minutes apply. Without a membership, only platform scenarios are open.
+- Lesson completion waits for required blocks (see below). The check is the same for the manual "Complete" button and for a quiz pass.
+
+## Required blocks and quizzes
+
+A `tutor_session` block with `required: true` must be finished before the lesson can be completed. "Finished" means a `tutor_sessions` row with `origin = lesson`, this `lesson_id` and `scenario_id`, and `status = completed`, which `/complete` writes. Required blocks whose scenario is not published do not block completion.
+
+If the learner passes the lesson's quiz while a required block is still open, the attempt is recorded but the lesson is not marked complete. The learner sees the same hint as on the Complete button.
+
+## Known limitations
+
+These are known and not fixed in this change.
+
+1. **Block text for AI context.** `blockToText` renders "Speaking practice with the AI tutor: <title or intro>". The scenario goal is not stored in the block, so it is not included. Including it would need a database lookup.
+2. **Block style is not sent to the session.** The `style` on the block is shown on the learner card, but `TutorSession` has no style prop. The scenario's own `style` is what the server uses.
+3. **No scenario authoring UI.** Teachers can only pick published scenarios. The block editor's empty state says so and points at `docs/LANGUAGE_IMPLEMENTATION_PLAN.md` section 2.5.
+4. **Catalog badge.** The "Features the AI tutor" badge is on the academy course detail page only. The catalog listing cards do not load lesson blocks, so they do not show it.
+5. **Tinashe is not seeded.** The fifth Rive preset (`tinashe` in `design/rive/presets.json`) is not part of this demo's four personas.
+6. **Error text may be masked.** In production, Next.js can hide the text of a server-action error from the client. The disabled Complete button and the hint are the main guard, and the server check is the backstop.
 
 ## Removing the demo
 
