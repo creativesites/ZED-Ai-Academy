@@ -1,6 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { createClient } from "@/lib/supabase/server";
-import { GEMINI_MODEL, gemini } from "@/lib/ai/gemini";
+import { gemini } from "@/lib/ai/gemini";
+import { modelFor } from "@/lib/ai/models";
 import { NextRequest } from "next/server";
 
 export async function POST(req: NextRequest) {
@@ -134,7 +135,7 @@ Guidelines:
 5. Use practical examples relevant to the course topic.`;
 
   const stream = await gemini.models.generateContentStream({
-    model: GEMINI_MODEL,
+    model: modelFor("tutor"),
     contents: message,
     config: {
       systemInstruction: systemPrompt,
