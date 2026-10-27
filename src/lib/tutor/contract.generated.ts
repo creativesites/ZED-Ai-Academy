@@ -1,5 +1,5 @@
 // GENERATED — do not edit; run npm run gen:tutor-contract
-// Source: docs/rive/teacher.contract.json (contract version 1.0.1).
+// Source: docs/rive/teacher.contract.json (contract version 1.1.0).
 
 export const GESTURES = ["idle", "wave", "nod", "head_shake", "explain", "point_card", "point_left", "point_right", "thumbs_up", "clap", "think", "listen", "celebrate", "count", "shrug", "beckon", "trace_tone", "oops"] as const;
 
@@ -175,6 +175,11 @@ export const TEACHER_VM_PROPS = {
     type: "enum",
     enum: "Prop",
     default: "none"
+  },
+  faceStyle: {
+    type: "enum",
+    enum: "FaceStyle",
+    default: "lin"
   }
 } as const;
 
@@ -294,8 +299,8 @@ export const TONE_TRACE = {
 
 export const ANCHORS = {
   cardTarget: [180, 640],
-  headCenter: [600, 545],
+  headCenter: [600, 520],
   mouthCenter: [600, 690]
 } as const;
 
-export const CONTRACT_VERSION = "1.0.1" as const;
+export const CONTRACT_VERSION = "1.1.0" as const;
