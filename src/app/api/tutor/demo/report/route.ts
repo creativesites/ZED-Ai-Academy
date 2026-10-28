@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { isDemoEnabled, parseDemoReport } from "@/lib/tutor/demo";
 import { demoScenario } from "@/lib/tutor/demo-scenarios";
 import { demoRateLimiter, runDemoReport } from "@/lib/tutor/server/demo-runner";
+import { describeGeminiError } from "@/lib/tutor/gemini-errors";
 
 // POST /api/tutor/demo/report: { scenarioKey, history } -> { report }. Stateless, nothing is written.
 // Shares the demo budget with /api/tutor/demo/turn.
@@ -39,7 +40,11 @@ export async function POST(req: NextRequest) {
     const report = await runDemoReport(scenario, parsed.value.history);
     return NextResponse.json({ report });
   } catch (err) {
-    console.error("[tutor] demo report failed:", err);
-    return NextResponse.json({ error: "The report could not be generated. Try again." }, { status: 502 });
+    const info = describeGeminiError(err);
+    console.error("[tutor] demo report failed:", info.code, info.detail);
+    return NextResponse.json(
+      { error: "The report could not be generated. Try again.", reason: `gemini_${info.code}`, detail: info.detail },
+      { status: 502 },
+    );
   }
 }

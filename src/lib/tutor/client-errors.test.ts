@@ -52,3 +52,13 @@ test("parseTutorErrorBody keeps only string fields", () => {
   assert.deepEqual(parseTutorErrorBody("oops"), {});
   assert.deepEqual(parseTutorErrorBody(null), {});
 });
+
+test("parseTutorErrorBody keeps the server's detail and the Gemini reasons have messages", () => {
+  assert.deepEqual(parseTutorErrorBody({ error: "x", reason: "gemini_auth", detail: "key rejected" }), {
+    error: "x",
+    reason: "gemini_auth",
+    detail: "key rejected",
+  });
+  assert.match(tutorErrorMessage({ kind: "http", status: 502, reason: "gemini_auth" }), /key was rejected/);
+  assert.match(tutorErrorMessage({ kind: "http", status: 502, reason: "gemini_no_key" }), /missing/);
+});

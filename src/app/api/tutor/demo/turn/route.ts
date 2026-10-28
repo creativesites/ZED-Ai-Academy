@@ -13,6 +13,7 @@ import {
 import { demoScenario } from "@/lib/tutor/demo-scenarios";
 import { runDemoTurn, demoRateLimiter } from "@/lib/tutor/server/demo-runner";
 import { transcribeLearnerAudio } from "@/lib/tutor/server/gemini-models";
+import { describeGeminiError } from "@/lib/tutor/gemini-errors";
 
 // POST /api/tutor/demo/turn: one exchange in the showcase demo. Stateless: the client sends the
 // history each time and nothing is stored. Body is JSON { scenarioKey, history, text?, elapsedMs? }
@@ -74,8 +75,12 @@ export async function POST(req: NextRequest) {
       if (!transcript.text) return NextResponse.json({ error: "No speech was detected. Try again." }, { status: 422 });
       text = transcript.text.slice(0, DEMO_MAX_TEXT_CHARS);
     } catch (err) {
-      console.error("[tutor] demo transcription failed:", err);
-      return NextResponse.json({ error: "The teacher could not hear that. Try again." }, { status: 502 });
+      const info = describeGeminiError(err);
+      console.error("[tutor] demo transcription failed:", info.code, info.detail);
+      return NextResponse.json(
+        { error: "The teacher could not hear that. Try again.", reason: `gemini_${info.code}`, detail: info.detail },
+        { status: 502 },
+      );
     }
   }
 
@@ -94,8 +99,12 @@ export async function POST(req: NextRequest) {
       endReason: result.endReason ?? null,
     });
   } catch (err) {
-    console.error("[tutor] demo turn failed:", err);
-    return NextResponse.json({ error: "The teacher could not respond. Try again." }, { status: 502 });
+    const info = describeGeminiError(err);
+    console.error("[tutor] demo turn failed:", info.code, info.detail);
+    return NextResponse.json(
+      { error: "The teacher could not respond. Try again.", reason: `gemini_${info.code}`, detail: info.detail },
+      { status: 502 },
+    );
   }
 }
 

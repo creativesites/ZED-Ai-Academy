@@ -29,7 +29,10 @@ async function send<T>(url: string, init: RequestInit): Promise<Result<T>> {
   }
   const body: unknown = await res.json().catch(() => null);
   if (!res.ok) {
-    return { ok: false, failure: { kind: "http", status: res.status, ...parseTutorErrorBody(body) } };
+    const parsed = parseTutorErrorBody(body);
+    // The server's reason and detail, for whoever has DevTools open during a demo.
+    if (parsed.reason || parsed.detail) console.warn("[ZAI Tutor]", res.status, parsed.reason ?? "", parsed.detail ?? "");
+    return { ok: false, failure: { kind: "http", status: res.status, ...parsed } };
   }
   return { ok: true, data: body as T };
 }
