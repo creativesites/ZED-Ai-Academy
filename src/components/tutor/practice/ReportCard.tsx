@@ -33,8 +33,8 @@ export function ReportCard({ report, title, words, onPractiseAgain, onDone }: Re
   return (
     <article aria-labelledby="report-title" className={`${styles.glass} mx-auto grid w-full max-w-[640px] gap-5 rounded-[28px] p-5 sm:p-7`}>
       <header className="grid gap-1">
-        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#c7b6dd]">Session report</p>
-        <h1 id="report-title" className="font-heading text-2xl font-semibold leading-tight text-[#f5ecff]">
+        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--ink-dim)]">Session report</p>
+        <h1 id="report-title" className="font-heading text-2xl font-semibold leading-tight text-[var(--ink)]">
           {title}
         </h1>
       </header>
@@ -42,10 +42,10 @@ export function ReportCard({ report, title, words, onPractiseAgain, onDone }: Re
       {scores.length > 0 && (
         <section aria-labelledby="scores-heading" className="grid gap-3">
           <div className="flex items-baseline justify-between gap-3">
-            <h2 id="scores-heading" className="text-sm font-semibold text-[#f5ecff]">
+            <h2 id="scores-heading" className="text-sm font-semibold text-[var(--ink)]">
               How it went
             </h2>
-            <span className="rounded-full border border-white/10 px-2 py-0.5 text-[11px] uppercase tracking-wider text-[#c7b6dd]">
+            <span className="rounded-full border border-[var(--line)] px-2 py-0.5 text-[11px] uppercase tracking-wider text-[var(--ink-dim)]">
               Guidance only
             </span>
           </div>
@@ -54,9 +54,9 @@ export function ReportCard({ report, title, words, onPractiseAgain, onDone }: Re
               const value = report.scores[key] ?? 0;
               return (
                 <li key={key} className="grid gap-1">
-                  <div className="flex justify-between text-[13px] text-[#f5ecff]">
+                  <div className="flex justify-between text-[13px] text-[var(--ink)]">
                     <span>{SCORE_LABEL[key]}</span>
-                    <span className="text-[#c7b6dd] tabular-nums">{value}</span>
+                    <span className="text-[var(--ink-dim)] tabular-nums">{value}</span>
                   </div>
                   <div
                     role="meter"
@@ -65,9 +65,9 @@ export function ReportCard({ report, title, words, onPractiseAgain, onDone }: Re
                     aria-valuemax={100}
                     aria-valuenow={value}
                     aria-valuetext={`${value} out of 100, guidance`}
-                    className="h-2 overflow-hidden rounded-full bg-white/10"
+                    className="h-2 overflow-hidden rounded-full bg-[var(--soft-hover)]"
                   >
-                    <div className="h-full rounded-full bg-gradient-to-r from-[#ffb867] to-[#7ee0c3]" style={{ width: `${value}%` }} />
+                    <div className="h-full rounded-full bg-gradient-to-r from-[#fd5523] to-[#15805f]" style={{ width: `${value}%` }} />
                   </div>
                 </li>
               );
@@ -78,10 +78,10 @@ export function ReportCard({ report, title, words, onPractiseAgain, onDone }: Re
 
       {report.strengths.length > 0 && (
         <section aria-labelledby="strengths-heading" className="grid gap-2">
-          <h2 id="strengths-heading" className="text-sm font-semibold text-[#f5ecff]">
+          <h2 id="strengths-heading" className="text-sm font-semibold text-[var(--ink)]">
             What went well
           </h2>
-          <ul className="list-disc space-y-1 pl-5 text-[15px] text-[#f5ecff]">
+          <ul className="list-disc space-y-1 pl-5 text-[15px] text-[var(--ink)]">
             {report.strengths.map((s, i) => (
               <li key={i}>{s}</li>
             ))}
@@ -91,7 +91,7 @@ export function ReportCard({ report, title, words, onPractiseAgain, onDone }: Re
 
       {report.mistakes.length > 0 && (
         <section aria-labelledby="mistakes-heading" className="grid gap-2">
-          <h2 id="mistakes-heading" className="text-sm font-semibold text-[#f5ecff]">
+          <h2 id="mistakes-heading" className="text-sm font-semibold text-[var(--ink)]">
             Worth another try
           </h2>
           <ul className="grid gap-2">
@@ -102,24 +102,24 @@ export function ReportCard({ report, title, words, onPractiseAgain, onDone }: Re
         </section>
       )}
 
-      <section aria-labelledby="next-heading" className="grid gap-1 rounded-2xl border border-white/10 bg-white/5 p-4">
-        <h2 id="next-heading" className="text-sm font-semibold text-[#7ee0c3]">
+      <section aria-labelledby="next-heading" className="grid gap-1 rounded-2xl border border-[var(--line)] bg-[var(--soft)] p-4">
+        <h2 id="next-heading" className="text-sm font-semibold text-[var(--accent)]">
           Next step
         </h2>
-        <p className="text-[15px] leading-relaxed text-[#f5ecff]">{report.nextStep}</p>
+        <p className="text-[15px] leading-relaxed text-[var(--ink)]">{report.nextStep}</p>
       </section>
 
       {words.length > 0 && (
         <section aria-labelledby="words-heading" className="grid gap-2">
-          <h2 id="words-heading" className="text-sm font-semibold text-[#f5ecff]">
+          <h2 id="words-heading" className="text-sm font-semibold text-[var(--ink)]">
             New words in your deck
           </h2>
           <ul className="flex flex-wrap gap-2">
             {words.map((w) => (
-              <li key={w.text} className="rounded-2xl border border-white/15 bg-white/5 px-3 py-2">
-                <span className={`${hasHan(w.text) ? styles.han : "font-semibold"} text-base text-[#f5ecff]`}>{w.text}</span>
-                {w.pron && <span className="ml-2 text-[13px] text-[#c7b6dd]">{w.pron}</span>}
-                {w.meaning && <span className="block text-[12px] text-[#8f7aa8]">{w.meaning}</span>}
+              <li key={w.text} className="rounded-2xl border border-[var(--line-strong)] bg-[var(--soft)] px-3 py-2">
+                <span className={`${hasHan(w.text) ? styles.han : "font-semibold"} text-base text-[var(--ink)]`}>{w.text}</span>
+                {w.pron && <span className="ml-2 text-[13px] text-[var(--ink-dim)]">{w.pron}</span>}
+                {w.meaning && <span className="block text-[12px] text-[var(--ink-faint)]">{w.meaning}</span>}
               </li>
             ))}
           </ul>
@@ -130,7 +130,7 @@ export function ReportCard({ report, title, words, onPractiseAgain, onDone }: Re
         <button
           type="button"
           onClick={onPractiseAgain}
-          className={`${styles.primaryButton} rounded-2xl px-5 py-3 text-sm font-bold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#ffb867]`}
+          className={`${styles.primaryButton} rounded-2xl px-5 py-3 text-sm font-bold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus)]`}
         >
           Practise again
         </button>
@@ -138,7 +138,7 @@ export function ReportCard({ report, title, words, onPractiseAgain, onDone }: Re
           <button
             type="button"
             onClick={onDone}
-            className="rounded-2xl border border-white/15 bg-white/5 px-5 py-3 text-sm font-semibold text-[#f5ecff] hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#ffb867]"
+            className="rounded-2xl border border-[var(--line-strong)] bg-[var(--soft)] px-5 py-3 text-sm font-semibold text-[var(--ink)] hover:bg-[var(--soft-hover)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus)]"
           >
             Done
           </button>
@@ -164,9 +164,9 @@ function MistakeRow({ mistake }: { mistake: Mistake }) {
   };
 
   return (
-    <li className="grid gap-1 rounded-2xl border border-white/10 bg-white/5 p-3">
-      <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1 text-[15px] text-[#f5ecff]">
-        <span className="text-[#c7b6dd] line-through decoration-[#ff7a8a]/70">{mistake.said}</span>
+    <li className="grid gap-1 rounded-2xl border border-[var(--line)] bg-[var(--soft)] p-3">
+      <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1 text-[15px] text-[var(--ink)]">
+        <span className="text-[var(--ink-dim)] line-through decoration-[#e11d48]/60">{mistake.said}</span>
         <span aria-hidden="true">→</span>
         <span className={`${han ? styles.han : "font-semibold"}`}>
           {han
@@ -181,20 +181,20 @@ function MistakeRow({ mistake }: { mistake: Mistake }) {
               )
             : mistake.correct}
         </span>
-        <span className="text-[11px] uppercase tracking-wider text-[#8f7aa8]">{mistake.category}</span>
+        <span className="text-[11px] uppercase tracking-wider text-[var(--ink-faint)]">{mistake.category}</span>
         {mistake.audioUrl && (
           <button
             type="button"
             onClick={listen}
             disabled={playing}
             aria-label={`Hear ${mistake.correct}`}
-            className="ml-auto rounded-full border border-white/15 px-2.5 py-0.5 text-[12px] text-[#f5ecff] hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#ffb867] disabled:opacity-60"
+            className="ml-auto rounded-full border border-[var(--line-strong)] px-2.5 py-0.5 text-[12px] text-[var(--ink)] hover:bg-[var(--soft-hover)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus)] disabled:opacity-60"
           >
             {playing ? "Playing..." : "Hear it"}
           </button>
         )}
       </div>
-      {mistake.note && <p className="text-[13px] text-[#c7b6dd]">{mistake.note}</p>}
+      {mistake.note && <p className="text-[13px] text-[var(--ink-dim)]">{mistake.note}</p>}
     </li>
   );
 }

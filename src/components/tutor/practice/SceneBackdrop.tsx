@@ -1,27 +1,34 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import type { SceneArtboard } from "@/lib/tutor/rive-driver";
 import { useReducedMotion } from "./use-reduced-motion";
 
 // Drifting glyphs on a canvas behind the stage. Decorative: aria-hidden, pointer-events none.
 // Paused when the page is hidden and drawn once, still, when the learner prefers reduced motion.
 
-const GLYPHS = ["你", "好", "学", "谢", "水", "山", "天", "猫", "茶", "ní", "hǎo", "xièxie", "ā", "ǒ"];
+// Glyphs follow the scene's language, so a Spanish café does not float Chinese characters.
+const GLYPHS: Record<SceneArtboard, readonly string[]> = {
+  Scene_TeaHouse: ["你", "好", "学", "谢", "水", "山", "天", "茶", "ní", "hǎo", "xièxie", "ā", "ǒ"],
+  Scene_Cafe: ["¡Hola!", "café", "ñ", "¿", "gracias", "por favor", "té", "á", "é", "pan", "sí"],
+  Scene_Rooftop: ["Bonjour", "merci", "ç", "é", "è", "à", "pain", "café", "oui", "ô", "s'il vous plaît"],
+  Scene_Clinic: ["Hello", "pain", "how", "when", "where", "breathe", "ache", "fever", "rest", "?"],
+};
 
 type Particle = { x: number; y: number; size: number; speed: number; alpha: number; glyph: string };
 
-function makeParticles(width: number, height: number, count: number): Particle[] {
+function makeParticles(width: number, height: number, count: number, glyphs: readonly string[]): Particle[] {
   return Array.from({ length: count }, (_, i) => ({
     x: Math.random() * width,
     y: Math.random() * height,
     size: 14 + ((i * 7) % 18),
     speed: 6 + ((i * 13) % 14),
-    alpha: 0.05 + ((i * 3) % 7) * 0.012,
-    glyph: GLYPHS[i % GLYPHS.length],
+    alpha: 0.06 + ((i * 3) % 7) * 0.012,
+    glyph: glyphs[i % glyphs.length],
   }));
 }
 
-export function SceneBackdrop({ className }: { className?: string }) {
+export function SceneBackdrop({ className, scene = "Scene_TeaHouse" }: { className?: string; scene?: SceneArtboard }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const reduced = useReducedMotion();
 
@@ -44,13 +51,13 @@ export function SceneBackdrop({ className }: { className?: string }) {
       canvas.width = Math.round(width * dpr);
       canvas.height = Math.round(height * dpr);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      particles = makeParticles(width, height, width < 500 ? 16 : 26);
+      particles = makeParticles(width, height, width < 500 ? 16 : 26, GLYPHS[scene] ?? GLYPHS.Scene_TeaHouse);
       draw(0);
     };
 
     const draw = (dt: number) => {
       ctx.clearRect(0, 0, width, height);
-      ctx.fillStyle = "#fff4e6";
+      ctx.fillStyle = "#fd5523";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       for (const p of particles) {
@@ -95,7 +102,7 @@ export function SceneBackdrop({ className }: { className?: string }) {
       observer.disconnect();
       document.removeEventListener("visibilitychange", onVisibility);
     };
-  }, [reduced]);
+  }, [reduced, scene]);
 
   return <canvas ref={canvasRef} aria-hidden="true" className={className} style={{ pointerEvents: "none" }} />;
 }

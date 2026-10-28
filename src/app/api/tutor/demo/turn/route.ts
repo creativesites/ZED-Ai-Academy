@@ -13,12 +13,15 @@ import {
 import { demoScenario } from "@/lib/tutor/demo-scenarios";
 import { runDemoTurn, demoRateLimiter } from "@/lib/tutor/server/demo-runner";
 import { transcribeLearnerAudio } from "@/lib/tutor/server/gemini-models";
+import { describeGeminiError } from "@/lib/tutor/gemini-errors";
 
 // POST /api/tutor/demo/turn: one exchange in the showcase demo. Stateless: the client sends the
 // history each time and nothing is stored. Body is JSON { scenarioKey, history, text?, elapsedMs? }
-// or multipart/form-data with `audio` (webm, ogg or wav, 2 MB at most) and the same fields as strings.
+// or multipart/form-data with `audio` (webm, ogg, wav or mp4, 2 MB at most) and the same fields as strings.
 
 export const runtime = "nodejs";
+// Transcribe, turn JSON and one TTS call per line run in sequence, so allow more than the default.
+export const maxDuration = 60;
 
 type Body = { scenarioKey: unknown; history: unknown; text: unknown; elapsedMs: unknown; audio?: { bytes: Buffer; mimeType: string } };
 
@@ -72,8 +75,12 @@ export async function POST(req: NextRequest) {
       if (!transcript.text) return NextResponse.json({ error: "No speech was detected. Try again." }, { status: 422 });
       text = transcript.text.slice(0, DEMO_MAX_TEXT_CHARS);
     } catch (err) {
-      console.error("[tutor] demo transcription failed:", err);
-      return NextResponse.json({ error: "The teacher could not hear that. Try again." }, { status: 502 });
+      const info = describeGeminiError(err);
+      console.error("[tutor] demo transcription failed:", info.code, info.detail);
+      return NextResponse.json(
+        { error: "The teacher could not hear that. Try again.", reason: `gemini_${info.code}`, detail: info.detail },
+        { status: 502 },
+      );
     }
   }
 
@@ -84,6 +91,7 @@ export async function POST(req: NextRequest) {
       text,
       elapsedMs: request.elapsedMs,
     });
+    if (result.fallback) console.warn("[tutor] demo turn used the fallback line:", result.parseError ?? "no valid events");
     return NextResponse.json({
       learnerText: text,
       events: result.events,
@@ -91,8 +99,12 @@ export async function POST(req: NextRequest) {
       endReason: result.endReason ?? null,
     });
   } catch (err) {
-    console.error("[tutor] demo turn failed:", err);
-    return NextResponse.json({ error: "The teacher could not respond. Try again." }, { status: 502 });
+    const info = describeGeminiError(err);
+    console.error("[tutor] demo turn failed:", info.code, info.detail);
+    return NextResponse.json(
+      { error: "The teacher could not respond. Try again.", reason: `gemini_${info.code}`, detail: info.detail },
+      { status: 502 },
+    );
   }
 }
 
@@ -127,7 +139,7 @@ async function readBody(req: NextRequest): Promise<ReadResult> {
       if (file.size > DEMO_AUDIO_MAX_BYTES) return { ok: false, status: 413, error: "Audio is too large (2 MB maximum)" };
       const mimeType = file.type.split(";")[0].trim().toLowerCase();
       if (!DEMO_AUDIO_TYPES.includes(mimeType)) {
-        return { ok: false, status: 415, error: "Unsupported audio type. Use webm, ogg or wav." };
+        return { ok: false, status: 415, error: "Unsupported audio type. Use webm, ogg, wav or mp4." };
       }
       audio = { bytes: Buffer.from(await file.arrayBuffer()), mimeType };
     }

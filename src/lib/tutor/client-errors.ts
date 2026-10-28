@@ -2,7 +2,7 @@
 // Status and reason codes follow docs/TUTOR_API.md. Unknown codes get a generic message, never a raw body.
 
 export type TutorFailure =
-  | { kind: "http"; status: number; reason?: string; error?: string }
+  | { kind: "http"; status: number; reason?: string; error?: string; detail?: string }
   | { kind: "network" };
 
 export type TutorErrorContext = "start" | "turn" | "complete";
@@ -23,6 +23,11 @@ const REASON_MESSAGES: Record<string, string> = {
   scenario_not_found: "We could not find that scenario.",
   lesson_not_found: "We could not find that lesson.",
   assignment_not_found: "We could not find that assignment.",
+  gemini_no_key: "The AI teacher is not set up yet: the Gemini API key is missing on the server.",
+  gemini_auth: "The AI teacher is not set up correctly: the Gemini API key was rejected.",
+  gemini_model: "The AI model is not available to this Gemini key. Check the key's project and region.",
+  gemini_quota: "The AI teacher is busy (usage limit reached). Try again in a minute.",
+  gemini_unavailable: "The AI service is briefly unavailable. Try again in a moment.",
 };
 
 /** The message to show for a failed call. `context` only changes wording for the 409 case. */
@@ -66,11 +71,12 @@ export function tutorErrorMessage(failure: TutorFailure, context: TutorErrorCont
 }
 
 /** Reads `{ error?, reason? }` from a JSON error body, ignoring anything else. */
-export function parseTutorErrorBody(body: unknown): { error?: string; reason?: string } {
+export function parseTutorErrorBody(body: unknown): { error?: string; reason?: string; detail?: string } {
   if (typeof body !== "object" || body === null) return {};
-  const { error, reason } = body as { error?: unknown; reason?: unknown };
+  const { error, reason, detail } = body as { error?: unknown; reason?: unknown; detail?: unknown };
   return {
     error: typeof error === "string" ? error : undefined,
     reason: typeof reason === "string" ? reason : undefined,
+    ...(typeof detail === "string" ? { detail } : {}),
   };
 }

@@ -7,12 +7,13 @@ import { loadOwnedSession, readJson, sessionIdSchema } from "@/lib/tutor/server/
 import { runSessionTurn, TurnConflictError } from "@/lib/tutor/server/turn-runner";
 import { sessionLimitReason } from "@/lib/tutor/server/turn-pipeline";
 import { recordUsage } from "@/lib/tutor/server/usage";
+import { LEARNER_AUDIO_TYPES } from "@/lib/tutor/recording";
 
 // POST /api/tutor/sessions/[id]/turn: one Voice or Text exchange.
-// Body: JSON { text } or multipart/form-data with an `audio` file (webm, ogg or wav, at most 2 MB).
+// Body: JSON { text } or multipart/form-data with an `audio` file (webm, ogg, wav or mp4, at most 2 MB).
 
 const MAX_AUDIO_BYTES = 2 * 1024 * 1024;
-const ALLOWED_AUDIO_TYPES = new Set(["audio/webm", "audio/ogg", "audio/wav", "audio/x-wav", "audio/wave"]);
+const ALLOWED_AUDIO_TYPES = new Set(LEARNER_AUDIO_TYPES);
 const MAX_TEXT_CHARS = 1000;
 
 const textSchema = z.object({
@@ -125,7 +126,7 @@ async function readTurnInput(req: NextRequest): Promise<TurnInput> {
       if (file.size > MAX_AUDIO_BYTES) return { ok: false, status: 413, error: "Audio is too large (2 MB maximum)" };
       const mimeType = file.type.split(";")[0].trim().toLowerCase();
       if (!ALLOWED_AUDIO_TYPES.has(mimeType)) {
-        return { ok: false, status: 415, error: "Unsupported audio type. Use webm, ogg or wav." };
+        return { ok: false, status: 415, error: "Unsupported audio type. Use webm, ogg, wav or mp4." };
       }
       const bytes = Buffer.from(await file.arrayBuffer());
       return { ok: true, audio: { bytes, mimeType } };

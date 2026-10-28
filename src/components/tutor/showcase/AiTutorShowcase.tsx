@@ -11,8 +11,8 @@ import { createDemoClient } from "./demoClient";
 import { HeroTeacher } from "./HeroTeacher";
 import { createScriptedClient } from "./scriptedClient";
 
-// The public ZAI Tutor showcase. The hero and picker are light, like the rest of the marketing site.
-// The demo stage uses the tutor's dusk scene (TutorSession brings its own backdrop).
+// The public ZAI Tutor showcase. Light throughout, like the rest of the marketing site. The only
+// colourful surfaces are the painted Rive scenes.
 
 type DemoMode = "watch" | "talk";
 
@@ -167,7 +167,7 @@ export function AiTutorShowcase({ signedIn }: { signedIn: boolean }) {
           </div>
         </div>
 
-        <div className="relative mt-6 min-h-[620px] overflow-hidden rounded-[32px] border border-[#2a1745] shadow-[0_30px_70px_rgba(22,15,54,0.28)]">
+        <div className="relative mt-6 min-h-[620px] overflow-hidden rounded-[32px] border border-slate-200 bg-white shadow-[0_30px_70px_rgba(6,46,57,0.12)]">
           {talkGated ? (
             <SignInGate />
           ) : (
@@ -190,7 +190,7 @@ export function AiTutorShowcase({ signedIn }: { signedIn: boolean }) {
         </div>
         <p className="mt-3 text-center text-xs text-slate-500">
           {mode === "watch"
-            ? `Watch mode plays a scripted lesson with ${cast.label.split(" · ")[0]}. The learner lines are scripted, so no account or model call is needed.`
+            ? `Watch mode plays a scripted lesson with ${cast.label.split(" · ")[0]}. The learner lines are scripted, so no account is needed. Turn your sound on.`
             : "Your replies go to the teacher for this demo only. Nothing is saved, and the report is a guide, not a grade."}
         </p>
       </section>
@@ -247,39 +247,39 @@ export function AiTutorShowcase({ signedIn }: { signedIn: boolean }) {
 
       {/* For academies */}
       <section aria-labelledby="academy-heading" className="mx-auto max-w-6xl px-4 pb-20 sm:px-6 lg:px-8">
-        <div className="rounded-[32px] bg-[#062e39] p-6 text-white shadow-[0_30px_70px_rgba(6,46,57,0.25)] sm:p-10">
+        <div className="rounded-[32px] border border-[#fd5523]/15 bg-gradient-to-br from-[#fff2e9] via-white to-[#e9f8f2] p-6 shadow-[0_30px_70px_rgba(6,46,57,0.08)] sm:p-10">
           <div className="grid gap-8 lg:grid-cols-[1fr_0.9fr] lg:items-center">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#fd8d69]">For academies</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#fd5523]">For academies</p>
               <h2 id="academy-heading" className="mt-3 text-3xl font-extrabold tracking-tight sm:text-4xl">
                 Tutor-led speaking practice, inside your courses
               </h2>
-              <ul className="mt-6 space-y-4 text-sm leading-6 text-white/80">
+              <ul className="mt-6 space-y-4 text-sm leading-6 text-slate-600">
                 <li className="flex gap-3">
-                  <BookOpen className="mt-1 h-5 w-5 shrink-0 text-[#fd8d69]" aria-hidden="true" />
+                  <BookOpen className="mt-1 h-5 w-5 shrink-0 text-[#fd5523]" aria-hidden="true" />
                   <span>
-                    <strong className="text-white">Tutor-led lessons.</strong> Attach a teacher scene to a lesson so
+                    <strong className="text-[#062e39]">Tutor-led lessons.</strong> Attach a teacher scene to a lesson so
                     learners practise what they just read.
                   </span>
                 </li>
                 <li className="flex gap-3">
-                  <Mic className="mt-1 h-5 w-5 shrink-0 text-[#fd8d69]" aria-hidden="true" />
+                  <Mic className="mt-1 h-5 w-5 shrink-0 text-[#fd5523]" aria-hidden="true" />
                   <span>
-                    <strong className="text-white">A free Practice Room.</strong> Every learner gets a monthly allowance
+                    <strong className="text-[#062e39]">A free Practice Room.</strong> Every learner gets a monthly allowance
                     of free practice minutes.
                   </span>
                 </li>
                 <li className="flex gap-3">
-                  <ClipboardList className="mt-1 h-5 w-5 shrink-0 text-[#fd8d69]" aria-hidden="true" />
+                  <ClipboardList className="mt-1 h-5 w-5 shrink-0 text-[#fd5523]" aria-hidden="true" />
                   <span>
-                    <strong className="text-white">A teacher gradebook.</strong> Staff see the reports from lesson and
+                    <strong className="text-[#062e39]">A teacher gradebook.</strong> Staff see the reports from lesson and
                     assignment sessions in one place.
                   </span>
                 </li>
               </ul>
             </div>
-            <div className="rounded-[24px] border border-white/10 bg-white/5 p-6">
-              <p className="text-base leading-7 text-white/85">
+            <div className="rounded-[24px] border border-slate-200 bg-white p-6 shadow-[0_18px_40px_rgba(6,46,57,0.06)]">
+              <p className="text-base leading-7 text-slate-600">
                 Want the tutor in your academy? We will set up a scene for your courses and walk your team through the
                 gradebook.
               </p>
@@ -305,7 +305,7 @@ function ModeButton({ active, onClick, children }: { active: boolean; onClick: (
       aria-pressed={active}
       onClick={onClick}
       className={`inline-flex flex-1 items-center justify-center gap-2 rounded-full px-4 py-2.5 text-sm font-semibold transition-colors sm:flex-none ${
-        active ? "bg-[#062e39] text-white" : "text-slate-600 hover:text-[#062e39]"
+        active ? "bg-[#fd5523] text-white shadow-sm" : "text-slate-600 hover:text-[#062e39]"
       }`}
     >
       {children}
@@ -316,13 +316,13 @@ function ModeButton({ active, onClick, children }: { active: boolean; onClick: (
 function SignInGate() {
   const back = encodeURIComponent("/ai-tutor");
   return (
-    <div className="flex min-h-[620px] flex-col items-center justify-center gap-5 bg-[#160f36] px-6 py-12 text-center text-[#f5ecff]">
-      <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/10 text-[#ffb867]">
+    <div className="flex min-h-[620px] flex-col items-center justify-center gap-5 bg-gradient-to-b from-[#fffaf6] to-[#fff1e6] px-6 py-12 text-center text-[#062e39]">
+      <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#fff2e9] text-[#fd5523]">
         <Lock className="h-6 w-6" aria-hidden="true" />
       </span>
       <div className="max-w-md">
         <h3 className="text-2xl font-bold">Sign in to talk with her</h3>
-        <p className="mt-3 text-sm leading-6 text-[#c7b6dd]">
+        <p className="mt-3 text-sm leading-6 text-slate-600">
           A free account lets you talk with the teacher. Your conversation stays in this tab and is not saved. You can
           still watch the demo without signing in.
         </p>
@@ -330,13 +330,13 @@ function SignInGate() {
       <div className="flex w-full max-w-xs flex-col gap-3 sm:flex-row sm:justify-center">
         <Link
           href={`/sign-in?redirect_url=${back}`}
-          className="inline-flex h-11 items-center justify-center rounded-full bg-[#ffb867] px-6 text-sm font-bold text-[#160f36] hover:bg-[#ffc885]"
+          className="inline-flex h-11 items-center justify-center rounded-full bg-[#fd5523] px-6 text-sm font-bold text-white shadow-[0_14px_30px_rgba(253,85,35,0.28)] hover:bg-[#ef4a16]"
         >
           Sign in
         </Link>
         <Link
           href={`/sign-up?redirect_url=${back}`}
-          className="inline-flex h-11 items-center justify-center rounded-full border border-white/20 px-6 text-sm font-semibold text-white hover:bg-white/10"
+          className="inline-flex h-11 items-center justify-center rounded-full border border-slate-300 bg-white px-6 text-sm font-semibold text-[#062e39] hover:border-[#062e39]"
         >
           Create a free account
         </Link>

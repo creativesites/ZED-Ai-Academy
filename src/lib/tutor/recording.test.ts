@@ -1,6 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
+  geminiAudioMimeType,
+  LEARNER_AUDIO_TYPES,
   levelFromTimeDomain,
   MAX_RECORDING_MS,
   pickRecorderMimeType,
@@ -37,4 +39,21 @@ test("silence reads as zero and loud speech reads near the top", () => {
   assert.ok(levelFromTimeDomain(loud) > 0.9);
   assert.equal(levelFromTimeDomain([]), 0);
   assert.ok(levelFromTimeDomain(new Uint8Array(256).fill(140)) <= 1);
+});
+
+test("pickRecorderMimeType falls back to MP4 for Safari", () => {
+  assert.equal(pickRecorderMimeType((t) => t === "audio/mp4"), "audio/mp4");
+});
+
+test("LEARNER_AUDIO_TYPES accepts Safari MP4 uploads", () => {
+  assert.ok(LEARNER_AUDIO_TYPES.includes("audio/mp4"));
+  assert.ok(LEARNER_AUDIO_TYPES.includes("audio/webm"));
+});
+
+test("geminiAudioMimeType maps upload types to the names Gemini lists", () => {
+  assert.equal(geminiAudioMimeType("audio/mp4"), "audio/m4a");
+  assert.equal(geminiAudioMimeType("audio/x-m4a"), "audio/m4a");
+  assert.equal(geminiAudioMimeType("audio/x-wav"), "audio/wav");
+  assert.equal(geminiAudioMimeType("audio/webm;codecs=opus"), "audio/webm");
+  assert.equal(geminiAudioMimeType("audio/ogg"), "audio/ogg");
 });

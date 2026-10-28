@@ -243,6 +243,9 @@ export class TeacherVmController {
 export const SCENE_ARTBOARDS = ["Scene_TeaHouse", "Scene_Cafe", "Scene_Rooftop", "Scene_Clinic"] as const;
 export type SceneArtboard = (typeof SCENE_ARTBOARDS)[number];
 
+/** Scene time for learner-facing pages: daylight, to match the light site (0 = midday, 70 = dusk). */
+export const DAYLIGHT_TIME_OF_DAY = 15;
+
 export type SceneOptions = {
   timeOfDay: number;
   parallaxX: number;

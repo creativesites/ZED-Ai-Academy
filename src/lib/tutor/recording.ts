@@ -5,13 +5,35 @@ export const MAX_RECORDING_MS = 30_000;
 /** Shorter holds are treated as a mis-tap and not sent. */
 export const MIN_RECORDING_MS = 400;
 
-/** Preferred recorder formats, in order. The API accepts webm, ogg and wav (the codec suffix is stripped on upload). */
+/** Preferred recorder formats, in order. Safari only records MP4 (AAC), so it comes last. */
 export const RECORDER_MIME_CANDIDATES = [
   "audio/webm;codecs=opus",
   "audio/webm",
   "audio/ogg;codecs=opus",
   "audio/ogg",
+  "audio/mp4",
 ] as const;
+
+/** Upload types the turn routes accept, after the codec suffix is stripped. */
+export const LEARNER_AUDIO_TYPES: readonly string[] = [
+  "audio/webm",
+  "audio/ogg",
+  "audio/wav",
+  "audio/x-wav",
+  "audio/wave",
+  "audio/mp4",
+  "audio/x-m4a",
+  "audio/m4a",
+  "audio/aac",
+];
+
+/** The type to send Gemini for an upload. Gemini lists MP4 audio as audio/m4a, and wav under one name. */
+export function geminiAudioMimeType(uploadType: string): string {
+  const base = uploadMimeType(uploadType);
+  if (base === "audio/mp4" || base === "audio/x-m4a") return "audio/m4a";
+  if (base === "audio/x-wav" || base === "audio/wave") return "audio/wav";
+  return base;
+}
 
 /**
  * First candidate the browser supports. Returns "" when none match, so MediaRecorder picks its own default.
