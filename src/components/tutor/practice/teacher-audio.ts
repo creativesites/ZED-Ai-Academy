@@ -34,6 +34,10 @@ export class TeacherAudio {
   private muted = false;
   private language: string | null = null;
   private synthPrimed = false;
+  /** Set when the element was routed through a context that would not run. Plays direct from then on. */
+  private analyserDisabled = false;
+  /** Chrome stops an utterance (and drops its events) if it is garbage collected while speaking. */
+  private currentUtterance: SpeechSynthesisUtterance | null = null;
 
   /**
    * Call from a user gesture (a tap or key press). Creates and resumes the AudioContext so later
@@ -113,9 +117,11 @@ export class TeacherAudio {
     return this.synthesize(event.text, avatar, signal);
   };
 
-  private playAudio(url: string, avatar: AvatarDriver, signal: AbortSignal): Promise<SpeakOutcome> {
+  private async playAudio(url: string, avatar: AvatarDriver, signal: AbortSignal): Promise<SpeakOutcome> {
+    await this.ensureAudible();
+    if (signal.aborted) return "stopped";
     const el = this.ensureElement();
-    if (!el) return Promise.resolve("unavailable");
+    if (!el) return "unavailable";
 
     return new Promise<SpeakOutcome>((resolve) => {
       let started = false;
@@ -184,15 +190,46 @@ export class TeacherAudio {
     });
   }
 
+  /**
+   * The element is routed through the AudioContext for lip-sync. A context that is not running mutes
+   * it, so resume first; if it still will not run, swap in a fresh element that plays directly.
+   */
+  private async ensureAudible(): Promise<void> {
+    const ctx = this.ctx;
+    if (!ctx || ctx.state === "running") return;
+    await Promise.race([ctx.resume().catch(() => undefined), new Promise((resolve) => setTimeout(resolve, 300))]);
+    if ((ctx.state as AudioContextState) === "running" || !this.sourceNode) return;
+    this.analyserDisabled = true;
+    this.sourceNode = null;
+    this.analyser = null;
+    this.element = null;
+  }
+
+  /** Chrome loads its voice list after the page; wait briefly for it so the right language is used. */
+  private async voices(synth: SpeechSynthesis): Promise<SpeechSynthesisVoice[]> {
+    const now = synth.getVoices();
+    if (now.length > 0) return now;
+    await new Promise<void>((resolve) => {
+      const done = () => {
+        synth.removeEventListener?.("voiceschanged", done);
+        resolve();
+      };
+      synth.addEventListener?.("voiceschanged", done);
+      setTimeout(done, 800);
+    });
+    return synth.getVoices();
+  }
+
   /** Reads the line with the browser's speech synthesis. "unavailable" when the browser has none. */
-  private synthesize(text: string, avatar: AvatarDriver, signal: AbortSignal): Promise<SpeakOutcome> {
+  private async synthesize(text: string, avatar: AvatarDriver, signal: AbortSignal): Promise<SpeakOutcome> {
     const synth = typeof window !== "undefined" ? window.speechSynthesis : undefined;
-    if (!synth || typeof SpeechSynthesisUtterance === "undefined") return Promise.resolve("unavailable");
+    if (!synth || typeof SpeechSynthesisUtterance === "undefined") return "unavailable";
 
     const lang = speechLangFor(text, this.language);
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = lang;
-    const voice = pickVoice(synth.getVoices(), lang);
+    const voice = pickVoice(await this.voices(synth), lang);
+    if (signal.aborted) return "stopped";
     try {
       if (voice) utterance.voice = voice;
     } catch {
@@ -216,6 +253,7 @@ export class TeacherAudio {
         utterance.onstart = null;
         utterance.onend = null;
         utterance.onerror = null;
+        if (this.currentUtterance === utterance) this.currentUtterance = null;
         if (outcome === "stopped") synth.cancel();
         if (started) this.playedMs += Math.round(performance.now() - startedAt);
         resolve(outcome);
@@ -242,13 +280,24 @@ export class TeacherAudio {
       }, VISEME_INTERVAL_MS);
       const watchdog = setTimeout(
         () => finish(started ? "played" : "unavailable"),
-        text.length * SYNTH_MS_PER_CHAR + SYNTH_WATCHDOG_MARGIN_MS,
+        // Han characters are a syllable each, so they take about twice as long as a Latin letter.
+        (text.length + (text.match(/[㐀-鿿]/g)?.length ?? 0) * 2) * SYNTH_MS_PER_CHAR + SYNTH_WATCHDOG_MARGIN_MS,
       );
 
-      // Chrome can leave the queue paused after a tab switch; resume before speaking.
-      synth.cancel();
-      synth.resume();
-      synth.speak(utterance);
+      this.currentUtterance = utterance;
+      // Clear anything left in the queue, then speak. Chrome drops an utterance queued in the same
+      // tick as cancel(), so only cancel when something is queued, and speak a moment later.
+      const leftover = synth.speaking || synth.pending;
+      if (leftover) synth.cancel();
+      setTimeout(
+        () => {
+          if (settled) return;
+          // Chrome can leave the queue paused after a tab switch.
+          synth.resume();
+          synth.speak(utterance);
+        },
+        leftover ? 60 : 0,
+      );
     });
   }
 
@@ -280,7 +329,7 @@ export class TeacherAudio {
   private connectAnalyser(el: HTMLAudioElement): void {
     // Routing an element through a suspended AudioContext mutes it, and the routing is permanent.
     // So only connect once the context is running; until then the element plays directly.
-    if (!this.ctx || this.ctx.state !== "running") return;
+    if (!this.ctx || this.ctx.state !== "running" || this.analyserDisabled) return;
     try {
       if (!this.sourceNode) {
         this.sourceNode = this.ctx.createMediaElementSource(el);

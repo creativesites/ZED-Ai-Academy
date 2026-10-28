@@ -1,38 +1,36 @@
-// The "Watch the demo" client. It plays a scenario's hard-coded turns with no network at all. The
+// The "Watch the demo" client. It plays a scenario's hard-coded turns with no model calls. The
 // learner's lines are the scripted ones, shown as what the learner said. Delays are short and
-// realistic so the session feels live.
+// realistic so the session feels live. The teacher's voice comes from the cached Gemini voice
+// route, downloaded ahead by VoiceLoader; a line that is not ready is read by the browser voice.
 
 import type { CompleteResponse, Result, StartResponse, TurnResponse, TutorApiClient } from "@/components/tutor/practice/api";
 import { demoScenario, type DemoScenario } from "@/lib/tutor/demo-scenarios";
 import { demoVoiceUrl, scriptedVoiceUrls } from "@/lib/tutor/demo-voice";
 import type { TutorEvent } from "@/lib/tutor/events";
+import { VoiceLoader } from "./voice-loader";
 
 const START_DELAY_MS = 500;
 const TURN_DELAY_MS = 900;
 const REPORT_DELAY_MS = 700;
+/** The first line is rendered by Gemini on the first visit after a deploy, which takes a few seconds. */
+const FIRST_LINE_WAIT_MS = 12_000;
+/** Later lines download while earlier ones play. Past this, the browser voice reads the line. */
+const LINE_WAIT_MS = 5_000;
 
 const wait = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
-/** A copy of one scripted turn, with each say line pointing at its cached Gemini voice. */
-function voiced(scenario: DemoScenario, turn: number): TutorEvent[] {
+/** A copy of one scripted turn. Each say line gets its downloaded voice, when it is ready in time. */
+async function voiced(scenario: DemoScenario, turn: number, loader: VoiceLoader, waitMs: number): Promise<TutorEvent[]> {
   let sayIndex = 0;
-  return scenario.scripted.turns[turn].map((e) =>
-    e.type === "say" ? { ...e, audioUrl: demoVoiceUrl(scenario, turn, sayIndex++, e.text) } : ({ ...e } as TutorEvent),
+  const events = scenario.scripted.turns[turn].map((e) =>
+    e.type === "say" ? { event: e, url: demoVoiceUrl(scenario, turn, sayIndex++, e.text) } : { event: e, url: null },
   );
-}
-
-/**
- * Asks for every line's voice in the background, so later lines are cached by the time they play.
- * The first visitor after a deploy renders them; everyone after gets them from the CDN.
- */
-function warmVoices(scenario: DemoScenario): void {
-  if (typeof fetch === "undefined") return;
-  // One at a time: TTS rate limits are low, and the lines play in this order anyway.
-  void (async () => {
-    for (const url of scriptedVoiceUrls(scenario).slice(1)) {
-      const res = await fetch(url).catch(() => null);
-      if (!res || res.status === 503) return; // Gemini not configured: the browser voice is used.
-    }
-  })();
+  return Promise.all(
+    events.map(async ({ event, url }): Promise<TutorEvent> => {
+      if (!url || event.type !== "say") return { ...event } as TutorEvent;
+      const audioUrl = await loader.get(url, waitMs);
+      return audioUrl ? { ...event, audioUrl } : { ...event };
+    }),
+  );
 }
 
 function endsSession(events: readonly TutorEvent[]): boolean {
@@ -45,12 +43,14 @@ export function createScriptedClient(scenarioKey: string): TutorApiClient {
   if (!scenario) throw new Error(`createScriptedClient: unknown demo scenario ${scenarioKey}`);
   const script = scenario.scripted;
   let index = 0;
+  let loader: VoiceLoader | null = null;
 
   return {
     async start(): Promise<Result<StartResponse>> {
       index = 0;
-      warmVoices(scenario);
-      await wait(START_DELAY_MS);
+      loader?.dispose();
+      loader = new VoiceLoader(scriptedVoiceUrls(scenario));
+      const [openingEvents] = await Promise.all([voiced(scenario, 0, loader, FIRST_LINE_WAIT_MS), wait(START_DELAY_MS)]);
       return {
         ok: true,
         data: {
@@ -69,14 +69,14 @@ export function createScriptedClient(scenarioKey: string): TutorApiClient {
             goal: scenario.goal,
             maxMinutes: scenario.maxMinutes,
           },
-          openingEvents: voiced(scenario, 0),
+          openingEvents,
         },
       };
     },
 
     async turn(): Promise<Result<TurnResponse>> {
       index += 1;
-      await wait(TURN_DELAY_MS);
+      const voiceLoader = loader ?? new VoiceLoader([]);
       // The script ends with end_session, so the session never asks for a turn past it.
       if (index >= script.turns.length) {
         return {
@@ -84,7 +84,7 @@ export function createScriptedClient(scenarioKey: string): TutorApiClient {
           data: { turnIdx: index, learnerText: null, events: [{ type: "end_session" }], ended: true, endReason: "model_end" },
         };
       }
-      const events = voiced(scenario, index);
+      const [events] = await Promise.all([voiced(scenario, index, voiceLoader, LINE_WAIT_MS), wait(TURN_DELAY_MS)]);
       const ended = endsSession(events);
       return {
         ok: true,
