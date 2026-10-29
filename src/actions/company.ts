@@ -3,38 +3,51 @@
 import { revalidatePath } from "next/cache";
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
-import { generateUniqueSlug } from "@/lib/utils";
+import { generateAcademySlug } from "@/lib/tenants/slug-server";
 import { requireTenantTeacher } from "@/lib/tenants/access";
 import { ensureTenantMembership } from "@/lib/tenants/membership";
 
+/**
+ * Mirror the Clerk active organization into Supabase when its academy row is
+ * missing (e.g. a missed webhook). Supabase stays the source of truth: an
+ * existing row is never changed, the slug comes from the database, and only the
+ * academy owner (companies.admin_id) is self-healed into a company_admin
+ * membership — never anyone based on their Clerk role.
+ */
 export async function syncActiveOrganization() {
-  const { userId, orgId, orgRole } = await auth();
+  const { userId, orgId } = await auth();
   if (!userId || !orgId) return null;
 
   const supabaseAdmin = createServiceClient();
-  const { data: existing } = await supabaseAdmin.from("companies").select("id").eq("id", orgId).maybeSingle();
+  const { data: existing } = await supabaseAdmin
+    .from("companies")
+    .select("id, admin_id")
+    .eq("id", orgId)
+    .maybeSingle();
+
+  let ownerId = existing?.admin_id ?? null;
 
   if (!existing) {
-    // Fetch from Clerk and sync
     const client = await clerkClient();
     const org = await client.organizations.getOrganization({ organizationId: orgId });
 
     if (org) {
-      const slug = await generateUniqueSlug(supabaseAdmin, org.name, "companies", org.id);
-      await supabaseAdmin.from("companies").upsert({
+      const slug = await generateAcademySlug(supabaseAdmin, org.name, org.id);
+      const { error } = await supabaseAdmin.from("companies").insert({
         id: org.id,
         name: org.name,
-        slug: slug,
+        slug,
         logo_url: org.imageUrl,
-        admin_id: org.createdBy,
+        admin_id: org.createdBy ?? null,
       });
+      if (error && error.code !== "23505") throw new Error(error.message);
+      ownerId = org.createdBy ?? null;
     }
   }
 
-  // Self-heal a missed Clerk webhook: the organization's admin always gets a
-  // company_admin membership for this academy. Only when no row exists at all —
-  // a deactivated row is an explicit revocation. ensureTenantMembership never downgrades.
-  if (orgRole === "org:admin") {
+  // Self-heal the owner's membership only when no row exists at all — a
+  // deactivated row is an explicit revocation. ensureTenantMembership never downgrades.
+  if (ownerId === userId) {
     const { data: member } = await supabaseAdmin
       .from("company_members")
       .select("role")
@@ -45,7 +58,7 @@ export async function syncActiveOrganization() {
       try {
         await ensureTenantMembership(userId, orgId, "company_admin");
       } catch (error) {
-        console.error("[syncActiveOrganization] Could not self-heal admin membership:", error);
+        console.error("[syncActiveOrganization] Could not self-heal owner membership:", error);
       }
     }
   }
