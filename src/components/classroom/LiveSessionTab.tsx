@@ -7,7 +7,7 @@ import {
   CheckCircle2, AlertCircle, Calendar, X, ChevronUp, UserCheck, Users
 } from "lucide-react";
 import { JaaSMeeting } from '@jitsi/react-sdk';
-import { generateJitsiToken } from "@/actions/jitsi";
+import { getClassroomJitsiToken } from "@/actions/jitsi";
 import { 
   toggleClassroomSession, 
   getCompanySessionState, 
@@ -45,7 +45,7 @@ export function LiveSessionTab({ companyId, isAdminOrInstructor, companySlug }: 
   const [showAttendance, setShowAttendance] = useState(false);
   const [showDeviceModal, setShowDeviceModal] = useState(false);
 
-  const APP_ID = "vpaas-magic-cookie-37a3214c11ef406c81cc165d3d1c2f4f";  
+  const [appId, setAppId] = useState<string | null>(null);
 
   // --- Effect: Sync Session State & Data ---
   useEffect(() => {
@@ -80,7 +80,7 @@ export function LiveSessionTab({ companyId, isAdminOrInstructor, companySlug }: 
     // Real-time Supabase Subscription
     const supabase = createClient();
     const channel = supabase
-      .channel('company-session')
+      .channel(`company-session-${companyId}`)
       .on('postgres_changes', { 
         event: 'UPDATE', 
         schema: 'public', 
@@ -130,52 +130,48 @@ export function LiveSessionTab({ companyId, isAdminOrInstructor, companySlug }: 
   }, []);
 
   // --- Handlers ---
+  // The server decides the room (from the academy's live session) and whether
+  // this user is a moderator (from their academy role).
+  async function connectToRoom() {
+    const result = await getClassroomJitsiToken(companyId);
+    if (!result.success) throw new Error(result.error);
+    setJwt(result.token);
+    setAppId(result.appId);
+    setRoomName(result.roomName);
+    setHasJoined(true);
+  }
+
   async function handleStartSession() {
     setIsInitializing(true);
     setError(null);
+    let started = false;
     try {
-      const generatedRoom = `classroom-${companySlug}-${Math.random().toString(36).slice(2, 7)}`;
-      
-      // 1. Persist state to Database
-      await toggleClassroomSession(companyId, companySlug, true, generatedRoom, selectedScheduleId);
-      
-      // 2. Generate Security Token
-      const result = await generateJitsiToken(generatedRoom, true);
-      
-      if (result.success && result.token) {
-        setJwt(result.token);
-        setRoomName(generatedRoom);
-        setActiveScheduleId(selectedScheduleId);
-        setHasJoined(true);
-        toast.success("Live Classroom Started!");
-      } else {
-        throw new Error(result.error || "Failed to generate security token");
-      }
+      // 1. Start the class on the server (it creates the room). Only roll back
+      // a class this click created — never one that was already running.
+      const result = await toggleClassroomSession(companyId, companySlug, true, selectedScheduleId);
+      started = result.created;
+      if (result.created) setActiveScheduleId(selectedScheduleId);
+
+      // 2. Get a moderator token for that room.
+      await connectToRoom();
+      toast.success("Live Classroom Started!");
     } catch (err: any) {
       console.error(err);
       setError(err.message || "Failed to initialize studio");
       toast.error("Failed to start live session");
-      await toggleClassroomSession(companyId, companySlug, false);
+      if (started) {
+        await toggleClassroomSession(companyId, companySlug, false).catch(() => undefined);
+      }
     } finally {
       setIsInitializing(false);
     }
   }
 
   async function handleJoinSession() {
-    if (!roomName) {
-       toast.error("No active room found");
-       return;
-    }
     setIsInitializing(true);
     setError(null);
     try {
-      const result = await generateJitsiToken(roomName, false);
-      if (result.success && result.token) {
-        setJwt(result.token);
-        setHasJoined(true);
-      } else {
-        throw new Error(result.error || "Failed to join studio");
-      }
+      await connectToRoom();
     } catch (err: any) {
       setError(err.message || "Failed to connect to studio");
       toast.error("Failed to join session");
@@ -385,9 +381,9 @@ export function LiveSessionTab({ companyId, isAdminOrInstructor, companySlug }: 
       {/* Video Content */}
       <div className="flex-1 relative flex min-h-0">
         <div className="flex-1 relative bg-black min-h-[500px]">
-          {roomName && jwt && (
+          {roomName && jwt && appId && (
             <JaaSMeeting
-              appId={APP_ID}
+              appId={appId}
               roomName={roomName}
               jwt={jwt}
               configOverwrite={{

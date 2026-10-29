@@ -10,6 +10,7 @@ import { TemplateRenderer } from "@/lib/templates/home-templates";
 import { TenantTracker } from "@/components/tenant/TenantTracker";
 import type { CSSProperties } from "react";
 import { getCurrentTenantAccess } from "@/lib/tenants/access";
+import { toPublicTenant } from "@/lib/tenants/public";
 import TenantHomeNavBar from "@/components/tenant/TenantHomeNavBar";  
 
 
@@ -87,7 +88,7 @@ export default async function TenantHomePage({ params }: { params: Promise<{ dom
     >
       {/* Fixed Header */}
       <TenantHomeNavBar 
-        tenant={tenant} 
+        tenant={toPublicTenant(tenant)} 
         template={template} 
         userId={userId || ""} 
         role={tenantRole || ""} 
@@ -97,7 +98,7 @@ export default async function TenantHomePage({ params }: { params: Promise<{ dom
       <main>
         <TenantTracker domain={domain} />
         <TemplateRenderer
-          tenant={tenant}
+          tenant={toPublicTenant(tenant)}
           courses={courses || []}
           membership={isMember ? { role: tenantRole } : null}
           content={content}

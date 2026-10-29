@@ -6,7 +6,7 @@ import { auth } from "@clerk/nextjs/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { requireTenantAdmin } from "@/lib/tenants/access";
 import { sendPaymentConfirmation } from "@/lib/email/emailjs";
-import { ensureTenantMembership } from "@/actions/tenants";
+import { ensureTenantMembership } from "@/lib/tenants/membership";
 import { validateCoupon } from "@/actions/coupons";
 import { getPaymentProvider } from "@/lib/payments";
 import { formatZmw } from "@/lib/payments/manual-instructions.ts";

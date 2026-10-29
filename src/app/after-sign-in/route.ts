@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { ensureProfile } from "@/lib/supabase/ensure-profile";
 import { resolveHome, tenantLandingPath } from "@/lib/tenants/resolve-home";
 import { createServiceClient } from "@/lib/supabase/server";
-import { ensureTenantMembership } from "@/actions/tenants";
+import { ensureTenantMembership } from "@/lib/tenants/membership";
 
 /**
  * Post-sign-in router. Signed-in users should never idle on the main site:

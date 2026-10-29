@@ -110,6 +110,7 @@ export function BlockRenderer({
           bookings={bookings || []}
           courseId={courseId}
           lessonId={lessonId}
+          blockId={id}
           previewMode={previewMode}
         />
       );
