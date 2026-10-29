@@ -2,10 +2,18 @@ import { SignIn } from "@clerk/nextjs";
 import { getSiteAsset } from "@/lib/site-assets";
 import Link from "next/link";
 import { ArrowLeft, CheckCircle2 } from "lucide-react";
+import { afterSignInPath, afterSignUpPath, intentQuery, intentTenant, readSignupIntent } from "@/lib/auth/signup-flow";
 
 export const metadata = { title: "Sign In — Zed AI Academy" };
 
-export default async function SignInPage() {
+export default async function SignInPage(props: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
+  const intent = readSignupIntent(await props.searchParams);
+  const tenant = intentTenant(intent);
+  // An invite link (academy or role) is the case where a visitor may not have an
+  // account yet: let them continue straight into sign-up from this form.
+  const hasInvite = Boolean(tenant || intent.role);
+  const signUpQuery = intentQuery(intent);
+  const signUpUrl = `/sign-up${signUpQuery ? `?${signUpQuery}` : ""}`;
   const bgImage = await getSiteAsset("auth_bg", "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200&q=80&auto=format&fit=crop");
   const logoUrl = await getSiteAsset("site_logo", "/images/zed-ai-logo2.png");
 
@@ -62,7 +70,7 @@ export default async function SignInPage() {
           {/* Logo — visible on mobile (left panel is hidden on small screens) */}
           <div className="mb-4 lg:mb-6 flex items-center justify-center flex-col">
             <img
-              src='images/logo-dark.png'
+              src='/images/logo-dark.png'
               alt="Zed AI Academy"
               className="h-20 w-auto"
             />
@@ -74,6 +82,12 @@ export default async function SignInPage() {
 
           <div>
             <SignIn
+              signUpUrl={signUpUrl}
+              withSignUp={hasInvite}
+              // Invite links pin the destination; otherwise Clerk honours ?redirect_url=.
+              forceRedirectUrl={hasInvite ? afterSignInPath(intent) : undefined}
+              fallbackRedirectUrl="/after-sign-in"
+              signUpForceRedirectUrl={hasInvite ? afterSignUpPath({ ...intent, role: intent.role ?? "student" }) : undefined}
               appearance={{
                 elements: {
                   formButtonPrimary:

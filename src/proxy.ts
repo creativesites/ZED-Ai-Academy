@@ -1,6 +1,8 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { RESERVED_SUBDOMAINS } from '@/lib/tenants/slug';
+import { signedInAuthPageRedirect } from '@/lib/auth/signup-flow';
 
 const isOnboardingRoute = createRouteMatcher(['/onboarding(.*)']);
 const isLaunchAcademyRoute = createRouteMatcher(['/launch-your-academy(.*)']);
@@ -39,17 +41,22 @@ const isPublicRoute = createRouteMatcher([
   '/academy-agreement(.*)',
 ]);
 
+/**
+ * Public pages on a tenant subdomain (paths before the /academy/{slug} rewrite).
+ * The join page must work signed out: it is where invited students start.
+ */
+const isPublicTenantSubdomainRoute = createRouteMatcher([
+  '/',
+  '/join(.*)',
+  '/courses(.*)',
+]);
+
 function supabaseAdmin() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !key) return null;
   return createClient(url, key, { auth: { persistSession: false } });
 }
-
-// Reserved subdomains that cannot be claimed by tenants
-const RESERVED_SUBDOMAINS = new Set([
-  'www', 'api', 'admin', 'app', 'auth', 'mail', 'test', 'dev', 'staging', 'dashboard', 'creator', 'superadmin', 'academy'
-]);
 
 export default clerkMiddleware(async (auth, req: NextRequest) => {
   const { userId, orgId, redirectToSignIn } = await auth();
@@ -77,9 +84,18 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
     return NextResponse.redirect(new URL('/academy/zedai', `${protocol}://${hostname}`));
   }
 
-  // Tenant-first: signed-in users on apex auth / home pages are immediately redirected to their tenant or portal
-  if (userId && !isTenantSubdomain && (pathname === '/' || pathname.startsWith('/sign-in') || pathname.startsWith('/sign-up'))) {
+  // Tenant-first: signed-in users on the apex home page go to their tenant or portal.
+  if (userId && !isTenantSubdomain && pathname === '/') {
     return NextResponse.redirect(new URL('/after-sign-in', req.url));
+  }
+
+  // Signed-in visitors of exactly /sign-in or /sign-up are sent on, keeping the
+  // role, academy and return path (e.g. role=company_admin -> /launch-your-academy).
+  // Clerk's own sub-paths (sso-callback, verify-email-address, factor-one, ...)
+  // are never interrupted: they finish the sign-in and then redirect themselves.
+  if (userId && !isTenantSubdomain) {
+    const target = signedInAuthPageRedirect(pathname, url.searchParams);
+    if (target) return NextResponse.redirect(new URL(target, req.url));
   }
 
   // Allow onboarding routes without redirection
@@ -133,7 +149,8 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
   }
 
   // Unauthenticated users trying to access private routes
-  if (!userId && !isPublicRoute(req)) {
+  const isPublic = isPublicRoute(req) || (isTenantSubdomain && isPublicTenantSubdomainRoute(req));
+  if (!userId && !isPublic) {
     if (isTenantSubdomain) {
       const returnBackUrl = new URL(`/academy/${subdomain}${pathname}${url.search}`, `${protocol}://${rootDomain}`).toString();
       const signInUrl = new URL('/sign-in', `${protocol}://${rootDomain}`);
