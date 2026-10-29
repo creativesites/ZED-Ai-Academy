@@ -34,6 +34,9 @@ const isPublicRoute = createRouteMatcher([
   '/manifest.json',
   '/favicon.ico',
   '/launch-your-academy(.*)',
+  '/terms(.*)',
+  '/privacy(.*)',
+  '/academy-agreement(.*)',
 ]);
 
 function supabaseAdmin() {

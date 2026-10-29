@@ -1,4 +1,5 @@
 import Link from "next/link"
+import { PLATFORM_NAME } from "@/lib/brand"
 
 export default function Footer1() {
     return (
@@ -129,7 +130,10 @@ export default function Footer1() {
                 <div className="container">
                     <div className="footer-one__bottom-inner">
                         <div className="footer-one__bottom-text">
-                            <p>© Copyright 2026 <Link href="/">Zed AI Academy.</Link> All Rights Reserved.</p>
+                            <p>© Copyright 2026 <Link href="/">{PLATFORM_NAME}.</Link> All Rights Reserved.</p>
+                            <p>
+                                <Link href="/terms">Terms of Service</Link> · <Link href="/privacy">Privacy Policy</Link> · <Link href="/academy-agreement">Academy Agreement</Link>
+                            </p>
                         </div>
                         <div className="footer-one__social-links">
                             <ul>

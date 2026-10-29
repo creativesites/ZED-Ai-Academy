@@ -167,6 +167,17 @@ export default async function SignUpPage(props: { searchParams: Promise<{ enroll
                   },
                 } as any}
               />
+              <p className="mt-4 text-center text-xs leading-relaxed text-slate-500">
+                By continuing you agree to the{" "}
+                <Link href="/terms" className="font-bold text-[#fd5523] hover:underline">
+                  Terms
+                </Link>{" "}
+                and{" "}
+                <Link href="/privacy" className="font-bold text-[#fd5523] hover:underline">
+                  Privacy Policy
+                </Link>
+                .
+              </p>
               <Link href="/sign-up" className="mt-4 block text-center text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-[#fd5523]">
                 Choose a different account type
               </Link>
