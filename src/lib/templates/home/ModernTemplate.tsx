@@ -25,6 +25,7 @@ import {
 import { CourseCard } from "@/components/tenant/CourseCard";
 import { joinTenantBySlug } from "@/actions/tenants";
 import { SharedSections } from "./SharedSections";
+import { hasAnyStat, type AcademyStats } from "@/lib/tenants/academy-stats";
 
 
 export function ModernTemplate(props: {
@@ -41,11 +42,7 @@ export function ModernTemplate(props: {
   ctaButton?: string;
   content: any;
   adminProfile?: any;
-  stats?: {
-    students: string;
-    rating: string;
-    success: string;
-  };
+  stats?: AcademyStats;
 }) {
   const { 
     tenant, courses, membership, brandColor, heroTitle, heroSubtitle, 
@@ -166,20 +163,29 @@ export function ModernTemplate(props: {
                 </Link>
               </div>
 
-              <div className={`flex flex-wrap items-center gap-10 md:gap-16 pt-12 border-t border-white/10 ${!showHeroImage && "justify-center"}`}>
-                <div className="space-y-1">
-                  <div className="text-3xl md:text-4xl font-black text-white tracking-tighter">{stats?.students || content.stats_students || "10k+"}</div>
-                  <div className="text-[10px] font-black text-white/30 uppercase tracking-[0.3em]">Students</div>
+              {/* Hero Stats */}
+              {stats && hasAnyStat(stats) && (
+                <div className={`flex flex-wrap items-center gap-10 md:gap-16 pt-12 border-t border-white/10 ${!showHeroImage && "justify-center"}`}>
+                  {stats?.students && (
+                    <div className="space-y-1">
+                      <div className="text-3xl md:text-4xl font-black text-white tracking-tighter">{stats?.students}</div>
+                      <div className="text-[10px] font-black text-white/30 uppercase tracking-[0.3em]">Students</div>
+                    </div>
+                  )}
+                  {stats?.rating && (
+                    <div className="space-y-1">
+                      <div className="text-3xl md:text-4xl font-black text-white tracking-tighter">{stats?.rating}</div>
+                      <div className="text-[10px] font-black text-white/30 uppercase tracking-[0.3em]">Rating</div>
+                    </div>
+                  )}
+                  {stats?.success && (
+                    <div className="space-y-1">
+                      <div className="text-3xl md:text-4xl font-black text-white tracking-tighter">{stats?.success}</div>
+                      <div className="text-[10px] font-black text-white/30 uppercase tracking-[0.3em]">Success</div>
+                    </div>
+                  )}
                 </div>
-                <div className="space-y-1">
-                  <div className="text-3xl md:text-4xl font-black text-white tracking-tighter">{stats?.rating || content.stats_rating || "4.9/5"}</div>
-                  <div className="text-[10px] font-black text-white/30 uppercase tracking-[0.3em]">Rating</div>
-                </div>
-                <div className="space-y-1">
-                  <div className="text-3xl md:text-4xl font-black text-white tracking-tighter">{stats?.success || content.stats_success || "95%"}</div>
-                  <div className="text-[10px] font-black text-white/30 uppercase tracking-[0.3em]">Success</div>
-                </div>
-              </div>
+              )}
             </div>
 
             {showHeroImage && (

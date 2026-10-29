@@ -127,32 +127,25 @@ export function SharedSections({
                   </div>
                 </div>
               </div>
-              <div className="flex flex-wrap gap-12 pt-10 border-t border-gray-200 mt-8">
-                <div>
-                  <div className="text-2xl font-black text-gray-900">
-                    {content.stats_students_tutor || "500+"}
-                  </div>
-                  <div className="text-xs font-medium text-gray-600 uppercase tracking-wider">
-                    Alumni
-                  </div>
+              {/* Tutor stats: only values the academy owner entered; never placeholders. */}
+              {(content.stats_students_tutor || content.stats_rating_tutor || content.stats_hours_tutor) && (
+                <div className="flex flex-wrap gap-12 pt-10 border-t border-gray-200 mt-8">
+                  {[
+                    { value: content.stats_students_tutor, label: "Alumni" },
+                    { value: content.stats_rating_tutor, label: "Rating" },
+                    { value: content.stats_hours_tutor, label: "Hours" },
+                  ]
+                    .filter((item) => item.value)
+                    .map((item) => (
+                      <div key={item.label}>
+                        <div className="text-2xl font-black text-gray-900">{item.value}</div>
+                        <div className="text-xs font-medium text-gray-600 uppercase tracking-wider">
+                          {item.label}
+                        </div>
+                      </div>
+                    ))}
                 </div>
-                <div>
-                  <div className="text-2xl font-black text-gray-900">
-                    {content.stats_rating_tutor || "4.9★"}
-                  </div>
-                  <div className="text-xs font-medium text-gray-600 uppercase tracking-wider">
-                    Rating
-                  </div>
-                </div>
-                <div>
-                  <div className="text-2xl font-black text-gray-900">
-                    {content.stats_hours_tutor || "12K+"}
-                  </div>
-                  <div className="text-xs font-medium text-gray-600 uppercase tracking-wider">
-                    Hours
-                  </div>
-                </div>
-              </div>
+              )}
             </div>
           </div>
         </div>

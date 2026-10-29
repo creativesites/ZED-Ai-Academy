@@ -11,6 +11,7 @@ import { TenantTracker } from "@/components/tenant/TenantTracker";
 import type { CSSProperties } from "react";
 import { getCurrentTenantAccess } from "@/lib/tenants/access";
 import { toPublicTenant } from "@/lib/tenants/public";
+import { computeAcademyStats } from "@/lib/tenants/academy-stats";
 import TenantHomeNavBar from "@/components/tenant/TenantHomeNavBar";  
 
 
@@ -57,26 +58,38 @@ export default async function TenantHomePage({ params }: { params: Promise<{ dom
   const content = (tenant.home_content || {}) as TenantHomeContent;
   const template = tenant.home_template || "modern";
 
-  // Fetch Real Stats
-  const { count: studentCount } = await supabase
-    .from("company_members")
-    .select("*", { count: "exact", head: true })
-    .eq("company_id", tenant.id)
-    .eq("role", "learner");
+  // Real numbers only: a new academy shows no stats rather than made-up ones.
+  const courseIds = (courses ?? []).map((c) => c.id);
+  const [{ count: studentCount }, { count: enrollmentCount }, { count: completionCount }, { data: reviews }] =
+    await Promise.all([
+      supabase
+        .from("company_members")
+        .select("*", { count: "exact", head: true })
+        .eq("company_id", tenant.id)
+        .eq("role", "learner")
+        .eq("status", "active"),
+      supabase.from("enrollments").select("*", { count: "exact", head: true }).eq("company_id", tenant.id),
+      supabase
+        .from("enrollments")
+        .select("*", { count: "exact", head: true })
+        .eq("company_id", tenant.id)
+        .not("completed_at", "is", null),
+      courseIds.length > 0
+        ? supabase.from("reviews").select("rating").in("course_id", courseIds).limit(1000)
+        : Promise.resolve({ data: [] as { rating: number }[] }),
+    ]);
 
-  // Fetch Success Rate (e.g. course completions)
-  const { count: completionCount } = await supabase
-    .from("enrollments")
-    .select("*", { count: "exact", head: true })
-    .eq("company_id", tenant.id)
-    .not("completed_at", "is", null);
-
-  // Calculate dynamic stats
-  const stats = {
-    students: (studentCount || 0) > 100 ? `${(studentCount || 0).toLocaleString()}+` : (studentCount || 0).toString(),
-    rating: "4.9/5", // Hardcoded for now unless we have reviews
-    success: studentCount ? `${Math.round(((completionCount || 0) / (studentCount || 1)) * 100)}%` : "95%"
-  };
+  const ratings = (reviews ?? []).map((r) => r.rating).filter((r) => typeof r === "number");
+  const stats = computeAcademyStats(
+    {
+      learnerCount: studentCount,
+      enrollmentCount,
+      completionCount,
+      ratingAverage: ratings.length ? ratings.reduce((a, b) => a + b, 0) / ratings.length : null,
+      ratingCount: ratings.length,
+    },
+    content as Record<string, unknown>
+  );
 
   return (
     <div

@@ -5,9 +5,10 @@ import { joinTenantBySlug } from "@/actions/tenants";
 
 import { ArrowRight, Award, BookOpen, Check, Globe, History, Layout, Landmark, Rocket, Search, Shield, Users, Zap, Palette, Heart } from "lucide-react";
 import { SharedSections } from "./SharedSections";
+import { hasAnyStat } from "@/lib/tenants/academy-stats";
 
 
-export function CreativeTemplate({ tenant, courses, membership, brandColor, heroTitle, heroSubtitle, aboutTitle, aboutText, aboutImage, ctaTitle, ctaButton, content, adminProfile }: any) {
+export function CreativeTemplate({ tenant, courses, membership, brandColor, heroTitle, heroSubtitle, aboutTitle, aboutText, aboutImage, ctaTitle, ctaButton, content, adminProfile, stats }: any) {
   const tutorName = adminProfile?.full_name || "Academy Tutor";
   const tutorBio = adminProfile?.bio || "Expert educator dedicated to student success.";
   const tutorAvatar = adminProfile?.avatar_url || null;
@@ -46,20 +47,28 @@ export function CreativeTemplate({ tenant, courses, membership, brandColor, hero
             </div>
 
             {/* Hero Stats */}
-            <div className="grid grid-cols-3 gap-8 pt-10 border-t border-fuchsia-100">
-              <div>
-                <div className="text-3xl font-black text-fuchsia-900">{content.stats_students || "10k+"}</div>
-                <div className="text-[10px] font-bold text-fuchsia-400 uppercase tracking-widest mt-1">Creators</div>
+            {hasAnyStat(stats) && (
+              <div className="grid grid-cols-3 gap-8 pt-10 border-t border-fuchsia-100">
+                {stats.students && (
+                  <div>
+                    <div className="text-3xl font-black text-fuchsia-900">{stats.students}</div>
+                    <div className="text-[10px] font-bold text-fuchsia-400 uppercase tracking-widest mt-1">Creators</div>
+                  </div>
+                )}
+                {stats.rating && (
+                  <div>
+                    <div className="text-3xl font-black text-fuchsia-900">{stats.rating}</div>
+                    <div className="text-[10px] font-bold text-fuchsia-400 uppercase tracking-widest mt-1">Love Rate</div>
+                  </div>
+                )}
+                {stats.success && (
+                  <div>
+                    <div className="text-3xl font-black text-fuchsia-900">{stats.success}</div>
+                    <div className="text-[10px] font-bold text-fuchsia-400 uppercase tracking-widest mt-1">Milestones</div>
+                  </div>
+                )}
               </div>
-              <div>
-                <div className="text-3xl font-black text-fuchsia-900">{content.stats_rating || "4.9/5"}</div>
-                <div className="text-[10px] font-bold text-fuchsia-400 uppercase tracking-widest mt-1">Love Rate</div>
-              </div>
-              <div>
-                <div className="text-3xl font-black text-fuchsia-900">{content.stats_success || "95%"}</div>
-                <div className="text-[10px] font-bold text-fuchsia-400 uppercase tracking-widest mt-1">Milestones</div>
-              </div>
-            </div>
+            )}
           </div>
           <div className="relative">
             <div className="absolute -top-10 -left-10 w-48 h-48 bg-yellow-300 rounded-full mix-blend-multiply opacity-30" />

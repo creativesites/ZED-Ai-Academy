@@ -5,9 +5,10 @@ import { joinTenantBySlug } from "@/actions/tenants";
 
 import { ArrowRight, Award, BookOpen, Check, Globe, History, Layout, Landmark, Rocket, Search, Shield, Users, Zap, Quote } from "lucide-react";
 import { SharedSections } from "./SharedSections";
+import { hasAnyStat } from "@/lib/tenants/academy-stats";
 
 
-export function ElegantTemplate({ tenant, courses, membership, brandColor, heroTitle, heroSubtitle, aboutTitle, aboutText, aboutImage, ctaTitle, ctaButton, content, adminProfile }: any) {
+export function ElegantTemplate({ tenant, courses, membership, brandColor, heroTitle, heroSubtitle, aboutTitle, aboutText, aboutImage, ctaTitle, ctaButton, content, adminProfile, stats }: any) {
   const tutorName = adminProfile?.full_name || "Academy Tutor";
   const tutorBio = adminProfile?.bio || "Expert educator dedicated to student success.";
   const tutorAvatar = adminProfile?.avatar_url || null;
@@ -43,20 +44,28 @@ export function ElegantTemplate({ tenant, courses, membership, brandColor, heroT
             </div>
 
             {/* Hero Stats */}
-            <div className="flex gap-16 pt-12 border-t border-stone-100">
-              <div>
-                <div className="text-4xl font-light text-stone-900">{content.stats_students || "10k+"}</div>
-                <div className="text-[10px] font-medium text-stone-400 uppercase tracking-[0.3em] mt-1">Scholars</div>
+            {hasAnyStat(stats) && (
+              <div className="flex gap-16 pt-12 border-t border-stone-100">
+                {stats.students && (
+                  <div>
+                    <div className="text-4xl font-light text-stone-900">{stats.students}</div>
+                    <div className="text-[10px] font-medium text-stone-400 uppercase tracking-[0.3em] mt-1">Scholars</div>
+                  </div>
+                )}
+                {stats.rating && (
+                  <div>
+                    <div className="text-4xl font-light text-stone-900">{stats.rating}</div>
+                    <div className="text-[10px] font-medium text-stone-400 uppercase tracking-[0.3em] mt-1">Satisfaction</div>
+                  </div>
+                )}
+                {stats.success && (
+                  <div>
+                    <div className="text-4xl font-light text-stone-900">{stats.success}</div>
+                    <div className="text-[10px] font-medium text-stone-400 uppercase tracking-[0.3em] mt-1">Excellence</div>
+                  </div>
+                )}
               </div>
-              <div>
-                <div className="text-4xl font-light text-stone-900">{content.stats_rating || "4.9/5"}</div>
-                <div className="text-[10px] font-medium text-stone-400 uppercase tracking-[0.3em] mt-1">Satisfaction</div>
-              </div>
-              <div>
-                <div className="text-4xl font-light text-stone-900">{content.stats_success || "95%"}</div>
-                <div className="text-[10px] font-medium text-stone-400 uppercase tracking-[0.3em] mt-1">Excellence</div>
-              </div>
-            </div>
+            )}
           </div>
           <div className="flex-1 relative">
             <div className="absolute -inset-4 border border-stone-200 translate-x-4 translate-y-4" />

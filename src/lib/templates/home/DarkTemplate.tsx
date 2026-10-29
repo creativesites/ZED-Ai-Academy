@@ -4,9 +4,10 @@ import { Sparkles, ArrowRight, Award, BookOpen, Check, Globe, History, Layout, L
 import { CourseCarousel } from "@/components/tenant/CourseCarousel";
 import { joinTenantBySlug } from "@/actions/tenants";
 import { SharedSections } from "./SharedSections";
+import { hasAnyStat } from "@/lib/tenants/academy-stats";
 
 
-export function DarkTemplate({ tenant, courses, membership, brandColor, heroTitle, heroSubtitle, aboutTitle, aboutText, aboutImage, ctaTitle, ctaButton, content, adminProfile }: any) {
+export function DarkTemplate({ tenant, courses, membership, brandColor, heroTitle, heroSubtitle, aboutTitle, aboutText, aboutImage, ctaTitle, ctaButton, content, adminProfile, stats }: any) {
   const tutorName = adminProfile?.full_name || "Academy Tutor";
   const tutorBio = adminProfile?.bio || "Expert educator dedicated to student success.";
   const tutorAvatar = adminProfile?.avatar_url || null;
@@ -55,18 +56,20 @@ export function DarkTemplate({ tenant, courses, membership, brandColor, heroTitl
           </div>
 
           {/* Hero Stats */}
-          <div className="grid grid-cols-3 gap-12 max-w-4xl mx-auto pt-20 border-t border-white/5">
-            {[
-              { num: content.stats_students || "12K", label: "Active Students" },
-              { num: content.stats_rating || "4.9", label: "Global Rating" },
-              { num: content.stats_success || "95%", label: "Success Rate" }
-            ].map(s => (
-              <div key={s.label}>
-                <div className="text-5xl font-black text-[#fd5523] mb-2">{s.num}</div>
-                <div className="text-xs font-bold uppercase tracking-widest text-white/40">{s.label}</div>
-              </div>
-            ))}
-          </div>
+          {hasAnyStat(stats) && (
+            <div className="grid grid-cols-3 gap-12 max-w-4xl mx-auto pt-20 border-t border-white/5">
+              {[
+                { num: stats.students, label: "Active Students" },
+                { num: stats.rating, label: "Global Rating" },
+                { num: stats.success, label: "Success Rate" }
+              ].filter((s) => s.num).map((s) => (
+                <div key={s.label}>
+                  <div className="text-5xl font-black text-[#fd5523] mb-2">{s.num}</div>
+                  <div className="text-xs font-bold uppercase tracking-widest text-white/40">{s.label}</div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
