@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { currentUser } from "@clerk/nextjs/server";
 import { createClient } from "@/lib/supabase/server";
 import { sendEnrollmentConfirmation } from "@/lib/email/emailjs";
-import { ensureTenantMembership } from "@/actions/tenants";
+import { ensureTenantMembership } from "@/lib/tenants/membership";
 
 export type ManualEnrollResult =
   | { success: true; enrollmentId: string; courseTitle: string; priceLabel: string }

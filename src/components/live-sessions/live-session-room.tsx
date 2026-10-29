@@ -2,18 +2,16 @@
 
 import { useState, useEffect } from "react";
 import { JaaSMeeting } from "@jitsi/react-sdk";
-import { generateJitsiToken } from "@/actions/jitsi";
+import { getBookingJitsiToken, getLessonMeetingJitsiToken } from "@/actions/jitsi";
 import { startLiveSessionAttendance, endLiveSessionAttendance } from "@/actions/live-sessions";
 import { Button } from "@/components/ui/button";
-import { 
-  Loader2, LogOut, Video, Copy, Check, ShieldCheck, 
-  Clock, Users, FileText, HelpCircle, Hand, Settings2, X, Send 
+import {
+  Loader2, LogOut, Video, Copy, Check, ShieldCheck,
+  Clock, Users, FileText, HelpCircle, Hand, Settings2, X, Send
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { DeviceTestModal } from "@/components/live-sessions/device-test-modal";
-
-const APP_ID = "vpaas-magic-cookie-37a3214c11ef406c81cc165d3d1c2f4f";
 
 type LiveQuestion = {
   id: string;
@@ -23,24 +21,31 @@ type LiveQuestion = {
   isAnswered: boolean;
 };
 
+/**
+ * What the room is for. The server derives the actual room name and whether
+ * the caller is a moderator from this; the client never chooses either.
+ */
+export type LiveRoomSource =
+  | { kind: "booking"; bookingId: string }
+  | { kind: "lesson"; blockId: string };
+
 type LiveSessionRoomProps = {
-  bookingId: string;
-  roomName: string;
-  isInstructor?: boolean;
+  source: LiveRoomSource;
   sessionTitle?: string;
   learnerName?: string | null;
   onLeave?: () => void;
 };
 
 export function LiveSessionRoom({
-  bookingId,
-  roomName,
-  isInstructor = false,
+  source,
   sessionTitle = "Live Session Studio",
   learnerName,
   onLeave,
 }: LiveSessionRoomProps) {
   const [jwt, setJwt] = useState<string | null>(null);
+  const [appId, setAppId] = useState<string | null>(null);
+  const [roomName, setRoomName] = useState<string | null>(null);
+  const [isInstructor, setIsInstructor] = useState(false);
   const [attendanceId, setAttendanceId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -65,6 +70,9 @@ export function LiveSessionRoom({
     return () => clearInterval(interval);
   }, []);
 
+  const sourceKind = source.kind;
+  const sourceId = source.kind === "booking" ? source.bookingId : source.blockId;
+
   // Initialize token and attendance
   useEffect(() => {
     let mounted = true;
@@ -74,22 +82,30 @@ export function LiveSessionRoom({
         setLoading(true);
         setError(null);
 
-        // 1. Generate Jitsi JWT Token
-        const result = await generateJitsiToken(roomName, isInstructor);
-        if (!result.success || !result.token) {
+        // 1. Ask the server for a token. It decides the room and the role.
+        const result =
+          sourceKind === "booking"
+            ? await getBookingJitsiToken(sourceId)
+            : await getLessonMeetingJitsiToken(sourceId);
+        if (!result.success) {
           throw new Error(result.error || "Failed to generate security token for live room");
         }
 
-        // 2. Start attendance tracking
-        try {
-          const attId = await startLiveSessionAttendance(bookingId);
-          if (mounted && attId) setAttendanceId(attId);
-        } catch (attErr) {
-          console.warn("Attendance recording notice:", attErr);
+        // 2. Start attendance tracking (bookings only)
+        if (sourceKind === "booking") {
+          try {
+            const attId = await startLiveSessionAttendance(sourceId);
+            if (mounted && attId) setAttendanceId(attId);
+          } catch (attErr) {
+            console.warn("Attendance recording notice:", attErr);
+          }
         }
 
         if (mounted) {
           setJwt(result.token);
+          setAppId(result.appId);
+          setRoomName(result.roomName);
+          setIsInstructor(result.moderator);
         }
       } catch (err) {
         if (mounted) {
@@ -105,7 +121,7 @@ export function LiveSessionRoom({
     return () => {
       mounted = false;
     };
-  }, [bookingId, roomName, isInstructor]);
+  }, [sourceKind, sourceId]);
 
   const handleLeave = async () => {
     if (attendanceId) {
@@ -302,9 +318,9 @@ export function LiveSessionRoom({
       {/* Main Studio Body (Video + Interactive Panel) */}
       <div className="flex-1 bg-black relative flex min-h-0">
         <div className="flex-1 relative min-h-0">
-          {jwt && roomName && (
+          {jwt && roomName && appId && (
             <JaaSMeeting
-              appId={APP_ID}
+              appId={appId}
               roomName={roomName}
               jwt={jwt}
               configOverwrite={{
@@ -312,6 +328,7 @@ export function LiveSessionRoom({
                 disableInviteFunctions: true,
                 enableWelcomePage: false,
                 prejoinPageEnabled: false,
+                disableDeepLinking: true,
                 backgroundColor: "#062e39",
               }}
               interfaceConfigOverwrite={{
@@ -453,7 +470,7 @@ export function LiveSessionRoom({
       <div className="px-6 py-2.5 bg-black/40 border-t border-white/5 flex items-center justify-between shrink-0 text-[10px] text-slate-400 font-medium">
         <div className="flex items-center gap-2">
           <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" />
-          <span>Encrypted End-to-End Session · ID: {roomName.slice(-8)}</span>
+          <span>Encrypted End-to-End Session · ID: {roomName?.slice(-8) ?? "…"}</span>
         </div>
         <span className="hidden sm:inline">Attendance tracking active</span>
       </div>

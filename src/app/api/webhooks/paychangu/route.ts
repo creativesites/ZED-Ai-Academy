@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { verifyWebhook } from "@/lib/payments/paychangu";
 import { sendPaymentConfirmation } from "@/lib/email/emailjs";
-import { ensureTenantMembership } from "@/actions/tenants";
+import { ensureTenantMembership } from "@/lib/tenants/membership";
 
 export async function POST(req: NextRequest) {
   const body = await req.json();

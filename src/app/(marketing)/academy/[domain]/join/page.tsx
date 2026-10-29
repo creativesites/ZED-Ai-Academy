@@ -2,7 +2,8 @@ import { auth } from "@clerk/nextjs/server";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { JoinClient } from "./join-client";
-import { ensureTenantMembership, validateAndJoinStaff } from "@/actions/tenants";
+import { validateAndJoinStaff } from "@/actions/tenants";
+import { ensureTenantMembership } from "@/lib/tenants/membership";
 
 export const metadata = {
   title: "Join Academy",
@@ -73,7 +74,7 @@ export default async function TenantJoinPage({
 
   return (
     <JoinClient
-      company={company}
+      company={{ id: company.id, name: company.name, slug: company.slug, logo_url: company.logo_url, primary_color: company.primary_color }}
       initialCode={code}
       role={role}
       isSignedIn={Boolean(userId)}
