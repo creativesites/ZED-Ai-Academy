@@ -500,11 +500,11 @@ export function LessonPlayerClient({
             )}
 
             {activeTab === "content" ? (
-              <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-12 items-start">
+              <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px] gap-8 lg:gap-12 items-start">
                 {/* Main Content */}
                 <div className="space-y-12">
                   {/* Lesson Header / Goal */}
-                  <section className="bg-white rounded-[2.5rem] p-10 shadow-xl shadow-slate-200/50 border border-slate-100 relative overflow-hidden group">
+                  <section className="bg-white rounded-[2rem] sm:rounded-[2.5rem] p-5 sm:p-10 shadow-xl shadow-slate-200/50 border border-slate-100 relative overflow-hidden group">
                     <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:opacity-[0.06] transition-opacity group-hover:scale-110 duration-1000">
                       <GraduationCap className="h-40 w-40 text-[#062e39]" />
                     </div>
@@ -636,7 +636,7 @@ export function LessonPlayerClient({
                   )}
 
                   {/* Completion Actions */}
-                  <section className="bg-[#062e39] rounded-[3rem] p-12 text-center relative overflow-hidden group">
+                  <section className="bg-[#062e39] rounded-[2rem] sm:rounded-[3rem] p-6 sm:p-12 text-center relative overflow-hidden group">
                     <div className="absolute inset-0 mesh-orange opacity-10" />
                     
                     <div className="relative z-10 max-w-xl mx-auto">
