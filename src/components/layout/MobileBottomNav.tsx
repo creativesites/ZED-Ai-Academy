@@ -246,6 +246,14 @@ function NavShell({ tabs, label }: { tabs: TabItem[]; label: string }) {
     <>
       <StyleInjector />
 
+      {/*
+        Reserves the bar's height in the page flow so content never sits under the
+        fixed bar. Rendered by the shared bar, so every page that shows the bar
+        gets the bottom space without per-page padding. Hidden on md and up, where
+        the bar is not shown.
+      */}
+      <div aria-hidden="true" className="md:hidden h-[calc(4.5rem+env(safe-area-inset-bottom))]" />
+
       {hasOverflow && (
         <MoreDrawer
           items={overflowTabs}

@@ -62,7 +62,7 @@ export default async function LearnerLayout({ children }: { children: React.Reac
       <Header2Wrapper>
         <NotificationBellServer />
       </Header2Wrapper>
-      <div id="page-content" className="pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:pb-0">
+      <div id="page-content">
         {children}
       </div>
       <Footer1 />
