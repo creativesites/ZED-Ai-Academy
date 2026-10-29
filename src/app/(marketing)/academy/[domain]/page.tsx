@@ -108,8 +108,8 @@ export default async function TenantHomePage({ params }: { params: Promise<{ dom
         />
       </main>
 
-      <footer className="py-20 border-t border-slate-100 text-center">
-        <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.5em]">
+      <footer className="py-12 sm:py-20 px-4 border-t border-slate-100 text-center">
+        <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.25em] sm:tracking-[0.5em] leading-loose break-words">
           &copy; {new Date().getFullYear()} {tenant.name} &bull; Powered by ZED AI Academy
         </p>
       </footer>
