@@ -4,9 +4,10 @@ import { joinTenantBySlug } from "@/actions/tenants";
 import Link from "next/link";
 import { Sparkles, ArrowRight, Zap, Target, Shield, Globe } from "lucide-react";
 import { SharedSections } from "./SharedSections";
+import { hasAnyStat } from "@/lib/tenants/academy-stats";
 
 
-export function MinimalTemplate({ tenant, courses, membership, brandColor, heroTitle, heroSubtitle, aboutTitle, aboutText, aboutImage, ctaTitle, ctaButton, content, adminProfile }: any) {
+export function MinimalTemplate({ tenant, courses, membership, brandColor, heroTitle, heroSubtitle, aboutTitle, aboutText, aboutImage, ctaTitle, ctaButton, content, adminProfile, stats }: any) {
   const showHeroImage = !!content.hero_image;
   const tutorName = adminProfile?.full_name || "Academy Tutor";
   const tutorBio = adminProfile?.bio || "Expert educator dedicated to student success.";
@@ -47,20 +48,28 @@ export function MinimalTemplate({ tenant, courses, membership, brandColor, heroT
               </div>
 
               {/* Hero Stats */}
-              <div className={`flex flex-wrap items-center gap-x-10 gap-y-6 sm:gap-16 pt-10 border-t border-slate-100 ${!showHeroImage && "justify-center"}`}>
-                <div>
-                  <div className="text-3xl sm:text-4xl font-light text-slate-900">{content.stats_students || "10k+"}</div>
-                  <div className="text-[10px] font-medium text-slate-500 uppercase tracking-widest mt-1">Students</div>
+              {hasAnyStat(stats) && (
+                <div className={`flex items-center gap-16 pt-10 border-t border-slate-100 ${!showHeroImage && "justify-center"}`}>
+                  {stats.students && (
+                    <div className="min-w-0">
+                      <div className="text-4xl font-light text-slate-900">{stats.students}</div>
+                      <div className="text-[10px] font-medium text-slate-500 uppercase tracking-widest mt-1">Students</div>
+                    </div>
+                  )}
+                  {stats.rating && (
+                    <div className="min-w-0">
+                      <div className="text-4xl font-light text-slate-900">{stats.rating}</div>
+                      <div className="text-[10px] font-medium text-slate-500 uppercase tracking-widest mt-1">Rating</div>
+                    </div>
+                  )}
+                  {stats.success && (
+                    <div className="min-w-0">
+                      <div className="text-4xl font-light text-slate-900">{stats.success}</div>
+                      <div className="text-[10px] font-medium text-slate-500 uppercase tracking-widest mt-1">Success</div>
+                    </div>
+                  )}
                 </div>
-                <div>
-                  <div className="text-3xl sm:text-4xl font-light text-slate-900">{content.stats_rating || "4.9/5"}</div>
-                  <div className="text-[10px] font-medium text-slate-500 uppercase tracking-widest mt-1">Rating</div>
-                </div>
-                <div>
-                  <div className="text-3xl sm:text-4xl font-light text-slate-900">{content.stats_success || "95%"}</div>
-                  <div className="text-[10px] font-medium text-slate-500 uppercase tracking-widest mt-1">Success</div>
-                </div>
-              </div>
+              )}
             </div>
 
             {showHeroImage && (

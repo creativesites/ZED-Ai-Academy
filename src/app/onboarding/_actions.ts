@@ -3,29 +3,26 @@
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import { cookies } from "next/headers";
 import { createServiceClient } from "@/lib/supabase/server";
-import type { CompanyMemberRole, UserRole } from "@/types/database";
-import { generateUniqueSlug } from "@/lib/utils";
+import { ensureTenantMembership } from "@/lib/tenants/membership";
+import { normalizeSignupRole, safeRelativePath, tenantFromPath } from "@/lib/auth/signup-flow";
+import type { CompanyMemberRole } from "@/types/database";
 
-function normalizeSignupRole(rawRole: string | null): UserRole {
-  if (rawRole === "company_admin" || rawRole === "tutor") return "company_admin";
-  if (rawRole === "teacher") return "teacher";
-  return "learner";
-}
-
-function membershipRoleForProfileRole(role: UserRole): CompanyMemberRole {
-  if (role === "company_admin") return "company_admin";
-  if (role === "teacher" || role === "instructor") return "teacher";
-  return "learner";
-}
-
+/**
+ * Finish onboarding for learners and teachers. Academy owners use
+ * createAcademy (/launch-your-academy) instead.
+ *
+ * Roles are never downgraded: the profile keeps its current role unless a
+ * verified academy join raises it (ensureTenantMembership), and a teacher role
+ * always requires the academy's staff code.
+ */
 export async function completeOnboarding(formData: FormData) {
-  const { userId, orgId, sessionClaims } = await auth();
+  const { userId, sessionClaims } = await auth();
 
   if (!userId) {
     return { error: "No signed-in user" };
   }
 
-  const fullName = formData.get("fullName") as string;
+  const fullName = String(formData.get("fullName") ?? "").trim();
   const claims = sessionClaims as Record<string, unknown> | null;
   const platform = typeof claims?.source_platform === "string" ? claims.source_platform : "web";
 
@@ -33,82 +30,35 @@ export async function completeOnboarding(formData: FormData) {
     return { error: "Full name is required" };
   }
 
+  const requestedRole = normalizeSignupRole(formData.get("role") as string | null);
+  if (requestedRole === "company_admin") {
+    return { success: true, redirectUrl: "/launch-your-academy" };
+  }
+  const joinRole: CompanyMemberRole = requestedRole === "teacher" ? "teacher" : "learner";
+
   const client = await clerkClient();
   const supabase = createServiceClient();
 
   try {
-    const rawRole = formData.get("role") as string | null;
-    const finalRole = normalizeSignupRole(rawRole);
-    
     // Check form data first, then cookies
     const cookieStore = await cookies();
     const tenantSlug = (formData.get("tenantSlug") as string) || cookieStore.get("last_visited_tenant")?.value;
-    
-    const teacherCode = formData.get("teacherCode") as string;
+    const teacherCode = String(formData.get("teacherCode") ?? "").trim();
+    const next = safeRelativePath(formData.get("next") as string | null);
 
-    if (finalRole === "company_admin" && !orgId) {
-      return { error: "Please create your academy before continuing." };
-    }
-
-    await client.users.updateUser(userId, {
-      publicMetadata: {
-        onboardingComplete: true,
-        role: finalRole,
-      },
-    });
-
-    // 1. Update Profiles table FIRST to satisfy FK constraints
-    await supabase
-      .from("profiles")
-      .upsert({
-        id: userId,
-        full_name: fullName,
-        role: finalRole,
-        onboarding_completed: true,
-        updated_at: new Date().toISOString(),
-      }, { onConflict: "id" });
-
-    let joinedCompanyId: string | null = null;
-    let joinedCompanySlug: string | null = null;
-
-    // 2. Handle Company Admin Setup
-    if (orgId && finalRole === "company_admin") {
-      const org = await client.organizations.getOrganization({ organizationId: orgId });
-      joinedCompanyId = org.id;
-      joinedCompanySlug = await generateUniqueSlug(supabase, org.name, "companies", org.id);
-
-      const { error: companyError } = await supabase.from("companies").upsert({
-        id: org.id,
-        name: org.name,
-        slug: joinedCompanySlug,
-        logo_url: org.imageUrl,
-        admin_id: userId,
-      }, { onConflict: "id" });
-      if (companyError) throw new Error(`Could not create your academy: ${companyError.message}`);
-
-      const { error: memberError } = await supabase.from("company_members").upsert({
-        company_id: org.id,
-        profile_id: userId,
-        status: "active",
-        role: "company_admin",
-        joined_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      }, { onConflict: "company_id, profile_id" });
-      if (memberError) throw new Error(`Could not add you to your academy: ${memberError.message}`);
-    }
-
-    // 3. Handle Tenant Join (Learner or Teacher)
-    if (tenantSlug && finalRole !== "company_admin") {
-      const { data: tenant } = await supabase
+    // Validate the academy (and staff code) BEFORE writing anything.
+    let tenant: { id: string; slug: string } | null = null;
+    if (tenantSlug) {
+      const { data } = await supabase
         .from("companies")
-        .select("id, slug, teacher_code")
+        .select("id, slug, teacher_code, status")
         .eq("slug", tenantSlug)
         .maybeSingle();
 
-      if (tenant) {
-        if (finalRole === "teacher") {
+      if (data && data.status !== "suspended") {
+        if (joinRole === "teacher") {
           // "0000" is the legacy DB default, i.e. the owner never set a code: treat as not configured.
-          const expectedCode = tenant.teacher_code;
+          const expectedCode = data.teacher_code;
           if (!expectedCode || expectedCode === "0000") {
             return { error: "This academy hasn't enabled staff sign-up yet. Ask the owner to set a staff access code." };
           }
@@ -116,31 +66,38 @@ export async function completeOnboarding(formData: FormData) {
             return { error: "Invalid staff access code for this academy." };
           }
         }
-
-        joinedCompanyId = tenant.id;
-        joinedCompanySlug = tenant.slug;
-        await supabase.from("company_members").upsert({
-          company_id: tenant.id,
-          profile_id: userId,
-          status: "active",
-          role: membershipRoleForProfileRole(finalRole),
-          joined_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        }, { onConflict: "company_id, profile_id" });
+        tenant = { id: data.id, slug: data.slug };
       }
     }
 
-    // 4. Update Profile with company context now that it's established
-    if (joinedCompanyId) {
-      await supabase
-        .from("profiles")
-        .update({
-          company_id: joinedCompanyId,
-        })
-        .eq("id", userId);
-    }
+    await client.users.updateUserMetadata(userId, {
+      publicMetadata: { onboardingComplete: true },
+    });
 
-    // 4. Track Platform
+    // 1. Profile first (FK target). Keep any existing role; new profiles start as learners.
+    const { data: existingProfile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", userId)
+      .maybeSingle();
+
+    await supabase
+      .from("profiles")
+      .upsert({
+        id: userId,
+        full_name: fullName,
+        role: existingProfile?.role ?? "learner",
+        onboarding_completed: true,
+        updated_at: new Date().toISOString(),
+      }, { onConflict: "id" });
+
+    // 2. Academy join (learner, or teacher after the staff-code check above). Never downgrades.
+    if (tenant) {
+      await ensureTenantMembership(userId, tenant.id, joinRole);
+    }
+    const joinedCompanySlug = tenant?.slug ?? null;
+
+    // 3. Track Platform
     await supabase
       .from("user_platforms")
       .upsert({
@@ -152,7 +109,7 @@ export async function completeOnboarding(formData: FormData) {
     const enrollCourseSlug = formData.get("enrollCourse") as string;
     let redirectUrl = "/dashboard";
 
-    // 5. Handle Specific Course Auto-Enrollment
+    // 4. Handle Specific Course Auto-Enrollment
     if (enrollCourseSlug) {
       const { data: requestedCourse } = await supabase
         .from("courses")
@@ -171,22 +128,17 @@ export async function completeOnboarding(formData: FormData) {
           }, { onConflict: "user_id,course_id" });
 
           if (requestedCourse.company_id) {
-            await supabase.from("company_members").upsert({
-              company_id: requestedCourse.company_id,
-              profile_id: userId,
-              status: "active",
-              role: "learner",
-              joined_at: new Date().toISOString(),
-              updated_at: new Date().toISOString(),
-            }, { onConflict: "company_id, profile_id" });
+            await ensureTenantMembership(userId, requestedCourse.company_id, "learner");
           }
           redirectUrl = `/courses/${requestedCourse.slug}/learn`;
         } else {
           redirectUrl = `/courses/${requestedCourse.slug}?action=enroll`;
         }
       }
-    } else {
-      // Fallback: Enroll in Global Onboarding Course if configured
+    } else if (!tenant) {
+      // Platform learners only. Anyone joining an academy (and academy owners, who
+      // never reach this action) must not become a member of the platform tenant
+      // through the global onboarding course.
       const { data: setting } = await supabase
         .from("site_settings")
         .select("value")
@@ -211,26 +163,22 @@ export async function completeOnboarding(formData: FormData) {
           }, { onConflict: "user_id,course_id" });
 
           if (globalCourse.company_id) {
-            await supabase.from("company_members").upsert({
-              company_id: globalCourse.company_id,
-              profile_id: userId,
-              status: "active",
-              role: "learner",
-              joined_at: new Date().toISOString(),
-              updated_at: new Date().toISOString(),
-            }, { onConflict: "company_id, profile_id" });
+            await ensureTenantMembership(userId, globalCourse.company_id, "learner");
           }
         }
       }
     }
 
-    // 6. Role-based Redirection
+    // 5. Redirect into the academy that was joined.
     if (!enrollCourseSlug && joinedCompanySlug) {
-      if (finalRole === "company_admin") {
-        redirectUrl = `/academy/${joinedCompanySlug}/admin`;
-      } else {
-        redirectUrl = `/academy/${joinedCompanySlug}/classroom`;
-      }
+      redirectUrl =
+        next && tenantFromPath(next) === joinedCompanySlug
+          ? next
+          : joinRole === "teacher"
+            ? `/academy/${joinedCompanySlug}/admin`
+            : `/academy/${joinedCompanySlug}/classroom`;
+    } else if (!enrollCourseSlug && next) {
+      redirectUrl = next;
     }
 
     return { success: true, redirectUrl };

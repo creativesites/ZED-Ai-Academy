@@ -1,5 +1,5 @@
 import { auth } from "@clerk/nextjs/server";
-import { redirect } from "next/navigation";
+import { redirect, unstable_rethrow } from "next/navigation";
 import { createServiceClient } from "@/lib/supabase/server";
 import { ensureProfile } from "@/lib/supabase/ensure-profile";
 import { requireOnboarding } from "@/lib/require-onboarding";
@@ -35,18 +35,29 @@ export default async function CreatorLayout({ children }: { children: React.Reac
 
   try {
     await requireOnboarding(userId);
-  } catch {
-    // redirect() throws
+  } catch (error) {
+    // redirect() works by throwing: let Next.js handle it instead of swallowing it.
+    unstable_rethrow(error);
+    console.error("[layout] onboarding check failed:", error);
   }
 
   const supabase = createServiceClient();
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", userId)
-    .single();
+  const [{ data: profile }, { data: teachingMembership }] = await Promise.all([
+    supabase.from("profiles").select("role").eq("id", userId).single(),
+    // Academy staff are authorized by company_members (the source of truth), not
+    // profiles.role: a teacher of an academy can open its courses in the builder.
+    supabase
+      .from("company_members")
+      .select("company_id")
+      .eq("profile_id", userId)
+      .eq("status", "active")
+      .in("role", ["company_admin", "instructor", "teacher"])
+      .limit(1)
+      .maybeSingle(),
+  ]);
 
-  if (!profile || !["instructor", "super_admin", "company_admin"].includes(profile.role)) {
+  const hasPlatformRole = !!profile && ["instructor", "super_admin", "company_admin"].includes(profile.role);
+  if (!hasPlatformRole && !teachingMembership) {
     redirect("/dashboard");
   }
 

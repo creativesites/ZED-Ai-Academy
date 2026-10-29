@@ -4,9 +4,10 @@ import { Globe, Shield, Zap, ArrowRight, Award, BookOpen, Check, History, Layout
 import { CourseCarousel } from "@/components/tenant/CourseCarousel";
 import { joinTenantBySlug } from "@/actions/tenants";
 import { SharedSections } from "./SharedSections";
+import { hasAnyStat } from "@/lib/tenants/academy-stats";
 
 
-export function TechTemplate({ tenant, courses, membership, brandColor, heroTitle, heroSubtitle, aboutTitle, aboutText, aboutImage, ctaTitle, ctaButton, content, adminProfile }: any) {
+export function TechTemplate({ tenant, courses, membership, brandColor, heroTitle, heroSubtitle, aboutTitle, aboutText, aboutImage, ctaTitle, ctaButton, content, adminProfile, stats }: any) {
   const tutorName = adminProfile?.full_name || "Academy Tutor";
   const tutorBio = adminProfile?.bio || "Expert educator dedicated to student success.";
   const tutorAvatar = adminProfile?.avatar_url || null;
@@ -50,18 +51,20 @@ export function TechTemplate({ tenant, courses, membership, brandColor, heroTitl
           </div>
 
           {/* Hero Stats */}
-          <div className="grid grid-cols-3 gap-4 sm:gap-10 max-w-4xl mx-auto pt-12 sm:pt-20 border-t border-cyan-500/10">
-            {[
-              { n: content.stats_students || "10K+", l: "Active Nodes" },
-              { n: content.stats_rating || "4.9", l: "Reliability" },
-              { n: content.stats_success || "99.9%", l: "Uptime" }
-            ].map(s => (
-              <div key={s.l} className="min-w-0">
-                <div className="text-3xl sm:text-5xl font-black text-cyan-400 mb-2 break-words" style={{ textShadow: "0 0 15px #0ff" }}>{s.n}</div>
-                <div className="text-[10px] uppercase tracking-widest text-cyan-300/60">{s.l}</div>
-              </div>
-            ))}
-          </div>
+          {hasAnyStat(stats) && (
+            <div className="grid grid-cols-3 gap-4 sm:gap-10 max-w-4xl mx-auto pt-12 sm:pt-20 border-t border-cyan-500/10">
+              {[ 
+                { n: stats.students, l: "Active Nodes" }, 
+                { n: stats.rating, l: "Reliability" }, 
+                { n: stats.success, l: "Uptime" } 
+              ].filter((s) => s.n).map((s) => (
+                <div key={s.l}>
+                  <div className="text-3xl sm:text-5xl font-black break-words text-cyan-400 mb-2" style={{ textShadow: "0 0 15px #0ff" }}>{s.n}</div>
+                  <div className="text-[10px] uppercase tracking-widest text-cyan-400/40">{s.l}</div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 

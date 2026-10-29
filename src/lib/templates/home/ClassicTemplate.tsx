@@ -4,8 +4,9 @@ import { SharedSections } from "./SharedSections";
 import { CourseCarousel } from "@/components/tenant/CourseCarousel";
 import { joinTenantBySlug } from "@/actions/tenants";
 import Link from "next/link";
+import { hasAnyStat } from "@/lib/tenants/academy-stats";
 
-export function ClassicTemplate({ tenant, courses, membership, brandColor, heroTitle, heroSubtitle, aboutTitle, aboutText, aboutImage, ctaTitle, ctaButton, content, adminProfile }: any) {
+export function ClassicTemplate({ tenant, courses, membership, brandColor, heroTitle, heroSubtitle, aboutTitle, aboutText, aboutImage, ctaTitle, ctaButton, content, adminProfile, stats }: any) {
   const showHeroImage = !!content.hero_image;
   const tutorName = adminProfile?.full_name || "Academy Tutor";
   const tutorBio = adminProfile?.bio || "Expert educator dedicated to student success.";
@@ -57,20 +58,28 @@ export function ClassicTemplate({ tenant, courses, membership, brandColor, heroT
               </div>
 
               {/* Hero Stats */}
-              <div className={`grid grid-cols-3 gap-4 sm:gap-10 pt-10 border-t border-amber-900/10 ${!showHeroImage && "max-w-xl mx-auto"}`}>
-                <div className="min-w-0">
-                  <div className="text-2xl sm:text-3xl font-black text-amber-950 tracking-tighter break-words">{content.stats_students || "10k+"}</div>
-                  <div className="text-[10px] font-bold text-amber-900/50 uppercase tracking-[0.15em] sm:tracking-[0.2em] mt-2">Scholars Enrolled</div>
+              {hasAnyStat(stats) && (
+                <div className={`grid grid-cols-3 gap-4 sm:gap-10 pt-10 border-t border-amber-900/10 ${!showHeroImage && "max-w-xl mx-auto"}`}>
+                  {stats.students && (
+                    <div className="min-w-0">
+                      <div className="text-2xl sm:text-3xl font-black break-words text-amber-950 tracking-tighter">{stats.students}</div>
+                      <div className="text-[10px] font-bold text-amber-900/50 uppercase tracking-[0.15em] sm:tracking-[0.2em] mt-2">Scholars Enrolled</div>
+                    </div>
+                  )}
+                  {stats.rating && (
+                    <div className="min-w-0">
+                      <div className="text-2xl sm:text-3xl font-black break-words text-amber-950 tracking-tighter">{stats.rating}</div>
+                      <div className="text-[10px] font-bold text-amber-900/50 uppercase tracking-[0.15em] sm:tracking-[0.2em] mt-2">Academic Rating</div>
+                    </div>
+                  )}
+                  {stats.success && (
+                    <div className="min-w-0">
+                      <div className="text-2xl sm:text-3xl font-black break-words text-amber-950 tracking-tighter">{stats.success}</div>
+                      <div className="text-[10px] font-bold text-amber-900/50 uppercase tracking-[0.15em] sm:tracking-[0.2em] mt-2">Success Quotient</div>
+                    </div>
+                  )}
                 </div>
-                <div className="min-w-0">
-                  <div className="text-2xl sm:text-3xl font-black text-amber-950 tracking-tighter break-words">{content.stats_rating || "4.9/5"}</div>
-                  <div className="text-[10px] font-bold text-amber-900/50 uppercase tracking-[0.15em] sm:tracking-[0.2em] mt-2">Academic Rating</div>
-                </div>
-                <div className="min-w-0">
-                  <div className="text-2xl sm:text-3xl font-black text-amber-950 tracking-tighter break-words">{content.stats_success || "95%"}</div>
-                  <div className="text-[10px] font-bold text-amber-900/50 uppercase tracking-[0.15em] sm:tracking-[0.2em] mt-2">Success Quotient</div>
-                </div>
-              </div>
+              )}
             </div>
 
             {showHeroImage && (

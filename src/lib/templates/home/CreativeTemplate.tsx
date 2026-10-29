@@ -5,15 +5,18 @@ import { joinTenantBySlug } from "@/actions/tenants";
 
 import { ArrowRight, Award, BookOpen, Check, Globe, History, Layout, Landmark, Rocket, Search, Shield, Users, Zap, Palette, Heart } from "lucide-react";
 import { SharedSections } from "./SharedSections";
+import { hasAnyStat } from "@/lib/tenants/academy-stats";
+import { readableTextOn } from "@/lib/color";
 
 
-export function CreativeTemplate({ tenant, courses, membership, brandColor, heroTitle, heroSubtitle, aboutTitle, aboutText, aboutImage, ctaTitle, ctaButton, content, adminProfile }: any) {
+export function CreativeTemplate({ tenant, courses, membership, brandColor, heroTitle, heroSubtitle, aboutTitle, aboutText, aboutImage, ctaTitle, ctaButton, content, adminProfile, stats }: any) {
   const tutorName = adminProfile?.full_name || "Academy Tutor";
   const tutorBio = adminProfile?.bio || "Expert educator dedicated to student success.";
   const tutorAvatar = adminProfile?.avatar_url || null;
+  const brandInk = readableTextOn(brandColor);
 
   return (
-    <div className="font-sans bg-white selection:bg-fuchsia-100 selection:text-fuchsia-900" style={{ "--primary-color": brandColor } as React.CSSProperties}>
+    <div className="font-sans bg-white selection:bg-fuchsia-100 selection:text-[#062e39]" style={{ "--primary-color": brandColor } as React.CSSProperties}>
       {/* Hero with blob */}
       <section className="relative pt-28 pb-16 sm:pt-40 sm:pb-24 lg:pt-52 lg:pb-32 overflow-hidden">
         <div className="absolute top-0 right-0 w-1/2 h-full bg-fuchsia-50 rounded-bl-[10rem] -z-10" />
@@ -21,45 +24,53 @@ export function CreativeTemplate({ tenant, courses, membership, brandColor, hero
 
         <div className="container mx-auto px-6 max-w-7xl grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
           <div className="space-y-8 min-w-0">
-            <span className="inline-block max-w-full px-4 py-2 rounded-full bg-fuchsia-100 text-fuchsia-700 font-bold text-sm uppercase tracking-widest">🍎 Creative Learning</span>
-            <h1 className="text-5xl md:text-7xl font-black text-fuchsia-900 leading-tight break-words">{heroTitle}</h1>
-            <p className="text-lg sm:text-xl text-fuchsia-700/80 break-words">{heroSubtitle}</p>
+            <span className="inline-block max-w-full px-4 py-2 rounded-full bg-fuchsia-50 text-slate-700 font-bold text-sm uppercase tracking-widest">🍎 Creative Learning</span>
+            <h1 className="text-5xl md:text-7xl font-black text-[#062e39] leading-tight break-words">{heroTitle}</h1>
+            <p className="text-lg sm:text-xl text-slate-600 break-words">{heroSubtitle}</p>
             <div className="flex flex-col sm:flex-row sm:flex-wrap gap-4 mb-12">
               {!membership ? (
                 <form action={joinTenantBySlug}>
                   <input type="hidden" name="tenantSlug" value={tenant.slug} />
                   <input type="hidden" name="role" value="student" />
-                  <Button className="h-14 sm:h-16 w-full sm:w-auto px-8 sm:px-10 rounded-full bg-fuchsia-600 text-white font-bold shadow-lg hover:bg-fuchsia-700 transition-all">
+                  <Button className="h-14 sm:h-16 w-full sm:w-auto px-8 sm:px-10 rounded-full bg-[var(--primary-color)] font-bold shadow-lg hover:opacity-90 transition-all" style={{ color: brandInk }}>
                     Let’s Create
                   </Button>
                 </form>
               ) : (
                 <Link href={`/academy/${tenant.slug}/classroom`} className="w-full sm:w-auto">
-                  <Button className="h-14 sm:h-16 w-full sm:w-auto px-8 sm:px-10 rounded-full bg-fuchsia-600 text-white font-bold shadow-lg hover:bg-fuchsia-700 transition-all">
+                  <Button className="h-14 sm:h-16 w-full sm:w-auto px-8 sm:px-10 rounded-full bg-[var(--primary-color)] font-bold shadow-lg hover:opacity-90 transition-all" style={{ color: brandInk }}>
                     Open Classroom
                   </Button>
                 </Link>
               )}
-              <Button variant="outline" className="h-14 sm:h-16 w-full sm:w-auto px-8 sm:px-10 rounded-full border-fuchsia-200 text-fuchsia-600 font-bold bg-white">
+              <Button variant="outline" className="h-14 sm:h-16 w-full sm:w-auto px-8 sm:px-10 rounded-full border-slate-300 text-[#062e39] font-bold bg-white">
                 See Our Work
               </Button>
             </div>
 
             {/* Hero Stats */}
-            <div className="grid grid-cols-3 gap-4 sm:gap-8 pt-10 border-t border-fuchsia-100">
-              <div className="min-w-0">
-                <div className="text-2xl sm:text-3xl font-black text-fuchsia-900 break-words">{content.stats_students || "10k+"}</div>
-                <div className="text-[10px] font-bold text-fuchsia-500 uppercase tracking-widest mt-1">Creators</div>
+            {hasAnyStat(stats) && (
+              <div className="grid grid-cols-3 gap-8 pt-10 border-t border-fuchsia-100">
+                {stats.students && (
+                  <div className="min-w-0">
+                    <div className="text-2xl sm:text-3xl font-black break-words text-[#062e39]">{stats.students}</div>
+                    <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Creators</div>
+                  </div>
+                )}
+                {stats.rating && (
+                  <div className="min-w-0">
+                    <div className="text-2xl sm:text-3xl font-black break-words text-[#062e39]">{stats.rating}</div>
+                    <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Love Rate</div>
+                  </div>
+                )}
+                {stats.success && (
+                  <div className="min-w-0">
+                    <div className="text-2xl sm:text-3xl font-black break-words text-[#062e39]">{stats.success}</div>
+                    <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Milestones</div>
+                  </div>
+                )}
               </div>
-              <div className="min-w-0">
-                <div className="text-2xl sm:text-3xl font-black text-fuchsia-900 break-words">{content.stats_rating || "4.9/5"}</div>
-                <div className="text-[10px] font-bold text-fuchsia-500 uppercase tracking-widest mt-1">Love Rate</div>
-              </div>
-              <div className="min-w-0">
-                <div className="text-2xl sm:text-3xl font-black text-fuchsia-900 break-words">{content.stats_success || "95%"}</div>
-                <div className="text-[10px] font-bold text-fuchsia-500 uppercase tracking-widest mt-1">Milestones</div>
-              </div>
-            </div>
+            )}
           </div>
           <div className="relative min-w-0 w-full">
             <div className="absolute -top-6 -left-4 sm:-top-10 sm:-left-10 w-32 h-32 sm:w-48 sm:h-48 bg-yellow-300 rounded-full mix-blend-multiply opacity-30" />
@@ -68,7 +79,7 @@ export function CreativeTemplate({ tenant, courses, membership, brandColor, hero
             </div>
             {/* Floating Element */}
             <div className="absolute -bottom-6 -right-2 sm:-bottom-10 sm:-right-10 bg-white p-4 sm:p-6 rounded-3xl shadow-2xl border border-fuchsia-50 animate-bounce">
-              <Palette className="h-8 w-8 sm:h-10 sm:w-10 text-fuchsia-600" />
+              <Palette className="h-8 w-8 sm:h-10 sm:w-10 text-[var(--primary-color)]" />
             </div>
           </div>
         </div>
@@ -77,8 +88,8 @@ export function CreativeTemplate({ tenant, courses, membership, brandColor, hero
       {/* Story */}
       <section className="py-16 sm:py-32 bg-fuchsia-50/30">
         <div className="container mx-auto px-6 max-w-5xl text-center">
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-fuchsia-900 mb-10 break-words">{aboutTitle}</h2>
-          <p className="text-lg sm:text-xl text-fuchsia-800/70 leading-relaxed max-w-3xl mx-auto break-words">{aboutText}</p>
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-[#062e39] mb-10 break-words">{aboutTitle}</h2>
+          <p className="text-lg sm:text-xl text-slate-600 leading-relaxed max-w-3xl mx-auto break-words">{aboutText}</p>
         </div>
       </section>
 
@@ -97,8 +108,8 @@ export function CreativeTemplate({ tenant, courses, membership, brandColor, hero
       <section className="py-16 sm:py-32">
         <div className="container mx-auto px-6 max-w-7xl">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-12 sm:mb-20">
-            <h2 className="text-4xl sm:text-5xl font-black text-fuchsia-900 tracking-tight break-words">Colorful Catalog</h2>
-            <Link href="#courses" className="text-fuchsia-600 font-bold flex items-center gap-2 group">
+            <h2 className="text-4xl sm:text-5xl font-black text-[#062e39] tracking-tight break-words">Colorful Catalog</h2>
+            <Link href="#courses" className="text-[#062e39] underline decoration-[var(--primary-color)] decoration-2 underline-offset-4 font-bold flex items-center gap-2 group">
               See All <ArrowRight className="h-4 w-4 group-hover:translate-x-2 transition-transform" />
             </Link>
           </div>
@@ -120,13 +131,13 @@ export function CreativeTemplate({ tenant, courses, membership, brandColor, hero
               <form action={joinTenantBySlug}>
                 <input type="hidden" name="tenantSlug" value={tenant.slug} />
                 <input type="hidden" name="role" value="student" />
-                <Button className="h-16 sm:h-24 w-full sm:w-auto px-8 sm:px-20 rounded-full bg-white text-fuchsia-900 text-lg sm:text-2xl font-black shadow-2xl hover:scale-110 transition-all uppercase tracking-widest">
+                <Button className="h-16 sm:h-24 w-full sm:w-auto px-8 sm:px-20 rounded-full bg-white text-[#062e39] text-lg sm:text-2xl font-black shadow-2xl hover:scale-110 transition-all uppercase tracking-widest">
                   {ctaButton}
                 </Button>
               </form>
             ) : (
               <Link href={`/academy/${tenant.slug}/classroom`} className="inline-block w-full sm:w-auto">
-                <Button className="h-16 sm:h-24 w-full sm:w-auto px-8 sm:px-20 rounded-full bg-white text-fuchsia-900 text-lg sm:text-2xl font-black shadow-2xl hover:scale-110 transition-all uppercase tracking-widest">
+                <Button className="h-16 sm:h-24 w-full sm:w-auto px-8 sm:px-20 rounded-full bg-white text-[#062e39] text-lg sm:text-2xl font-black shadow-2xl hover:scale-110 transition-all uppercase tracking-widest">
                   Open Classroom
                 </Button>
               </Link>

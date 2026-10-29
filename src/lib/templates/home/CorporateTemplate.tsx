@@ -4,9 +4,10 @@ import { CourseCard } from "@/components/tenant/CourseCard";
 import { joinTenantBySlug } from "@/actions/tenants";
 import { Globe, Shield, Users, ArrowRight, Award, BookOpen, Check, History, Layout, Landmark, Rocket, Search, Zap, Briefcase } from "lucide-react";
 import { SharedSections } from "./SharedSections";
+import { hasAnyStat } from "@/lib/tenants/academy-stats";
 
 
-export function CorporateTemplate({ tenant, courses, membership, brandColor, heroTitle, heroSubtitle, aboutTitle, aboutText, aboutImage, ctaTitle, ctaButton, content, adminProfile }: any) {
+export function CorporateTemplate({ tenant, courses, membership, brandColor, heroTitle, heroSubtitle, aboutTitle, aboutText, aboutImage, ctaTitle, ctaButton, content, adminProfile, stats }: any) {
   const tutorName = adminProfile?.full_name || "Academy Tutor";
   const tutorBio = adminProfile?.bio || "Expert educator dedicated to student success.";
   const tutorAvatar = adminProfile?.avatar_url || null;
@@ -42,20 +43,28 @@ export function CorporateTemplate({ tenant, courses, membership, brandColor, her
             </div>
 
             {/* Hero Stats */}
-            <div className="grid grid-cols-3 gap-4 sm:gap-10 pt-12 border-t border-slate-200">
-              <div className="min-w-0">
-                <div className="text-2xl sm:text-3xl font-black text-slate-800 break-words">{content.stats_students || "10k+"}</div>
-                <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Learners</div>
+            {hasAnyStat(stats) && (
+              <div className="grid grid-cols-3 gap-4 sm:gap-10 pt-12 border-t border-slate-200">
+                {stats.students && (
+                  <div className="min-w-0">
+                    <div className="text-2xl sm:text-3xl font-black break-words text-slate-800">{stats.students}</div>
+                    <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Learners</div>
+                  </div>
+                )}
+                {stats.rating && (
+                  <div className="min-w-0">
+                    <div className="text-2xl sm:text-3xl font-black break-words text-slate-800">{stats.rating}</div>
+                    <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Satisfaction</div>
+                  </div>
+                )}
+                {stats.success && (
+                  <div className="min-w-0">
+                    <div className="text-2xl sm:text-3xl font-black break-words text-slate-800">{stats.success}</div>
+                    <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Placement</div>
+                  </div>
+                )}
               </div>
-              <div className="min-w-0">
-                <div className="text-2xl sm:text-3xl font-black text-slate-800 break-words">{content.stats_rating || "4.9/5"}</div>
-                <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Satisfaction</div>
-              </div>
-              <div className="min-w-0">
-                <div className="text-2xl sm:text-3xl font-black text-slate-800 break-words">{content.stats_success || "95%"}</div>
-                <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Placement</div>
-              </div>
-            </div>
+            )}
           </div>
           <div className="flex-1 min-w-0 w-full relative">
             <div className="absolute -inset-3 sm:-inset-4 bg-blue-100 rounded-2xl -rotate-2" />
