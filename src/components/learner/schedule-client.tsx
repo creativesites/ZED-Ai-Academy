@@ -408,7 +408,7 @@ export function LearnerScheduleClient({
         })}
 
         {filteredSchedules.length === 0 && (
-          <div className="rounded-[2.5rem] border-2 border-dashed border-slate-200 bg-white p-12 text-center">
+          <div className="rounded-[2rem] sm:rounded-[2.5rem] border-2 border-dashed border-slate-200 bg-white p-6 sm:p-12 text-center">
             <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#fff6ee] text-[#fd5523]">
               <CalendarDays className="h-8 w-8" />
             </div>

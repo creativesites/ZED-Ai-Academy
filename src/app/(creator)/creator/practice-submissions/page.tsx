@@ -129,7 +129,7 @@ export default async function PracticeSubmissionsPage() {
 
       <div className="grid gap-5">
         {submissions.length === 0 ? (
-          <div className="rounded-[2rem] border border-dashed border-slate-200 bg-white p-10 text-center">
+          <div className="rounded-[2rem] border border-dashed border-slate-200 bg-white p-6 sm:p-10 text-center">
             <FileText className="mx-auto h-12 w-12 text-slate-300" />
             <h2 className="mt-4 text-2xl font-bold text-[#062e39]">No submissions yet</h2>
             <p className="mt-2 text-sm text-slate-500">Learner submissions will appear here after practice exercises are added to lessons.</p>

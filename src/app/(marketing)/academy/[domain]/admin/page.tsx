@@ -48,7 +48,7 @@ export default async function AdminTenantHubPage({
   return (
     <div className="container max-w-7xl px-4 py-8 md:py-12">
       <div className="mb-10 flex flex-col gap-8 md:flex-row md:items-center justify-between">
-        <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 text-center sm:text-left">
+        <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 text-center sm:text-left min-w-0 max-w-full">
           <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-[2rem] bg-white shadow-2xl border border-slate-100 p-5">
             {company.logo_url ? (
               <img src={company.logo_url} alt="" className="h-full w-auto object-contain" />
@@ -56,8 +56,8 @@ export default async function AdminTenantHubPage({
               <Building2 className="h-10 w-10 text-[#062e39]" />
             )}
           </div>
-          <div className="space-y-1">
-            <h1 className="text-3xl md:text-5xl font-black text-[#062e39] tracking-tight leading-none uppercase">
+          <div className="space-y-1 min-w-0">
+            <h1 className="text-3xl md:text-5xl font-black text-[#062e39] tracking-tight leading-tight md:leading-none uppercase break-words">
               {company.name} <span className="text-[#fd5523]">Hub</span>
             </h1>
             <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 mt-4">
@@ -68,10 +68,10 @@ export default async function AdminTenantHubPage({
             </div>
           </div>
         </div>
-        <div className="flex items-center justify-center">
+        <div className="flex items-center justify-center w-full md:w-auto">
            <Link 
             href={`/academy/${company.slug}/admin/classroom?tab=session&action=start`}
-            className="group flex items-center gap-3 h-16 px-10 rounded-[2rem] bg-[#fd5523] text-white text-xs font-black uppercase tracking-[0.2em] hover:scale-[1.02] active:scale-95 transition-all shadow-2xl shadow-[#fd5523]/30"
+            className="group flex items-center justify-center gap-3 w-full md:w-auto h-14 sm:h-16 px-6 sm:px-10 rounded-[2rem] bg-[#fd5523] text-white text-xs font-black uppercase tracking-[0.2em] hover:scale-[1.02] active:scale-95 transition-all shadow-2xl shadow-[#fd5523]/30"
           >
             <div className="h-8 w-8 rounded-full bg-white/20 flex items-center justify-center group-hover:scale-110 transition-transform">
               <Play className="h-4 w-4 fill-current" />
