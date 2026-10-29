@@ -7,7 +7,10 @@ import {
   LayoutDashboard, Zap, GraduationCap, ChevronRight,
   Clock, Sparkles
 } from "lucide-react";
+import { headers } from "next/headers";
 import { TimetableCalendar } from "@/components/tenant/admin/TimetableCalendar";
+import { GetStartedChecklist } from "@/components/tenant/admin/GetStartedChecklist";
+import { getStartedSteps, shouldShowGetStarted } from "@/lib/tenants/get-started";
 import { cn } from "@/lib/utils";
 
 export const metadata = {
@@ -16,10 +19,13 @@ export const metadata = {
 
 export default async function AdminTenantHubPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ domain: string }>;
+  searchParams: Promise<{ welcome?: string }>;
 }) {
   const { domain } = await params;
+  const { welcome } = await searchParams;
   const supabase = createClient();
 
   const { data: company } = await supabase
@@ -35,15 +41,32 @@ export default async function AdminTenantHubPage({
     { count: studentCount },
     { count: courseCount },
     { data: schedules },
-    { data: recentEnrollments }
+    { data: recentEnrollments },
+    { count: publishedCourseCount },
+    { data: draftCourse },
   ] = await Promise.all([
     supabase.from("company_members").select("*", { count: "exact", head: true }).eq("company_id", company.id).eq("role", "learner"),
     supabase.from("courses").select("*", { count: "exact", head: true }).eq("company_id", company.id),
     supabase.from("class_schedules").select("*").eq("company_id", company.id).order("starts_at"),
-    supabase.from("enrollments").select("id, status, enrolled_at, profiles(full_name, email)").eq("company_id", company.id).order("enrolled_at", { ascending: false }).limit(5)
+    supabase.from("enrollments").select("id, status, enrolled_at, profiles(full_name, email)").eq("company_id", company.id).order("enrolled_at", { ascending: false }).limit(5),
+    supabase.from("courses").select("*", { count: "exact", head: true }).eq("company_id", company.id).eq("status", "published"),
+    supabase.from("courses").select("id").eq("company_id", company.id).eq("status", "draft").order("created_at", { ascending: false }).limit(1).maybeSingle(),
   ]);
 
   const upcomingClasses = (schedules || []).slice(0, 4);
+
+  // First-run "Get started" checklist: right after launch, and until a course is published.
+  const isWelcome = welcome === "1";
+  const showGetStarted = shouldShowGetStarted({ welcome: isWelcome, publishedCourseCount: publishedCourseCount ?? 0 });
+  let joinUrl = `/academy/${company.slug}/join`;
+  if (showGetStarted) {
+    const h = await headers();
+    const host = h.get("x-forwarded-host") ?? h.get("host");
+    const proto = h.get("x-forwarded-proto") ?? (host?.startsWith("localhost") ? "http" : "https");
+    // On the academy's own subdomain the proxy adds x-tenant-slug and paths are relative to it.
+    const onSubdomain = h.get("x-tenant-slug") === company.slug;
+    if (host) joinUrl = `${proto}://${host}${onSubdomain ? "/join" : joinUrl}`;
+  }
 
   return (
     <div className="container max-w-7xl px-4 py-8 md:py-12">
@@ -81,8 +104,25 @@ export default async function AdminTenantHubPage({
         </div>
       </div>
 
+      {showGetStarted && (
+        <GetStartedChecklist
+          slug={company.slug}
+          academyName={company.name}
+          joinUrl={joinUrl}
+          welcome={isWelcome}
+          draftCourseId={draftCourse?.id ?? null}
+          steps={getStartedSteps({
+            logoUrl: company.logo_url,
+            primaryColor: company.primary_color,
+            courseCount: courseCount ?? 0,
+            publishedCourseCount: publishedCourseCount ?? 0,
+            learnerCount: studentCount ?? 0,
+          })}
+        />
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        
+
         {/* Left Column: Stats & Timetable */}
         <div className="lg:col-span-8 space-y-8">
           
