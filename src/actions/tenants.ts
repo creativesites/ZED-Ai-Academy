@@ -72,7 +72,10 @@ export async function ensureTenantMembership(
   const supabase = createServiceClient();
   let clerkUser: any = null;
   try {
-    clerkUser = await currentUser();
+    // Only use the signed-in user when it is the user being joined. An admin confirming
+    // a learner's payment must not copy the admin's name and email onto the learner.
+    const signedIn = await currentUser();
+    if (signedIn?.id === userId) clerkUser = signedIn;
   } catch {
     // Webhooks or background tasks don't have request auth context
   }
