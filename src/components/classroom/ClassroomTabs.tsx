@@ -44,7 +44,7 @@ export function ClassroomTabs({ companyId, isAdminOrInstructor, companySlug, ini
   const filteredTabs = tabs.filter(tab => !tab.instructorOnly || isAdminOrInstructor);
 
   return (
-    <div className="flex flex-col lg:flex-row gap-4 lg:gap-8 pb-24 lg:pb-0">
+    <div className="flex flex-col lg:flex-row gap-4 lg:gap-8 pb-40 lg:pb-0 min-w-0">
       {/* 
         Desktop Sidebar: Visible only on lg screens 
       */}
@@ -75,7 +75,7 @@ export function ClassroomTabs({ companyId, isAdminOrInstructor, companySlug, ini
       {/* 
         Mobile Bottom Navigation: Fixed to bottom on small screens 
       */}
-      <nav className="lg:hidden fixed bottom-6 left-4 right-4 z-50 bg-white/80 backdrop-blur-lg border border-slate-200 shadow-2xl rounded-3xl px-2 py-3">
+      <nav className="lg:hidden fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom)+0.5rem)] left-4 right-4 z-40bg-white/80 backdrop-blur-lg border border-slate-200 shadow-2xl rounded-3xl px-2 py-3">
         <div className="flex justify-around items-center max-w-md mx-auto">
           {filteredTabs.map((tab) => {
             const isActive = activeTab === tab.id;

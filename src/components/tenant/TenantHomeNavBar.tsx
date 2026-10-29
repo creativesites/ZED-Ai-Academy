@@ -71,7 +71,7 @@ export default function TenantHomeNavBar({
                     {/* === BRAND === */}
                     <Link
                         href={`/academy/${tenant.slug}`}
-                        className="flex items-center gap-2.5 flex-shrink-0 group"
+                        className="flex items-center gap-2.5 min-w-0 group"
                         onClick={() => setIsMobileMenuOpen(false)}
                     >
                         <div
@@ -94,7 +94,7 @@ export default function TenantHomeNavBar({
                         </div>
                         <span
                             className={cn(
-                                "text-[15px] font-extrabold tracking-tight leading-none",
+                                "text-[15px] font-extrabold tracking-tight leading-none truncate min-w-0",
                                 isDark ? "text-[#f0f6fc]" : "text-[#062e39]"
                             )}
                         >

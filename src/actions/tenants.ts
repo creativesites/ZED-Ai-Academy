@@ -1,36 +1,35 @@
 "use server";
 
-import { auth, currentUser, clerkClient } from "@clerk/nextjs/server";
+import { randomInt } from "node:crypto";
+import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createServiceClient } from "@/lib/supabase/server";
-import type { CompanyMemberRole, UserRole } from "@/types/database";
+import { ensureTenantMembership } from "@/lib/tenants/membership";
+import type { CompanyMemberRole } from "@/types/database";
 
-type JoinTenantRole = "student" | "learner" | "teacher";
-
-function normalizeJoinRole(role: JoinTenantRole): CompanyMemberRole {
-  return role === "teacher" ? "teacher" : "learner";
-}
-
-function profileRoleForJoin(currentRole: UserRole | null | undefined, membershipRole: CompanyMemberRole): UserRole {
-  if (currentRole === "super_admin" || currentRole === "company_admin" || currentRole === "instructor") {
-    return currentRole;
-  }
-  if (membershipRole === "teacher") return "teacher";
-  return currentRole ?? "learner";
+/** Only allow same-site relative redirects. */
+function safeNextPath(next: string): string | null {
+  if (!next.startsWith("/") || next.startsWith("//") || next.startsWith("/\\")) return null;
+  return next;
 }
 
 /**
  * Server action to join a tenant from the public landing page.
  * If signed out, redirects to sign-up with tenant context.
+ *
+ * Signed-in users always join as learners here. Staff roles require the
+ * academy's staff code (join page / onboarding) — never trust a role sent from
+ * the form. ensureTenantMembership lives in a server-only module so it cannot
+ * be called directly from the browser as a server action.
  */
 export async function joinTenantBySlug(formData: FormData) {
   const slug = String(formData.get("tenantSlug") ?? "");
-  const requestedRole = String(formData.get("role") ?? "student") as JoinTenantRole;
+  const requestedRole = String(formData.get("role") ?? "student");
   const next = String(formData.get("next") ?? "");
 
   const { userId } = await auth();
-  
+
   if (!userId) {
     const params = new URLSearchParams({
       role: requestedRole === "teacher" ? "teacher" : "student",
@@ -50,117 +49,17 @@ export async function joinTenantBySlug(formData: FormData) {
     throw new Error("Academy not found.");
   }
 
-  await ensureTenantMembership(userId, company.id, normalizeJoinRole(requestedRole));
+  // Staff must go through the staff-code check on the join page.
+  if (requestedRole === "teacher") {
+    redirect(`/academy/${company.slug}/join?role=teacher`);
+  }
+
+  await ensureTenantMembership(userId, company.id, "learner");
 
   revalidatePath(`/academy/${company.slug}`);
   revalidatePath("/dashboard");
-  
-  // If they are a learner, go to the academy classroom. 
-  // If teacher, they'll also likely want the classroom/dashboard.
-  redirect(next || `/academy/${company.slug}/classroom`);
-}
 
-/**
- * Core utility to ensure a profile and membership exist for a specific tenant.
- * Does NOT overwrite existing high-level roles (admin/instructor).
- */
-export async function ensureTenantMembership(
-  userId: string,
-  companyId: string,
-  role: CompanyMemberRole = "learner"
-) {
-  const supabase = createServiceClient();
-  let clerkUser: any = null;
-  try {
-    clerkUser = await currentUser();
-  } catch {
-    // Webhooks or background tasks don't have request auth context
-  }
-
-  if (!clerkUser) {
-    try {
-      const client = await clerkClient();
-      clerkUser = await client.users.getUser(userId);
-    } catch (e) {
-      console.warn("[ensureTenantMembership] Could not fetch clerk user directly:", e);
-    }
-  }
-
-  const email = clerkUser?.emailAddresses?.find((e: any) => e.id === clerkUser.primaryEmailAddressId)?.emailAddress 
-    ?? clerkUser?.emailAddresses?.[0]?.emailAddress 
-    ?? null;
-  const fullName = [clerkUser?.firstName, clerkUser?.lastName].filter(Boolean).join(" ") || clerkUser?.fullName || null;
-
-  const { data: existingProfile } = await supabase
-    .from("profiles")
-    .select("role, company_id")
-    .eq("id", userId)
-    .maybeSingle();
-
-  const nextProfileRole = profileRoleForJoin((existingProfile?.role as UserRole | undefined) ?? null, role);
-  
-  // Keep existing company_id as default if it exists, otherwise set it.
-  const companyIdUpdate = existingProfile?.company_id ? existingProfile.company_id : companyId;
-
-  await supabase.from("profiles").upsert(
-    {
-      id: userId,
-      full_name: fullName,
-      email,
-      avatar_url: clerkUser?.imageUrl ?? null,
-      role: nextProfileRole,
-      company_id: companyIdUpdate,
-      updated_at: new Date().toISOString(),
-    },
-    { onConflict: "id" }
-  );
-
-  const { error } = await supabase.from("company_members").upsert(
-    {
-      company_id: companyId,
-      profile_id: userId,
-      status: "active",
-      role,
-      joined_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    },
-    { onConflict: "company_id, profile_id" }
-  );
-
-  if (error) {
-    throw new Error(error.message);
-  }
-
-  // SYNC WITH CLERK
-  // Ensure the user is added to the Clerk organization
-  // Since companyId in DB IS the Clerk Organization ID
-  try {
-    const client = await clerkClient();
-    
-    // Check if membership already exists to avoid 422
-    const memberships = await client.organizations.getOrganizationMembershipList({
-      organizationId: companyId,
-    });
-    
-    const exists = memberships.data.some(m => m.publicUserData?.userId === userId);
-    
-    if (!exists) {
-      // Add as basic member (learner/teacher)
-      // Admins are usually created via organization.created webhook or manual invite
-      await client.organizations.createOrganizationMembership({
-        organizationId: companyId,
-        userId: userId,
-        role: role === "company_admin" ? "org:admin" : "org:member",
-      });
-      console.log(`[Clerk Sync] Added user ${userId} to org ${companyId} as ${role}`);
-    }
-  } catch (clerkError: any) {
-    console.error("[Clerk Sync Error] Failed to add user to organization:", clerkError.message);
-    // We don't throw here to avoid failing the enrollment if only Clerk sync fails,
-    // but ideally we should keep them in sync.
-  }
-
-  return { success: true };
+  redirect(safeNextPath(next) ?? `/academy/${company.slug}/classroom`);
 }
 
 /**
@@ -184,6 +83,10 @@ export async function validateAndJoinStaff(tenantSlug: string, code: string) {
   }
 
   const cleanCode = code.trim();
+  // NULL or the legacy "0000" default means staff sign-up is not enabled.
+  if (!company.teacher_code || company.teacher_code === "0000") {
+    return { error: "This academy hasn't enabled staff sign-up yet. Ask the owner to set a staff access code." };
+  }
   if (!cleanCode || cleanCode !== company.teacher_code) {
     return { error: "Invalid staff access code. Please check with your academy administrator." };
   }
@@ -222,7 +125,7 @@ export async function regenerateStaffCode(companyId: string) {
     }
   }
 
-  const newCode = Math.floor(100000 + Math.random() * 900000).toString();
+  const newCode = randomInt(100000, 1000000).toString();
 
   const { error } = await supabase
     .from("companies")

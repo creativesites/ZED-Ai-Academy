@@ -2,39 +2,50 @@ import { SignUp } from "@clerk/nextjs";
 import { getSiteAsset } from "@/lib/site-assets";
 import Link from "next/link";
 import { ArrowLeft, Rocket, CheckCircle2, Building2, GraduationCap, Users } from "lucide-react";
+import { afterSignInPath, afterSignUpPath, intentQuery, intentTenant, readSignupIntent } from "@/lib/auth/signup-flow";
 
 export const metadata = { title: "Join — Zed AI Academy" };
 
-export default async function SignUpPage(props: { searchParams: Promise<{ enroll_course?: string; role?: string; tenant?: string }> }) {
-  const { enroll_course, role, tenant } = await props.searchParams;
+export default async function SignUpPage(props: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
+  const intent = readSignupIntent(await props.searchParams);
+  const tenant = intentTenant(intent);
   const bgImage = await getSiteAsset("auth_bg", "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200&q=80&auto=format&fit=crop");
 
-  const normalizedRole = role === "company_admin" || role === "teacher" || role === "student" ? role : null;
-  const redirectParams = new URLSearchParams();
-  if (normalizedRole) redirectParams.set("role", normalizedRole);
-  if (enroll_course) redirectParams.set("enroll_course", enroll_course);
-  if (tenant) redirectParams.set("tenant", tenant);
-  const forceRedirectUrl = `/onboarding${redirectParams.toString() ? `?${redirectParams.toString()}` : ""}`;
+  const normalizedRole = intent.role;
+  // New accounts (email or Google) go here; an existing account that signs in
+  // from this page (Clerk transfers it to sign-in) goes to afterSignInPath.
+  const forceRedirectUrl = afterSignUpPath(intent);
+  const signInForceRedirectUrl = afterSignInPath(intent);
+  const signInQuery = intentQuery(intent);
+  const signInUrl = `/sign-in${signInQuery ? `?${signInQuery}` : ""}`;
+  const chooserQuery = intentQuery(intent, { role: null });
 
   const roleChoices = [
     {
-      href: "/sign-up?role=student",
+      role: "student" as const,
       title: "Student",
-      description: "Join courses, classrooms, and academies as a learner.",
+      description: tenant ? "Join this academy as a learner." : "Join courses, classrooms, and academies as a learner.",
       icon: GraduationCap,
     },
     {
-      href: "/sign-up?role=teacher",
+      role: "teacher" as const,
       title: "Teacher",
-      description: "Join a tenant academy as a teacher from its academy page.",
+      description: tenant
+        ? "Join this academy's teaching staff (you'll need the staff code)."
+        : "Join an academy as a teacher from its invite link.",
       icon: Users,
     },
-    {
-      href: "/sign-up?role=company_admin",
-      title: "Tutor / School Owner",
-      description: "Create your own academy tenant and manage students.",
-      icon: Building2,
-    },
+    // Someone arriving from an academy's invite link is joining it, not creating one.
+    ...(tenant
+      ? []
+      : [
+          {
+            role: "company_admin" as const,
+            title: "Tutor / School Owner",
+            description: "Create your own academy and invite your students.",
+            icon: Building2,
+          },
+        ]),
   ];
 
   const roleLabel =
@@ -107,7 +118,7 @@ export default async function SignUpPage(props: { searchParams: Promise<{ enroll
           {/* Logo — visible on all screen sizes */}
           <div className="mb-4 lg:mb-6 flex items-center justify-center flex-col">
             <img
-              src='images/logo-dark.png'
+              src='/images/logo-dark.png'
               alt="Zed AI Academy"
               className="h-20 w-auto"
             />
@@ -121,13 +132,10 @@ export default async function SignUpPage(props: { searchParams: Promise<{ enroll
             <div className="w-full space-y-3">
               {roleChoices.map((choice) => {
                 const Icon = choice.icon;
-                const choiceParams = new URLSearchParams(choice.href.split("?")[1]);
-                if (tenant) choiceParams.set("tenant", tenant);
-                if (enroll_course) choiceParams.set("enroll_course", enroll_course);
-                const href = `/sign-up?${choiceParams.toString()}`;
+                const href = `/sign-up?${intentQuery(intent, { role: choice.role })}`;
                 return (
                   <Link
-                    key={choice.href}
+                    key={choice.role}
                     href={href}
                     className="group flex w-full items-center gap-4 rounded-2xl border border-slate-200 bg-white p-4 text-left transition-all hover:border-[#fd5523]/40 hover:bg-[#fff6ee]"
                   >
@@ -146,6 +154,11 @@ export default async function SignUpPage(props: { searchParams: Promise<{ enroll
             <div>
               <SignUp
                 forceRedirectUrl={forceRedirectUrl}
+                signInForceRedirectUrl={signInForceRedirectUrl}
+                signInUrl={signInUrl}
+                // Routing hint only (never trusted for permissions): lets an interrupted
+                // sign-up resume in the right place, see /after-sign-in.
+                unsafeMetadata={{ signupRole: normalizedRole, ...(tenant ? { signupTenant: tenant } : {}) }}
                 appearance={{
                   elements: {
                     formButtonPrimary:
@@ -167,7 +180,18 @@ export default async function SignUpPage(props: { searchParams: Promise<{ enroll
                   },
                 } as any}
               />
-              <Link href="/sign-up" className="mt-4 block text-center text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-[#fd5523]">
+              <p className="mt-4 text-center text-xs leading-relaxed text-slate-500">
+                By continuing you agree to the{" "}
+                <Link href="/terms" className="font-bold text-[#fd5523] hover:underline">
+                  Terms
+                </Link>{" "}
+                and{" "}
+                <Link href="/privacy" className="font-bold text-[#fd5523] hover:underline">
+                  Privacy Policy
+                </Link>
+                .
+              </p>
+              <Link href={`/sign-up${chooserQuery ? `?${chooserQuery}` : ""}`} className="mt-4 block text-center text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-[#fd5523]">
                 Choose a different account type
               </Link>
             </div>

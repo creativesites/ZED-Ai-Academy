@@ -1,10 +1,11 @@
-import { auth } from "@clerk/nextjs/server";
+import { auth, currentUser } from "@clerk/nextjs/server";
+import { resumeOnboardingPath } from "@/lib/auth/signup-flow";
 import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 import { ensureProfile } from "@/lib/supabase/ensure-profile";
 import { resolveHome, tenantLandingPath } from "@/lib/tenants/resolve-home";
 import { createServiceClient } from "@/lib/supabase/server";
-import { ensureTenantMembership } from "@/actions/tenants";
+import { ensureTenantMembership } from "@/lib/tenants/membership";
 
 /**
  * Post-sign-in router. Signed-in users should never idle on the main site:
@@ -76,7 +77,14 @@ export async function GET(req: NextRequest) {
   const home = await resolveHome(userId, cookieStore.get("last_visited_tenant")?.value);
 
   if (!home.onboardingCompleted) {
-    return NextResponse.redirect(new URL("/onboarding", req.url));
+    // Members of an academy (e.g. joined through an invite link) go straight in.
+    if (home.defaultTenant) {
+      return NextResponse.redirect(new URL(tenantLandingPath(home.defaultTenant), req.url));
+    }
+    // Resume an interrupted sign-up where it started (academy owner, or invited
+    // student/teacher), using the routing hint stored at sign-up.
+    const user = await currentUser().catch(() => null);
+    return NextResponse.redirect(new URL(resumeOnboardingPath(user?.unsafeMetadata ?? null), req.url));
   }
 
   // Platform super admins go straight to the Super Admin Control Plane

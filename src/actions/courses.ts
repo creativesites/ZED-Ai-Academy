@@ -6,6 +6,7 @@ import { auth } from "@clerk/nextjs/server";
 import { createClient } from "@/lib/supabase/server";
 import type { CourseLevel, PriceType } from "@/types/database";
 import { ZEDAI_TENANT_ID } from "@/lib/tenants/constants";
+import { requireCourseEditor } from "@/lib/courses/authorize";
 
 function slugify(text: string) {
   return text
@@ -164,17 +165,20 @@ export async function createCourse(formData: FormData) {
   }
 
   if (tenantSlug) {
+    revalidatePath(`/academy/${tenantSlug}/admin`);
     revalidatePath(`/academy/${tenantSlug}/admin/courses`);
-    redirect(`/academy/${tenantSlug}/admin/courses/${course.id}`);
   }
+
+  // The course builder lives at /creator/courses/[id] for every academy.
 
   revalidatePath("/creator/courses");
   redirect(`/creator/courses/${course.id}`);
 }
 
 export async function updateCourse(courseId: string, formData: FormData) {
-  const { userId, orgId } = await auth();
+  const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
+  await requireCourseEditor(courseId, userId);
 
   const supabase = createClient();
   const priceType = formData.get("price_type") as PriceType;
@@ -191,8 +195,7 @@ export async function updateCourse(courseId: string, formData: FormData) {
       price_type: priceType,
       price_amount: priceAmount,
     })
-    .eq("id", courseId)
-    .eq(orgId ? "company_id" : "instructor_id", orgId || userId);
+    .eq("id", courseId);
 
   if (error) throw new Error(error.message);
 
@@ -200,8 +203,11 @@ export async function updateCourse(courseId: string, formData: FormData) {
 }
 
 export async function publishCourse(courseId: string, publish: boolean) {
-  const { userId, orgId } = await auth();
+  const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
+  // Authorized by the course's own academy, not the active organization (which
+  // may be another academy and used to make this update silently match nothing).
+  const access = await requireCourseEditor(courseId, userId);
 
   const supabase = createClient();
 
@@ -212,24 +218,32 @@ export async function publishCourse(courseId: string, publish: boolean) {
   const { error } = await supabase
     .from("courses")
     .update({ status: publish ? "published" : "draft" })
-    .eq("id", courseId)
-    .eq(orgId ? "company_id" : "instructor_id", orgId || userId);
+    .eq("id", courseId);
 
   if (error) throw new Error(error.message);
   revalidatePath(`/creator/courses/${courseId}`);
+  if (access.companyId) {
+    const { data: company } = await supabase.from("companies").select("slug").eq("id", access.companyId).maybeSingle();
+    if (company?.slug) {
+      revalidatePath(`/academy/${company.slug}`);
+      revalidatePath(`/academy/${company.slug}/admin`);
+      revalidatePath(`/academy/${company.slug}/admin/courses`);
+    }
+  }
 }
 
 export async function deleteCourse(courseId: string) {
-  const { userId, orgId } = await auth();
+  const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
+  const access = await requireCourseEditor(courseId, userId);
+  if (!access.canDelete) throw new Error("Only the course owner or an academy admin can delete this course.");
 
   const supabase = createClient();
 
   const { error } = await supabase
     .from("courses")
     .delete()
-    .eq("id", courseId)
-    .eq(orgId ? "company_id" : "instructor_id", orgId || userId);
+    .eq("id", courseId);
 
   if (error) throw new Error(error.message);
   revalidatePath("/creator/courses");

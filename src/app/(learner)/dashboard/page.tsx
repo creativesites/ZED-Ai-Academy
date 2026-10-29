@@ -232,7 +232,7 @@ export default async function DashboardPage() {
           </div>
 
           {academies.length === 0 ? (
-            <div className="bg-white rounded-3xl border border-slate-200/80 p-10 text-center shadow-sm">
+            <div className="bg-white rounded-3xl border border-slate-200/80 p-6 sm:p-10 text-center shadow-sm">
               <div className="h-16 w-16 rounded-2xl bg-orange-50 text-[#fd5523] mx-auto flex items-center justify-center mb-4">
                 <Building2 className="h-8 w-8" />
               </div>

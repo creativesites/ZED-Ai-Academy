@@ -9,6 +9,11 @@
     "lint": "eslint",
     "gen:tutor-contract": "node scripts/gen-tutor-contract.mjs",
     "test:tutor": "node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test \"src/lib/tutor/**/*.test.ts\"",
+    "test:payments": "node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test \"src/lib/payments/**/*.test.ts\"",
+    "test:unit": "node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test \"src/lib/auth/**/*.test.ts\" \"src/lib/studio/**/*.test.ts\" \"src/lib/jitsi/**/*.test.ts\" \"src/lib/tenants/**/*.test.ts\" \"src/lib/color.test.ts\"",
+    "test": "npm run test:unit && npm run test:tutor && npm run test:payments",
+    "typecheck": "tsc --noEmit",
+    "check": "npm run typecheck && npm test",
     "sync:rive": "node scripts/sync-rive.mjs",
     "check:rive": "node scripts/sync-rive.mjs --check",
     "test:rive": "node scripts/rive-check/run.mjs"

@@ -1,108 +1,157 @@
 "use client";
 
-import { CreateOrganization, useOrganizationList } from "@clerk/nextjs";
+import { useState } from "react";
+import { useClerk } from "@clerk/nextjs";
 import Link from "next/link";
-import { ArrowRight, Building2, Rocket, Sparkles } from "lucide-react";
+import { ArrowRight, Loader2, Rocket } from "lucide-react";
+import { createAcademy } from "@/actions/academy";
+
+const NAME_MAX = 80;
+const TAGLINE_MAX = 160;
 
 export function LaunchAcademyClient() {
-  const { userMemberships } = useOrganizationList({
-    userMemberships: { infinite: true },
-  });
-  const hasOrg = (userMemberships?.data?.length ?? 0) > 0;
+  const { setActive } = useClerk();
+  const [name, setName] = useState("");
+  const [tagline, setTagline] = useState("");
+  const [status, setStatus] = useState<"idle" | "creating" | "opening">("idle");
+  const [error, setError] = useState<string | null>(null);
+
+  const busy = status !== "idle";
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (busy) return;
+
+    const trimmed = name.trim();
+    if (trimmed.length < 2) {
+      setError("Please enter a name for your academy.");
+      return;
+    }
+
+    setError(null);
+    setStatus("creating");
+    try {
+      const result = await createAcademy({ name: trimmed, tagline: tagline.trim() || null });
+      if (!result.ok) {
+        setError(result.error);
+        setStatus("idle");
+        return;
+      }
+
+      setStatus("opening");
+      try {
+        await setActive({ organization: result.organizationId });
+      } catch {
+        // Not fatal: the academy pages authorize from the academy's own records.
+      }
+      // Full navigation so the new session state is used everywhere.
+      window.location.assign(`/academy/${result.slug}/admin?welcome=1`);
+    } catch {
+      setError("We couldn't reach the server. Please check your connection and try again.");
+      setStatus("idle");
+    }
+  }
 
   return (
-    <div className="mx-auto max-w-lg px-4 py-10 md:py-14">
+    <div className="mx-auto w-full max-w-md px-4 py-8 md:py-12">
       <div className="mb-8 space-y-3 text-center">
         <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[#fd5523]/15 text-[#fd5523]">
           <Rocket className="h-7 w-7" />
         </div>
-        <p className="text-[10px] font-black uppercase tracking-[0.28em] text-[#fd5523]">
-          Launch Pad
-        </p>
-        <h1 className="text-2xl font-black tracking-tight text-[#062e39] md:text-3xl">
-          Open your academy
-        </h1>
+        <h1 className="text-2xl font-black tracking-tight text-[#062e39] md:text-3xl">Name your academy</h1>
         <p className="text-sm leading-relaxed text-slate-600">
-          One quick step creates your organization in Clerk. We&apos;ll sync your public academy site
-          and studio tools right after — usually under a minute.
+          This is the name your students will see. You can add your logo and colours next.
         </p>
       </div>
 
-      <ol className="mb-8 space-y-3 rounded-3xl border border-slate-100 bg-slate-50/80 p-5 text-left text-sm text-slate-700">
-        <li className="flex gap-3">
-          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#062e39] text-[10px] font-black text-white">
-            1
-          </span>
-          <span>
-            <strong className="text-[#062e39]">Name your academy</strong> — this becomes your brand
-            across the platform.
-          </span>
-        </li>
-        <li className="flex gap-3">
-          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#062e39] text-[10px] font-black text-white">
-            2
-          </span>
-          <span>
-            <strong className="text-[#062e39]">Optional logo</strong> — add it now or later in
-            settings.
-          </span>
-        </li>
-        <li className="flex gap-3">
-          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#062e39] text-[10px] font-black text-white">
-            3
-          </span>
-          <span>
-            <strong className="text-[#062e39]">Continue</strong> — we&apos;ll drop you into studio to
-            publish your first course when you&apos;re ready.
-          </span>
-        </li>
-      </ol>
+      <form
+        onSubmit={handleSubmit}
+        className="space-y-5 rounded-3xl border border-slate-100 bg-white p-5 shadow-sm sm:p-6"
+        noValidate
+      >
+        <div className="space-y-1.5">
+          <label htmlFor="academy-name" className="block text-sm font-bold text-[#062e39]">
+            Academy name
+          </label>
+          <input
+            id="academy-name"
+            name="name"
+            type="text"
+            required
+            autoFocus
+            autoComplete="organization"
+            maxLength={NAME_MAX}
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            disabled={busy}
+            placeholder="e.g. Lusaka ICT Academy"
+            aria-invalid={Boolean(error)}
+            aria-describedby={error ? "academy-error" : undefined}
+            className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50/60 px-4 text-base text-slate-900 outline-none transition focus:border-[#fd5523] focus:bg-white focus:ring-4 focus:ring-[#fd5523]/10 disabled:opacity-60"
+          />
+        </div>
 
-      <div className="flex justify-center align-center">
-        <CreateOrganization
-          afterCreateOrganizationUrl="/creator/courses"
-          appearance={{
-            elements: {
-              card: "shadow-none bg-transparent",
-              navbar: "hidden",
-              headerTitle: "text-[#062e39] font-black text-lg",
-              formButtonPrimary:
-                "bg-[#fd5523] hover:bg-[#ef4a16] text-sm font-bold rounded-xl",
-              formFieldInput: "rounded-xl border-slate-200",
-            },
-          }}
-        />
-      </div>
+        <div className="space-y-1.5">
+          <label htmlFor="academy-tagline" className="block text-sm font-bold text-[#062e39]">
+            Short tagline <span className="font-normal text-slate-400">(optional)</span>
+          </label>
+          <input
+            id="academy-tagline"
+            name="tagline"
+            type="text"
+            maxLength={TAGLINE_MAX}
+            value={tagline}
+            onChange={(e) => setTagline(e.target.value)}
+            disabled={busy}
+            placeholder="e.g. Practical computer skills for everyone"
+            className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50/60 px-4 text-base text-slate-900 outline-none transition focus:border-[#fd5523] focus:bg-white focus:ring-4 focus:ring-[#fd5523]/10 disabled:opacity-60"
+          />
+        </div>
 
-      {hasOrg && (
-        <p className="mt-6 text-center text-xs text-slate-500">
-          You already belong to an organization.{" "}
-          <Link href="/creator/courses" className="font-bold text-[#fd5523] underline-offset-4 hover:underline">
-            Go to studio
-          </Link>
-        </p>
-      )}
+        {error && (
+          <p id="academy-error" role="alert" className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">
+            {error}
+          </p>
+        )}
 
-      <div className="mt-10 flex flex-col items-center gap-4 border-t border-slate-100 pt-8">
-        <p className="text-xs text-slate-500">Prefer to finish profile details first?</p>
-        <Link
-          href="/onboarding?role=company_admin"
-          className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-6 py-3 text-sm font-semibold text-[#062e39] shadow-sm transition-colors hover:bg-slate-50"
+        <button
+          type="submit"
+          disabled={busy}
+          className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#fd5523] text-base font-bold text-white shadow-lg shadow-[#fd5523]/20 transition hover:bg-[#ef4a16] active:scale-[0.99] disabled:cursor-wait disabled:opacity-80"
         >
-          <Building2 className="h-4 w-4" />
-          Complete profile wizard
-          <ArrowRight className="h-4 w-4 opacity-60" />
-        </Link>
-      </div>
+          {busy ? (
+            <>
+              <Loader2 className="h-5 w-5 animate-spin" />
+              {status === "creating" ? "Creating your academy…" : "Opening your academy…"}
+            </>
+          ) : (
+            <>
+              Create my academy
+              <ArrowRight className="h-5 w-5" />
+            </>
+          )}
+        </button>
 
-      <div className="mt-8 flex items-start gap-3 rounded-2xl bg-[#fff6ee] p-4 text-xs leading-relaxed text-slate-600">
-        <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-[#fd5523]" />
-        <span>
-          Tip: After your org exists, use{" "}
-          <strong className="text-[#062e39]">Organization</strong> in the header to switch academies if
-          you join more than one later.
-        </span>
-      </div>
+        <p aria-live="polite" className="sr-only">
+          {status === "creating" ? "Creating your academy" : status === "opening" ? "Opening your academy" : ""}
+        </p>
+      </form>
+
+      <p className="mt-6 text-center text-xs leading-relaxed text-slate-500">
+        By continuing you agree to the{" "}
+        <Link href="/terms" className="font-bold text-[#fd5523] underline-offset-4 hover:underline">
+          Terms
+        </Link>
+        ,{" "}
+        <Link href="/privacy" className="font-bold text-[#fd5523] underline-offset-4 hover:underline">
+          Privacy Policy
+        </Link>{" "}
+        and the{" "}
+        <Link href="/academy-agreement" className="font-bold text-[#fd5523] underline-offset-4 hover:underline">
+          Academy Agreement
+        </Link>
+        .
+      </p>
     </div>
   );
 }

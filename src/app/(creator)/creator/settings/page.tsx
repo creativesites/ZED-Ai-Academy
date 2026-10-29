@@ -15,7 +15,7 @@ export default async function SettingsPage() {
     return (
       <div className="container" style={{ paddingTop: "60px", paddingBottom: "80px" }}>
         <Card className="rounded-[2.5rem] border-0 shadow-xl overflow-hidden bg-[#fff6ee]">
-          <CardContent className="p-12 text-center space-y-6">
+          <CardContent className="p-6 sm:p-12 text-center space-y-6">
             <div className="mx-auto h-20 w-20 bg-white rounded-3xl flex items-center justify-center text-[#fd5523] shadow-sm">
               <Building2 className="h-10 w-10" />
             </div>

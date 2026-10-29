@@ -54,7 +54,7 @@ export default async function TenantAdminStaffPage({
           <Sparkles className="h-3.5 w-3.5" />
           <span>Team Management</span>
         </div>
-        <h1 className="text-3xl md:text-5xl font-black text-[#062e39] tracking-tight leading-none uppercase">
+        <h1 className="text-3xl md:text-5xl font-black text-[#062e39] tracking-tight leading-tight md:leading-none uppercase break-words">
           {company.name} <span className="text-[#fd5523]">Staff</span>
         </h1>
         <p className="mt-2 text-slate-500 text-sm sm:text-base font-medium">

@@ -2,7 +2,7 @@ import { auth } from "@clerk/nextjs/server";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { JoinClient } from "./join-client";
-import { ensureTenantMembership, validateAndJoinStaff } from "@/actions/tenants";
+import { ensureTenantMembership } from "@/lib/tenants/membership";
 
 export const metadata = {
   title: "Join Academy",
@@ -60,8 +60,15 @@ export default async function TenantJoinPage({
     }
 
     // Auto-join if valid credentials provided
-    if (role === "teacher" && code && code === company.teacher_code) {
-      await validateAndJoinStaff(company.slug, code);
+    // ("0000" is the legacy "no code set" default and never admits anyone.)
+    if (
+      role === "teacher" &&
+      code &&
+      company.teacher_code &&
+      company.teacher_code !== "0000" &&
+      code.trim() === company.teacher_code
+    ) {
+      await ensureTenantMembership(userId, company.id, "teacher");
       redirect(`/academy/${company.slug}/admin`);
     }
 
@@ -73,7 +80,7 @@ export default async function TenantJoinPage({
 
   return (
     <JoinClient
-      company={company}
+      company={{ id: company.id, name: company.name, slug: company.slug, logo_url: company.logo_url, primary_color: company.primary_color }}
       initialCode={code}
       role={role}
       isSignedIn={Boolean(userId)}

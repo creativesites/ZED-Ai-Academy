@@ -309,7 +309,7 @@ export function GradebookTab({
             <p className="text-xs font-bold uppercase tracking-wider">Loading Gradebook Records...</p>
           </div>
         ) : filteredStudents.length === 0 ? (
-          <div className="bg-white rounded-3xl p-12 text-center border border-slate-200/80 shadow-xs max-w-lg mx-auto my-8">
+          <div className="bg-white rounded-3xl p-6 sm:p-12 text-center border border-slate-200/80 shadow-xs max-w-lg mx-auto my-8">
             <div className="h-16 w-16 rounded-2xl bg-slate-50 flex items-center justify-center mx-auto mb-4 text-slate-300">
               <GraduationCap className="h-8 w-8" />
             </div>
