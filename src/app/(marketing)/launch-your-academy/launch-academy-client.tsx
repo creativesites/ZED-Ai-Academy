@@ -74,6 +74,22 @@ export function LaunchAcademyClient() {
         />
       </div>
 
+      <p className="mt-6 text-center text-xs leading-relaxed text-slate-500">
+        By continuing you agree to the{" "}
+        <Link href="/terms" className="font-bold text-[#fd5523] underline-offset-4 hover:underline">
+          Terms
+        </Link>
+        ,{" "}
+        <Link href="/privacy" className="font-bold text-[#fd5523] underline-offset-4 hover:underline">
+          Privacy Policy
+        </Link>{" "}
+        and the{" "}
+        <Link href="/academy-agreement" className="font-bold text-[#fd5523] underline-offset-4 hover:underline">
+          Academy Agreement
+        </Link>
+        .
+      </p>
+
       {hasOrg && (
         <p className="mt-6 text-center text-xs text-slate-500">
           You already belong to an organization.{" "}
