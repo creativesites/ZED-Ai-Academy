@@ -31,45 +31,33 @@ export function CouponInput({
   }
 
   return (
-    <div style={{ marginTop: "12px" }}>
-      <div style={{ display: "flex", gap: "8px" }}>
-        <div style={{ position: "relative", flex: 1 }}>
-          <Tag style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", width: "14px", height: "14px", color: "rgba(255,255,255,0.4)" }} />
+    <div className="mt-3">
+      <div className="flex gap-2">
+        <div className="relative flex-1">
+          <Tag className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
           <input
             value={code}
             onChange={(e) => { setCode(e.target.value.toUpperCase()); setResult(null); }}
             placeholder="Coupon code"
-            style={{
-              width: "100%", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)",
-              borderRadius: "12px", padding: "10px 12px 10px 34px", color: "#fff",
-              fontSize: "13px", outline: "none", fontFamily: "inherit",
-            }}
+            aria-label="Coupon code"
+            className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-9 pr-3 text-sm text-[#062e39] outline-none focus:border-[#fd5523] focus:ring-2 focus:ring-[#fd5523]/20"
           />
         </div>
         <button
+          type="button"
           onClick={handleApply}
           disabled={pending || !code.trim()}
-          style={{
-            padding: "10px 16px", borderRadius: "12px", border: "none",
-            background: code.trim() ? "#fd5523" : "rgba(255,255,255,0.1)",
-            color: "#fff", fontWeight: 700, fontSize: "13px",
-            cursor: code.trim() ? "pointer" : "not-allowed",
-            display: "flex", alignItems: "center", gap: "6px", flexShrink: 0,
-          }}
+          className="flex shrink-0 items-center gap-1.5 rounded-xl bg-[#062e39] px-4 py-2.5 text-sm font-bold text-white transition-colors hover:bg-[#0b4250] disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400"
         >
-          {pending ? <Loader2 style={{ width: "14px", height: "14px" }} className="animate-spin" /> : "Apply"}
+          {pending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Apply"}
         </button>
       </div>
 
       {result && (
-        <div style={{
-          display: "flex", alignItems: "center", gap: "6px", marginTop: "8px",
-          fontSize: "12px", fontWeight: 600,
-          color: result.ok ? "#86efac" : "#fca5a5",
-        }}>
-          {result.ok
-            ? <CheckCircle style={{ width: "14px", height: "14px" }} />
-            : <XCircle style={{ width: "14px", height: "14px" }} />}
+        <div
+          className={`mt-2 flex items-center gap-1.5 text-xs font-semibold ${result.ok ? "text-green-700" : "text-red-600"}`}
+        >
+          {result.ok ? <CheckCircle className="h-3.5 w-3.5" /> : <XCircle className="h-3.5 w-3.5" />}
           {result.message}
         </div>
       )}

@@ -1,16 +1,19 @@
-import { auth, currentUser } from "@clerk/nextjs/server";
+import { auth } from "@clerk/nextjs/server";
 import { redirect, notFound } from "next/navigation";
-import { createClient, createServiceClient } from "@/lib/supabase/server";
-import { initiatePayment } from "@/lib/payments/paychangu";
-import { randomUUID } from "crypto";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import type { Metadata } from "next";
+import { createClient } from "@/lib/supabase/server";
+import { getPaymentProvider } from "@/lib/payments";
+import { OPEN_ORDER_STATUSES, PROOF_ALLOWED_FROM } from "@/lib/payments/order-status.ts";
+import { formatZmw } from "@/lib/payments/manual-instructions.ts";
+import type { PaymentInstructions, PaymentStart } from "@/lib/payments/types.ts";
 import { buttonVariants } from "@/components/ui/button-variants";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, BookOpen, CheckCircle, Lock, Shield } from "lucide-react";
-import type { Metadata } from "next";
-import { CheckoutPanel } from "@/components/learner/checkout-panel";
+import { ArrowLeft, BookOpen, CheckCircle, Clock3, Lock, Shield, XCircle } from "lucide-react";
+import { PlaceOrderPanel } from "@/components/learner/place-order-panel";
+import { PaymentInstructionsCard } from "@/components/learner/payment-instructions";
+import { PaymentProofForm } from "@/components/learner/payment-proof-form";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -23,77 +26,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     .eq("slug", slug)
     .single();
   return { title: data ? `Checkout — ${data.title}` : "Checkout" };
-}
-
-async function startCheckout(slug: string, courseId: string, userId: string) {
-  "use server";
-
-  const clerkUser = await currentUser();
-  if (!clerkUser) redirect("/sign-in");
-
-  const primaryEmail = clerkUser.emailAddresses.find(
-    (e) => e.id === clerkUser.primaryEmailAddressId
-  )?.emailAddress;
-
-  if (!primaryEmail) throw new Error("No email address on account");
-
-  const supabase = createClient();
-
-  // Get the course
-  const { data: course } = await supabase
-    .from("courses")
-    .select("id, title, price_amount, slug")
-    .eq("id", courseId)
-    .single();
-
-  if (!course || !course.price_amount) throw new Error("Course not found");
-
-  // Check not already enrolled
-  const { data: existing } = await supabase
-    .from("enrollments")
-    .select("id")
-    .eq("user_id", userId)
-    .eq("course_id", courseId)
-    .maybeSingle();
-
-  if (existing) redirect(`/courses/${slug}/learn`);
-
-  // Create pending order
-  const txRef = `zaa-${courseId.slice(0, 8)}-${randomUUID().slice(0, 8)}`;
-
-  const serviceClient = createServiceClient();
-  const { error: orderError } = await serviceClient
-    .from("orders")
-    .insert({
-      user_id: userId,
-      course_id: courseId,
-      amount: course.price_amount,
-      currency: "ZMW",
-      status: "pending",
-      payment_reference: txRef,
-    });
-
-  if (orderError) throw new Error(orderError.message);
-
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
-
-  const result = await initiatePayment({
-    txRef,
-    amount: course.price_amount,
-    currency: "ZMW",
-    email: primaryEmail,
-    firstName: clerkUser.firstName ?? "",
-    lastName: clerkUser.lastName ?? "",
-    courseTitle: course.title,
-    returnUrl: `${appUrl}/courses/${slug}/learn?enrolled=1`,
-    callbackUrl: `${appUrl}/api/webhooks/paychangu`,
-  });
-
-  if (!result.success) {
-    throw new Error(result.error);
-  }
-
-  redirect(result.checkoutUrl);
 }
 
 export default async function CheckoutPage({ params }: Props) {
@@ -120,18 +52,52 @@ export default async function CheckoutPage({ params }: Props) {
     ? course.companies[0]
     : course.companies;
   const tenantSlug = comp?.slug || "zedai";
+  const listPrice = Number(course.price_amount);
 
-  // Already enrolled?
-  const { data: existing } = await supabase
+  const { data: enrollment } = await supabase
     .from("enrollments")
-    .select("id")
+    .select("status")
     .eq("user_id", userId)
     .eq("course_id", course.id)
     .maybeSingle();
+  if (enrollment?.status === "active") redirect(`/courses/${slug}/learn`);
 
-  if (existing) redirect(`/courses/${slug}/learn`);
+  const { data: openOrder } = await supabase
+    .from("orders")
+    .select("id, status, amount, currency, payment_reference, transaction_id, rejection_reason")
+    .eq("user_id", userId)
+    .eq("course_id", course.id)
+    .in("status", [...OPEN_ORDER_STATUSES])
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
 
-  const startCheckoutForCourse = startCheckout.bind(null, slug, course.id, userId);
+  // Work out what an open order shows. Pending and rejected orders need the payment
+  // instructions again; awaiting ones only show a status.
+  let instructions: PaymentInstructions | null = null;
+  let continueToProvider = false;
+  let notConfigured = false;
+  if (openOrder && PROOF_ALLOWED_FROM.includes(openOrder.status)) {
+    const provider = getPaymentProvider();
+    let start: PaymentStart | null | undefined;
+    if (provider.resumePayment) {
+      start = await provider.resumePayment({
+        id: openOrder.id,
+        reference: openOrder.payment_reference ?? "",
+        amount: Number(openOrder.amount),
+        currency: openOrder.currency,
+        courseTitle: course.title,
+        userId,
+        companyId: course.company_id,
+      });
+    }
+    if (start?.kind === "manual") instructions = start.instructions;
+    else if (start === null) notConfigured = true;
+    else continueToProvider = true;
+  }
+
+  const isAwaiting = openOrder?.status === "awaiting_confirmation";
+  const isRejected = openOrder?.status === "rejected";
 
   return (
     <div className="container" style={{ paddingTop: "60px", paddingBottom: "80px" }}>
@@ -153,12 +119,11 @@ export default async function CheckoutPage({ params }: Props) {
         <h1 className="text-3xl font-bold tracking-tight text-[#062e39]">Complete your enrollment</h1>
       </div>
 
-      <div className="grid gap-8 lg:grid-cols-[1fr_380px]">
+      <div className="grid gap-8 lg:grid-cols-[1fr_420px]">
 
-        {/* Left — course preview + what's included */}
+        {/* Left: course preview + what's included */}
         <div className="space-y-6">
 
-          {/* Course preview */}
           <div className="marketing-card rounded-[2.5rem] border-0 p-6 flex gap-6 items-start">
             <div className="h-24 w-32 shrink-0 overflow-hidden rounded-[1.5rem] bg-[#fff6ee]">
               {course.thumbnail_url ? (
@@ -194,7 +159,6 @@ export default async function CheckoutPage({ params }: Props) {
             </div>
           </div>
 
-          {/* What's included */}
           <div className="marketing-outline-card rounded-[2.5rem] border-0 p-8">
             <div className="mb-5 flex items-center gap-2">
               <CheckCircle className="h-5 w-5 text-[#fd5523]" />
@@ -218,53 +182,109 @@ export default async function CheckoutPage({ params }: Props) {
             </ul>
           </div>
 
-          {/* Trust badges */}
           <div className="flex flex-wrap gap-4 px-2 text-xs font-medium text-slate-400">
             <span className="flex items-center gap-1.5">
               <Shield className="h-3.5 w-3.5" />
-              Secure payment via PayChangu
+              Pay by MTN MoMo, Airtel Money or bank transfer
             </span>
             <span className="flex items-center gap-1.5">
               <Lock className="h-3.5 w-3.5" />
-              End-to-end encrypted
+              Access is granted once the academy confirms your payment
             </span>
           </div>
         </div>
 
-        {/* Right — order summary + CTA */}
-        <div className="h-fit rounded-[2.5rem] bg-[#062e39] p-8 text-white shadow-2xl">
-          <p className="text-xs font-bold uppercase tracking-widest text-[#fd8d69] mb-6">Order Summary</p>
+        {/* Right: order summary and the next step */}
+        <div className="h-fit space-y-6 rounded-[2.5rem] border border-slate-200 bg-white p-8 shadow-sm">
+          <p className="text-xs font-bold uppercase tracking-widest text-[#fd5523]">Order Summary</p>
 
-          <div className="space-y-3 border-b border-white/10 pb-6 mb-6">
+          <div className="space-y-3 border-b border-slate-100 pb-6">
             <div className="flex items-center justify-between text-sm">
-              <span className="text-white/60">Course price</span>
-              <span className="font-bold text-white">ZMW {course.price_amount.toLocaleString()}</span>
+              <span className="text-slate-500">Course price</span>
+              <span className="font-bold text-[#062e39]">{formatZmw(listPrice)}</span>
             </div>
-          </div>
-
-          <CheckoutPanel courseId={course.id} originalPrice={course.price_amount}>
-            {(_finalPrice, _couponCode) => (
-              <form action={startCheckoutForCourse}>
-                <Button
-                  type="submit"
-                  className="w-full rounded-full bg-[#fd5523] py-7 text-base font-bold text-white hover:bg-[#ef4a16] transition-all hover:scale-[1.02] active:scale-95 shadow-xl"
-                >
-                  Pay with PayChangu
-                </Button>
-              </form>
+            {openOrder && (
+              <>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-slate-500">Amount due</span>
+                  <span className="font-bold text-[#062e39]">{formatZmw(Number(openOrder.amount))}</span>
+                </div>
+                {openOrder.payment_reference && (
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-slate-500">Order reference</span>
+                    <span className="font-mono font-bold text-[#062e39]">{openOrder.payment_reference}</span>
+                  </div>
+                )}
+              </>
             )}
-          </CheckoutPanel>
-
-          <p className="mt-4 text-center text-xs font-medium text-white/40">
-            MTN MoMo · Airtel Money · Visa / Mastercard
-          </p>
-
-          <div className="mt-6 rounded-2xl bg-white/5 p-4 text-xs leading-relaxed text-white/50">
-            You&apos;ll be redirected to PayChangu to complete payment securely.
-            Instant access granted after confirmation.
           </div>
+
+          {!openOrder && (
+            <PlaceOrderPanel courseId={course.id} originalPrice={listPrice} />
+          )}
+
+          {continueToProvider && (
+            <PlaceOrderPanel courseId={course.id} originalPrice={listPrice} continueOnly />
+          )}
+
+          {notConfigured && (
+            <Notice tone="amber" icon={<Clock3 className="h-4 w-4" />} title="Payment is not set up yet">
+              This academy has not added its payment details yet. Contact the academy to complete your enrollment.
+            </Notice>
+          )}
+
+          {isAwaiting && (
+            <Notice tone="amber" icon={<Clock3 className="h-4 w-4" />} title="Payment details received">
+              Transaction ID <span className="font-mono font-bold">{openOrder?.transaction_id}</span>. The academy is
+              checking it. You get access as soon as it is confirmed.
+            </Notice>
+          )}
+
+          {instructions && (
+            <>
+              {isRejected && (
+                <Notice tone="red" icon={<XCircle className="h-4 w-4" />} title="Your last payment was not accepted">
+                  {openOrder?.rejection_reason ?? "The academy could not match this payment."} Check the details
+                  below and submit again.
+                </Notice>
+              )}
+              <PaymentInstructionsCard instructions={instructions} />
+              <PaymentProofForm orderId={openOrder!.id} />
+            </>
+          )}
+
+          <p className="text-xs leading-relaxed text-slate-400">
+            Send the exact amount with your order reference in the payment note. Your access starts when the
+            academy confirms the payment.
+          </p>
         </div>
       </div>
+    </div>
+  );
+}
+
+function Notice({
+  tone,
+  icon,
+  title,
+  children,
+}: {
+  tone: "amber" | "red";
+  icon: React.ReactNode;
+  title: string;
+  children: React.ReactNode;
+}) {
+  const styles =
+    tone === "red"
+      ? "border-red-200 bg-red-50 text-red-800"
+      : "border-amber-200 bg-amber-50 text-amber-900";
+  return (
+    <div className={cn("rounded-[1.5rem] border p-5", styles)}>
+      <div className="flex items-center gap-2 font-bold">
+        {icon}
+        {title}
+      </div>
+      <p className="mt-2 text-sm leading-relaxed">{children}</p>
     </div>
   );
 }

@@ -12,7 +12,7 @@ export type CourseStatus = "draft" | "published" | "archived";
 export type PriceType = "free" | "one_time" | "subscription_only" | "both";
 export type CourseLevel = "beginner" | "intermediate" | "advanced";
 export type ContentBlockType = "video" | "text" | "quiz" | "resource" | "image" | "callout" | "tool_spotlight" | "before_after" | "ai_prompt" | "steps" | "checklist" | "key_takeaway" | "expert_note" | "comparison_table" | "case_study" | "meeting" | "practice_exercise" | "learning_objectives" | "glossary" | "discussion_prompt" | "assignment" | "risk_assessment" | "tutor_session";
-export type OrderStatus = "pending" | "paid" | "failed" | "refunded";
+export type OrderStatus = "pending" | "awaiting_confirmation" | "paid" | "rejected" | "failed" | "refunded";
 export type SubscriptionStatus = "active" | "cancelled" | "expired" | "past_due";
 export type MemberStatus = "invited" | "active" | "deactivated";
 export type EnrollmentSource = "individual_purchase" | "subscription" | "company_seat" | "gift" | "manual_admin";
@@ -94,6 +94,7 @@ export interface Database {
           active_room_name: string | null;
           home_template: string;
           home_content: Json;
+          payment_settings: Json;
           teacher_code: string | null;
           status: "active" | "suspended";
           suspended_reason: string | null;
@@ -113,6 +114,7 @@ export interface Database {
           active_room_name?: string | null;
           home_template?: string;
           home_content?: Json;
+          payment_settings?: Json;
           teacher_code?: string | null;
           status?: "active" | "suspended";
           suspended_reason?: string | null;
@@ -130,6 +132,7 @@ export interface Database {
           active_room_name?: string | null;
           home_template?: string;
           home_content?: Json;
+          payment_settings?: Json;
           teacher_code?: string | null;
           status?: "active" | "suspended";
           suspended_reason?: string | null;
@@ -461,6 +464,12 @@ export interface Database {
           payment_method: string | null;
           created_at: string;
           paid_at: string | null;
+          transaction_id: string | null;
+          payment_note: string | null;
+          payment_submitted_at: string | null;
+          rejection_reason: string | null;
+          rejected_at: string | null;
+          decided_by: string | null;
         };
         Insert: {
           user_id: string;
@@ -474,9 +483,16 @@ export interface Database {
         };
         Update: {
           status?: OrderStatus;
+          amount?: number;
           payment_reference?: string | null;
           payment_method?: string | null;
           paid_at?: string | null;
+          transaction_id?: string | null;
+          payment_note?: string | null;
+          payment_submitted_at?: string | null;
+          rejection_reason?: string | null;
+          rejected_at?: string | null;
+          decided_by?: string | null;
         };
         Relationships: R;
       };
