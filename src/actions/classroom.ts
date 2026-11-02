@@ -168,15 +168,45 @@ export async function getClassSchedules(companyId: string) {
   return data;
 }
 
-// Groups and Students
+// Courses / Programs for Cohort assignment
+export async function getCompanyCourses(companyId: string) {
+  const { supabase } = await requireTenantMember(companyId);
+  const { data, error } = await supabase
+    .from("courses")
+    .select("id, title, slug, description, published")
+    .eq("company_id", companyId)
+    .order("title", { ascending: true });
+
+  if (error) return [];
+  return data ?? [];
+}
+
+// Groups and Cohorts
 export async function getClassroomGroups(companyId: string) {
   const { supabase } = await requireTenantMember(companyId);
   const { data, error } = await supabase
     .from("classroom_groups")
-    .select("*")
-    .eq("company_id", companyId);
-  if (error) return [];
-  return data;
+    .select(`
+      *,
+      course:courses(id, title, slug),
+      classroom_group_members(count)
+    `)
+    .eq("company_id", companyId)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    // Graceful fallback if joined columns differ
+    const { data: fallbackData } = await supabase
+      .from("classroom_groups")
+      .select("*")
+      .eq("company_id", companyId);
+    return fallbackData ?? [];
+  }
+
+  return (data ?? []).map((g: any) => ({
+    ...g,
+    students_count: g.classroom_group_members?.[0]?.count ?? 0,
+  }));
 }
 
 export async function getGroupMembers(groupId: string, companyId: string) {
@@ -200,16 +230,84 @@ export async function getGroupMembers(groupId: string, companyId: string) {
 export async function createClassroomGroup(formData: FormData) {
   const companyId = formData.get("companyId") as string;
   const companySlug = formData.get("companySlug") as string;
-  const name = formData.get("name") as string;
-  const description = formData.get("description") as string;
+  const name = (formData.get("name") as string)?.trim();
+  const description = (formData.get("description") as string)?.trim() || null;
+  const courseId = (formData.get("courseId") as string) || null;
+  const academicPeriod = (formData.get("academicPeriod") as string)?.trim() || null;
+  const primaryTeacherId = (formData.get("primaryTeacherId") as string) || null;
+  const color = (formData.get("color") as string) || "#fd5523";
+  const status = (formData.get("status") as string) || "active";
   
+  if (!name) throw new Error("Cohort name is required");
+
+  const { supabase } = await requireInstructor(companyId);
+  const { data, error } = await supabase
+    .from("classroom_groups")
+    .insert({
+      company_id: companyId,
+      name,
+      description,
+      course_id: courseId && courseId !== "all" ? courseId : null,
+      academic_period: academicPeriod,
+      primary_teacher_id: primaryTeacherId && primaryTeacherId !== "all" ? primaryTeacherId : null,
+      color,
+      status,
+    } as any)
+    .select()
+    .single();
+    
+  if (error) throw new Error(error.message);
+  revalidatePath(`/academy/${companySlug}/classroom`);
+  revalidatePath(`/academy/${companySlug}/admin/classroom`);
+  return data;
+}
+
+export async function updateClassroomGroup(groupId: string, formData: FormData) {
+  const companyId = formData.get("companyId") as string;
+  const companySlug = formData.get("companySlug") as string;
+  const name = (formData.get("name") as string)?.trim();
+  const description = (formData.get("description") as string)?.trim() || null;
+  const courseId = (formData.get("courseId") as string) || null;
+  const academicPeriod = (formData.get("academicPeriod") as string)?.trim() || null;
+  const primaryTeacherId = (formData.get("primaryTeacherId") as string) || null;
+  const color = (formData.get("color") as string) || "#fd5523";
+  const status = (formData.get("status") as string) || "active";
+
+  if (!name) throw new Error("Cohort name is required");
+
   const { supabase } = await requireInstructor(companyId);
   const { error } = await supabase
     .from("classroom_groups")
-    .insert({ company_id: companyId, name, description } as any);
-    
+    .update({
+      name,
+      description,
+      course_id: courseId && courseId !== "all" ? courseId : null,
+      academic_period: academicPeriod,
+      primary_teacher_id: primaryTeacherId && primaryTeacherId !== "all" ? primaryTeacherId : null,
+      color,
+      status,
+    } as any)
+    .eq("id", groupId)
+    .eq("company_id", companyId);
+
   if (error) throw new Error(error.message);
+  revalidatePath(`/academy/${companySlug}/classroom`);
   revalidatePath(`/academy/${companySlug}/admin/classroom`);
+  return { success: true };
+}
+
+export async function deleteClassroomGroup(groupId: string, companyId: string, companySlug: string) {
+  const { supabase } = await requireInstructor(companyId);
+  const { error } = await supabase
+    .from("classroom_groups")
+    .delete()
+    .eq("id", groupId)
+    .eq("company_id", companyId);
+
+  if (error) throw new Error(error.message);
+  revalidatePath(`/academy/${companySlug}/classroom`);
+  revalidatePath(`/academy/${companySlug}/admin/classroom`);
+  return { success: true };
 }
 
 export async function addGroupMember(groupId: string, profileId: string, companyId: string, companySlug: string) {

@@ -1414,6 +1414,140 @@ export interface Database {
         };
         Relationships: R;
       };
+      classroom_groups: {
+        Row: {
+          id: string;
+          company_id: string;
+          name: string;
+          description: string | null;
+          course_id: string | null;
+          academic_period: string | null;
+          primary_teacher_id: string | null;
+          status: string;
+          color: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          company_id: string;
+          name: string;
+          description?: string | null;
+          course_id?: string | null;
+          academic_period?: string | null;
+          primary_teacher_id?: string | null;
+          status?: string;
+          color?: string;
+          created_at?: string;
+        };
+        Update: {
+          name?: string;
+          description?: string | null;
+          course_id?: string | null;
+          academic_period?: string | null;
+          primary_teacher_id?: string | null;
+          status?: string;
+          color?: string;
+        };
+        Relationships: R;
+      };
+      classroom_group_members: {
+        Row: {
+          group_id: string;
+          profile_id: string;
+        };
+        Insert: {
+          group_id: string;
+          profile_id: string;
+        };
+        Update: {
+          group_id?: string;
+          profile_id?: string;
+        };
+        Relationships: R;
+      };
+      classroom_folders: {
+        Row: {
+          id: string;
+          company_id: string;
+          cohort_id: string | null;
+          name: string;
+          color: string;
+          icon: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          company_id: string;
+          cohort_id?: string | null;
+          name: string;
+          color?: string;
+          icon?: string;
+          created_at?: string;
+        };
+        Update: {
+          name?: string;
+          cohort_id?: string | null;
+          color?: string;
+          icon?: string;
+        };
+        Relationships: R;
+      };
+      classroom_materials: {
+        Row: {
+          id: string;
+          company_id: string;
+          folder_id: string | null;
+          cohort_id: string | null;
+          course_id: string | null;
+          author_id: string;
+          title: string;
+          description: string | null;
+          material_type: "pdf" | "document" | "slides" | "worksheet" | "code" | "link" | "video";
+          file_url: string | null;
+          file_size_bytes: number;
+          tags: string[];
+          is_pinned: boolean;
+          is_published: boolean;
+          download_count: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          company_id: string;
+          folder_id?: string | null;
+          cohort_id?: string | null;
+          course_id?: string | null;
+          author_id: string;
+          title: string;
+          description?: string | null;
+          material_type?: "pdf" | "document" | "slides" | "worksheet" | "code" | "link" | "video";
+          file_url?: string | null;
+          file_size_bytes?: number;
+          tags?: string[];
+          is_pinned?: boolean;
+          is_published?: boolean;
+          download_count?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          folder_id?: string | null;
+          cohort_id?: string | null;
+          course_id?: string | null;
+          title?: string;
+          description?: string | null;
+          material_type?: "pdf" | "document" | "slides" | "worksheet" | "code" | "link" | "video";
+          file_url?: string | null;
+          file_size_bytes?: number;
+          tags?: string[];
+          is_pinned?: boolean;
+          is_published?: boolean;
+          download_count?: number;
+          updated_at?: string;
+        };
+        Relationships: R;
+      };
       exam_frameworks: {
         Row: {
           id: string;
