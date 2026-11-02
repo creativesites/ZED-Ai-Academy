@@ -12,6 +12,7 @@ import { StudentsTab } from "./StudentsTab";
 import { GradebookTab } from "./GradebookTab";
 import { GroupsTab } from "./GroupsTab";
 import { SessionHistoryTab } from "./SessionHistoryTab";
+import { StudentProgressTab } from "./StudentProgressTab";
 import {
   LayoutDashboard,
   MessageSquare,
@@ -24,6 +25,7 @@ import {
   GraduationCap,
   FolderOpen,
   FileCheck2,
+  Award,
   MoreHorizontal,
   X,
 } from "lucide-react";
@@ -39,6 +41,10 @@ import {
   getCompanyCourses,
   getCompanySessionState,
   getAnnouncements,
+  getClassSchedules,
+  getMyClassroomProgress,
+  getInstructorOverviewStats,
+  getAcademyInstructors,
 } from "@/actions/classroom";
 import { getClassroomAssignments } from "@/actions/classroom-assignments";
 import { getClassroomMaterials } from "@/actions/classroom-materials";
@@ -52,6 +58,7 @@ type TabType =
   | "assignments"
   | "noticeboard"
   | "discussions"
+  | "progress"
   | "students"
   | "gradebook"
   | "groups"
@@ -78,6 +85,10 @@ export function ClassroomTabs({
   const [announcements, setAnnouncements] = useState<any[]>([]);
   const [assignments, setAssignments] = useState<any[]>([]);
   const [materials, setMaterials] = useState<any[]>([]);
+  const [schedules, setSchedules] = useState<any[]>([]);
+  const [studentProgress, setStudentProgress] = useState<any | null>(null);
+  const [instructorStats, setInstructorStats] = useState<any | null>(null);
+  const [instructors, setInstructors] = useState<any[]>([]);
   const [isMobileMoreOpen, setIsMobileMoreOpen] = useState(false);
 
   useEffect(() => {
@@ -89,13 +100,14 @@ export function ClassroomTabs({
   useEffect(() => {
     async function loadData() {
       try {
-        const [groupsData, coursesData, sState, aNotices, aTasks, aDocs] = await Promise.all([
+        const [groupsData, coursesData, sState, aNotices, aTasks, aDocs, aSchedules] = await Promise.all([
           getClassroomGroups(companyId),
           getCompanyCourses(companyId),
           getCompanySessionState(companyId, activeCohortId),
           getAnnouncements(companyId, activeCohortId),
           getClassroomAssignments(companyId, activeCohortId),
           getClassroomMaterials(companyId, { cohortId: activeCohortId }),
+          getClassSchedules(companyId),
         ]);
         setCohorts(groupsData || []);
         setCourses(coursesData || []);
@@ -103,12 +115,26 @@ export function ClassroomTabs({
         setAnnouncements(aNotices || []);
         setAssignments(aTasks || []);
         setMaterials(aDocs || []);
+        setSchedules(aSchedules || []);
+
+        // Load role-specific academic stats
+        if (isAdminOrInstructor) {
+          const stats = await getInstructorOverviewStats(companyId, activeCohortId);
+          setInstructorStats(stats);
+        } else {
+          const [progress, faculty] = await Promise.all([
+            getMyClassroomProgress(companyId, activeCohortId),
+            getAcademyInstructors(companyId),
+          ]);
+          setStudentProgress(progress);
+          setInstructors(faculty || []);
+        }
       } catch (err) {
         console.error("Failed to load classroom dashboard data:", err);
       }
     }
     loadData();
-  }, [companyId, activeCohortId]);
+  }, [companyId, activeCohortId, isAdminOrInstructor]);
 
   const selectedCohort =
     activeCohortId !== "all" ? cohorts.find((c) => c.id === activeCohortId) : cohorts[0] || null;
@@ -120,6 +146,7 @@ export function ClassroomTabs({
     { id: "assignments" as const, label: "Assignments", icon: FileCheck2 },
     { id: "noticeboard" as const, label: "Notices", icon: Bell },
     { id: "discussions" as const, label: "Community", icon: MessageSquare },
+    { id: "progress" as const, label: "My Progress", icon: Award, learnerOnly: true },
     { id: "session" as const, label: "Live Room", icon: Video },
     { id: "students" as const, label: "Students", icon: Users, instructorOnly: true },
     { id: "gradebook" as const, label: "Gradebook", icon: GraduationCap, instructorOnly: true },
@@ -127,7 +154,11 @@ export function ClassroomTabs({
     { id: "history" as const, label: "History", icon: History, instructorOnly: true },
   ];
 
-  const filteredTabs = tabs.filter((tab) => !tab.instructorOnly || isAdminOrInstructor);
+  const filteredTabs = tabs.filter((tab) => {
+    if (tab.instructorOnly && !isAdminOrInstructor) return false;
+    if ((tab as any).learnerOnly && isAdminOrInstructor) return false;
+    return true;
+  });
 
   // 4 Primary Mobile Tabs + More
   const mobilePrimaryTabIds: TabType[] = ["overview", "timetable", "materials", "assignments"];
@@ -339,8 +370,20 @@ export function ClassroomTabs({
                 announcements={announcements}
                 assignments={assignments}
                 materials={materials}
+                schedules={schedules}
+                studentProgress={studentProgress}
+                instructorStats={instructorStats}
+                instructors={instructors}
               />
             </div>
+          )}
+          {activeTab === "progress" && !isAdminOrInstructor && (
+            <StudentProgressTab
+              companyId={companyId}
+              companySlug={companySlug}
+              selectedCohortId={activeCohortId === "all" ? null : activeCohortId}
+              courses={courses}
+            />
           )}
           {activeTab === "session" && (
             <LiveSessionTab

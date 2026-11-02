@@ -355,8 +355,23 @@ export async function getClassroomGroups(companyId: string) {
     return fallbackData ?? [];
   }
 
-  return (data ?? []).map((g: any) => ({
+  const groups = data ?? [];
+  const teacherIds = Array.from(
+    new Set(groups.map((g: any) => g.primary_teacher_id).filter(Boolean))
+  ) as string[];
+
+  let teachersMap = new Map<string, any>();
+  if (teacherIds.length > 0) {
+    const { data: teachers } = await supabase
+      .from("profiles")
+      .select("id, full_name, email, avatar_url")
+      .in("id", teacherIds);
+    teachersMap = new Map((teachers ?? []).map((t) => [t.id, t]));
+  }
+
+  return groups.map((g: any) => ({
     ...g,
+    primary_teacher: g.primary_teacher_id ? teachersMap.get(g.primary_teacher_id) || null : null,
     students_count: g.classroom_group_members?.[0]?.count ?? 0,
   }));
 }
@@ -1209,6 +1224,351 @@ export async function getAcademyGradebook(companyId: string): Promise<AcademyGra
       avgAssignmentScore,
       certificatesIssued: certRows.length,
     },
+  };
+}
+
+export interface MyClassroomProgress {
+  completionPercent: number;
+  completedLessons: number;
+  totalLessons: number;
+  avgQuizScore: number;
+  avgAssignmentScore: number;
+  attendancePercent: number;
+  totalClassesAttended: number;
+  totalClassSessions: number;
+  nextLesson?: {
+    id: string;
+    title: string;
+    course_slug: string;
+    course_title: string;
+  } | null;
+  quizzes: Array<{
+    id: string;
+    quiz_id: string;
+    title: string;
+    score: number;
+    passed: boolean;
+    taken_at: string;
+  }>;
+  assignments: Array<{
+    id: string;
+    assignment_id: string;
+    title: string;
+    max_points: number;
+    grade: number | null;
+    status: string;
+    submitted_at: string;
+    feedback: string | null;
+  }>;
+  attendanceRecords: Array<{
+    date: string;
+    status: "present" | "late" | "absent";
+  }>;
+  certificates: Array<{
+    id: string;
+    course_id: string;
+    course_title: string;
+    issued_at: string;
+    public_id: string;
+    file_url: string | null;
+  }>;
+}
+
+export async function getMyClassroomProgress(
+  companyId: string,
+  cohortId?: string | null
+): Promise<MyClassroomProgress> {
+  const { userId, supabase } = await requireTenantMember(companyId);
+
+  // 1. Determine relevant courses for this academy / cohort
+  let courseIds: string[] = [];
+  if (cohortId && cohortId !== "all") {
+    const { data: group } = await supabase
+      .from("classroom_groups")
+      .select("course_id")
+      .eq("id", cohortId)
+      .maybeSingle();
+    if (group?.course_id) {
+      courseIds = [group.course_id];
+    }
+  }
+
+  if (courseIds.length === 0) {
+    const { data: courses } = await supabase
+      .from("courses")
+      .select("id")
+      .eq("company_id", companyId);
+    courseIds = (courses ?? []).map((c) => c.id);
+  }
+
+  // 2. Fetch courses info for slug & title
+  const { data: coursesData } = await supabase
+    .from("courses")
+    .select("id, title, slug")
+    .in("id", courseIds);
+  const coursesMap = new Map((coursesData ?? []).map((c) => [c.id, c]));
+
+  // 3. Fetch modules and lessons
+  const { data: modulesData } = await supabase
+    .from("modules")
+    .select("id, course_id, position")
+    .in("course_id", courseIds)
+    .order("position", { ascending: true });
+
+  const moduleIds = (modulesData ?? []).map((m) => m.id);
+  const moduleCourseMap = new Map((modulesData ?? []).map((m) => [m.id, m.course_id]));
+
+  let lessonsData: any[] = [];
+  if (moduleIds.length > 0) {
+    const { data: lData } = await supabase
+      .from("lessons")
+      .select("id, module_id, title, position")
+      .in("module_id", moduleIds)
+      .order("position", { ascending: true });
+    lessonsData = lData ?? [];
+  }
+
+  const totalLessons = lessonsData.length;
+  const lessonIds = lessonsData.map((l) => l.id);
+
+  // 4. Fetch lesson progress for current user
+  let completedLessonIds = new Set<string>();
+  if (lessonIds.length > 0) {
+    const { data: progress } = await supabase
+      .from("lesson_progress")
+      .select("lesson_id, completed")
+      .eq("user_id", userId)
+      .in("lesson_id", lessonIds)
+      .eq("completed", true);
+    completedLessonIds = new Set((progress ?? []).map((p) => p.lesson_id));
+  }
+  const completedLessons = completedLessonIds.size;
+  const completionPercent = totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0;
+
+  // 5. Determine next lesson to continue
+  let nextLesson = null;
+  for (const l of lessonsData) {
+    if (!completedLessonIds.has(l.id)) {
+      const courseId = moduleCourseMap.get(l.module_id);
+      const course = courseId ? coursesMap.get(courseId) : null;
+      if (course) {
+        nextLesson = {
+          id: l.id,
+          title: l.title,
+          course_slug: course.slug,
+          course_title: course.title,
+        };
+        break;
+      }
+    }
+  }
+
+  // 6. Fetch quizzes & attempts
+  let quizzes: any[] = [];
+  if (lessonIds.length > 0) {
+    const { data: qData } = await supabase
+      .from("quizzes")
+      .select("id, title, lesson_id")
+      .in("lesson_id", lessonIds);
+    quizzes = qData ?? [];
+  }
+  const quizTitleMap = new Map(quizzes.map((q) => [q.id, q.title || "Lesson Quiz"]));
+  const quizIds = quizzes.map((q) => q.id);
+
+  let attempts: any[] = [];
+  if (quizIds.length > 0) {
+    const { data: aData } = await supabase
+      .from("quiz_attempts")
+      .select("id, quiz_id, score, passed, created_at")
+      .eq("user_id", userId)
+      .in("quiz_id", quizIds)
+      .order("created_at", { ascending: false });
+    attempts = aData ?? [];
+  }
+
+  const avgQuizScore =
+    attempts.length > 0
+      ? Math.round(attempts.reduce((sum, a) => sum + (a.score || 0), 0) / attempts.length)
+      : 0;
+
+  const quizList = attempts.map((a) => ({
+    id: a.id,
+    quiz_id: a.quiz_id,
+    title: quizTitleMap.get(a.quiz_id) || "Lesson Quiz",
+    score: a.score ?? 0,
+    passed: !!a.passed,
+    taken_at: a.created_at,
+  }));
+
+  // 7. Fetch assignments & grades
+  const { data: assignmentRows } = await supabase
+    .from("classroom_assignment_submissions")
+    .select(`
+      id,
+      assignment_id,
+      grade,
+      status,
+      submitted_at,
+      feedback,
+      assignment:classroom_assignments(title, max_points)
+    `)
+    .eq("student_id", userId)
+    .eq("company_id", companyId)
+    .order("submitted_at", { ascending: false });
+
+  const assignmentList = (assignmentRows ?? []).map((s: any) => ({
+    id: s.id,
+    assignment_id: s.assignment_id,
+    title: s.assignment?.title || "Class Assignment",
+    max_points: s.assignment?.max_points || 100,
+    grade: s.grade,
+    status: s.status,
+    submitted_at: s.submitted_at,
+    feedback: s.feedback,
+  }));
+
+  const gradedAssignments = assignmentList.filter((a) => a.grade !== null && a.grade !== undefined);
+  const avgAssignmentScore =
+    gradedAssignments.length > 0
+      ? Math.round(gradedAssignments.reduce((acc, curr) => acc + (curr.grade || 0), 0) / gradedAssignments.length)
+      : 0;
+
+  // 8. Fetch student attendance
+  const { data: attRows } = await supabase
+    .from("student_attendance")
+    .select("date, status")
+    .eq("company_id", companyId)
+    .eq("profile_id", userId)
+    .order("date", { ascending: false });
+
+  const attendanceRecords = (attRows ?? []) as any[];
+  const totalClassSessions = attendanceRecords.length;
+  const totalClassesAttended = attendanceRecords.filter((a) => a.status === "present" || a.status === "late").length;
+  const attendancePercent =
+    totalClassSessions > 0 ? Math.round((totalClassesAttended / totalClassSessions) * 100) : 100;
+
+  // 9. Fetch certificates
+  let certQuery = supabase
+    .from("certificates")
+    .select("id, course_id, issued_at, public_id, file_url")
+    .eq("user_id", userId);
+
+  if (courseIds.length > 0) {
+    certQuery = certQuery.in("course_id", courseIds);
+  }
+
+  const { data: certRows } = await certQuery.order("issued_at", { ascending: false });
+
+  const certificates = (certRows ?? []).map((c: any) => ({
+    id: c.id,
+    course_id: c.course_id,
+    course_title: coursesMap.get(c.course_id)?.title || "Course Certificate",
+    issued_at: c.issued_at,
+    public_id: c.public_id,
+    file_url: c.file_url,
+  }));
+
+  return {
+    completionPercent,
+    completedLessons,
+    totalLessons,
+    avgQuizScore,
+    avgAssignmentScore,
+    attendancePercent,
+    totalClassesAttended,
+    totalClassSessions,
+    nextLesson,
+    quizzes: quizList,
+    assignments: assignmentList,
+    attendanceRecords,
+    certificates,
+  };
+}
+
+export async function getAcademyInstructors(companyId: string) {
+  const { supabase } = await requireTenantMember(companyId);
+  const { data: members, error } = await supabase
+    .from("company_members")
+    .select(`
+      profile_id,
+      role,
+      profile:profiles(id, full_name, email, avatar_url)
+    `)
+    .eq("company_id", companyId)
+    .eq("status", "active")
+    .in("role", ["instructor", "teacher", "company_admin"]);
+
+  if (error || !members) return [];
+  return members
+    .map((m: any) => m.profile)
+    .filter((p: any) => Boolean(p && p.id));
+}
+
+export async function getInstructorOverviewStats(
+  companyId: string,
+  cohortId?: string | null
+) {
+  const { supabase } = await requireTenantMember(companyId);
+
+  let assignmentIds: string[] | null = null;
+  if (cohortId && cohortId !== "all") {
+    const { data: assignments } = await supabase
+      .from("classroom_assignments")
+      .select("id")
+      .eq("company_id", companyId)
+      .eq("cohort_id", cohortId);
+    assignmentIds = (assignments ?? []).map((a) => a.id);
+  }
+
+  let subQuery = supabase
+    .from("classroom_assignment_submissions")
+    .select("id", { count: "exact", head: true })
+    .eq("company_id", companyId)
+    .eq("status", "submitted");
+
+  if (assignmentIds !== null) {
+    if (assignmentIds.length > 0) {
+      subQuery = subQuery.in("assignment_id", assignmentIds);
+    } else {
+      subQuery = subQuery.eq("id", "00000000-0000-0000-0000-000000000000");
+    }
+  }
+
+  let matQuery = supabase
+    .from("classroom_materials")
+    .select("id", { count: "exact", head: true })
+    .eq("company_id", companyId);
+
+  if (cohortId && cohortId !== "all") {
+    matQuery = matQuery.eq("cohort_id", cohortId);
+  }
+
+  let studentsCount = 0;
+  if (cohortId && cohortId !== "all") {
+    const { count } = await supabase
+      .from("classroom_group_members")
+      .select("profile_id", { count: "exact", head: true })
+      .eq("group_id", cohortId);
+    studentsCount = count || 0;
+  } else {
+    const { count } = await supabase
+      .from("company_members")
+      .select("id", { count: "exact", head: true })
+      .eq("company_id", companyId)
+      .eq("status", "active")
+      .eq("role", "learner");
+    studentsCount = count || 0;
+  }
+
+  const [submissionsCountRes, materialsCountRes] = await Promise.all([
+    subQuery,
+    matQuery,
+  ]);
+
+  return {
+    pendingGradingCount: submissionsCountRes.count || 0,
+    materialsCount: materialsCountRes.count || 0,
+    activeStudentsCount: studentsCount,
   };
 }
 
