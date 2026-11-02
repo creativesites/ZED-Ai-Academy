@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS public.classroom_assignments (
   company_id text NOT NULL REFERENCES public.companies(id) ON DELETE CASCADE,
   cohort_id uuid REFERENCES public.classroom_groups(id) ON DELETE SET NULL,
   course_id uuid REFERENCES public.courses(id) ON DELETE SET NULL,
-  author_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  author_id text NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
   title text NOT NULL,
   description text,
   due_date timestamp with time zone NOT NULL,
@@ -29,7 +29,7 @@ CREATE TABLE IF NOT EXISTS public.classroom_assignments (
 CREATE TABLE IF NOT EXISTS public.classroom_assignment_submissions (
   id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
   assignment_id uuid NOT NULL REFERENCES public.classroom_assignments(id) ON DELETE CASCADE,
-  student_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  student_id text NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
   company_id text NOT NULL REFERENCES public.companies(id) ON DELETE CASCADE,
   submission_text text,
   file_url text,
@@ -39,7 +39,7 @@ CREATE TABLE IF NOT EXISTS public.classroom_assignment_submissions (
   status text DEFAULT 'submitted', -- 'submitted', 'graded', 'late', 'resubmit_requested'
   grade numeric,
   feedback text,
-  graded_by uuid REFERENCES public.profiles(id) ON DELETE SET NULL,
+  graded_by text REFERENCES public.profiles(id) ON DELETE SET NULL,
   graded_at timestamp with time zone,
   submitted_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
   UNIQUE (assignment_id, student_id)
@@ -63,35 +63,35 @@ CREATE POLICY "Company members can view published assignments" ON public.classro
     (
       is_published = true AND
       company_id IN (
-        SELECT company_id FROM public.company_members WHERE profile_id = auth.uid() AND status = 'active'
+        SELECT company_id FROM public.company_members WHERE profile_id = auth.uid()::text AND status = 'active'
         UNION
-        SELECT company_id FROM public.profiles WHERE id = auth.uid()
+        SELECT company_id FROM public.profiles WHERE id = auth.uid()::text
       )
     ) OR
-    author_id = auth.uid() OR
+    author_id = auth.uid()::text OR
     EXISTS (
       SELECT 1 FROM public.company_members
       WHERE company_id = classroom_assignments.company_id
-        AND profile_id = auth.uid()
+        AND profile_id = auth.uid()::text
         AND role IN ('company_admin', 'teacher')
     ) OR EXISTS (
       SELECT 1 FROM public.profiles
-      WHERE id = auth.uid() AND role IN ('super_admin', 'instructor')
+      WHERE id = auth.uid()::text AND role IN ('super_admin', 'instructor')
     )
   );
 
 DROP POLICY IF EXISTS "Instructors and admins can manage assignments" ON public.classroom_assignments;
 CREATE POLICY "Instructors and admins can manage assignments" ON public.classroom_assignments
   FOR ALL USING (
-    author_id = auth.uid() OR
+    author_id = auth.uid()::text OR
     EXISTS (
       SELECT 1 FROM public.company_members
       WHERE company_id = classroom_assignments.company_id
-        AND profile_id = auth.uid()
+        AND profile_id = auth.uid()::text
         AND role IN ('company_admin', 'teacher')
     ) OR EXISTS (
       SELECT 1 FROM public.profiles
-      WHERE id = auth.uid() AND role IN ('super_admin', 'instructor')
+      WHERE id = auth.uid()::text AND role IN ('super_admin', 'instructor')
     )
   );
 
@@ -99,15 +99,15 @@ CREATE POLICY "Instructors and admins can manage assignments" ON public.classroo
 DROP POLICY IF EXISTS "Students can view and manage their own submissions" ON public.classroom_assignment_submissions;
 CREATE POLICY "Students can view and manage their own submissions" ON public.classroom_assignment_submissions
   FOR ALL USING (
-    student_id = auth.uid() OR
+    student_id = auth.uid()::text OR
     EXISTS (
       SELECT 1 FROM public.company_members
       WHERE company_id = classroom_assignment_submissions.company_id
-        AND profile_id = auth.uid()
+        AND profile_id = auth.uid()::text
         AND role IN ('company_admin', 'teacher')
     ) OR EXISTS (
       SELECT 1 FROM public.profiles
-      WHERE id = auth.uid() AND role IN ('super_admin', 'instructor')
+      WHERE id = auth.uid()::text AND role IN ('super_admin', 'instructor')
     )
   );
 
@@ -121,7 +121,7 @@ CREATE TABLE IF NOT EXISTS public.classroom_channels (
   description text,
   icon text DEFAULT 'hash',
   is_default boolean DEFAULT false,
-  created_by uuid REFERENCES public.profiles(id) ON DELETE SET NULL,
+  created_by text REFERENCES public.profiles(id) ON DELETE SET NULL,
   created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
   UNIQUE (company_id, name, cohort_id)
 );
@@ -131,7 +131,7 @@ CREATE TABLE IF NOT EXISTS public.classroom_messages (
   id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
   channel_id uuid NOT NULL REFERENCES public.classroom_channels(id) ON DELETE CASCADE,
   company_id text NOT NULL REFERENCES public.companies(id) ON DELETE CASCADE,
-  user_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  user_id text NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
   content text NOT NULL,
   attachments jsonb DEFAULT '[]'::jsonb,
   is_pinned boolean DEFAULT false,
@@ -155,11 +155,11 @@ DROP POLICY IF EXISTS "Members can view channels of their company" ON public.cla
 CREATE POLICY "Members can view channels of their company" ON public.classroom_channels
   FOR SELECT USING (
     company_id IN (
-      SELECT company_id FROM public.company_members WHERE profile_id = auth.uid() AND status = 'active'
+      SELECT company_id FROM public.company_members WHERE profile_id = auth.uid()::text AND status = 'active'
       UNION
-      SELECT company_id FROM public.profiles WHERE id = auth.uid()
+      SELECT company_id FROM public.profiles WHERE id = auth.uid()::text
     ) OR EXISTS (
-      SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'super_admin'
+      SELECT 1 FROM public.profiles WHERE id = auth.uid()::text AND role = 'super_admin'
     )
   );
 
@@ -169,11 +169,11 @@ CREATE POLICY "Instructors and admins can manage channels" ON public.classroom_c
     EXISTS (
       SELECT 1 FROM public.company_members
       WHERE company_id = classroom_channels.company_id
-        AND profile_id = auth.uid()
+        AND profile_id = auth.uid()::text
         AND role IN ('company_admin', 'teacher')
     ) OR EXISTS (
       SELECT 1 FROM public.profiles
-      WHERE id = auth.uid() AND role IN ('super_admin', 'instructor')
+      WHERE id = auth.uid()::text AND role IN ('super_admin', 'instructor')
     )
   );
 
@@ -182,25 +182,25 @@ DROP POLICY IF EXISTS "Members can view messages in company channels" ON public.
 CREATE POLICY "Members can view messages in company channels" ON public.classroom_messages
   FOR SELECT USING (
     company_id IN (
-      SELECT company_id FROM public.company_members WHERE profile_id = auth.uid() AND status = 'active'
+      SELECT company_id FROM public.company_members WHERE profile_id = auth.uid()::text AND status = 'active'
       UNION
-      SELECT company_id FROM public.profiles WHERE id = auth.uid()
+      SELECT company_id FROM public.profiles WHERE id = auth.uid()::text
     ) OR EXISTS (
-      SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'super_admin'
+      SELECT 1 FROM public.profiles WHERE id = auth.uid()::text AND role = 'super_admin'
     )
   );
 
 DROP POLICY IF EXISTS "Members can post messages" ON public.classroom_messages;
 CREATE POLICY "Members can post messages" ON public.classroom_messages
   FOR INSERT WITH CHECK (
-    user_id = auth.uid() AND
+    user_id = auth.uid()::text AND
     (
       company_id IN (
-        SELECT company_id FROM public.company_members WHERE profile_id = auth.uid() AND status = 'active'
+        SELECT company_id FROM public.company_members WHERE profile_id = auth.uid()::text AND status = 'active'
         UNION
-        SELECT company_id FROM public.profiles WHERE id = auth.uid()
+        SELECT company_id FROM public.profiles WHERE id = auth.uid()::text
       ) OR EXISTS (
-        SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'super_admin'
+        SELECT 1 FROM public.profiles WHERE id = auth.uid()::text AND role = 'super_admin'
       )
     )
   );
@@ -208,15 +208,15 @@ CREATE POLICY "Members can post messages" ON public.classroom_messages
 DROP POLICY IF EXISTS "Users can update or delete their own messages, instructors can moderate" ON public.classroom_messages;
 CREATE POLICY "Users can update or delete their own messages, instructors can moderate" ON public.classroom_messages
   FOR ALL USING (
-    user_id = auth.uid() OR
+    user_id = auth.uid()::text OR
     EXISTS (
       SELECT 1 FROM public.company_members
       WHERE company_id = classroom_messages.company_id
-        AND profile_id = auth.uid()
+        AND profile_id = auth.uid()::text
         AND role IN ('company_admin', 'teacher')
     ) OR EXISTS (
       SELECT 1 FROM public.profiles
-      WHERE id = auth.uid() AND role IN ('super_admin', 'instructor')
+      WHERE id = auth.uid()::text AND role IN ('super_admin', 'instructor')
     )
   );
 

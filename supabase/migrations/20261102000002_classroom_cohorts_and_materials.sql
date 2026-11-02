@@ -4,7 +4,7 @@
 ALTER TABLE public.classroom_groups
 ADD COLUMN IF NOT EXISTS course_id uuid REFERENCES public.courses(id) ON DELETE SET NULL,
 ADD COLUMN IF NOT EXISTS academic_period text,
-ADD COLUMN IF NOT EXISTS primary_teacher_id uuid REFERENCES public.profiles(id) ON DELETE SET NULL,
+ADD COLUMN IF NOT EXISTS primary_teacher_id text REFERENCES public.profiles(id) ON DELETE SET NULL,
 ADD COLUMN IF NOT EXISTS status text DEFAULT 'active',
 ADD COLUMN IF NOT EXISTS color text DEFAULT '#fd5523';
 
@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS public.classroom_materials (
   folder_id uuid REFERENCES public.classroom_folders(id) ON DELETE SET NULL,
   cohort_id uuid REFERENCES public.classroom_groups(id) ON DELETE SET NULL,
   course_id uuid REFERENCES public.courses(id) ON DELETE SET NULL,
-  author_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  author_id text NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
   title text NOT NULL,
   description text,
   material_type text NOT NULL DEFAULT 'document',
@@ -57,9 +57,9 @@ DROP POLICY IF EXISTS "Company members can view classroom folders" ON public.cla
 CREATE POLICY "Company members can view classroom folders" ON public.classroom_folders
   FOR SELECT USING (
     company_id IN (
-      SELECT company_id FROM public.company_members WHERE profile_id = auth.uid() AND status = 'active'
+      SELECT company_id FROM public.company_members WHERE profile_id = auth.uid()::text AND status = 'active'
       UNION
-      SELECT company_id FROM public.profiles WHERE id = auth.uid()
+      SELECT company_id FROM public.profiles WHERE id = auth.uid()::text
     )
   );
 
@@ -69,11 +69,11 @@ CREATE POLICY "Instructors and admins can manage classroom folders" ON public.cl
     EXISTS (
       SELECT 1 FROM public.company_members
       WHERE company_id = classroom_folders.company_id
-        AND profile_id = auth.uid()
+        AND profile_id = auth.uid()::text
         AND role IN ('company_admin', 'teacher')
     ) OR EXISTS (
       SELECT 1 FROM public.profiles
-      WHERE id = auth.uid() AND role IN ('super_admin', 'instructor')
+      WHERE id = auth.uid()::text AND role IN ('super_admin', 'instructor')
     )
   );
 
@@ -84,35 +84,35 @@ CREATE POLICY "Company members can view published classroom materials" ON public
     (
       is_published = true AND
       company_id IN (
-        SELECT company_id FROM public.company_members WHERE profile_id = auth.uid() AND status = 'active'
+        SELECT company_id FROM public.company_members WHERE profile_id = auth.uid()::text AND status = 'active'
         UNION
-        SELECT company_id FROM public.profiles WHERE id = auth.uid()
+        SELECT company_id FROM public.profiles WHERE id = auth.uid()::text
       )
     ) OR
-    author_id = auth.uid() OR
+    author_id = auth.uid()::text OR
     EXISTS (
       SELECT 1 FROM public.company_members
       WHERE company_id = classroom_materials.company_id
-        AND profile_id = auth.uid()
+        AND profile_id = auth.uid()::text
         AND role IN ('company_admin', 'teacher')
     ) OR EXISTS (
       SELECT 1 FROM public.profiles
-      WHERE id = auth.uid() AND role IN ('super_admin', 'instructor')
+      WHERE id = auth.uid()::text AND role IN ('super_admin', 'instructor')
     )
   );
 
 DROP POLICY IF EXISTS "Instructors and admins can manage classroom materials" ON public.classroom_materials;
 CREATE POLICY "Instructors and admins can manage classroom materials" ON public.classroom_materials
   FOR ALL USING (
-    author_id = auth.uid() OR
+    author_id = auth.uid()::text OR
     EXISTS (
       SELECT 1 FROM public.company_members
       WHERE company_id = classroom_materials.company_id
-        AND profile_id = auth.uid()
+        AND profile_id = auth.uid()::text
         AND role IN ('company_admin', 'teacher')
     ) OR EXISTS (
       SELECT 1 FROM public.profiles
-      WHERE id = auth.uid() AND role IN ('super_admin', 'instructor')
+      WHERE id = auth.uid()::text AND role IN ('super_admin', 'instructor')
     )
   );
 
