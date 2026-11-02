@@ -5,6 +5,8 @@ import { cookies } from "next/headers";
 import { createServiceClient } from "@/lib/supabase/server";
 import { ensureTenantMembership } from "@/lib/tenants/membership";
 import { normalizeSignupRole, safeRelativePath, tenantFromPath } from "@/lib/auth/signup-flow";
+import { normalizeInviteCode } from "@/lib/tenants/invites";
+import { finishInviteOnboarding } from "@/lib/auth/finish-invite-onboarding";
 import type { CompanyMemberRole } from "@/types/database";
 
 /**
@@ -28,6 +30,19 @@ export async function completeOnboarding(formData: FormData) {
 
   if (!fullName) {
     return { error: "Full name is required" };
+  }
+
+  // Academy invite link: the invite (checked on the server) decides the academy,
+  // role, courses and group. Nothing else from the form is used.
+  const inviteCode = normalizeInviteCode(formData.get("invite") as string | null);
+  if (inviteCode) {
+    try {
+      const result = await finishInviteOnboarding(userId, inviteCode, fullName, platform);
+      return result.ok ? { success: true, redirectUrl: result.redirectUrl } : { error: result.error };
+    } catch (err: unknown) {
+      console.error("Invite onboarding error:", err);
+      return { error: "We couldn't finish joining the academy. Please try again." };
+    }
   }
 
   const requestedRole = normalizeSignupRole(formData.get("role") as string | null);

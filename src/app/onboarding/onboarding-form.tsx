@@ -17,10 +17,12 @@ export type OnboardingFormProps = {
   enrollCourse: string | null;
   initialCode: string | null;
   next: string | null;
+  /** Academy invite code: joining is decided by the invite, so only the name is asked. */
+  inviteCode?: string | null;
 };
 
 /** Academy owners never come here: /onboarding redirects them to /launch-your-academy. */
-export function OnboardingForm({ presetRole, tenantSlug, tenantName, enrollCourse, initialCode, next }: OnboardingFormProps) {
+export function OnboardingForm({ presetRole, tenantSlug, tenantName, enrollCourse, initialCode, next, inviteCode = null }: OnboardingFormProps) {
   const { user } = useUser();
   const router = useRouter();
 
@@ -56,9 +58,11 @@ export function OnboardingForm({ presetRole, tenantSlug, tenantName, enrollCours
   return (
     <div className="space-y-6">
       <div className="space-y-2 text-center mb-8">
-        <h1 className="text-3xl font-black text-slate-900 tracking-tight">Complete Your Profile</h1>
+        <h1 className="text-3xl font-black text-slate-900 tracking-tight">{inviteCode ? "What's your name?" : "Complete Your Profile"}</h1>
         <p className="text-sm text-slate-500 leading-relaxed max-w-md mx-auto">
-          {tenantName
+          {inviteCode && tenantName
+            ? `So your teacher at ${tenantName} knows who you are.`
+            : tenantName
             ? `You're joining ${tenantName}. Please confirm your name to get started.`
             : "We're excited to have you here. Please confirm your details to get started."}
         </p>
@@ -68,6 +72,7 @@ export function OnboardingForm({ presetRole, tenantSlug, tenantName, enrollCours
         <input type="hidden" name="enrollCourse" value={enrollCourse || ""} />
         <input type="hidden" name="tenantSlug" value={tenantSlug || ""} />
         <input type="hidden" name="next" value={next || ""} />
+        <input type="hidden" name="invite" value={inviteCode || ""} />
 
         {/* Role Selection */}
         {!presetRole && (

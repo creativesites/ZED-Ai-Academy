@@ -6,6 +6,8 @@
  * re-checks the caller on the server (staff codes, academy ownership, ...).
  */
 
+import { normalizeInviteCode } from "../tenants/invites.ts";
+
 export type SignupRole = "company_admin" | "teacher" | "student";
 
 export type SignupIntent = {
@@ -17,6 +19,11 @@ export type SignupIntent = {
   /** Same-site path to return to. */
   redirectUrl: string | null;
   enrollCourse: string | null;
+  /**
+   * Academy invite code (/i/{code}). It decides the academy, role, courses and
+   * group server-side, so it wins over role/tenant: the person never chooses.
+   */
+  invite: string | null;
 };
 
 type ParamSource = URLSearchParams | Record<string, string | string[] | undefined>;
@@ -77,12 +84,13 @@ export function readSignupIntent(params: ParamSource): SignupIntent {
     code: code && CODE_RE.test(code) ? code : null,
     redirectUrl: safeRelativePath(read(params, "redirect_url")),
     enrollCourse: enrollCourse && /^[a-z0-9-]{1,128}$/.test(enrollCourse) ? enrollCourse : null,
+    invite: normalizeInviteCode(read(params, "invite")),
   };
 }
 
 /** The academy this sign-up belongs to: explicit `tenant`, else one in the return path. */
 export function intentTenant(intent: SignupIntent): string | null {
-  if (intent.role === "company_admin") return null;
+  if (intent.role === "company_admin" || intent.invite) return null;
   return intent.tenant ?? tenantFromPath(intent.redirectUrl);
 }
 
@@ -104,11 +112,14 @@ export function intentQuery(intent: SignupIntent, overrides: Partial<SignupInten
   if (merged.code) params.set("code", merged.code);
   if (merged.redirectUrl) params.set("redirect_url", merged.redirectUrl);
   if (merged.enrollCourse) params.set("enroll_course", merged.enrollCourse);
+  if (merged.invite) params.set("invite", merged.invite);
   return params.toString();
 }
 
 /** Where a NEW account goes right after sign-up (email or Google). */
 export function afterSignUpPath(intent: SignupIntent): string {
+  // An invite link is for joining an academy, never for creating one.
+  if (intent.invite) return withQuery("/onboarding", { invite: intent.invite });
   if (intent.role === "company_admin") return "/launch-your-academy";
 
   const role = intent.role === "teacher" ? "teacher" : "student";
@@ -131,6 +142,8 @@ export function afterSignUpPath(intent: SignupIntent): string {
 
 /** Where an EXISTING account goes after signing in (or a signed-in visitor of /sign-in, /sign-up). */
 export function afterSignInPath(intent: SignupIntent): string {
+  // Back to the invite page, which shows "Join {Academy}" for a signed-in person.
+  if (intent.invite) return `/i/${intent.invite}`;
   if (intent.role === "company_admin") return "/launch-your-academy";
 
   const tenant = intentTenant(intent);
@@ -159,10 +172,12 @@ export function signedInAuthPageRedirect(pathname: string, params: URLSearchPara
 }
 
 /** What sign-up stores (Clerk unsafeMetadata) so an interrupted sign-up can resume. */
-export type SignupResumeHint = { signupRole?: unknown; signupTenant?: unknown };
+export type SignupResumeHint = { signupRole?: unknown; signupTenant?: unknown; signupInvite?: unknown };
 
 /** Where someone who has not finished onboarding resumes (e.g. after closing the tab). */
 export function resumeOnboardingPath(hint: SignupResumeHint | null | undefined): string {
+  const invite = normalizeInviteCode(typeof hint?.signupInvite === "string" ? hint.signupInvite : null);
+  if (invite) return withQuery("/onboarding", { invite });
   const role = normalizeSignupRole(typeof hint?.signupRole === "string" ? hint.signupRole : null);
   if (role === "company_admin") return "/launch-your-academy";
   const tenant =

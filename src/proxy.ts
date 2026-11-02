@@ -27,6 +27,7 @@ const isPublicRoute = createRouteMatcher([
   '/faq(.*)',
   '/blog(.*)',
   '/academy(.*)',
+  '/i/(.*)',
   '/ai-tutor(.*)',
   '/api/tutor/demo/voice',
   '/api/webhooks/(.*)',
@@ -48,8 +49,12 @@ const isPublicRoute = createRouteMatcher([
 const isPublicTenantSubdomainRoute = createRouteMatcher([
   '/',
   '/join(.*)',
+  '/i/(.*)',
   '/courses(.*)',
 ]);
+
+/** Invite links (/i/{code}) are served by the top-level route on every host, never rewritten into an academy. */
+const isInviteRoute = createRouteMatcher(['/i/(.*)']);
 
 function supabaseAdmin() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -201,11 +206,18 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
 
   // Apply Subdomain Rewrite Logic
   if (isTenantSubdomain && subdomain) {
+    if (isInviteRoute(req)) return NextResponse.next();
+
     const requestHeaders = new Headers(req.headers);
     requestHeaders.set('x-tenant-slug', subdomain);
 
+    // Paths that already carry the academy prefix (e.g. a redirect to
+    // /academy/{slug}/classroom) are not prefixed a second time.
+    const academyPrefix = `/academy/${subdomain}`;
+    const alreadyPrefixed = pathname === academyPrefix || pathname.startsWith(`${academyPrefix}/`);
+
     return NextResponse.rewrite(
-      new URL(`/academy/${subdomain}${pathname}${url.search}`, req.url),
+      new URL(`${alreadyPrefixed ? '' : academyPrefix}${pathname}${url.search}`, req.url),
       {
         request: { headers: requestHeaders },
       }

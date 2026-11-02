@@ -2,12 +2,32 @@ import { SignUp } from "@clerk/nextjs";
 import { getSiteAsset } from "@/lib/site-assets";
 import Link from "next/link";
 import { ArrowLeft, Rocket, CheckCircle2, Building2, GraduationCap, Users } from "lucide-react";
+import { redirect } from "next/navigation";
 import { afterSignInPath, afterSignUpPath, intentQuery, intentTenant, readSignupIntent } from "@/lib/auth/signup-flow";
+import { loadInviteWithCompany } from "@/lib/tenants/invites-server";
+import { inviteStatus } from "@/lib/tenants/invites";
 
 export const metadata = { title: "Join — Zed AI Academy" };
 
 export default async function SignUpPage(props: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
-  const intent = readSignupIntent(await props.searchParams);
+  const rawIntent = readSignupIntent(await props.searchParams);
+
+  // Academy invite link (/i/{code}): the invite decides the academy and role, so
+  // there is no role chooser and no academy to pick. The academy name comes from
+  // the server, never from the URL. A dead link goes back to its friendly page.
+  let inviteAcademyName: string | null = null;
+  let inviteRoleLabel: "student" | "teacher" = "student";
+  if (rawIntent.invite) {
+    const loaded = await loadInviteWithCompany(rawIntent.invite);
+    if (!loaded || loaded.company.status === "suspended" || inviteStatus(loaded.invite) !== "active") {
+      redirect(`/i/${rawIntent.invite}`);
+    }
+    inviteAcademyName = loaded.company.name;
+    inviteRoleLabel = loaded.invite.role === "teacher" ? "teacher" : "student";
+  }
+  const intent = rawIntent.invite
+    ? { ...rawIntent, role: "student" as const, tenant: null, code: null, enrollCourse: null }
+    : rawIntent;
   const tenant = intentTenant(intent);
   const bgImage = await getSiteAsset("auth_bg", "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200&q=80&auto=format&fit=crop");
 
@@ -49,6 +69,7 @@ export default async function SignUpPage(props: { searchParams: Promise<Record<s
   ];
 
   const roleLabel =
+    inviteAcademyName ? `Create your account to join ${inviteAcademyName}` :
     normalizedRole === "company_admin" ? "Create your academy owner account" :
     normalizedRole === "teacher" ? "Create your teacher account" :
     normalizedRole === "student" ? "Create your student account" :
@@ -122,9 +143,15 @@ export default async function SignUpPage(props: { searchParams: Promise<Record<s
               alt="Zed AI Academy"
               className="h-20 w-auto"
             />
-            <h2 className="mt-6 text-3xl font-extrabold text-[#062e39] tracking-tight">{roleLabel}</h2>
-            <p className="mt-2 text-sm text-slate-500">
-              {normalizedRole ? "You can change account details after signing in." : "This keeps learner and tenant-owner permissions separate."}
+            <h2 className="mt-6 text-3xl font-extrabold text-[#062e39] tracking-tight text-center">{roleLabel}</h2>
+            <p className="mt-2 text-sm text-slate-500 text-center">
+              {inviteAcademyName
+                ? inviteRoleLabel === "teacher"
+                  ? "You'll join the teaching team as soon as your account is ready."
+                  : "You'll be enrolled and taken to the classroom as soon as your account is ready."
+                : normalizedRole
+                  ? "You can change account details after signing in."
+                  : "This keeps learner and tenant-owner permissions separate."}
             </p>
           </div>
 
@@ -158,7 +185,11 @@ export default async function SignUpPage(props: { searchParams: Promise<Record<s
                 signInUrl={signInUrl}
                 // Routing hint only (never trusted for permissions): lets an interrupted
                 // sign-up resume in the right place, see /after-sign-in.
-                unsafeMetadata={{ signupRole: normalizedRole, ...(tenant ? { signupTenant: tenant } : {}) }}
+                unsafeMetadata={{
+                  signupRole: normalizedRole,
+                  ...(tenant ? { signupTenant: tenant } : {}),
+                  ...(intent.invite ? { signupInvite: intent.invite } : {}),
+                }}
                 appearance={{
                   elements: {
                     formButtonPrimary:
@@ -191,9 +222,11 @@ export default async function SignUpPage(props: { searchParams: Promise<Record<s
                 </Link>
                 .
               </p>
-              <Link href={`/sign-up${chooserQuery ? `?${chooserQuery}` : ""}`} className="mt-4 block text-center text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-[#fd5523]">
-                Choose a different account type
-              </Link>
+              {!intent.invite && (
+                <Link href={`/sign-up${chooserQuery ? `?${chooserQuery}` : ""}`} className="mt-4 block text-center text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-[#fd5523]">
+                  Choose a different account type
+                </Link>
+              )}
             </div>
           )}
         </div>

@@ -84,7 +84,8 @@ export async function ensureTenantMembership(
     updated_at: new Date().toISOString(),
   };
   if (clerkUser) {
-    profileUpdate.full_name = fullName;
+    // Never blank a name the person typed during onboarding when Clerk has none.
+    if (fullName) profileUpdate.full_name = fullName;
     profileUpdate.email = email;
     profileUpdate.avatar_url = clerkUser.imageUrl ?? null;
   }

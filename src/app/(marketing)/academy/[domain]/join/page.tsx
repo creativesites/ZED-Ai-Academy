@@ -37,6 +37,8 @@ export default async function TenantJoinPage({
   // Check if current user is already a member
   let isAlreadyMember = false;
   let memberRole: string | null = null;
+  // Removed by the academy (Admin -> Students): a public join link must not undo that.
+  let wasRemoved = false;
 
   if (userId) {
     const { data: member } = await supabase
@@ -45,6 +47,8 @@ export default async function TenantJoinPage({
       .eq("company_id", company.id)
       .eq("profile_id", userId)
       .maybeSingle();
+
+    wasRemoved = member?.status === "deactivated";
 
     if (member && member.status === "active") {
       isAlreadyMember = true;
@@ -72,7 +76,7 @@ export default async function TenantJoinPage({
       redirect(`/academy/${company.slug}/admin`);
     }
 
-    if (role === "learner" && !isAlreadyMember) {
+    if (role === "learner" && !isAlreadyMember && !wasRemoved) {
       await ensureTenantMembership(userId, company.id, "learner");
       redirect(`/academy/${company.slug}/classroom`);
     }

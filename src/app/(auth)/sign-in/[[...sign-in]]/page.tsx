@@ -3,6 +3,7 @@ import { getSiteAsset } from "@/lib/site-assets";
 import Link from "next/link";
 import { ArrowLeft, CheckCircle2 } from "lucide-react";
 import { afterSignInPath, afterSignUpPath, intentQuery, intentTenant, readSignupIntent } from "@/lib/auth/signup-flow";
+import { loadInviteWithCompany } from "@/lib/tenants/invites-server";
 
 export const metadata = { title: "Sign In — Zed AI Academy" };
 
@@ -11,7 +12,9 @@ export default async function SignInPage(props: { searchParams: Promise<Record<s
   const tenant = intentTenant(intent);
   // An invite link (academy or role) is the case where a visitor may not have an
   // account yet: let them continue straight into sign-up from this form.
-  const hasInvite = Boolean(tenant || intent.role);
+  const hasInvite = Boolean(tenant || intent.role || intent.invite);
+  // Academy invite link (/i/{code}): name the academy, looked up on the server.
+  const inviteAcademy = intent.invite ? (await loadInviteWithCompany(intent.invite))?.company ?? null : null;
   const signUpQuery = intentQuery(intent);
   const signUpUrl = `/sign-up${signUpQuery ? `?${signUpQuery}` : ""}`;
   const bgImage = await getSiteAsset("auth_bg", "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200&q=80&auto=format&fit=crop");
@@ -74,9 +77,13 @@ export default async function SignInPage(props: { searchParams: Promise<Record<s
               alt="Zed AI Academy"
               className="h-20 w-auto"
             />
-            <h2 className="mt-6 text-3xl font-extrabold text-[#062e39] tracking-tight">Welcome back</h2>
-            <p className="mt-2 text-sm text-slate-500">
-              Pick up where you left off in your AI journey.
+            <h2 className="mt-6 text-3xl font-extrabold text-[#062e39] tracking-tight text-center">
+              {inviteAcademy ? `Sign in to join ${inviteAcademy.name}` : "Welcome back"}
+            </h2>
+            <p className="mt-2 text-sm text-slate-500 text-center">
+              {inviteAcademy
+                ? "Use the account you already have. You'll go straight to the academy."
+                : "Pick up where you left off in your AI journey."}
             </p>
           </div>
 
