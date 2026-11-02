@@ -12,7 +12,9 @@
     "sync:rive": "node scripts/sync-rive.mjs",
     "check:rive": "node scripts/sync-rive.mjs --check",
     "test:rive": "node scripts/rive-check/run.mjs",
-    "test:brand": "node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test \"src/lib/brand.test.ts\""
+    "test:brand": "node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test \"src/lib/brand.test.ts\"",
+    "test:schedule": "node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test \"src/lib/schedule.test.ts\"",
+    "test:unit": "npm run test:tutor && npm run test:brand && npm run test:schedule"
   },
   "dependencies": {
     "@base-ui/react": "^1.4.1",

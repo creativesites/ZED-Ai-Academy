@@ -98,6 +98,7 @@ export interface Database {
           status: "active" | "suspended";
           suspended_reason: string | null;
           suspended_at: string | null;
+          timezone: string;
           created_at: string;
           updated_at: string;
         };
@@ -117,6 +118,7 @@ export interface Database {
           status?: "active" | "suspended";
           suspended_reason?: string | null;
           suspended_at?: string | null;
+          timezone?: string;
           updated_at?: string;
         };
         Update: {
@@ -134,6 +136,7 @@ export interface Database {
           status?: "active" | "suspended";
           suspended_reason?: string | null;
           suspended_at?: string | null;
+          timezone?: string;
           updated_at?: string;
         };
         Relationships: R;

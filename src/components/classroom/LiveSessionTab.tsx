@@ -1,5 +1,6 @@
 "use client";
 
+import { dayName, normalizeTime } from "@/lib/schedule";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { 
@@ -57,13 +58,17 @@ export function LiveSessionTab({ companyId, isAdminOrInstructor, companySlug }: 
         setActiveScheduleId(state.active_schedule_id);
         setActiveSessionId(state.active_session_id);
 
+        // Everyone needs the schedule list so the live header can show which class is running.
+        const schs = await getClassSchedules(companyId);
+        setSchedules(schs);
+
         if (isAdminOrInstructor) {
-          const [schs, stus] = await Promise.all([
-            getClassSchedules(companyId),
-            getCompanyStudents(companyId)
-          ]);
-          setSchedules(schs);
+          const stus = await getCompanyStudents(companyId);
           setStudents(stus);
+
+          // Arrived from "Join" on the timetable: pre-select that class.
+          const wanted = new URLSearchParams(window.location.search).get("scheduleId");
+          if (wanted && schs.some((sc: any) => sc.id === wanted)) setSelectedScheduleId(wanted);
           
           if (state.active_schedule_id) {
              const att = await getSessionAttendance(companyId, state.active_schedule_id);
@@ -270,7 +275,7 @@ export function LiveSessionTab({ companyId, isAdminOrInstructor, companySlug }: 
                 <option value="">Unscheduled Session</option>
                 {schedules.map((s) => (
                   <option key={s.id} value={s.id}>
-                    {s.title} {s.is_recurring ? `(Every ${s.day_of_week})` : ""}
+                    {s.title}{s.is_recurring ? ` — ${dayName(s.day_of_week)} ${normalizeTime(s.start_time_only) ?? ""}` : " — one-off"}
                   </option>
                 ))}
               </select>
