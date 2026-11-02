@@ -274,9 +274,14 @@ export async function acceptInviteForUser(userId: string, rawCode: string): Prom
 
   // Count the use atomically (respects revoked / expired / max_uses). Typed
   // loosely because Database.Functions is intentionally empty (see database.ts).
-  const { data: redeemed, error: redeemError } = await (
-    supabase.rpc as unknown as (fn: string, args: Record<string, unknown>) => Promise<{ data: unknown; error: { message: string } | null }>
-  )("redeem_academy_invite", { p_invite_id: invite.id, p_user_id: userId });
+  // Called as a method (not detached) so supabase-js keeps its `this`.
+  const untypedRpc = supabase as unknown as {
+    rpc: (fn: string, args: Record<string, unknown>) => PromiseLike<{ data: unknown; error: { message: string } | null }>;
+  };
+  const { data: redeemed, error: redeemError } = await untypedRpc.rpc("redeem_academy_invite", {
+    p_invite_id: invite.id,
+    p_user_id: userId,
+  });
 
   if (redeemError) {
     console.error("[invites] redeem failed:", redeemError.message);
