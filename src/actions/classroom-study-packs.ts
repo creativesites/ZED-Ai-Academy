@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { gemini } from "@/lib/ai/gemini";
 import { modelFor } from "@/lib/ai/models";
-import { requireTenantMember, requireTenantTeacher } from "@/lib/tenants/access";
+import { requireTenantMember, requireTenantTeacher, isTeachingRole } from "@/lib/tenants/access";
 import { createServiceClient } from "@/lib/supabase/server";
 
 export interface StudyPack {
@@ -31,7 +31,8 @@ export async function getStudyPacks(
   companyId: string,
   cohortId?: string | null
 ): Promise<StudyPack[]> {
-  const { supabase, isTeacher, isSuperAdmin } = await requireTenantMember(companyId);
+  const { supabase, tenantRole, isSuperAdmin } = await requireTenantMember(companyId);
+  const isFaculty = isSuperAdmin || isTeachingRole(tenantRole);
 
   let query = supabase
     .from("classroom_study_packs")
@@ -44,7 +45,7 @@ export async function getStudyPacks(
   }
 
   // Non-teachers only see published packs
-  if (!isTeacher && !isSuperAdmin) {
+  if (!isFaculty) {
     query = query.eq("is_published", true);
   }
 

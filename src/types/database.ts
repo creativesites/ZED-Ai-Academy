@@ -1515,6 +1515,10 @@ export interface Database {
           title: string;
           description: string | null;
           material_type: "pdf" | "document" | "slides" | "worksheet" | "code" | "link" | "video";
+          category: string | null;
+          visibility: string;
+          requires_acknowledgement: boolean;
+          published_at: string | null;
           file_url: string | null;
           file_size_bytes: number;
           tags: string[];
@@ -1534,6 +1538,10 @@ export interface Database {
           title: string;
           description?: string | null;
           material_type?: "pdf" | "document" | "slides" | "worksheet" | "code" | "link" | "video";
+          category?: string | null;
+          visibility?: string;
+          requires_acknowledgement?: boolean;
+          published_at?: string | null;
           file_url?: string | null;
           file_size_bytes?: number;
           tags?: string[];
@@ -1550,6 +1558,10 @@ export interface Database {
           title?: string;
           description?: string | null;
           material_type?: "pdf" | "document" | "slides" | "worksheet" | "code" | "link" | "video";
+          category?: string | null;
+          visibility?: string;
+          requires_acknowledgement?: boolean;
+          published_at?: string | null;
           file_url?: string | null;
           file_size_bytes?: number;
           tags?: string[];

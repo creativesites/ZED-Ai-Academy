@@ -95,7 +95,7 @@ export function ClassroomTabs({
           getCompanySessionState(companyId, activeCohortId),
           getAnnouncements(companyId, activeCohortId),
           getClassroomAssignments(companyId, activeCohortId),
-          getClassroomMaterials(companyId, activeCohortId),
+          getClassroomMaterials(companyId, { cohortId: activeCohortId }),
         ]);
         setCohorts(groupsData || []);
         setCourses(coursesData || []);
