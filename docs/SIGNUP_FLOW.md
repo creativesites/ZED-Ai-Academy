@@ -34,7 +34,38 @@ A trainer must be able to go from the landing page to a working academy, a first
 
 A signed-in user who opens `/launch-your-academy` and already owns an academy goes straight to its admin hub. `/onboarding?role=company_admin` redirects to `/launch-your-academy`.
 
-## Student flow (invite link)
+## Student flow (invite link `/i/{code}`) — the main path
+
+Most people who sign up are students of an academy that already exists. They never choose an academy: the link decides it. Students never see a list of academies anywhere in sign-up or onboarding.
+
+**Invite links** live in `academy_invites` (`supabase/migrations/20261104000000_academy_invites.sql`). Each link has an 8-character code (alphabet `23456789ABCDEFGHJKMNPQRSTUVWXYZ`, generated with `crypto.randomInt`), a label, a role (`learner` or `teacher`), courses, an optional class group, optional max uses and expiry, and can be revoked. Every academy gets a default "General" student link the first time the admin hub or the Students page needs it. Revoking the default link replaces it with a new one. The tables are server-only (no anon or authenticated grants).
+
+1. The academy shares `https://<host>/i/{code}` from **Admin → Students** or the **Get started** checklist (Copy or WhatsApp). The host is the one the admin is using, so links work on previews, academy subdomains (`https://{slug}.<root>/i/{code}`) and custom domains.
+2. `/i/{code}` is public. It shows the academy's logo, name and colour, the courses and group the link includes, and the next live class (Lusaka time). It never mentions another academy. A wrong, revoked, expired or full link shows a friendly message and nothing else.
+3. **Signed out:** **Create my account** goes to `/sign-up?role=student&invite={code}`. The page skips the role chooser and says "Create your account to join {Academy}" (the name is looked up on the server). Clerk then sends the new account to `/onboarding?invite={code}`.
+4. **Onboarding** asks only "What's your name?". It skips even that when Clerk already has the name (for example Google). It then saves the profile, marks onboarding complete and calls the invite acceptance. The student lands in `/academy/{slug}/classroom`, a member of the academy, enrolled in the link's courses and in its class group.
+5. **I already have an account** goes to `/sign-in?invite={code}` and comes back to `/i/{code}`. **Signed in:** one button, **Join {Academy}**, calls `acceptInvite(code)` and opens the classroom.
+
+`acceptInvite(code)` (`src/actions/invites.ts`, logic in `src/lib/tenants/invites-server.ts`) is idempotent:
+
+- It validates the link and the academy.
+- It refuses a person the academy removed (membership `deactivated`).
+- It counts one use per person atomically (`redeem_academy_invite()`, which respects `max_uses`, `expires_at` and `revoked_at`). Tapping twice never counts twice.
+- It calls `ensureTenantMembership` (never downgrades a role, sets `profiles.company_id` if empty).
+- For students, it creates free, active enrollments with `source = 'academy_invite'` and no order. An existing active enrollment is left alone, one awaiting payment becomes active, and a revoked one stays revoked.
+- It adds the student to the link's class group.
+- **Teacher links** (`role = 'teacher'`) are the staff authorization themselves: the code is secret, made by an admin and revocable. They only work if the creator is still the academy's `company_admin` (or the owner, or a super admin). Only admins can create them.
+
+**Admin → Students** (`/academy/{slug}/admin/students`):
+
+- Admins and teachers see the invite links and the academy's students.
+- Teachers can share links and create student links.
+- Only admins can create teacher links, revoke links, remove a student (the membership is deactivated after a confirm; the profile is kept) or add a student to a course for free.
+- There is no QR code yet: no QR library is installed.
+
+If a resume is needed (tab closed after sign-up), Clerk `unsafeMetadata.signupInvite` sends the person back to `/onboarding?invite={code}`.
+
+## Student flow (academy join page, still supported)
 
 1. The trainer shares `https://<site>/academy/{slug}/join`. On an academy subdomain, the link is `https://{slug}.<root>/join`, which is also public.
 2. A signed-out student taps **Create Account to Join** and goes to `/sign-up?role=student&tenant={slug}`.
@@ -49,7 +80,9 @@ A signed-in user who opens `/launch-your-academy` and already owns an academy go
 
 ## Redirect rules (`src/lib/auth/signup-flow.ts`, `src/proxy.ts`)
 
-- When a signed-in user opens exactly `/sign-in` or `/sign-up`, the proxy sends them on and keeps the intent: `role=company_admin` → `/launch-your-academy`, an academy invite → its join page, otherwise `/after-sign-in?redirect_url=...`.
+- When a signed-in user opens exactly `/sign-in` or `/sign-up`, the proxy sends them on and keeps the intent: `invite={code}` → `/i/{code}`, `role=company_admin` → `/launch-your-academy`, an academy slug → its join page, otherwise `/after-sign-in?redirect_url=...`.
+- An `invite` code wins over `role` and `tenant`: a new account goes to `/onboarding?invite={code}`, an existing one to `/i/{code}`.
+- `/i/{code}` is public, and on an academy subdomain it is served as is (not rewritten into the academy).
 - Clerk sub-paths (`/sign-up/sso-callback`, `/sign-up/verify-email-address`, `/sign-in/factor-one`, ...) are never interrupted.
 - Return paths must be same-site paths. Absolute URLs are reduced to their path.
 
@@ -93,3 +126,20 @@ Use fresh accounts. Use a private window for each person, and Gmail "+" addresse
    2. In a new private window, open it and tap **Create Account to Join**. Sign up. Expect onboarding with the staff code filled in. Tap **Join Academy Staff**. Expect the academy admin hub.
    3. Open one of the academy's courses (Admin → Courses). Expect the course builder to open and edits to save.
    4. Try the staff link with a wrong code. Expect "Invalid staff access code".
+7. **Student invite link (main path).** Apply `supabase/migrations/20261104000000_academy_invites.sql` first. You need the academy from test 1, with a published course and one live class on the timetable.
+   1. As the trainer, open **Admin → Students** (`/academy/{slug}/admin/students`). Expect "Your academy link" (`.../i/XXXXXXXX`).
+   2. Tap **New invite link**. Name it "ICT Cohort Nov", tick the course, tap **Create group**, name it "Evening class", set max uses to 2, and keep expiry at Never. Tap **Create link**. Expect the new link in the list as Active, Used 0 / 2.
+   3. Tap **WhatsApp** on it and send it to a phone, or copy it.
+   4. On the phone, in a private tab (signed out), open the link. Expect:
+      - the academy's logo, name and colour;
+      - "You've been invited to join {Academy}";
+      - the course, "Evening class" and the next live class;
+      - no other academy anywhere.
+   5. Tap **Create my account**. Expect "Create your account to join {Academy}", with no role chooser. Sign up with email and enter the code.
+   6. Expect "What's your name?" (or nothing, with Google). Enter a name and tap **Start Learning**. Expect the academy classroom. Open the course: it is enrolled, and no payment was asked.
+   7. Back on the trainer's Students page, expect the student with the course and "Evening class", and the link at Used 1 / 2.
+   8. As a second student, with an account that already exists and is signed in, open the same link. Expect a single **Join {Academy}** button. Tap it, and expect the classroom with the course enrolled. Tap back and **Open {Academy}** again: the link stays at 2 / 2, not 3.
+   9. As a third person, open the link. Expect "This invite link is full" and no academy list.
+   10. Revoke the link. Open it again. Expect "This invite link has been turned off".
+   11. Remove the first student (**Remove**, then confirm). Signed in as that student, open the academy's default link and tap Join. Expect "Your access to {Academy} was removed".
+   12. On an academy subdomain (`https://{slug}.<root>/i/{code}`), repeat steps 4 and 5. Expect the same page, and sign-up continuing on the main domain.
