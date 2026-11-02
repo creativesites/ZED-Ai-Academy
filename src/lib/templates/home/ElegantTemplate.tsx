@@ -15,35 +15,35 @@ export function ElegantTemplate({ tenant, courses, membership, brandColor, heroT
   return (
     <div className="font-serif bg-stone-50 text-stone-800 selection:bg-stone-200" style={{ "--primary-color": brandColor } as React.CSSProperties}>
       {/* Hero */}
-      <section className="pt-52 pb-32 bg-white relative overflow-hidden">
-        <div className="container mx-auto px-6 flex flex-col lg:flex-row items-center gap-20 max-w-7xl relative z-10">
+      <section className="pt-32 sm:pt-44 lg:pt-52 pb-16 sm:pb-24 lg:pb-32 bg-white relative overflow-hidden">
+        <div className="container mx-auto px-6 flex flex-col lg:flex-row items-center gap-10 lg:gap-20 max-w-7xl relative z-10">
           <div className="flex-1 space-y-10">
             <div className="w-24 h-0.5 bg-stone-400" />
-            <h1 className="text-6xl md:text-8xl font-light tracking-tight leading-none text-stone-900">{heroTitle}</h1>
+            <h1 className="text-4xl sm:text-6xl md:text-8xl break-words font-light tracking-tight leading-none text-stone-900">{heroTitle}</h1>
             <p className="text-xl text-stone-500 font-light max-w-xl">{heroSubtitle}</p>
             <div className="flex gap-6 mb-16">
               {!membership ? (
                 <form action={joinTenantBySlug}>
                   <input type="hidden" name="tenantSlug" value={tenant.slug} />
                   <input type="hidden" name="role" value="student" />
-                  <Button className="h-16 px-12 rounded-none bg-brand text-brand-on font-light tracking-widest hover:bg-brand-hover shadow-lg transition-all">
+                  <Button className="h-14 sm:h-16 px-7 sm:px-12 rounded-none bg-brand text-brand-on font-light tracking-widest hover:bg-brand-hover shadow-lg transition-all">
                     ENTER
                   </Button>
                 </form>
               ) : (
                 <Link href={`/academy/${tenant.slug}/classroom`}>
-                  <Button className="h-16 px-12 rounded-none bg-brand text-brand-on font-light tracking-widest hover:bg-brand-hover shadow-lg transition-all">
+                  <Button className="h-14 sm:h-16 px-7 sm:px-12 rounded-none bg-brand text-brand-on font-light tracking-widest hover:bg-brand-hover shadow-lg transition-all">
                     CLASSROOM
                   </Button>
                 </Link>
               )}
-              <Button variant="ghost" className="h-16 px-10 rounded-none text-stone-400 font-light tracking-widest border border-stone-100">
+              <Button variant="ghost" className="h-14 sm:h-16 px-7 sm:px-10 rounded-none text-stone-400 font-light tracking-widest border border-stone-100">
                 DISCOVER
               </Button>
             </div>
 
             {/* Hero Stats */}
-            <div className="flex gap-16 pt-12 border-t border-stone-100">
+            <div className="flex flex-wrap gap-x-10 gap-y-6 sm:gap-16 pt-10 sm:pt-12 border-t border-stone-100">
               <div>
                 <div className="text-4xl font-light text-stone-900">{content.stats_students || "10k+"}</div>
                 <div className="text-[10px] font-medium text-stone-400 uppercase tracking-[0.3em] mt-1">Scholars</div>
@@ -68,7 +68,7 @@ export function ElegantTemplate({ tenant, courses, membership, brandColor, heroT
       </section>
 
       {/* About */}
-      <section className="py-32 bg-white">
+      <section className="py-16 sm:py-24 lg:py-32 bg-white">
         <div className="container mx-auto px-6 max-w-4xl text-center">
           <Quote className="h-12 w-12 text-stone-200 mx-auto mb-10" />
           <p className="text-2xl md:text-3xl font-light italic leading-relaxed text-stone-500 mb-12">{aboutText}</p>
@@ -89,7 +89,7 @@ export function ElegantTemplate({ tenant, courses, membership, brandColor, heroT
       />
 
       {/* Courses Grid */}
-      <section className="py-32 bg-stone-50 border-y border-stone-100">
+      <section className="py-16 sm:py-24 lg:py-32 bg-stone-50 border-y border-stone-100">
         <div className="container mx-auto px-6 max-w-7xl">
           <div className="flex items-end justify-between mb-20">
             <div className="space-y-4">
@@ -109,22 +109,22 @@ export function ElegantTemplate({ tenant, courses, membership, brandColor, heroT
 
 
       {/* CTA */}
-      <section className="py-32 container mx-auto px-6">
-        <div className="bg-stone-800 text-white p-16 md:p-32 text-center rounded-none shadow-[0_40px_100px_-20px_rgba(0,0,0,0.5)] relative overflow-hidden group">
+      <section className="py-16 sm:py-24 lg:py-32 container mx-auto px-6">
+        <div className="bg-stone-800 text-white p-8 sm:p-16 md:p-32 text-center rounded-none shadow-[0_40px_100px_-20px_rgba(0,0,0,0.5)] relative overflow-hidden group">
           <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/dark-matter.png')] opacity-10 pointer-events-none" />
-          <h2 className="text-5xl md:text-[7rem] font-light mb-16 tracking-tight leading-none relative z-10">{ctaTitle}</h2>
+          <h2 className="text-4xl sm:text-6xl md:text-[7rem] break-words font-light mb-16 tracking-tight leading-none relative z-10">{ctaTitle}</h2>
           <div className="relative z-10">
             {!membership ? (
               <form action={joinTenantBySlug}>
                 <input type="hidden" name="tenantSlug" value={tenant.slug} />
                 <input type="hidden" name="role" value="student" />
-                <Button className="h-20 px-16 rounded-none bg-white text-stone-800 font-bold tracking-[0.3em] hover:bg-stone-100 shadow-2xl transition-all">
+                <Button className="h-14 sm:h-20 px-8 sm:px-16 rounded-none bg-white text-stone-800 font-bold tracking-widest sm:tracking-[0.3em] hover:bg-stone-100 shadow-2xl transition-all">
                   {ctaButton}
                 </Button>
               </form>
             ) : (
               <Link href={`/academy/${tenant.slug}/classroom`}>
-                <Button className="h-20 px-16 rounded-none bg-white text-stone-800 font-bold tracking-[0.3em] hover:bg-stone-100 shadow-2xl transition-all">
+                <Button className="h-14 sm:h-20 px-8 sm:px-16 rounded-none bg-white text-stone-800 font-bold tracking-widest sm:tracking-[0.3em] hover:bg-stone-100 shadow-2xl transition-all">
                   OPEN CLASSROOM
                 </Button>
               </Link>

@@ -120,7 +120,7 @@ export default async function TenantEnrollmentsPage({ params, searchParams }: Pa
   ];
 
   return (
-    <div className="container max-w-7xl py-12">
+    <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 md:py-12">
       <div className="space-y-10">
         
         {/* Header */}

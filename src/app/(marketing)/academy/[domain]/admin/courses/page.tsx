@@ -73,7 +73,7 @@ export default async function TenantAdminCoursesPage({
   const draftCount = courses.filter((c) => c.status === "draft").length;
 
   return (
-    <div className="container max-w-7xl px-4 py-8 md:py-12">
+    <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 md:py-12">
       {/* Top Header */}
       <div className="mb-10 flex flex-col gap-6 md:flex-row md:items-center justify-between">
         <div>
@@ -135,7 +135,7 @@ export default async function TenantAdminCoursesPage({
 
       {/* Courses Grid */}
       {courses.length === 0 ? (
-        <div className="bg-white rounded-[2.5rem] p-12 text-center border border-slate-100 shadow-sm max-w-xl mx-auto my-12">
+        <div className="bg-white rounded-3xl sm:rounded-[2.5rem] p-6 sm:p-12 text-center border border-slate-100 shadow-sm max-w-xl mx-auto my-12">
           <div className="h-16 w-16 rounded-2xl bg-brand-soft text-brand-ink flex items-center justify-center mx-auto mb-4">
             <BookOpen className="h-8 w-8" />
           </div>

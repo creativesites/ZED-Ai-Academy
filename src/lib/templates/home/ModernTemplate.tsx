@@ -81,7 +81,7 @@ export function ModernTemplate(props: {
   return (
     <div style={{ "--primary-color": brandColor } as React.CSSProperties}>
       {/* Hero */}
-      <section className="relative pt-25 px-10 pb-10 lg:pt-30 lg:pb-10 overflow-hidden bg-[#0f1117]">
+      <section className="relative pt-28 sm:pt-32 px-4 sm:px-10 pb-10 lg:pt-32 lg:pb-10 overflow-hidden bg-[#0f1117]">
         {/* Grid Background */}
         <div
           className="absolute inset-0 z-0 opacity-30"
@@ -121,7 +121,7 @@ export function ModernTemplate(props: {
                 <Sparkles className="h-3.5 w-3.5 text-brand-ink-dark" />{" "}
                 Accredited Academy
               </div>
-              <h1 className="font-serif text-5xl md:text-7xl lg:text-8xl text-white leading-[1.05] mb-8 tracking-tighter">
+              <h1 className="font-serif text-4xl sm:text-5xl md:text-7xl lg:text-8xl break-words text-white leading-[1.05] mb-8 tracking-tighter">
                 {finalHeroTitle}
               </h1>
               <p className="text-white/60 text-lg md:text-xl leading-relaxed mb-12 max-w-xl whitespace-pre-wrap">
@@ -136,7 +136,7 @@ export function ModernTemplate(props: {
                     <input type="hidden" name="tenantSlug" value={tenant.slug} />
                     <input type="hidden" name="role" value="student" />
                     <Button 
-                      className="h-16 px-10 rounded-full bg-brand text-brand-on text-lg font-black uppercase tracking-wider shadow-2xl shadow-brand/20 hover:scale-105 transition-all"
+                      className="h-14 sm:h-16 px-7 sm:px-10 rounded-full bg-brand text-brand-on text-lg font-black uppercase tracking-wider shadow-2xl shadow-brand/20 hover:scale-105 transition-all"
                       style={{ borderRadius: '24px' }}
                     >
                       Enroll Now
@@ -145,7 +145,7 @@ export function ModernTemplate(props: {
                 ) : (
                   <Link href={`/academy/${tenant.slug}/classroom`}>
                     <Button 
-                      className="h-16 px-10 rounded-full bg-brand text-brand-on text-lg font-black uppercase tracking-wider shadow-2xl shadow-brand/20 hover:scale-105 transition-all"
+                      className="h-14 sm:h-16 px-7 sm:px-10 rounded-full bg-brand text-brand-on text-lg font-black uppercase tracking-wider shadow-2xl shadow-brand/20 hover:scale-105 transition-all"
                       style={{ borderRadius: '24px' }}
                     >
                       Go to Classroom
@@ -155,7 +155,7 @@ export function ModernTemplate(props: {
                 <Link href="#learn-more">
                 <Button
                   variant="outline"
-                  className="h-16 px-10 rounded-2xl text-lg font-black uppercase tracking-wider border-white/10 text-white hover:bg-white/5"
+                  className="h-14 sm:h-16 px-7 sm:px-10 rounded-2xl text-lg font-black uppercase tracking-wider border-white/10 text-white hover:bg-white/5"
                   style={{
                     background: "radial-gradient(ellipse, color-mix(in srgb, var(--brand) 35%, transparent) 0%, transparent 70%)",
                     borderRadius: '16px'
@@ -184,9 +184,8 @@ export function ModernTemplate(props: {
 
             {showHeroImage && (
               <div className="relative group">
-                <div className="absolute inset-0 bg-brand rounded-[4rem] blur-[120px] opacity-20 group-hover:opacity-30 transition-opacity" />
-                <div className="relative rounded-[3.5rem] overflow-hidden border-[12px] border-white/5 shadow-2xl shadow-black/50"
-                style={{height: '80vh'}}>
+                <div className="absolute inset-0 bg-brand rounded-[2rem] sm:rounded-[4rem] blur-[120px] opacity-20 group-hover:opacity-30 transition-opacity" />
+                <div className="relative h-[55vh] sm:h-[70vh] lg:h-[80vh] rounded-[2rem] sm:rounded-[3.5rem] overflow-hidden border-[6px] sm:border-[12px] border-white/5 shadow-2xl shadow-black/50">
                   <img
                     src={content.hero_image}
                     className="w-full h-full object-cover"
@@ -217,9 +216,9 @@ export function ModernTemplate(props: {
       </section>
 
       {/* Mission */}
-      <section id="learn-more" className="py-24 bg-white overflow-hidden">
+      <section id="learn-more" className="py-14 sm:py-20 lg:py-24 bg-white overflow-hidden">
         <div className="container mx-auto px-6 max-w-7xl">
-          <div className="grid lg:grid-cols-2 gap-20 items-center">
+          <div className="grid lg:grid-cols-2 gap-10 lg:gap-20 items-center">
             <div className="space-y-8 order-2 lg:order-1">
               <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-100 text-slate-600 text-[10px] font-black uppercase tracking-widest border border-slate-200">
                 <BookOpen className="h-3.5 w-3.5" />
@@ -263,8 +262,8 @@ export function ModernTemplate(props: {
 
             <div className="order-1 lg:order-2">
               <div className="relative">
-                <div className="absolute inset-0 bg-brand/30 rounded-[4rem] rotate-3 scale-95 opacity-20" />
-                <div className="relative aspect-square rounded-[4rem] overflow-hidden border-[12px] border-white shadow-2xl">
+                <div className="absolute inset-0 bg-brand/30 rounded-[2rem] sm:rounded-[4rem] rotate-3 scale-95 opacity-20" />
+                <div className="relative aspect-square rounded-[2rem] sm:rounded-[4rem] overflow-hidden border-[6px] sm:border-[12px] border-white shadow-2xl">
                   <img
                     src={aboutImage}
                     className="w-full h-full object-cover"
@@ -289,7 +288,7 @@ export function ModernTemplate(props: {
       />
 
       {/* Courses */}
-      <section className="py-24 bg-white">
+      <section className="py-14 sm:py-20 lg:py-24 bg-white">
         <div className="container mx-auto px-6 max-w-7xl">
           <div className="flex flex-col md:flex-row items-end justify-between gap-8 mb-16">
             <div className="max-w-2xl space-y-4">
@@ -322,8 +321,8 @@ export function ModernTemplate(props: {
       </section>
 
       {/* CTA */}
-      <section className="py-24 container mx-auto px-6">
-        <div className="rounded-[4rem] p-12 md:p-24 text-center relative overflow-hidden shadow-2xl bg-[#062e39] text-white group">
+      <section className="py-14 sm:py-20 lg:py-24 container mx-auto px-6">
+        <div className="rounded-[2rem] sm:rounded-[4rem] p-8 sm:p-12 md:p-24 text-center relative overflow-hidden shadow-2xl bg-[#062e39] text-white group">
           {/* Animated Background Element */}
           <div className="absolute top-0 right-0 p-12 opacity-5 pointer-events-none rotate-12 transition-transform duration-700 group-hover:rotate-[30deg] group-hover:scale-125">
             <Zap className="h-64 w-64 text-white" />
@@ -339,13 +338,13 @@ export function ModernTemplate(props: {
                 <form action={joinTenantBySlug}>
                   <input type="hidden" name="tenantSlug" value={tenant.slug} />
                   <input type="hidden" name="role" value="student" />
-                  <Button className="h-20 px-12 rounded-3xl bg-brand text-brand-on text-xl font-black uppercase tracking-[0.2em] shadow-2xl shadow-brand/40 hover:scale-105 transition-all">
+                  <Button className="h-14 sm:h-20 px-7 sm:px-12 rounded-3xl bg-brand text-brand-on text-base sm:text-xl font-black uppercase tracking-widest sm:tracking-[0.2em] shadow-2xl shadow-brand/40 hover:scale-105 transition-all">
                     {ctaButton}
                   </Button>
                 </form>
               ) : (
                 <Link href={`/academy/${tenant.slug}/classroom`}>
-                  <Button className="h-20 px-12 rounded-3xl bg-brand text-brand-on text-xl font-black uppercase tracking-[0.2em] shadow-2xl shadow-brand/40 hover:scale-105 transition-all">
+                  <Button className="h-14 sm:h-20 px-7 sm:px-12 rounded-3xl bg-brand text-brand-on text-base sm:text-xl font-black uppercase tracking-widest sm:tracking-[0.2em] shadow-2xl shadow-brand/40 hover:scale-105 transition-all">
                     Open Classroom
                   </Button>
                 </Link>

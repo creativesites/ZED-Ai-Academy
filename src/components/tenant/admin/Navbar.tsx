@@ -17,7 +17,7 @@ import {
   ChevronRight,
   Layers
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { TenantUserButton } from "@/components/tenant/TenantUserButton";
 import { TenantAcademySwitcher } from "@/components/tenant/TenantAcademySwitcher";
@@ -31,6 +31,22 @@ interface NavItem {
 export function TenantAdminNavbar({ slug, name }: { slug: string; name: string }) {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
+
+  const isItemActive = (item: NavItem) =>
+    pathname === item.href ||
+    (item.label === "Settings" && pathname.includes("/settings") && !pathname.includes("/settings/live-sessions")) ||
+    (item.label === "Live Sessions" && pathname.includes("/live-sessions"));
+
+  // Close the drawer when the route changes or Escape is pressed; lock page scroll while open.
+  useEffect(() => { setIsOpen(false); }, [pathname]);
+  useEffect(() => {
+    if (!isOpen) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setIsOpen(false); };
+    document.addEventListener("keydown", onKey);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.removeEventListener("keydown", onKey); document.body.style.overflow = prev; };
+  }, [isOpen]);
 
   const navItems: NavItem[] = [
     { label: "Dashboard", href: `/academy/${slug}/admin`, icon: LayoutDashboard },
@@ -50,7 +66,7 @@ export function TenantAdminNavbar({ slug, name }: { slug: string; name: string }
           {/* Left Brand: Clean & Compact (no giant academy name crowding the menu) */}
           <div className="flex items-center gap-2.5 shrink-0">
             <Link href={`/academy/${slug}/admin`} className="flex items-center gap-2 group">
-              <div className="h-8 w-8 rounded-xl bg-[#062e39] group-hover:bg-brand flex items-center justify-center text-white transition-colors shadow-sm shrink-0 hover:text-brand-on">
+              <div className="h-8 w-8 rounded-xl bg-[#062e39] group-hover:bg-brand group-hover:text-brand-on flex items-center justify-center text-white transition-colors shadow-sm shrink-0 hover:text-brand-on">
                 <LayoutDashboard className="h-4 w-4" />
               </div>
               <span className="font-black text-sm text-[#062e39] tracking-tight">Admin Hub</span>
@@ -70,9 +86,9 @@ export function TenantAdminNavbar({ slug, name }: { slug: string; name: string }
           </div>
 
           {/* Desktop Nav: Spacious, Unsqueezed, and Elegantly Aligned */}
-          <div className="hidden md:flex items-center gap-1">
+          <div className="hidden lg:flex items-center gap-1">
             {navItems.map((item) => {
-              const isActive = pathname === item.href || (item.label === "Settings" && pathname.includes("/settings"));
+              const isActive = isItemActive(item);
               return (
                 <Link
                   key={item.label}
@@ -102,8 +118,11 @@ export function TenantAdminNavbar({ slug, name }: { slug: string; name: string }
             <Button
               variant="ghost"
               size="icon"
-              className="md:hidden rounded-xl text-slate-600 hover:bg-slate-100"
+              className="lg:hidden rounded-xl text-slate-600 hover:bg-slate-100"
               onClick={() => setIsOpen(!isOpen)}
+              aria-label={isOpen ? "Close menu" : "Open menu"}
+              aria-expanded={isOpen}
+              aria-controls="admin-mobile-menu"
             >
               {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </Button>
@@ -114,9 +133,10 @@ export function TenantAdminNavbar({ slug, name }: { slug: string; name: string }
 
       {/* Mobile Drawer */}
       {isOpen && (
-        <div className="fixed inset-0 z-[90] bg-black/20 backdrop-blur-sm md:hidden" onClick={() => setIsOpen(false)}>
+        <div className="fixed inset-0 z-[90] bg-black/20 backdrop-blur-sm lg:hidden" onClick={() => setIsOpen(false)}>
           <div 
-            className="absolute top-16 left-0 right-0 bg-white border-b border-slate-200 p-6 space-y-2 animate-in slide-in-from-top duration-300"
+            id="admin-mobile-menu"
+            className="absolute top-16 left-0 right-0 max-h-[calc(100dvh-4rem)] overflow-y-auto bg-white border-b border-slate-200 p-4 sm:p-6 space-y-1.5 animate-in slide-in-from-top duration-300"
             onClick={(e) => e.stopPropagation()}
           >
             {navItems.map((item) => (
@@ -126,7 +146,7 @@ export function TenantAdminNavbar({ slug, name }: { slug: string; name: string }
                 onClick={() => setIsOpen(false)}
                 className={cn(
                   "w-full p-3.5 rounded-xl text-xs font-bold flex items-center justify-between transition-all",
-                  pathname === item.href 
+                  isItemActive(item)
                     ? "bg-brand-soft text-brand-ink font-extrabold" 
                     : "text-slate-600 hover:bg-slate-50"
                 )}
@@ -138,6 +158,15 @@ export function TenantAdminNavbar({ slug, name }: { slug: string; name: string }
                 <ChevronRight className="h-4 w-4 opacity-40" />
               </Link>
             ))}
+            <Link
+              href={`/academy/${slug}`}
+              target="_blank"
+              onClick={() => setIsOpen(false)}
+              className="w-full p-3.5 rounded-xl text-xs font-bold flex items-center gap-3 text-slate-600 hover:bg-slate-50 border-t border-slate-100 mt-2 pt-4"
+            >
+              <Globe className="h-4 w-4" />
+              View public academy
+            </Link>
           </div>
         </div>
       )}

@@ -126,7 +126,7 @@ export default async function TenantAdminLiveSessionsPage({
   const upcomingBookings = bookings.filter((booking) => booking.status !== "requested");
 
   return (
-    <div className="container max-w-7xl py-12">
+    <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 md:py-12">
       <div className="mb-10 flex flex-col justify-between gap-5 md:flex-row md:items-center">
         <div>
           <h1 className="text-4xl font-black tracking-tight text-[#062e39] uppercase">Live Sessions Studio</h1>
@@ -139,7 +139,7 @@ export default async function TenantAdminLiveSessionsPage({
       <div className="grid gap-10 lg:grid-cols-12">
         <div className="lg:col-span-7 space-y-10">
           {/* Create Session Type */}
-          <section className="bg-white rounded-[2.5rem] p-10 border border-slate-100 shadow-sm">
+          <section className="bg-white rounded-3xl sm:rounded-[2.5rem] p-5 sm:p-8 md:p-10 border border-slate-100 shadow-sm">
             <div className="mb-8 flex items-center gap-3">
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-soft text-brand-ink">
                 <Plus className="h-6 w-6" />
@@ -179,7 +179,7 @@ export default async function TenantAdminLiveSessionsPage({
           </section>
 
           {/* Availability Rules */}
-          <section className="bg-white rounded-[2.5rem] p-10 border border-slate-100 shadow-sm">
+          <section className="bg-white rounded-3xl sm:rounded-[2.5rem] p-5 sm:p-8 md:p-10 border border-slate-100 shadow-sm">
             <div className="mb-8 flex items-center gap-3">
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600">
                 <Clock3 className="h-6 w-6" />
@@ -202,7 +202,7 @@ export default async function TenantAdminLiveSessionsPage({
 
             <div className="mt-8 grid gap-3">
               {rules.length === 0 ? (
-                <div className="p-10 text-center bg-slate-50 rounded-3xl border border-dashed border-slate-200">
+                <div className="p-6 sm:p-10 text-center bg-slate-50 rounded-3xl border border-dashed border-slate-200">
                    <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">No slots added yet.</p>
                 </div>
               ) : rules.map((rule) => (
@@ -222,7 +222,7 @@ export default async function TenantAdminLiveSessionsPage({
 
         <div className="lg:col-span-5 space-y-10">
           {/* Active Services */}
-          <section className="bg-white rounded-[2.5rem] p-10 border border-slate-100 shadow-sm">
+          <section className="bg-white rounded-3xl sm:rounded-[2.5rem] p-5 sm:p-8 md:p-10 border border-slate-100 shadow-sm">
             <h3 className="text-sm font-black uppercase tracking-widest text-[#062e39] mb-8 flex items-center gap-3">
               <Video className="h-5 w-5 text-brand-ink" /> Published Services
             </h3>
@@ -249,7 +249,7 @@ export default async function TenantAdminLiveSessionsPage({
           </section>
 
           {/* Pending Requests */}
-          <section className="bg-white rounded-[2.5rem] p-10 border border-slate-100 shadow-sm">
+          <section className="bg-white rounded-3xl sm:rounded-[2.5rem] p-5 sm:p-8 md:p-10 border border-slate-100 shadow-sm">
              <h3 className="text-sm font-black uppercase tracking-widest text-[#062e39] mb-8 flex items-center gap-3">
                <CalendarDays className="h-5 w-5 text-brand-ink" /> Session Requests
              </h3>
@@ -279,7 +279,7 @@ export default async function TenantAdminLiveSessionsPage({
           </section>
 
           {/* Upcoming Sessions */}
-          <section className="bg-white rounded-[2.5rem] p-10 border border-slate-100 shadow-sm">
+          <section className="bg-white rounded-3xl sm:rounded-[2.5rem] p-5 sm:p-8 md:p-10 border border-slate-100 shadow-sm">
              <h3 className="text-sm font-black uppercase tracking-widest text-[#062e39] mb-8">Confirmed Sessions</h3>
              <div className="space-y-4">
                 {upcomingBookings.map((booking) => (

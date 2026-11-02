@@ -105,7 +105,7 @@ export default async function CreatorLiveSessionsPage() {
   const upcomingBookings = bookings.filter((booking) => booking.status !== "requested");
 
   return (
-    <main className="container" style={{ paddingTop: "60px", paddingBottom: "120px" }}>
+    <main className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10 sm:py-14 pb-24 sm:pb-32">
       <div className="mb-10 flex flex-col justify-between gap-5 md:flex-row md:items-end">
         <div>
           <p className="text-xs font-black uppercase tracking-[0.25em] text-brand-ink">Creator Studio</p>

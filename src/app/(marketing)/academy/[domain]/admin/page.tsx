@@ -46,18 +46,18 @@ export default async function AdminTenantHubPage({
   const upcomingClasses = (schedules || []).slice(0, 4);
 
   return (
-    <div className="container max-w-7xl px-4 py-8 md:py-12">
-      <div className="mb-10 flex flex-col gap-8 md:flex-row md:items-center justify-between">
+    <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+      <div className="mb-6 sm:mb-10 flex flex-col gap-6 sm:gap-8 md:flex-row md:items-center justify-between">
         <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 text-center sm:text-left">
-          <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-[2rem] bg-white shadow-2xl border border-slate-100 p-5">
+          <div className="flex h-16 w-16 sm:h-24 sm:w-24 shrink-0 items-center justify-center rounded-2xl sm:rounded-[2rem] bg-white shadow-xl border border-slate-100 p-3 sm:p-5">
             {company.logo_url ? (
               <img src={company.logo_url} alt="" className="h-full w-auto object-contain" />
             ) : (
-              <Building2 className="h-10 w-10 text-[#062e39]" />
+              <Building2 className="h-7 w-7 sm:h-10 sm:w-10 text-[#062e39]" />
             )}
           </div>
           <div className="space-y-1">
-            <h1 className="text-3xl md:text-5xl font-black text-[#062e39] tracking-tight leading-none uppercase">
+            <h1 className="text-2xl sm:text-4xl md:text-5xl font-black text-[#062e39] tracking-tight leading-tight sm:leading-none uppercase break-words">
               {company.name} <span className="text-brand-ink">Hub</span>
             </h1>
             <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 mt-4">
@@ -126,7 +126,7 @@ export default async function AdminTenantHubPage({
           
           {/* Quick Actions */}
           <div className="bg-[#062e39] rounded-[2.5rem] p-8 shadow-2xl text-white relative overflow-hidden">
-             <div className="absolute top-0 right-0 p-10 opacity-5 pointer-events-none">
+             <div className="absolute top-0 right-0 p-5 sm:p-10 opacity-5 pointer-events-none">
                 <Sparkles className="h-32 w-32" />
              </div>
              <h3 className="text-lg font-black uppercase tracking-widest mb-6 flex items-center gap-2">

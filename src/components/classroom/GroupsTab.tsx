@@ -93,7 +93,7 @@ export function GroupsTab({ companyId, companySlug }: { companyId: string, compa
             <p className="text-[10px] font-black uppercase tracking-widest">Loading Groups...</p>
           </div>
         ) : groups.length === 0 ? (
-          <div className="py-20 text-center bg-white rounded-[3rem] border-2 border-dashed border-slate-100">
+          <div className="py-12 sm:py-20 px-4 text-center bg-white rounded-3xl sm:rounded-[3rem] border-2 border-dashed border-slate-100">
             <div className="h-20 w-20 rounded-3xl bg-slate-50 flex items-center justify-center mx-auto mb-6">
               <UsersRound className="h-10 w-10 text-slate-200" />
             </div>
