@@ -147,6 +147,19 @@ export async function removeStudent(companyId: string, profileId: string): Promi
     .select("profile_id");
   if (error) return { ok: false, error: error.message };
   if (!data?.length) return { ok: false, error: "Student not found in this academy." };
+
+  // Removing a student also ends their access to this academy's courses (other academies untouched).
+  const { data: courses } = await supabase.from("courses").select("id").eq("company_id", companyId);
+  const courseIds = (courses ?? []).map((c) => c.id);
+  if (courseIds.length > 0) {
+    await supabase
+      .from("enrollments")
+      .update({ status: "revoked" })
+      .eq("user_id", String(profileId ?? ""))
+      .in("course_id", courseIds)
+      .neq("status", "revoked");
+  }
+
   await revalidateStudents(companyId);
   return { ok: true };
 }
