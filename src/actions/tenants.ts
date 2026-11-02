@@ -54,6 +54,17 @@ export async function joinTenantBySlug(formData: FormData) {
     redirect(`/academy/${company.slug}/join?role=teacher`);
   }
 
+  // Removed by the academy (Admin -> Students): joining again needs the academy.
+  const { data: existing } = await supabase
+    .from("company_members")
+    .select("status")
+    .eq("company_id", company.id)
+    .eq("profile_id", userId)
+    .maybeSingle();
+  if (existing?.status === "deactivated") {
+    redirect(`/academy/${company.slug}`);
+  }
+
   await ensureTenantMembership(userId, company.id, "learner");
 
   revalidatePath(`/academy/${company.slug}`);
