@@ -34,7 +34,7 @@ export default async function SettingsPage({
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#fff6ee] to-white">
+    <div className="min-h-screen bg-gradient-to-b from-brand-soft to-white">
       <div className="px-4 py-8 sm:px-6 lg:px-8 max-w-6xl mx-auto space-y-6">
         <div>
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-[#062e39]">

@@ -61,7 +61,7 @@ export function ClassroomTabs({ companyId, isAdminOrInstructor, companySlug, ini
               className={cn(
                 "flex items-center gap-4 px-6 py-4 rounded-[1.5rem] text-xs font-black uppercase tracking-widest transition-all w-full",
                 isActive
-                  ? "bg-[#fd5523] text-white shadow-lg shadow-[#fd5523]/30 scale-[1.02]"
+                  ? "bg-brand text-white shadow-lg shadow-brand/30 scale-[1.02]"
                   : "text-slate-400 hover:bg-slate-50 hover:text-slate-600"
               )}
             >
@@ -87,13 +87,13 @@ export function ClassroomTabs({ companyId, isAdminOrInstructor, companySlug, ini
               >
                 <div className={cn(
                   "p-2 rounded-2xl transition-all",
-                  isActive ? "bg-[#fd5523] text-white" : "text-slate-400"
+                  isActive ? "bg-brand text-white" : "text-slate-400"
                 )}>
                   <tab.icon className="h-5 w-5" />
                 </div>
                 <span className={cn(
                   "text-[10px] font-bold truncate w-full text-center px-1",
-                  isActive ? "text-[#fd5523]" : "text-slate-400"
+                  isActive ? "text-brand-ink" : "text-slate-400"
                 )}>
                   {tab.label}
                 </span>

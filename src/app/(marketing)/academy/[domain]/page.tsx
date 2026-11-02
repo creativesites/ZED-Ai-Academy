@@ -8,7 +8,7 @@ import { joinTenantBySlug } from "@/actions/tenants";
 import { cn } from "@/lib/utils";
 import { TemplateRenderer } from "@/lib/templates/home-templates";
 import { TenantTracker } from "@/components/tenant/TenantTracker";
-import type { CSSProperties } from "react";
+import { brandStyle } from "@/lib/brand";
 import { getCurrentTenantAccess } from "@/lib/tenants/access";
 import TenantHomeNavBar from "@/components/tenant/TenantHomeNavBar";  
 
@@ -83,7 +83,7 @@ export default async function TenantHomePage({ params }: { params: Promise<{ dom
         "min-h-screen transition-colors duration-1000",
         template === "dark_mode" ? "bg-[#0a0a0c] text-white" : "bg-white text-slate-900"
       )}
-      style={{ "--primary-color": brandColor } as CSSProperties}
+      style={brandStyle(brandColor)}
     >
       {/* Fixed Header */}
       <TenantHomeNavBar 

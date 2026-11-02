@@ -17,7 +17,7 @@ export function CorporateTemplate({ tenant, courses, membership, brandColor, her
       <section className="pt-52 pb-32 bg-slate-50 relative overflow-hidden">
         <div className="container mx-auto px-6 max-w-7xl flex flex-col lg:flex-row items-center gap-20 relative z-10">
           <div className="flex-1 space-y-8">
-            <span className="text-blue-600 font-bold uppercase tracking-[0.3em] text-sm">Professional Development</span>
+            <span className="text-brand-ink font-bold uppercase tracking-[0.3em] text-sm">Professional Development</span>
             <h1 className="text-5xl md:text-7xl font-black text-slate-800 leading-tight">{heroTitle}</h1>
             <p className="text-xl text-slate-600">{heroSubtitle}</p>
             <div className="flex gap-4 mb-12">
@@ -25,13 +25,13 @@ export function CorporateTemplate({ tenant, courses, membership, brandColor, her
                 <form action={joinTenantBySlug}>
                   <input type="hidden" name="tenantSlug" value={tenant.slug} />
                   <input type="hidden" name="role" value="student" />
-                  <Button className="h-16 px-12 rounded-md bg-blue-600 text-white font-bold hover:bg-blue-700 shadow-lg transition-all">
+                  <Button className="h-16 px-12 rounded-md bg-brand text-brand-on font-bold hover:bg-brand-hover shadow-lg transition-all">
                     Get Started
                   </Button>
                 </form>
               ) : (
                 <Link href={`/academy/${tenant.slug}/classroom`}>
-                  <Button className="h-16 px-12 rounded-md bg-blue-600 text-white font-bold hover:bg-blue-700 shadow-lg transition-all">
+                  <Button className="h-16 px-12 rounded-md bg-brand text-brand-on font-bold hover:bg-brand-hover shadow-lg transition-all">
                     Open Classroom
                   </Button>
                 </Link>
@@ -58,7 +58,7 @@ export function CorporateTemplate({ tenant, courses, membership, brandColor, her
             </div>
           </div>
           <div className="flex-1 relative">
-            <div className="absolute -inset-4 bg-blue-100 rounded-2xl -rotate-2" />
+            <div className="absolute -inset-4 bg-brand-soft rounded-2xl -rotate-2" />
             <div className="relative rounded-2xl overflow-hidden shadow-2xl border-4 border-white">
               <img src={content.hero_image || aboutImage} className="w-full h-full object-cover" style={{maxHeight: '600px'}} alt="" />
             </div>
@@ -95,7 +95,7 @@ export function CorporateTemplate({ tenant, courses, membership, brandColor, her
         <div className="container mx-auto px-6 max-w-7xl">
           <div className="flex items-center justify-between mb-20">
             <h2 className="text-4xl font-black text-slate-800 tracking-tight">Available Programs</h2>
-            <Link href="#courses" className="text-blue-600 font-bold flex items-center gap-2 group">
+            <Link href="#courses" className="text-brand-ink font-bold flex items-center gap-2 group">
               View Catalog <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
             </Link>
           </div>
@@ -107,8 +107,8 @@ export function CorporateTemplate({ tenant, courses, membership, brandColor, her
 
       {/* CTA */}
       <section className="py-32 container mx-auto px-6">
-        <div className="bg-blue-600 rounded-3xl p-16 md:p-32 text-center text-white shadow-2xl shadow-blue-600/20 relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-700 to-blue-500" />
+        <div className="bg-brand rounded-3xl p-16 md:p-32 text-center text-brand-on shadow-2xl shadow-brand/20 relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-brand-hover to-brand" />
           <div className="relative z-10 max-w-3xl mx-auto">
             <h2 className="text-5xl md:text-7xl font-black mb-12 tracking-tight leading-none">{ctaTitle}</h2>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
@@ -116,13 +116,13 @@ export function CorporateTemplate({ tenant, courses, membership, brandColor, her
                 <form action={joinTenantBySlug}>
                   <input type="hidden" name="tenantSlug" value={tenant.slug} />
                   <input type="hidden" name="role" value="student" />
-                  <Button className="h-20 px-16 rounded-full bg-white text-blue-600 text-xl font-black shadow-xl hover:scale-105 transition-all">
+                  <Button className="h-20 px-16 rounded-full bg-white text-brand-ink text-xl font-black shadow-xl hover:scale-105 transition-all">
                     {ctaButton}
                   </Button>
                 </form>
               ) : (
                 <Link href={`/academy/${tenant.slug}/classroom`}>
-                  <Button className="h-20 px-16 rounded-full bg-white text-blue-600 text-xl font-black shadow-xl hover:scale-105 transition-all">
+                  <Button className="h-20 px-16 rounded-full bg-white text-brand-ink text-xl font-black shadow-xl hover:scale-105 transition-all">
                     Open Classroom
                   </Button>
                 </Link>

@@ -89,7 +89,7 @@ export function ManageGroupModal({
         <div className="p-6 overflow-y-auto flex-1 bg-white space-y-8">
           {loading ? (
             <div className="flex flex-col items-center justify-center py-10 text-slate-400">
-              <Loader2 className="h-8 w-8 animate-spin mb-4 text-[#fd5523]" />
+              <Loader2 className="h-8 w-8 animate-spin mb-4 text-brand-ink" />
               <p className="text-[10px] font-black uppercase tracking-widest">Loading Students...</p>
             </div>
           ) : (
@@ -166,7 +166,7 @@ export function ManageGroupModal({
                           size="icon"
                           disabled={pending}
                           onClick={() => handleAdd(student.id)}
-                          className="h-8 w-8 text-slate-400 hover:text-[#fd5523] hover:bg-[#fd5523]/10 rounded-lg"
+                          className="h-8 w-8 text-slate-400 hover:text-brand-ink hover:bg-brand/10 rounded-lg"
                         >
                           <UserPlus className="h-4 w-4" />
                         </Button>

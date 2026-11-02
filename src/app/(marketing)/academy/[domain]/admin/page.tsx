@@ -58,11 +58,11 @@ export default async function AdminTenantHubPage({
           </div>
           <div className="space-y-1">
             <h1 className="text-3xl md:text-5xl font-black text-[#062e39] tracking-tight leading-none uppercase">
-              {company.name} <span className="text-[#fd5523]">Hub</span>
+              {company.name} <span className="text-brand-ink">Hub</span>
             </h1>
             <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 mt-4">
-               <span className="px-4 py-1.5 rounded-full bg-[#fd5523]/10 text-[#fd5523] text-[10px] font-black uppercase tracking-[0.2em] border border-[#fd5523]/10">Command Center</span>
-               <Link href={`/academy/${company.slug}`} target="_blank" className="px-4 py-1.5 rounded-full bg-slate-100 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 hover:text-[#fd5523] hover:bg-[#fd5523]/5 flex items-center gap-2 transition-all border border-slate-200">
+               <span className="px-4 py-1.5 rounded-full bg-brand/10 text-brand-ink text-[10px] font-black uppercase tracking-[0.2em] border border-brand/10">Command Center</span>
+               <Link href={`/academy/${company.slug}`} target="_blank" className="px-4 py-1.5 rounded-full bg-slate-100 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 hover:text-brand-ink hover:bg-brand/5 flex items-center gap-2 transition-all border border-slate-200">
                  <Globe className="h-3 w-3" /> Visit Academy
                </Link>
             </div>
@@ -71,7 +71,7 @@ export default async function AdminTenantHubPage({
         <div className="flex items-center justify-center">
            <Link 
             href={`/academy/${company.slug}/admin/classroom?tab=session&action=start`}
-            className="group flex items-center gap-3 h-16 px-10 rounded-[2rem] bg-[#fd5523] text-white text-xs font-black uppercase tracking-[0.2em] hover:scale-[1.02] active:scale-95 transition-all shadow-2xl shadow-[#fd5523]/30"
+            className="group flex items-center gap-3 h-16 px-10 rounded-[2rem] bg-brand text-brand-on text-xs font-black uppercase tracking-[0.2em] hover:scale-[1.02] active:scale-95 transition-all shadow-2xl shadow-brand/30"
           >
             <div className="h-8 w-8 rounded-full bg-white/20 flex items-center justify-center group-hover:scale-110 transition-transform">
               <Play className="h-4 w-4 fill-current" />
@@ -108,12 +108,12 @@ export default async function AdminTenantHubPage({
           <div className="space-y-6">
             <div className="flex items-center justify-between px-4">
               <h2 className="text-2xl font-black text-[#062e39] uppercase tracking-tight flex items-center gap-4">
-                <div className="h-10 w-10 rounded-xl bg-[#fd5523]/10 flex items-center justify-center">
-                  <Calendar className="h-5 w-5 text-[#fd5523]" /> 
+                <div className="h-10 w-10 rounded-xl bg-brand/10 flex items-center justify-center">
+                  <Calendar className="h-5 w-5 text-brand-ink" /> 
                 </div>
                 School Timetable
               </h2>
-              <Link href={`/academy/${company.slug}/admin/classroom?tab=timetable`} className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 hover:text-[#fd5523] transition-colors bg-white px-4 py-2 rounded-full border border-slate-100 shadow-sm">
+              <Link href={`/academy/${company.slug}/admin/classroom?tab=timetable`} className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 hover:text-brand-ink transition-colors bg-white px-4 py-2 rounded-full border border-slate-100 shadow-sm">
                 Edit Schedule
               </Link>
             </div>
@@ -156,12 +156,12 @@ export default async function AdminTenantHubPage({
           {/* Upcoming Classes Sidebar */}
           <div className="bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-sm">
              <h3 className="text-sm font-black uppercase tracking-widest text-[#062e39] mb-6 flex items-center gap-2">
-               <Clock className="h-4 w-4 text-[#fd5523]" /> Upcoming Classes
+               <Clock className="h-4 w-4 text-brand-ink" /> Upcoming Classes
              </h3>
              <div className="space-y-4">
                 {upcomingClasses.length > 0 ? upcomingClasses.map((item: any) => (
                   <div key={item.id} className="flex items-center gap-4 group cursor-pointer">
-                    <div className="h-12 w-12 rounded-2xl bg-slate-50 flex flex-col items-center justify-center text-[#fd5523] border border-slate-100 shrink-0 group-hover:bg-[#fd5523] group-hover:text-white transition-all">
+                    <div className="h-12 w-12 rounded-2xl bg-slate-50 flex flex-col items-center justify-center text-brand-ink border border-slate-100 shrink-0 group-hover:bg-brand group-hover:text-white transition-all">
                        <span className="text-[10px] font-black">{item.start_time_only?.slice(0, 5) || "TBA"}</span>
                     </div>
                     <div className="flex-1 min-w-0">
@@ -170,7 +170,7 @@ export default async function AdminTenantHubPage({
                          {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"][item.day_of_week - 1]}
                        </p>
                     </div>
-                    <ChevronRight className="h-4 w-4 text-slate-200 group-hover:text-[#fd5523] transition-colors" />
+                    <ChevronRight className="h-4 w-4 text-slate-200 group-hover:text-brand-ink transition-colors" />
                   </div>
                 )) : (
                   <p className="text-xs text-slate-400 font-medium italic">No classes scheduled yet.</p>
@@ -181,7 +181,7 @@ export default async function AdminTenantHubPage({
           {/* Recent Activity */}
           <div className="bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-sm">
              <h3 className="text-sm font-black uppercase tracking-widest text-[#062e39] mb-6 flex items-center gap-2">
-               <GraduationCap className="h-4 w-4 text-[#fd5523]" /> New Enrollments
+               <GraduationCap className="h-4 w-4 text-brand-ink" /> New Enrollments
              </h3>
              <div className="space-y-5">
                 {(recentEnrollments || []).map((enroll: any) => (
@@ -200,7 +200,7 @@ export default async function AdminTenantHubPage({
                   </div>
                 ))}
              </div>
-             <Link href={`/academy/${company.slug}/admin/enrollments`} className="mt-8 block text-center py-3 rounded-2xl bg-slate-50 text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] hover:bg-[#fff6ee] hover:text-[#fd5523] transition-all border border-transparent hover:border-[#fd5523]/10">
+             <Link href={`/academy/${company.slug}/admin/enrollments`} className="mt-8 block text-center py-3 rounded-2xl bg-slate-50 text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] hover:bg-brand-soft hover:text-brand-ink transition-all border border-transparent hover:border-brand/10">
                View All Students
              </Link>
           </div>

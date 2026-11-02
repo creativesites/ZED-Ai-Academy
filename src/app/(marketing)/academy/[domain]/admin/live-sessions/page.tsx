@@ -141,7 +141,7 @@ export default async function TenantAdminLiveSessionsPage({
           {/* Create Session Type */}
           <section className="bg-white rounded-[2.5rem] p-10 border border-slate-100 shadow-sm">
             <div className="mb-8 flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#fff6ee] text-[#fd5523]">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-soft text-brand-ink">
                 <Plus className="h-6 w-6" />
               </div>
               <div>
@@ -153,15 +153,15 @@ export default async function TenantAdminLiveSessionsPage({
             <form action={createLiveSessionService} className="grid gap-6 md:grid-cols-2">
               <div className="space-y-2 md:col-span-2">
                 <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Title</label>
-                <input name="title" required placeholder="e.g. 1-on-1 Code Review" className="h-14 w-full rounded-2xl border border-slate-100 bg-slate-50 px-5 outline-none focus:bg-white focus:border-[#fd5523] transition-all" />
+                <input name="title" required placeholder="e.g. 1-on-1 Code Review" className="h-14 w-full rounded-2xl border border-slate-100 bg-slate-50 px-5 outline-none focus:bg-white focus:border-brand transition-all" />
               </div>
               <div className="space-y-2 md:col-span-2">
                 <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Description</label>
-                <textarea name="description" rows={3} placeholder="What will happen during this session?" className="w-full rounded-2xl border border-slate-100 bg-slate-50 px-5 py-4 outline-none focus:bg-white focus:border-[#fd5523] transition-all resize-none" />
+                <textarea name="description" rows={3} placeholder="What will happen during this session?" className="w-full rounded-2xl border border-slate-100 bg-slate-50 px-5 py-4 outline-none focus:bg-white focus:border-brand transition-all resize-none" />
               </div>
               <div className="space-y-2">
                 <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Related Course</label>
-                <select name="course_id" className="h-14 w-full rounded-2xl border border-slate-100 bg-slate-50 px-4 outline-none focus:bg-white focus:border-[#fd5523] transition-all">
+                <select name="course_id" className="h-14 w-full rounded-2xl border border-slate-100 bg-slate-50 px-4 outline-none focus:bg-white focus:border-brand transition-all">
                   <option value="">General Session</option>
                   {courses.map((course) => (
                     <option key={course.id} value={course.id}>{course.title}</option>
@@ -170,9 +170,9 @@ export default async function TenantAdminLiveSessionsPage({
               </div>
               <div className="space-y-2">
                 <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Duration (Min)</label>
-                <input name="duration_minutes" type="number" min={15} max={240} defaultValue={45} className="h-14 w-full rounded-2xl border border-slate-100 bg-slate-50 px-5 outline-none focus:bg-white focus:border-[#fd5523] transition-all" />
+                <input name="duration_minutes" type="number" min={15} max={240} defaultValue={45} className="h-14 w-full rounded-2xl border border-slate-100 bg-slate-50 px-5 outline-none focus:bg-white focus:border-brand transition-all" />
               </div>
-              <Button type="submit" className="md:col-span-2 h-16 rounded-2xl bg-[#fd5523] text-white text-sm font-black uppercase tracking-widest hover:scale-[1.02] active:scale-95 transition-all shadow-xl shadow-[#fd5523]/20">
+              <Button type="submit" className="md:col-span-2 h-16 rounded-2xl bg-brand text-brand-on text-sm font-black uppercase tracking-widest hover:scale-[1.02] active:scale-95 transition-all shadow-xl shadow-brand/20">
                 Create Session Type
               </Button>
             </form>
@@ -191,11 +191,11 @@ export default async function TenantAdminLiveSessionsPage({
             </div>
 
             <form action={createAvailabilityRule} className="grid gap-4 md:grid-cols-4">
-              <select name="weekday" required className="h-14 rounded-2xl border border-slate-100 bg-slate-50 px-4 outline-none focus:bg-white focus:border-[#fd5523] transition-all">
+              <select name="weekday" required className="h-14 rounded-2xl border border-slate-100 bg-slate-50 px-4 outline-none focus:bg-white focus:border-brand transition-all">
                 {WEEKDAYS.map((day, idx) => <option key={day} value={idx}>{day}</option>)}
               </select>
-              <input name="start_time" type="time" required defaultValue="09:00" className="h-14 rounded-2xl border border-slate-100 bg-slate-50 px-4 outline-none focus:bg-white focus:border-[#fd5523] transition-all" />
-              <input name="end_time" type="time" required defaultValue="17:00" className="h-14 rounded-2xl border border-slate-100 bg-slate-50 px-4 outline-none focus:bg-white focus:border-[#fd5523] transition-all" />
+              <input name="start_time" type="time" required defaultValue="09:00" className="h-14 rounded-2xl border border-slate-100 bg-slate-50 px-4 outline-none focus:bg-white focus:border-brand transition-all" />
+              <input name="end_time" type="time" required defaultValue="17:00" className="h-14 rounded-2xl border border-slate-100 bg-slate-50 px-4 outline-none focus:bg-white focus:border-brand transition-all" />
               <Button type="submit" className="h-14 rounded-2xl bg-[#062e39] text-white text-[10px] font-black uppercase tracking-widest">Add Slot</Button>
               <input type="hidden" name="timezone" defaultValue="Africa/Lusaka" />
             </form>
@@ -206,7 +206,7 @@ export default async function TenantAdminLiveSessionsPage({
                    <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">No slots added yet.</p>
                 </div>
               ) : rules.map((rule) => (
-                <div key={rule.id} className="flex items-center justify-between p-5 rounded-2xl border border-slate-100 hover:border-[#fd5523]/30 transition-all group">
+                <div key={rule.id} className="flex items-center justify-between p-5 rounded-2xl border border-slate-100 hover:border-brand/30 transition-all group">
                   <div>
                     <p className="font-black text-[#062e39] uppercase text-sm tracking-tight">{WEEKDAYS[rule.weekday]}</p>
                     <p className="text-xs text-slate-400 font-medium">{rule.start_time.slice(0, 5)} - {rule.end_time.slice(0, 5)}</p>
@@ -224,7 +224,7 @@ export default async function TenantAdminLiveSessionsPage({
           {/* Active Services */}
           <section className="bg-white rounded-[2.5rem] p-10 border border-slate-100 shadow-sm">
             <h3 className="text-sm font-black uppercase tracking-widest text-[#062e39] mb-8 flex items-center gap-3">
-              <Video className="h-5 w-5 text-[#fd5523]" /> Published Services
+              <Video className="h-5 w-5 text-brand-ink" /> Published Services
             </h3>
             <div className="space-y-4">
               {services.map((service) => (
@@ -251,23 +251,23 @@ export default async function TenantAdminLiveSessionsPage({
           {/* Pending Requests */}
           <section className="bg-white rounded-[2.5rem] p-10 border border-slate-100 shadow-sm">
              <h3 className="text-sm font-black uppercase tracking-widest text-[#062e39] mb-8 flex items-center gap-3">
-               <CalendarDays className="h-5 w-5 text-[#fd5523]" /> Session Requests
+               <CalendarDays className="h-5 w-5 text-brand-ink" /> Session Requests
              </h3>
              <div className="space-y-6">
                {pendingBookings.length === 0 ? (
                  <p className="text-slate-400 font-bold uppercase tracking-widest text-[10px] text-center py-10">No pending requests.</p>
                ) : pendingBookings.map((booking) => (
-                 <div key={booking.id} className="p-6 rounded-[2rem] bg-[#fff6ee]/50 border border-[#fd5523]/10">
+                 <div key={booking.id} className="p-6 rounded-[2rem] bg-brand-soft/50 border border-brand/10">
                     <p className="font-black text-[#062e39] uppercase tracking-tight">{booking.live_session_services?.title}</p>
                     <div className="flex items-center gap-2 mt-2 text-xs font-bold text-slate-500">
-                       <Clock3 className="h-3 w-3 text-[#fd5523]" />
+                       <Clock3 className="h-3 w-3 text-brand-ink" />
                        {formatSessionTime(booking.starts_at, booking.ends_at, booking.timezone)}
                     </div>
                     <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mt-4">Learner</p>
                     <p className="text-sm font-bold text-[#062e39]">{booking.profiles?.full_name || booking.profiles?.email}</p>
                     <div className="mt-6 flex gap-2">
                        <form action={confirmLiveSessionBooking.bind(null, booking.id)} className="flex-1">
-                         <Button className="w-full h-12 rounded-xl bg-[#fd5523] text-white text-[10px] font-black uppercase tracking-widest">Confirm</Button>
+                         <Button className="w-full h-12 rounded-xl bg-brand text-brand-on text-[10px] font-black uppercase tracking-widest">Confirm</Button>
                        </form>
                        <form action={declineLiveSessionBooking.bind(null, booking.id)}>
                          <Button variant="ghost" className="h-12 rounded-xl text-red-400 hover:text-red-600 hover:bg-red-50 text-[10px] font-black uppercase tracking-widest">Decline</Button>

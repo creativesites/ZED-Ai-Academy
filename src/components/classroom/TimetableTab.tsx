@@ -196,7 +196,7 @@ export function TimetableTab({ companyId, isAdminOrInstructor, companySlug }: { 
           <div>
             <h2 className="text-xl sm:text-2xl font-bold text-slate-900 flex items-center gap-2">
               School Timetable
-              <BookOpen className="h-5 w-5 text-[#fd5523]" />
+              <BookOpen className="h-5 w-5 text-brand-ink" />
             </h2>
             <p className="text-xs sm:text-sm text-slate-500 font-medium mt-1">
               Weekly recurring class schedule and subjects.
@@ -206,13 +206,13 @@ export function TimetableTab({ companyId, isAdminOrInstructor, companySlug }: { 
           {isAdminOrInstructor && (
             <Dialog open={open} onOpenChange={setOpen}>
               <DialogTrigger render={(props) => (
-                <Button {...props} className="bg-[#fd5523] text-white hover:bg-[#ef4a16] rounded-xl flex items-center gap-2 shadow-lg shadow-[#fd5523]/20 transition-all hover:scale-[1.02] w-full sm:w-auto">
+                <Button {...props} className="bg-brand text-brand-on hover:bg-brand-hover rounded-xl flex items-center gap-2 shadow-lg shadow-brand/20 transition-all hover:scale-[1.02] w-full sm:w-auto">
                   <Plus className="h-4 w-4" />
                   Add Subject
                 </Button>
               )} />
               <DialogContent className="sm:max-w-[600px] rounded-[2rem] overflow-hidden w-[95vw] sm:w-full mx-auto">
-                <div className="p-1 px-4 bg-gradient-to-r from-[#fd5523] to-orange-400 h-1" />
+                <div className="p-1 px-4 bg-gradient-to-r from-brand to-brand-hover h-1" />
                 <DialogHeader className="pt-6 px-4 sm:px-6">
                   <DialogTitle className="text-xl sm:text-2xl font-black text-[#062e39]">Create New Subject</DialogTitle>
                 </DialogHeader>
@@ -278,7 +278,7 @@ export function TimetableTab({ companyId, isAdminOrInstructor, companySlug }: { 
                                   />
                                   <label 
                                     htmlFor={`day-${i}`} 
-                                    className="w-full text-center py-2 rounded-lg text-[10px] font-black cursor-pointer bg-white border border-slate-100 text-slate-400 peer-checked:bg-[#fd5523] peer-checked:text-[#fd7e14] peer-checked:border-[#fd5523] transition-all whitespace-nowrap px-2"
+                                    className="w-full text-center py-2 rounded-lg text-[10px] font-black cursor-pointer bg-white border border-slate-100 text-slate-400 peer-checked:bg-brand peer-checked:text-brand-on peer-checked:border-brand transition-all whitespace-nowrap px-2"
                                   >
                                     {day.slice(0, 3)}
                                   </label>
@@ -331,7 +331,7 @@ export function TimetableTab({ companyId, isAdminOrInstructor, companySlug }: { 
                     </div>
                   </div>
                   <DialogFooter>
-                    <Button type="submit" disabled={isPosting} className="w-full bg-[#fd5523] hover:bg-[#ef4a16] h-14 rounded-2xl text-white font-black text-base sm:text-lg shadow-xl shadow-[#fd5523]/20">
+                    <Button type="submit" disabled={isPosting} className="w-full bg-brand hover:bg-brand-hover h-14 rounded-2xl text-brand-on font-black text-base sm:text-lg shadow-xl shadow-brand/20">
                       {isPosting ? <Loader2 className="h-5 w-5 sm:h-6 sm:w-6 animate-spin mr-2" /> : null}
                       Save to Timetable
                     </Button>
@@ -346,7 +346,7 @@ export function TimetableTab({ companyId, isAdminOrInstructor, companySlug }: { 
         <div className="space-y-8 sm:space-y-12">
           {loading ? (
             <div className="flex flex-col items-center justify-center py-20 text-slate-400">
-              <Loader2 className="h-10 w-10 animate-spin mb-4 text-[#fd5523]" />
+              <Loader2 className="h-10 w-10 animate-spin mb-4 text-brand-ink" />
               <p className="text-[10px] font-black uppercase tracking-widest text-center">Compiling School Timetable...</p>
             </div>
           ) : (
@@ -367,7 +367,7 @@ export function TimetableTab({ companyId, isAdminOrInstructor, companySlug }: { 
                     {/* Lessons Grid - 1 column on mobile, 1 on tablet, responsive gap */}
                     <div className="grid grid-cols-1 gap-4 sm:gap-5">
                       {lessons.map((lesson) => (
-                        <div key={lesson.id} className="bg-white rounded-2xl sm:rounded-[2rem] p-5 sm:p-7 border border-slate-100 shadow-sm hover:shadow-xl hover:border-[#fd5523]/30 transition-all group relative overflow-hidden">
+                        <div key={lesson.id} className="bg-white rounded-2xl sm:rounded-[2rem] p-5 sm:p-7 border border-slate-100 shadow-sm hover:shadow-xl hover:border-brand/30 transition-all group relative overflow-hidden">
                           <div className="absolute top-0 right-0 p-6 sm:p-8 opacity-[0.02] pointer-events-none group-hover:opacity-[0.05] transition-opacity">
                              <LayoutGrid className="h-24 w-24 sm:h-32 sm:w-32" />
                           </div>
@@ -376,7 +376,7 @@ export function TimetableTab({ companyId, isAdminOrInstructor, companySlug }: { 
                           <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-6 lg:gap-8">
                             <div className="flex flex-col sm:flex-row sm:items-start gap-4 sm:gap-6 flex-1">
                               {/* Time Icon - Responsive sizing */}
-                              <div className="h-16 w-16 sm:h-20 sm:w-20 rounded-2xl sm:rounded-3xl bg-[#fd5523]/5 text-[#fd5523] flex flex-col items-center justify-center border-2 border-[#fd5523]/10 shrink-0 shadow-inner group-hover:bg-[#fd5523] group-hover:text-white transition-all duration-500">
+                              <div className="h-16 w-16 sm:h-20 sm:w-20 rounded-2xl sm:rounded-3xl bg-brand/5 text-brand-ink flex flex-col items-center justify-center border-2 border-brand/10 shrink-0 shadow-inner group-hover:bg-brand group-hover:text-white transition-all duration-500">
                                  <Clock className="h-5 w-5 sm:h-7 sm:w-7 mb-1" />
                                  <span className="text-xs sm:text-sm font-black tracking-tighter">{lesson.start_time_only?.slice(0, 5)}</span>
                               </div>
@@ -384,7 +384,7 @@ export function TimetableTab({ companyId, isAdminOrInstructor, companySlug }: { 
                               <div className="flex-1 min-w-0">
                                 {/* Title and badges - responsive wrapping */}
                                 <div className="flex flex-wrap items-center gap-2 mb-3">
-                                  <h4 className="text-xl sm:text-2xl font-black text-[#062e39] tracking-tight group-hover:text-[#fd5523] transition-colors break-words">
+                                  <h4 className="text-xl sm:text-2xl font-black text-[#062e39] tracking-tight group-hover:text-brand-ink transition-colors break-words">
                                     {lesson.title}
                                   </h4>
                                   <div className="px-2 py-1 sm:px-3 rounded-lg bg-indigo-50 text-indigo-600 text-[9px] sm:text-[10px] font-black uppercase tracking-widest border border-indigo-100">
@@ -400,11 +400,11 @@ export function TimetableTab({ companyId, isAdminOrInstructor, companySlug }: { 
                                 {/* Instructor and time info - responsive */}
                                 <div className="flex flex-wrap items-center gap-3 sm:gap-5 text-xs sm:text-sm text-slate-500 font-bold">
                                    <span className="flex items-center gap-1 sm:gap-2 bg-slate-50 px-2 py-1 sm:px-3 sm:py-1 rounded-full">
-                                     <User className="h-3 w-3 sm:h-4 sm:w-4 text-[#fd5523]" /> 
+                                     <User className="h-3 w-3 sm:h-4 sm:w-4 text-brand-ink" /> 
                                      <span className="text-xs sm:text-sm">Instructor: You</span>
                                    </span>
                                    <span className="flex items-center gap-1 sm:gap-2 bg-slate-50 px-2 py-1 sm:px-3 sm:py-1 rounded-full">
-                                     <Clock className="h-3 w-3 sm:h-4 sm:w-4 text-[#fd5523]" /> 
+                                     <Clock className="h-3 w-3 sm:h-4 sm:w-4 text-brand-ink" /> 
                                      <span className="text-xs sm:text-sm">{lesson.start_time_only?.slice(0, 5)} — {lesson.end_time_only?.slice(0, 5)}</span>
                                    </span>
                                 </div>
@@ -413,7 +413,7 @@ export function TimetableTab({ companyId, isAdminOrInstructor, companySlug }: { 
                                 {lesson.topics_covered && (
                                   <div className="mt-4 sm:mt-5 p-4 sm:p-5 rounded-2xl sm:rounded-[1.5rem] bg-indigo-50/20 border border-indigo-100/50 backdrop-blur-sm group-hover:bg-white group-hover:border-indigo-200 transition-all">
                                     <p className="text-[9px] sm:text-[10px] font-black text-indigo-900 uppercase tracking-widest mb-2 flex items-center gap-2">
-                                      <Sparkles className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-[#fd5523]" /> Syllabus / Topics:
+                                      <Sparkles className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-brand-ink" /> Syllabus / Topics:
                                     </p>
                                     <p className="text-xs sm:text-sm text-indigo-700/80 leading-relaxed font-medium italic break-words">
                                       "{lesson.topics_covered}"
@@ -427,7 +427,7 @@ export function TimetableTab({ companyId, isAdminOrInstructor, companySlug }: { 
                             <div className="mt-4 lg:mt-0 lg:ml-4 flex flex-wrap items-center gap-2">
                               <a
                                 href={`/academy/${companySlug}/classroom?tab=session&scheduleId=${lesson.id}`}
-                                className="h-10 sm:h-12 px-5 sm:px-6 rounded-xl bg-[#fd5523] text-white font-black text-[10px] sm:text-xs uppercase tracking-widest hover:bg-[#ef4a16] transition-all shadow-md shadow-[#fd5523]/20 flex items-center justify-center gap-1.5"
+                                className="h-10 sm:h-12 px-5 sm:px-6 rounded-xl bg-brand text-brand-on font-black text-[10px] sm:text-xs uppercase tracking-widest hover:bg-brand-hover transition-all shadow-md shadow-brand/20 flex items-center justify-center gap-1.5"
                               >
                                 <Video className="h-3.5 w-3.5" />
                                 <span>Join Room</span>
@@ -473,7 +473,7 @@ export function TimetableTab({ companyId, isAdminOrInstructor, companySlug }: { 
               <button onClick={() => setSelectedLesson(null)} className="absolute top-4 right-4 sm:top-6 sm:right-6 h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-all">
                  <X className="h-4 w-4 sm:h-5 sm:w-5" />
               </button>
-              <div className="px-3 py-1 sm:px-4 sm:py-1.5 rounded-full bg-[#fd5523] text-white text-[8px] sm:text-[10px] font-black uppercase tracking-widest inline-block mb-3 sm:mb-4">
+              <div className="px-3 py-1 sm:px-4 sm:py-1.5 rounded-full bg-brand text-brand-on text-[8px] sm:text-[10px] font-black uppercase tracking-widest inline-block mb-3 sm:mb-4">
                  {selectedLesson?.schedule_type?.replace('_', ' ')}
               </div>
               <h2 className="text-2xl sm:text-4xl font-black tracking-tight mb-2 break-words">{selectedLesson?.title}</h2>
@@ -483,7 +483,7 @@ export function TimetableTab({ companyId, isAdminOrInstructor, companySlug }: { 
            </div>
            <div className="p-6 sm:p-10 bg-white space-y-6 sm:space-y-8">
               <div className="space-y-3 sm:space-y-4">
-                 <h4 className="text-[10px] sm:text-xs font-black uppercase tracking-[0.2em] text-[#fd5523]">Learning Objectives</h4>
+                 <h4 className="text-[10px] sm:text-xs font-black uppercase tracking-[0.2em] text-brand-ink">Learning Objectives</h4>
                  <div className="p-4 sm:p-6 rounded-2xl sm:rounded-3xl bg-slate-50 border border-slate-100">
                     <p className="text-sm sm:text-base text-slate-600 leading-relaxed font-medium break-words">
                        {selectedLesson?.topics_covered || "No topics specified for this lesson."}
@@ -517,7 +517,7 @@ export function TimetableTab({ companyId, isAdminOrInstructor, companySlug }: { 
               <div className="space-y-3 pt-2">
                  <a
                    href={`/academy/${companySlug}/classroom?tab=session&scheduleId=${selectedLesson?.id}`}
-                   className="w-full flex items-center justify-center gap-2 h-14 rounded-2xl bg-[#fd5523] text-white font-black text-sm uppercase tracking-widest hover:bg-[#ef4a16] transition-all shadow-xl shadow-[#fd5523]/25"
+                   className="w-full flex items-center justify-center gap-2 h-14 rounded-2xl bg-brand text-brand-on font-black text-sm uppercase tracking-widest hover:bg-brand-hover transition-all shadow-xl shadow-brand/25"
                  >
                    <Video className="h-5 w-5" />
                    Enter Live Classroom
@@ -530,7 +530,7 @@ export function TimetableTab({ companyId, isAdminOrInstructor, companySlug }: { 
                      rel="noopener noreferrer"
                      className="flex items-center justify-center gap-2 h-11 rounded-xl bg-slate-50 text-[#062e39] font-bold text-xs hover:bg-slate-100 border border-slate-200 transition-all"
                    >
-                     <Calendar className="h-4 w-4 text-[#fd5523]" />
+                     <Calendar className="h-4 w-4 text-brand-ink" />
                      Add to Google Calendar
                    </a>
 

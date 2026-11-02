@@ -73,7 +73,7 @@ export function NoticeBoardTab({ companyId, isAdminOrInstructor, companySlug }: 
         <div>
           <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
             Notice Board
-            <Megaphone className="h-5 w-5 text-[#fd5523]" />
+            <Megaphone className="h-5 w-5 text-brand-ink" />
           </h2>
           <p className="text-sm text-slate-500">Important updates and announcements for the class.</p>
         </div>
@@ -81,7 +81,7 @@ export function NoticeBoardTab({ companyId, isAdminOrInstructor, companySlug }: 
         {isAdminOrInstructor && (
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger render={(props) => (
-              <Button {...props} className="bg-[#fd5523] text-white hover:bg-[#ef4a16] rounded-xl flex items-center gap-2">
+              <Button {...props} className="bg-brand text-brand-on hover:bg-brand-hover rounded-xl flex items-center gap-2">
                 <Plus className="h-4 w-4" />
                 New Post
               </Button>
@@ -100,7 +100,7 @@ export function NoticeBoardTab({ companyId, isAdminOrInstructor, companySlug }: 
                   <Textarea name="content" placeholder="Write your announcement here..." rows={5} required />
                 </div>
                 <DialogFooter>
-                  <Button type="submit" disabled={isPosting} className="w-full bg-[#fd5523] hover:bg-[#ef4a16]">
+                  <Button type="submit" disabled={isPosting} className="w-full bg-brand hover:bg-brand-hover">
                     {isPosting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                     Post Announcement
                   </Button>
@@ -123,7 +123,7 @@ export function NoticeBoardTab({ companyId, isAdminOrInstructor, companySlug }: 
               <div key={notice.id} className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm animate-in fade-in slide-in-from-bottom-2 duration-300">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-full bg-[#fd5523]/10 text-[#fd5523] flex items-center justify-center font-bold">
+                    <div className="h-10 w-10 rounded-full bg-brand/10 text-brand-ink flex items-center justify-center font-bold">
                       A
                     </div>
                     <div>

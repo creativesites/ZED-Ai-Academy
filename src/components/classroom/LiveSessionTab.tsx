@@ -218,7 +218,7 @@ export function LiveSessionTab({ companyId, isAdminOrInstructor, companySlug }: 
         <p className="mt-2 text-slate-500 max-w-xs">{error}</p>
         <Button 
           variant="outline" 
-          className="mt-6 rounded-xl border-[#fd5523] text-[#fd5523] hover:bg-[#fd5523]/5"
+          className="mt-6 rounded-xl border-brand text-brand-ink hover:bg-brand/5"
           onClick={() => setError(null)}
         >
           Try Again
@@ -232,7 +232,7 @@ export function LiveSessionTab({ companyId, isAdminOrInstructor, companySlug }: 
     return (
       <div className="flex h-full min-h-[500px] flex-col items-center justify-center p-8 text-center bg-slate-50">
         <div className="relative mb-8">
-           <div className="absolute -inset-4 bg-[#fd5523]/10 rounded-full blur-2xl animate-pulse" />
+           <div className="absolute -inset-4 bg-brand/10 rounded-full blur-2xl animate-pulse" />
            <div className="relative h-24 w-24 rounded-3xl bg-white shadow-xl border border-slate-100 flex items-center justify-center">
              <Video className="h-10 w-10 text-slate-300" />
            </div>
@@ -250,7 +250,7 @@ export function LiveSessionTab({ companyId, isAdminOrInstructor, companySlug }: 
     return (
       <div className="flex h-full min-h-[500px] flex-col items-center justify-center p-4 lg:p-8 bg-slate-50">
         <div className="max-w-md w-full bg-white rounded-[2rem] lg:rounded-[2.5rem] p-8 lg:p-10 shadow-2xl border border-slate-100 text-center relative overflow-hidden">
-          <div className="mb-8 flex h-20 w-20 mx-auto items-center justify-center rounded-3xl bg-[#fd5523]/10 text-[#fd5523] shadow-inner">
+          <div className="mb-8 flex h-20 w-20 mx-auto items-center justify-center rounded-3xl bg-brand/10 text-brand-ink shadow-inner">
             <Video className="h-10 w-10" />
           </div>
           <h2 className="text-2xl lg:text-3xl font-black text-[#062e39] mb-3 tracking-tight">
@@ -263,7 +263,7 @@ export function LiveSessionTab({ companyId, isAdminOrInstructor, companySlug }: 
                 Attach to Schedule
               </label>
               <select 
-                className="w-full h-14 px-4 rounded-xl border border-slate-200 bg-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-[#fd5523]/20 transition-all appearance-none"
+                className="w-full h-14 px-4 rounded-xl border border-slate-200 bg-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 transition-all appearance-none"
                 value={selectedScheduleId || ""}
                 onChange={(e) => setSelectedScheduleId(e.target.value || null)}
               >
@@ -281,7 +281,7 @@ export function LiveSessionTab({ companyId, isAdminOrInstructor, companySlug }: 
             <Button 
               onClick={isAdminOrInstructor && !isSessionActive ? handleStartSession : handleJoinSession}
               disabled={isInitializing}
-              className="w-full h-16 rounded-2xl bg-[#fd5523] text-white font-black text-lg lg:text-xl hover:bg-[#ef4a16] shadow-xl shadow-[#fd5523]/20 transition-all active:scale-[0.98]"
+              className="w-full h-16 rounded-2xl bg-brand text-brand-on font-black text-lg lg:text-xl hover:bg-brand-hover shadow-xl shadow-brand/20 transition-all active:scale-[0.98]"
             >
               {isInitializing ? (
                 <Loader2 className="h-6 w-6 animate-spin" />
@@ -294,7 +294,7 @@ export function LiveSessionTab({ companyId, isAdminOrInstructor, companySlug }: 
               type="button"
               variant="outline"
               onClick={() => setShowDeviceModal(true)}
-              className="w-full h-11 rounded-xl border-slate-200 text-slate-700 hover:border-[#fd5523] text-xs font-bold"
+              className="w-full h-11 rounded-xl border-slate-200 text-slate-700 hover:border-brand text-xs font-bold"
             >
               Test Camera & Microphone
             </Button>
@@ -338,7 +338,7 @@ export function LiveSessionTab({ companyId, isAdminOrInstructor, companySlug }: 
               </p>
               {activeSchedule && (
                 <div className="lg:hidden flex items-center gap-1 text-[9px] font-bold text-white/40 uppercase tracking-tighter truncate">
-                  <span className="text-[#fd5523] opacity-100">●</span> {activeSchedule.title}
+                  <span className="text-brand-ink-dark">●</span> {activeSchedule.title}
                 </div>
               )}
             </div>
@@ -374,7 +374,7 @@ export function LiveSessionTab({ companyId, isAdminOrInstructor, companySlug }: 
         {activeSchedule && (
           <div className="hidden lg:flex items-center px-6 py-2 bg-black/20 border-t border-white/5">
             <div className="flex items-center gap-2 text-[10px] font-bold text-white/50 uppercase tracking-[0.2em]">
-              <Calendar className="h-3 w-3 text-[#fd5523]" />
+              <Calendar className="h-3 w-3 text-brand-ink-dark" />
               <span>Currently Scheduled:</span>
               <span className="text-white">{activeSchedule.title}</span>
             </div>
@@ -404,7 +404,7 @@ export function LiveSessionTab({ companyId, isAdminOrInstructor, companySlug }: 
               }}
               spinner={() => (
                 <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 text-white/50 bg-[#062e39]">
-                  <Loader2 className="h-10 w-10 animate-spin text-[#fd5523]" />
+                  <Loader2 className="h-10 w-10 animate-spin text-brand-ink-dark" />
                   <p className="text-xs font-black uppercase tracking-widest">Configuring Studio...</p>
                 </div>
               )}
@@ -425,7 +425,7 @@ export function LiveSessionTab({ companyId, isAdminOrInstructor, companySlug }: 
             <div className="flex items-center justify-between mt-2 lg:mt-0">
               <div>
                 <div className="flex items-center gap-2">
-                  <div className="h-2 w-2 rounded-full bg-[#fd5523] animate-pulse" />
+                  <div className="h-2 w-2 rounded-full bg-brand animate-pulse" />
                   <h3 className="font-black text-sm uppercase tracking-[0.2em] text-white">Attendance</h3>
                 </div>
                 <p className="text-[10px] text-white/40 mt-1 uppercase font-bold tracking-widest flex items-center gap-2">
@@ -453,7 +453,7 @@ export function LiveSessionTab({ companyId, isAdminOrInstructor, companySlug }: 
                 return (
                   <div 
                     key={student.id} 
-                    className="group relative bg-gradient-to-b from-white/[0.08] to-transparent p-4 rounded-[2rem] border border-white/10 transition-all hover:border-[#fd5523]/30"
+                    className="group relative bg-gradient-to-b from-white/[0.08] to-transparent p-4 rounded-[2rem] border border-white/10 transition-all hover:border-brand/30"
                   >
                     <div className="flex items-center gap-4 mb-4">
                       <div className="relative">

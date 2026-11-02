@@ -60,7 +60,7 @@ export function SessionHistoryTab({ companyId }: { companyId: string }) {
     <div className="h-full flex flex-col bg-slate-50/30">
       <div className="sticky top-0 z-10 bg-white/80 backdrop-blur-md border-b border-slate-100 px-6 py-5">
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-xl bg-[#fd5523]/10 text-[#fd5523]">
+          <div className="p-2 rounded-xl bg-brand/10 text-brand-ink">
             <History className="h-5 w-5" />
           </div>
           <div>
@@ -117,7 +117,7 @@ export function SessionHistoryTab({ companyId }: { companyId: string }) {
                       ))}
                     </div>
                     <div className="flex flex-col ml-2">
-                      <span className="text-sm font-black text-[#fd5523]">{session.attendance_count}</span>
+                      <span className="text-sm font-black text-brand-ink">{session.attendance_count}</span>
                       <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Attended</span>
                     </div>
                   </div>

@@ -50,7 +50,7 @@ export function TenantAdminNavbar({ slug, name }: { slug: string; name: string }
           {/* Left Brand: Clean & Compact (no giant academy name crowding the menu) */}
           <div className="flex items-center gap-2.5 shrink-0">
             <Link href={`/academy/${slug}/admin`} className="flex items-center gap-2 group">
-              <div className="h-8 w-8 rounded-xl bg-[#062e39] group-hover:bg-[#fd5523] flex items-center justify-center text-white transition-colors shadow-sm shrink-0">
+              <div className="h-8 w-8 rounded-xl bg-[#062e39] group-hover:bg-brand flex items-center justify-center text-white transition-colors shadow-sm shrink-0 hover:text-brand-on">
                 <LayoutDashboard className="h-4 w-4" />
               </div>
               <span className="font-black text-sm text-[#062e39] tracking-tight">Admin Hub</span>
@@ -61,7 +61,7 @@ export function TenantAdminNavbar({ slug, name }: { slug: string; name: string }
             <Link 
               href={`/academy/${slug}`} 
               target="_blank"
-              className="hidden sm:inline-flex items-center gap-1 text-[11px] font-bold text-slate-400 hover:text-[#fd5523] hover:bg-slate-100 transition-all px-2.5 py-1 rounded-lg border border-slate-200/60"
+              className="hidden sm:inline-flex items-center gap-1 text-[11px] font-bold text-slate-400 hover:text-brand-ink hover:bg-slate-100 transition-all px-2.5 py-1 rounded-lg border border-slate-200/60"
               title="View Public Academy"
             >
               <Globe className="h-3 w-3" />
@@ -80,11 +80,11 @@ export function TenantAdminNavbar({ slug, name }: { slug: string; name: string }
                   className={cn(
                     "px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap",
                     isActive 
-                      ? "bg-[#fff6ee] text-[#fd5523] shadow-sm font-extrabold" 
+                      ? "bg-brand-soft text-brand-ink shadow-sm font-extrabold" 
                       : "text-slate-500 hover:text-[#062e39] hover:bg-slate-50"
                   )}
                 >
-                  <item.icon className={cn("h-3.5 w-3.5", isActive ? "text-[#fd5523]" : "text-slate-400")} />
+                  <item.icon className={cn("h-3.5 w-3.5", isActive ? "text-brand-ink" : "text-slate-400")} />
                   <span>{item.label}</span>
                 </Link>
               );
@@ -127,7 +127,7 @@ export function TenantAdminNavbar({ slug, name }: { slug: string; name: string }
                 className={cn(
                   "w-full p-3.5 rounded-xl text-xs font-bold flex items-center justify-between transition-all",
                   pathname === item.href 
-                    ? "bg-[#fff6ee] text-[#fd5523] font-extrabold" 
+                    ? "bg-brand-soft text-brand-ink font-extrabold" 
                     : "text-slate-600 hover:bg-slate-50"
                 )}
               >

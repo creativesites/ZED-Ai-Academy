@@ -77,12 +77,12 @@ export default async function TenantAdminCoursesPage({
       {/* Top Header */}
       <div className="mb-10 flex flex-col gap-6 md:flex-row md:items-center justify-between">
         <div>
-          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#fd5523]/10 text-[#fd5523] text-xs font-black uppercase tracking-wider mb-3">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-brand/10 text-brand-ink text-xs font-black uppercase tracking-wider mb-3">
             <Sparkles className="h-3.5 w-3.5" />
             <span>Curriculum Studio</span>
           </div>
           <h1 className="text-3xl md:text-5xl font-black text-[#062e39] tracking-tight leading-none uppercase">
-            {company.name} <span className="text-[#fd5523]">Courses</span>
+            {company.name} <span className="text-brand-ink">Courses</span>
           </h1>
           <p className="mt-2 text-slate-500 text-sm sm:text-base font-medium">
             Manage your courses, modular lessons, and monetization for this academy.
@@ -92,7 +92,7 @@ export default async function TenantAdminCoursesPage({
         <div className="flex items-center gap-3">
           <Link
             href={`/academy/${company.slug}/admin/courses/new`}
-            className="flex items-center gap-2 h-14 px-8 rounded-2xl bg-[#fd5523] text-white text-xs font-black uppercase tracking-[0.2em] hover:scale-105 active:scale-95 transition-all shadow-xl shadow-[#fd5523]/20"
+            className="flex items-center gap-2 h-14 px-8 rounded-2xl bg-brand text-brand-on text-xs font-black uppercase tracking-[0.2em] hover:scale-105 active:scale-95 transition-all shadow-xl shadow-brand/20"
           >
             <Plus className="h-4 w-4" />
             <span>Create Course</span>
@@ -136,7 +136,7 @@ export default async function TenantAdminCoursesPage({
       {/* Courses Grid */}
       {courses.length === 0 ? (
         <div className="bg-white rounded-[2.5rem] p-12 text-center border border-slate-100 shadow-sm max-w-xl mx-auto my-12">
-          <div className="h-16 w-16 rounded-2xl bg-[#fff6ee] text-[#fd5523] flex items-center justify-center mx-auto mb-4">
+          <div className="h-16 w-16 rounded-2xl bg-brand-soft text-brand-ink flex items-center justify-center mx-auto mb-4">
             <BookOpen className="h-8 w-8" />
           </div>
           <h2 className="text-xl font-black text-[#062e39]">No courses created yet</h2>
@@ -145,7 +145,7 @@ export default async function TenantAdminCoursesPage({
           </p>
           <Link
             href={`/academy/${company.slug}/admin/courses/new`}
-            className="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-[#fd5523] text-white text-xs font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-lg"
+            className="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-brand text-brand-on text-xs font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-lg"
           >
             <Plus className="h-4 w-4" />
             <span>Create First Course</span>
@@ -189,7 +189,7 @@ export default async function TenantAdminCoursesPage({
 
                   {/* Body Content */}
                   <div className="p-6">
-                    <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-[#fd5523] mb-2">
+                    <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-brand-ink mb-2">
                       <span>{course.category || "General"}</span>
                       {course.level && (
                         <>
@@ -199,7 +199,7 @@ export default async function TenantAdminCoursesPage({
                       )}
                     </div>
 
-                    <h3 className="text-lg font-black text-[#062e39] tracking-tight group-hover:text-[#fd5523] transition-colors line-clamp-2">
+                    <h3 className="text-lg font-black text-[#062e39] tracking-tight group-hover:text-brand-ink transition-colors line-clamp-2">
                       {course.title}
                     </h3>
                     
@@ -234,7 +234,7 @@ export default async function TenantAdminCoursesPage({
                   <Link
                     href={`/academy/${company.slug}/courses/${course.slug}`}
                     target="_blank"
-                    className="h-10 w-10 flex items-center justify-center rounded-xl bg-slate-50 hover:bg-[#fd5523] text-slate-400 hover:text-white transition-all shadow-sm"
+                    className="h-10 w-10 flex items-center justify-center rounded-xl bg-slate-50 hover:bg-brand text-slate-400 hover:text-white transition-all shadow-sm"
                     title="Preview Course"
                   >
                     <Eye className="h-4 w-4" />

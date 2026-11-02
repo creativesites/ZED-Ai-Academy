@@ -83,7 +83,7 @@ export default async function TenantStudentDashboardPage({
           <div className="absolute top-0 right-0 p-12 opacity-10 pointer-events-none">
              <GraduationCap className="h-64 w-64" />
           </div>
-          <div className="absolute bottom-[-100px] left-[-100px] w-80 h-80 bg-[#fd5523] rounded-full blur-[120px] opacity-20" />
+          <div className="absolute bottom-[-100px] left-[-100px] w-80 h-80 bg-brand rounded-full blur-[120px] opacity-20" />
           
           <div className="relative z-10 max-w-3xl">
             <div className="inline-flex items-center gap-3 px-6 py-2.5 rounded-full bg-white/10 text-white text-[10px] font-black uppercase tracking-[0.3em] border border-white/10 mb-10">
@@ -91,7 +91,7 @@ export default async function TenantStudentDashboardPage({
             </div>
             <h1 className="text-4xl md:text-7xl font-black tracking-tighter mb-8 uppercase leading-[0.9]">
               Welcome back, <br/>
-              <span className="text-[#fd5523]">{firstName}</span>
+              <span className="text-brand-ink-dark">{firstName}</span>
             </h1>
             <p className="text-white/60 text-lg md:text-xl font-medium leading-relaxed mb-12 max-w-lg">
               Continue your journey at {company.name}. You have {inProgressCount} course{inProgressCount !== 1 ? "s" : ""} active.
@@ -99,7 +99,7 @@ export default async function TenantStudentDashboardPage({
             <div className="flex flex-wrap gap-4">
               <Link
                 href={`/academy/${company.slug}/classroom`}
-                className="group h-20 px-12 rounded-[2rem] bg-[#fd5523] text-white text-xs font-black uppercase tracking-[0.2em] flex items-center gap-4 hover:scale-[1.02] active:scale-95 transition-all shadow-2xl shadow-[#fd5523]/30"
+                className="group h-20 px-12 rounded-[2rem] bg-brand text-brand-on text-xs font-black uppercase tracking-[0.2em] flex items-center gap-4 hover:scale-[1.02] active:scale-95 transition-all shadow-2xl shadow-brand/30"
               >
                 Enter Classroom 
                 <div className="h-8 w-8 rounded-full bg-white/20 flex items-center justify-center group-hover:rotate-12 transition-transform">
@@ -113,7 +113,7 @@ export default async function TenantStudentDashboardPage({
         {/* Stats Grid */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
-            { label: "Active Courses", value: inProgressCount, icon: Clock3, accent: "bg-[#fff6ee] text-[#fd5523]" },
+            { label: "Active Courses", value: inProgressCount, icon: Clock3, accent: "bg-brand-soft text-brand-ink" },
             { label: "Completed", value: completedCount, icon: Award, accent: "bg-emerald-50 text-emerald-600" },
             { label: "Certificates", value: 0, icon: Trophy, accent: "bg-amber-50 text-amber-600" },
             { label: "Total Library", value: enrollments.length, icon: BookOpen, accent: "bg-blue-50 text-blue-600" },
@@ -132,10 +132,10 @@ export default async function TenantStudentDashboardPage({
         <section className="space-y-8">
            <div className="flex items-center justify-between px-2">
               <h2 className="text-2xl font-black text-[#062e39] uppercase tracking-tight flex items-center gap-3">
-                <BookOpen className="h-6 w-6 text-[#fd5523]" /> 
+                <BookOpen className="h-6 w-6 text-brand-ink" /> 
                 My Learning
               </h2>
-              <Link href={`/academy/${company.slug}#courses`} className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-[#fd5523] transition-colors">
+              <Link href={`/academy/${company.slug}#courses`} className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-brand-ink transition-colors">
                 Browse More
               </Link>
            </div>
@@ -148,7 +148,7 @@ export default async function TenantStudentDashboardPage({
                   const isPending = enrollment.status === "pending_payment";
 
                   return (
-                    <Card key={enrollment.id} className="group bg-white rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-2xl hover:border-[#fd5523]/20 transition-all overflow-hidden flex flex-col h-full">
+                    <Card key={enrollment.id} className="group bg-white rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-2xl hover:border-brand/20 transition-all overflow-hidden flex flex-col h-full">
                       <div className="aspect-[16/10] bg-slate-50 relative overflow-hidden">
                         {course.thumbnail_url ? (
                           <img src={course.thumbnail_url} alt="" className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-700" />
@@ -164,7 +164,7 @@ export default async function TenantStudentDashboardPage({
                         </div>
                       </div>
                       <CardContent className="p-8 flex flex-col flex-1">
-                        <h3 className="text-2xl font-black text-[#062e39] leading-tight group-hover:text-[#fd5523] transition-colors mb-6">{course.title}</h3>
+                        <h3 className="text-2xl font-black text-[#062e39] leading-tight group-hover:text-brand-ink transition-colors mb-6">{course.title}</h3>
                         
                         <div className="mt-auto space-y-6">
                            {isPending ? (
@@ -184,12 +184,12 @@ export default async function TenantStudentDashboardPage({
                            ) : (
                              <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-3">
-                                   <div className="h-2.5 w-2.5 rounded-full bg-[#fd5523] animate-pulse shadow-[0_0_8px_rgba(253,85,35,0.5)]" />
+                                   <div className="h-2.5 w-2.5 rounded-full bg-brand animate-pulse shadow-[0_0_8px_color-mix(in_srgb,var(--brand)_50%,transparent)]" />
                                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">In Progress</span>
                                 </div>
                                 <Link 
                                   href={`/courses/${course.slug}/learn`}
-                                  className="h-12 px-8 rounded-xl bg-[#062e39] text-white text-[10px] font-black uppercase tracking-[0.2em] hover:bg-[#fd5523] transition-all flex items-center gap-3 shadow-xl shadow-[#062e39]/10"
+                                  className="h-12 px-8 rounded-xl bg-[#062e39] text-white text-[10px] font-black uppercase tracking-[0.2em] hover:bg-brand transition-all flex items-center gap-3 shadow-xl shadow-[#062e39]/10 hover:text-brand-on"
                                 >
                                   Continue <ArrowRight className="h-4 w-4" />
                                 </Link>
@@ -206,7 +206,7 @@ export default async function TenantStudentDashboardPage({
                 <BookOpen className="h-20 w-20 text-slate-50 mx-auto mb-6" />
                 <h3 className="text-2xl font-black text-[#062e39]">No active courses</h3>
                 <p className="text-slate-400 font-medium mt-2 max-w-xs mx-auto">Explore {company.name}'s curriculum to start learning.</p>
-                <Link href={`/academy/${company.slug}#courses`} className="mt-8 inline-flex h-14 px-8 rounded-2xl bg-[#062e39] text-white text-[10px] font-black uppercase tracking-widest hover:bg-[#fd5523] transition-all">
+                <Link href={`/academy/${company.slug}#courses`} className="mt-8 inline-flex h-14 px-8 rounded-2xl bg-[#062e39] text-white text-[10px] font-black uppercase tracking-widest hover:bg-brand transition-all hover:text-brand-on">
                    Browse Courses
                 </Link>
              </div>

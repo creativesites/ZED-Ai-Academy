@@ -54,10 +54,10 @@ export default async function AdminClassroomPage({
           </div>
           <div className="space-y-1">
             <h1 className="text-3xl md:text-5xl font-black text-[#062e39] tracking-tight leading-none uppercase">
-              {company.name} <span className="text-[#fd5523]">Admin Hub</span>
+              {company.name} <span className="text-brand-ink">Admin Hub</span>
             </h1>
             <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 mt-4">
-               <span className="px-4 py-1.5 rounded-full bg-[#fd5523]/10 text-[#fd5523] text-[10px] font-black uppercase tracking-[0.2em] border border-[#fd5523]/10">Management View</span>
+               <span className="px-4 py-1.5 rounded-full bg-brand/10 text-brand-ink text-[10px] font-black uppercase tracking-[0.2em] border border-brand/10">Management View</span>
             </div>
           </div>
         </div>

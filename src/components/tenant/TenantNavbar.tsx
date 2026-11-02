@@ -63,7 +63,7 @@ export function TenantNavbar({
                       : "text-slate-400 hover:text-slate-600 hover:bg-white/50"
                   )}
                 >
-                  <link.icon className={cn("h-4 w-4", isActive ? "text-[#fd5523]" : "")} style={{ color: isActive ? brandColor : undefined }} />
+                  <link.icon className={cn("h-4 w-4", isActive ? "text-brand-ink" : "")} style={{ color: isActive ? brandColor : undefined }} />
                   {link.name}
                 </Link>
               );

@@ -108,13 +108,13 @@ export default async function CreatorLiveSessionsPage() {
     <main className="container" style={{ paddingTop: "60px", paddingBottom: "120px" }}>
       <div className="mb-10 flex flex-col justify-between gap-5 md:flex-row md:items-end">
         <div>
-          <p className="text-xs font-black uppercase tracking-[0.25em] text-[#fd5523]">Creator Studio</p>
+          <p className="text-xs font-black uppercase tracking-[0.25em] text-brand-ink">Creator Studio</p>
           <h1 className="mt-3 text-4xl font-bold tracking-tight text-[#062e39]">Live Sessions</h1>
           <p className="mt-3 max-w-2xl text-slate-500">
             Set your availability, publish bookable session types, and confirm learner requests.
           </p>
         </div>
-        <Link href="/creator/courses" className="text-sm font-bold text-[#062e39] hover:text-[#fd5523]">
+        <Link href="/creator/courses" className="text-sm font-bold text-[#062e39] hover:text-brand-ink">
           Back to courses
         </Link>
       </div>
@@ -123,7 +123,7 @@ export default async function CreatorLiveSessionsPage() {
         <section className="space-y-8">
           <div className="rounded-[2rem] border border-slate-100 bg-white p-6 shadow-xl shadow-slate-200/50">
             <div className="mb-6 flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#fff6ee] text-[#fd5523]">
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-brand-soft text-brand-ink">
                 <Plus className="h-5 w-5" />
               </div>
               <div>
@@ -135,15 +135,15 @@ export default async function CreatorLiveSessionsPage() {
             <form action={createLiveSessionService} className="grid gap-4 md:grid-cols-2">
               <label className="space-y-1.5 md:col-span-2">
                 <span className="text-xs font-bold uppercase tracking-widest text-slate-400">Title</span>
-                <input name="title" required placeholder="30-minute live Q&A" className="h-12 w-full rounded-xl border border-slate-200 px-4 outline-none focus:border-[#fd5523]" />
+                <input name="title" required placeholder="30-minute live Q&A" className="h-12 w-full rounded-xl border border-slate-200 px-4 outline-none focus:border-brand" />
               </label>
               <label className="space-y-1.5 md:col-span-2">
                 <span className="text-xs font-bold uppercase tracking-widest text-slate-400">Description</span>
-                <textarea name="description" rows={3} placeholder="What learners should use this session for..." className="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-[#fd5523]" />
+                <textarea name="description" rows={3} placeholder="What learners should use this session for..." className="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-brand" />
               </label>
               <label className="space-y-1.5">
                 <span className="text-xs font-bold uppercase tracking-widest text-slate-400">Course</span>
-                <select name="course_id" className="h-12 w-full rounded-xl border border-slate-200 px-4 outline-none focus:border-[#fd5523]">
+                <select name="course_id" className="h-12 w-full rounded-xl border border-slate-200 px-4 outline-none focus:border-brand">
                   <option value="">General session</option>
                   {courses.map((course) => (
                     <option key={course.id} value={course.id}>{course.title}</option>
@@ -152,17 +152,17 @@ export default async function CreatorLiveSessionsPage() {
               </label>
               <label className="space-y-1.5">
                 <span className="text-xs font-bold uppercase tracking-widest text-slate-400">Duration</span>
-                <input name="duration_minutes" type="number" min={15} max={240} defaultValue={30} className="h-12 w-full rounded-xl border border-slate-200 px-4 outline-none focus:border-[#fd5523]" />
+                <input name="duration_minutes" type="number" min={15} max={240} defaultValue={30} className="h-12 w-full rounded-xl border border-slate-200 px-4 outline-none focus:border-brand" />
               </label>
               <label className="space-y-1.5">
                 <span className="text-xs font-bold uppercase tracking-widest text-slate-400">Min notice hours</span>
-                <input name="min_notice_hours" type="number" min={0} defaultValue={12} className="h-12 w-full rounded-xl border border-slate-200 px-4 outline-none focus:border-[#fd5523]" />
+                <input name="min_notice_hours" type="number" min={0} defaultValue={12} className="h-12 w-full rounded-xl border border-slate-200 px-4 outline-none focus:border-brand" />
               </label>
               <label className="space-y-1.5">
                 <span className="text-xs font-bold uppercase tracking-widest text-slate-400">Booking window days</span>
-                <input name="max_booking_days" type="number" min={1} defaultValue={30} className="h-12 w-full rounded-xl border border-slate-200 px-4 outline-none focus:border-[#fd5523]" />
+                <input name="max_booking_days" type="number" min={1} defaultValue={30} className="h-12 w-full rounded-xl border border-slate-200 px-4 outline-none focus:border-brand" />
               </label>
-              <Button type="submit" className="md:col-span-2 rounded-xl bg-[#fd5523] py-6 text-white">
+              <Button type="submit" className="md:col-span-2 rounded-xl bg-brand py-6 text-brand-on">
                 Create session type
               </Button>
             </form>
@@ -180,12 +180,12 @@ export default async function CreatorLiveSessionsPage() {
             </div>
 
             <form action={createAvailabilityRule} className="grid gap-4 md:grid-cols-[1fr_1fr_1fr_1fr_auto]">
-              <select name="weekday" required className="h-12 rounded-xl border border-slate-200 px-4 outline-none focus:border-[#fd5523]">
+              <select name="weekday" required className="h-12 rounded-xl border border-slate-200 px-4 outline-none focus:border-brand">
                 {WEEKDAYS.map((day, idx) => <option key={day} value={idx}>{day}</option>)}
               </select>
-              <input name="start_time" type="time" required defaultValue="09:00" className="h-12 rounded-xl border border-slate-200 px-4 outline-none focus:border-[#fd5523]" />
-              <input name="end_time" type="time" required defaultValue="12:00" className="h-12 rounded-xl border border-slate-200 px-4 outline-none focus:border-[#fd5523]" />
-              <input name="timezone" defaultValue="Africa/Lusaka" className="h-12 rounded-xl border border-slate-200 px-4 outline-none focus:border-[#fd5523]" />
+              <input name="start_time" type="time" required defaultValue="09:00" className="h-12 rounded-xl border border-slate-200 px-4 outline-none focus:border-brand" />
+              <input name="end_time" type="time" required defaultValue="12:00" className="h-12 rounded-xl border border-slate-200 px-4 outline-none focus:border-brand" />
+              <input name="timezone" defaultValue="Africa/Lusaka" className="h-12 rounded-xl border border-slate-200 px-4 outline-none focus:border-brand" />
               <Button type="submit" className="rounded-xl bg-[#062e39] px-6 text-white">Add</Button>
             </form>
 
@@ -235,7 +235,7 @@ export default async function CreatorLiveSessionsPage() {
                       </Button>
                     </form>
                   </div>
-                  <Link href={`/live-sessions/${service.id}/book`} className="mt-4 inline-flex text-sm font-bold text-[#fd5523]">
+                  <Link href={`/live-sessions/${service.id}/book`} className="mt-4 inline-flex text-sm font-bold text-brand-ink">
                     View learner booking page
                   </Link>
                 </div>
@@ -245,7 +245,7 @@ export default async function CreatorLiveSessionsPage() {
 
           <div className="rounded-[2rem] border border-slate-100 bg-white p-6 shadow-xl shadow-slate-200/50">
             <div className="mb-6 flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#fff6ee] text-[#fd5523]">
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-brand-soft text-brand-ink">
                 <CalendarDays className="h-5 w-5" />
               </div>
               <div>
@@ -258,7 +258,7 @@ export default async function CreatorLiveSessionsPage() {
               {pendingBookings.length === 0 ? (
                 <p className="rounded-xl bg-slate-50 p-4 text-sm text-slate-500">No pending requests.</p>
               ) : pendingBookings.map((booking) => (
-                <div key={booking.id} className="rounded-2xl border border-[#fd5523]/20 bg-[#fff6ee]/40 p-4">
+                <div key={booking.id} className="rounded-2xl border border-brand/20 bg-brand-soft/40 p-4">
                   <p className="font-bold text-[#062e39]">{booking.live_session_services?.title ?? "Live Session"}</p>
                   <p className="mt-1 text-sm text-slate-600">{formatSessionTime(booking.starts_at, booking.ends_at, booking.timezone)}</p>
                   <p className="mt-1 text-xs text-slate-500">{booking.profiles?.full_name ?? booking.profiles?.email ?? "Learner"}</p>

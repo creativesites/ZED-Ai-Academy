@@ -134,7 +134,7 @@ export default async function TenantEnrollmentsPage({ params, searchParams }: Pa
         {/* KPI row */}
         <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
           {[
-            { label: "Total Students", value: allCount ?? 0, icon: GraduationCap, accent: "bg-[#fff6ee] text-[#fd5523]" },
+            { label: "Total Students", value: allCount ?? 0, icon: GraduationCap, accent: "bg-brand-soft text-brand-ink" },
             { label: "Active Access", value: activeCount ?? 0, icon: CheckCircle2, accent: "bg-green-50 text-green-600" },
             { label: "Pending", value: pendingCount ?? 0, icon: Clock3, accent: "bg-amber-50 text-amber-600" },
             { label: "Revoked", value: revokedCount ?? 0, icon: XCircle, accent: "bg-red-50 text-red-500" },
@@ -178,12 +178,12 @@ export default async function TenantEnrollmentsPage({ params, searchParams }: Pa
                 name="q"
                 defaultValue={q}
                 placeholder="Search students..."
-                className="h-12 w-full sm:w-64 rounded-xl border border-slate-100 bg-slate-50 px-5 text-sm text-[#062e39] placeholder:text-slate-400 focus:bg-white focus:border-[#fd5523] outline-none transition-all"
+                className="h-12 w-full sm:w-64 rounded-xl border border-slate-100 bg-slate-50 px-5 text-sm text-[#062e39] placeholder:text-slate-400 focus:bg-white focus:border-brand outline-none transition-all"
               />
               <select
                 name="course"
                 defaultValue={courseFilter}
-                className="h-12 w-full sm:w-48 rounded-xl border border-slate-100 bg-slate-50 px-4 text-sm text-[#062e39] focus:bg-white focus:border-[#fd5523] outline-none transition-all"
+                className="h-12 w-full sm:w-48 rounded-xl border border-slate-100 bg-slate-50 px-4 text-sm text-[#062e39] focus:bg-white focus:border-brand outline-none transition-all"
               >
                 <option value="">All Courses</option>
                 {(allCourses ?? []).map((c) => (

@@ -51,14 +51,14 @@ export function GroupsTab({ companyId, companySlug }: { companyId: string, compa
           <div>
             <h2 className="text-3xl font-black text-[#062e39] tracking-tight flex items-center gap-3">
               Class Groups
-              <UsersRound className="h-7 w-7 text-[#fd5523]" />
+              <UsersRound className="h-7 w-7 text-brand-ink" />
             </h2>
             <p className="text-slate-500 font-medium mt-1">Organize students into classes or cohorts.</p>
           </div>
           
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger render={(props) => (
-              <Button {...props} className="bg-[#fd5523] text-white hover:bg-[#ef4a16] rounded-2xl h-12 px-6 font-black text-sm uppercase tracking-widest shadow-xl shadow-[#fd5523]/20 transition-all hover:scale-[1.02] flex items-center gap-2">
+              <Button {...props} className="bg-brand text-brand-on hover:bg-brand-hover rounded-2xl h-12 px-6 font-black text-sm uppercase tracking-widest shadow-xl shadow-brand/20 transition-all hover:scale-[1.02] flex items-center gap-2">
                 <Plus className="h-4 w-4" /> Create Group
               </Button>
             )} />
@@ -71,11 +71,11 @@ export function GroupsTab({ companyId, companySlug }: { companyId: string, compa
               <form action={handleCreateGroup} className="p-6 space-y-4 bg-white">
                 <div>
                   <label className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-2 block">Group Name</label>
-                  <Input name="name" required placeholder="e.g. Fall 2026 Cohort" className="h-12 rounded-xl border-slate-200 focus:ring-[#fd5523]/10 focus:border-[#fd5523]/30 font-medium" />
+                  <Input name="name" required placeholder="e.g. Fall 2026 Cohort" className="h-12 rounded-xl border-slate-200 focus:ring-brand/10 focus:border-brand/30 font-medium" />
                 </div>
                 <div>
                   <label className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-2 block">Description</label>
-                  <Textarea name="description" placeholder="Optional details about this group" className="rounded-xl border-slate-200 focus:ring-[#fd5523]/10 focus:border-[#fd5523]/30 font-medium min-h-[100px]" />
+                  <Textarea name="description" placeholder="Optional details about this group" className="rounded-xl border-slate-200 focus:ring-brand/10 focus:border-brand/30 font-medium min-h-[100px]" />
                 </div>
                 <Button type="submit" className="w-full h-12 rounded-xl bg-[#062e39] text-white hover:bg-[#0a4a5c] font-black uppercase tracking-widest text-xs">
                   Create Group
@@ -89,7 +89,7 @@ export function GroupsTab({ companyId, companySlug }: { companyId: string, compa
       <div className="flex-1 overflow-y-auto px-8 pb-8">
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20 text-slate-400">
-            <Loader2 className="h-10 w-10 animate-spin mb-4 text-[#fd5523]" />
+            <Loader2 className="h-10 w-10 animate-spin mb-4 text-brand-ink" />
             <p className="text-[10px] font-black uppercase tracking-widest">Loading Groups...</p>
           </div>
         ) : groups.length === 0 ? (
@@ -108,7 +108,7 @@ export function GroupsTab({ companyId, companySlug }: { companyId: string, compa
               <div key={group.id} className="bg-white rounded-[2rem] p-6 border border-slate-100 shadow-sm hover:shadow-xl transition-all group flex flex-col justify-between">
                 <div>
                   <div className="flex justify-between items-start mb-4">
-                    <div className="h-12 w-12 rounded-xl bg-[#fd5523]/10 flex items-center justify-center text-[#fd5523]">
+                    <div className="h-12 w-12 rounded-xl bg-brand/10 flex items-center justify-center text-brand-ink">
                       <UsersRound className="h-6 w-6" />
                     </div>
                     <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-red-500 rounded-lg">

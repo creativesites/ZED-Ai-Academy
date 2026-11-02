@@ -76,7 +76,7 @@ export function JoinClient({
         </div>
 
         <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-slate-100 text-slate-600 text-xs font-black uppercase tracking-wider mb-3">
-          <Sparkles className="h-3.5 w-3.5 text-[#fd5523]" />
+          <Sparkles className="h-3.5 w-3.5 text-brand-ink" />
           <span>Academy Invitation</span>
         </div>
 
@@ -140,7 +140,7 @@ export function JoinClient({
                   onChange={(e) => setCode(e.target.value)}
                   placeholder="Enter 6-digit staff code"
                   required
-                  className="w-full h-14 px-4 rounded-2xl border-2 border-slate-200 text-lg font-mono font-bold tracking-widest text-[#062e39] focus:outline-none focus:border-[#fd5523] transition-all"
+                  className="w-full h-14 px-4 rounded-2xl border-2 border-slate-200 text-lg font-mono font-bold tracking-widest text-[#062e39] focus:outline-none focus:border-brand transition-all"
                 />
                 <Key className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-300" />
               </div>

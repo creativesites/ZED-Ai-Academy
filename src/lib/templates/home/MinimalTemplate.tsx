@@ -30,13 +30,13 @@ export function MinimalTemplate({ tenant, courses, membership, brandColor, heroT
                 {!membership ? (
                   <form action={joinTenantBySlug}>
                     <input type="hidden" name="tenantSlug" value={tenant.slug} />
-                    <Button className="h-16 px-12 rounded-full bg-slate-900 text-white text-base font-medium tracking-tight hover:bg-slate-800 transition-all">
+                    <Button className="h-16 px-12 rounded-full bg-brand text-brand-on text-base font-medium tracking-tight hover:bg-brand-hover transition-all">
                       Start Your Journey
                     </Button>
                   </form>
                 ) : (
                   <Link href={`/academy/${tenant.slug}/classroom`}>
-                    <Button className="h-16 px-12 rounded-full bg-slate-900 text-white text-base font-medium tracking-tight hover:bg-slate-800 transition-all">
+                    <Button className="h-16 px-12 rounded-full bg-brand text-brand-on text-base font-medium tracking-tight hover:bg-brand-hover transition-all">
                       Open Classroom
                     </Button>
                   </Link>
@@ -127,13 +127,13 @@ export function MinimalTemplate({ tenant, courses, membership, brandColor, heroT
           {!membership ? (
             <form action={joinTenantBySlug}>
               <input type="hidden" name="tenantSlug" value={tenant.slug} />
-              <Button className="h-16 px-14 rounded-full bg-slate-900 text-white text-lg font-medium hover:scale-105 transition-all shadow-2xl">
+              <Button className="h-16 px-14 rounded-full bg-brand text-brand-on text-lg font-medium hover:scale-105 transition-all shadow-2xl">
                 {ctaButton}
               </Button>
             </form>
           ) : (
             <Link href={`/academy/${tenant.slug}/classroom`}>
-              <Button className="h-16 px-14 rounded-full bg-slate-900 text-white text-lg font-medium hover:scale-105 transition-all shadow-2xl">
+              <Button className="h-16 px-14 rounded-full bg-brand text-brand-on text-lg font-medium hover:scale-105 transition-all shadow-2xl">
                 Open Classroom
               </Button>
             </Link>

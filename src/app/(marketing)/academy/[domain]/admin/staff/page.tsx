@@ -50,12 +50,12 @@ export default async function TenantAdminStaffPage({
   return (
     <div className="container max-w-7xl px-4 py-8 md:py-12">
       <div className="mb-10">
-        <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#fd5523]/10 text-[#fd5523] text-xs font-black uppercase tracking-wider mb-3">
+        <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-brand/10 text-brand-ink text-xs font-black uppercase tracking-wider mb-3">
           <Sparkles className="h-3.5 w-3.5" />
           <span>Team Management</span>
         </div>
         <h1 className="text-3xl md:text-5xl font-black text-[#062e39] tracking-tight leading-none uppercase">
-          {company.name} <span className="text-[#fd5523]">Staff</span>
+          {company.name} <span className="text-brand-ink">Staff</span>
         </h1>
         <p className="mt-2 text-slate-500 text-sm sm:text-base font-medium">
           Manage teacher invitations, staff permissions, and student self-join links.

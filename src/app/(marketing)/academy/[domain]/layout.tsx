@@ -3,6 +3,7 @@ import { auth } from "@clerk/nextjs/server";
 import { createClient } from "@/lib/supabase/server";
 import { AlertTriangle } from "lucide-react";
 import Link from "next/link";
+import { brandStyle } from "@/lib/brand";
 
 export default async function TenantLayout({
   children,
@@ -64,11 +65,10 @@ export default async function TenantLayout({
     }
   }
 
-  // Inject Custom Styling via CSS variables
-  const primaryColor = tenant.primary_color || "#fd5523";
-
+  // Inject the academy brand as CSS variables (--brand, --brand-on, --brand-ink, ...).
+  // Every tenant page inherits them, so text/fills stay readable for any colour the academy picks.
   return (
-    <div style={{ "--primary-color": primaryColor } as React.CSSProperties} className="tenant-wrapper min-h-screen bg-slate-50">
+    <div style={brandStyle(tenant.primary_color)} className="tenant-wrapper min-h-screen bg-slate-50">
       {/* Custom Tenant Header */}
       {/* <header className="p-4 border-b bg-white shadow-sm flex items-center justify-between sticky top-0 z-50">
         <div className="container mx-auto px-4 flex items-center justify-between">

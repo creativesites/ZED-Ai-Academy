@@ -26,13 +26,13 @@ export function ElegantTemplate({ tenant, courses, membership, brandColor, heroT
                 <form action={joinTenantBySlug}>
                   <input type="hidden" name="tenantSlug" value={tenant.slug} />
                   <input type="hidden" name="role" value="student" />
-                  <Button className="h-16 px-12 rounded-none bg-stone-800 text-white font-light tracking-widest hover:bg-stone-700 shadow-lg transition-all">
+                  <Button className="h-16 px-12 rounded-none bg-brand text-brand-on font-light tracking-widest hover:bg-brand-hover shadow-lg transition-all">
                     ENTER
                   </Button>
                 </form>
               ) : (
                 <Link href={`/academy/${tenant.slug}/classroom`}>
-                  <Button className="h-16 px-12 rounded-none bg-stone-800 text-white font-light tracking-widest hover:bg-stone-700 shadow-lg transition-all">
+                  <Button className="h-16 px-12 rounded-none bg-brand text-brand-on font-light tracking-widest hover:bg-brand-hover shadow-lg transition-all">
                     CLASSROOM
                   </Button>
                 </Link>

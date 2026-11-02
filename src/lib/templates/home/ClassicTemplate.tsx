@@ -40,13 +40,13 @@ export function ClassicTemplate({ tenant, courses, membership, brandColor, heroT
                 {!membership ? (
                   <form action={joinTenantBySlug}>
                     <input type="hidden" name="tenantSlug" value={tenant.slug} />
-                    <Button className="h-16 px-12 rounded-none bg-amber-900 text-white text-lg font-bold tracking-widest shadow-xl hover:bg-amber-800 transition-all border-b-4 border-amber-950 active:border-b-0 active:translate-y-1">
+                    <Button className="h-16 px-12 rounded-none bg-brand text-brand-on text-lg font-bold tracking-widest shadow-xl hover:bg-brand-hover transition-all border-b-4 border-brand-deep active:border-b-0 active:translate-y-1">
                       JOIN THE TRADITION
                     </Button>
                   </form>
                 ) : (
                   <Link href={`/academy/${tenant.slug}/classroom`}>
-                    <Button className="h-16 px-12 rounded-none bg-amber-900 text-white text-lg font-bold tracking-widest shadow-xl hover:bg-amber-800 transition-all border-b-4 border-amber-950 active:border-b-0 active:translate-y-1">
+                    <Button className="h-16 px-12 rounded-none bg-brand text-brand-on text-lg font-bold tracking-widest shadow-xl hover:bg-brand-hover transition-all border-b-4 border-brand-deep active:border-b-0 active:translate-y-1">
                       ENTER ACADEMY
                     </Button>
                   </Link>
