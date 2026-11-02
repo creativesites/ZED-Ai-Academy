@@ -1548,6 +1548,174 @@ export interface Database {
         };
         Relationships: R;
       };
+      classroom_assignments: {
+        Row: {
+          id: string;
+          company_id: string;
+          cohort_id: string | null;
+          course_id: string | null;
+          author_id: string;
+          title: string;
+          description: string | null;
+          due_date: string;
+          max_points: number;
+          submission_type: "file" | "link" | "file_or_link";
+          attachments: Json;
+          rubric: Json;
+          is_published: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          company_id: string;
+          cohort_id?: string | null;
+          course_id?: string | null;
+          author_id: string;
+          title: string;
+          description?: string | null;
+          due_date: string;
+          max_points?: number;
+          submission_type?: "file" | "link" | "file_or_link";
+          attachments?: Json;
+          rubric?: Json;
+          is_published?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          cohort_id?: string | null;
+          course_id?: string | null;
+          title?: string;
+          description?: string | null;
+          due_date?: string;
+          max_points?: number;
+          submission_type?: "file" | "link" | "file_or_link";
+          attachments?: Json;
+          rubric?: Json;
+          is_published?: boolean;
+          updated_at?: string;
+        };
+        Relationships: R;
+      };
+      classroom_assignment_submissions: {
+        Row: {
+          id: string;
+          assignment_id: string;
+          student_id: string;
+          company_id: string;
+          submission_text: string | null;
+          file_url: string | null;
+          repo_url: string | null;
+          file_name: string | null;
+          file_size_bytes: number;
+          status: "submitted" | "graded" | "late" | "resubmit_requested";
+          grade: number | null;
+          feedback: string | null;
+          graded_by: string | null;
+          graded_at: string | null;
+          submitted_at: string;
+        };
+        Insert: {
+          id?: string;
+          assignment_id: string;
+          student_id: string;
+          company_id: string;
+          submission_text?: string | null;
+          file_url?: string | null;
+          repo_url?: string | null;
+          file_name?: string | null;
+          file_size_bytes?: number;
+          status?: "submitted" | "graded" | "late" | "resubmit_requested";
+          grade?: number | null;
+          feedback?: string | null;
+          graded_by?: string | null;
+          graded_at?: string | null;
+          submitted_at?: string;
+        };
+        Update: {
+          submission_text?: string | null;
+          file_url?: string | null;
+          repo_url?: string | null;
+          file_name?: string | null;
+          file_size_bytes?: number;
+          status?: "submitted" | "graded" | "late" | "resubmit_requested";
+          grade?: number | null;
+          feedback?: string | null;
+          graded_by?: string | null;
+          graded_at?: string | null;
+        };
+        Relationships: R;
+      };
+      classroom_channels: {
+        Row: {
+          id: string;
+          company_id: string;
+          cohort_id: string | null;
+          name: string;
+          display_name: string;
+          description: string | null;
+          icon: string;
+          is_default: boolean;
+          created_by: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          company_id: string;
+          cohort_id?: string | null;
+          name: string;
+          display_name: string;
+          description?: string | null;
+          icon?: string;
+          is_default?: boolean;
+          created_by?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          cohort_id?: string | null;
+          name?: string;
+          display_name?: string;
+          description?: string | null;
+          icon?: string;
+          is_default?: boolean;
+        };
+        Relationships: R;
+      };
+      classroom_messages: {
+        Row: {
+          id: string;
+          channel_id: string;
+          company_id: string;
+          user_id: string;
+          content: string;
+          attachments: Json;
+          is_pinned: boolean;
+          reply_to_id: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          channel_id: string;
+          company_id: string;
+          user_id: string;
+          content: string;
+          attachments?: Json;
+          is_pinned?: boolean;
+          reply_to_id?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          content?: string;
+          attachments?: Json;
+          is_pinned?: boolean;
+          reply_to_id?: string | null;
+          updated_at?: string;
+        };
+        Relationships: R;
+      };
       exam_frameworks: {
         Row: {
           id: string;

@@ -5,6 +5,7 @@ import { LiveSessionTab } from "./LiveSessionTab";
 import { NoticeBoardTab } from "./NoticeBoardTab";
 import { TimetableTab } from "./TimetableTab";
 import { MaterialsTab } from "./MaterialsTab";
+import { AssignmentsTab } from "./AssignmentsTab";
 import { DiscussionsTab } from "./DiscussionsTab";
 import { StudentsTab } from "./StudentsTab";
 import { GradebookTab } from "./GradebookTab";
@@ -20,6 +21,7 @@ import {
   History,
   GraduationCap,
   FolderOpen,
+  FileCheck2,
 } from "lucide-react";
 import {
   Select,
@@ -28,13 +30,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { getClassroomGroups } from "@/actions/classroom";
+import { getClassroomGroups, getCompanyCourses } from "@/actions/classroom";
 import { cn } from "@/lib/utils";
 
 type TabType =
   | "session"
   | "timetable"
   | "materials"
+  | "assignments"
   | "noticeboard"
   | "discussions"
   | "students"
@@ -57,6 +60,7 @@ export function ClassroomTabs({
 }: ClassroomTabsProps) {
   const [activeTab, setActiveTab] = useState<TabType>(initialTab);
   const [cohorts, setCohorts] = useState<any[]>([]);
+  const [courses, setCourses] = useState<any[]>([]);
   const [activeCohortId, setActiveCohortId] = useState<string>("all");
 
   useEffect(() => {
@@ -66,21 +70,26 @@ export function ClassroomTabs({
   }, [initialTab]);
 
   useEffect(() => {
-    async function loadCohorts() {
+    async function loadData() {
       try {
-        const data = await getClassroomGroups(companyId);
-        setCohorts(data || []);
+        const [groupsData, coursesData] = await Promise.all([
+          getClassroomGroups(companyId),
+          getCompanyCourses(companyId),
+        ]);
+        setCohorts(groupsData || []);
+        setCourses(coursesData || []);
       } catch (err) {
-        console.error("Failed to load cohorts in classroom tabs:", err);
+        console.error("Failed to load classroom cohorts/courses:", err);
       }
     }
-    loadCohorts();
+    loadData();
   }, [companyId]);
 
   const tabs = [
     { id: "session" as const, label: "Live", icon: Video },
     { id: "timetable" as const, label: "Schedule", icon: Calendar },
     { id: "materials" as const, label: "Materials", icon: FolderOpen },
+    { id: "assignments" as const, label: "Assignments", icon: FileCheck2 },
     { id: "noticeboard" as const, label: "Notices", icon: Bell },
     { id: "discussions" as const, label: "Chat", icon: MessageSquare },
     { id: "students" as const, label: "Students", icon: Users, instructorOnly: true },
@@ -209,6 +218,16 @@ export function ClassroomTabs({
               activeCohortId={activeCohortId === "all" ? null : activeCohortId}
             />
           )}
+          {activeTab === "assignments" && (
+            <AssignmentsTab
+              companyId={companyId}
+              companySlug={companySlug}
+              isAdminOrInstructor={isAdminOrInstructor}
+              selectedCohortId={activeCohortId}
+              cohorts={cohorts}
+              courses={courses}
+            />
+          )}
           {activeTab === "noticeboard" && (
             <NoticeBoardTab
               companyId={companyId}
@@ -217,7 +236,13 @@ export function ClassroomTabs({
             />
           )}
           {activeTab === "discussions" && (
-            <DiscussionsTab companyId={companyId} companySlug={companySlug} />
+            <DiscussionsTab
+              companyId={companyId}
+              companySlug={companySlug}
+              isAdminOrInstructor={isAdminOrInstructor}
+              selectedCohortId={activeCohortId}
+              cohorts={cohorts}
+            />
           )}
           {activeTab === "students" && isAdminOrInstructor && (
             <StudentsTab

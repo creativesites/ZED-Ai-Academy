@@ -122,17 +122,35 @@ export async function toggleClassroomSession(companyId: string, companySlug: str
   return { success: true };
 }
 
-// Announcements (Fixed revalidation)
-export async function getAnnouncements(companyId: string) {
+// Announcements & Notice Board with Priority & Push Notifications
+export async function getAnnouncements(companyId: string, cohortId?: string | null) {
   const { supabase } = await requireTenantMember(companyId);
-  const { data, error } = await supabase
+  let query = supabase
     .from("announcements")
-    .select("*")
-    .eq("company_id", companyId)
+    .select(`
+      *,
+      author:profiles!announcements_author_id_fkey(full_name, avatar_url)
+    `)
+    .eq("company_id", companyId);
+
+  if (cohortId && cohortId !== "all") {
+    query = query.or(`cohort_id.eq.${cohortId},cohort_id.is.null`);
+  }
+
+  const { data, error } = await query
+    .order("is_pinned", { ascending: false })
     .order("created_at", { ascending: false });
 
-  if (error) throw new Error(error.message);
-  return data;
+  if (error) {
+    // Fallback if join is not available
+    const { data: fallbackData } = await supabase
+      .from("announcements")
+      .select("*")
+      .eq("company_id", companyId)
+      .order("created_at", { ascending: false });
+    return fallbackData ?? [];
+  }
+  return data ?? [];
 }
 
 export async function postAnnouncement(formData: FormData) {
@@ -140,18 +158,96 @@ export async function postAnnouncement(formData: FormData) {
   const companySlug = formData.get("companySlug") as string;
   const { userId, supabase } = await requireInstructor(companyId);
 
-  const title = formData.get("title") as string;
-  const content = formData.get("content") as string;
+  const title = (formData.get("title") as string)?.trim();
+  const content = (formData.get("content") as string)?.trim();
+  const priority = (formData.get("priority") as string) || "notice";
+  const cohortId = (formData.get("cohortId") as string) || null;
+  const isPinned = formData.get("isPinned") === "true";
 
-  const { error } = await supabase.from("announcements").insert({
-    company_id: companyId,
-    author_id: userId,
-    title,
-    content,
-  });
+  if (!title || !content) throw new Error("Title and content are required");
+
+  const { data: newNotice, error } = await supabase
+    .from("announcements")
+    .insert({
+      company_id: companyId,
+      author_id: userId,
+      title,
+      content,
+      priority,
+      cohort_id: cohortId && cohortId !== "all" ? cohortId : null,
+      is_pinned: isPinned,
+    } as any)
+    .select()
+    .single();
 
   if (error) throw new Error(error.message);
-  revalidatePath(`/classroom/${companySlug}`);
+
+  // Dispatch student notifications
+  try {
+    const { data: company } = await supabase.from("companies").select("name").eq("id", companyId).maybeSingle();
+    let studentIds: string[] = [];
+
+    if (cohortId && cohortId !== "all") {
+      const { data: groupMembers } = await supabase
+        .from("classroom_group_members")
+        .select("profile_id")
+        .eq("group_id", cohortId);
+      studentIds = (groupMembers ?? []).map((m: any) => m.profile_id).filter((pid: string) => pid && pid !== userId);
+    } else {
+      const { data: members } = await supabase
+        .from("company_members")
+        .select("profile_id")
+        .eq("company_id", companyId)
+        .eq("status", "active");
+      studentIds = (members ?? []).map((m: any) => m.profile_id).filter((pid: string) => pid && pid !== userId);
+    }
+
+    if (studentIds.length > 0) {
+      const prefix =
+        priority === "urgent"
+          ? "🚨 URGENT Notice"
+          : priority === "exam"
+          ? "📝 Exam Notice"
+          : priority === "event"
+          ? "🎉 School Event"
+          : "📢 New Announcement";
+
+      const notifications = studentIds.map((pid: string) => ({
+        user_id: pid,
+        type: "announcement",
+        title: `${prefix}: ${title}`,
+        body: content.slice(0, 150) + (content.length > 150 ? "..." : ""),
+        data: {
+          announcement_id: newNotice?.id,
+          priority,
+          company_id: companyId,
+          company_slug: companySlug,
+          url: `/academy/${companySlug}/classroom?tab=noticeboard`,
+        },
+      }));
+
+      await supabase.from("notifications").insert(notifications as any);
+    }
+  } catch (notifErr) {
+    console.error("Failed to dispatch announcement notifications:", notifErr);
+  }
+
+  revalidatePath(`/academy/${companySlug}/classroom`);
+  return newNotice;
+}
+
+export async function deleteAnnouncement(announcementId: string, companyId: string, companySlug: string) {
+  const { supabase } = await requireInstructor(companyId);
+
+  const { error } = await supabase
+    .from("announcements")
+    .delete()
+    .eq("id", announcementId)
+    .eq("company_id", companyId);
+
+  if (error) throw new Error(error.message);
+  revalidatePath(`/academy/${companySlug}/classroom`);
+  return { success: true };
 }
 
 // Timetable
@@ -672,6 +768,17 @@ export type GradebookCertificate = {
   file_url: string | null;
 };
 
+export type GradebookAssignmentRecord = {
+  id: string;
+  assignment_id: string;
+  assignment_title: string;
+  max_points: number;
+  grade: number | null;
+  status: string;
+  submitted_at: string;
+  feedback: string | null;
+};
+
 export type StudentGradebookRecord = {
   id: string;
   full_name: string;
@@ -685,6 +792,9 @@ export type StudentGradebookRecord = {
   avgQuizScore: number;
   passedQuizzesCount: number;
   certificates: GradebookCertificate[];
+  assignments?: GradebookAssignmentRecord[];
+  avgAssignmentScore?: number;
+  submittedAssignmentsCount?: number;
   status: "active" | "completed" | "inactive";
   lastActive: string | null;
 };
@@ -696,6 +806,7 @@ export type AcademyGradebookData = {
     totalStudents: number;
     avgCompletionRate: number;
     avgQuizScore: number;
+    avgAssignmentScore?: number;
     certificatesIssued: number;
   };
 };
@@ -802,12 +913,13 @@ export async function getAcademyGradebook(companyId: string): Promise<AcademyGra
     };
   }
 
-  // 5. Fetch profiles, lesson_progress, quiz_attempts, and certificates
+  // 5. Fetch profiles, lesson_progress, quiz_attempts, certificates, and assignment submissions
   const [
     { data: profilesData },
     { data: progressData },
     { data: attemptsData },
     { data: certsData },
+    { data: assignmentSubmissionsData },
   ] = await Promise.all([
     supabase
       .from("profiles")
@@ -834,12 +946,44 @@ export async function getAcademyGradebook(companyId: string): Promise<AcademyGra
       .select("id, user_id, course_id, issued_at, public_id, file_url")
       .in("user_id", studentIds)
       .in("course_id", courseIds),
+    supabase
+      .from("classroom_assignment_submissions")
+      .select(`
+        id,
+        assignment_id,
+        student_id,
+        grade,
+        status,
+        submitted_at,
+        feedback,
+        assignment:classroom_assignments(title, max_points)
+      `)
+      .in("student_id", studentIds)
+      .eq("company_id", companyId),
   ]);
 
   const profiles = profilesData ?? [];
   const progressRows = progressData ?? [];
   const attemptRows = attemptsData ?? [];
   const certRows = certsData ?? [];
+  const submissionRows = assignmentSubmissionsData ?? [];
+
+  // Group assignment submissions by student
+  const assignmentsByUser = new Map<string, GradebookAssignmentRecord[]>();
+  for (const s of submissionRows as any[]) {
+    const list = assignmentsByUser.get(s.student_id) || [];
+    list.push({
+      id: s.id,
+      assignment_id: s.assignment_id,
+      assignment_title: s.assignment?.title || "Assignment",
+      max_points: s.assignment?.max_points || 100,
+      grade: s.grade,
+      status: s.status,
+      submitted_at: s.submitted_at,
+      feedback: s.feedback,
+    });
+    assignmentsByUser.set(s.student_id, list);
+  }
 
   // Group progress by user
   const progressByUser = new Map<string, Set<string>>();
@@ -921,6 +1065,15 @@ export async function getAcademyGradebook(companyId: string): Promise<AcademyGra
 
     const passedQuizzesCount = userAttempts.filter((a) => a.passed).length;
 
+    // Student assignments
+    const userAssignments = assignmentsByUser.get(p.id) || [];
+    const gradedAssignments = userAssignments.filter((a) => a.grade !== null && a.grade !== undefined);
+    let avgAssignmentScore = 0;
+    if (gradedAssignments.length > 0) {
+      const sum = gradedAssignments.reduce((acc, curr) => acc + (curr.grade || 0), 0);
+      avgAssignmentScore = Math.round(sum / gradedAssignments.length);
+    }
+
     const enrolledCourseTitles = enrolledCourseIds
       .map((cId) => courseTitleMap.get(cId))
       .filter((title): title is string => !!title);
@@ -932,13 +1085,14 @@ export async function getAcademyGradebook(companyId: string): Promise<AcademyGra
 
     const lastAttemptDate = userAttempts[0]?.created_at;
     const lastCertDate = userCerts[0]?.issued_at;
-    const dates = [lastAttemptDate, lastCertDate].filter(Boolean) as string[];
+    const lastSubDate = userAssignments[0]?.submitted_at;
+    const dates = [lastAttemptDate, lastCertDate, lastSubDate].filter(Boolean) as string[];
     const lastActive = dates.length > 0 ? dates.sort().reverse()[0] : null;
 
     let status: "active" | "completed" | "inactive" = "active";
     if (completionPercent >= 100 || userCerts.length > 0) {
       status = "completed";
-    } else if (completionPercent === 0 && userAttempts.length === 0) {
+    } else if (completionPercent === 0 && userAttempts.length === 0 && userAssignments.length === 0) {
       status = "inactive";
     }
 
@@ -955,6 +1109,9 @@ export async function getAcademyGradebook(companyId: string): Promise<AcademyGra
       avgQuizScore,
       passedQuizzesCount,
       certificates: userCerts,
+      assignments: userAssignments,
+      avgAssignmentScore,
+      submittedAssignmentsCount: userAssignments.length,
       status,
       lastActive,
     };
@@ -962,6 +1119,12 @@ export async function getAcademyGradebook(companyId: string): Promise<AcademyGra
 
   const avgCompletionRate = students.length > 0 ? Math.round(totalCompletionPercentages / students.length) : 0;
   const avgQuizScore = totalQuizAttemptsCount > 0 ? Math.round(totalQuizScores / totalQuizAttemptsCount) : 0;
+  
+  const allGraded = submissionRows.filter((s: any) => s.grade !== null && s.grade !== undefined);
+  const avgAssignmentScore =
+    allGraded.length > 0
+      ? Math.round(allGraded.reduce((acc: number, curr: any) => acc + (curr.grade || 0), 0) / allGraded.length)
+      : 0;
 
   return {
     courses,
@@ -970,6 +1133,7 @@ export async function getAcademyGradebook(companyId: string): Promise<AcademyGra
       totalStudents: students.length,
       avgCompletionRate,
       avgQuizScore,
+      avgAssignmentScore,
       certificatesIssued: certRows.length,
     },
   };

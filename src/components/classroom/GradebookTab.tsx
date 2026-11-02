@@ -330,6 +330,7 @@ export function GradebookTab({
                     <th className="py-3.5 px-4">Enrolled Course</th>
                     <th className="py-3.5 px-4 min-w-[160px]">Lesson Progress</th>
                     <th className="py-3.5 px-4 text-center">Quiz Score</th>
+                    <th className="py-3.5 px-4 text-center">Assignments</th>
                     <th className="py-3.5 px-4 text-center">Certificates</th>
                     <th className="py-3.5 px-4 text-right">Actions</th>
                   </tr>
@@ -412,6 +413,18 @@ export function GradebookTab({
                         )}
                       </td>
 
+                      {/* Coursework & Assignments */}
+                      <td className="py-3.5 px-4 text-center">
+                        {student.assignments && student.assignments.length > 0 ? (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-black bg-indigo-50 text-indigo-700 border border-indigo-200">
+                            <FileCheck2 className="h-3.5 w-3.5" />
+                            {student.avgAssignmentScore ? `${student.avgAssignmentScore} pts avg` : `${student.assignments.length} Works`}
+                          </span>
+                        ) : (
+                          <span className="text-slate-300 text-xs">—</span>
+                        )}
+                      </td>
+
                       {/* Certificates */}
                       <td className="py-3.5 px-4 text-center">
                         {student.certificates.length > 0 ? (
@@ -482,7 +495,7 @@ export function GradebookTab({
             </div>
 
             {/* Quick Metrics */}
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-100">
                 <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">
                   Lesson Progress
@@ -504,6 +517,18 @@ export function GradebookTab({
                 </p>
                 <p className="text-[10px] text-slate-500 font-medium">
                   {selectedStudent.passedQuizzesCount} passed quizzes
+                </p>
+              </div>
+
+              <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-100">
+                <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">
+                  Coursework
+                </p>
+                <p className="text-lg font-black text-slate-900 mt-0.5">
+                  {selectedStudent.avgAssignmentScore ? `${selectedStudent.avgAssignmentScore} pts` : "—"}
+                </p>
+                <p className="text-[10px] text-slate-500 font-medium">
+                  {selectedStudent.submittedAssignmentsCount || 0} tasks submitted
                 </p>
               </div>
 
@@ -564,6 +589,57 @@ export function GradebookTab({
                         ) : (
                           <span className="flex items-center gap-1 text-[11px] font-bold text-rose-500">
                             <XCircle className="h-3.5 w-3.5" /> Retake Needed
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Section 2: Coursework & Assignment Submissions */}
+            <div className="space-y-3">
+              <h4 className="text-xs font-black uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                <FileCheck2 className="h-4 w-4 text-indigo-600" /> Graded Coursework & Assignments
+              </h4>
+
+              {!selectedStudent.assignments || selectedStudent.assignments.length === 0 ? (
+                <div className="p-5 rounded-2xl bg-slate-50 text-center text-xs text-slate-400 font-medium">
+                  No assignments submitted by this student yet.
+                </div>
+              ) : (
+                <div className="space-y-2 max-h-52 overflow-y-auto pr-1">
+                  {selectedStudent.assignments.map((asg) => (
+                    <div
+                      key={asg.id}
+                      className="p-3.5 rounded-xl border border-slate-100 bg-slate-50/60 flex items-center justify-between gap-3 text-xs"
+                    >
+                      <div className="min-w-0">
+                        <p className="font-bold text-slate-900 truncate">{asg.assignment_title}</p>
+                        <p className="text-[10px] text-slate-400">
+                          Submitted on{" "}
+                          {new Date(asg.submitted_at).toLocaleDateString([], {
+                            month: "short",
+                            day: "numeric",
+                            year: "numeric",
+                          })}
+                        </p>
+                        {asg.feedback && (
+                          <p className="text-[11px] text-slate-500 italic mt-0.5">
+                            "{asg.feedback}"
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="shrink-0 text-right">
+                        {asg.grade !== null && asg.grade !== undefined ? (
+                          <span className="px-2.5 py-1 rounded-lg text-xs font-black text-emerald-700 bg-emerald-50 border border-emerald-200">
+                            {asg.grade}/{asg.max_points} pts
+                          </span>
+                        ) : (
+                          <span className="px-2 py-0.5 rounded text-[10px] font-bold text-amber-700 bg-amber-50">
+                            Pending Review
                           </span>
                         )}
                       </div>
