@@ -15,7 +15,8 @@ export type ContentBlockType = "video" | "text" | "quiz" | "resource" | "image" 
 export type OrderStatus = "pending" | "awaiting_confirmation" | "paid" | "rejected" | "failed" | "refunded";
 export type SubscriptionStatus = "active" | "cancelled" | "expired" | "past_due";
 export type MemberStatus = "invited" | "active" | "deactivated";
-export type EnrollmentSource = "individual_purchase" | "subscription" | "company_seat" | "gift" | "manual_admin";
+export type EnrollmentSource = "individual_purchase" | "subscription" | "company_seat" | "gift" | "manual_admin" | "academy_invite";
+export type AcademyInviteRole = "learner" | "teacher";
 export type EnrollmentStatus = "pending_payment" | "active" | "revoked";
 export type DiscountType = "percent" | "fixed";
 export type ReferralStatus = "pending" | "converted";
@@ -1890,8 +1891,69 @@ export interface Database {
         Update: Record<string, never>;
         Relationships: R;
       };
+      academy_invites: {
+        Row: {
+          id: string;
+          company_id: string;
+          code: string;
+          label: string;
+          role: AcademyInviteRole;
+          course_ids: string[];
+          group_id: string | null;
+          max_uses: number | null;
+          uses: number;
+          expires_at: string | null;
+          revoked_at: string | null;
+          is_default: boolean;
+          created_by: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          company_id: string;
+          code: string;
+          label?: string;
+          role?: AcademyInviteRole;
+          course_ids?: string[];
+          group_id?: string | null;
+          max_uses?: number | null;
+          uses?: number;
+          expires_at?: string | null;
+          revoked_at?: string | null;
+          is_default?: boolean;
+          created_by?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          label?: string;
+          course_ids?: string[];
+          group_id?: string | null;
+          max_uses?: number | null;
+          expires_at?: string | null;
+          revoked_at?: string | null;
+        };
+        Relationships: R;
+      };
+      academy_invite_redemptions: {
+        Row: {
+          invite_id: string;
+          user_id: string;
+          redeemed_at: string;
+        };
+        Insert: {
+          invite_id: string;
+          user_id: string;
+          redeemed_at?: string;
+        };
+        Update: Record<string, never>;
+        Relationships: R;
+      };
     };
     Views: Record<string, never>;
+    // Typed as a whole-schema escape hatch on purpose: giving Functions real
+    // entries makes supabase-js type every relation select strictly, which the
+    // existing code base is not ready for. RPCs are called with a cast instead
+    // (see redeem_academy_invite in src/lib/tenants/invites-server.ts).
     Functions: Record<string, never>;
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;
@@ -1941,3 +2003,4 @@ export type VocabItem = Database["public"]["Tables"]["vocab_items"]["Row"];
 export type LearnerVocab = Database["public"]["Tables"]["learner_vocab"]["Row"];
 export type TutorSettings = Database["public"]["Tables"]["tutor_settings"]["Row"];
 export type AiUsageLedgerEntry = Database["public"]["Tables"]["ai_usage_ledger"]["Row"];
+export type AcademyInvite = Database["public"]["Tables"]["academy_invites"]["Row"];

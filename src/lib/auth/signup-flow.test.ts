@@ -4,6 +4,7 @@ import {
   afterSignInPath,
   afterSignUpPath,
   intentQuery,
+  intentTenant,
   readSignupIntent,
   resumeOnboardingPath,
   safeRelativePath,
@@ -120,5 +121,48 @@ describe("intentQuery", () => {
       intentQuery(intent, { role: "student" }),
       "role=student&tenant=abc&redirect_url=%2Facademy%2Fabc%2Fjoin"
     );
+  });
+});
+
+describe("invite links", () => {
+  it("reads and normalizes the invite code, rejecting bad ones", () => {
+    assert.equal(readSignupIntent(q("role=student&invite=abcd2345")).invite, "ABCD2345");
+    for (const bad of ["ABCD234", "ABCD23450", "ABCD0345", "ABCDI345", "../x", ""]) {
+      assert.equal(readSignupIntent(q(`invite=${bad}`)).invite, null, bad);
+    }
+  });
+
+  it("sends a new account to onboarding with the invite, never the role chooser or launch page", () => {
+    assert.equal(afterSignUpPath(readSignupIntent(q("role=student&invite=ABCD2345"))), "/onboarding?invite=ABCD2345");
+    // The invite decides the academy: a tenant or owner role in the URL is ignored.
+    assert.equal(
+      afterSignUpPath(readSignupIntent(q("role=company_admin&tenant=other&invite=ABCD2345"))),
+      "/onboarding?invite=ABCD2345"
+    );
+    assert.equal(intentTenant(readSignupIntent(q("tenant=other&invite=ABCD2345"))), null);
+  });
+
+  it("sends an existing account back to the invite page", () => {
+    assert.equal(afterSignInPath(readSignupIntent(q("role=student&invite=ABCD2345"))), "/i/ABCD2345");
+    assert.equal(signedInAuthPageRedirect("/sign-up", q("role=student&invite=ABCD2345")), "/i/ABCD2345");
+    assert.equal(signedInAuthPageRedirect("/sign-in", q("invite=ABCD2345")), "/i/ABCD2345");
+  });
+
+  it("carries the invite between sign-up and sign-in", () => {
+    const intent = readSignupIntent(q("role=student&invite=ABCD2345"));
+    assert.equal(intentQuery(intent), "role=student&invite=ABCD2345");
+  });
+
+  it("resumes an interrupted invite sign-up", () => {
+    assert.equal(
+      resumeOnboardingPath({ signupRole: "student", signupInvite: "ABCD2345" }),
+      "/onboarding?invite=ABCD2345"
+    );
+    assert.equal(resumeOnboardingPath({ signupRole: "student", signupInvite: "bad" }), "/onboarding?role=student");
+  });
+
+  it("keeps the existing /academy/{slug}/join flow unchanged", () => {
+    assert.equal(afterSignUpPath(readSignupIntent(q("role=student&tenant=abc"))), "/onboarding?role=student&tenant=abc");
+    assert.equal(afterSignInPath(readSignupIntent(q("role=student&tenant=abc"))), "/academy/abc/join");
   });
 });
