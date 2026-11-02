@@ -51,7 +51,7 @@ export function SharedSections({
               },
             ].map((item, idx) => (
               <div key={idx} className="relative text-center">
-                <div className="text-7xl font-black text-gray-200 absolute -top-10 left-1/2 -translate-x-1/2 select-none">
+                <div aria-hidden="true" className="text-7xl font-black text-gray-200 absolute -top-10 left-1/2 -translate-x-1/2 select-none">
                   {item.step}
                 </div>
                 <h3 className="text-lg font-black text-gray-900 mb-4 relative z-10 tracking-widest">
@@ -109,50 +109,38 @@ export function SharedSections({
               <p className="text-lg text-gray-600 leading-relaxed mb-8">
                 {tutorBio}
               </p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8">
-                <div className="border-l-4 border-brand pl-6 py-2">
-                  <div className="text-xs font-bold text-brand-ink uppercase tracking-wider mb-1">
-                    Education
-                  </div>
-                  <div className="text-gray-900 font-black">
-                    {content.tutor_education || content.tutor_college || "MSc Computer Science · Applied AI"}
-                  </div>
+              {(content.tutor_education || content.tutor_college || content.tutor_university) && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8">
+                  {(content.tutor_education || content.tutor_college) && (
+                    <div className="border-l-4 border-brand pl-6 py-2">
+                      <div className="text-xs font-bold text-brand-ink uppercase tracking-wider mb-1">Education</div>
+                      <div className="text-gray-900 font-black">{content.tutor_education || content.tutor_college}</div>
+                    </div>
+                  )}
+                  {content.tutor_university && (
+                    <div className="border-l-4 border-brand pl-6 py-2">
+                      <div className="text-xs font-bold text-brand-ink uppercase tracking-wider mb-1">Institution</div>
+                      <div className="text-gray-900 font-black">{content.tutor_university}</div>
+                    </div>
+                  )}
                 </div>
-                <div className="border-l-4 border-brand pl-6 py-2">
-                  <div className="text-xs font-bold text-brand-ink uppercase tracking-wider mb-1">
-                    Institution
-                  </div>
-                  <div className="text-gray-900 font-black">
-                    {content.tutor_university || "Zed AI Academy Faculty"}
-                  </div>
+              )}
+              {(content.stats_students_tutor || content.stats_rating_tutor || content.stats_hours_tutor) && (
+                <div className="flex flex-wrap gap-x-10 gap-y-6 sm:gap-x-12 pt-8 sm:pt-10 border-t border-gray-200 mt-8">
+                  {[
+                    { value: content.stats_students_tutor, label: "Alumni" },
+                    { value: content.stats_rating_tutor, label: "Rating" },
+                    { value: content.stats_hours_tutor, label: "Hours" },
+                  ]
+                    .filter((stat) => stat.value)
+                    .map((stat) => (
+                      <div key={stat.label}>
+                        <div className="text-2xl font-black text-gray-900">{stat.value}</div>
+                        <div className="text-xs font-medium text-gray-600 uppercase tracking-wider">{stat.label}</div>
+                      </div>
+                    ))}
                 </div>
-              </div>
-              <div className="flex flex-wrap gap-12 pt-10 border-t border-gray-200 mt-8">
-                <div>
-                  <div className="text-2xl font-black text-gray-900">
-                    {content.stats_students_tutor || "500+"}
-                  </div>
-                  <div className="text-xs font-medium text-gray-600 uppercase tracking-wider">
-                    Alumni
-                  </div>
-                </div>
-                <div>
-                  <div className="text-2xl font-black text-gray-900">
-                    {content.stats_rating_tutor || "4.9★"}
-                  </div>
-                  <div className="text-xs font-medium text-gray-600 uppercase tracking-wider">
-                    Rating
-                  </div>
-                </div>
-                <div>
-                  <div className="text-2xl font-black text-gray-900">
-                    {content.stats_hours_tutor || "12K+"}
-                  </div>
-                  <div className="text-xs font-medium text-gray-600 uppercase tracking-wider">
-                    Hours
-                  </div>
-                </div>
-              </div>
+              )}
             </div>
           </div>
         </div>
@@ -182,7 +170,7 @@ export function SharedSections({
               { title: "Elite Exam Prep", subtitle: "Strategic optimization for global standard certification exams." }
             ]).map((card: any, idx: number) => (
               <div key={idx} className="p-10 bg-white border border-gray-200 rounded-3xl hover:border-brand transition-all group shadow-sm hover:shadow-xl">
-                <div className="text-brand/30 text-xs font-black mb-6 tracking-widest uppercase">Protocol 0{idx + 1}</div>
+                <div aria-hidden="true" className="text-brand/30 text-xs font-black mb-6 tracking-widest uppercase">0{idx + 1}</div>
                 <h4 className="text-2xl font-black text-gray-900 mb-4 group-hover:text-brand-ink transition-colors uppercase tracking-tight">
                   {card.title}
                 </h4>
@@ -267,7 +255,7 @@ export function SharedSections({
                   </p>
                   <div className="pt-4 border-t border-gray-100">
                     <h5 className="font-black text-gray-900 text-sm">{t.name}</h5>
-                    <p className="text-xs text-gray-400 uppercase tracking-wider">{t.role}</p>
+                    <p className="text-xs text-gray-500 uppercase tracking-wider">{t.role}</p>
                   </div>
                 </div>
               ))}

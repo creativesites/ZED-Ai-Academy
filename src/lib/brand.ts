@@ -9,8 +9,8 @@
  *
  *   --brand           the raw colour. Fills, borders, glows, decorative bits.
  *   --brand-on        text/icons that sit ON a --brand fill (white or near-black).
- *   --brand-ink       the brand as TEXT on a light background (>= 4.5:1 vs white).
- *   --brand-ink-dark  the brand as TEXT on a dark background (>= 4.5:1 vs #0f1117).
+ *   --brand-ink       the brand as TEXT on a light background (>= 5.5:1 vs white, so >= 4.5 on tinted surfaces).
+ *   --brand-ink-dark  the brand as TEXT on a dark background (>= 5.5:1 vs #0f1117).
  *   --brand-deep      a very dark brand shade for headings on light backgrounds.
  *   --brand-soft      a pale tint for chips and active backgrounds.
  *   --brand-hover     hover state of --brand.
@@ -25,7 +25,8 @@ export const DEFAULT_BRAND = "#fd5523";
 
 const WHITE: RGB = [255, 255, 255];
 const DARK_SURFACE: RGB = [15, 17, 23]; // #0f1117 - the darkest surface templates use
-const NEAR_BLACK: RGB = [11, 18, 32]; // text colour used on light brand fills
+const NEAR_BLACK: RGB = [11, 18, 32]; // preferred text colour on light brand fills
+const BLACK: RGB = [0, 0, 0]; // fallback: the only dark that reaches AA on every mid-luminance hue
 
 type RGB = [number, number, number];
 
@@ -76,11 +77,30 @@ function shiftUntil(color: RGB, target: RGB, against: RGB, min: number): RGB {
 }
 
 /**
- * Minimum contrast for text drawn ON a brand fill. 3:1 is the WCAG minimum for
- * large/bold text and UI components, which is what our buttons and badges are
- * (bold, uppercase). Below it we switch to near-black.
+ * Minimum contrast for text drawn ON a brand fill: WCAG AA for normal text. Below it we switch to
+ * near-black. Most button/badge labels are 12-14px, which is "normal" text, so 3:1 is not enough.
+ *
+ * One deliberate exception: the platform's own default orange (#fd5523) keeps white labels. White on
+ * it is 3.2:1 - fine for large/bold text, short of AA for small text - but it is the signature look
+ * of every academy that never picked a colour, so we don't repaint all of them.
  */
-const ON_BRAND_MIN = 3;
+const ON_BRAND_MIN = 4.5;
+
+/** How far above the AA minimum text-as-brand shades are pushed, so they still pass on tinted
+ *  surfaces (slate-50, brand-soft, ...) and not only on pure white / the darkest dark. */
+const INK_TARGET = 5.5;
+
+/**
+ * White if it clears AA, else near-black if it does, else pure black. Mid-luminance colours (roughly
+ * #777) reach at most ~4.3:1 with near-black but ~4.6:1 with pure black, so the last step matters.
+ */
+function pickOn(brand: RGB, isDefault: boolean): RGB {
+  if (isDefault) return WHITE;
+  for (const candidate of [WHITE, NEAR_BLACK, BLACK]) {
+    if (contrast(candidate, brand) >= ON_BRAND_MIN) return candidate;
+  }
+  return contrast(WHITE, brand) >= contrast(BLACK, brand) ? WHITE : BLACK;
+}
 
 export type BrandTokens = {
   brand: string;
@@ -95,12 +115,13 @@ export type BrandTokens = {
 export function brandTokens(input: string | null | undefined): BrandTokens {
   const rgb = parseHex(input) ?? (parseHex(DEFAULT_BRAND) as RGB);
 
-  // Text on the brand fill: white if it clears 3:1, otherwise near-black.
-  const on = contrast(rgb, WHITE) >= ON_BRAND_MIN ? WHITE : NEAR_BLACK;
+  // Text on the brand fill: white if it clears AA (or it is the platform default), else near-black.
+  const isDefault = toHex(rgb) === DEFAULT_BRAND;
+  const on = pickOn(rgb, isDefault);
 
   // Brand as text. On light surfaces darken it; on dark surfaces lighten it.
-  const ink = shiftUntil(rgb, [0, 0, 0], WHITE, 4.5);
-  const inkDark = shiftUntil(rgb, WHITE, DARK_SURFACE, 4.5);
+  const ink = shiftUntil(rgb, [0, 0, 0], WHITE, INK_TARGET);
+  const inkDark = shiftUntil(rgb, WHITE, DARK_SURFACE, INK_TARGET);
 
   // Very dark shade for headings (>= 8:1 on white), still tinted by the brand.
   const deep = shiftUntil(mix(rgb, [0, 0, 0], 0.55), [0, 0, 0], WHITE, 8);

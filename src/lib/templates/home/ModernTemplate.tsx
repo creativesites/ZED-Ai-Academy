@@ -119,7 +119,7 @@ export function ModernTemplate(props: {
                 className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-white/80 text-[10px] font-black uppercase tracking-[0.2em] mb-8 ${!showHeroImage && "mx-auto"}`}
               >
                 <Sparkles className="h-3.5 w-3.5 text-brand-ink-dark" />{" "}
-                Accredited Academy
+                {content.hero_badge || "Online Academy"}
               </div>
               <h1 className="font-serif text-4xl sm:text-5xl md:text-7xl lg:text-8xl break-words text-white leading-[1.05] mb-8 tracking-tighter">
                 {finalHeroTitle}
@@ -169,15 +169,15 @@ export function ModernTemplate(props: {
               <div className={`flex flex-wrap items-center gap-10 md:gap-16 pt-12 border-t border-white/10 ${!showHeroImage && "justify-center"}`}>
                 <div className="space-y-1">
                   <div className="text-3xl md:text-4xl font-black text-white tracking-tighter">{stats?.students || content.stats_students || "10k+"}</div>
-                  <div className="text-[10px] font-black text-white/30 uppercase tracking-[0.3em]">Students</div>
+                  <div className="text-[10px] font-black text-white/60 uppercase tracking-[0.3em]">Students</div>
                 </div>
                 <div className="space-y-1">
                   <div className="text-3xl md:text-4xl font-black text-white tracking-tighter">{stats?.rating || content.stats_rating || "4.9/5"}</div>
-                  <div className="text-[10px] font-black text-white/30 uppercase tracking-[0.3em]">Rating</div>
+                  <div className="text-[10px] font-black text-white/60 uppercase tracking-[0.3em]">Rating</div>
                 </div>
                 <div className="space-y-1">
                   <div className="text-3xl md:text-4xl font-black text-white tracking-tighter">{stats?.success || content.stats_success || "95%"}</div>
-                  <div className="text-[10px] font-black text-white/30 uppercase tracking-[0.3em]">Success</div>
+                  <div className="text-[10px] font-black text-white/60 uppercase tracking-[0.3em]">Success</div>
                 </div>
               </div>
             </div>
@@ -204,7 +204,7 @@ export function ModernTemplate(props: {
                     <div>
                       <div className="text-slate-900 font-black">Fast Track</div>
                       <div className="text-xs text-slate-500">
-                        Industry Certificates
+                        Certificate on completion
                       </div>
                     </div>
                   </div>

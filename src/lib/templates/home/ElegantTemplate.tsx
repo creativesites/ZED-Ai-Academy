@@ -37,7 +37,7 @@ export function ElegantTemplate({ tenant, courses, membership, brandColor, heroT
                   </Button>
                 </Link>
               )}
-              <Button variant="ghost" className="h-14 sm:h-16 px-7 sm:px-10 rounded-none text-stone-400 font-light tracking-widest border border-stone-100">
+              <Button variant="ghost" className="bg-transparent h-14 sm:h-16 px-7 sm:px-10 rounded-none text-stone-500 font-light tracking-widest border border-stone-100">
                 DISCOVER
               </Button>
             </div>
@@ -46,15 +46,15 @@ export function ElegantTemplate({ tenant, courses, membership, brandColor, heroT
             <div className="flex flex-wrap gap-x-10 gap-y-6 sm:gap-16 pt-10 sm:pt-12 border-t border-stone-100">
               <div>
                 <div className="text-4xl font-light text-stone-900">{content.stats_students || "10k+"}</div>
-                <div className="text-[10px] font-medium text-stone-400 uppercase tracking-[0.3em] mt-1">Scholars</div>
+                <div className="text-[10px] font-medium text-stone-500 uppercase tracking-[0.3em] mt-1">Scholars</div>
               </div>
               <div>
                 <div className="text-4xl font-light text-stone-900">{content.stats_rating || "4.9/5"}</div>
-                <div className="text-[10px] font-medium text-stone-400 uppercase tracking-[0.3em] mt-1">Satisfaction</div>
+                <div className="text-[10px] font-medium text-stone-500 uppercase tracking-[0.3em] mt-1">Satisfaction</div>
               </div>
               <div>
                 <div className="text-4xl font-light text-stone-900">{content.stats_success || "95%"}</div>
-                <div className="text-[10px] font-medium text-stone-400 uppercase tracking-[0.3em] mt-1">Excellence</div>
+                <div className="text-[10px] font-medium text-stone-500 uppercase tracking-[0.3em] mt-1">Excellence</div>
               </div>
             </div>
           </div>
@@ -73,7 +73,7 @@ export function ElegantTemplate({ tenant, courses, membership, brandColor, heroT
           <Quote className="h-12 w-12 text-stone-200 mx-auto mb-10" />
           <p className="text-2xl md:text-3xl font-light italic leading-relaxed text-stone-500 mb-12">{aboutText}</p>
           <div className="h-px w-20 bg-stone-300 mx-auto mb-8" />
-          <p className="text-sm font-bold uppercase tracking-[0.5em] text-stone-300">- {aboutTitle}</p>
+          <p className="text-sm font-bold uppercase tracking-[0.5em] text-stone-500">- {aboutTitle}</p>
         </div>
       </section>
 
@@ -96,7 +96,7 @@ export function ElegantTemplate({ tenant, courses, membership, brandColor, heroT
               <h2 className="text-4xl font-light text-stone-900 tracking-tight">Curated Collections</h2>
               <div className="h-0.5 w-16 bg-stone-800" />
             </div>
-            <Link href="#courses" className="text-stone-400 text-xs font-bold uppercase tracking-[0.3em] hover:text-stone-900 transition-colors flex items-center gap-2">
+            <Link href="#courses" className="text-stone-500 text-xs font-bold uppercase tracking-[0.3em] hover:text-stone-900 transition-colors flex items-center gap-2">
               View Catalog <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
@@ -134,11 +134,11 @@ export function ElegantTemplate({ tenant, courses, membership, brandColor, heroT
       </section>
 
       {/* Footer Decoration */}
-      <div className="py-12 text-center border-t border-stone-100">
-        <div className="text-[10px] font-bold tracking-[0.8em] text-stone-200 uppercase">
-          Excellence in Discourse
+      {content?.motto && (
+        <div className="py-12 text-center border-t border-stone-100">
+          <div className="text-[10px] font-bold tracking-[0.8em] text-stone-500 uppercase break-words px-4">{content.motto}</div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

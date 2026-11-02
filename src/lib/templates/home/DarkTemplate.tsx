@@ -12,7 +12,7 @@ export function DarkTemplate({ tenant, courses, membership, brandColor, heroTitl
   const tutorAvatar = adminProfile?.avatar_url || null;
 
   return (
-    <div className="bg-[#0a0a0c] text-brand-on selection:bg-brand selection:text-brand-on" style={{ "--primary-color": brandColor } as React.CSSProperties}>
+    <div className="bg-[#0a0a0c] text-white selection:bg-brand selection:text-brand-on" style={{ "--primary-color": brandColor } as React.CSSProperties}>
       {/* Hero */}
       <section className="relative pt-32 sm:pt-44 lg:pt-52 pb-16 sm:pb-24 lg:pb-32 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-[#0a0a0c] to-[#1a1a20]">
@@ -49,7 +49,7 @@ export function DarkTemplate({ tenant, courses, membership, brandColor, heroTitl
                 </Button>
               </Link>
             )}
-            <Button variant="outline" className="h-14 sm:h-20 px-7 sm:px-12 rounded-[2.5rem] border-white/10 text-white hover:bg-white/5 font-black text-base sm:text-xl">
+            <Button variant="outline" className="h-14 sm:h-20 px-7 sm:px-12 rounded-[2.5rem] bg-transparent border-white/20 text-white hover:bg-white/10 font-black text-base sm:text-xl">
               Explore
             </Button>
           </div>
@@ -63,7 +63,7 @@ export function DarkTemplate({ tenant, courses, membership, brandColor, heroTitl
             ].map(s => (
               <div key={s.label}>
                 <div className="text-3xl sm:text-5xl font-black text-brand-ink-dark mb-2">{s.num}</div>
-                <div className="text-xs font-bold uppercase tracking-widest text-white/40">{s.label}</div>
+                <div className="text-xs font-bold uppercase tracking-widest text-white/60">{s.label}</div>
               </div>
             ))}
           </div>

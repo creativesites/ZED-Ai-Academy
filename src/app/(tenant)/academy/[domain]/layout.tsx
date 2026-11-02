@@ -3,7 +3,7 @@ import { auth } from "@clerk/nextjs/server";
 import { createClient } from "@/lib/supabase/server";
 import { AlertTriangle } from "lucide-react";
 import Link from "next/link";
-import { brandStyle } from "@/lib/brand";
+import { brandStyle, brandTokens } from "@/lib/brand";
 
 export default async function TenantLayout({
   children,
@@ -67,8 +67,15 @@ export default async function TenantLayout({
 
   // Inject the academy brand as CSS variables (--brand, --brand-on, --brand-ink, ...).
   // Every tenant page inherits them, so text/fills stay readable for any colour the academy picks.
+  // Dialogs, menus and toasts render in portals on <body>, outside the wrapper below, so they would fall
+  // back to the platform orange. Also publish the brand on <html> while a tenant page is mounted.
+  // (Every value is a #rrggbb string produced by brandTokens, so this CSS cannot be injected into.)
+  const t = brandTokens(tenant.primary_color);
+  const portalCss = `html:has(.tenant-wrapper){--brand:${t.brand};--brand-on:${t.on};--brand-ink:${t.ink};--brand-ink-dark:${t.inkDark};--brand-deep:${t.deep};--brand-soft:${t.soft};--brand-hover:${t.hover}}`;
+
   return (
     <div style={brandStyle(tenant.primary_color)} className="tenant-wrapper min-h-screen bg-slate-50">
+      <style dangerouslySetInnerHTML={{ __html: portalCss }} />
       {/* Custom Tenant Header */}
       {/* <header className="p-4 border-b bg-white shadow-sm flex items-center justify-between sticky top-0 z-50">
         <div className="container mx-auto px-4 flex items-center justify-between">

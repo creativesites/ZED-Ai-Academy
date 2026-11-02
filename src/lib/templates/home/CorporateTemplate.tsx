@@ -45,15 +45,15 @@ export function CorporateTemplate({ tenant, courses, membership, brandColor, her
             <div className="grid grid-cols-3 gap-4 sm:gap-10 pt-10 sm:pt-12 border-t border-slate-200">
               <div>
                 <div className="text-3xl font-black text-slate-800">{content.stats_students || "10k+"}</div>
-                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Learners</div>
+                <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Learners</div>
               </div>
               <div>
                 <div className="text-3xl font-black text-slate-800">{content.stats_rating || "4.9/5"}</div>
-                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Satisfaction</div>
+                <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Satisfaction</div>
               </div>
               <div>
                 <div className="text-3xl font-black text-slate-800">{content.stats_success || "95%"}</div>
-                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Placement</div>
+                <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Placement</div>
               </div>
             </div>
           </div>
@@ -66,17 +66,19 @@ export function CorporateTemplate({ tenant, courses, membership, brandColor, her
         </div>
       </section>
 
-      {/* Trust Bar */}
-      <section className="py-20 bg-white border-b">
-        <div className="container mx-auto px-6 text-center">
-          <p className="text-sm font-bold uppercase tracking-widest text-slate-400 mb-10">Trusted by leading organisations</p>
-          <div className="flex flex-wrap justify-center gap-16 opacity-40 grayscale">
-            {[ "Acme Inc", "GlobalTech", "EduPrime", "SkillForge", "LearnCorp" ].map(name => (
-              <span key={name} className="text-2xl font-black text-slate-400">{name}</span>
-            ))}
+      {/* Trust Bar - only when the academy lists real partners (content.partners: string[]) */}
+      {Array.isArray(content?.partners) && content.partners.length > 0 && (
+        <section className="py-14 sm:py-20 bg-white border-b">
+          <div className="container mx-auto px-6 text-center">
+            <p className="text-sm font-bold uppercase tracking-widest text-slate-500 mb-8 sm:mb-10">Our partners</p>
+            <div className="flex flex-wrap justify-center gap-x-10 gap-y-4 sm:gap-x-16">
+              {content.partners.map((name: string) => (
+                <span key={name} className="text-xl sm:text-2xl font-black text-slate-500">{name}</span>
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* Shared Sections (How It Works, About Tutor, Sticky Scroll‑Cards, Services) */}
       <SharedSections

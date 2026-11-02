@@ -1,3 +1,4 @@
+import { brandStyle } from "@/lib/brand";
 import { ModernTemplate } from "./home/ModernTemplate";
 import { ClassicTemplate } from "./home/ClassicTemplate";
 import { MinimalTemplate } from "./home/MinimalTemplate";
@@ -49,15 +50,25 @@ export function TemplateRenderer({ tenant, courses, membership, content, brandCo
     stats
   };
 
-  switch (template) {
-    case "modern": return <ModernTemplate {...sharedProps} />;
-    case "classic": return <ClassicTemplate {...sharedProps} />;
-    case "minimal": return <MinimalTemplate {...sharedProps} />;
-    case "dark_mode": return <DarkTemplate {...sharedProps} />;
-    case "corporate": return <CorporateTemplate {...sharedProps} />;
-    case "creative": return <CreativeTemplate {...sharedProps} />;
-    case "tech": return <TechTemplate {...sharedProps} />;
-    case "elegant": return <ElegantTemplate {...sharedProps} />;
-    default: return <ModernTemplate {...sharedProps} />;
-  }
+  const page = (() => {
+    switch (template) {
+      case "modern": return <ModernTemplate {...sharedProps} />;
+      case "classic": return <ClassicTemplate {...sharedProps} />;
+      case "minimal": return <MinimalTemplate {...sharedProps} />;
+      case "dark_mode": return <DarkTemplate {...sharedProps} />;
+      case "corporate": return <CorporateTemplate {...sharedProps} />;
+      case "creative": return <CreativeTemplate {...sharedProps} />;
+      case "tech": return <TechTemplate {...sharedProps} />;
+      case "elegant": return <ElegantTemplate {...sharedProps} />;
+      default: return <ModernTemplate {...sharedProps} />;
+    }
+  })();
+
+  // Scope the complete brand set (not just the legacy --primary-color) so every caller - the live page and
+  // the branding preview alike - gets readable text roles. display:contents keeps layout untouched.
+  return (
+    <div style={brandStyle(brandColor)} className="contents">
+      {page}
+    </div>
+  );
 }

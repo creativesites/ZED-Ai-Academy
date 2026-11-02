@@ -46,9 +46,12 @@ export function ClassroomTabs({ companyId, isAdminOrInstructor, companySlug, ini
   const [activeTab, setActiveTab] = useState<TabType>(() => resolveTab(initialTab));
   const stripRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
+  // Follow the ?tab= prop when navigation changes it (adjusting state during render, not in an effect).
+  const [seenInitialTab, setSeenInitialTab] = useState(initialTab);
+  if (initialTab !== seenInitialTab) {
+    setSeenInitialTab(initialTab);
     setActiveTab(resolveTab(initialTab));
-  }, [initialTab, resolveTab]);
+  }
 
   // Keep the active pill in view on narrow screens.
   useEffect(() => {

@@ -12,7 +12,7 @@ export function TechTemplate({ tenant, courses, membership, brandColor, heroTitl
   const tutorAvatar = adminProfile?.avatar_url || null;
 
   return (
-    <div className="bg-slate-950 text-brand-on font-mono selection:bg-brand selection:text-brand-on" style={{ "--primary-color": brandColor } as React.CSSProperties}>
+    <div className="bg-slate-950 text-white font-mono selection:bg-brand selection:text-brand-on" style={{ "--primary-color": brandColor } as React.CSSProperties}>
       {/* Hero with data grid */}
       <section className="relative pt-32 sm:pt-44 lg:pt-52 pb-16 sm:pb-24 lg:pb-32 overflow-hidden">
         <div className="absolute inset-0 opacity-20" style={{ backgroundImage: "url('https://www.transparenttextures.com/patterns/carbon-fibre.png')" }} />
@@ -44,7 +44,7 @@ export function TechTemplate({ tenant, courses, membership, brandColor, heroTitl
                 </Button>
               </Link>
             )}
-            <Button variant="outline" className="h-20 px-10 rounded-none border-brand/30 text-brand-ink-dark font-black text-xl uppercase tracking-widest">
+            <Button variant="outline" className="h-20 px-10 rounded-none bg-transparent hover:bg-brand/10 border-brand/40 text-brand-ink-dark font-black text-xl uppercase tracking-widest">
               Docs
             </Button>
           </div>
@@ -58,7 +58,7 @@ export function TechTemplate({ tenant, courses, membership, brandColor, heroTitl
             ].map(s => (
               <div key={s.l}>
                 <div className="text-3xl sm:text-5xl font-black text-brand-ink-dark mb-2" style={{ textShadow: "0 0 15px color-mix(in srgb, var(--brand) 70%, transparent)" }}>{s.n}</div>
-                <div className="text-[10px] uppercase tracking-widest text-brand-ink-dark/70">{s.l}</div>
+                <div className="text-[10px] uppercase tracking-widest text-brand-ink-dark/90">{s.l}</div>
               </div>
             ))}
           </div>
@@ -70,7 +70,7 @@ export function TechTemplate({ tenant, courses, membership, brandColor, heroTitl
         <div className="container mx-auto px-6 max-w-7xl">
           <div className="grid lg:grid-cols-2 gap-10 lg:gap-20 items-center">
             <div className="space-y-10">
-              <div className="inline-block px-4 py-1 border border-brand/20 text-brand-ink-dark/80 text-[10px] uppercase tracking-[0.4em]">Mission Log</div>
+              <div className="inline-block px-4 py-1 border border-brand/20 text-brand-ink-dark text-[10px] uppercase tracking-[0.4em]">Mission Log</div>
               <h2 className="text-4xl sm:text-5xl md:text-7xl break-words font-black text-brand-ink-dark uppercase tracking-tighter leading-none">{aboutTitle}</h2>
               <p className="text-xl md:text-2xl text-slate-400 leading-relaxed border-l-2 border-brand/30 pl-8">{aboutText}</p>
             </div>
@@ -140,7 +140,7 @@ export function TechTemplate({ tenant, courses, membership, brandColor, heroTitl
 
       {/* Footer */}
       <footer className="py-12 border-t border-brand/10">
-        <div className="container mx-auto px-6 text-center text-brand-ink-dark/40 text-[10px] font-black tracking-[0.8em] uppercase">
+        <div className="container mx-auto px-6 text-center text-brand-ink-dark text-[10px] font-black tracking-[0.8em] uppercase">
           [ system: synchronized // protocol: complete ]
         </div>
       </footer>

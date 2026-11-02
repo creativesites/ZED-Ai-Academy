@@ -9,8 +9,10 @@ interface CourseCardProps {
   tenantSlug?: string;
 }
 
+type VariantStyle = { card: string; badge: string; title: string; price: string; button: string; desc?: string };
+
 export function CourseCard({ course, variant = "default", tenantSlug }: CourseCardProps) {
-  const styles = {
+  const styles: Record<NonNullable<CourseCardProps["variant"]>, VariantStyle> = {
     default: {
       card: "bg-white rounded-[2.5rem] shadow-sm border border-slate-100 hover:shadow-2xl hover:-translate-y-2",
       badge: "bg-white/90 backdrop-blur text-[#062e39]",
@@ -48,10 +50,11 @@ export function CourseCard({ course, variant = "default", tenantSlug }: CourseCa
     },
     tech: {
       card: "bg-slate-900 border border-brand/20 rounded-lg shadow-[0_0_15px_color-mix(in_srgb,var(--brand)_10%,transparent)] hover:shadow-[0_0_30px_color-mix(in_srgb,var(--brand)_30%,transparent)]",
-      badge: "bg-brand/20 text-brand-ink-dark backdrop-blur",
+      badge: "bg-slate-950/70 text-brand-ink-dark backdrop-blur",
       title: "text-white",
       price: "text-white",
       button: "bg-brand text-brand-on hover:bg-brand-hover",
+      desc: "text-slate-300",
     },
     elegant: {
       card: "bg-white border border-stone-200 rounded-3xl shadow-md hover:shadow-2xl",
@@ -66,6 +69,7 @@ export function CourseCard({ course, variant = "default", tenantSlug }: CourseCa
       title: "text-white",
       price: "text-white",
       button: "bg-white text-black hover:bg-white/90",
+      desc: "text-white/70",
     },
   };
 
@@ -92,7 +96,7 @@ export function CourseCard({ course, variant = "default", tenantSlug }: CourseCa
       </div>
       <div className="px-4 pb-4 flex-1 flex flex-col">
         <h3 className={cn("text-2xl font-black mb-3 transition-colors", s.title)}>{course.title}</h3>
-        <p className="text-slate-500 text-sm font-medium line-clamp-2 mb-8">{course.description}</p>
+        <p className={cn("text-sm font-medium line-clamp-2 mb-8", s.desc ?? "text-slate-600")}>{course.description}</p>
         <div className="mt-auto flex items-center justify-between pt-6 border-t border-slate-100">
           <span className={cn("font-black text-xl", s.price)}>
             {formatPrice(course.price_type, course.price_amount)}

@@ -22,7 +22,7 @@ export function MinimalTemplate({ tenant, courses, membership, brandColor, heroT
               <h1 className="text-4xl sm:text-6xl md:text-8xl break-words font-light tracking-tight text-slate-900 mb-10 leading-[1.05]">
                 {heroTitle}
               </h1>
-              <p className="text-xl md:text-2xl text-slate-400 font-light max-w-2xl mb-16 leading-relaxed">
+              <p className="text-xl md:text-2xl text-slate-500 font-light max-w-2xl mb-16 leading-relaxed">
                 {heroSubtitle}
               </p>
               
@@ -41,7 +41,7 @@ export function MinimalTemplate({ tenant, courses, membership, brandColor, heroT
                     </Button>
                   </Link>
                 )}
-                <Button variant="ghost" className="h-16 px-8 rounded-full text-slate-500 font-medium group">
+                <Button variant="ghost" className="bg-transparent h-16 px-8 rounded-full text-slate-500 font-medium group">
                   Explore Courses <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />
                 </Button>
               </div>
@@ -50,15 +50,15 @@ export function MinimalTemplate({ tenant, courses, membership, brandColor, heroT
               <div className={`flex flex-wrap items-center gap-x-10 gap-y-6 sm:gap-16 pt-10 border-t border-slate-100 ${!showHeroImage && "justify-center"}`}>
                 <div>
                   <div className="text-4xl font-light text-slate-900">{content.stats_students || "10k+"}</div>
-                  <div className="text-[10px] font-medium text-slate-400 uppercase tracking-widest mt-1">Students</div>
+                  <div className="text-[10px] font-medium text-slate-500 uppercase tracking-widest mt-1">Students</div>
                 </div>
                 <div>
                   <div className="text-4xl font-light text-slate-900">{content.stats_rating || "4.9/5"}</div>
-                  <div className="text-[10px] font-medium text-slate-400 uppercase tracking-widest mt-1">Rating</div>
+                  <div className="text-[10px] font-medium text-slate-500 uppercase tracking-widest mt-1">Rating</div>
                 </div>
                 <div>
                   <div className="text-4xl font-light text-slate-900">{content.stats_success || "95%"}</div>
-                  <div className="text-[10px] font-medium text-slate-400 uppercase tracking-widest mt-1">Success</div>
+                  <div className="text-[10px] font-medium text-slate-500 uppercase tracking-widest mt-1">Success</div>
                 </div>
               </div>
             </div>
@@ -83,7 +83,7 @@ export function MinimalTemplate({ tenant, courses, membership, brandColor, heroT
              <h2 className="text-3xl md:text-5xl font-light text-slate-900 leading-tight">
                {aboutTitle}
              </h2>
-             <p className="text-xl md:text-2xl text-slate-400 font-light leading-relaxed">
+             <p className="text-xl md:text-2xl text-slate-500 font-light leading-relaxed">
                {aboutText}
              </p>
              <div className="h-px w-24 bg-slate-200" />
@@ -107,7 +107,7 @@ export function MinimalTemplate({ tenant, courses, membership, brandColor, heroT
         <div className="container mx-auto px-6 max-w-7xl">
           <div className="flex items-center justify-between mb-20">
              <h2 className="text-4xl font-light text-slate-900">Academic Catalog</h2>
-             <Link href="#courses" className="text-sm font-medium text-slate-400 hover:text-slate-900 transition-colors">
+             <Link href="#courses" className="text-sm font-medium text-slate-500 hover:text-slate-900 transition-colors">
                View All Programs
              </Link>
           </div>
@@ -143,7 +143,7 @@ export function MinimalTemplate({ tenant, courses, membership, brandColor, heroT
 
       {/* Footer */}
       <footer className="py-20 border-t border-slate-100">
-        <div className="container mx-auto px-6 text-center text-slate-300 text-xs font-medium tracking-widest uppercase">
+        <div className="container mx-auto px-6 text-center text-slate-500 text-xs font-medium tracking-widest uppercase">
           © {new Date().getFullYear()} {tenant.name} · Less is More
         </div>
       </footer>

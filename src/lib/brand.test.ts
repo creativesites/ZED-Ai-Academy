@@ -37,19 +37,55 @@ test("invalid input falls back to the default brand instead of throwing", () => 
   assert.equal(brandTokens(undefined).brand, DEFAULT_BRAND);
 });
 
-for (const hex of SAMPLES) {
-  test(`${hex}: text roles meet contrast targets`, () => {
-    const t = brandTokens(hex);
-    // brand-ink is text on light surfaces
-    assert.ok(contrast(rgb(t.ink), WHITE) >= 4.5, `ink ${t.ink} on white = ${contrast(rgb(t.ink), WHITE).toFixed(2)}`);
-    // brand-ink-dark is text on dark surfaces
-    assert.ok(contrast(rgb(t.inkDark), DARK) >= 4.5, `inkDark ${t.inkDark} on dark = ${contrast(rgb(t.inkDark), DARK).toFixed(2)}`);
-    // brand-deep is heading text on light surfaces
-    assert.ok(contrast(rgb(t.deep), WHITE) >= 7, `deep ${t.deep} on white = ${contrast(rgb(t.deep), WHITE).toFixed(2)}`);
-    // text on the brand fill must be readable (>= 3:1, the bold/UI minimum we document)
-    assert.ok(contrast(rgb(t.on), rgb(t.brand)) >= 3, `on ${t.on} over ${t.brand} = ${contrast(rgb(t.on), rgb(t.brand)).toFixed(2)}`);
-  });
+const GRAY50: [number, number, number] = [249, 250, 251]; // tailwind gray-50 - a typical tinted surface
+
+function hsl(h: number, sat: number, l: number): string {
+  const a = sat * Math.min(l, 1 - l);
+  const f = (n: number) => {
+    const k = (n + h / 30) % 12;
+    const v = l - a * Math.max(-1, Math.min(k - 3, 9 - k, 1));
+    return Math.round(255 * v).toString(16).padStart(2, "0");
+  };
+  return `#${f(0)}${f(8)}${f(4)}`;
 }
+
+function assertRoles(hex: string) {
+  const t = brandTokens(hex);
+  const label = `${hex} -> ${JSON.stringify(t)}`;
+  // brand-ink: text on light surfaces. Targets 5.5 on white so tinted surfaces still clear AA.
+  assert.ok(contrast(rgb(t.ink), WHITE) >= 5.4, `ink on white ${contrast(rgb(t.ink), WHITE).toFixed(2)} :: ${label}`);
+  assert.ok(contrast(rgb(t.ink), GRAY50) >= 4.5, `ink on gray-50 ${contrast(rgb(t.ink), GRAY50).toFixed(2)} :: ${label}`);
+  assert.ok(contrast(rgb(t.ink), rgb(t.soft)) >= 4.5, `ink on soft ${contrast(rgb(t.ink), rgb(t.soft)).toFixed(2)} :: ${label}`);
+  // brand-ink-dark: text on dark surfaces
+  assert.ok(contrast(rgb(t.inkDark), DARK) >= 5.4, `inkDark on dark ${contrast(rgb(t.inkDark), DARK).toFixed(2)} :: ${label}`);
+  // brand-deep: headings on light surfaces
+  assert.ok(contrast(rgb(t.deep), WHITE) >= 7, `deep on white ${contrast(rgb(t.deep), WHITE).toFixed(2)} :: ${label}`);
+  // text on the brand fill meets AA for normal text - except the platform default, which deliberately keeps white
+  if (t.brand !== DEFAULT_BRAND) {
+    assert.ok(contrast(rgb(t.on), rgb(t.brand)) >= 4.5, `on ${t.on} over ${t.brand} = ${contrast(rgb(t.on), rgb(t.brand)).toFixed(2)}`);
+  }
+}
+
+for (const hex of SAMPLES) test(`${hex}: every text role meets its contrast target`, () => assertRoles(hex));
+
+test("property: every role holds across a sweep of hue, saturation and lightness (incl. greys)", () => {
+  let n = 0;
+  for (let h = 0; h < 360; h += 15) {
+    for (const sat of [0, 0.35, 0.7, 1]) {
+      for (const l of [0.08, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.92]) {
+        assertRoles(hsl(h, sat, l));
+        n++;
+      }
+    }
+  }
+  assert.ok(n > 800);
+});
+
+test("mid-luminance greys still get readable text on the fill (needs pure black, not near-black)", () => {
+  for (const hex of ["#777777", "#767676", "#7a7a7a", "#808080"]) {
+    assert.ok(contrast(rgb(brandTokens(hex).on), rgb(hex)) >= 4.5, hex);
+  }
+});
 
 test("the platform orange keeps white button text (existing look is unchanged)", () => {
   assert.equal(brandTokens("#fd5523").on, "#ffffff");
