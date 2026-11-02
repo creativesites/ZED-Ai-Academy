@@ -26,9 +26,17 @@ interface LiveSessionTabProps {
   companyId: string;
   isAdminOrInstructor: boolean;
   companySlug: string;
+  activeCohortId?: string | null;
+  cohorts?: any[];
 }
 
-export function LiveSessionTab({ companyId, isAdminOrInstructor, companySlug }: LiveSessionTabProps) {
+export function LiveSessionTab({
+  companyId,
+  isAdminOrInstructor,
+  companySlug,
+  activeCohortId = null,
+  cohorts = [],
+}: LiveSessionTabProps) {
   // --- State Management ---
   const [isSessionActive, setIsSessionActive] = useState(false);
   const [hasJoined, setHasJoined] = useState(false);
@@ -51,7 +59,7 @@ export function LiveSessionTab({ companyId, isAdminOrInstructor, companySlug }: 
   useEffect(() => {
     async function loadInitialData() {
       try {
-        const state = await getCompanySessionState(companyId);
+        const state = await getCompanySessionState(companyId, activeCohortId);
         setIsSessionActive(state.is_session_active);
         setRoomName(state.active_room_name);
         setActiveScheduleId(state.active_schedule_id);
@@ -79,13 +87,17 @@ export function LiveSessionTab({ companyId, isAdminOrInstructor, companySlug }: 
 
     // Real-time Supabase Subscription
     const supabase = createClient();
+    const isCohortScoped = Boolean(activeCohortId && activeCohortId !== "all");
+    const targetTable = isCohortScoped ? "classroom_groups" : "companies";
+    const targetFilter = isCohortScoped ? `id=eq.${activeCohortId}` : `id=eq.${companyId}`;
+
     const channel = supabase
-      .channel('company-session')
+      .channel(`classroom-session-${activeCohortId || companyId}`)
       .on('postgres_changes', { 
         event: 'UPDATE', 
         schema: 'public', 
-        table: 'companies',
-        filter: `id=eq.${companyId}`
+        table: targetTable,
+        filter: targetFilter
       }, (payload) => {
         setIsSessionActive(payload.new.is_session_active);
         setRoomName(payload.new.active_room_name);
@@ -103,7 +115,7 @@ export function LiveSessionTab({ companyId, isAdminOrInstructor, companySlug }: 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [companyId, isAdminOrInstructor]);
+  }, [companyId, isAdminOrInstructor, activeCohortId]);
 
   // --- Effect: Auto Attendance ---
   useEffect(() => {
@@ -137,7 +149,7 @@ export function LiveSessionTab({ companyId, isAdminOrInstructor, companySlug }: 
       const generatedRoom = `classroom-${companySlug}-${Math.random().toString(36).slice(2, 7)}`;
       
       // 1. Persist state to Database
-      await toggleClassroomSession(companyId, companySlug, true, generatedRoom, selectedScheduleId);
+      await toggleClassroomSession(companyId, companySlug, true, generatedRoom, selectedScheduleId, activeCohortId);
       
       // 2. Generate Security Token
       const result = await generateJitsiToken(generatedRoom, true);
@@ -155,7 +167,7 @@ export function LiveSessionTab({ companyId, isAdminOrInstructor, companySlug }: 
       console.error(err);
       setError(err.message || "Failed to initialize studio");
       toast.error("Failed to start live session");
-      await toggleClassroomSession(companyId, companySlug, false);
+      await toggleClassroomSession(companyId, companySlug, false, null, null, activeCohortId);
     } finally {
       setIsInitializing(false);
     }
@@ -186,7 +198,7 @@ export function LiveSessionTab({ companyId, isAdminOrInstructor, companySlug }: 
 
   async function handleEndSession() {
     try {
-      await toggleClassroomSession(companyId, companySlug, false);
+      await toggleClassroomSession(companyId, companySlug, false, null, null, activeCohortId);
       setHasJoined(false);
       setJwt(null);
       setRoomName(null);

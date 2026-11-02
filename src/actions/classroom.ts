@@ -24,9 +24,22 @@ async function requireInstructor(companyId: string) {
   return requireTenantTeacher(companyId);
 }
 
-// Session State
-export async function getCompanySessionState(companyId: string) {
+// Session State (supports both Academy-wide and Cohort-specific concurrent sessions)
+export async function getCompanySessionState(companyId: string, cohortId?: string | null) {
   const { supabase } = await requireTenantMember(companyId);
+
+  if (cohortId && cohortId !== "all") {
+    const { data: groupData } = await supabase
+      .from("classroom_groups")
+      .select("is_session_active, active_room_name, active_schedule_id, active_session_id")
+      .eq("id", cohortId)
+      .maybeSingle();
+
+    if (groupData?.is_session_active) {
+      return groupData as any;
+    }
+  }
+
   const { data, error } = await supabase
     .from("companies")
     .select("is_session_active, active_room_name, active_schedule_id, active_session_id")
@@ -37,17 +50,25 @@ export async function getCompanySessionState(companyId: string) {
   return data as any;
 }
 
-export async function toggleClassroomSession(companyId: string, companySlug: string, active: boolean, roomName: string | null = null, scheduleId: string | null = null) {
+export async function toggleClassroomSession(
+  companyId: string,
+  companySlug: string,
+  active: boolean,
+  roomName: string | null = null,
+  scheduleId: string | null = null,
+  cohortId: string | null = null
+) {
   const { supabase, userId } = await requireInstructor(companyId);
 
   let activeSessionId = null;
 
   if (active) {
-    // Starting a session: Create history record
+    // Starting a session: Create history record linked to cohort if scoped
     const { data: sessionData, error: sessionError } = await (supabase
       .from("classroom_sessions") as any)
       .insert({
         company_id: companyId,
+        cohort_id: cohortId && cohortId !== "all" ? cohortId : null,
         schedule_id: scheduleId || null,
         room_name: roomName || "Unknown Room",
       })
@@ -58,18 +79,25 @@ export async function toggleClassroomSession(companyId: string, companySlug: str
       activeSessionId = (sessionData as any).id;
     }
 
-    // Notify active academy members that live class has started
+    // Notify cohort or active academy members that live class has started
     try {
       const { data: company } = await supabase.from("companies").select("name").eq("id", companyId).maybeSingle();
-      const { data: members } = await supabase
-        .from("company_members")
-        .select("profile_id")
-        .eq("company_id", companyId)
-        .eq("status", "active");
+      let studentIds: string[] = [];
 
-      const studentIds = (members ?? [])
-        .map((m: any) => m.profile_id)
-        .filter((pid: string) => pid && pid !== userId);
+      if (cohortId && cohortId !== "all") {
+        const { data: groupMembers } = await supabase
+          .from("classroom_group_members")
+          .select("profile_id")
+          .eq("group_id", cohortId);
+        studentIds = (groupMembers ?? []).map((m: any) => m.profile_id).filter((pid: string) => pid && pid !== userId);
+      } else {
+        const { data: members } = await supabase
+          .from("company_members")
+          .select("profile_id")
+          .eq("company_id", companyId)
+          .eq("status", "active");
+        studentIds = (members ?? []).map((m: any) => m.profile_id).filter((pid: string) => pid && pid !== userId);
+      }
 
       if (studentIds.length > 0) {
         const companyName = company?.name || "Your Academy";
@@ -81,6 +109,7 @@ export async function toggleClassroomSession(companyId: string, companySlug: str
           data: {
             company_id: companyId,
             company_slug: companySlug,
+            cohort_id: cohortId,
             schedule_id: scheduleId,
             url: `/academy/${companySlug}/classroom?tab=session`,
           },
@@ -92,21 +121,47 @@ export async function toggleClassroomSession(companyId: string, companySlug: str
     }
   } else {
     // Ending a session: update ended_at and calculate duration
-    const { data: companyData } = await supabase
-      .from("companies")
-      .select("active_session_id")
-      .eq("id", companyId)
-      .single();
+    let targetSessionId = null;
+    if (cohortId && cohortId !== "all") {
+      const { data: groupData } = await supabase
+        .from("classroom_groups")
+        .select("active_session_id")
+        .eq("id", cohortId)
+        .maybeSingle();
+      targetSessionId = groupData?.active_session_id;
+    }
+
+    if (!targetSessionId) {
+      const { data: companyData } = await supabase
+        .from("companies")
+        .select("active_session_id")
+        .eq("id", companyId)
+        .single();
+      targetSessionId = companyData?.active_session_id;
+    }
       
-    if (companyData?.active_session_id) {
+    if (targetSessionId) {
       const endedAt = new Date().toISOString();
       await (supabase
         .from("classroom_sessions") as any)
         .update({ ended_at: endedAt })
-        .eq("id", companyData.active_session_id);
+        .eq("id", targetSessionId);
     }
   }
 
+  // Update cohort record if cohort-scoped
+  if (cohortId && cohortId !== "all") {
+    await (supabase.from("classroom_groups") as any)
+      .update({
+        is_session_active: active,
+        active_room_name: active ? roomName : null,
+        active_schedule_id: active ? scheduleId : null,
+        active_session_id: activeSessionId,
+      })
+      .eq("id", cohortId);
+  }
+
+  // Also maintain company level session for compatibility
   const { error } = await supabase
     .from("companies")
     .update({ 
@@ -119,6 +174,7 @@ export async function toggleClassroomSession(companyId: string, companySlug: str
 
   if (error) throw new Error(error.message);
   revalidatePath(`/academy/${companySlug}/admin/classroom`);
+  revalidatePath(`/academy/${companySlug}/classroom`);
   return { success: true };
 }
 
@@ -665,16 +721,33 @@ export async function getSessionAttendance(companyId: string, scheduleId: string
 }
 
 export async function deleteClassSchedule(scheduleId: string, companySlug: string) {
-  const { supabase } = await requireTenantMember("ignored"); // Bypassing company ID check for simple delete, RLS handles it
+  const { createClient } = await import("@/lib/supabase/server");
+  const tempSupabase = createClient();
+  const { data: schedule } = await tempSupabase
+    .from("class_schedules")
+    .select("company_id")
+    .eq("id", scheduleId)
+    .single();
+
+  if (!schedule) throw new Error("Schedule not found.");
+  const { supabase } = await requireTenantTeacher(schedule.company_id);
+
   const { error } = await supabase.from("class_schedules").delete().eq("id", scheduleId);
   if (error) throw new Error(error.message);
   revalidatePath(`/academy/${companySlug}/admin/classroom`);
 }
 
 export async function duplicateClassSchedule(scheduleId: string, companySlug: string) {
-  const { supabase } = await requireTenantMember("ignored");
-  const { data: schedule, error: fetchError } = await supabase.from("class_schedules").select("*").eq("id", scheduleId).single();
+  const { createClient } = await import("@/lib/supabase/server");
+  const tempSupabase = createClient();
+  const { data: schedule, error: fetchError } = await tempSupabase
+    .from("class_schedules")
+    .select("*")
+    .eq("id", scheduleId)
+    .single();
+
   if (fetchError || !schedule) throw new Error("Schedule not found");
+  const { supabase } = await requireTenantTeacher(schedule.company_id);
 
   const { id, created_at, ...copyData } = schedule;
   copyData.title = `${copyData.title} (Copy)`;

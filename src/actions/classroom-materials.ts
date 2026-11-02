@@ -29,6 +29,10 @@ export interface ClassroomMaterial {
   title: string;
   description: string | null;
   material_type: "pdf" | "document" | "slides" | "worksheet" | "code" | "link" | "video";
+  category?: string;
+  visibility?: string;
+  requires_acknowledgement?: boolean;
+  published_at?: string;
   file_url: string | null;
   file_size_bytes: number;
   tags: string[];
@@ -37,6 +41,8 @@ export interface ClassroomMaterial {
   download_count: number;
   created_at: string;
   updated_at: string;
+  is_bookmarked?: boolean;
+  is_acknowledged?: boolean;
   author?: {
     full_name: string | null;
     avatar_url: string | null;
@@ -137,16 +143,28 @@ export async function deleteClassroomFolder(folderId: string, companyId: string,
 
 export async function getClassroomMaterials(
   companyId: string,
-  options?: {
-    folderId?: string | null;
-    cohortId?: string | null;
-    search?: string;
-    materialType?: string;
-    tag?: string;
-    sort?: "updated" | "title" | "created";
-  }
+  optionsOrCohortId?:
+    | string
+    | null
+    | {
+        folderId?: string | null;
+        cohortId?: string | null;
+        search?: string;
+        materialType?: string;
+        category?: string;
+        tag?: string;
+        sort?: "updated" | "title" | "created";
+        isBookmarkedOnly?: boolean;
+      }
 ): Promise<ClassroomMaterial[]> {
-  const { supabase } = await requireTenantMember(companyId);
+  const options =
+    typeof optionsOrCohortId === "string"
+      ? { cohortId: optionsOrCohortId }
+      : optionsOrCohortId && typeof optionsOrCohortId === "object"
+      ? optionsOrCohortId
+      : {};
+
+  const { userId, supabase } = await requireTenantMember(companyId);
 
   let query = supabase
     .from("classroom_materials")
@@ -158,7 +176,7 @@ export async function getClassroomMaterials(
     `)
     .eq("company_id", companyId);
 
-  if (options?.folderId) {
+  if (options.folderId) {
     if (options.folderId === "unfiled") {
       query = query.is("folder_id", null);
     } else {
@@ -166,17 +184,21 @@ export async function getClassroomMaterials(
     }
   }
 
-  if (options?.cohortId && options.cohortId !== "all") {
+  if (options.cohortId && options.cohortId !== "all") {
     query = query.or(`cohort_id.eq.${options.cohortId},cohort_id.is.null`);
   }
 
-  if (options?.materialType && options.materialType !== "all") {
+  if (options.materialType && options.materialType !== "all") {
     query = query.eq("material_type", options.materialType as any);
   }
 
-  if (options?.sort === "title") {
+  if (options.category && options.category !== "all") {
+    query = query.eq("category", options.category);
+  }
+
+  if (options.sort === "title") {
     query = query.order("title", { ascending: true });
-  } else if (options?.sort === "created") {
+  } else if (options.sort === "created") {
     query = query.order("created_at", { ascending: false });
   } else {
     query = query.order("updated_at", { ascending: false });
@@ -190,7 +212,38 @@ export async function getClassroomMaterials(
 
   let list = (data ?? []) as any[];
 
-  if (options?.search) {
+  // Fetch bookmarks and acknowledgements for current user
+  try {
+    const [bookmarksRes, acksRes] = await Promise.all([
+      supabase
+        .from("classroom_bookmarks")
+        .select("document_id")
+        .eq("student_id", userId)
+        .eq("company_id", companyId),
+      supabase
+        .from("class_document_acknowledgements")
+        .select("document_id")
+        .eq("student_id", userId)
+        .eq("company_id", companyId),
+    ]);
+
+    const bookmarkedSet = new Set((bookmarksRes.data ?? []).map((b: any) => b.document_id));
+    const ackedSet = new Set((acksRes.data ?? []).map((a: any) => a.document_id));
+
+    list = list.map((m) => ({
+      ...m,
+      is_bookmarked: bookmarkedSet.has(m.id),
+      is_acknowledged: ackedSet.has(m.id),
+    }));
+  } catch (enrichErr) {
+    console.warn("Could not enrich materials with bookmarks/acknowledgements:", enrichErr);
+  }
+
+  if (options.isBookmarkedOnly) {
+    list = list.filter((m) => m.is_bookmarked);
+  }
+
+  if (typeof options.search === "string" && options.search.trim()) {
     const s = options.search.toLowerCase();
     list = list.filter(
       (m) =>
@@ -200,7 +253,7 @@ export async function getClassroomMaterials(
     );
   }
 
-  if (options?.tag && options.tag !== "all") {
+  if (options.tag && options.tag !== "all") {
     list = list.filter((m) => m.tags && m.tags.includes(options.tag!));
   }
 
@@ -246,6 +299,9 @@ export async function createClassroomMaterial(formData: FormData) {
   const title = (formData.get("title") as string)?.trim();
   const description = (formData.get("description") as string)?.trim() || null;
   const materialType = (formData.get("materialType") as string) || "document";
+  const category = (formData.get("category") as string) || "lecture_notes";
+  const visibility = (formData.get("visibility") as string) || "class";
+  const requiresAcknowledgement = formData.get("requiresAcknowledgement") === "true";
   const folderId = (formData.get("folderId") as string) || null;
   const cohortId = (formData.get("cohortId") as string) || null;
   const courseId = (formData.get("courseId") as string) || null;
@@ -325,6 +381,9 @@ export async function createClassroomMaterial(formData: FormData) {
       title,
       description,
       material_type: materialType as any,
+      category,
+      visibility,
+      requires_acknowledgement: requiresAcknowledgement,
       file_url: fileUrl,
       file_size_bytes: fileSizeBytes,
       tags,
@@ -336,8 +395,189 @@ export async function createClassroomMaterial(formData: FormData) {
 
   if (error) throw new Error(error.message);
 
+  // If a file was uploaded, create initial version 1 record
+  if (file && file.size > 0 && fileUrl) {
+    try {
+      await serviceClient.from("class_document_versions").insert({
+        document_id: (newMaterial as any).id,
+        version_number: 1,
+        file_url: fileUrl,
+        file_name: file.name,
+        file_size_bytes: fileSizeBytes,
+        mime_type: file.type || "application/octet-stream",
+        change_note: "Initial upload",
+        uploaded_by: userId,
+      });
+    } catch (verErr) {
+      console.warn("Could not record initial document version:", verErr);
+    }
+  }
+
   revalidatePath(`/academy/${companySlug}/classroom`);
   return newMaterial;
+}
+
+export async function uploadDocumentVersion(formData: FormData) {
+  const companyId = formData.get("companyId") as string;
+  const companySlug = formData.get("companySlug") as string;
+  const documentId = formData.get("documentId") as string;
+  const changeNote = (formData.get("changeNote") as string)?.trim() || null;
+  const file = formData.get("file") as File | null;
+
+  if (!file || file.size === 0) throw new Error("A replacement file is required");
+  if (file.size > MAX_FILE_BYTES) throw new Error("File size exceeds 50 MB limit");
+
+  const { userId } = await requireTenantTeacher(companyId);
+  const serviceClient = createServiceClient();
+
+  // Find next version number
+  const { data: existingVersions } = await serviceClient
+    .from("class_document_versions")
+    .select("version_number")
+    .eq("document_id", documentId)
+    .order("version_number", { ascending: false })
+    .limit(1);
+
+  const nextVersion = (existingVersions?.[0]?.version_number || 1) + 1;
+
+  const ext = file.name.split(".").pop()?.toLowerCase() ?? "bin";
+  const safeName = file.name
+    .replace(/[^a-zA-Z0-9.-]/g, "_")
+    .toLowerCase()
+    .slice(0, 50);
+  const uniquePath = `${companyId}/${documentId}-v${nextVersion}-${Date.now()}-${safeName}.${ext}`;
+
+  const buffer = await file.arrayBuffer();
+  let fileUrl = "";
+  const { error: uploadError } = await serviceClient.storage
+    .from(BUCKET)
+    .upload(uniquePath, buffer, {
+      contentType: file.type || "application/octet-stream",
+      upsert: false,
+    });
+
+  if (uploadError) {
+    const { error: fallbackError } = await serviceClient.storage
+      .from("courses_media")
+      .upload(uniquePath, buffer, {
+        contentType: file.type || "application/octet-stream",
+        upsert: false,
+      });
+    if (fallbackError) throw new Error(fallbackError.message);
+    const { data: publicData } = serviceClient.storage
+      .from("courses_media")
+      .getPublicUrl(uniquePath);
+    fileUrl = publicData.publicUrl;
+  } else {
+    const { data: publicData } = serviceClient.storage
+      .from(BUCKET)
+      .getPublicUrl(uniquePath);
+    fileUrl = publicData.publicUrl;
+  }
+
+  // Record new version in class_document_versions
+  await serviceClient.from("class_document_versions").insert({
+    document_id: documentId,
+    version_number: nextVersion,
+    file_url: fileUrl,
+    file_name: file.name,
+    file_size_bytes: file.size,
+    mime_type: file.type || "application/octet-stream",
+    change_note: changeNote,
+    uploaded_by: userId,
+  });
+
+  // Update master document file reference and size
+  await serviceClient
+    .from("classroom_materials")
+    .update({
+      file_url: fileUrl,
+      file_size_bytes: file.size,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", documentId);
+
+  revalidatePath(`/academy/${companySlug}/classroom`);
+  return { success: true, version: nextVersion, fileUrl };
+}
+
+export async function getDocumentVersions(documentId: string, companyId: string) {
+  const { supabase } = await requireTenantMember(companyId);
+  const { data, error } = await supabase
+    .from("class_document_versions")
+    .select(`
+      *,
+      uploader:profiles!class_document_versions_uploaded_by_fkey(full_name, email, avatar_url)
+    `)
+    .eq("document_id", documentId)
+    .order("version_number", { ascending: false });
+
+  if (error) {
+    console.error("Failed to load document versions:", error);
+    return [];
+  }
+  return data ?? [];
+}
+
+export async function toggleBookmarkDocument(documentId: string, companyId: string, companySlug: string) {
+  const { userId, supabase } = await requireTenantMember(companyId);
+  const { data: existing } = await supabase
+    .from("classroom_bookmarks")
+    .select("id")
+    .eq("student_id", userId)
+    .eq("document_id", documentId)
+    .maybeSingle();
+
+  if (existing) {
+    await supabase.from("classroom_bookmarks").delete().eq("id", existing.id);
+    revalidatePath(`/academy/${companySlug}/classroom`);
+    return { isBookmarked: false };
+  } else {
+    await supabase.from("classroom_bookmarks").insert({
+      student_id: userId,
+      document_id: documentId,
+      company_id: companyId,
+    });
+    revalidatePath(`/academy/${companySlug}/classroom`);
+    return { isBookmarked: true };
+  }
+}
+
+export async function acknowledgeClassDocument(documentId: string, companyId: string, companySlug: string) {
+  const { userId, supabase } = await requireTenantMember(companyId);
+  const { error } = await supabase
+    .from("class_document_acknowledgements")
+    .upsert(
+      {
+        document_id: documentId,
+        student_id: userId,
+        company_id: companyId,
+        acknowledged_at: new Date().toISOString(),
+      },
+      { onConflict: "document_id,student_id" }
+    );
+
+  if (error) throw new Error(error.message);
+  revalidatePath(`/academy/${companySlug}/classroom`);
+  return { success: true };
+}
+
+export async function getDocumentAcknowledgements(documentId: string, companyId: string) {
+  const { supabase } = await requireTenantTeacher(companyId);
+  const { data, error } = await supabase
+    .from("class_document_acknowledgements")
+    .select(`
+      acknowledged_at,
+      student:profiles!class_document_acknowledgements_student_id_fkey(id, full_name, email, avatar_url)
+    `)
+    .eq("document_id", documentId)
+    .order("acknowledged_at", { ascending: false });
+
+  if (error) {
+    console.error("Failed to load document acknowledgements:", error);
+    return [];
+  }
+  return data ?? [];
 }
 
 export async function togglePinClassroomMaterial(materialId: string, companyId: string, companySlug: string) {

@@ -1425,6 +1425,10 @@ export interface Database {
           primary_teacher_id: string | null;
           status: string;
           color: string;
+          is_session_active: boolean;
+          active_room_name: string | null;
+          active_schedule_id: string | null;
+          active_session_id: string | null;
           created_at: string;
         };
         Insert: {
@@ -1437,6 +1441,10 @@ export interface Database {
           primary_teacher_id?: string | null;
           status?: string;
           color?: string;
+          is_session_active?: boolean;
+          active_room_name?: string | null;
+          active_schedule_id?: string | null;
+          active_session_id?: string | null;
           created_at?: string;
         };
         Update: {
@@ -1447,6 +1455,10 @@ export interface Database {
           primary_teacher_id?: string | null;
           status?: string;
           color?: string;
+          is_session_active?: boolean;
+          active_room_name?: string | null;
+          active_schedule_id?: string | null;
+          active_session_id?: string | null;
         };
         Relationships: R;
       };
@@ -1544,6 +1556,175 @@ export interface Database {
           is_pinned?: boolean;
           is_published?: boolean;
           download_count?: number;
+          updated_at?: string;
+        };
+        Relationships: R;
+      };
+      class_document_versions: {
+        Row: {
+          id: string;
+          document_id: string;
+          version_number: number;
+          file_url: string;
+          file_name: string;
+          file_size_bytes: number;
+          mime_type: string | null;
+          change_note: string | null;
+          uploaded_by: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          document_id: string;
+          version_number?: number;
+          file_url: string;
+          file_name: string;
+          file_size_bytes?: number;
+          mime_type?: string | null;
+          change_note?: string | null;
+          uploaded_by?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          file_url?: string;
+          file_name?: string;
+          file_size_bytes?: number;
+          mime_type?: string | null;
+          change_note?: string | null;
+        };
+        Relationships: R;
+      };
+      class_document_acknowledgements: {
+        Row: {
+          id: string;
+          document_id: string;
+          student_id: string;
+          company_id: string;
+          acknowledged_at: string;
+        };
+        Insert: {
+          id?: string;
+          document_id: string;
+          student_id: string;
+          company_id: string;
+          acknowledged_at?: string;
+        };
+        Update: {
+          acknowledged_at?: string;
+        };
+        Relationships: R;
+      };
+      classroom_bookmarks: {
+        Row: {
+          id: string;
+          student_id: string;
+          document_id: string;
+          company_id: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          student_id: string;
+          document_id: string;
+          company_id: string;
+          created_at?: string;
+        };
+        Update: {
+          document_id?: string;
+        };
+        Relationships: R;
+      };
+      classroom_polls: {
+        Row: {
+          id: string;
+          company_id: string;
+          cohort_id: string | null;
+          session_id: string | null;
+          creator_id: string;
+          question: string;
+          poll_type: string;
+          options: Json;
+          is_active: boolean;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          company_id: string;
+          cohort_id?: string | null;
+          session_id?: string | null;
+          creator_id: string;
+          question: string;
+          poll_type?: string;
+          options?: Json;
+          is_active?: boolean;
+          created_at?: string;
+        };
+        Update: {
+          is_active?: boolean;
+          options?: Json;
+        };
+        Relationships: R;
+      };
+      classroom_poll_votes: {
+        Row: {
+          id: string;
+          poll_id: string;
+          student_id: string;
+          selected_option: string;
+          voted_at: string;
+        };
+        Insert: {
+          id?: string;
+          poll_id: string;
+          student_id: string;
+          selected_option: string;
+          voted_at?: string;
+        };
+        Update: {
+          selected_option?: string;
+        };
+        Relationships: R;
+      };
+      classroom_study_packs: {
+        Row: {
+          id: string;
+          company_id: string;
+          cohort_id: string | null;
+          course_id: string | null;
+          title: string;
+          summary: string | null;
+          concepts: Json;
+          flashcards: Json;
+          quiz_questions: Json;
+          is_published: boolean;
+          created_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          company_id: string;
+          cohort_id?: string | null;
+          course_id?: string | null;
+          title: string;
+          summary?: string | null;
+          concepts?: Json;
+          flashcards?: Json;
+          quiz_questions?: Json;
+          is_published?: boolean;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          cohort_id?: string | null;
+          course_id?: string | null;
+          title?: string;
+          summary?: string | null;
+          concepts?: Json;
+          flashcards?: Json;
+          quiz_questions?: Json;
+          is_published?: boolean;
           updated_at?: string;
         };
         Relationships: R;

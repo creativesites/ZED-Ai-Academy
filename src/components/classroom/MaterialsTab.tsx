@@ -33,6 +33,11 @@ import {
   Upload,
   Loader2,
   Share2,
+  Bookmark,
+  BookmarkCheck,
+  History,
+  CheckCheck,
+  FileCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -69,6 +74,11 @@ import {
   createClassroomMaterial,
   togglePinClassroomMaterial,
   deleteClassroomMaterial,
+  toggleBookmarkDocument,
+  acknowledgeClassDocument,
+  getDocumentVersions,
+  uploadDocumentVersion,
+  getDocumentAcknowledgements,
   type ClassroomFolder,
   type ClassroomMaterial,
 } from "@/actions/classroom-materials";
@@ -82,6 +92,18 @@ const FOLDER_COLORS = [
   { name: "Pink", hex: "#ec4899" },
   { name: "Amber", hex: "#f59e0b" },
   { name: "Slate", hex: "#475569" },
+];
+
+const DOCUMENT_CATEGORIES = [
+  { value: "all", label: "All Categories" },
+  { value: "lecture_notes", label: "Lecture Notes" },
+  { value: "presentations", label: "Presentations" },
+  { value: "worksheets", label: "Worksheets" },
+  { value: "reading_materials", label: "Reading Materials" },
+  { value: "reference_materials", label: "Reference Materials" },
+  { value: "policies", label: "Policies & Guidelines" },
+  { value: "templates", label: "Templates" },
+  { value: "other_resources", label: "Other Resources" },
 ];
 
 const MATERIAL_TYPES = [
@@ -143,6 +165,8 @@ export function MaterialsTab({
   // Filters & State
   const [selectedFolderId, setSelectedFolderId] = useState<string>("all");
   const [selectedType, setSelectedType] = useState<string>("all");
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [isBookmarksOnly, setIsBookmarksOnly] = useState(false);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [sortBy, setSortBy] = useState<"updated" | "title" | "created">("updated");
@@ -151,6 +175,19 @@ export function MaterialsTab({
   const [isFolderModalOpen, setIsFolderModalOpen] = useState(false);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [previewMaterial, setPreviewMaterial] = useState<ClassroomMaterial | null>(null);
+
+  // Version History Modal
+  const [versionModalDoc, setVersionModalDoc] = useState<ClassroomMaterial | null>(null);
+  const [versions, setVersions] = useState<any[]>([]);
+  const [isLoadingVersions, setIsLoadingVersions] = useState(false);
+  const [versionFile, setVersionFile] = useState<File | null>(null);
+  const [versionChangeNote, setVersionChangeNote] = useState("");
+  const [isUploadingVersion, startUploadVersion] = useTransition();
+
+  // Acknowledgements Modal
+  const [acksModalDoc, setAcksModalDoc] = useState<ClassroomMaterial | null>(null);
+  const [acknowledgements, setAcknowledgements] = useState<any[]>([]);
+  const [isLoadingAcks, setIsLoadingAcks] = useState(false);
 
   // New Folder Form State
   const [folderName, setFolderName] = useState("");
@@ -171,6 +208,8 @@ export function MaterialsTab({
           folderId: selectedFolderId === "all" ? undefined : selectedFolderId,
           cohortId: activeCohortId,
           materialType: selectedType === "all" ? undefined : selectedType,
+          category: selectedCategory === "all" ? undefined : selectedCategory,
+          isBookmarkedOnly: isBookmarksOnly,
           sort: sortBy,
         }),
         getPinnedClassroomMaterials(companyId, activeCohortId),
@@ -188,7 +227,7 @@ export function MaterialsTab({
 
   useEffect(() => {
     loadData();
-  }, [companyId, activeCohortId, selectedFolderId, selectedType, sortBy]);
+  }, [companyId, activeCohortId, selectedFolderId, selectedType, selectedCategory, isBookmarksOnly, sortBy]);
 
   // Client-side search filtering
   const filteredMaterials = useMemo(() => {
@@ -270,6 +309,87 @@ export function MaterialsTab({
     } catch (err: any) {
       toast.error(err.message || "Failed to delete material");
     }
+  }
+
+  // Toggle Bookmark
+  async function handleToggleBookmark(docId: string) {
+    try {
+      const res = await toggleBookmarkDocument(docId, companyId, companySlug);
+      setMaterials((prev) =>
+        prev.map((m) => (m.id === docId ? { ...m, is_bookmarked: res.isBookmarked } : m))
+      );
+      toast.success(res.isBookmarked ? "Saved to your bookmarks" : "Removed from bookmarks");
+    } catch (err: any) {
+      toast.error("Could not update bookmark");
+    }
+  }
+
+  // Acknowledge Document
+  async function handleAcknowledgeDoc(docId: string) {
+    try {
+      await acknowledgeClassDocument(docId, companyId, companySlug);
+      setMaterials((prev) =>
+        prev.map((m) => (m.id === docId ? { ...m, is_acknowledged: true } : m))
+      );
+      toast.success("Document reading acknowledged!");
+    } catch (err: any) {
+      toast.error("Could not record acknowledgement");
+    }
+  }
+
+  // Open Version History
+  async function handleOpenVersionHistory(doc: ClassroomMaterial) {
+    setVersionModalDoc(doc);
+    setIsLoadingVersions(true);
+    try {
+      const vList = await getDocumentVersions(doc.id, companyId);
+      setVersions(vList);
+    } catch (err) {
+      toast.error("Failed to load version history");
+    } finally {
+      setIsLoadingVersions(false);
+    }
+  }
+
+  // Open Acknowledgements List (Instructor)
+  async function handleOpenAcks(doc: ClassroomMaterial) {
+    setAcksModalDoc(doc);
+    setIsLoadingAcks(true);
+    try {
+      const ackList = await getDocumentAcknowledgements(doc.id, companyId);
+      setAcknowledgements(ackList);
+    } catch (err) {
+      toast.error("Failed to load student acknowledgements");
+    } finally {
+      setIsLoadingAcks(false);
+    }
+  }
+
+  // Handle Version Upload
+  function handleUploadVersion(e: React.FormEvent) {
+    e.preventDefault();
+    if (!versionModalDoc || !versionFile) return;
+
+    startUploadVersion(async () => {
+      try {
+        const fd = new FormData();
+        fd.append("companyId", companyId);
+        fd.append("companySlug", companySlug);
+        fd.append("documentId", versionModalDoc.id);
+        fd.append("file", versionFile);
+        if (versionChangeNote) fd.append("changeNote", versionChangeNote);
+
+        await uploadDocumentVersion(fd);
+        toast.success("New document version uploaded!");
+        setVersionFile(null);
+        setVersionChangeNote("");
+        const updated = await getDocumentVersions(versionModalDoc.id, companyId);
+        setVersions(updated);
+        loadData();
+      } catch (err: any) {
+        toast.error(err.message || "Failed to upload new version");
+      }
+    });
   }
 
   // Active Folder Name
@@ -526,6 +646,21 @@ export function MaterialsTab({
               </SelectContent>
             </Select>
 
+            {/* Bookmarks Toggle */}
+            <button
+              type="button"
+              onClick={() => setIsBookmarksOnly((prev) => !prev)}
+              className={cn(
+                "h-10 px-3 rounded-xl border text-xs font-bold flex items-center gap-1.5 transition-all",
+                isBookmarksOnly
+                  ? "bg-[#fd5523] text-white border-[#fd5523] shadow-sm shadow-[#fd5523]/30"
+                  : "bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100"
+              )}
+            >
+              <Bookmark className={cn("h-3.5 w-3.5", isBookmarksOnly && "fill-current")} />
+              <span>Saved</span>
+            </button>
+
             {/* View Mode Toggle */}
             <div className="flex items-center rounded-xl bg-slate-100 p-1">
               <button
@@ -552,6 +687,27 @@ export function MaterialsTab({
               </button>
             </div>
           </div>
+        </div>
+
+        {/* ── Category Pills Strip ─────────────────────────────────────────── */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+          {DOCUMENT_CATEGORIES.map((cat) => {
+            const isSelected = selectedCategory === cat.value;
+            return (
+              <button
+                key={cat.value}
+                onClick={() => setSelectedCategory(cat.value)}
+                className={cn(
+                  "px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all",
+                  isSelected
+                    ? "bg-[#062e39] text-white shadow-sm"
+                    : "bg-white border border-slate-200/80 text-slate-600 hover:border-slate-300 hover:bg-slate-50"
+                )}
+              >
+                {cat.label}
+              </button>
+            );
+          })}
         </div>
 
         {/* ── Materials List / Grid View ────────────────────────────────────── */}
@@ -616,45 +772,86 @@ export function MaterialsTab({
                       </div>
 
                       <div className="flex items-center gap-1">
+                        {/* Bookmark Toggle Button */}
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleToggleBookmark(item.id);
+                          }}
+                          className={cn(
+                            "h-7 w-7 rounded-lg flex items-center justify-center transition-colors",
+                            item.is_bookmarked
+                              ? "text-[#fd5523] bg-orange-50 hover:bg-orange-100"
+                              : "text-slate-400 hover:text-slate-600 hover:bg-slate-100"
+                          )}
+                          title={item.is_bookmarked ? "Remove Bookmark" : "Save Bookmark"}
+                        >
+                          {item.is_bookmarked ? (
+                            <BookmarkCheck className="h-4 w-4 fill-current" />
+                          ) : (
+                            <Bookmark className="h-4 w-4" />
+                          )}
+                        </button>
+
                         {item.is_pinned && (
                           <Pin className="h-3.5 w-3.5 text-[#fd5523]" />
                         )}
 
-                        {isAdminOrInstructor && (
-                          <DropdownMenu>
-                            <DropdownMenuTrigger render={(props) => (
-                              <button
-                                {...props}
-                                className="h-7 w-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100"
-                              >
-                                <MoreVertical className="h-3.5 w-3.5" />
-                              </button>
-                            )} />
-                            <DropdownMenuContent align="end" className="w-40 text-xs">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger render={(props) => (
+                            <button
+                              {...props}
+                              className="h-7 w-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100"
+                            >
+                              <MoreVertical className="h-3.5 w-3.5" />
+                            </button>
+                          )} />
+                          <DropdownMenuContent align="end" className="w-48 text-xs">
+                            <DropdownMenuItem
+                              onClick={() => handleOpenVersionHistory(item)}
+                              className="cursor-pointer gap-2"
+                            >
+                              <History className="h-3.5 w-3.5" /> Version History
+                            </DropdownMenuItem>
+
+                            {isAdminOrInstructor && item.requires_acknowledgement && (
                               <DropdownMenuItem
-                                onClick={() => handleTogglePin(item.id)}
+                                onClick={() => handleOpenAcks(item)}
                                 className="cursor-pointer gap-2"
                               >
-                                {item.is_pinned ? (
-                                  <>
-                                    <PinOff className="h-3.5 w-3.5" /> Unpin from Top
-                                  </>
-                                ) : (
-                                  <>
-                                    <Pin className="h-3.5 w-3.5" /> Pin to Top
-                                  </>
-                                )}
+                                <CheckCheck className="h-3.5 w-3.5" /> View Sign-offs
                               </DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem
-                                onClick={() => handleDeleteMaterial(item.id, item.title)}
-                                className="cursor-pointer gap-2 text-red-600 focus:text-red-600"
-                              >
-                                <Trash2 className="h-3.5 w-3.5" /> Delete
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        )}
+                            )}
+
+                            {isAdminOrInstructor && (
+                              <>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                  onClick={() => handleTogglePin(item.id)}
+                                  className="cursor-pointer gap-2"
+                                >
+                                  {item.is_pinned ? (
+                                    <>
+                                      <PinOff className="h-3.5 w-3.5" /> Unpin from Top
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Pin className="h-3.5 w-3.5" /> Pin to Top
+                                    </>
+                                  )}
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                  onClick={() => handleDeleteMaterial(item.id, item.title)}
+                                  className="cursor-pointer gap-2 text-red-600 focus:text-red-600"
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" /> Delete
+                                </DropdownMenuItem>
+                              </>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
                     </div>
 
@@ -685,6 +882,29 @@ export function MaterialsTab({
                       <p className="mt-2 text-xs text-slate-500 line-clamp-2 leading-relaxed">
                         {item.description}
                       </p>
+                    )}
+
+                    {/* Reading Sign-off Banner if Required */}
+                    {item.requires_acknowledgement && (
+                      <div className="mt-3 flex items-center justify-between p-2.5 rounded-xl bg-amber-50/70 border border-amber-200/60">
+                        <span className="text-[10px] font-bold text-amber-800">
+                          {item.is_acknowledged ? "✓ Reading Confirmed" : "⚠️ Sign-off Required"}
+                        </span>
+                        {!item.is_acknowledged ? (
+                          <Button
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleAcknowledgeDoc(item.id);
+                            }}
+                            className="h-6 px-2.5 rounded-lg text-[10px] font-black bg-amber-600 hover:bg-amber-700 text-white shadow-xs"
+                          >
+                            Mark Read
+                          </Button>
+                        ) : (
+                          <span className="text-[9px] font-black text-emerald-600 uppercase">Completed</span>
+                        )}
+                      </div>
                     )}
                   </div>
 
@@ -899,22 +1119,40 @@ export function MaterialsTab({
 
               <div className="space-y-1.5">
                 <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                  Folder
+                  Category
                 </label>
-                <Select name="folderId" defaultValue={selectedFolderId !== "all" ? selectedFolderId : "unfiled"}>
+                <Select name="category" defaultValue="lecture_notes">
                   <SelectTrigger className="h-11 rounded-xl text-xs">
-                    <SelectValue placeholder="Folder" />
+                    <SelectValue placeholder="Category" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="unfiled" className="text-xs">Unfiled</SelectItem>
-                    {folders.map((f) => (
-                      <SelectItem key={f.id} value={f.id} className="text-xs">
-                        {f.name}
+                    {DOCUMENT_CATEGORIES.filter((c) => c.value !== "all").map((cat) => (
+                      <SelectItem key={cat.value} value={cat.value} className="text-xs">
+                        {cat.label}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                Folder
+              </label>
+              <Select name="folderId" defaultValue={selectedFolderId !== "all" ? selectedFolderId : "unfiled"}>
+                <SelectTrigger className="h-11 rounded-xl text-xs">
+                  <SelectValue placeholder="Folder" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="unfiled" className="text-xs">Unfiled</SelectItem>
+                  {folders.map((f) => (
+                    <SelectItem key={f.id} value={f.id} className="text-xs">
+                      {f.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             {cohorts.length > 0 && (
@@ -1020,11 +1258,20 @@ export function MaterialsTab({
               />
             </div>
 
-            <div className="flex items-center gap-2 pt-1">
-              <input type="checkbox" name="isPinned" value="true" id="isPinnedCheck" className="rounded" />
-              <label htmlFor="isPinnedCheck" className="text-xs font-bold text-slate-700 cursor-pointer">
-                Pin to top of materials shelf
-              </label>
+            <div className="space-y-2 pt-1 border-t border-slate-100">
+              <div className="flex items-center gap-2">
+                <input type="checkbox" name="requiresAcknowledgement" value="true" id="reqAckCheck" className="rounded" />
+                <label htmlFor="reqAckCheck" className="text-xs font-bold text-slate-700 cursor-pointer">
+                  Require student reading sign-off / acknowledgement
+                </label>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <input type="checkbox" name="isPinned" value="true" id="isPinnedCheck" className="rounded" />
+                <label htmlFor="isPinnedCheck" className="text-xs font-bold text-slate-700 cursor-pointer">
+                  Pin to top of materials shelf
+                </label>
+              </div>
             </div>
 
             <DialogFooter className="pt-3">
@@ -1140,6 +1387,164 @@ export function MaterialsTab({
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Dialog: Document Version History ─────────────────────────────────── */}
+      <Dialog open={!!versionModalDoc} onOpenChange={() => setVersionModalDoc(null)}>
+        <DialogContent className="sm:max-w-[620px] rounded-3xl p-6 max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-black text-[#062e39] flex items-center gap-2">
+              <History className="h-5 w-5 text-[#fd5523]" />
+              Version History
+            </DialogTitle>
+            <p className="text-xs text-slate-400 mt-1">
+              {versionModalDoc?.title}
+            </p>
+          </DialogHeader>
+
+          {/* Instructor: Upload New Version Form */}
+          {isAdminOrInstructor && (
+            <form onSubmit={handleUploadVersion} className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-3 mb-4">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-black text-slate-800 uppercase tracking-wide">
+                  Publish New Version
+                </span>
+                <span className="text-[10px] font-bold text-slate-400 bg-white px-2 py-0.5 rounded-md border">
+                  Next: v{(versions[0]?.version_number || 1) + 1}
+                </span>
+              </div>
+              <div className="space-y-1">
+                <Input
+                  type="file"
+                  required
+                  onChange={(e) => setVersionFile(e.target.files?.[0] || null)}
+                  className="rounded-xl border-slate-200 text-xs h-10 file:mr-2 file:py-1 file:px-2.5 file:rounded-md file:border-0 file:text-[11px] file:font-bold file:bg-[#fd5523]/10 file:text-[#fd5523]"
+                />
+              </div>
+              <div className="space-y-1">
+                <Input
+                  type="text"
+                  placeholder="Change note (e.g. Added Chapter 5 exercises, fixed typos)..."
+                  value={versionChangeNote}
+                  onChange={(e) => setVersionChangeNote(e.target.value)}
+                  className="h-9 rounded-xl text-xs bg-white"
+                />
+              </div>
+              <Button
+                type="submit"
+                disabled={isUploadingVersion || !versionFile}
+                className="w-full bg-[#fd5523] hover:bg-[#e0481d] text-white text-xs font-bold rounded-xl h-10 shadow-md shadow-[#fd5523]/20"
+              >
+                {isUploadingVersion ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> : <Upload className="h-3.5 w-3.5 mr-1.5" />}
+                Upload &amp; Replace Active Version
+              </Button>
+            </form>
+          )}
+
+          {/* Versions List */}
+          <div className="space-y-2">
+            <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+              Revision Log ({versions.length})
+            </h4>
+
+            {isLoadingVersions ? (
+              <div className="py-8 text-center text-slate-400 flex items-center justify-center gap-2 text-xs">
+                <Loader2 className="h-4 w-4 animate-spin text-[#fd5523]" /> Loading versions...
+              </div>
+            ) : versions.length === 0 ? (
+              <div className="p-4 text-center text-xs text-slate-400 border border-dashed rounded-xl">
+                No past revisions logged for this resource yet.
+              </div>
+            ) : (
+              <div className="divide-y divide-slate-100 border border-slate-100 rounded-2xl overflow-hidden bg-white">
+                {versions.map((ver, idx) => (
+                  <div key={ver.id || ver.version_number} className="p-3.5 flex items-center justify-between gap-3 hover:bg-slate-50 transition-colors">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className={cn(
+                          "px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider",
+                          idx === 0 ? "bg-emerald-100 text-emerald-800" : "bg-slate-100 text-slate-600"
+                        )}>
+                          v{ver.version_number} {idx === 0 && "(Active)"}
+                        </span>
+                        <span className="text-xs font-bold text-slate-800 truncate">
+                          {ver.file_name}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-slate-500 mt-1">
+                        {ver.change_note || "No change note provided."}
+                      </p>
+                      <p className="text-[10px] text-slate-400 mt-0.5">
+                        {new Date(ver.created_at).toLocaleString()} {ver.file_size_bytes > 0 && `· ${formatBytes(ver.file_size_bytes)}`}
+                      </p>
+                    </div>
+                    {ver.file_url && (
+                      <a
+                        href={ver.file_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="h-8 px-3 rounded-lg bg-slate-100 hover:bg-[#fd5523] hover:text-white text-slate-700 text-xs font-bold flex items-center gap-1.5 transition-colors shrink-0"
+                      >
+                        <Download className="h-3.5 w-3.5" />
+                        Download
+                      </a>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Dialog: Student Reading Acknowledgements (Instructor) ───────────── */}
+      <Dialog open={!!acksModalDoc} onOpenChange={() => setAcksModalDoc(null)}>
+        <DialogContent className="sm:max-w-[540px] rounded-3xl p-6 max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-black text-[#062e39] flex items-center gap-2">
+              <CheckCheck className="h-5 w-5 text-emerald-600" />
+              Document Acknowledgements
+            </DialogTitle>
+            <p className="text-xs text-slate-400 mt-1">
+              Students who confirmed reading &quot;{acksModalDoc?.title}&quot;
+            </p>
+          </DialogHeader>
+
+          <div className="space-y-3 pt-2">
+            {isLoadingAcks ? (
+              <div className="py-8 text-center text-slate-400 flex items-center justify-center gap-2 text-xs">
+                <Loader2 className="h-4 w-4 animate-spin text-[#fd5523]" /> Loading sign-offs...
+              </div>
+            ) : acknowledgements.length === 0 ? (
+              <div className="p-8 text-center text-xs text-slate-400 border border-dashed rounded-2xl bg-slate-50">
+                No students have acknowledged reading this document yet.
+              </div>
+            ) : (
+              <div className="divide-y divide-slate-100 border border-slate-100 rounded-2xl overflow-hidden bg-white">
+                {acknowledgements.map((ack) => (
+                  <div key={ack.acknowledged_at} className="p-3.5 flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <div className="h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-600">
+                        {ack.student?.full_name?.charAt(0) || "S"}
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold text-slate-900">
+                          {ack.student?.full_name || ack.student?.email || "Student"}
+                        </p>
+                        <p className="text-[10px] text-slate-400">
+                          {ack.student?.email}
+                        </p>
+                      </div>
+                    </div>
+                    <span className="text-[10px] font-bold text-slate-400">
+                      {new Date(ack.acknowledged_at).toLocaleString()}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </DialogContent>
       </Dialog>
     </div>
