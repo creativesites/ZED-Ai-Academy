@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Check, Copy, MessageCircle, Palette, BookOpen, Send, Users, ArrowRight } from "lucide-react";
 import { whatsappShareUrl, type GetStartedStep, type GetStartedStepId } from "@/lib/tenants/get-started";
+import { inviteShareMessage } from "@/lib/tenants/invites";
 import { cn } from "@/lib/utils";
 
 type GetStartedChecklistProps = {
@@ -20,7 +21,7 @@ const STEP_COPY: Record<GetStartedStepId, { title: string; body: string; icon: t
   branding: { title: "Add your logo and colour", body: "Make the academy look like yours.", icon: Palette },
   course: { title: "Create your first course", body: "Add lessons with videos, notes and quizzes.", icon: BookOpen },
   publish: { title: "Publish it", body: "Students can only see published courses.", icon: Send },
-  invite: { title: "Invite your students", body: "Share your join link. Students sign up and land in your classroom.", icon: Users },
+  invite: { title: "Invite your students", body: "Share your invite link. Students create an account and land in your classroom.", icon: Users },
 };
 
 export function GetStartedChecklist({ slug, academyName, joinUrl, steps, draftCourseId, welcome }: GetStartedChecklistProps) {
@@ -34,7 +35,7 @@ export function GetStartedChecklist({ slug, academyName, joinUrl, steps, draftCo
     publish: draftCourseId ? `/creator/courses/${draftCourseId}` : `/academy/${slug}/admin/courses`,
   };
 
-  const shareMessage = `Join ${academyName} and start learning with me:`;
+  const shareMessage = inviteShareMessage(academyName);
 
   async function copyLink() {
     try {
@@ -124,6 +125,13 @@ export function GetStartedChecklist({ slug, academyName, joinUrl, steps, draftCo
                             ? "Couldn't copy automatically. Press and hold the link above to copy it."
                             : ""}
                       </p>
+                      <Link
+                        href={`/academy/${slug}/admin/students`}
+                        className="inline-flex items-center gap-1 text-sm font-bold text-[#062e39] underline-offset-4 hover:underline"
+                      >
+                        Links for a course or class group
+                        <ArrowRight className="h-4 w-4" />
+                      </Link>
                     </div>
                   ) : (
                     !step.done && (

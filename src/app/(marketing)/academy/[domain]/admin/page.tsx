@@ -11,6 +11,9 @@ import { headers } from "next/headers";
 import { TimetableCalendar } from "@/components/tenant/admin/TimetableCalendar";
 import { GetStartedChecklist } from "@/components/tenant/admin/GetStartedChecklist";
 import { getStartedSteps, shouldShowGetStarted } from "@/lib/tenants/get-started";
+import { getOrCreateDefaultInvite, requestOrigin } from "@/lib/tenants/invites-server";
+import { inviteUrl } from "@/lib/tenants/invites";
+import { auth } from "@clerk/nextjs/server";
 import { cn } from "@/lib/utils";
 
 export const metadata = {
@@ -60,12 +63,22 @@ export default async function AdminTenantHubPage({
   const showGetStarted = shouldShowGetStarted({ welcome: isWelcome, publishedCourseCount: publishedCourseCount ?? 0 });
   let joinUrl = `/academy/${company.slug}/join`;
   if (showGetStarted) {
-    const h = await headers();
-    const host = h.get("x-forwarded-host") ?? h.get("host");
-    const proto = h.get("x-forwarded-proto") ?? (host?.startsWith("localhost") ? "http" : "https");
-    // On the academy's own subdomain the proxy adds x-tenant-slug and paths are relative to it.
-    const onSubdomain = h.get("x-tenant-slug") === company.slug;
-    if (host) joinUrl = `${proto}://${host}${onSubdomain ? "/join" : joinUrl}`;
+    // The academy's default invite link (/i/{code}) on the host in use, so it
+    // works on previews, subdomains and custom domains. Falls back to the join
+    // page if invite links are not available yet (migration not applied).
+    const { userId } = await auth();
+    const defaultInvite = await getOrCreateDefaultInvite(company.id, userId ?? null);
+    const origin = await requestOrigin();
+    if (defaultInvite && origin) {
+      joinUrl = inviteUrl(origin, defaultInvite.code);
+    } else {
+      const h = await headers();
+      const host = h.get("x-forwarded-host") ?? h.get("host");
+      const proto = h.get("x-forwarded-proto") ?? (host?.startsWith("localhost") ? "http" : "https");
+      // On the academy's own subdomain the proxy adds x-tenant-slug and paths are relative to it.
+      const onSubdomain = h.get("x-tenant-slug") === company.slug;
+      if (host) joinUrl = `${proto}://${host}${onSubdomain ? "/join" : joinUrl}`;
+    }
   }
 
   return (
