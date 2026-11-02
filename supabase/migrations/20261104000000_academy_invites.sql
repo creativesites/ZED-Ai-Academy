@@ -65,7 +65,9 @@ CREATE UNIQUE INDEX IF NOT EXISTS academy_invites_one_default_per_company
 -- 2. Redemptions: one row per (invite, person).
 CREATE TABLE IF NOT EXISTS public.academy_invite_redemptions (
   invite_id   uuid NOT NULL REFERENCES public.academy_invites(id) ON DELETE CASCADE,
-  user_id     text NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  -- Clerk user id. No FK to profiles: a brand-new learner can redeem before the
+  -- profile row exists (acceptInvite counts the use first, then creates the membership).
+  user_id     text NOT NULL,
   redeemed_at timestamptz NOT NULL DEFAULT now(),
   PRIMARY KEY (invite_id, user_id)
 );
