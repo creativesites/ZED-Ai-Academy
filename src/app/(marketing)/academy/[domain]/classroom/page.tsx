@@ -50,7 +50,7 @@ export default async function TenantClassroomPage({
             <Building2 className="h-10 w-10 text-[#062e39]" />
           </div>
           <div className="space-y-1">
-            <h1 className="text-3xl md:text-5xl font-black text-[#062e39] tracking-tight leading-none uppercase">
+            <h1 className="text-3xl md:text-5xl font-black text-[#062e39] tracking-tight leading-tight md:leading-none uppercase break-words">
               {company.name} <span className="text-[#fd5523]">Classroom</span>
             </h1>
             <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 mt-4">

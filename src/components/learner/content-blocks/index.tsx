@@ -65,7 +65,7 @@ export function BlockRenderer({
     case "case_study":
       return <CaseStudyBlock content={content} />;
     case "meeting":
-      return <MeetingBlock content={content} bookings={bookings || []} courseId={courseId} lessonId={lessonId} />;
+      return <MeetingBlock content={content} bookings={bookings || []} courseId={courseId} lessonId={lessonId} blockId={id} />;
     case "practice_exercise":
       const submission = practiceSubmissions?.find((s) => s.exercise_block_id === id);
       return (

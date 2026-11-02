@@ -81,7 +81,7 @@ export default async function TenantAdminCoursesPage({
             <Sparkles className="h-3.5 w-3.5" />
             <span>Curriculum Studio</span>
           </div>
-          <h1 className="text-3xl md:text-5xl font-black text-[#062e39] tracking-tight leading-none uppercase">
+          <h1 className="text-3xl md:text-5xl font-black text-[#062e39] tracking-tight leading-tight md:leading-none uppercase break-words">
             {company.name} <span className="text-[#fd5523]">Courses</span>
           </h1>
           <p className="mt-2 text-slate-500 text-sm sm:text-base font-medium">
@@ -135,7 +135,7 @@ export default async function TenantAdminCoursesPage({
 
       {/* Courses Grid */}
       {courses.length === 0 ? (
-        <div className="bg-white rounded-[2.5rem] p-12 text-center border border-slate-100 shadow-sm max-w-xl mx-auto my-12">
+        <div className="bg-white rounded-[2rem] sm:rounded-[2.5rem] p-6 sm:p-12 text-center border border-slate-100 shadow-sm max-w-xl mx-auto my-8 sm:my-12">
           <div className="h-16 w-16 rounded-2xl bg-[#fff6ee] text-[#fd5523] flex items-center justify-center mx-auto mb-4">
             <BookOpen className="h-8 w-8" />
           </div>

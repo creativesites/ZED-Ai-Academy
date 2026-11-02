@@ -39,3 +39,18 @@ export const createClient = (clerkToken?: string) => {
   
   return unauthenticatedClient;
 };
+
+/**
+ * Browser client that sends the signed-in Clerk session token with every request.
+ * Once Clerk is configured as a Supabase third-party auth provider, RLS and
+ * Realtime authorization see the caller's identity through this token.
+ */
+export const createAuthedClient = (getToken: () => Promise<string | null>) =>
+  createSupabaseClient<Database>(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+    {
+      accessToken: async () => (await getToken()) ?? null,
+      auth: { persistSession: false },
+    }
+  );

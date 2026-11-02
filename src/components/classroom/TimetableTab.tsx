@@ -563,7 +563,7 @@ export function TimetableTab({ companyId, isAdminOrInstructor, companySlug }: { 
                      <Button onClick={async () => {
                        if (!selectedLesson) return;
                        try {
-                         await duplicateClassSchedule(selectedLesson.id, companySlug);
+                         await duplicateClassSchedule(companyId, selectedLesson.id, companySlug);
                          toast.success("Schedule duplicated");
                          setSelectedLesson(null);
                          const data = await getClassSchedules(companyId);
@@ -577,7 +577,7 @@ export function TimetableTab({ companyId, isAdminOrInstructor, companySlug }: { 
                      <Button onClick={async () => {
                        if (!selectedLesson) return;
                        try {
-                         await deleteClassSchedule(selectedLesson.id, companySlug);
+                         await deleteClassSchedule(companyId, selectedLesson.id, companySlug);
                          toast.success("Schedule deleted");
                          setSelectedLesson(null);
                          const data = await getClassSchedules(companyId);

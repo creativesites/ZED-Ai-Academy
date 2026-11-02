@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+
 import { useState } from "react";
 import { 
   Users, Key, Copy, Check, RefreshCw, 
@@ -48,7 +50,6 @@ export function StaffManagementClient({
 
   const appUrl = typeof window !== "undefined" ? window.location.origin : "";
   const staffInviteUrl = `${appUrl}/academy/${company.slug}/join?role=teacher&code=${teacherCode}`;
-  const studentInviteUrl = `${appUrl}/academy/${company.slug}/join`;
 
   const copyToClipboard = (text: string, key: string) => {
     navigator.clipboard.writeText(text);
@@ -165,50 +166,30 @@ export function StaffManagementClient({
           </div>
         </div>
 
-        {/* Student Join Link Card */}
+        {/* Students are invited from the Students page (invite links per course and group). */}
         <div className="bg-white rounded-[2rem] p-8 border border-slate-100 shadow-sm flex flex-col justify-between">
           <div>
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-3">
-                <div className="h-12 w-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
-                  <GraduationCap className="h-6 w-6" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-black text-[#062e39] tracking-tight">Student Self-Join Link</h3>
-                  <p className="text-xs text-slate-400 font-medium">Quick direct link for students to join your academy</p>
-                </div>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="h-12 w-12 shrink-0 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                <GraduationCap className="h-6 w-6" />
+              </div>
+              <div className="min-w-0">
+                <h3 className="text-lg font-black text-[#062e39] tracking-tight">Inviting students?</h3>
+                <p className="text-xs text-slate-500 font-medium">Use invite links on the Students page</p>
               </div>
             </div>
-
-            <div className="my-6 p-4 rounded-2xl bg-slate-50 border border-slate-100">
-              <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Direct Join URL</span>
-              <div className="text-xs font-mono text-slate-600 truncate mt-1">
-                {studentInviteUrl}
-              </div>
-            </div>
-
             <p className="text-xs text-slate-500 leading-relaxed">
-              Share this link in newsletters, WhatsApp groups, or social media. Students who click will join your academy and be routed to the classroom.
+              Each invite link can enrol students in chosen courses and a class group, so they land in the classroom ready for your live classes. Share it on WhatsApp in one tap.
             </p>
           </div>
-
           <div className="mt-6 pt-4 border-t border-slate-100">
-            <button
-              onClick={() => copyToClipboard(studentInviteUrl, "student")}
+            <Link
+              href={`/academy/${company.slug}/admin/students`}
               className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-[#fd5523] text-white font-bold text-xs uppercase tracking-wider hover:bg-[#ea4817] transition-all shadow-md shadow-[#fd5523]/20 active:scale-95"
             >
-              {copiedKey === "student" ? (
-                <>
-                  <Check className="h-4 w-4 text-white" />
-                  <span>Link Copied!</span>
-                </>
-              ) : (
-                <>
-                  <LinkIcon className="h-4 w-4" />
-                  <span>Copy Student Join Link</span>
-                </>
-              )}
-            </button>
+              <LinkIcon className="h-4 w-4" />
+              <span>Open Students</span>
+            </Link>
           </div>
         </div>
 

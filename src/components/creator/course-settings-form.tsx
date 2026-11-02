@@ -298,7 +298,7 @@ export function CourseSettingsForm({ course }: { course: Course }) {
         </div>
 
         <div className="flex items-center justify-between gap-4 rounded-[2.5rem] bg-[#062e39] p-6 text-white shadow-xl">
-          <Button type="submit" disabled={saving} className="rounded-full bg-[#fd5523] px-10 py-6 text-lg font-bold text-white transition-all hover:bg-[#ef4a16] hover:scale-105 active:scale-95">
+          <Button type="submit" disabled={saving} className="w-full sm:w-auto rounded-full bg-[#fd5523] px-6 sm:px-10 py-6 text-base sm:text-lg font-bold text-white transition-all hover:bg-[#ef4a16] hover:scale-105 active:scale-95">
             {saving ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Save className="mr-2 h-5 w-5" />}
             Save Course Studio Details
           </Button>

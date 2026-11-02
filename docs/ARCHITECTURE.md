@@ -85,13 +85,15 @@ This block-based design lets the creator compose lessons freely.
 
 ## Payment Architecture
 
-Abstract payment logic in `src/lib/payments/`:
+Payment logic lives in `src/lib/payments/`. See `docs/PAYMENTS.md` for the provider interface, the manual flow and how to add a processor.
 ```
 src/lib/payments/
-  index.ts          # exports unified interface
-  types.ts          # PaymentIntent, CheckoutSession types
-  paychungu.ts      # PayChangu implementation
-  flutterwave.ts    # Flutterwave implementation (fallback)
+  index.ts          # provider registry, picked by PAYMENT_PROVIDER (default "manual")
+  types.ts          # PaymentProvider interface, order and instruction types
+  manual.ts         # manual mobile money / bank transfer provider (active)
+  order-status.ts   # order status transitions
+  reference.ts      # order reference generation
+  proof.ts          # validation for payment proof and rejection reasons
 ```
 
 Payment webhooks: `POST /api/webhooks/payment` — verifies signature, updates `orders` and `enrollments` tables.

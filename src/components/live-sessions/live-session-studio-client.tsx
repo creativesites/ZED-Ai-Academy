@@ -46,8 +46,6 @@ export function LiveSessionStudioClient({
   const [showDeviceModal, setShowDeviceModal] = useState(false);
   const [pending, startTransition] = useTransition();
 
-  // Primary room identifier matching Instructor join room
-  const canonicalRoomName = zoomMeetingId || `zed-session-${bookingId}`;
 
   function handleStartJoinFlow() {
     // Trigger pre-call device test modal
@@ -139,9 +137,7 @@ export function LiveSessionStudioClient({
   if (inJaasStudio) {
     return (
       <LiveSessionRoom
-        bookingId={bookingId}
-        roomName={canonicalRoomName}
-        isInstructor={false}
+        source={{ kind: "booking", bookingId }}
         sessionTitle={title}
         onLeave={() => setInJaasStudio(false)}
       />

@@ -47,7 +47,7 @@ export function CourseCarousel({ courses, variant }: { courses: any[]; variant?:
         className="flex gap-6 overflow-x-auto scrollbar-hide snap-x snap-mandatory scroll-smooth pb-4"
       >
         {courses.map((course) => (
-          <div key={course.id} className="min-w-[320px] md:min-w-[380px] snap-start shrink-0">
+          <div key={course.id} className="w-[82%] sm:w-[320px] md:w-[380px] snap-start shrink-0">
             <CourseCard course={course} variant={variant as any} />
           </div>
         ))}
@@ -55,7 +55,8 @@ export function CourseCarousel({ courses, variant }: { courses: any[]; variant?:
       {canScrollLeft && (
         <button
           onClick={() => scroll("left")}
-          className="absolute left-0 top-1/2 -translate-y-1/2 h-12 w-12 rounded-full bg-white/90 backdrop-blur shadow-xl flex items-center justify-center text-slate-800 hover:scale-110 transition-all opacity-0 group-hover:opacity-100 z-10"
+          aria-label="Scroll courses left"
+          className="absolute left-1 md:left-0 top-1/2 -translate-y-1/2 h-10 w-10 md:h-12 md:w-12 rounded-full bg-white/90 backdrop-blur shadow-xl flex items-center justify-center text-slate-800 hover:scale-110 transition-all opacity-100 md:opacity-0 md:group-hover:opacity-100 z-10"
         >
           <ChevronLeft className="h-6 w-6" />
         </button>
@@ -63,7 +64,8 @@ export function CourseCarousel({ courses, variant }: { courses: any[]; variant?:
       {canScrollRight && (
         <button
           onClick={() => scroll("right")}
-          className="absolute right-0 top-1/2 -translate-y-1/2 h-12 w-12 rounded-full bg-white/90 backdrop-blur shadow-xl flex items-center justify-center text-slate-800 hover:scale-110 transition-all opacity-0 group-hover:opacity-100 z-10"
+          aria-label="Scroll courses right"
+          className="absolute right-1 md:right-0 top-1/2 -translate-y-1/2 h-10 w-10 md:h-12 md:w-12 rounded-full bg-white/90 backdrop-blur shadow-xl flex items-center justify-center text-slate-800 hover:scale-110 transition-all opacity-100 md:opacity-0 md:group-hover:opacity-100 z-10"
         >
           <ChevronRight className="h-6 w-6" />
         </button>

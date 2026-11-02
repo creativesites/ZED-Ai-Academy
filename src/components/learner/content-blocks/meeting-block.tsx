@@ -128,15 +128,17 @@ export function MeetingBlock({
   bookings = [],
   courseId,
   lessonId,
+  blockId,
   previewMode = false,
 }: {
   content: Record<string, unknown>;
   bookings?: any[];
   courseId?: string;
   lessonId?: string;
+  blockId?: string;
   previewMode?: boolean;
 }) {
-  return <MeetingBlockInner content={content} bookings={bookings} courseId={courseId} lessonId={lessonId} previewMode={previewMode} />;
+  return <MeetingBlockInner content={content} bookings={bookings} courseId={courseId} lessonId={lessonId} blockId={blockId} previewMode={previewMode} />;
 }
 
 export function MeetingBlockInner({
@@ -144,12 +146,14 @@ export function MeetingBlockInner({
   bookings = [],
   courseId,
   lessonId,
+  blockId,
   previewMode = false,
 }: {
   content: Record<string, unknown>;
   bookings?: any[];
   courseId?: string;
   lessonId?: string;
+  blockId?: string;
   previewMode?: boolean;
 }) {
   const router = useRouter();
@@ -293,9 +297,7 @@ export function MeetingBlockInner({
         return (
           <div className="space-y-4">
             <LiveSessionRoom
-              bookingId={confirmedBooking.id || displayMeetingId}
-              roomName={displayMeetingId}
-              isInstructor={false}
+              source={{ kind: "booking", bookingId: confirmedBooking.id }}
               sessionTitle={title}
               onLeave={() => setJoined(false)}
             />
@@ -469,15 +471,13 @@ export function MeetingBlockInner({
     );
   }
 
-  // Standalone live class in coursework (not tied to 1-on-1 booking service)
-  const directRoomId = meetingId || lessonId || "live-coursework-room";
-  if (joined && user) {
+  // Standalone live class in coursework (not tied to 1-on-1 booking service).
+  // The server derives the room from this block; it needs the block id.
+  if (joined && user && blockId) {
     return (
       <div className="space-y-4">
         <LiveSessionRoom
-          bookingId={directRoomId}
-          roomName={directRoomId}
-          isInstructor={false}
+          source={{ kind: "lesson", blockId }}
           sessionTitle={title}
           onLeave={() => setJoined(false)}
         />
@@ -517,7 +517,7 @@ export function MeetingBlockInner({
               <Button
                 className="rounded-2xl px-8 py-7 text-lg font-black bg-[#fd5523] hover:bg-[#ef4a16] text-white shadow-xl shadow-[#fd5523]/30 hover:scale-105 active:scale-95 transition-all"
                 onClick={handleJoin}
-                disabled={joining}
+                disabled={joining || !blockId}
               >
                 {joining ? (
                   <><Loader2 className="mr-2 h-5 w-5 animate-spin" />Entering...</>

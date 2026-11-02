@@ -20,6 +20,7 @@ import {
 import type { Metadata } from "next";
 import TenantHomeNavBar from "@/components/tenant/TenantHomeNavBar";
 import { getCurrentTenantAccess } from "@/lib/tenants/access";
+import { toPublicTenant } from "@/lib/tenants/public";
 
 type PageProps = {
   params: Promise<{ domain: string; slug: string }>;
@@ -123,7 +124,7 @@ export default async function TenantCourseDetailPage({ params, searchParams }: P
     <div className="min-h-screen bg-slate-50/50 pb-24">
       {/* Fixed Tenant Header */}
       <TenantHomeNavBar
-        tenant={tenant}
+        tenant={toPublicTenant(tenant)}
         template={tenant.home_template || "modern"}
         userId={userId || ""}
         role={tenantRole || ""}

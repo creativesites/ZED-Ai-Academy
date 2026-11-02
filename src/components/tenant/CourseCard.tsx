@@ -13,9 +13,10 @@ export function CourseCard({ course, variant = "default", tenantSlug }: CourseCa
     default: {
       card: "bg-white rounded-[2.5rem] shadow-sm border border-slate-100 hover:shadow-2xl hover:-translate-y-2",
       badge: "bg-white/90 backdrop-blur text-[#062e39]",
-      title: "text-[#062e39] group-hover:text-[var(--primary-color)]",
+      // Brand colour is an accent here (underline), never the title text colour
+      title: "text-[#062e39] group-hover:underline decoration-[var(--primary-color)] decoration-2 underline-offset-4",
       price: "text-[#062e39]",
-      button: "bg-[#062e39] hover:bg-[var(--primary-color)]",
+      button: "bg-[#062e39] hover:bg-[#0a4a5c]",
     },
     minimal: {
       card: "bg-white rounded-3xl shadow-none border border-slate-200/50 hover:shadow-md",
@@ -83,10 +84,10 @@ export function CourseCard({ course, variant = "default", tenantSlug }: CourseCa
         </div>
       </div>
       <div className="px-4 pb-4 flex-1 flex flex-col">
-        <h3 className={cn("text-2xl font-black mb-3 transition-colors", s.title)}>{course.title}</h3>
+        <h3 className={cn("text-xl sm:text-2xl font-black mb-3 transition-colors break-words", s.title)}>{course.title}</h3>
         <p className="text-slate-500 text-sm font-medium line-clamp-2 mb-8">{course.description}</p>
         <div className="mt-auto flex items-center justify-between pt-6 border-t border-slate-100">
-          <span className={cn("font-black text-xl", s.price)}>
+          <span className={cn("font-black text-xl min-w-0 truncate", s.price)}>
             {formatPrice(course.price_type, course.price_amount)}
           </span>
           <Link

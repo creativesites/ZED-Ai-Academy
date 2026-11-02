@@ -1,6 +1,8 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { RESERVED_SUBDOMAINS } from '@/lib/tenants/slug';
+import { signedInAuthPageRedirect } from '@/lib/auth/signup-flow';
 
 const isOnboardingRoute = createRouteMatcher(['/onboarding(.*)']);
 const isLaunchAcademyRoute = createRouteMatcher(['/launch-your-academy(.*)']);
@@ -25,6 +27,7 @@ const isPublicRoute = createRouteMatcher([
   '/faq(.*)',
   '/blog(.*)',
   '/academy(.*)',
+  '/i/(.*)',
   '/ai-tutor(.*)',
   '/api/tutor/demo/voice',
   '/api/webhooks/(.*)',
@@ -34,7 +37,24 @@ const isPublicRoute = createRouteMatcher([
   '/manifest.json',
   '/favicon.ico',
   '/launch-your-academy(.*)',
+  '/terms(.*)',
+  '/privacy(.*)',
+  '/academy-agreement(.*)',
 ]);
+
+/**
+ * Public pages on a tenant subdomain (paths before the /academy/{slug} rewrite).
+ * The join page must work signed out: it is where invited students start.
+ */
+const isPublicTenantSubdomainRoute = createRouteMatcher([
+  '/',
+  '/join(.*)',
+  '/i/(.*)',
+  '/courses(.*)',
+]);
+
+/** Invite links (/i/{code}) are served by the top-level route on every host, never rewritten into an academy. */
+const isInviteRoute = createRouteMatcher(['/i/(.*)']);
 
 function supabaseAdmin() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -42,11 +62,6 @@ function supabaseAdmin() {
   if (!url || !key) return null;
   return createClient(url, key, { auth: { persistSession: false } });
 }
-
-// Reserved subdomains that cannot be claimed by tenants
-const RESERVED_SUBDOMAINS = new Set([
-  'www', 'api', 'admin', 'app', 'auth', 'mail', 'test', 'dev', 'staging', 'dashboard', 'creator', 'superadmin', 'academy'
-]);
 
 export default clerkMiddleware(async (auth, req: NextRequest) => {
   const { userId, orgId, redirectToSignIn } = await auth();
@@ -74,9 +89,18 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
     return NextResponse.redirect(new URL('/academy/zedai', `${protocol}://${hostname}`));
   }
 
-  // Tenant-first: signed-in users on apex auth / home pages are immediately redirected to their tenant or portal
-  if (userId && !isTenantSubdomain && (pathname === '/' || pathname.startsWith('/sign-in') || pathname.startsWith('/sign-up'))) {
+  // Tenant-first: signed-in users on the apex home page go to their tenant or portal.
+  if (userId && !isTenantSubdomain && pathname === '/') {
     return NextResponse.redirect(new URL('/after-sign-in', req.url));
+  }
+
+  // Signed-in visitors of exactly /sign-in or /sign-up are sent on, keeping the
+  // role, academy and return path (e.g. role=company_admin -> /launch-your-academy).
+  // Clerk's own sub-paths (sso-callback, verify-email-address, factor-one, ...)
+  // are never interrupted: they finish the sign-in and then redirect themselves.
+  if (userId && !isTenantSubdomain) {
+    const target = signedInAuthPageRedirect(pathname, url.searchParams);
+    if (target) return NextResponse.redirect(new URL(target, req.url));
   }
 
   // Allow onboarding routes without redirection
@@ -130,7 +154,8 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
   }
 
   // Unauthenticated users trying to access private routes
-  if (!userId && !isPublicRoute(req)) {
+  const isPublic = isPublicRoute(req) || (isTenantSubdomain && isPublicTenantSubdomainRoute(req));
+  if (!userId && !isPublic) {
     if (isTenantSubdomain) {
       const returnBackUrl = new URL(`/academy/${subdomain}${pathname}${url.search}`, `${protocol}://${rootDomain}`).toString();
       const signInUrl = new URL('/sign-in', `${protocol}://${rootDomain}`);
@@ -181,11 +206,18 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
 
   // Apply Subdomain Rewrite Logic
   if (isTenantSubdomain && subdomain) {
+    if (isInviteRoute(req)) return NextResponse.next();
+
     const requestHeaders = new Headers(req.headers);
     requestHeaders.set('x-tenant-slug', subdomain);
 
+    // Paths that already carry the academy prefix (e.g. a redirect to
+    // /academy/{slug}/classroom) are not prefixed a second time.
+    const academyPrefix = `/academy/${subdomain}`;
+    const alreadyPrefixed = pathname === academyPrefix || pathname.startsWith(`${academyPrefix}/`);
+
     return NextResponse.rewrite(
-      new URL(`/academy/${subdomain}${pathname}${url.search}`, req.url),
+      new URL(`${alreadyPrefixed ? '' : academyPrefix}${pathname}${url.search}`, req.url),
       {
         request: { headers: requestHeaders },
       }

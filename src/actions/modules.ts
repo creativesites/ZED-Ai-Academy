@@ -3,23 +3,15 @@
 import { revalidatePath } from "next/cache";
 import { auth } from "@clerk/nextjs/server";
 import { createClient } from "@/lib/supabase/server";
-
-async function verifyInstructor(supabase: Awaited<ReturnType<typeof createClient>>, courseId: string, userId: string) {
-  const { data } = await supabase
-    .from("courses")
-    .select("id")
-    .eq("id", courseId)
-    .eq("instructor_id", userId)
-    .single();
-  if (!data) throw new Error("Unauthorized");
-}
+import { requireCourseEditor } from "@/lib/courses/authorize";
 
 export async function createModule(courseId: string, title: string) {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
 
   const supabase = createClient();
-  await verifyInstructor(supabase, courseId, userId);
+  // The course's instructor, or a teaching member of its academy.
+  await requireCourseEditor(courseId, userId);
 
   const { data: existing } = await supabase
     .from("modules")
@@ -44,12 +36,14 @@ export async function updateModule(moduleId: string, courseId: string, title: st
   if (!userId) throw new Error("Unauthorized");
 
   const supabase = createClient();
-  await verifyInstructor(supabase, courseId, userId);
+  // The course's instructor, or a teaching member of its academy.
+  await requireCourseEditor(courseId, userId);
 
   const { error } = await supabase
     .from("modules")
     .update({ title })
-    .eq("id", moduleId);
+    .eq("id", moduleId)
+    .eq("course_id", courseId);
 
   if (error) throw new Error(error.message);
   revalidatePath(`/creator/courses/${courseId}`);
@@ -60,9 +54,10 @@ export async function deleteModule(moduleId: string, courseId: string) {
   if (!userId) throw new Error("Unauthorized");
 
   const supabase = createClient();
-  await verifyInstructor(supabase, courseId, userId);
+  // The course's instructor, or a teaching member of its academy.
+  await requireCourseEditor(courseId, userId);
 
-  const { error } = await supabase.from("modules").delete().eq("id", moduleId);
+  const { error } = await supabase.from("modules").delete().eq("id", moduleId).eq("course_id", courseId);
   if (error) throw new Error(error.message);
   revalidatePath(`/creator/courses/${courseId}`);
 }
@@ -72,11 +67,12 @@ export async function reorderModules(courseId: string, orderedIds: string[]) {
   if (!userId) throw new Error("Unauthorized");
 
   const supabase = createClient();
-  await verifyInstructor(supabase, courseId, userId);
+  // The course's instructor, or a teaching member of its academy.
+  await requireCourseEditor(courseId, userId);
 
   await Promise.all(
     orderedIds.map((id, index) =>
-      supabase.from("modules").update({ position: index + 1 }).eq("id", id)
+      supabase.from("modules").update({ position: index + 1 }).eq("id", id).eq("course_id", courseId)
     )
   );
   revalidatePath(`/creator/courses/${courseId}`);

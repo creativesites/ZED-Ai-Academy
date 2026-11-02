@@ -47,9 +47,7 @@ export function InstructorJoinButton({
     return (
       <div className="fixed inset-0 z-50 flex flex-col bg-[#062e39]">
         <LiveSessionRoom
-          bookingId={bookingId}
-          roomName={effectiveRoomName}
-          isInstructor={true}
+          source={{ kind: "booking", bookingId }}
           sessionTitle={`${sessionTitle} (Moderator)`}
           learnerName={learnerName}
           onLeave={() => setJoined(false)}

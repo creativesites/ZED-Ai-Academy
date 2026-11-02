@@ -2,6 +2,7 @@ import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentTenantAccess, isTeachingRole } from "@/lib/tenants/access";
+import { toPublicTenant } from "@/lib/tenants/public";
 
 import { TenantAdminNavbar } from "@/components/tenant/admin/Navbar";
 import { getProfileContext } from "@/actions/profile";
@@ -45,7 +46,7 @@ export default async function TenantClassroomLayout({
   return (
     <div className="bg-slate-50 min-h-screen">
       <TenantHomeNavBar 
-        tenant={company} 
+        tenant={toPublicTenant(company)}
         template={"modern"} 
         userId={userId || ""} 
         role={tenantRole} 

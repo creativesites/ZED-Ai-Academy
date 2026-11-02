@@ -243,7 +243,7 @@ export function QuizPlayer({
       <div className="pt-4">
         {submitted && result ? (
           <div className={cn(
-            "rounded-[2.5rem] p-10 text-center shadow-2xl animate-in zoom-in duration-500",
+            "rounded-[2rem] sm:rounded-[2.5rem] p-6 sm:p-10 text-center shadow-2xl animate-in zoom-in duration-500",
             result.passed ? "bg-green-600 text-white" : "bg-[#062e39] text-white"
           )}>
             {result.passed ? (
@@ -274,7 +274,7 @@ export function QuizPlayer({
                 </p>
                 <Button 
                   onClick={handleRetry} 
-                  className="rounded-2xl bg-[#fd5523] px-10 py-7 text-lg font-bold text-white hover:bg-[#ef4a16] shadow-xl shadow-[#fd5523]/20"
+                  className="w-full sm:w-auto rounded-2xl bg-[#fd5523] px-6 sm:px-10 py-7 text-base sm:text-lg font-bold text-white hover:bg-[#ef4a16] shadow-xl shadow-[#fd5523]/20"
                 >
                   <RotateCcw className="mr-2 h-5 w-5" />
                   Try Again

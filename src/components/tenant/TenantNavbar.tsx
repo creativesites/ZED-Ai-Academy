@@ -35,7 +35,7 @@ export function TenantNavbar({
         <div className="flex items-center gap-8">
           <Link 
             href={`/academy/${tenant.slug}`}
-            className="flex items-center gap-3 group"
+            className="flex items-center gap-3 group min-w-0"
           >
             <div 
               className="h-10 w-10 rounded-xl flex items-center justify-center text-white shadow-lg transition-transform group-hover:scale-110"

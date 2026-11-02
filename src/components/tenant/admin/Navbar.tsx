@@ -15,7 +15,8 @@ import {
   X,
   Globe,
   ChevronRight,
-  Layers
+  Layers,
+  Wallet
 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -35,6 +36,7 @@ export function TenantAdminNavbar({ slug, name }: { slug: string; name: string }
   const navItems: NavItem[] = [
     { label: "Dashboard", href: `/academy/${slug}/admin`, icon: LayoutDashboard },
     { label: "Courses", href: `/academy/${slug}/admin/courses`, icon: BookOpen },
+    { label: "Payments", href: `/academy/${slug}/admin/payments`, icon: Wallet },
     { label: "Classroom", href: `/academy/${slug}/admin/classroom`, icon: Layers },
     { label: "Staff", href: `/academy/${slug}/admin/staff`, icon: Users },
     { label: "Live Sessions", href: `/academy/${slug}/admin/settings/live-sessions`, icon: Video },

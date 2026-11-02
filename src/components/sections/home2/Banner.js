@@ -37,7 +37,7 @@ export default async function Banner() {
 
                         <div className="banner-two__tab-box">
                             <div className="btn-box" style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', marginTop: '30px' }}>
-                                <Link className="thm-btn" href="/launch-your-academy">
+                                <Link className="thm-btn" href="/sign-up?role=company_admin">
                                     Launch Your Academy
                                     <i className="icon-right-arrow21"></i>
                                     <span className="hover-btn hover-bx"></span>

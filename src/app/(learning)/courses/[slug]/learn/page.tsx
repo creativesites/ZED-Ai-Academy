@@ -55,7 +55,7 @@ export default async function LearnPage({ params, searchParams }: PageProps) {
     supabase.from("enrollments").select("id, status").eq("user_id", userId).eq("course_id", course.id).maybeSingle(),
     supabase.from("modules").select("id, title, position, lessons(id, title, position, is_preview)").eq("course_id", course.id).order("position", { ascending: true }),
     supabase.from("certificates").select("id, public_id, issued_at").eq("user_id", userId).eq("course_id", course.id).maybeSingle(),
-    supabase.from("live_session_bookings").select("*, zoom_meetings(*)").eq("learner_id", userId).in("status", ["requested", "confirmed", "reschedule_requested", "completed"])
+    supabase.from("live_session_bookings").select("*, zoom_meetings(zoom_meeting_id, join_url)").eq("learner_id", userId).in("status", ["requested", "confirmed", "reschedule_requested", "completed"])
   ]);
 
   let enrollment = enrollmentInitial;

@@ -6,6 +6,7 @@ import { CorporateTemplate } from "./home/CorporateTemplate";
 import { CreativeTemplate } from "./home/CreativeTemplate";
 import { TechTemplate } from "./home/TechTemplate";
 import { ElegantTemplate } from "./home/ElegantTemplate";
+import type { AcademyStats } from "@/lib/tenants/academy-stats";
 
 type TemplateProps = {
   tenant: any;
@@ -15,12 +16,10 @@ type TemplateProps = {
   brandColor: string;
   template: string;
   adminProfile?: any;
-  stats?: {
-    students: string;
-    rating: string;
-    success: string;
-  };
+  stats?: AcademyStats;
 };
+
+const NO_STATS: AcademyStats = { students: null, rating: null, success: null };
 
 export function TemplateRenderer({ tenant, courses, membership, content, brandColor, template, adminProfile, stats }: TemplateProps) {
   const academyName = tenant.name || "Zed AI Academy";
@@ -46,7 +45,8 @@ export function TemplateRenderer({ tenant, courses, membership, content, brandCo
     ctaButton, 
     content,
     adminProfile,
-    stats
+    // Real numbers only (see computeAcademyStats); templates hide missing values.
+    stats: stats ?? NO_STATS,
   };
 
   switch (template) {

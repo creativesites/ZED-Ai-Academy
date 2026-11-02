@@ -29,8 +29,12 @@
         const root = document.getElementById('zoom-root');
         const status = document.getElementById('status');
 
+        // Only the embedding page (same origin) may drive this bridge.
+        const ORIGIN = window.location.origin;
+
         window.addEventListener('message', async (event) => {
-            const { type, payload } = event.data;
+            if (event.origin !== ORIGIN || event.source !== window.parent) return;
+            const { type, payload } = event.data || {};
             
             if (type === 'JOIN_MEETING') {
                 try {
@@ -65,18 +69,18 @@
 
                     status.style.display = 'none';
                     console.log('Joined Zoom meeting successfully via bridge');
-                    window.parent.postMessage({ type: 'ZOOM_JOIN_SUCCESS' }, '*');
+                    window.parent.postMessage({ type: 'ZOOM_JOIN_SUCCESS' }, ORIGIN);
                 } catch (error) {
                     console.error('Zoom Bridge Error:', error);
                     status.innerText = 'Error: ' + (error.message || 'Failed to join');
                     status.style.color = '#ef4444';
-                    window.parent.postMessage({ type: 'ZOOM_JOIN_ERROR', payload: error.message }, '*');
+                    window.parent.postMessage({ type: 'ZOOM_JOIN_ERROR', payload: error.message }, ORIGIN);
                 }
             }
         });
 
         // Notify parent that bridge is ready
-        window.parent.postMessage({ type: 'ZOOM_BRIDGE_READY' }, '*');
+        window.parent.postMessage({ type: 'ZOOM_BRIDGE_READY' }, ORIGIN);
 
         // Handle resize
         window.addEventListener('resize', () => {

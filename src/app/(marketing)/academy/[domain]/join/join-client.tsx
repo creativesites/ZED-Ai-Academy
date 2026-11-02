@@ -36,6 +36,20 @@ export function JoinClient({
 
   const brandColor = company.primary_color || "#fd5523";
 
+  // Sign-up and sign-in carry the academy (and staff code) through, so a new
+  // account lands in this academy after creating it.
+  const staffCode = role === "teacher" ? code.trim() : "";
+  const authParams = new URLSearchParams({ role: role === "teacher" ? "teacher" : "student", tenant: company.slug });
+  if (staffCode) authParams.set("code", staffCode);
+  const joinParams = new URLSearchParams();
+  if (role === "teacher") joinParams.set("role", "teacher");
+  if (staffCode) joinParams.set("code", staffCode);
+  const joinPath = `/academy/${company.slug}/join${joinParams.size ? `?${joinParams.toString()}` : ""}`;
+  const signUpHref = `/sign-up?${authParams.toString()}`;
+  const signInParams = new URLSearchParams(authParams);
+  signInParams.set("redirect_url", joinPath);
+  const signInHref = `/sign-in?${signInParams.toString()}`;
+
   const handleTeacherJoin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!code.trim()) {
@@ -94,7 +108,7 @@ export function JoinClient({
         {!isSignedIn ? (
           <div className="space-y-3">
             <Link
-              href={`/sign-up?redirect_url=/academy/${company.slug}/join?role=${role}${code ? `&code=${code}` : ""}`}
+              href={signUpHref}
               className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl text-white font-bold text-xs uppercase tracking-wider shadow-lg transition-all hover:scale-[1.02] active:scale-95"
               style={{ backgroundColor: brandColor }}
             >
@@ -103,7 +117,7 @@ export function JoinClient({
             </Link>
 
             <Link
-              href={`/sign-in?redirect_url=/academy/${company.slug}/join?role=${role}${code ? `&code=${code}` : ""}`}
+              href={signInHref}
               className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl border-2 border-slate-100 text-[#062e39] font-bold text-xs uppercase tracking-wider hover:bg-slate-50 transition-all"
             >
               <span>Already have an account? Sign In</span>

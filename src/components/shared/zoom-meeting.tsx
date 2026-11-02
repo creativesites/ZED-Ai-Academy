@@ -26,7 +26,8 @@ export function ZoomMeeting({
 
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
-      const { type, payload } = event.data;
+      if (event.origin !== window.location.origin || event.source !== iframeRef.current?.contentWindow) return;
+      const { type, payload } = event.data || {};
 
       if (type === "ZOOM_BRIDGE_READY") {
         if (iframeRef.current?.contentWindow) {
@@ -40,7 +41,7 @@ export function ZoomMeeting({
               signature,
               sdkKey,
             },
-          }, "*");
+          }, window.location.origin);
         }
       }
 

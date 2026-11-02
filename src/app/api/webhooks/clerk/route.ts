@@ -2,7 +2,8 @@ import { headers } from "next/headers";
 import { Webhook } from "svix";
 import { createServiceClient } from "@/lib/supabase/server";
 import { sendWelcomeEmail } from "@/lib/email/emailjs";
-import type { CompanyMemberRole, UserRole } from "@/types/database";
+import { generateAcademySlug } from "@/lib/tenants/slug-server";
+import type { CompanyMemberRole } from "@/types/database";
 
 type ClerkUserPayload = {
   id: string;
@@ -38,6 +39,38 @@ type ClerkMembershipPayload = {
   role: string;
 };
 
+type ServiceClient = ReturnType<typeof createServiceClient>;
+
+/**
+ * INSERT ... ON CONFLICT DO NOTHING: an existing membership (any role, any
+ * status, including a deliberate deactivation) is never changed here.
+ */
+async function insertMembershipIfMissing(
+  supabase: ServiceClient,
+  companyId: string,
+  profileId: string,
+  role: CompanyMemberRole
+) {
+  // The membership row references the profile; make sure one exists (never changes its role).
+  await supabase
+    .from("profiles")
+    .upsert({ id: profileId }, { onConflict: "id", ignoreDuplicates: true });
+
+  const now = new Date().toISOString();
+  const { error } = await supabase.from("company_members").upsert(
+    {
+      company_id: companyId,
+      profile_id: profileId,
+      status: "active",
+      role,
+      joined_at: now,
+      updated_at: now,
+    },
+    { onConflict: "company_id, profile_id", ignoreDuplicates: true }
+  );
+  if (error) console.error("Membership sync error:", error);
+}
+
 export async function POST(req: Request) {
   const webhookSecret = process.env.CLERK_WEBHOOK_SECRET;
   if (!webhookSecret) {
@@ -69,36 +102,52 @@ export async function POST(req: Request) {
 
   const supabase = createServiceClient();
 
-  // Handle Organization Events
+  // Organization events. Supabase (companies, company_members, profiles) is the
+  // source of truth for academies and roles; Clerk organizations only mirror
+  // membership. So this handler only INSERTS what is missing: it never updates
+  // a role, never writes companies.slug for an existing academy, and never
+  // touches profiles.role.
   if (event.type.startsWith("organization")) {
-    if (event.type === "organization.created" || event.type === "organization.updated") {
+    if (event.type === "organization.created") {
       const data = event.data as ClerkOrganizationPayload;
-      const { error } = await supabase.from("companies").upsert({
-        id: data.id,
-        name: data.name,
-        slug: data.slug || data.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""),
-        logo_url: data.image_url || data.logo_url,
-        admin_id: data.created_by, // Clerk provides creator ID
-        updated_at: new Date().toISOString(),
-      }, { onConflict: "id" });
-      if (error) console.error("Org sync error:", error);
-
-      // If it's a new organization, ensure the creator is marked as company_admin
-      if (event.type === "organization.created" && data.created_by) {
-        await supabase.from("profiles").update({
-          role: "company_admin",
-          company_id: data.id
-        }).eq("id", data.created_by);
-
-        await supabase.from("company_members").upsert({
-          company_id: data.id,
-          profile_id: data.created_by,
-          status: "active",
-          role: "company_admin",
-          joined_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        }, { onConflict: "company_id, profile_id" });
+      const { data: existing } = await supabase.from("companies").select("id").eq("id", data.id).maybeSingle();
+      if (!existing) {
+        // createAcademy normally writes this row first; this only covers
+        // organizations created elsewhere (e.g. the Clerk dashboard).
+        try {
+          const slug = await generateAcademySlug(supabase, data.name, data.id);
+          const { error } = await supabase.from("companies").insert({
+            id: data.id,
+            name: data.name,
+            slug,
+            logo_url: data.image_url || data.logo_url || null,
+            admin_id: data.created_by ?? null,
+          });
+          // 23505: createAcademy inserted it in the meantime, which is fine.
+          if (error && error.code !== "23505") console.error("Org sync error:", error);
+        } catch (error) {
+          console.error("Org sync error:", error);
+        }
       }
+
+      if (data.created_by) {
+        await insertMembershipIfMissing(supabase, data.id, data.created_by, "company_admin");
+      }
+    }
+
+    if (event.type === "organization.updated") {
+      // Name and logo only. The academy's slug is owned by the database.
+      const data = event.data as ClerkOrganizationPayload;
+      const logo = data.image_url || data.logo_url;
+      const { error } = await supabase
+        .from("companies")
+        .update({
+          name: data.name,
+          ...(logo ? { logo_url: logo } : {}),
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", data.id);
+      if (error) console.error("Org update sync error:", error);
     }
 
     if (event.type === "organization.deleted") {
@@ -108,38 +157,18 @@ export async function POST(req: Request) {
 
     if (event.type === "organizationMembership.created") {
       const { organization, public_user_data, role: clerkRole } = event.data as ClerkMembershipPayload;
-      
-      // Update profile's company_id and role
-      // If clerkRole is admin, they are either company_admin (if creator) or instructor (if invited)
-      // For now, let's assume invited admins are instructors
-      let dbRole: UserRole = "teacher";
-      let memberRole: CompanyMemberRole = "teacher";
+      // Only the academy owner is mirrored as an admin; anyone else is a learner
+      // until the academy grants more (staff code, admin role change) in the app.
+      let memberRole: CompanyMemberRole = "learner";
       if (clerkRole === "org:admin") {
-        // If they are the creator, they should already be company_admin from organization.created
-        // but we can check if they are the admin_id in companies
-        const { data: company } = await supabase.from("companies").select("admin_id").eq("id", organization.id).single();
-        if (company?.admin_id === public_user_data.user_id) {
-          dbRole = "company_admin";
-          memberRole = "company_admin";
-        }
-      } else {
-        dbRole = "learner";
-        memberRole = "learner";
+        const { data: company } = await supabase
+          .from("companies")
+          .select("admin_id")
+          .eq("id", organization.id)
+          .maybeSingle();
+        if (company?.admin_id === public_user_data.user_id) memberRole = "company_admin";
       }
-
-      await supabase.from("company_members").upsert({
-        company_id: organization.id,
-        profile_id: public_user_data.user_id,
-        status: "active",
-        role: memberRole,
-        joined_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      }, { onConflict: "company_id, profile_id" });
-
-      await supabase.from("profiles").update({
-        company_id: organization.id,
-        role: dbRole
-      }).eq("id", public_user_data.user_id);
+      await insertMembershipIfMissing(supabase, organization.id, public_user_data.user_id, memberRole);
     }
 
     if (event.type === "organizationMembership.deleted") {
@@ -164,12 +193,14 @@ export async function POST(req: Request) {
 
   const fullName = [user.first_name, user.last_name].filter(Boolean).join(" ") || null;
 
+  // Name, email and avatar only: the role is owned by the app, never by Clerk.
+  // Missing values are skipped so a name typed during onboarding is not erased.
   const { error } = await supabase.from("profiles").upsert(
     {
       id: user.id,
-      full_name: fullName,
-      avatar_url: user.image_url,
-      email: primaryEmail,
+      ...(fullName ? { full_name: fullName } : {}),
+      ...(primaryEmail ? { email: primaryEmail } : {}),
+      ...(user.image_url ? { avatar_url: user.image_url } : {}),
       updated_at: new Date().toISOString(),
     },
     { onConflict: "id" }

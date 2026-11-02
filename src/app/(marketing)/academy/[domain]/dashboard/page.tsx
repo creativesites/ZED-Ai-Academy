@@ -79,7 +79,7 @@ export default async function TenantStudentDashboardPage({
 
         
         {/* Hero Section */}
-        <section className="relative overflow-hidden rounded-[4rem] bg-[#062e39] p-10 md:p-24 text-white shadow-2xl">
+        <section className="relative overflow-hidden rounded-[2rem] md:rounded-[4rem] bg-[#062e39] p-6 sm:p-10 md:p-24 text-white shadow-2xl">
           <div className="absolute top-0 right-0 p-12 opacity-10 pointer-events-none">
              <GraduationCap className="h-64 w-64" />
           </div>
@@ -89,7 +89,7 @@ export default async function TenantStudentDashboardPage({
             <div className="inline-flex items-center gap-3 px-6 py-2.5 rounded-full bg-white/10 text-white text-[10px] font-black uppercase tracking-[0.3em] border border-white/10 mb-10">
               <Sparkles className="h-4 w-4 text-yellow-400" /> Student Dashboard
             </div>
-            <h1 className="text-4xl md:text-7xl font-black tracking-tighter mb-8 uppercase leading-[0.9]">
+            <h1 className="text-3xl sm:text-4xl md:text-7xl font-black tracking-tighter mb-8 uppercase leading-[0.95] break-words">
               Welcome back, <br/>
               <span className="text-[#fd5523]">{firstName}</span>
             </h1>
@@ -99,7 +99,7 @@ export default async function TenantStudentDashboardPage({
             <div className="flex flex-wrap gap-4">
               <Link
                 href={`/academy/${company.slug}/classroom`}
-                className="group h-20 px-12 rounded-[2rem] bg-[#fd5523] text-white text-xs font-black uppercase tracking-[0.2em] flex items-center gap-4 hover:scale-[1.02] active:scale-95 transition-all shadow-2xl shadow-[#fd5523]/30"
+                className="group h-16 sm:h-20 w-full sm:w-auto px-6 sm:px-12 rounded-[2rem] bg-[#fd5523] text-white text-xs font-black uppercase tracking-[0.2em] flex items-center gap-4 hover:scale-[1.02] active:scale-95 transition-all shadow-2xl shadow-[#fd5523]/30"
               >
                 Enter Classroom 
                 <div className="h-8 w-8 rounded-full bg-white/20 flex items-center justify-center group-hover:rotate-12 transition-transform">

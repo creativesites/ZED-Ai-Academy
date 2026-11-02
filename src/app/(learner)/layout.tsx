@@ -1,5 +1,5 @@
 import { auth } from "@clerk/nextjs/server";
-import { redirect } from "next/navigation";
+import { redirect, unstable_rethrow } from "next/navigation";
 import { ensureProfile } from "@/lib/supabase/ensure-profile";
 import { requireOnboarding } from "@/lib/require-onboarding";
 import Header2Wrapper from "@/components/layout/Header2Wrapper";
@@ -53,8 +53,10 @@ export default async function LearnerLayout({ children }: { children: React.Reac
 
   try {
     await requireOnboarding(userId);
-  } catch {
-    // redirect() handled
+  } catch (error) {
+    // redirect() works by throwing: let Next.js handle it instead of swallowing it.
+    unstable_rethrow(error);
+    console.error("[layout] onboarding check failed:", error);
   }
 
   return (
@@ -62,7 +64,7 @@ export default async function LearnerLayout({ children }: { children: React.Reac
       <Header2Wrapper>
         <NotificationBellServer />
       </Header2Wrapper>
-      <div id="page-content" className="pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:pb-0">
+      <div id="page-content">
         {children}
       </div>
       <Footer1 />

@@ -1,5 +1,5 @@
 import { auth } from "@clerk/nextjs/server";
-import { redirect } from "next/navigation";
+import { redirect, unstable_rethrow } from "next/navigation";
 import { ensureProfile } from "@/lib/supabase/ensure-profile";
 import { requireOnboarding } from "@/lib/require-onboarding";
 import { NotificationBellServer } from "@/components/shared/notification-bell-server";
@@ -20,8 +20,10 @@ export default async function LearningLayout({ children }: { children: React.Rea
 
   try {
     await requireOnboarding(userId);
-  } catch {
-    // redirect() throws
+  } catch (error) {
+    // redirect() works by throwing: let Next.js handle it instead of swallowing it.
+    unstable_rethrow(error);
+    console.error("[layout] onboarding check failed:", error);
   }
 
   return (
