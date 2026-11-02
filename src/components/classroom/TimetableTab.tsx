@@ -1,597 +1,661 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { 
-  CalendarDays, Plus, Clock, Loader2, Calendar, BookOpen, 
-  User, Sparkles, Filter, ChevronRight, X, Info, LayoutGrid,
-  Users, Bell, Video, ExternalLink, Download
+import { useCallback, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import {
+  CalendarDays, Plus, Clock, Loader2, Calendar, User, Users, Video, Download, Bell, Pencil, Copy, Trash2,
+  LayoutList, LayoutGrid, Radio, ChevronDown, AlertCircle, Repeat,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { 
-  getClassSchedules, 
-  postClassSchedule, 
-  getClassroomGroups, 
-  deleteClassSchedule, 
-  duplicateClassSchedule,
-  sendScheduleReminder,
-} from "@/actions/classroom";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogTrigger,
-  DialogFooter 
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import {
+  getTimetable, getClassroomGroups, deleteClassSchedule, duplicateClassSchedule, sendScheduleReminder,
+} from "@/actions/classroom";
+import {
+  DAY_NAMES, dayName, nextOccurrence, isLiveNow, zonedParts, todayInTz, addDaysISO, isoDayOf,
+  buildIcs, googleCalendarUrl, tzLabel, formatRange, normalizeTime, type Occurrence, type TimetableRow,
+} from "@/lib/schedule";
+import { ScheduleFormDialog } from "./ScheduleFormDialog";
 import { cn } from "@/lib/utils";
 
-const DAYS = [
-  "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"
-];
+type Schedule = TimetableRow;
+type Enriched = Schedule & { occ: Occurrence | null; live: boolean };
 
-function getGoogleCalendarUrl(lesson: any, companySlug: string) {
-  const title = encodeURIComponent(lesson.title || "Live Class");
-  const details = encodeURIComponent(
-    `${lesson.topics_covered ? `Topics: ${lesson.topics_covered}\n\n` : ""}Join live classroom: ${typeof window !== "undefined" ? window.location.origin : ""}/academy/${companySlug}/classroom?tab=session`
+const TYPE_LABEL: Record<string, string> = { live_session: "Live class", workshop: "Workshop", assignment_due: "Assignment", other: "Event" };
+
+function fmtDate(d: Date, tz: string) {
+  return new Intl.DateTimeFormat("en-GB", { timeZone: tz, weekday: "short", day: "numeric", month: "short" }).format(d);
+}
+function fmtClock(d: Date, tz: string) {
+  return new Intl.DateTimeFormat("en-GB", { timeZone: tz, hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(d);
+}
+
+/** "Live now", "in 25 min", "in 3h 10m", "Tomorrow", "Mon 9 Nov". */
+function relativeStart(occ: Occurrence, now: Date, tz: string): string {
+  const ms = occ.start.getTime() - now.getTime();
+  if (ms <= 0) return "Live now";
+  const mins = Math.round(ms / 60000);
+  if (mins < 60) return `in ${mins} min`;
+  if (mins < 24 * 60) return `in ${Math.floor(mins / 60)}h ${mins % 60 ? `${mins % 60}m` : ""}`.trim();
+  const today = todayInTz(tz, now);
+  const day = zonedParts(occ.start, tz).date;
+  if (day === addDaysISO(today, 1)) return "Tomorrow";
+  return fmtDate(occ.start, tz);
+}
+
+type BadgeTone = "slate" | "brand" | "green" | "red";
+function Badge({ children, tone = "slate" }: { children: React.ReactNode; tone?: BadgeTone }) {
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold border",
+        tone === "slate" && "bg-slate-50 text-slate-600 border-slate-200",
+        tone === "brand" && "bg-brand-soft text-brand-ink border-brand/20",
+        tone === "green" && "bg-emerald-50 text-emerald-700 border-emerald-200",
+        tone === "red" && "bg-red-50 text-red-700 border-red-200"
+      )}
+    >
+      {children}
+    </span>
   );
-  const location = encodeURIComponent("Zed AI Academy - Classroom");
-
-  let startIso = "";
-  let endIso = "";
-  if (lesson.is_recurring && lesson.start_time_only) {
-    const today = new Date();
-    const targetDay = lesson.day_of_week || 1;
-    const currentDay = today.getDay() === 0 ? 7 : today.getDay();
-    let diff = targetDay - currentDay;
-    if (diff < 0) diff += 7;
-    const targetDate = new Date(today.getTime() + diff * 86400000);
-    const [sh, sm] = (lesson.start_time_only || "10:00").split(":");
-    const [eh, em] = (lesson.end_time_only || "11:00").split(":");
-    targetDate.setHours(Number(sh), Number(sm), 0, 0);
-    startIso = targetDate.toISOString().replace(/-|:|\.\d\d\d/g, "");
-    const endDate = new Date(targetDate);
-    endDate.setHours(Number(eh), Number(em), 0, 0);
-    endIso = endDate.toISOString().replace(/-|:|\.\d\d\d/g, "");
-  } else if (lesson.starts_at) {
-    startIso = new Date(lesson.starts_at).toISOString().replace(/-|:|\.\d\d\d/g, "");
-    endIso = new Date(lesson.ends_at || lesson.starts_at).toISOString().replace(/-|:|\.\d\d\d/g, "");
-  }
-
-  const recurrence = lesson.is_recurring ? "&recur=RRULE:FREQ=WEEKLY" : "";
-  return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${startIso}/${endIso}&details=${details}&location=${location}${recurrence}`;
 }
 
-function downloadIcsFile(lesson: any, companySlug: string) {
-  const title = lesson.title || "Live Class";
-  const desc = (lesson.topics_covered || "Live Class Session").replace(/\n/g, "\\n");
-  const classroomUrl = `${typeof window !== "undefined" ? window.location.origin : ""}/academy/${companySlug}/classroom?tab=session`;
-
-  const icsContent = [
-    "BEGIN:VCALENDAR",
-    "VERSION:2.0",
-    "PRODID:-//Zed AI Academy//Timetable//EN",
-    "CALSCALE:GREGORIAN",
-    "BEGIN:VEVENT",
-    `SUMMARY:${title}`,
-    `DESCRIPTION:${desc}\\n\\nJoin URL: ${classroomUrl}`,
-    `URL:${classroomUrl}`,
-    "STATUS:CONFIRMED",
-    ...(lesson.is_recurring ? ["RRULE:FREQ=WEEKLY"] : []),
-    "END:VEVENT",
-    "END:VCALENDAR",
-  ].join("\r\n");
-
-  const blob = new Blob([icsContent], { type: "text/calendar;charset=utf-8" });
-  const link = document.createElement("a");
-  link.href = window.URL.createObjectURL(blob);
-  link.setAttribute("download", `${title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}.ics`);
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  toast.success("Calendar event (.ics) downloaded!");
-}
-
-export function TimetableTab({ companyId, isAdminOrInstructor, companySlug }: { companyId: string, isAdminOrInstructor: boolean, companySlug: string }) {
-  const [schedules, setSchedules] = useState<any[]>([]);
-  const [groups, setGroups] = useState<any[]>([]);
+export function TimetableTab({ companyId, isAdminOrInstructor, companySlug }: { companyId: string; isAdminOrInstructor: boolean; companySlug: string }) {
+  const [timezone, setTimezone] = useState("Africa/Lusaka");
+  const [schedules, setSchedules] = useState<Schedule[]>([]);
+  const [groups, setGroups] = useState<{ id: string; name: string }[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isPosting, setIsPosting] = useState(false);
-  const [open, setOpen] = useState(false);
-  const [isRecurring, setIsRecurring] = useState(true);
-  const [sendingReminder, setSendingReminder] = useState(false);
-  
-  // Lesson Detail View
-  const [selectedLesson, setSelectedLesson] = useState<any | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [view, setView] = useState<"list" | "week">("list");
+  const [now, setNow] = useState(() => new Date());
 
-  // Time Validation Helpers
-  const [startTime, setStartTime] = useState("");
-  const [endTime, setEndTime] = useState("");
+  const [formOpen, setFormOpen] = useState(false);
+  const [editing, setEditing] = useState<Schedule | null>(null);
+  const [selected, setSelected] = useState<Schedule | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [busy, setBusy] = useState<string | null>(null);
+  const [showPast, setShowPast] = useState(false);
 
-  async function handleSendReminder(scheduleId: string) {
-    setSendingReminder(true);
+  const viewerTz = useMemo(() => {
     try {
-      const res = await sendScheduleReminder(companyId, scheduleId, companySlug);
-      toast.success(res.message);
-    } catch (err: any) {
-      toast.error(err.message || "Failed to send reminder");
-    } finally {
-      setSendingReminder(false);
+      return Intl.DateTimeFormat().resolvedOptions().timeZone;
+    } catch {
+      return timezone;
     }
-  }
+  }, [timezone]);
+
+  // Bump to refetch after a mutation (or the "Try again" button).
+  const [version, setVersion] = useState(0);
+  const reload = useCallback(() => setVersion((v) => v + 1), []);
 
   useEffect(() => {
-    async function load() {
+    let cancelled = false;
+    (async () => {
       try {
-        const [schedulesData, groupsData] = await Promise.all([
-          getClassSchedules(companyId),
-          getClassroomGroups(companyId)
-        ]);
-        setSchedules(schedulesData);
-        setGroups(groupsData);
+        const [tt, g] = await Promise.all([getTimetable(companyId), getClassroomGroups(companyId)]);
+        if (cancelled) return;
+        setTimezone(tt.timezone);
+        setSchedules(tt.schedules);
+        setGroups(((g ?? []) as { id: string; name: string }[]));
+        setLoadError(null);
       } catch (e) {
-        console.error(e);
+        if (!cancelled) setLoadError(e instanceof Error && e.message ? e.message : "Couldn't load the timetable.");
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [companyId, version]);
+
+  useEffect(() => {
+    const t = setInterval(() => setNow(new Date()), 60_000); // keeps "Live now" / countdowns fresh
+    return () => clearInterval(t);
+  }, []);
+
+  const groupName = useMemo(() => Object.fromEntries(groups.map((g) => [g.id, g.name])), [groups]);
+
+  const enriched: Enriched[] = useMemo(
+    () => schedules.map((s) => ({ ...s, occ: nextOccurrence(s, timezone, now), live: isLiveNow(s, timezone, now) })),
+    [schedules, timezone, now]
+  );
+
+  const today = useMemo(() => {
+    const date = todayInTz(timezone, now);
+    return { date, isoDay: isoDayOf(date) };
+  }, [timezone, now]);
+
+  const byDay = useMemo(() => {
+    const map: Record<number, Enriched[]> = {};
+    for (const s of enriched) {
+      if (!s.is_recurring || !s.day_of_week) continue;
+      (map[s.day_of_week] ||= []).push(s);
     }
-    load();
-  }, [companyId]);
+    for (const k of Object.keys(map)) map[+k].sort((a, b) => (a.start_time_only ?? "").localeCompare(b.start_time_only ?? ""));
+    return map;
+  }, [enriched]);
 
-  // Automatically suggest end time (e.g., +1 hour)
-  const handleStartTimeChange = (val: string) => {
-    setStartTime(val);
-    if (val) {
-      const [h, m] = val.split(':').map(Number);
-      const newH = (h + 1) % 24;
-      const suggestedEnd = `${String(newH).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
-      setEndTime(suggestedEnd);
+  const oneOffUpcoming = useMemo(
+    () => enriched.filter((s) => !s.is_recurring && s.occ).sort((a, b) => a.occ!.start.getTime() - b.occ!.start.getTime()),
+    [enriched]
+  );
+  const oneOffPast = useMemo(
+    () =>
+      enriched
+        .filter((s) => !s.is_recurring && !s.occ)
+        .sort((a, b) => +new Date(b.starts_at) - +new Date(a.starts_at))
+        .slice(0, 10),
+    [enriched]
+  );
+  const nextUp = useMemo(
+    () => enriched.filter((s) => s.occ).sort((a, b) => a.occ!.start.getTime() - b.occ!.start.getTime())[0] ?? null,
+    [enriched]
+  );
+
+  // One-off classes that fall in the current Mon-Sun week (academy time) also appear in the week grid.
+  const oneOffThisWeekByDay = useMemo(() => {
+    const weekStart = addDaysISO(today.date, -(today.isoDay - 1));
+    const weekEnd = addDaysISO(weekStart, 6);
+    const map: Record<number, Enriched[]> = {};
+    for (const s of oneOffUpcoming) {
+      const p = zonedParts(s.occ!.start, timezone);
+      if (p.date >= weekStart && p.date <= weekEnd) (map[p.isoDay] ||= []).push(s);
     }
-  };
+    return map;
+  }, [oneOffUpcoming, timezone, today]);
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    setIsPosting(true);
-    const formData = new FormData(e.currentTarget);
-    formData.append("companyId", companyId);
-    formData.append("companySlug", companySlug);
-    formData.append("isRecurring", String(isRecurring));
+  const joinHref = (id?: string) => `/academy/${companySlug}/classroom?tab=session${id ? `&scheduleId=${id}` : ""}`;
+  const joinUrlAbs = () => `${window.location.origin}/academy/${companySlug}/classroom?tab=session`;
 
+  function downloadIcs(events: Schedule[], filename: string) {
+    const ics = buildIcs(events, { tz: timezone, joinUrl: joinUrlAbs(), calendarName: `${companySlug} timetable` });
+    if (!ics.includes("BEGIN:VEVENT")) {
+      toast.info("There are no upcoming classes to export.");
+      return;
+    }
+    const url = URL.createObjectURL(new Blob([ics], { type: "text/calendar;charset=utf-8" }));
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    toast.success("Calendar file downloaded");
+  }
+
+  async function run(key: string, fn: () => Promise<unknown>, ok: string) {
+    setBusy(key);
     try {
-      await postClassSchedule(formData);
-      toast.success("Schedule added successfully!");
-      setOpen(false);
-      const data = await getClassSchedules(companyId);
-      setSchedules(data);
-    } catch (e: any) {
-      toast.error(e.message || "Failed to add schedule");
+      const res = (await fn()) as { message?: unknown } | undefined;
+      toast.success(typeof res?.message === "string" ? res.message : ok);
+      return true;
+    } catch (e) {
+      toast.error(e instanceof Error && e.message ? e.message : "That didn't work. Please try again.");
+      return false;
     } finally {
-      setIsPosting(false);
+      setBusy(null);
     }
   }
 
-  const groupedSchedules = DAYS.reduce((acc, day, index) => {
-    const dayLessons = schedules.filter(s => s.day_of_week === (index + 1));
-    if (dayLessons.length > 0) acc[day] = dayLessons;
-    return acc;
-  }, {} as Record<string, any[]>);
+  const openAdd = () => {
+    setEditing(null);
+    setFormOpen(true);
+  };
+  const openEdit = (s: Schedule) => {
+    setSelected(null);
+    setConfirmDelete(false);
+    setEditing(s);
+    setFormOpen(true);
+  };
+  const closeDetails = () => {
+    setSelected(null);
+    setConfirmDelete(false);
+  };
 
-  return (
-    <div className="min-h-screen bg-slate-50/50">
-      {/* Mobile-first container with responsive padding */}
-      <div className="px-4 py-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-        
-        {/* Header Section - Stack on mobile, row on tablet+ */}
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6 sm:mb-8">
-          <div>
-            <h2 className="text-xl sm:text-2xl font-bold text-slate-900 flex items-center gap-2">
-              School Timetable
-              <BookOpen className="h-5 w-5 text-[#fd5523]" />
-            </h2>
-            <p className="text-xs sm:text-sm text-slate-500 font-medium mt-1">
-              Weekly recurring class schedule and subjects.
-            </p>
-          </div>
-          
-          {isAdminOrInstructor && (
-            <Dialog open={open} onOpenChange={setOpen}>
-              <DialogTrigger render={(props) => (
-                <Button {...props} className="bg-[#fd5523] text-white hover:bg-[#ef4a16] rounded-xl flex items-center gap-2 shadow-lg shadow-[#fd5523]/20 transition-all hover:scale-[1.02] w-full sm:w-auto">
-                  <Plus className="h-4 w-4" />
-                  Add Subject
-                </Button>
-              )} />
-              <DialogContent className="sm:max-w-[600px] rounded-[2rem] overflow-hidden w-[95vw] sm:w-full mx-auto">
-                <div className="p-1 px-4 bg-gradient-to-r from-[#fd5523] to-orange-400 h-1" />
-                <DialogHeader className="pt-6 px-4 sm:px-6">
-                  <DialogTitle className="text-xl sm:text-2xl font-black text-[#062e39]">Create New Subject</DialogTitle>
-                </DialogHeader>
-                <form onSubmit={handleSubmit} className="space-y-6 p-4 sm:p-6 overflow-y-auto max-h-[80vh]">
-                  <div className="space-y-5">
-                    {/* Responsive grid - 1 column on mobile, 2 on tablet+ */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Subject Name</label>
-                        <Input name="title" placeholder="e.g. Mathematics" required className="rounded-xl border-slate-100 bg-slate-50/50 h-12 focus:bg-white" />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Lesson Type</label>
-                        <Select name="type" defaultValue="live_session">
-                          <SelectTrigger className="rounded-xl border-slate-100 bg-slate-50/50 h-12 focus:bg-white">
-                            <SelectValue placeholder="Type" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="live_session">Live Class</SelectItem>
-                            <SelectItem value="workshop">Workshop</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
+  function timeBlock(s: Enriched) {
+    if (s.is_recurring) return { top: normalizeTime(s.start_time_only) ?? "", bottom: normalizeTime(s.end_time_only) ?? "" };
+    return { top: fmtClock(new Date(s.starts_at), timezone), bottom: fmtClock(new Date(s.ends_at), timezone) };
+  }
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                         <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Target Group (Class)</label>
-                         <Select name="groupId" defaultValue="all">
-                           <SelectTrigger className="rounded-xl border-slate-100 bg-slate-50/50 h-12">
-                             <SelectValue placeholder="All Students" />
-                           </SelectTrigger>
-                           <SelectContent>
-                             <SelectItem value="all">All Students</SelectItem>
-                             {groups.map(g => (
-                               <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>
-                             ))}
-                           </SelectContent>
-                         </Select>
-                      </div>
-                      <div className="flex items-center space-x-2 mt-0 sm:mt-6 h-12">
-                        <Checkbox id="recurring" checked={isRecurring} onCheckedChange={(v) => setIsRecurring(!!v)} />
-                        <label htmlFor="recurring" className="text-sm font-bold text-slate-700 cursor-pointer">Recurring Weekly</label>
-                      </div>
-                    </div>
-
-                    {isRecurring ? (
-                      <div className="p-4 sm:p-5 rounded-3xl bg-slate-50 border border-slate-100 space-y-4 animate-in fade-in duration-300">
-                        <div className="space-y-2">
-                          <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Repeat Every</label>
-                          {/* Responsive day grid - scrollable on mobile */}
-                          <div className="overflow-x-auto pb-2 -mx-1">
-                            <div className="grid grid-cols-7 gap-1 min-w-[280px]">
-                              {DAYS.map((day, i) => (
-                                <div key={day} className="flex flex-col items-center">
-                                  <input 
-                                    type="radio" 
-                                    name="dayOfWeek" 
-                                    value={String(i + 1)} 
-                                    id={`day-${i}`} 
-                                    className="hidden peer" 
-                                    defaultChecked={i === 0}
-                                  />
-                                  <label 
-                                    htmlFor={`day-${i}`} 
-                                    className="w-full text-center py-2 rounded-lg text-[10px] font-black cursor-pointer bg-white border border-slate-100 text-slate-400 peer-checked:bg-[#fd5523] peer-checked:text-[#fd7e14] peer-checked:border-[#fd5523] transition-all whitespace-nowrap px-2"
-                                  >
-                                    {day.slice(0, 3)}
-                                  </label>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                          <div className="space-y-2">
-                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Start Time</label>
-                            <Input 
-                              name="startTime" 
-                              type="time" 
-                              value={startTime}
-                              onChange={(e) => handleStartTimeChange(e.target.value)}
-                              required 
-                              className="rounded-xl border-slate-100 bg-white h-12" 
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">End Time</label>
-                            <Input 
-                              name="endTime" 
-                              type="time" 
-                              value={endTime}
-                              onChange={(e) => setEndTime(e.target.value)}
-                              required 
-                              className="rounded-xl border-slate-100 bg-white h-12" 
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 sm:p-5 rounded-3xl bg-slate-50 border border-slate-100 animate-in fade-in duration-300">
-                        <div className="space-y-2">
-                          <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Starts At</label>
-                          <Input name="startsAt" type="datetime-local" required className="rounded-xl border-slate-100 bg-white h-12" />
-                        </div>
-                        <div className="space-y-2">
-                          <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Ends At</label>
-                          <Input name="endsAt" type="datetime-local" required className="rounded-xl border-slate-100 bg-white h-12" />
-                        </div>
-                      </div>
-                    )}
-
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Topics to be Covered</label>
-                      <Textarea name="topics" placeholder="Enter lesson topics..." className="rounded-xl border-slate-100 bg-slate-50/50 resize-none h-24 p-4" />
-                    </div>
-                  </div>
-                  <DialogFooter>
-                    <Button type="submit" disabled={isPosting} className="w-full bg-[#fd5523] hover:bg-[#ef4a16] h-14 rounded-2xl text-white font-black text-base sm:text-lg shadow-xl shadow-[#fd5523]/20">
-                      {isPosting ? <Loader2 className="h-5 w-5 sm:h-6 sm:w-6 animate-spin mr-2" /> : null}
-                      Save to Timetable
-                    </Button>
-                  </DialogFooter>
-                </form>
-              </DialogContent>
-            </Dialog>
+  function lessonCard(s: Enriched) {
+    const t = timeBlock(s);
+    const isToday = s.is_recurring && s.day_of_week === today.isoDay;
+    return (
+      <article
+        key={s.id}
+        className={cn(
+          "bg-white rounded-2xl border p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center gap-4 transition-shadow hover:shadow-md",
+          s.live ? "border-red-200 ring-1 ring-red-100" : "border-slate-200"
+        )}
+      >
+        <div
+          className={cn(
+            "shrink-0 sm:w-24 rounded-xl flex sm:flex-col items-center justify-between sm:justify-center gap-1 px-4 py-2.5 sm:py-3 font-black tabular-nums",
+            s.live ? "bg-red-50 text-red-700" : "bg-brand-soft text-brand-ink"
           )}
+        >
+          <span className="text-lg leading-none">{t.top}</span>
+          <span className="text-xs font-bold opacity-70 leading-none">to {t.bottom}</span>
         </div>
 
-        {/* Timetable Content */}
-        <div className="space-y-8 sm:space-y-12">
-          {loading ? (
-            <div className="flex flex-col items-center justify-center py-20 text-slate-400">
-              <Loader2 className="h-10 w-10 animate-spin mb-4 text-[#fd5523]" />
-              <p className="text-[10px] font-black uppercase tracking-widest text-center">Compiling School Timetable...</p>
-            </div>
-          ) : (
-            <>
-              {DAYS.map((day) => {
-                const lessons = groupedSchedules[day];
-                if (!lessons) return null;
-                return (
-                  <div key={day} className="space-y-4 sm:space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                    {/* Day Header - Responsive */}
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
-                      <div className="px-4 py-1.5 rounded-full bg-[#062e39] text-white text-xs font-black uppercase tracking-[0.2em] shadow-lg inline-block w-fit">
-                        {day}
-                      </div>
-                      <div className="h-px flex-1 bg-gradient-to-r from-slate-200 to-transparent hidden sm:block" />
-                    </div>
-                    
-                    {/* Lessons Grid - 1 column on mobile, 1 on tablet, responsive gap */}
-                    <div className="grid grid-cols-1 gap-4 sm:gap-5">
-                      {lessons.map((lesson) => (
-                        <div key={lesson.id} className="bg-white rounded-2xl sm:rounded-[2rem] p-5 sm:p-7 border border-slate-100 shadow-sm hover:shadow-xl hover:border-[#fd5523]/30 transition-all group relative overflow-hidden">
-                          <div className="absolute top-0 right-0 p-6 sm:p-8 opacity-[0.02] pointer-events-none group-hover:opacity-[0.05] transition-opacity">
-                             <LayoutGrid className="h-24 w-24 sm:h-32 sm:w-32" />
-                          </div>
-                          
-                          {/* Responsive layout - column on mobile, row on tablet+ */}
-                          <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-6 lg:gap-8">
-                            <div className="flex flex-col sm:flex-row sm:items-start gap-4 sm:gap-6 flex-1">
-                              {/* Time Icon - Responsive sizing */}
-                              <div className="h-16 w-16 sm:h-20 sm:w-20 rounded-2xl sm:rounded-3xl bg-[#fd5523]/5 text-[#fd5523] flex flex-col items-center justify-center border-2 border-[#fd5523]/10 shrink-0 shadow-inner group-hover:bg-[#fd5523] group-hover:text-white transition-all duration-500">
-                                 <Clock className="h-5 w-5 sm:h-7 sm:w-7 mb-1" />
-                                 <span className="text-xs sm:text-sm font-black tracking-tighter">{lesson.start_time_only?.slice(0, 5)}</span>
-                              </div>
-                              
-                              <div className="flex-1 min-w-0">
-                                {/* Title and badges - responsive wrapping */}
-                                <div className="flex flex-wrap items-center gap-2 mb-3">
-                                  <h4 className="text-xl sm:text-2xl font-black text-[#062e39] tracking-tight group-hover:text-[#fd5523] transition-colors break-words">
-                                    {lesson.title}
-                                  </h4>
-                                  <div className="px-2 py-1 sm:px-3 rounded-lg bg-indigo-50 text-indigo-600 text-[9px] sm:text-[10px] font-black uppercase tracking-widest border border-indigo-100">
-                                    {lesson.schedule_type?.replace('_', ' ')}
-                                  </div>
-                                  {lesson.group_id && (
-                                    <div className="px-2 py-1 sm:px-3 rounded-lg bg-emerald-50 text-emerald-600 text-[9px] sm:text-[10px] font-black uppercase tracking-widest border border-emerald-100 flex items-center gap-1">
-                                      <Users className="h-2 w-2 sm:h-3 sm:w-3" /> Class
-                                    </div>
-                                  )}
-                                </div>
-                                
-                                {/* Instructor and time info - responsive */}
-                                <div className="flex flex-wrap items-center gap-3 sm:gap-5 text-xs sm:text-sm text-slate-500 font-bold">
-                                   <span className="flex items-center gap-1 sm:gap-2 bg-slate-50 px-2 py-1 sm:px-3 sm:py-1 rounded-full">
-                                     <User className="h-3 w-3 sm:h-4 sm:w-4 text-[#fd5523]" /> 
-                                     <span className="text-xs sm:text-sm">Instructor: You</span>
-                                   </span>
-                                   <span className="flex items-center gap-1 sm:gap-2 bg-slate-50 px-2 py-1 sm:px-3 sm:py-1 rounded-full">
-                                     <Clock className="h-3 w-3 sm:h-4 sm:w-4 text-[#fd5523]" /> 
-                                     <span className="text-xs sm:text-sm">{lesson.start_time_only?.slice(0, 5)} — {lesson.end_time_only?.slice(0, 5)}</span>
-                                   </span>
-                                </div>
-                                
-                                {/* Topics section - responsive padding */}
-                                {lesson.topics_covered && (
-                                  <div className="mt-4 sm:mt-5 p-4 sm:p-5 rounded-2xl sm:rounded-[1.5rem] bg-indigo-50/20 border border-indigo-100/50 backdrop-blur-sm group-hover:bg-white group-hover:border-indigo-200 transition-all">
-                                    <p className="text-[9px] sm:text-[10px] font-black text-indigo-900 uppercase tracking-widest mb-2 flex items-center gap-2">
-                                      <Sparkles className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-[#fd5523]" /> Syllabus / Topics:
-                                    </p>
-                                    <p className="text-xs sm:text-sm text-indigo-700/80 leading-relaxed font-medium italic break-words">
-                                      "{lesson.topics_covered}"
-                                    </p>
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                            
-                            {/* Action Button - Full width on mobile, auto on desktop */}
-                            <div className="mt-4 lg:mt-0 lg:ml-4 flex flex-wrap items-center gap-2">
-                              <a
-                                href={`/academy/${companySlug}/classroom?tab=session&scheduleId=${lesson.id}`}
-                                className="h-10 sm:h-12 px-5 sm:px-6 rounded-xl bg-[#fd5523] text-white font-black text-[10px] sm:text-xs uppercase tracking-widest hover:bg-[#ef4a16] transition-all shadow-md shadow-[#fd5523]/20 flex items-center justify-center gap-1.5"
-                              >
-                                <Video className="h-3.5 w-3.5" />
-                                <span>Join Room</span>
-                              </a>
-                              <Button 
-                                onClick={() => setSelectedLesson(lesson)}
-                                variant="outline"
-                                className="h-10 sm:h-12 px-4 sm:px-6 rounded-xl border-slate-200 text-[#062e39] font-black text-[10px] sm:text-xs uppercase tracking-widest hover:bg-slate-100 transition-all"
-                              >
-                                Details
-                              </Button>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                );
-              })}
-              
-              {/* Empty State - Mobile responsive */}
-              {schedules.length === 0 && (
-                <div className="text-center py-16 sm:py-24 bg-white rounded-3xl sm:rounded-[4rem] border-2 border-dashed border-slate-100">
-                  <CalendarDays className="mx-auto h-16 w-16 sm:h-24 sm:w-24 text-slate-50 mb-6 sm:mb-8" />
-                  <h3 className="text-2xl sm:text-3xl font-black text-[#062e39] px-4">Timetable Clear</h3>
-                  <p className="text-slate-400 mt-2 font-bold max-w-xs mx-auto px-4 text-sm sm:text-base">
-                    Your weekly school schedule will appear here once added by the instructor.
-                  </p>
-                </div>
-              )}
-            </>
+        <div className="flex-1 min-w-0 space-y-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <h4 className="text-lg font-black text-[#062e39] break-words">{s.title}</h4>
+            {s.live && (
+              <Badge tone="red">
+                <Radio className="h-3 w-3" /> Live now
+              </Badge>
+            )}
+            {isToday && !s.live && <Badge tone="brand">Today</Badge>}
+          </div>
+          <div className="flex flex-wrap items-center gap-1.5">
+            <Badge>{TYPE_LABEL[s.schedule_type ?? ""] ?? "Class"}</Badge>
+            <Badge tone="green">
+              <Users className="h-3 w-3" /> {s.group_id ? groupName[s.group_id] ?? "Group" : "Everyone"}
+            </Badge>
+            {!s.is_recurring && <Badge>{fmtDate(new Date(s.starts_at), timezone)}</Badge>}
+            {s.instructor_name && (
+              <Badge>
+                <User className="h-3 w-3" /> {s.instructor_name}
+              </Badge>
+            )}
+          </div>
+          {s.topics_covered && <p className="text-sm text-slate-600 line-clamp-2 break-words">{s.topics_covered}</p>}
+        </div>
+
+        <div className="flex gap-2 sm:flex-col sm:w-32">
+          <Link
+            href={joinHref(s.id)}
+            className="flex-1 h-11 px-4 rounded-xl bg-brand text-brand-on text-xs font-black uppercase tracking-wider hover:bg-brand-hover transition-colors inline-flex items-center justify-center gap-1.5"
+          >
+            <Video className="h-4 w-4" /> Join
+          </Link>
+          <Button variant="outline" onClick={() => setSelected(s)} className="flex-1 h-11 rounded-xl text-xs font-black uppercase tracking-wider text-[#062e39]">
+            Details
+          </Button>
+        </div>
+      </article>
+    );
+  }
+
+  function weekChip(s: Enriched) {
+    const t = timeBlock(s);
+    return (
+      <button
+        key={s.id}
+        type="button"
+        onClick={() => setSelected(s)}
+        className={cn(
+          "w-full text-left rounded-lg border p-2 transition-colors hover:border-brand focus-visible:outline-2 focus-visible:outline-brand",
+          s.live ? "bg-red-50 border-red-200" : "bg-brand-soft/60 border-brand/20"
+        )}
+      >
+        <div className="text-[11px] font-black text-brand-ink tabular-nums">
+          {t.top}–{t.bottom}
+        </div>
+        <div className="text-xs font-bold text-[#062e39] leading-snug line-clamp-2 break-words">{s.title}</div>
+        {!s.is_recurring && <div className="mt-0.5 text-[10px] font-bold text-slate-500">One-off</div>}
+      </button>
+    );
+  }
+
+  const hasAny = schedules.length > 0;
+  const tzDiffers = viewerTz !== timezone;
+
+  return (
+    <div className="px-4 py-5 sm:px-6 lg:px-8 max-w-7xl w-full mx-auto">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between mb-5">
+        <div>
+          <h2 className="text-xl sm:text-2xl font-black text-[#062e39] flex items-center gap-2">
+            Timetable <CalendarDays className="h-5 w-5 text-brand-ink" />
+          </h2>
+          <p className="text-sm text-slate-500 mt-1">
+            Times shown in{" "}
+            <strong className="text-slate-700">
+              {timezone.replace(/_/g, " ")} ({tzLabel(timezone, now)})
+            </strong>
+            {tzDiffers && <> — your device is set to {viewerTz.replace(/_/g, " ")}</>}.
+          </p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <div role="group" aria-label="Timetable view" className="hidden lg:inline-flex p-1 rounded-xl bg-slate-100">
+            {(
+              [
+                ["list", "List", LayoutList],
+                ["week", "Week", LayoutGrid],
+              ] as const
+            ).map(([v, name, Icon]) => (
+              <button
+                key={v}
+                type="button"
+                aria-pressed={view === v}
+                onClick={() => setView(v)}
+                className={cn(
+                  "h-9 px-3 rounded-lg text-xs font-bold inline-flex items-center gap-1.5 transition-colors",
+                  view === v ? "bg-white text-[#062e39] shadow-sm" : "text-slate-500 hover:text-slate-700"
+                )}
+              >
+                <Icon className="h-4 w-4" /> {name}
+              </button>
+            ))}
+          </div>
+          {hasAny && (
+            <Button variant="outline" onClick={() => downloadIcs(schedules, `${companySlug}-timetable.ics`)} className="h-11 rounded-xl font-bold text-xs gap-2">
+              <Download className="h-4 w-4" />
+              <span className="hidden sm:inline">Add all to calendar</span>
+              <span className="sm:hidden">Calendar</span>
+            </Button>
+          )}
+          {isAdminOrInstructor && (
+            <Button onClick={openAdd} className="h-11 rounded-xl bg-brand text-brand-on hover:bg-brand-hover font-black gap-2 shadow-lg shadow-brand/20">
+              <Plus className="h-4 w-4" /> Add class
+            </Button>
           )}
         </div>
       </div>
 
-      {/* Lesson Details Dialog - Mobile Responsive */}
-      <Dialog open={!!selectedLesson} onOpenChange={() => setSelectedLesson(null)}>
-        <DialogContent className="sm:max-w-[600px] rounded-2xl sm:rounded-[3rem] p-0 overflow-hidden border-none shadow-2xl w-[95vw] sm:w-full mx-auto">
-           <div className="bg-[#062e39] p-6 sm:p-8 text-white relative">
-              <div className="absolute top-0 right-0 p-8 sm:p-12 opacity-10 pointer-events-none">
-                 <BookOpen className="h-32 w-32 sm:h-40 sm:w-40" />
+      {loading ? (
+        <div role="status" className="flex flex-col items-center justify-center py-20 text-slate-500">
+          <Loader2 className="h-9 w-9 animate-spin mb-3 text-brand-ink" />
+          <p className="text-sm font-bold">Loading timetable…</p>
+        </div>
+      ) : loadError ? (
+        <div role="alert" className="rounded-2xl border border-red-200 bg-red-50 p-6 text-center">
+          <AlertCircle className="h-8 w-8 text-red-500 mx-auto mb-2" />
+          <p className="font-bold text-red-800">{loadError}</p>
+          <Button
+            variant="outline"
+            onClick={() => {
+              setLoading(true);
+              reload();
+            }}
+            className="mt-4 rounded-xl"
+          >
+            Try again
+          </Button>
+        </div>
+      ) : !hasAny ? (
+        <div className="text-center py-14 sm:py-20 px-4 bg-white rounded-3xl border-2 border-dashed border-slate-200">
+          <CalendarDays className="mx-auto h-14 w-14 text-slate-300 mb-4" />
+          <h3 className="text-xl sm:text-2xl font-black text-[#062e39]">No classes yet</h3>
+          <p className="text-slate-500 mt-2 max-w-sm mx-auto text-sm sm:text-base">
+            {isAdminOrInstructor
+              ? "Add your first class and your students will see it here and get a notification."
+              : "Your timetable will appear here once your instructor adds classes."}
+          </p>
+          {isAdminOrInstructor && (
+            <Button onClick={openAdd} className="mt-6 h-12 px-6 rounded-xl bg-brand text-brand-on hover:bg-brand-hover font-black gap-2">
+              <Plus className="h-4 w-4" /> Add a class
+            </Button>
+          )}
+        </div>
+      ) : (
+        <div className="space-y-8">
+          {nextUp?.occ && (
+            <section
+              aria-label="Next class"
+              className={cn("rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center gap-4 text-white", nextUp.live ? "bg-red-600" : "bg-[#062e39]")}
+            >
+              <div className="flex-1 min-w-0">
+                <p className="text-[11px] font-bold uppercase tracking-widest opacity-80">{nextUp.live ? "Happening now" : "Next up"}</p>
+                <p className="text-lg sm:text-xl font-black break-words">{nextUp.title}</p>
+                <p className="text-sm opacity-90">
+                  {fmtDate(nextUp.occ.start, timezone)}, {fmtClock(nextUp.occ.start, timezone)} {tzLabel(timezone, nextUp.occ.start)} ·{" "}
+                  <strong>{relativeStart(nextUp.occ, now, timezone)}</strong>
+                  {tzDiffers && <span className="opacity-80"> · {fmtClock(nextUp.occ.start, viewerTz)} your time</span>}
+                </p>
               </div>
-              <button onClick={() => setSelectedLesson(null)} className="absolute top-4 right-4 sm:top-6 sm:right-6 h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-all">
-                 <X className="h-4 w-4 sm:h-5 sm:w-5" />
-              </button>
-              <div className="px-3 py-1 sm:px-4 sm:py-1.5 rounded-full bg-[#fd5523] text-white text-[8px] sm:text-[10px] font-black uppercase tracking-widest inline-block mb-3 sm:mb-4">
-                 {selectedLesson?.schedule_type?.replace('_', ' ')}
-              </div>
-              <h2 className="text-2xl sm:text-4xl font-black tracking-tight mb-2 break-words">{selectedLesson?.title}</h2>
-              <p className="text-white/60 font-bold flex items-center gap-2 text-sm sm:text-base">
-                 <Clock className="h-3 w-3 sm:h-4 sm:w-4" /> Every {DAYS[(selectedLesson?.day_of_week || 1) - 1]} at {selectedLesson?.start_time_only?.slice(0, 5)}
-              </p>
-           </div>
-           <div className="p-6 sm:p-10 bg-white space-y-6 sm:space-y-8">
-              <div className="space-y-3 sm:space-y-4">
-                 <h4 className="text-[10px] sm:text-xs font-black uppercase tracking-[0.2em] text-[#fd5523]">Learning Objectives</h4>
-                 <div className="p-4 sm:p-6 rounded-2xl sm:rounded-3xl bg-slate-50 border border-slate-100">
-                    <p className="text-sm sm:text-base text-slate-600 leading-relaxed font-medium break-words">
-                       {selectedLesson?.topics_covered || "No topics specified for this lesson."}
-                    </p>
-                 </div>
-              </div>
-              
-              {/* Info cards - 1 column on mobile, 2 on tablet */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-                 <div className="p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-100 flex items-center gap-3 sm:gap-4">
-                    <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center shadow-inner">
-                       <User className="h-5 w-5 sm:h-6 sm:w-6" />
-                    </div>
-                    <div>
-                       <p className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-slate-400">Instructor</p>
-                       <p className="text-xs sm:text-sm font-black text-[#062e39]">Assigned Instructor</p>
-                    </div>
-                 </div>
-                 <div className="p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-100 flex items-center gap-3 sm:gap-4">
-                    <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center shadow-inner">
-                       <Info className="h-5 w-5 sm:h-6 sm:w-6" />
-                    </div>
-                    <div>
-                       <p className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-slate-400">Status</p>
-                       <p className="text-xs sm:text-sm font-black text-[#062e39]">Confirmed</p>
-                    </div>
-                 </div>
-              </div>
+              <Link
+                href={joinHref(nextUp.id)}
+                className="h-12 px-6 rounded-xl bg-white text-[#062e39] font-black text-sm inline-flex items-center justify-center gap-2 hover:bg-slate-100 transition-colors"
+              >
+                <Video className="h-4 w-4" /> {nextUp.live ? "Join now" : "Open classroom"}
+              </Link>
+            </section>
+          )}
 
-              {/* Direct Join & Calendar Action Strip */}
-              <div className="space-y-3 pt-2">
-                 <a
-                   href={`/academy/${companySlug}/classroom?tab=session&scheduleId=${selectedLesson?.id}`}
-                   className="w-full flex items-center justify-center gap-2 h-14 rounded-2xl bg-[#fd5523] text-white font-black text-sm uppercase tracking-widest hover:bg-[#ef4a16] transition-all shadow-xl shadow-[#fd5523]/25"
-                 >
-                   <Video className="h-5 w-5" />
-                   Enter Live Classroom
-                 </a>
+          {/* WEEK GRID (large screens only) */}
+          {view === "week" && (
+            <div className="hidden lg:grid grid-cols-7 gap-3">
+              {DAY_NAMES.map((d, i) => {
+                const iso = i + 1;
+                const items = [...(byDay[iso] ?? []), ...(oneOffThisWeekByDay[iso] ?? [])].sort((a, b) => timeBlock(a).top.localeCompare(timeBlock(b).top));
+                const isToday = iso === today.isoDay;
+                return (
+                  <div key={d} className={cn("rounded-2xl border p-2.5 min-h-40", isToday ? "border-brand bg-brand-soft/30" : "border-slate-200 bg-white")}>
+                    <div className={cn("text-xs font-black uppercase tracking-wider mb-2 px-1 flex items-center justify-between", isToday ? "text-brand-ink" : "text-slate-500")}>
+                      {d.slice(0, 3)} {isToday && <span className="text-[10px]">Today</span>}
+                    </div>
+                    <div className="space-y-2">{items.length ? items.map(weekChip) : <p className="text-xs text-slate-400 px-1">—</p>}</div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
 
-                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                   <a
-                     href={selectedLesson ? getGoogleCalendarUrl(selectedLesson, companySlug) : "#"}
-                     target="_blank"
-                     rel="noopener noreferrer"
-                     className="flex items-center justify-center gap-2 h-11 rounded-xl bg-slate-50 text-[#062e39] font-bold text-xs hover:bg-slate-100 border border-slate-200 transition-all"
-                   >
-                     <Calendar className="h-4 w-4 text-[#fd5523]" />
-                     Add to Google Calendar
-                   </a>
+          {/* LIST (always on small screens; on large when List is selected) */}
+          <div className={cn("space-y-8", view === "week" && "lg:hidden")}>
+            {DAY_NAMES.map((d, i) => {
+              const items = byDay[i + 1];
+              if (!items?.length) return null;
+              const isToday = i + 1 === today.isoDay;
+              return (
+                <section key={d} aria-label={d} className="space-y-3">
+                  <div className="flex items-center gap-3">
+                    <h3
+                      className={cn(
+                        "px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-[0.15em]",
+                        isToday ? "bg-brand text-brand-on" : "bg-[#062e39] text-white"
+                      )}
+                    >
+                      {d}
+                      {isToday && " · Today"}
+                    </h3>
+                    <div className="h-px flex-1 bg-gradient-to-r from-slate-200 to-transparent" />
+                  </div>
+                  <div className="space-y-3">{items.map(lessonCard)}</div>
+                </section>
+              );
+            })}
 
-                   <button
-                     type="button"
-                     onClick={() => selectedLesson && downloadIcsFile(selectedLesson, companySlug)}
-                     className="flex items-center justify-center gap-2 h-11 rounded-xl bg-slate-50 text-[#062e39] font-bold text-xs hover:bg-slate-100 border border-slate-200 transition-all"
-                   >
-                     <Download className="h-4 w-4 text-slate-500" />
-                     Download iCal (.ics)
-                   </button>
-                 </div>
-              </div>
+            {oneOffUpcoming.length > 0 && (
+              <section aria-label="One-off classes" className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <h3 className="px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-[0.15em] bg-indigo-600 text-white">One-off classes</h3>
+                  <div className="h-px flex-1 bg-gradient-to-r from-slate-200 to-transparent" />
+                </div>
+                <div className="space-y-3">{oneOffUpcoming.map(lessonCard)}</div>
+              </section>
+            )}
 
-              {/* Action Buttons - Column on mobile, row on tablet */}
-              <div className="pt-2 grid grid-cols-1 sm:grid-cols-4 gap-2.5">
-                 <Button onClick={() => setSelectedLesson(null)} className="h-12 rounded-xl bg-slate-100 text-[#062e39] font-black text-xs uppercase tracking-widest hover:bg-slate-200 transition-all">
-                    Close
-                 </Button>
-                 {isAdminOrInstructor && (
-                   <>
-                     <Button 
-                       onClick={() => selectedLesson && handleSendReminder(selectedLesson.id)}
-                       disabled={sendingReminder}
-                       className="h-12 rounded-xl bg-amber-500 text-white font-black text-xs uppercase tracking-widest hover:bg-amber-600 transition-all shadow-sm"
-                     >
-                        {sendingReminder ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Bell className="h-4 w-4 mr-1" />}
-                        Remind Class
-                     </Button>
-                     <Button onClick={async () => {
-                       if (!selectedLesson) return;
-                       try {
-                         await duplicateClassSchedule(selectedLesson.id, companySlug);
-                         toast.success("Schedule duplicated");
-                         setSelectedLesson(null);
-                         const data = await getClassSchedules(companyId);
-                         setSchedules(data);
-                       } catch (e: any) {
-                         toast.error(e.message);
-                       }
-                     }} className="h-12 rounded-xl bg-indigo-50 text-indigo-600 font-black text-xs uppercase tracking-widest hover:bg-indigo-100 transition-all border border-indigo-100">
-                        Duplicate
-                     </Button>
-                     <Button onClick={async () => {
-                       if (!selectedLesson) return;
-                       try {
-                         await deleteClassSchedule(selectedLesson.id, companySlug);
-                         toast.success("Schedule deleted");
-                         setSelectedLesson(null);
-                         const data = await getClassSchedules(companyId);
-                         setSchedules(data);
-                       } catch (e: any) {
-                         toast.error(e.message);
-                       }
-                     }} className="h-12 rounded-xl bg-red-50 text-red-600 font-black text-xs uppercase tracking-widest hover:bg-red-100 transition-all border border-red-100">
-                        Cancel
-                     </Button>
-                   </>
-                 )}
-              </div>
-           </div>
+            {oneOffPast.length > 0 && (
+              <section className="space-y-3">
+                <button type="button" aria-expanded={showPast} onClick={() => setShowPast((v) => !v)} className="flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-slate-700">
+                  <ChevronDown className={cn("h-4 w-4 transition-transform", showPast && "rotate-180")} /> Past one-off classes ({oneOffPast.length})
+                </button>
+                {showPast && <div className="space-y-3 opacity-70">{oneOffPast.map(lessonCard)}</div>}
+              </section>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Add / edit */}
+      <ScheduleFormDialog
+        open={formOpen}
+        onOpenChange={setFormOpen}
+        companyId={companyId}
+        companySlug={companySlug}
+        groups={groups}
+        timezone={timezone}
+        schedule={editing}
+        onSaved={reload}
+      />
+
+      {/* Details */}
+      <Dialog
+        open={!!selected}
+        onOpenChange={(o) => {
+          if (!o) closeDetails();
+        }}
+      >
+        <DialogContent className="sm:max-w-[560px] w-[calc(100vw-1.5rem)] max-h-[92dvh] p-0 overflow-hidden rounded-2xl sm:rounded-[2rem] gap-0">
+          {selected &&
+            (() => {
+              const s = enriched.find((e) => e.id === selected.id) ?? (selected as Enriched);
+              const occ = s.occ;
+              const gcal = googleCalendarUrl(s, { tz: timezone, joinUrl: typeof window !== "undefined" ? joinUrlAbs() : "" });
+              return (
+                <>
+                  <DialogHeader className="bg-[#062e39] text-white p-5 sm:p-7 text-left space-y-2">
+                    <div className="flex flex-wrap gap-1.5">
+                      <span className="px-2.5 py-1 rounded-full bg-brand text-brand-on text-[10px] font-black uppercase tracking-widest">{TYPE_LABEL[s.schedule_type ?? ""] ?? "Class"}</span>
+                      {s.is_recurring && (
+                        <span className="px-2.5 py-1 rounded-full bg-white/15 text-white text-[10px] font-black uppercase tracking-widest inline-flex items-center gap-1">
+                          <Repeat className="h-3 w-3" /> Weekly
+                        </span>
+                      )}
+                    </div>
+                    <DialogTitle className="text-2xl sm:text-3xl font-black tracking-tight break-words">{s.title}</DialogTitle>
+                    <DialogDescription className="text-white/75 flex items-center gap-2 text-sm">
+                      <Clock className="h-4 w-4 shrink-0" />
+                      {s.is_recurring
+                        ? `Every ${dayName(s.day_of_week)}, ${formatRange(s.start_time_only, s.end_time_only)} ${tzLabel(timezone, now)}`
+                        : `${fmtDate(new Date(s.starts_at), timezone)}, ${fmtClock(new Date(s.starts_at), timezone)}–${fmtClock(new Date(s.ends_at), timezone)} ${tzLabel(timezone, now)}`}
+                    </DialogDescription>
+                  </DialogHeader>
+
+                  <div className="p-5 sm:p-7 space-y-5 overflow-y-auto max-h-[calc(92dvh-9rem)]">
+                    {s.topics_covered && (
+                      <div>
+                        <h4 className="text-[11px] font-bold uppercase tracking-wider text-brand-ink mb-1.5">Topics</h4>
+                        <p className="text-sm text-slate-700 whitespace-pre-wrap break-words">{s.topics_covered}</p>
+                      </div>
+                    )}
+
+                    <dl className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                      <div className="rounded-xl border border-slate-200 p-3">
+                        <dt className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Instructor</dt>
+                        <dd className="font-bold text-[#062e39] mt-0.5">{s.instructor_name ?? "Not assigned"}</dd>
+                      </div>
+                      <div className="rounded-xl border border-slate-200 p-3">
+                        <dt className="text-[11px] font-bold uppercase tracking-wider text-slate-500">For</dt>
+                        <dd className="font-bold text-[#062e39] mt-0.5">{s.group_id ? groupName[s.group_id] ?? "A class group" : "Everyone in the academy"}</dd>
+                      </div>
+                      <div className="rounded-xl border border-slate-200 p-3 sm:col-span-2">
+                        <dt className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Next session</dt>
+                        <dd className="font-bold text-[#062e39] mt-0.5">
+                          {occ ? (
+                            <>
+                              {fmtDate(occ.start, timezone)}, {fmtClock(occ.start, timezone)} {tzLabel(timezone, occ.start)} · {relativeStart(occ, now, timezone)}
+                            </>
+                          ) : (
+                            "This class has already taken place"
+                          )}
+                          {occ && tzDiffers && (
+                            <span className="block text-xs font-medium text-slate-500">
+                              {fmtClock(occ.start, viewerTz)} in your timezone ({viewerTz.replace(/_/g, " ")})
+                            </span>
+                          )}
+                        </dd>
+                      </div>
+                    </dl>
+
+                    <div className="space-y-2">
+                      <Link
+                        href={joinHref(s.id)}
+                        onClick={closeDetails}
+                        className="w-full h-12 rounded-xl bg-brand text-brand-on font-black text-sm uppercase tracking-wider inline-flex items-center justify-center gap-2 hover:bg-brand-hover transition-colors"
+                      >
+                        <Video className="h-5 w-5" /> Enter classroom
+                      </Link>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        {gcal && (
+                          <a
+                            href={gcal}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="h-11 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-[#062e39] font-bold text-xs inline-flex items-center justify-center gap-2 transition-colors"
+                          >
+                            <Calendar className="h-4 w-4 text-brand-ink" /> Google Calendar
+                          </a>
+                        )}
+                        <button
+                          type="button"
+                          disabled={!occ}
+                          onClick={() => downloadIcs([s], `${s.title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}.ics`)}
+                          className="h-11 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 disabled:opacity-50 text-[#062e39] font-bold text-xs inline-flex items-center justify-center gap-2 transition-colors"
+                        >
+                          <Download className="h-4 w-4 text-slate-500" /> Apple / Outlook (.ics)
+                        </button>
+                      </div>
+                    </div>
+
+                    {isAdminOrInstructor && (
+                      <div className="pt-4 border-t border-slate-100 space-y-3">
+                        <div className="grid grid-cols-3 gap-2">
+                          <Button variant="outline" onClick={() => openEdit(s)} className="h-11 rounded-xl font-bold text-xs gap-1.5">
+                            <Pencil className="h-4 w-4" /> Edit
+                          </Button>
+                          <Button
+                            variant="outline"
+                            disabled={busy === "remind"}
+                            onClick={() => void run("remind", () => sendScheduleReminder(companyId, s.id, companySlug), "Reminder sent")}
+                            className="h-11 rounded-xl font-bold text-xs gap-1.5"
+                          >
+                            {busy === "remind" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Bell className="h-4 w-4" />} Remind
+                          </Button>
+                          <Button
+                            variant="outline"
+                            disabled={busy === "dup"}
+                            onClick={async () => {
+                              if (await run("dup", () => duplicateClassSchedule(s.id, companySlug), "Class duplicated")) {
+                                closeDetails();
+                                reload();
+                              }
+                            }}
+                            className="h-11 rounded-xl font-bold text-xs gap-1.5"
+                          >
+                            {busy === "dup" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Copy className="h-4 w-4" />} Copy
+                          </Button>
+                        </div>
+                        {!confirmDelete ? (
+                          <Button variant="ghost" onClick={() => setConfirmDelete(true)} className="w-full h-11 rounded-xl font-bold text-xs gap-1.5 text-red-600 hover:bg-red-50 hover:text-red-700">
+                            <Trash2 className="h-4 w-4" /> Delete class
+                          </Button>
+                        ) : (
+                          <div role="alert" className="rounded-xl border border-red-200 bg-red-50 p-3 space-y-2">
+                            <p className="text-sm font-bold text-red-800">
+                              Delete “{s.title}”{s.is_recurring ? " and every future week" : ""}? This can’t be undone.
+                            </p>
+                            <div className="grid grid-cols-2 gap-2">
+                              <Button variant="outline" onClick={() => setConfirmDelete(false)} className="h-10 rounded-lg bg-white">
+                                Keep it
+                              </Button>
+                              <Button
+                                disabled={busy === "del"}
+                                onClick={async () => {
+                                  if (await run("del", () => deleteClassSchedule(s.id, companySlug), "Class deleted")) {
+                                    closeDetails();
+                                    reload();
+                                  }
+                                }}
+                                className="h-10 rounded-lg bg-red-600 text-white hover:bg-red-700"
+                              >
+                                {busy === "del" ? <Loader2 className="h-4 w-4 animate-spin" /> : "Yes, delete"}
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </>
+              );
+            })()}
         </DialogContent>
       </Dialog>
     </div>

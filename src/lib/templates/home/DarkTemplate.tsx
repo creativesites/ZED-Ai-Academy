@@ -12,22 +12,22 @@ export function DarkTemplate({ tenant, courses, membership, brandColor, heroTitl
   const tutorAvatar = adminProfile?.avatar_url || null;
 
   return (
-    <div className="bg-[#0a0a0c] text-white selection:bg-[#fd5523] selection:text-white" style={{ "--primary-color": brandColor } as React.CSSProperties}>
+    <div className="bg-[#0a0a0c] text-white selection:bg-brand selection:text-brand-on" style={{ "--primary-color": brandColor } as React.CSSProperties}>
       {/* Hero */}
-      <section className="relative pt-52 pb-32 overflow-hidden">
+      <section className="relative pt-32 sm:pt-44 lg:pt-52 pb-16 sm:pb-24 lg:pb-32 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-[#0a0a0c] to-[#1a1a20]">
           <div className="absolute inset-0 opacity-10" style={{ backgroundImage: "url('https://www.transparenttextures.com/patterns/carbon-fibre.png')" }} />
         </div>
         
         {/* Animated Orbs */}
-        <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] bg-[#fd5523]/10 rounded-full blur-[120px] animate-pulse" />
-        <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-[#fd5523]/5 rounded-full blur-[100px]" />
+        <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] bg-brand/10 rounded-full blur-[120px] animate-pulse" />
+        <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-brand/5 rounded-full blur-[100px]" />
 
         <div className="container mx-auto px-6 text-center relative z-10">
-          <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-[#fd5523]/20 text-[#fd5523] text-[10px] font-black uppercase tracking-[0.2em] mb-12 border border-[#fd5523]/30">
-            <Sparkles className="h-4 w-4 fill-[#fd5523]" /> Join the Nebula
+          <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-brand/20 text-brand-ink-dark text-[10px] font-black uppercase tracking-[0.2em] mb-12 border border-brand/30">
+            <Sparkles className="h-4 w-4 fill-brand-ink-dark" /> Join the Nebula
           </div>
-          <h1 className="text-7xl md:text-[9rem] font-black tracking-tighter mb-10 leading-[0.8] text-white">
+          <h1 className="text-5xl sm:text-7xl md:text-8xl lg:text-[9rem] break-words font-black tracking-tighter mb-10 leading-[0.8] text-white">
             {heroTitle}
           </h1>
           <p className="text-xl md:text-3xl font-medium leading-relaxed max-w-3xl mx-auto mb-16 text-white/60">
@@ -38,32 +38,32 @@ export function DarkTemplate({ tenant, courses, membership, brandColor, heroTitl
               <form action={joinTenantBySlug}>
                 <input type="hidden" name="tenantSlug" value={tenant.slug} />
                 <input type="hidden" name="role" value="student" />
-                <Button className="h-20 px-14 rounded-[2.5rem] bg-[#fd5523] text-white text-xl font-black uppercase tracking-widest shadow-[0_0_50px_rgba(253,85,35,0.3)] hover:scale-105 transition-all">
+                <Button className="h-14 sm:h-20 px-8 sm:px-14 rounded-[2.5rem] bg-brand text-brand-on text-base sm:text-xl font-black uppercase tracking-widest shadow-[0_0_50px_color-mix(in_srgb,var(--brand)_30%,transparent)] hover:scale-105 transition-all">
                   Launch Now
                 </Button>
               </form>
             ) : (
               <Link href={`/academy/${tenant.slug}/classroom`}>
-                <Button className="h-20 px-14 rounded-[2.5rem] bg-[#fd5523] text-white text-xl font-black uppercase tracking-widest shadow-[0_0_50px_rgba(253,85,35,0.3)] hover:scale-105 transition-all">
+                <Button className="h-14 sm:h-20 px-8 sm:px-14 rounded-[2.5rem] bg-brand text-brand-on text-base sm:text-xl font-black uppercase tracking-widest shadow-[0_0_50px_color-mix(in_srgb,var(--brand)_30%,transparent)] hover:scale-105 transition-all">
                   Open Classroom
                 </Button>
               </Link>
             )}
-            <Button variant="outline" className="h-20 px-12 rounded-[2.5rem] border-white/10 text-white hover:bg-white/5 font-black text-xl">
+            <Button variant="outline" className="h-14 sm:h-20 px-7 sm:px-12 rounded-[2.5rem] bg-transparent border-white/20 text-white hover:bg-white/10 font-black text-base sm:text-xl">
               Explore
             </Button>
           </div>
 
           {/* Hero Stats */}
-          <div className="grid grid-cols-3 gap-12 max-w-4xl mx-auto pt-20 border-t border-white/5">
+          <div className="grid grid-cols-3 gap-4 sm:gap-12 max-w-4xl mx-auto pt-12 sm:pt-20 border-t border-white/5">
             {[
               { num: content.stats_students || "12K", label: "Active Students" },
               { num: content.stats_rating || "4.9", label: "Global Rating" },
               { num: content.stats_success || "95%", label: "Success Rate" }
             ].map(s => (
               <div key={s.label}>
-                <div className="text-5xl font-black text-[#fd5523] mb-2">{s.num}</div>
-                <div className="text-xs font-bold uppercase tracking-widest text-white/40">{s.label}</div>
+                <div className="text-3xl sm:text-5xl font-black text-brand-ink-dark mb-2">{s.num}</div>
+                <div className="text-xs font-bold uppercase tracking-widest text-white/60">{s.label}</div>
               </div>
             ))}
           </div>
@@ -71,15 +71,15 @@ export function DarkTemplate({ tenant, courses, membership, brandColor, heroTitl
       </section>
 
       {/* Mission */}
-      <section className="py-32 bg-[#0f0f12] relative overflow-hidden">
+      <section className="py-16 sm:py-24 lg:py-32 bg-[#0f0f12] relative overflow-hidden">
         <div className="container mx-auto px-6 max-w-7xl relative z-10">
-          <div className="grid lg:grid-cols-2 gap-20 items-center">
+          <div className="grid lg:grid-cols-2 gap-10 lg:gap-20 items-center">
             <div className="space-y-10">
-              <div className="h-1 bg-[#fd5523] w-20" />
-              <h2 className="text-5xl md:text-7xl font-black tracking-tighter leading-[0.9]">{aboutTitle}</h2>
+              <div className="h-1 bg-brand w-20" />
+              <h2 className="text-4xl sm:text-5xl md:text-7xl break-words font-black tracking-tighter leading-[0.9]">{aboutTitle}</h2>
               <p className="text-xl md:text-2xl font-medium leading-relaxed text-white/60">{aboutText}</p>
             </div>
-            <div className="relative aspect-square rounded-[5rem] overflow-hidden border border-white/10 group">
+            <div className="relative aspect-square rounded-[2.5rem] sm:rounded-[5rem] overflow-hidden border border-white/10 group">
               <img src={aboutImage} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" alt="" />
               <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0c] via-transparent to-transparent opacity-60" />
             </div>
@@ -99,11 +99,11 @@ export function DarkTemplate({ tenant, courses, membership, brandColor, heroTitl
       />
 
       {/* Courses Slider */}
-      <section className="py-32 bg-[#0a0a0c]">
+      <section className="py-16 sm:py-24 lg:py-32 bg-[#0a0a0c]">
         <div className="container mx-auto px-6 max-w-7xl">
           <div className="flex items-center justify-between mb-20">
-            <h2 className="text-5xl font-black text-white tracking-tighter">DATA CATALOG</h2>
-            <Link href="#courses" className="text-[#fd5523] text-sm font-black uppercase tracking-[0.3em] flex items-center gap-2 group">
+            <h2 className="text-3xl sm:text-5xl font-black text-white tracking-tighter">DATA CATALOG</h2>
+            <Link href="#courses" className="text-brand-ink-dark text-sm font-black uppercase tracking-[0.3em] flex items-center gap-2 group">
               View All <ArrowRight className="h-4 w-4 group-hover:translate-x-2 transition-transform" />
             </Link>
           </div>
@@ -114,22 +114,22 @@ export function DarkTemplate({ tenant, courses, membership, brandColor, heroTitl
 
 
       {/* CTA */}
-      <section className="py-32 container mx-auto px-6">
-        <div className="rounded-[4rem] p-16 md:p-28 bg-[#1a1a20] text-center border border-white/5 relative overflow-hidden group">
-          <div className="absolute top-0 right-0 w-[50%] h-[100%] bg-[#fd5523]/5 blur-[100px] group-hover:bg-[#fd5523]/10 transition-all" />
-          <h2 className="text-5xl md:text-[8rem] font-black mb-16 tracking-tighter leading-none relative z-10">{ctaTitle}</h2>
+      <section className="py-16 sm:py-24 lg:py-32 container mx-auto px-6">
+        <div className="rounded-[2rem] sm:rounded-[4rem] p-8 sm:p-16 md:p-28 bg-[#1a1a20] text-center border border-white/5 relative overflow-hidden group">
+          <div className="absolute top-0 right-0 w-[50%] h-[100%] bg-brand/5 blur-[100px] group-hover:bg-brand/10 transition-all" />
+          <h2 className="text-4xl sm:text-6xl md:text-[8rem] break-words font-black mb-16 tracking-tighter leading-none relative z-10">{ctaTitle}</h2>
           <div className="relative z-10">
             {!membership ? (
               <form action={joinTenantBySlug}>
                 <input type="hidden" name="tenantSlug" value={tenant.slug} />
                 <input type="hidden" name="role" value="student" />
-                <Button className="h-24 px-20 rounded-[3rem] bg-[#fd5523] text-white text-2xl font-black shadow-[0_0_60px_rgba(253,85,35,0.4)] hover:scale-110 transition-all">
+                <Button className="h-16 sm:h-24 px-8 sm:px-20 rounded-[3rem] bg-brand text-brand-on text-lg sm:text-2xl font-black shadow-[0_0_60px_color-mix(in_srgb,var(--brand)_40%,transparent)] hover:scale-110 transition-all">
                   {ctaButton}
                 </Button>
               </form>
             ) : (
               <Link href={`/academy/${tenant.slug}/classroom`}>
-                <Button className="h-24 px-20 rounded-[3rem] bg-[#fd5523] text-white text-2xl font-black shadow-[0_0_60px_rgba(253,85,35,0.4)] hover:scale-110 transition-all">
+                <Button className="h-16 sm:h-24 px-8 sm:px-20 rounded-[3rem] bg-brand text-brand-on text-lg sm:text-2xl font-black shadow-[0_0_60px_color-mix(in_srgb,var(--brand)_40%,transparent)] hover:scale-110 transition-all">
                   Open Classroom
                 </Button>
               </Link>

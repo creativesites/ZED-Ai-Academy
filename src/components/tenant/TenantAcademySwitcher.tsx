@@ -116,7 +116,7 @@ export function TenantAcademySwitcher({
         type="button"
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
-          "flex items-center gap-2 px-2.5 py-1.5 rounded-xl border transition-all text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-[#fd5523]/30",
+          "flex items-center gap-2 px-2.5 py-1.5 rounded-xl border transition-all text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-brand/30",
           isDark
             ? "bg-white/[0.06] border-white/10 text-slate-200 hover:bg-white/[0.1] hover:border-white/20"
             : variant === "admin"
@@ -155,7 +155,7 @@ export function TenantAcademySwitcher({
 
         {/* Multi-academy count pill */}
         {academies.length > 0 && (
-          <span className="inline-flex items-center justify-center px-1.5 py-0.2 rounded-full text-[10px] font-extrabold bg-[#fd5523]/10 text-[#fd5523] border border-[#fd5523]/20">
+          <span className="inline-flex items-center justify-center px-1.5 py-0.2 rounded-full text-[10px] font-extrabold bg-brand/10 text-brand-ink border border-brand/20">
             {academies.length}
           </span>
         )}
@@ -183,7 +183,7 @@ export function TenantAcademySwitcher({
                 You belong to {academies.length} {academies.length === 1 ? "academy" : "academies"}
               </p>
             </div>
-            <Sparkles className="h-3.5 w-3.5 text-[#fd5523]" />
+            <Sparkles className="h-3.5 w-3.5 text-brand-ink" />
           </div>
 
           {/* Academies List */}
@@ -206,8 +206,8 @@ export function TenantAcademySwitcher({
                     "w-full text-left px-2.5 py-2 rounded-xl transition-all flex items-center justify-between gap-2.5 group",
                     isCurrent
                       ? isDark
-                        ? "bg-white/[0.08] ring-1 ring-[#fd5523]/40"
-                        : "bg-orange-50/70 border border-orange-200/70"
+                        ? "bg-white/[0.08] ring-1 ring-brand/40"
+                        : "bg-brand-soft/70 border border-brand/30"
                       : isDark
                       ? "hover:bg-white/[0.05]"
                       : "hover:bg-slate-50"
@@ -230,7 +230,7 @@ export function TenantAcademySwitcher({
                     </div>
 
                     <div className="min-w-0">
-                      <p className="font-bold text-xs truncate leading-tight text-slate-900 dark:text-white group-hover:text-[#fd5523] transition-colors">
+                      <p className="font-bold text-xs truncate leading-tight text-slate-900 dark:text-white group-hover:text-brand-ink dark:group-hover:text-brand-ink-dark transition-colors">
                         {item.name}
                       </p>
                       <div className="flex items-center gap-1.5 mt-0.5">
@@ -243,7 +243,7 @@ export function TenantAcademySwitcher({
                   </div>
 
                   {isCurrent && (
-                    <div className="h-5 w-5 rounded-full bg-[#fd5523] text-white flex items-center justify-center shrink-0 shadow-xs">
+                    <div className="h-5 w-5 rounded-full bg-brand text-brand-on flex items-center justify-center shrink-0 shadow-xs">
                       <Check className="h-3 w-3 stroke-[3]" />
                     </div>
                   )}
@@ -277,8 +277,8 @@ export function TenantAcademySwitcher({
               className={cn(
                 "w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold flex items-center justify-between transition-colors",
                 isDark
-                  ? "text-[#fd5523] hover:bg-[#fd5523]/10"
-                  : "text-[#fd5523] hover:bg-[#fd5523]/5"
+                  ? "text-brand-ink hover:bg-brand/10"
+                  : "text-brand-ink hover:bg-brand/5"
               )}
             >
               <span className="flex items-center gap-2">

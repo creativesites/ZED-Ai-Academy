@@ -27,7 +27,7 @@ export function TimetableCalendar({ schedules }: { schedules: any[] }) {
           <h3 className="text-sm font-black uppercase tracking-widest text-[#062e39]">
             {DAYS[activeDayIdx]}
           </h3>
-          <p className="text-[10px] font-bold text-[#fd5523] uppercase">Daily Schedule</p>
+          <p className="text-[10px] font-bold text-brand-ink uppercase">Daily Schedule</p>
         </div>
 
         <button 
@@ -51,7 +51,7 @@ export function TimetableCalendar({ schedules }: { schedules: any[] }) {
           >
             <span className={cn(
               "text-[10px] font-black uppercase tracking-[0.2em]",
-              activeDayIdx === idx ? "text-[#fd5523]" : "text-slate-400"
+              activeDayIdx === idx ? "text-brand-ink" : "text-slate-400"
             )}>
               {day}
             </span>
@@ -112,12 +112,12 @@ export function TimetableCalendar({ schedules }: { schedules: any[] }) {
                     return (
                       <div
                         key={lesson.id}
-                        className="absolute left-2 right-2 lg:left-1.5 lg:right-1.5 rounded-2xl p-4 lg:p-3 overflow-hidden border border-[#fd5523]/20 shadow-md lg:shadow-sm transition-all hover:z-10 hover:scale-[1.02] lg:hover:scale-[1.03] group/lesson cursor-pointer"
+                        className="absolute left-2 right-2 lg:left-1.5 lg:right-1.5 rounded-2xl p-4 lg:p-3 overflow-hidden border border-brand/20 shadow-md lg:shadow-sm transition-all hover:z-10 hover:scale-[1.02] lg:hover:scale-[1.03] group/lesson cursor-pointer"
                         style={{ 
                           top: `${top}px`, 
                           height: `${height}px`,
-                          backgroundColor: "#fff6ee",
-                          color: "#fd5523"
+                          backgroundColor: "var(--brand-soft)",
+                          color: "var(--brand-ink)"
                         }}
                       >
                         <div className="flex flex-col h-full justify-between">
@@ -133,8 +133,8 @@ export function TimetableCalendar({ schedules }: { schedules: any[] }) {
                           
                           {/* Desktop/Tablet extra info */}
                           {height > 100 && (
-                            <div className="mt-auto pt-2 border-t border-[#fd5523]/10 hidden sm:flex items-center gap-2">
-                               <div className="h-5 w-5 rounded-full bg-[#fd5523] text-white flex items-center justify-center">
+                            <div className="mt-auto pt-2 border-t border-brand/10 hidden sm:flex items-center gap-2">
+                               <div className="h-5 w-5 rounded-full bg-brand text-brand-on flex items-center justify-center">
                                  <BookOpen className="h-2.5 w-2.5" />
                                </div>
                                <span className="text-[8px] font-black uppercase tracking-tighter opacity-80">View Lesson</span>
@@ -157,7 +157,7 @@ export function TimetableCalendar({ schedules }: { schedules: any[] }) {
             key={day}
             className={cn(
               "h-1.5 flex-1 rounded-full transition-all",
-              activeDayIdx === idx ? "bg-[#fd5523] grow-[2]" : "bg-slate-100"
+              activeDayIdx === idx ? "bg-brand grow-[2]" : "bg-slate-100"
             )}
           />
         ))}

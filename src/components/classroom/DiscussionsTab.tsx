@@ -97,7 +97,7 @@ export function DiscussionsTab({ companyId, companySlug }: { companyId: string, 
       >
         {loading ? (
           <div className="flex flex-col items-center justify-center h-full text-slate-400">
-            <Loader2 className="h-6 w-6 animate-spin mb-4 text-[#fd5523]" />
+            <Loader2 className="h-6 w-6 animate-spin mb-4 text-brand-ink" />
             <p className="text-[9px] font-black uppercase tracking-widest opacity-50">Syncing Messages...</p>
           </div>
         ) : (
@@ -138,7 +138,7 @@ export function DiscussionsTab({ companyId, companySlug }: { companyId: string, 
             {discussions.length === 0 && (
               <div className="flex flex-col items-center justify-center h-full text-center py-10 lg:py-20">
                 <div className="h-16 w-16 lg:h-24 lg:w-24 rounded-[1.5rem] lg:rounded-[2.5rem] bg-white shadow-xl border border-slate-100 flex items-center justify-center mb-6">
-                  <MessageSquare className="h-8 w-8 lg:h-12 lg:w-12 text-[#fd5523]/20" />
+                  <MessageSquare className="h-8 w-8 lg:h-12 lg:w-12 text-brand-ink/20" />
                 </div>
                 <h3 className="text-lg lg:text-2xl font-black text-[#062e39]">No Messages</h3>
                 <p className="text-slate-400 text-[11px] lg:text-sm max-w-[200px] lg:max-w-xs mt-2 font-medium">
@@ -153,11 +153,11 @@ export function DiscussionsTab({ companyId, companySlug }: { companyId: string, 
       {/* Input Area - Thumb Optimized */}
       <div className="p-1 lg:p-4 bg-white border-t border-slate-100 shrink-0">
         <div className="max-w-4xl mx-auto relative group">
-          <div className="relative bg-[#f8fafc] rounded-2xl lg:rounded-[2.2rem] border-2 border-slate-100 p-2 lg:p-3 flex items-center gap-2 lg:gap-4 transition-all focus-within:border-[#fd5523]/30 focus-within:bg-white shadow-sm">
+          <div className="relative bg-[#f8fafc] rounded-2xl lg:rounded-[2.2rem] border-2 border-slate-100 p-2 lg:p-3 flex items-center gap-2 lg:gap-4 transition-all focus-within:border-brand/30 focus-within:bg-white shadow-sm">
             
             {/* Sparkle Icon - Hidden on very small screens */}
             <div className="hidden xs:flex h-10 w-10 lg:h-12 lg:w-12 rounded-xl lg:rounded-2xl bg-white shadow-inner items-center justify-center shrink-0 border border-slate-100 mb-0.5">
-              <Sparkles className="h-4 w-4 lg:h-5 lg:w-5 text-[#fd5523]" />
+              <Sparkles className="h-4 w-4 lg:h-5 lg:w-5 text-brand-ink" />
             </div>
 
             <textarea
@@ -177,7 +177,7 @@ export function DiscussionsTab({ companyId, companySlug }: { companyId: string, 
             <Button 
               onClick={handlePost}
               disabled={pending || !content.trim()}
-              className="h-10 w-10 lg:h-12 lg:w-12 px-4 lg:px-6 rounded-[1.2rem] lg:rounded-2xl bg-[#062e39] hover:bg-[#fd5523] text-white shrink-0 shadow-lg active:scale-95 flex items-center gap-2 group/btn"
+              className="h-10 w-10 lg:h-12 lg:w-12 px-4 lg:px-6 rounded-[1.2rem] lg:rounded-2xl bg-[#062e39] hover:bg-brand text-white shrink-0 shadow-lg active:scale-95 flex items-center gap-2 group/btn hover:text-brand-on"
             >
               {pending ? (
                 <Loader2 className="h-4 w-4 lg:h-5 lg:w-5 animate-spin" />

@@ -131,10 +131,10 @@ export function StaffManagementClient({
                 <button
                   onClick={handleRegenerateCode}
                   disabled={isRegenerating}
-                  className="px-3 py-2 rounded-xl bg-white border border-slate-200 text-xs font-bold text-slate-600 hover:text-[#fd5523] flex items-center gap-1.5 transition-all shadow-sm"
+                  className="px-3 py-2 rounded-xl bg-white border border-slate-200 text-xs font-bold text-slate-600 hover:text-brand-ink flex items-center gap-1.5 transition-all shadow-sm"
                   title="Generate a new code to invalidate the old one"
                 >
-                  <RefreshCw className={`h-3.5 w-3.5 ${isRegenerating ? "animate-spin text-[#fd5523]" : ""}`} />
+                  <RefreshCw className={`h-3.5 w-3.5 ${isRegenerating ? "animate-spin text-brand-ink" : ""}`} />
                   <span>Reset</span>
                 </button>
               </div>
@@ -195,7 +195,7 @@ export function StaffManagementClient({
           <div className="mt-6 pt-4 border-t border-slate-100">
             <button
               onClick={() => copyToClipboard(studentInviteUrl, "student")}
-              className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-[#fd5523] text-white font-bold text-xs uppercase tracking-wider hover:bg-[#ea4817] transition-all shadow-md shadow-[#fd5523]/20 active:scale-95"
+              className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-brand text-brand-on font-bold text-xs uppercase tracking-wider hover:bg-[#ea4817] transition-all shadow-md shadow-brand/20 active:scale-95"
             >
               {copiedKey === "student" ? (
                 <>

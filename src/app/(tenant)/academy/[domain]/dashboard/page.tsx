@@ -1,0 +1,219 @@
+import { auth } from "@clerk/nextjs/server";
+import { createClient } from "@/lib/supabase/server";
+import { redirect, notFound } from "next/navigation";
+import Link from "next/link";
+import { 
+  ArrowRight, Award, BookOpen, Clock3, GraduationCap, 
+  Play, Sparkles, Trophy, Users, Layout, Building2
+} from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
+import type { Enrollment, Course } from "@/types/database";
+import { getCurrentTenantAccess } from "@/lib/tenants/access";
+
+export const metadata = { title: "Student Dashboard" };
+
+type EnrollmentWithCourse = Enrollment & {
+  courses: Pick<Course, "id" | "slug" | "title" | "thumbnail_url" | "category"> | null;
+};
+
+import { TenantNavbar } from "@/components/tenant/TenantNavbar";
+
+export default async function TenantStudentDashboardPage({
+  params,
+}: {
+  params: Promise<{ domain: string }>;
+}) {
+  const { domain } = await params;
+  const { userId } = await auth();
+  if (!userId) redirect(`/sign-in?redirect_url=/academy/${domain}/dashboard`);
+
+  const supabase = createClient();
+  
+  // 1. Fetch Company
+  const { data: company } = await supabase
+    .from("companies")
+    .select("id, name, slug, logo_url, primary_color, admin_id")
+    .eq("slug", domain)
+    .single();
+
+  if (!company) notFound();
+
+  // Enforce tenant membership: non-members cannot view the private tenant dashboard
+  const access = await getCurrentTenantAccess(company.id);
+  const isMember = Boolean(access?.isMember || access?.isSuperAdmin || company.admin_id === userId);
+
+  if (!isMember) {
+    redirect(`/academy/${company.slug}`);
+  }
+
+  // 2. Fetch User Profile
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("full_name")
+    .eq("id", userId)
+    .single();
+
+  const firstName = profile?.full_name?.split(" ")[0] ?? "there";
+
+  // 3. Fetch Enrollments for THIS company
+  const { data: enrollmentsData } = await supabase
+    .from("enrollments")
+    .select("*, courses(id, slug, title, thumbnail_url, category)")
+    .eq("user_id", userId)
+    .eq("company_id", company.id)
+    .in("status", ["active", "pending_payment"])
+    .order("enrolled_at", { ascending: false });
+
+  const enrollments = (enrollmentsData ?? []) as EnrollmentWithCourse[];
+
+  const completedCount = enrollments.filter((e) => e.completed_at).length;
+  const inProgressCount = enrollments.length - completedCount;
+
+  return (
+    <div className="bg-slate-50 min-h-screen">
+      <TenantNavbar tenant={company} />
+      
+      <div className="py-6 sm:py-10 md:py-12">
+        <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-8 md:space-y-12">
+
+        
+        {/* Hero Section */}
+        <section className="relative overflow-hidden rounded-[2rem] sm:rounded-[3rem] md:rounded-[4rem] bg-[#062e39] p-6 sm:p-10 md:p-16 lg:p-24 text-white shadow-2xl">
+          <div className="absolute top-0 right-0 p-6 sm:p-12 opacity-10 pointer-events-none">
+             <GraduationCap className="h-32 w-32 sm:h-64 sm:w-64" />
+          </div>
+          <div className="absolute bottom-[-100px] left-[-100px] w-80 h-80 bg-brand rounded-full blur-[120px] opacity-20" />
+          
+          <div className="relative z-10 max-w-3xl">
+            <div className="inline-flex items-center gap-2 sm:gap-3 px-4 sm:px-6 py-2 sm:py-2.5 rounded-full bg-white/10 text-white text-[10px] font-black uppercase tracking-[0.2em] sm:tracking-[0.3em] border border-white/10 mb-6 sm:mb-10">
+              <Sparkles className="h-4 w-4 text-yellow-400" /> Student Dashboard
+            </div>
+            <h1 className="text-3xl sm:text-5xl md:text-7xl font-black tracking-tighter mb-5 sm:mb-8 uppercase leading-[0.95] break-words">
+              Welcome back, <br/>
+              <span className="text-brand-ink-dark">{firstName}</span>
+            </h1>
+            <p className="text-white/70 text-base sm:text-lg md:text-xl font-medium leading-relaxed mb-8 sm:mb-12 max-w-lg">
+              Continue your journey at {company.name}. You have {inProgressCount} course{inProgressCount !== 1 ? "s" : ""} active.
+            </p>
+            <div className="flex flex-wrap gap-4">
+              <Link
+                href={`/academy/${company.slug}/classroom`}
+                className="group h-14 sm:h-20 w-full sm:w-auto justify-center px-6 sm:px-12 rounded-[1.5rem] sm:rounded-[2rem] bg-brand text-brand-on text-xs font-black uppercase tracking-[0.2em] flex items-center gap-4 hover:scale-[1.02] active:scale-95 transition-all shadow-2xl shadow-brand/30"
+              >
+                Enter Classroom 
+                <div className="h-8 w-8 rounded-full bg-white/20 flex items-center justify-center group-hover:rotate-12 transition-transform">
+                  <Layout className="h-4 w-4" />
+                </div>
+              </Link>
+            </div>
+          </div>
+        </section>
+
+        {/* Stats Grid */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+          {[
+            { label: "Active Courses", value: inProgressCount, icon: Clock3, accent: "bg-brand-soft text-brand-ink" },
+            { label: "Completed", value: completedCount, icon: Award, accent: "bg-emerald-50 text-emerald-600" },
+            { label: "Certificates", value: 0, icon: Trophy, accent: "bg-amber-50 text-amber-600" },
+            { label: "Total Library", value: enrollments.length, icon: BookOpen, accent: "bg-blue-50 text-blue-600" },
+          ].map((stat) => (
+            <div key={stat.label} className="bg-white rounded-3xl sm:rounded-[2.5rem] p-4 sm:p-6 border border-slate-100 shadow-sm">
+              <div className={cn("h-10 w-10 rounded-2xl flex items-center justify-center mb-4 shadow-inner", stat.accent)}>
+                <stat.icon className="h-5 w-5" />
+              </div>
+              <div className="text-2xl sm:text-3xl font-black text-[#062e39] tracking-tight">{stat.value}</div>
+              <div className="text-[10px] font-black uppercase tracking-widest text-slate-400 mt-1">{stat.label}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Course List */}
+        <section className="space-y-8">
+           <div className="flex items-center justify-between px-2">
+              <h2 className="text-xl sm:text-2xl font-black text-[#062e39] uppercase tracking-tight flex items-center gap-3">
+                <BookOpen className="h-6 w-6 text-brand-ink" /> 
+                My Learning
+              </h2>
+              <Link href={`/academy/${company.slug}#courses`} className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-brand-ink transition-colors">
+                Browse More
+              </Link>
+           </div>
+
+           {enrollments.length > 0 ? (
+             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-8">
+                {enrollments.map((enrollment) => {
+                  const course = enrollment.courses;
+                  if (!course) return null;
+                  const isPending = enrollment.status === "pending_payment";
+
+                  return (
+                    <Card key={enrollment.id} className="group bg-white rounded-3xl sm:rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-2xl hover:border-brand/20 transition-all overflow-hidden flex flex-col h-full">
+                      <div className="aspect-[16/10] bg-slate-50 relative overflow-hidden">
+                        {course.thumbnail_url ? (
+                          <img src={course.thumbnail_url} alt="" className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                        ) : (
+                          <div className="h-full w-full flex items-center justify-center bg-slate-100/50">
+                             <BookOpen className="h-16 w-16 text-slate-200" />
+                          </div>
+                        )}
+                        <div className="absolute top-4 left-4 sm:top-6 sm:left-6">
+                           <div className="px-4 py-1.5 rounded-full bg-white/90 backdrop-blur-md text-[10px] font-black uppercase tracking-[0.2em] text-[#062e39] shadow-xl border border-white">
+                             {course.category || "General"}
+                           </div>
+                        </div>
+                      </div>
+                      <CardContent className="p-5 sm:p-8 flex flex-col flex-1">
+                        <h3 className="text-xl sm:text-2xl font-black text-[#062e39] leading-tight group-hover:text-brand-ink transition-colors mb-5 sm:mb-6 break-words">{course.title}</h3>
+                        
+                        <div className="mt-auto space-y-6">
+                           {isPending ? (
+                             <div className="p-6 rounded-[2rem] bg-amber-50 border border-amber-100 flex flex-col gap-4">
+                                <div className="flex items-center gap-2">
+                                  <div className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
+                                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-700">Awaiting Confirmation</p>
+                                </div>
+                                <a 
+                                  href={`https://wa.me/260979046745?text=Hi, I have enrolled in ${course.title} and would like to confirm my payment.`}
+                                  target="_blank"
+                                  className="h-12 rounded-xl bg-[#25D366] text-white text-[10px] font-black uppercase tracking-[0.2em] flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-95 transition-all shadow-lg shadow-[#25D366]/20"
+                                >
+                                  Confirm on WhatsApp
+                                </a>
+                             </div>
+                           ) : (
+                             <div className="flex flex-wrap items-center justify-between gap-3">
+                                <div className="flex items-center gap-3">
+                                   <div className="h-2.5 w-2.5 rounded-full bg-brand animate-pulse shadow-[0_0_8px_color-mix(in_srgb,var(--brand)_50%,transparent)]" />
+                                   <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">In Progress</span>
+                                </div>
+                                <Link 
+                                  href={`/courses/${course.slug}/learn`}
+                                  className="h-12 px-8 rounded-xl bg-[#062e39] text-white text-[10px] font-black uppercase tracking-[0.2em] hover:bg-brand transition-all flex items-center gap-3 shadow-xl shadow-[#062e39]/10 hover:text-brand-on"
+                                >
+                                  Continue <ArrowRight className="h-4 w-4" />
+                                </Link>
+                             </div>
+                           )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+             </div>
+           ) : (
+             <div className="py-14 sm:py-24 px-4 text-center bg-white rounded-[2rem] sm:rounded-[4rem] border-2 border-dashed border-slate-100">
+                <BookOpen className="h-20 w-20 text-slate-50 mx-auto mb-6" />
+                <h3 className="text-2xl font-black text-[#062e39]">No active courses</h3>
+                <p className="text-slate-400 font-medium mt-2 max-w-xs mx-auto">Explore {company.name}'s curriculum to start learning.</p>
+                <Link href={`/academy/${company.slug}#courses`} className="mt-8 inline-flex h-14 px-8 rounded-2xl bg-[#062e39] text-white text-[10px] font-black uppercase tracking-widest hover:bg-brand transition-all hover:text-brand-on">
+                   Browse Courses
+                </Link>
+             </div>
+           )}
+        </section>
+      </div>
+    </div>
+  </div>
+);
+}

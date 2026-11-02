@@ -4,6 +4,10 @@ import { revalidatePath } from "next/cache";
 import { auth } from "@clerk/nextjs/server";
 import { createClient } from "@/lib/supabase/server";
 import { requireTenantMember, requireTenantTeacher } from "@/lib/tenants/access";
+import {
+  resolveTimezone, validateSchedule, findConflicts, nextOccurrence, dayName, tzLabel, todayInTz,
+  normalizeTime, type ScheduleLike, type TimetableRow,
+} from "@/lib/schedule";
 
 type ClassScheduleInsert = {
   company_id: string;
@@ -13,9 +17,9 @@ type ClassScheduleInsert = {
   topics_covered: string | null;
   is_recurring: boolean;
   group_id: string | null;
-  day_of_week?: number;
-  start_time_only?: string;
-  end_time_only?: string;
+  day_of_week: number | null;
+  start_time_only: string | null;
+  end_time_only: string | null;
   starts_at: string;
   ends_at: string;
 };
@@ -268,154 +272,225 @@ export async function getCompanyStudents(companyId: string) {
   return data;
 }
 
-export async function postClassSchedule(formData: FormData) {
-  const companyId = formData.get("companyId") as string;
-  const companySlug = formData.get("companySlug") as string;
-  const { userId, supabase } = await requireInstructor(companyId);
+/* ------------------------------------------------------------------ */
+/* Timetable helpers                                                   */
+/* ------------------------------------------------------------------ */
 
-  const title = formData.get("title") as string;
-  const isRecurring = formData.get("isRecurring") === "true";
-  const groupId = formData.get("groupId") as string || null;
-  
-  const rawScheduleType = String(formData.get("type") || "live_session");
-  const scheduleType: ClassScheduleInsert["schedule_type"] =
-    rawScheduleType === "workshop" || rawScheduleType === "assignment_due" || rawScheduleType === "other"
-      ? rawScheduleType
-      : "live_session";
-  const now = new Date().toISOString();
-  const insertData: ClassScheduleInsert = {
-    company_id: companyId,
-    title,
-    instructor_id: userId,
-    schedule_type: scheduleType,
-    topics_covered: formData.get("topics") as string || null,
-    is_recurring: isRecurring,
-    group_id: groupId === "all" ? null : groupId,
-    starts_at: now,
-    ends_at: now,
-  };
+async function getAcademyTimezone(supabase: ReturnType<typeof createClient>, companyId: string) {
+  // If the timezone column has not been migrated yet the select errors and we fall back to the default.
+  const { data } = await supabase.from("companies").select("timezone").eq("id", companyId).maybeSingle();
+  return resolveTimezone((data as { timezone?: string | null } | null)?.timezone);
+}
 
-  if (isRecurring) {
-    insertData.day_of_week = parseInt(formData.get("dayOfWeek") as string);
-    insertData.start_time_only = formData.get("startTime") as string;
-    insertData.end_time_only = formData.get("endTime") as string;
+/** "every Monday at 09:00 CAT" / "Mon, 9 Nov, 09:00 CAT" - used in notifications. */
+function describeWhen(s: ScheduleLike, tz: string, now: Date = new Date()): string {
+  if (s.is_recurring) {
+    return `every ${dayName(s.day_of_week)} at ${normalizeTime(s.start_time_only)} ${tzLabel(tz, now)}`;
+  }
+  const start = s.starts_at ? new Date(s.starts_at) : null;
+  if (!start) return "soon";
+  const when = new Intl.DateTimeFormat("en-GB", {
+    timeZone: tz, weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", hourCycle: "h23",
+  }).format(start);
+  return `${when} ${tzLabel(tz, start)}`;
+}
+
+/** Notify everyone a class is for: the chosen group, or every active member when it is for the whole academy. */
+async function notifyAudience(
+  supabase: ReturnType<typeof createClient>,
+  a: { companyId: string; companySlug: string; groupId: string | null; excludeUserId: string; type: string; title: string; body: string; scheduleId?: string; tab: string }
+) {
+  let ids: string[] = [];
+  if (a.groupId) {
+    const { data } = await supabase.from("classroom_group_members").select("profile_id").eq("group_id", a.groupId);
+    ids = (data ?? []).map((m: any) => m.profile_id);
   } else {
-    insertData.starts_at = formData.get("startsAt") as string;
-    insertData.ends_at = formData.get("endsAt") as string;
+    const { data } = await supabase.from("company_members").select("profile_id").eq("company_id", a.companyId).eq("status", "active");
+    ids = (data ?? []).map((m: any) => m.profile_id);
+  }
+  ids = [...new Set(ids.filter((id) => id && id !== a.excludeUserId))];
+  if (ids.length === 0) return 0;
+
+  const rows = ids.map((uid) => ({
+    user_id: uid,
+    type: a.type,
+    title: a.title,
+    body: a.body,
+    data: { schedule_id: a.scheduleId, company_id: a.companyId, company_slug: a.companySlug, url: `/academy/${a.companySlug}/classroom?tab=${a.tab}` },
+  }));
+  for (let i = 0; i < rows.length; i += 500) {
+    const { error } = await supabase.from("notifications").insert(rows.slice(i, i + 500) as any);
+    if (error) throw new Error(error.message);
+  }
+  return ids.length;
+}
+
+export type ScheduleConflict = { id: string; title: string; when: string };
+export type SaveScheduleResult =
+  | { ok: true; schedule: any }
+  | { ok: false; errors: string[]; conflicts?: ScheduleConflict[] };
+
+function readScheduleForm(formData: FormData) {
+  const str = (k: string) => {
+    const v = formData.get(k);
+    return typeof v === "string" ? v : "";
+  };
+  const rawType = str("type") || "live_session";
+  const scheduleType: ClassScheduleInsert["schedule_type"] =
+    rawType === "workshop" || rawType === "assignment_due" || rawType === "other" ? rawType : "live_session";
+  const rawGroup = str("groupId");
+  return {
+    input: {
+      title: str("title"),
+      isRecurring: str("isRecurring") === "true",
+      dayOfWeek: str("dayOfWeek"),
+      startTime: str("startTime"),
+      endTime: str("endTime"),
+      startsAt: str("startsAt"),
+      endsAt: str("endsAt"),
+    },
+    scheduleType,
+    topics: str("topics").trim().slice(0, 2000) || null,
+    groupId: rawGroup && rawGroup !== "all" ? rawGroup : null,
+    allowConflict: str("allowConflict") === "true",
+  };
+}
+
+async function saveSchedule(args: {
+  mode: "create" | "update";
+  companyId: string;
+  companySlug: string;
+  userId: string;
+  supabase: ReturnType<typeof createClient>;
+  formData: FormData;
+  existing?: any; // the row being edited
+}): Promise<SaveScheduleResult> {
+  const { mode, companyId, companySlug, userId, supabase, formData, existing } = args;
+  const tz = await getAcademyTimezone(supabase, companyId);
+  const form = readScheduleForm(formData);
+
+  const validated = validateSchedule(form.input, tz);
+  if (!validated.ok) return { ok: false, errors: validated.errors };
+
+  // The group must belong to this academy (the service role would otherwise accept any group id).
+  if (form.groupId) {
+    const { data: group } = await supabase.from("classroom_groups").select("id").eq("id", form.groupId).eq("company_id", companyId).maybeSingle();
+    if (!group) return { ok: false, errors: ["That class group doesn't exist in this academy."] };
   }
 
-  const { data: newSchedule, error } = await supabase
-    .from("class_schedules")
-    .insert(insertData)
-    .select()
-    .single();
+  const instructorId = existing?.instructor_id ?? userId;
+  const candidate: ScheduleLike = { id: existing?.id, ...validated.timing, instructor_id: instructorId, group_id: form.groupId };
 
+  const { data: others } = await supabase.from("class_schedules").select("*").eq("company_id", companyId);
+  const clashes = findConflicts(candidate, (others ?? []) as ScheduleLike[], tz) as any[];
+  if (clashes.length > 0 && !form.allowConflict) {
+    return {
+      ok: false,
+      errors: [],
+      conflicts: clashes.map((c) => ({ id: c.id, title: c.title, when: describeWhen(c, tz) })),
+    };
+  }
+
+  // company_id is deliberately not part of the editable fields: an edit can never move a class to another academy.
+  const fields = {
+    title: validated.title,
+    instructor_id: instructorId,
+    schedule_type: form.scheduleType,
+    topics_covered: form.topics,
+    group_id: form.groupId,
+    ...validated.timing,
+  };
+
+  const query =
+    mode === "create"
+      ? supabase.from("class_schedules").insert({ company_id: companyId, ...fields }).select().single()
+      : supabase.from("class_schedules").update(fields).eq("id", existing.id).eq("company_id", companyId).select().single();
+  const { data: saved, error } = await query;
   if (error) throw new Error(error.message);
 
-  // Notify students of newly scheduled class
+  // Tell students (best effort - a notification failure must not undo the save).
   try {
     const { data: company } = await supabase.from("companies").select("name").eq("id", companyId).maybeSingle();
-    let studentIds: string[] = [];
-
-    if (groupId && groupId !== "all") {
-      const { data: groupMembers } = await supabase
-        .from("classroom_group_members")
-        .select("profile_id")
-        .eq("group_id", groupId);
-      studentIds = (groupMembers ?? []).map((m: any) => m.profile_id).filter((pid: string) => pid && pid !== userId);
-    } else {
-      const { data: members } = await supabase
-        .from("company_members")
-        .select("profile_id")
-        .eq("company_id", companyId)
-        .eq("status", "active");
-      studentIds = (members ?? [])
-        .map((m: any) => m.profile_id)
-        .filter((pid: string) => pid && pid !== userId);
-    }
-
-    if (studentIds.length > 0) {
-      const timeDesc = isRecurring
-        ? `Every ${["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"][(insertData.day_of_week || 1) - 1]} at ${insertData.start_time_only}`
-        : `on ${new Date(insertData.starts_at).toLocaleString()}`;
-
-      const notifications = studentIds.map((pid: string) => ({
-        user_id: pid,
-        type: "class_schedule",
-        title: `📅 New Live Class: ${title}`,
-        body: `Scheduled ${timeDesc} for ${company?.name || "your academy"}. View your timetable.`,
-        data: {
-          schedule_id: newSchedule?.id,
-          company_id: companyId,
-          company_slug: companySlug,
-          url: `/academy/${companySlug}/classroom?tab=timetable`,
-        },
-      }));
-      await supabase.from("notifications").insert(notifications as any);
-    }
+    const when = describeWhen(saved as ScheduleLike, tz);
+    await notifyAudience(supabase, {
+      companyId, companySlug, groupId: form.groupId, excludeUserId: userId, scheduleId: saved?.id, tab: "timetable",
+      type: "class_schedule",
+      title: mode === "create" ? `📅 New class: ${validated.title}` : `📅 Class updated: ${validated.title}`,
+      body: `${mode === "create" ? "Scheduled" : "Now"} ${when} for ${company?.name || "your academy"}. View your timetable.`,
+    });
   } catch (notifErr) {
-    console.error("Failed to notify students of new schedule:", notifErr);
+    console.error("Failed to notify students of schedule change:", notifErr);
   }
 
   revalidatePath(`/academy/${companySlug}/admin/classroom`);
-  return newSchedule;
+  revalidatePath(`/academy/${companySlug}/classroom`);
+  return { ok: true, schedule: saved };
+}
+
+export async function postClassSchedule(formData: FormData): Promise<SaveScheduleResult> {
+  const companyId = String(formData.get("companyId") ?? "");
+  const companySlug = String(formData.get("companySlug") ?? "");
+  const { userId, supabase } = await requireInstructor(companyId);
+  return saveSchedule({ mode: "create", companyId, companySlug, userId, supabase, formData });
+}
+
+export async function updateClassSchedule(scheduleId: string, formData: FormData): Promise<SaveScheduleResult> {
+  const { schedule, userId, supabase } = await requireScheduleInstructor(scheduleId);
+  const companySlug = String(formData.get("companySlug") ?? "");
+  return saveSchedule({ mode: "update", companyId: schedule.company_id, companySlug, userId, supabase, formData, existing: schedule });
+}
+
+/** Load a schedule and require the caller to teach in the academy that owns it. */
+async function requireScheduleInstructor(scheduleId: string) {
+  const { data } = await createClient().from("class_schedules").select("*").eq("id", scheduleId).maybeSingle();
+  if (!data) throw new Error("Class not found.");
+  const ctx = await requireInstructor((data as any).company_id);
+  return { ...ctx, schedule: data as any };
+}
+
+/** Timetable for the classroom: rows + the academy timezone + instructor names. */
+export async function getTimetable(companyId: string) {
+  const { supabase } = await requireTenantMember(companyId);
+  const [timezone, res] = await Promise.all([
+    getAcademyTimezone(supabase, companyId),
+    supabase.from("class_schedules").select("*").eq("company_id", companyId),
+  ]);
+  if (res.error) throw new Error(res.error.message);
+  const rows = (res.data ?? []) as any[];
+
+  const instructorIds = [...new Set(rows.map((r) => r.instructor_id).filter(Boolean))] as string[];
+  const names: Record<string, string> = {};
+  if (instructorIds.length) {
+    const { data: profiles } = await supabase.from("profiles").select("id, full_name").in("id", instructorIds);
+    for (const pr of (profiles ?? []) as any[]) if (pr.full_name) names[pr.id] = pr.full_name;
+  }
+  return { timezone, schedules: rows.map((r) => ({ ...r, instructor_name: names[r.instructor_id] ?? null })) as TimetableRow[] };
 }
 
 export async function sendScheduleReminder(companyId: string, scheduleId: string, companySlug: string) {
   const { userId, supabase } = await requireInstructor(companyId);
 
-  const { data: rawSchedule } = await supabase
+  const { data: schedule } = await supabase
     .from("class_schedules")
     .select("*, companies(name)")
     .eq("id", scheduleId)
-    .single();
+    .eq("company_id", companyId) // an instructor may only remind their own academy's students
+    .maybeSingle();
+  if (!schedule) throw new Error("Class not found in this academy.");
 
-  const schedule = rawSchedule as any;
-  if (!schedule) throw new Error("Schedule not found");
-
-  let studentIds: string[] = [];
-
-  if (schedule.group_id) {
-    const { data: groupMembers } = await supabase
-      .from("classroom_group_members")
-      .select("profile_id")
-      .eq("group_id", schedule.group_id);
-    studentIds = (groupMembers ?? []).map((m: any) => m.profile_id).filter((pid: string) => pid && pid !== userId);
-  } else {
-    const { data: members } = await supabase
-      .from("company_members")
-      .select("profile_id")
-      .eq("company_id", companyId)
-      .eq("status", "active");
-    studentIds = (members ?? [])
-      .map((m: any) => m.profile_id)
-      .filter((pid: string) => pid && pid !== userId);
-  }
-
-  if (studentIds.length === 0) {
-    return { count: 0, message: "No active students to notify." };
-  }
-
+  const tz = await getAcademyTimezone(supabase, companyId);
+  const occ = nextOccurrence(schedule as ScheduleLike, tz);
+  const when = occ ? describeWhen({ is_recurring: false, starts_at: occ.start.toISOString() }, tz) : "soon";
   const companyName = (schedule as any).companies?.name || "your academy";
-  const timeDesc = schedule.start_time_only ? `at ${schedule.start_time_only}` : "starting soon";
 
-  const notifications = studentIds.map((pid: string) => ({
-    user_id: pid,
+  const count = await notifyAudience(supabase, {
+    companyId, companySlug, groupId: (schedule as any).group_id ?? null, excludeUserId: userId, scheduleId, tab: "session",
     type: "live_session_reminder",
-    title: `⏰ Reminder: ${schedule.title} Starts Soon`,
-    body: `Your live class with ${companyName} is scheduled ${timeDesc}. Tap to enter the classroom.`,
-    data: {
-      schedule_id: scheduleId,
-      company_id: companyId,
-      company_slug: companySlug,
-      url: `/academy/${companySlug}/classroom?tab=session`,
-    },
-  }));
-
-  const { error } = await supabase.from("notifications").insert(notifications as any);
-  if (error) throw new Error(error.message);
-
-  return { count: studentIds.length, message: `Reminder sent to ${studentIds.length} student(s)!` };
+    title: `⏰ Reminder: ${(schedule as any).title}`,
+    body: `Your live class with ${companyName} is on ${when}. Tap to enter the classroom.`,
+  });
+  if (count === 0) return { count: 0, message: "No active students to notify." };
+  return { count, message: `Reminder sent to ${count} student(s)!` };
 }
 
 export async function getUpcomingUserClasses(): Promise<any[]> {
@@ -446,10 +521,20 @@ export async function getUpcomingUserClasses(): Promise<any[]> {
 // Attendance
 export async function markAttendance(companyId: string, scheduleId: string, profileId: string, status: "present" | "absent" | "late", companySlug: string) {
   const { supabase } = await requireInstructor(companyId);
+
+  // The class and the student must both belong to this academy.
+  const [{ data: sched }, { data: member }] = await Promise.all([
+    supabase.from("class_schedules").select("id").eq("id", scheduleId).eq("company_id", companyId).maybeSingle(),
+    supabase.from("company_members").select("profile_id").eq("company_id", companyId).eq("profile_id", profileId).maybeSingle(),
+  ]);
+  if (!sched) throw new Error("Class not found in this academy.");
+  if (!member) throw new Error("That student is not a member of this academy.");
+
+  const tz = await getAcademyTimezone(supabase, companyId);
   const { error } = await supabase
     .from("student_attendance")
     .upsert(
-      { company_id: companyId, schedule_id: scheduleId, profile_id: profileId, status, date: new Date().toISOString().split("T")[0] } as any,
+      { company_id: companyId, schedule_id: scheduleId, profile_id: profileId, status, date: todayInTz(tz) } as any,
       { onConflict: "schedule_id, profile_id, date" }
     );
 
@@ -459,34 +544,36 @@ export async function markAttendance(companyId: string, scheduleId: string, prof
 
 export async function getSessionAttendance(companyId: string, scheduleId: string) {
   const { supabase } = await requireTenantMember(companyId);
-  const date = new Date().toISOString().split("T")[0];
+  const tz = await getAcademyTimezone(supabase, companyId);
   const { data, error } = await supabase
     .from("student_attendance")
     .select("profile_id, status")
+    .eq("company_id", companyId)
     .eq("schedule_id", scheduleId)
-    .eq("date", date);
+    .eq("date", todayInTz(tz));
 
   if (error) return [];
   return data;
 }
 
 export async function deleteClassSchedule(scheduleId: string, companySlug: string) {
-  const { supabase } = await requireTenantMember("ignored"); // Bypassing company ID check for simple delete, RLS handles it
-  const { error } = await supabase.from("class_schedules").delete().eq("id", scheduleId);
+  // Previously this called requireTenantMember("ignored"), which only ever passed for platform
+  // super-admins - so instructors could not delete their own classes. Authorize against the
+  // academy that actually owns the class.
+  const { schedule, supabase } = await requireScheduleInstructor(scheduleId);
+  const { error } = await supabase.from("class_schedules").delete().eq("id", scheduleId).eq("company_id", schedule.company_id);
   if (error) throw new Error(error.message);
   revalidatePath(`/academy/${companySlug}/admin/classroom`);
+  revalidatePath(`/academy/${companySlug}/classroom`);
 }
 
 export async function duplicateClassSchedule(scheduleId: string, companySlug: string) {
-  const { supabase } = await requireTenantMember("ignored");
-  const { data: schedule, error: fetchError } = await supabase.from("class_schedules").select("*").eq("id", scheduleId).single();
-  if (fetchError || !schedule) throw new Error("Schedule not found");
-
-  const { id, created_at, ...copyData } = schedule;
-  copyData.title = `${copyData.title} (Copy)`;
-  const { error } = await supabase.from("class_schedules").insert(copyData);
+  const { schedule, supabase } = await requireScheduleInstructor(scheduleId);
+  const { id: _id, created_at: _createdAt, ...copy } = schedule;
+  const { error } = await supabase.from("class_schedules").insert({ ...copy, title: `${copy.title} (Copy)` });
   if (error) throw new Error(error.message);
   revalidatePath(`/academy/${companySlug}/admin/classroom`);
+  revalidatePath(`/academy/${companySlug}/classroom`);
 }
 
 export async function markAutoAttendance(companyId: string, sessionId: string, scheduleId: string | null) {
@@ -503,7 +590,7 @@ export async function markAutoAttendance(companyId: string, sessionId: string, s
         profile_id: userId, 
         session_id: sessionId,
         status: "present", 
-        date: new Date().toISOString().split("T")[0] 
+        date: todayInTz(await getAcademyTimezone(supabase, companyId)),
       } as any,
       { onConflict: "schedule_id, profile_id, date" } // Using existing constraint, but updating session_id
     );

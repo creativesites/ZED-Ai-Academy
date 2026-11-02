@@ -39,6 +39,14 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+  /* Tenant brand roles - values are injected per academy by brandStyle() in src/lib/brand.ts */
+  --color-brand: var(--brand);
+  --color-brand-on: var(--brand-on);
+  --color-brand-ink: var(--brand-ink);
+  --color-brand-ink-dark: var(--brand-ink-dark);
+  --color-brand-deep: var(--brand-deep);
+  --color-brand-soft: var(--brand-soft);
+  --color-brand-hover: var(--brand-hover);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -48,6 +56,14 @@
 }
 
 :root {
+  /* Brand defaults = the platform orange. Academies override these on their own wrapper. */
+  --brand: #fd5523;
+  --brand-on: #ffffff;
+  --brand-ink: #b93e1a;
+  --brand-ink-dark: #fd5523;
+  --brand-deep: #722610;
+  --brand-soft: #ffeee9;
+  --brand-hover: #df4b1f;
   --background: oklch(0.975 0.01 65);
   --foreground: oklch(0.28 0.04 220);
   --card: oklch(1 0 0);

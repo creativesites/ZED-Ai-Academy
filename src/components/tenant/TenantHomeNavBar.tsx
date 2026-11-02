@@ -147,7 +147,7 @@ export default function TenantHomeNavBar({
 
                                         <Link
                                             href={`/academy/${tenant.slug}/dashboard`}
-                                            className="h-8 px-4 rounded-lg bg-[#fd5523] hover:bg-[#e84b1c] text-white text-[12px] font-bold flex items-center gap-1.5 transition-all duration-150 hover:-translate-y-px hover:shadow-[0_4px_12px_rgba(253,85,35,0.35)]"
+                                            className="h-8 px-4 rounded-lg bg-brand hover:bg-brand-hover text-brand-on text-[12px] font-bold flex items-center gap-1.5 transition-all duration-150 hover:-translate-y-px hover:shadow-[0_4px_12px_color-mix(in_srgb,var(--brand)_35%,transparent)]"
                                         >
                                             <LayoutDashboard className="h-3.5 w-3.5" />
                                             Dashboard
@@ -159,7 +159,7 @@ export default function TenantHomeNavBar({
                                         <input type="hidden" name="role" value="student" />
                                         <button
                                             type="submit"
-                                            className="h-8 px-4 rounded-lg bg-[#fd5523] hover:bg-[#e84b1c] text-white text-[12px] font-bold flex items-center gap-1.5 transition-all duration-150 hover:-translate-y-px hover:shadow-[0_4px_12px_rgba(253,85,35,0.35)] cursor-pointer"
+                                            className="h-8 px-4 rounded-lg bg-brand hover:bg-brand-hover text-brand-on text-[12px] font-bold flex items-center gap-1.5 transition-all duration-150 hover:-translate-y-px hover:shadow-[0_4px_12px_color-mix(in_srgb,var(--brand)_35%,transparent)] cursor-pointer"
                                         >
                                             <UserPlus className="h-3.5 w-3.5" />
                                             Join Academy
@@ -187,7 +187,7 @@ export default function TenantHomeNavBar({
                                 </Link>
                                 <Link
                                     href={signUpUrl}
-                                    className="h-8 px-4 rounded-lg bg-[#fd5523] hover:bg-[#e84b1c] text-white text-[12px] font-bold flex items-center gap-1.5 transition-all duration-150 hover:-translate-y-px hover:shadow-[0_4px_12px_rgba(253,85,35,0.35)]"
+                                    className="h-8 px-4 rounded-lg bg-brand hover:bg-brand-hover text-brand-on text-[12px] font-bold flex items-center gap-1.5 transition-all duration-150 hover:-translate-y-px hover:shadow-[0_4px_12px_color-mix(in_srgb,var(--brand)_35%,transparent)]"
                                 >
                                     Get Started
                                     <ArrowUpRight className="h-3.5 w-3.5" />
@@ -287,7 +287,7 @@ export default function TenantHomeNavBar({
                                     <Link
                                         href={`/academy/${tenant.slug}/dashboard`}
                                         onClick={() => setIsMobileMenuOpen(false)}
-                                        className="h-12 rounded-xl bg-[#fd5523] hover:bg-[#e84b1c] text-white text-[13px] font-bold flex items-center justify-center gap-2 transition-colors"
+                                        className="h-12 rounded-xl bg-brand hover:bg-brand-hover text-brand-on text-[13px] font-bold flex items-center justify-center gap-2 transition-colors"
                                     >
                                         <LayoutDashboard className="h-4 w-4" />
                                         Student Dashboard
@@ -299,7 +299,7 @@ export default function TenantHomeNavBar({
                                     <input type="hidden" name="role" value="student" />
                                     <button
                                         type="submit"
-                                        className="w-full h-12 rounded-xl bg-[#fd5523] hover:bg-[#e84b1c] text-white text-[13px] font-bold flex items-center justify-center gap-2 transition-colors cursor-pointer"
+                                        className="w-full h-12 rounded-xl bg-brand hover:bg-brand-hover text-brand-on text-[13px] font-bold flex items-center justify-center gap-2 transition-colors cursor-pointer"
                                     >
                                         <UserPlus className="h-4 w-4" />
                                         Join Academy
@@ -334,7 +334,7 @@ export default function TenantHomeNavBar({
                                 <Link
                                     href={signUpUrl}
                                     onClick={() => setIsMobileMenuOpen(false)}
-                                    className="h-12 rounded-xl bg-[#fd5523] hover:bg-[#e84b1c] text-white text-[13px] font-bold flex items-center justify-center gap-2 transition-colors"
+                                    className="h-12 rounded-xl bg-brand hover:bg-brand-hover text-brand-on text-[13px] font-bold flex items-center justify-center gap-2 transition-colors"
                                 >
                                     Get Started
                                     <ArrowUpRight className="h-4 w-4" />
