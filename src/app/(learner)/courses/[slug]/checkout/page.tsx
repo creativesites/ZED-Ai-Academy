@@ -75,7 +75,7 @@ async function startCheckout(slug: string, courseId: string, userId: string) {
 
   if (orderError) throw new Error(orderError.message);
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://academy.zedai.org";
 
   const result = await initiatePayment({
     txRef,

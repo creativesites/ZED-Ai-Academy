@@ -50,11 +50,10 @@ export default function TenantHomeNavBar({
     const isAdmin =
         role === "admin" || role === "super_admin" || role === "company_admin";
 
-    // Build absolute sign-in / sign-up URLs to point to the root domain so that authentication cookies are always set centrally
-    const rootDomain = typeof window !== "undefined" ? (process.env.NEXT_PUBLIC_ROOT_DOMAIN || "localhost:3000") : "localhost:3000";
-    const protocol = typeof window !== "undefined" ? window.location.protocol : "http:";
-    const signInUrl = `${protocol}//${rootDomain}/sign-in?redirect_url=/academy/${tenant.slug}/classroom`;
-    const signUpUrl = `${protocol}//${rootDomain}/sign-up?role=student&tenant=${tenant.slug}`;
+    // Relative auth URLs: on a tenant subdomain the proxy (src/proxy.ts) redirects /sign-in and /sign-up
+    // to the root domain centrally, so no host or protocol needs to be hardcoded here.
+    const signInUrl = `/sign-in?redirect_url=/academy/${tenant.slug}/classroom`;
+    const signUpUrl = `/sign-up?role=student&tenant=${tenant.slug}`;
 
     return (
         <>

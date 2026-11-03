@@ -136,7 +136,7 @@ export async function enrollFree(courseId: string, courseSlug: string) {
 
   if (email) {
     const firstName = clerkUser.firstName ?? clerkUser.fullName?.split(" ")[0] ?? "there";
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://academy.zedai.org";
     sendEnrollmentConfirmation({
       toEmail: email,
       toName: firstName,

@@ -93,7 +93,7 @@ export async function POST(req: NextRequest) {
     const profile = profileResult.data;
     const course = courseResult.data;
     const firstName = profile.full_name?.split(" ")[0] ?? "there";
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://academy.zedai.org";
 
     await sendPaymentConfirmation({
       toEmail: profileEmail,
