@@ -59,8 +59,19 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
   const forwardedProto = req.headers.get('x-forwarded-proto');
   const protocol = forwardedProto || (url.protocol ? url.protocol.replace(':', '') : 'http');
 
-  // Define the root domain (e.g. localhost:3000 or zedaiacademy.com)
-  const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'localhost:3000';
+  // Define the root domain dynamically based on configuration or incoming host
+  const configuredRootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN;
+  const appHost = process.env.NEXT_PUBLIC_APP_URL
+    ? new URL(process.env.NEXT_PUBLIC_APP_URL).host
+    : '';
+  const rootDomain =
+    configuredRootDomain && !configuredRootDomain.includes('localhost')
+      ? configuredRootDomain
+      : appHost && !appHost.includes('localhost')
+      ? appHost
+      : hostname.includes('localhost')
+      ? 'localhost:3000'
+      : hostname;
 
   // Determine if request is on a tenant subdomain
   const subdomain = hostname.endsWith(`.${rootDomain}`) && !hostname.startsWith('www.')

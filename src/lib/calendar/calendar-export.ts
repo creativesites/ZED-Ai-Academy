@@ -33,7 +33,7 @@ export function getGoogleCalendarUrl(event: CalendarEventDetails): string {
  * Resolves the next upcoming date & time range for a class schedule.
  */
 export function getScheduleEventDetails(schedule: any, companySlug: string): CalendarEventDetails {
-  const origin = typeof window !== "undefined" ? window.location.origin : "";
+  const origin = typeof window !== "undefined" ? window.location.origin : (process.env.NEXT_PUBLIC_APP_URL || "https://academy.zedai.org");
   const classroomUrl = `${origin}/academy/${companySlug}/classroom?tab=session`;
   const title = schedule.title || "Live Class Session";
   const description = `${schedule.topics_covered ? `Topics Covered: ${schedule.topics_covered}\n\n` : ""}${schedule.description ? `${schedule.description}\n\n` : ""}Join live classroom: ${classroomUrl}`;

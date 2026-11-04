@@ -9,7 +9,7 @@ import type { NextRequest } from 'next/server';
  * Uses leading dot for domain to enable subdomain cookie sharing
  */
 function getCookieOptions() {
-  const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'localhost:3000';
+  const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'zed-ai-academy.vercel.app';
   const domain = rootDomain.split(':')[0];
 
   return {
@@ -29,7 +29,7 @@ export default clerkMiddleware(async (auth, req: NextRequest) =>  {
   const { userId, orgId, redirectToSignIn, orgRole, orgSlug } = await auth()
 
   // Define the root domain (e.g. localhost:3000 or guidelearn.com)
-  const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'localhost:3000';
+  const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'zed-ai-academy.vercel.app';
 
   // Determine if we are on a subdomain
   // logic: if hostname is "mine.guidelearn.com", subdomain is "mine"
