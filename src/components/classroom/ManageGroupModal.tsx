@@ -78,15 +78,15 @@ export function ManageGroupModal({
           Manage
         </Button>
       )} />
-      <DialogContent className="rounded-3xl border-slate-100 p-0 overflow-hidden sm:max-w-xl max-h-[80vh] flex flex-col">
-        <div className="p-6 bg-slate-50 border-b border-slate-100 shrink-0">
+      <DialogContent className="rounded-2xl sm:rounded-3xl border-slate-100 p-0 overflow-hidden w-[95vw] sm:max-w-xl max-h-[85dvh] flex flex-col">
+        <div className="p-4 sm:p-6 bg-slate-50 border-b border-slate-100 shrink-0">
           <DialogHeader>
-            <DialogTitle className="text-xl font-black text-[#062e39]">Manage {group.name}</DialogTitle>
+            <DialogTitle className="text-lg sm:text-xl font-black text-[#062e39]">Manage {group.name}</DialogTitle>
           </DialogHeader>
-          <p className="text-sm font-medium text-slate-500 mt-2">Add or remove students from this cohort.</p>
+          <p className="text-xs sm:text-sm font-medium text-slate-500 mt-1 sm:mt-2">Add or remove students from this cohort.</p>
         </div>
         
-        <div className="p-6 overflow-y-auto flex-1 bg-white space-y-8">
+        <div className="p-4 sm:p-6 overflow-y-auto flex-1 bg-white space-y-6 sm:space-y-8">
           {loading ? (
             <div className="flex flex-col items-center justify-center py-10 text-slate-400">
               <Loader2 className="h-8 w-8 animate-spin mb-4 text-[#fd5523]" />

@@ -187,37 +187,34 @@ export function TimetableTab({ companyId, isAdminOrInstructor, companySlug }: { 
   }, {} as Record<string, any[]>);
 
   return (
-    <div className="min-h-screen bg-slate-50/50">
-      {/* Mobile-first container with responsive padding */}
-      <div className="px-4 py-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+    <div className="p-3 sm:p-6 lg:p-8 space-y-6 sm:space-y-8 max-w-7xl mx-auto animate-in fade-in duration-300">
+      {/* Header Section - Stack on mobile, row on tablet+ */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-8">
+        <div>
+          <h2 className="text-xl sm:text-2xl font-bold text-slate-900 flex items-center gap-2">
+            School Timetable
+            <BookOpen className="h-5 w-5 text-[#fd5523]" />
+          </h2>
+          <p className="text-xs sm:text-sm text-slate-500 font-medium mt-1">
+            Weekly recurring class schedule and subjects.
+          </p>
+        </div>
         
-        {/* Header Section - Stack on mobile, row on tablet+ */}
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6 sm:mb-8">
-          <div>
-            <h2 className="text-xl sm:text-2xl font-bold text-slate-900 flex items-center gap-2">
-              School Timetable
-              <BookOpen className="h-5 w-5 text-[#fd5523]" />
-            </h2>
-            <p className="text-xs sm:text-sm text-slate-500 font-medium mt-1">
-              Weekly recurring class schedule and subjects.
-            </p>
-          </div>
-          
-          {isAdminOrInstructor && (
-            <Dialog open={open} onOpenChange={setOpen}>
-              <DialogTrigger render={(props) => (
-                <Button {...props} className="bg-[#fd5523] text-white hover:bg-[#ef4a16] rounded-xl flex items-center gap-2 shadow-lg shadow-[#fd5523]/20 transition-all hover:scale-[1.02] w-full sm:w-auto">
-                  <Plus className="h-4 w-4" />
-                  Add Subject
-                </Button>
-              )} />
-              <DialogContent className="sm:max-w-[600px] rounded-[2rem] overflow-hidden w-[95vw] sm:w-full mx-auto">
-                <div className="p-1 px-4 bg-gradient-to-r from-[#fd5523] to-orange-400 h-1" />
-                <DialogHeader className="pt-6 px-4 sm:px-6">
-                  <DialogTitle className="text-xl sm:text-2xl font-black text-[#062e39]">Create New Subject</DialogTitle>
-                </DialogHeader>
-                <form onSubmit={handleSubmit} className="space-y-6 p-4 sm:p-6 overflow-y-auto max-h-[80vh]">
-                  <div className="space-y-5">
+        {isAdminOrInstructor && (
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger render={(props) => (
+              <Button {...props} className="bg-[#fd5523] text-white hover:bg-[#ef4a16] min-h-[44px] rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-[#fd5523]/20 transition-all hover:scale-[1.02] w-full sm:w-auto font-black text-xs uppercase tracking-wider">
+                <Plus className="h-4 w-4" />
+                Add Subject
+              </Button>
+            )} />
+            <DialogContent className="sm:max-w-[600px] rounded-2xl sm:rounded-[2rem] overflow-hidden w-[95vw] sm:w-full mx-auto max-h-[85dvh] flex flex-col p-0">
+              <div className="p-1 px-4 bg-gradient-to-r from-[#fd5523] to-orange-400 h-1 shrink-0" />
+              <DialogHeader className="pt-6 px-4 sm:px-6 shrink-0">
+                <DialogTitle className="text-xl sm:text-2xl font-black text-[#062e39]">Create New Subject</DialogTitle>
+              </DialogHeader>
+              <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6 p-4 sm:p-6 overflow-y-auto flex-1">
+                <div className="space-y-4 sm:space-y-5">
                     {/* Responsive grid - 1 column on mobile, 2 on tablet+ */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="space-y-2">
@@ -424,10 +421,10 @@ export function TimetableTab({ companyId, isAdminOrInstructor, companySlug }: { 
                             </div>
                             
                             {/* Action Button - Full width on mobile, auto on desktop */}
-                            <div className="mt-4 lg:mt-0 lg:ml-4 flex flex-wrap items-center gap-2">
+                            <div className="mt-4 lg:mt-0 lg:ml-4 grid grid-cols-2 sm:flex sm:items-center gap-2 w-full sm:w-auto">
                               <a
                                 href={`/academy/${companySlug}/classroom?tab=session&scheduleId=${lesson.id}`}
-                                className="h-10 sm:h-12 px-5 sm:px-6 rounded-xl bg-[#fd5523] text-white font-black text-[10px] sm:text-xs uppercase tracking-widest hover:bg-[#ef4a16] transition-all shadow-md shadow-[#fd5523]/20 flex items-center justify-center gap-1.5"
+                                className="h-11 sm:h-12 px-4 sm:px-6 rounded-xl bg-[#fd5523] text-white font-black text-[10px] sm:text-xs uppercase tracking-widest hover:bg-[#ef4a16] transition-all shadow-md shadow-[#fd5523]/20 flex items-center justify-center gap-1.5 min-h-[44px]"
                               >
                                 <Video className="h-3.5 w-3.5" />
                                 <span>Join Room</span>
@@ -435,7 +432,7 @@ export function TimetableTab({ companyId, isAdminOrInstructor, companySlug }: { 
                               <Button 
                                 onClick={() => setSelectedLesson(lesson)}
                                 variant="outline"
-                                className="h-10 sm:h-12 px-4 sm:px-6 rounded-xl border-slate-200 text-[#062e39] font-black text-[10px] sm:text-xs uppercase tracking-widest hover:bg-slate-100 transition-all"
+                                className="h-11 sm:h-12 px-4 sm:px-6 rounded-xl border-slate-200 text-[#062e39] font-black text-[10px] sm:text-xs uppercase tracking-widest hover:bg-slate-100 transition-all min-h-[44px]"
                               >
                                 Details
                               </Button>
@@ -461,12 +458,11 @@ export function TimetableTab({ companyId, isAdminOrInstructor, companySlug }: { 
             </>
           )}
         </div>
-      </div>
 
       {/* Lesson Details Dialog - Mobile Responsive */}
       <Dialog open={!!selectedLesson} onOpenChange={() => setSelectedLesson(null)}>
-        <DialogContent className="sm:max-w-[600px] rounded-2xl sm:rounded-[3rem] p-0 overflow-hidden border-none shadow-2xl w-[95vw] sm:w-full mx-auto">
-           <div className="bg-[#062e39] p-6 sm:p-8 text-white relative">
+        <DialogContent className="sm:max-w-[600px] rounded-2xl sm:rounded-[2.5rem] p-0 overflow-hidden border-none shadow-2xl w-[95vw] sm:w-full mx-auto max-h-[85dvh] flex flex-col">
+           <div className="bg-[#062e39] p-5 sm:p-8 text-white relative shrink-0">
               <div className="absolute top-0 right-0 p-8 sm:p-12 opacity-10 pointer-events-none">
                  <BookOpen className="h-32 w-32 sm:h-40 sm:w-40" />
               </div>
@@ -476,59 +472,59 @@ export function TimetableTab({ companyId, isAdminOrInstructor, companySlug }: { 
               <div className="px-3 py-1 sm:px-4 sm:py-1.5 rounded-full bg-[#fd5523] text-white text-[8px] sm:text-[10px] font-black uppercase tracking-widest inline-block mb-3 sm:mb-4">
                  {selectedLesson?.schedule_type?.replace('_', ' ')}
               </div>
-              <h2 className="text-2xl sm:text-4xl font-black tracking-tight mb-2 break-words">{selectedLesson?.title}</h2>
-              <p className="text-white/60 font-bold flex items-center gap-2 text-sm sm:text-base">
+              <h2 className="text-xl sm:text-3xl lg:text-4xl font-black tracking-tight mb-2 break-words pr-8">{selectedLesson?.title}</h2>
+              <p className="text-white/60 font-bold flex items-center gap-2 text-xs sm:text-sm">
                  <Clock className="h-3 w-3 sm:h-4 sm:w-4" /> Every {DAYS[(selectedLesson?.day_of_week || 1) - 1]} at {selectedLesson?.start_time_only?.slice(0, 5)}
               </p>
            </div>
-           <div className="p-6 sm:p-10 bg-white space-y-6 sm:space-y-8">
-              <div className="space-y-3 sm:space-y-4">
+           <div className="p-4 sm:p-8 bg-white space-y-4 sm:space-y-6 flex-1 overflow-y-auto">
+              <div className="space-y-2 sm:space-y-3">
                  <h4 className="text-[10px] sm:text-xs font-black uppercase tracking-[0.2em] text-[#fd5523]">Learning Objectives</h4>
-                 <div className="p-4 sm:p-6 rounded-2xl sm:rounded-3xl bg-slate-50 border border-slate-100">
-                    <p className="text-sm sm:text-base text-slate-600 leading-relaxed font-medium break-words">
+                 <div className="p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl bg-slate-50 border border-slate-100">
+                    <p className="text-xs sm:text-sm text-slate-600 leading-relaxed font-medium break-words">
                        {selectedLesson?.topics_covered || "No topics specified for this lesson."}
                     </p>
                  </div>
               </div>
               
               {/* Info cards - 1 column on mobile, 2 on tablet */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-                 <div className="p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-100 flex items-center gap-3 sm:gap-4">
-                    <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center shadow-inner">
-                       <User className="h-5 w-5 sm:h-6 sm:w-6" />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                 <div className="p-3.5 sm:p-4 rounded-xl sm:rounded-2xl border border-slate-100 flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shadow-inner shrink-0">
+                       <User className="h-5 w-5" />
                     </div>
                     <div>
-                       <p className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-slate-400">Instructor</p>
+                       <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Instructor</p>
                        <p className="text-xs sm:text-sm font-black text-[#062e39]">Assigned Instructor</p>
                     </div>
                  </div>
-                 <div className="p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-100 flex items-center gap-3 sm:gap-4">
-                    <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center shadow-inner">
-                       <Info className="h-5 w-5 sm:h-6 sm:w-6" />
+                 <div className="p-3.5 sm:p-4 rounded-xl sm:rounded-2xl border border-slate-100 flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shadow-inner shrink-0">
+                       <Info className="h-5 w-5" />
                     </div>
                     <div>
-                       <p className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-slate-400">Status</p>
+                       <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Status</p>
                        <p className="text-xs sm:text-sm font-black text-[#062e39]">Confirmed</p>
                     </div>
                  </div>
               </div>
 
               {/* Direct Join & Calendar Action Strip */}
-              <div className="space-y-3 pt-2">
+              <div className="space-y-2.5 pt-1">
                  <a
                    href={`/academy/${companySlug}/classroom?tab=session&scheduleId=${selectedLesson?.id}`}
-                   className="w-full flex items-center justify-center gap-2 h-14 rounded-2xl bg-[#fd5523] text-white font-black text-sm uppercase tracking-widest hover:bg-[#ef4a16] transition-all shadow-xl shadow-[#fd5523]/25"
+                   className="w-full flex items-center justify-center gap-2 h-12 sm:h-14 rounded-2xl bg-[#fd5523] text-white font-black text-xs sm:text-sm uppercase tracking-widest hover:bg-[#ef4a16] transition-all shadow-xl shadow-[#fd5523]/25 min-h-[44px]"
                  >
-                   <Video className="h-5 w-5" />
+                   <Video className="h-4 w-4 sm:h-5 sm:w-5" />
                    Enter Live Classroom
                  </a>
 
-                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                    <a
                      href={selectedLesson ? getGoogleCalendarUrl(selectedLesson, companySlug) : "#"}
                      target="_blank"
                      rel="noopener noreferrer"
-                     className="flex items-center justify-center gap-2 h-11 rounded-xl bg-slate-50 text-[#062e39] font-bold text-xs hover:bg-slate-100 border border-slate-200 transition-all"
+                     className="flex items-center justify-center gap-2 h-11 rounded-xl bg-slate-50 text-[#062e39] font-bold text-xs hover:bg-slate-100 border border-slate-200 transition-all min-h-[44px]"
                    >
                      <Calendar className="h-4 w-4 text-[#fd5523]" />
                      Add to Google Calendar
@@ -537,7 +533,7 @@ export function TimetableTab({ companyId, isAdminOrInstructor, companySlug }: { 
                    <button
                      type="button"
                      onClick={() => selectedLesson && downloadIcsFile(selectedLesson, companySlug)}
-                     className="flex items-center justify-center gap-2 h-11 rounded-xl bg-slate-50 text-[#062e39] font-bold text-xs hover:bg-slate-100 border border-slate-200 transition-all"
+                     className="flex items-center justify-center gap-2 h-11 rounded-xl bg-slate-50 text-[#062e39] font-bold text-xs hover:bg-slate-100 border border-slate-200 transition-all min-h-[44px]"
                    >
                      <Download className="h-4 w-4 text-slate-500" />
                      Download iCal (.ics)
@@ -546,8 +542,8 @@ export function TimetableTab({ companyId, isAdminOrInstructor, companySlug }: { 
               </div>
 
               {/* Action Buttons - Column on mobile, row on tablet */}
-              <div className="pt-2 grid grid-cols-1 sm:grid-cols-4 gap-2.5">
-                 <Button onClick={() => setSelectedLesson(null)} className="h-12 rounded-xl bg-slate-100 text-[#062e39] font-black text-xs uppercase tracking-widest hover:bg-slate-200 transition-all">
+              <div className="pt-2 grid grid-cols-2 sm:grid-cols-4 gap-2">
+                 <Button onClick={() => setSelectedLesson(null)} className="h-11 sm:h-12 rounded-xl bg-slate-100 text-[#062e39] font-black text-xs uppercase tracking-widest hover:bg-slate-200 transition-all min-h-[44px]">
                     Close
                  </Button>
                  {isAdminOrInstructor && (
@@ -555,7 +551,7 @@ export function TimetableTab({ companyId, isAdminOrInstructor, companySlug }: { 
                      <Button 
                        onClick={() => selectedLesson && handleSendReminder(selectedLesson.id)}
                        disabled={sendingReminder}
-                       className="h-12 rounded-xl bg-amber-500 text-white font-black text-xs uppercase tracking-widest hover:bg-amber-600 transition-all shadow-sm"
+                       className="h-11 sm:h-12 rounded-xl bg-amber-500 text-white font-black text-xs uppercase tracking-widest hover:bg-amber-600 transition-all shadow-sm min-h-[44px]"
                      >
                         {sendingReminder ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Bell className="h-4 w-4 mr-1" />}
                         Remind Class

@@ -110,12 +110,12 @@ export function GroupsTab({ companyId, companySlug }: { companyId: string; compa
   }
 
   return (
-    <div className="flex h-full flex-col bg-slate-50/40 p-6 md:p-8 space-y-6">
+    <div className="flex h-full flex-col bg-slate-50/40 p-3 sm:p-6 md:p-8 space-y-4 sm:space-y-6 animate-in fade-in duration-300">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2.5">
-            <h2 className="text-2xl md:text-3xl font-black text-[#062e39] tracking-tight">
+            <h2 className="text-xl sm:text-2xl md:text-3xl font-black text-[#062e39] tracking-tight">
               Class Cohorts &amp; Sections
             </h2>
             <span className="text-xs px-2.5 py-0.5 rounded-full bg-slate-100 font-black text-slate-500">
@@ -131,24 +131,24 @@ export function GroupsTab({ companyId, companySlug }: { companyId: string; compa
           <DialogTrigger render={(props) => (
             <Button
               {...props}
-              className="bg-[#fd5523] text-white hover:bg-[#ef4a16] rounded-xl h-11 px-5 font-bold text-xs uppercase tracking-wider shadow-lg shadow-[#fd5523]/20 flex items-center gap-2"
+              className="bg-[#fd5523] text-white hover:bg-[#ef4a16] rounded-xl h-11 px-5 font-bold text-xs uppercase tracking-wider shadow-lg shadow-[#fd5523]/20 flex items-center justify-center gap-2 w-full md:w-auto min-h-[44px]"
             >
               <Plus className="h-4 w-4" /> Create Cohort / Section
             </Button>
           )} />
-          <DialogContent className="rounded-3xl border-slate-100 p-0 overflow-hidden sm:max-w-lg">
-            <div className="p-6 bg-[#062e39] text-white">
+          <DialogContent className="rounded-2xl sm:rounded-3xl border-slate-100 p-0 overflow-hidden w-[95vw] sm:max-w-lg max-h-[85dvh] flex flex-col">
+            <div className="p-5 sm:p-6 bg-[#062e39] text-white shrink-0">
               <DialogHeader>
                 <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-[#fd8d69]">
                   <GraduationCap className="h-4 w-4" /> Academic Group
                 </div>
-                <DialogTitle className="text-2xl font-black text-white mt-1">
+                <DialogTitle className="text-xl sm:text-2xl font-black text-white mt-1">
                   Create Class Cohort
                 </DialogTitle>
               </DialogHeader>
             </div>
 
-            <form onSubmit={handleCreateGroup} className="p-6 space-y-4 bg-white">
+            <form onSubmit={handleCreateGroup} className="p-4 sm:p-6 space-y-4 bg-white flex-1 overflow-y-auto">
               <div className="space-y-1.5">
                 <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
                   Cohort Name
@@ -257,13 +257,13 @@ export function GroupsTab({ companyId, companySlug }: { companyId: string; compa
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-5">
             {groups.map((group) => {
               const brandColor = group.color || "#fd5523";
               return (
                 <div
                   key={group.id}
-                  className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm hover:shadow-xl transition-all flex flex-col justify-between group"
+                  className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-slate-100 shadow-sm hover:shadow-xl transition-all flex flex-col justify-between group"
                 >
                   <div>
                     <div className="flex items-start justify-between gap-3 mb-3">

@@ -22,6 +22,7 @@ import {
   Users,
   Check,
   ChevronLeft,
+  ArrowLeft,
   X,
   Maximize2,
   Minimize2,
@@ -82,6 +83,7 @@ export function AssignmentsTab({
   const [activeListTab, setActiveListTab] = useState<"todo" | "past">("todo");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedAssignmentId, setSelectedAssignmentId] = useState<string | null>(null);
+  const [mobileView, setMobileView] = useState<"list" | "detail">("list");
 
   // Instructor creation modal state
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -397,9 +399,9 @@ export function AssignmentsTab({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6 animate-in fade-in duration-300">
       {/* Top Banner: Academic Context & Action Bar */}
-      <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+      <div className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-slate-100 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 text-xs font-bold text-slate-400 mb-1">
             <span>Classroom</span>
@@ -414,7 +416,7 @@ export function AssignmentsTab({
               </>
             )}
           </div>
-          <h2 className="text-2xl font-black text-[#062e39] tracking-tight">Assignments & Tasks</h2>
+          <h2 className="text-xl sm:text-2xl font-black text-[#062e39] tracking-tight">Assignments & Tasks</h2>
           <p className="text-xs text-slate-500 mt-0.5">
             Homework, lab assignments, project deliverables, and rubric evaluations.
           </p>
@@ -429,7 +431,7 @@ export function AssignmentsTab({
           {isAdminOrInstructor && (
             <Button
               onClick={() => setIsCreateOpen(true)}
-              className="bg-[#fd5523] hover:bg-[#e0481d] text-white rounded-xl text-xs font-black px-4 py-2 shadow-lg shadow-[#fd5523]/20 gap-2"
+              className="bg-[#fd5523] hover:bg-[#e0481d] text-white rounded-xl text-xs font-black px-4 py-2 min-h-[44px] shadow-lg shadow-[#fd5523]/20 gap-2"
             >
               <Plus className="h-4 w-4" />
               New Assignment
@@ -439,16 +441,16 @@ export function AssignmentsTab({
       </div>
 
       {/* Main Layout: Master List (Left) + Detail Drawer (Right) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 items-start">
         {/* Left Column: Master List */}
-        <div className="lg:col-span-5 space-y-4">
-          <div className="bg-white rounded-3xl p-4 border border-slate-100 shadow-sm space-y-4">
+        <div className={cn("lg:col-span-5 space-y-4", mobileView === "detail" ? "hidden lg:block" : "block")}>
+          <div className="bg-white rounded-2xl sm:rounded-3xl p-4 border border-slate-100 shadow-sm space-y-4">
             {/* Filter Tabs: Todo vs All Past Works */}
             <div className="flex p-1 bg-slate-100/80 rounded-2xl">
               <button
                 onClick={() => setActiveListTab("todo")}
                 className={cn(
-                  "flex-1 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all",
+                  "flex-1 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all min-h-[40px]",
                   activeListTab === "todo"
                     ? "bg-white text-[#062e39] shadow-sm"
                     : "text-slate-500 hover:text-slate-900"
@@ -459,7 +461,7 @@ export function AssignmentsTab({
               <button
                 onClick={() => setActiveListTab("past")}
                 className={cn(
-                  "flex-1 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all",
+                  "flex-1 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all min-h-[40px]",
                   activeListTab === "past"
                     ? "bg-white text-[#062e39] shadow-sm"
                     : "text-slate-500 hover:text-slate-900"
@@ -484,7 +486,7 @@ export function AssignmentsTab({
             </div>
 
             {/* Assignment Groups */}
-            <div className="space-y-5 pt-1 max-h-[calc(100vh-320px)] overflow-y-auto pr-1">
+            <div className="space-y-4 sm:space-y-5 pt-1 max-h-[calc(100vh-320px)] overflow-y-auto pr-1">
               {loading ? (
                 <div className="py-16 text-center text-slate-400">
                   <Loader2 className="h-6 w-6 animate-spin mx-auto text-[#fd5523] mb-2" />
@@ -514,7 +516,10 @@ export function AssignmentsTab({
                             key={a.id}
                             assignment={a}
                             isSelected={selectedAssignmentId === a.id}
-                            onSelect={() => setSelectedAssignmentId(a.id)}
+                            onSelect={() => {
+                              setSelectedAssignmentId(a.id);
+                              setMobileView("detail");
+                            }}
                             statusBadge={getStatusBadge(a)}
                           />
                         ))}
@@ -536,7 +541,10 @@ export function AssignmentsTab({
                             key={a.id}
                             assignment={a}
                             isSelected={selectedAssignmentId === a.id}
-                            onSelect={() => setSelectedAssignmentId(a.id)}
+                            onSelect={() => {
+                              setSelectedAssignmentId(a.id);
+                              setMobileView("detail");
+                            }}
                             statusBadge={getStatusBadge(a)}
                           />
                         ))}
@@ -558,7 +566,10 @@ export function AssignmentsTab({
                             key={a.id}
                             assignment={a}
                             isSelected={selectedAssignmentId === a.id}
-                            onSelect={() => setSelectedAssignmentId(a.id)}
+                            onSelect={() => {
+                              setSelectedAssignmentId(a.id);
+                              setMobileView("detail");
+                            }}
                             statusBadge={getStatusBadge(a)}
                           />
                         ))}
@@ -572,9 +583,18 @@ export function AssignmentsTab({
         </div>
 
         {/* Right Column: Assignment Detail Pane */}
-        <div className="lg:col-span-7">
+        <div className={cn("lg:col-span-7", mobileView === "list" ? "hidden lg:block" : "block")}>
           {selectedAssignment ? (
-            <div className="bg-white rounded-3xl p-6 md:p-8 border border-slate-100 shadow-sm space-y-6 animate-in fade-in duration-300">
+            <div className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8 border border-slate-100 shadow-sm space-y-4 sm:space-y-6 animate-in fade-in duration-300">
+              {/* Mobile Back Button */}
+              <button
+                type="button"
+                onClick={() => setMobileView("list")}
+                className="lg:hidden inline-flex items-center gap-1.5 text-xs font-black text-[#fd5523] hover:text-[#e0481d] min-h-[44px]"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                <span>Back to All Assignments</span>
+              </button>
               {/* Header with Sub-chapter badge & Action Button */}
               <div className="flex items-start justify-between gap-4">
                 <div>
@@ -828,8 +848,8 @@ export function AssignmentsTab({
 
       {/* MODAL 1: Create Assignment (Instructor) */}
       {isCreateOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-2xl w-full p-6 md:p-8 shadow-2xl border border-slate-100 max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
+          <div className="bg-white rounded-2xl sm:rounded-3xl max-w-2xl w-full p-4 sm:p-6 md:p-8 shadow-2xl border border-slate-100 max-h-[85dvh] overflow-y-auto animate-in zoom-in-95 duration-200">
             <div className="flex items-center justify-between pb-4 border-b border-slate-100">
               <h3 className="text-lg font-black text-[#062e39]">Create New Assignment</h3>
               <Button
@@ -1059,8 +1079,8 @@ export function AssignmentsTab({
 
       {/* MODAL 2: Submit Assignment (Student) */}
       {isSubmitOpen && selectedAssignment && (
-        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-lg w-full p-6 md:p-8 shadow-2xl border border-slate-100 animate-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
+          <div className="bg-white rounded-2xl sm:rounded-3xl max-w-lg w-full p-4 sm:p-6 md:p-8 shadow-2xl border border-slate-100 animate-in zoom-in-95 duration-200 max-h-[85dvh] overflow-y-auto">
             <div className="flex items-center justify-between pb-4 border-b border-slate-100">
               <div>
                 <h3 className="text-lg font-black text-[#062e39]">Turn In Assignment</h3>
@@ -1159,8 +1179,8 @@ export function AssignmentsTab({
 
       {/* MODAL 3: Instructor Grading & Review Drawer */}
       {isGradingOpen && selectedAssignment && (
-        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-4xl w-full p-6 md:p-8 shadow-2xl border border-slate-100 max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-200 space-y-6">
+        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
+          <div className="bg-white rounded-2xl sm:rounded-3xl max-w-4xl w-full p-4 sm:p-6 md:p-8 shadow-2xl border border-slate-100 max-h-[85dvh] overflow-y-auto animate-in zoom-in-95 duration-200 space-y-4 sm:space-y-6">
             <div className="flex items-center justify-between pb-4 border-b border-slate-100">
               <div>
                 <h3 className="text-lg font-black text-[#062e39]">

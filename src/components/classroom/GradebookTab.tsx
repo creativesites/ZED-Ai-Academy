@@ -150,29 +150,29 @@ export function GradebookTab({
   };
 
   return (
-    <div className="flex h-full flex-col bg-slate-50/40">
+    <div className="flex h-full flex-col bg-slate-50/40 animate-in fade-in duration-300">
       {/* Header & Metrics */}
-      <div className="p-6 sm:p-8 pb-4 space-y-6">
+      <div className="p-3 sm:p-6 lg:p-8 pb-4 space-y-4 sm:space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2.5">
-              <h2 className="text-2xl sm:text-3xl font-black text-[#062e39] tracking-tight">
-                Student Gradebook & Analytics
+              <h2 className="text-xl sm:text-2xl lg:text-3xl font-black text-[#062e39] tracking-tight">
+                Student Gradebook &amp; Analytics
               </h2>
-              <GraduationCap className="h-7 w-7 text-[#fd5523]" />
+              <GraduationCap className="h-6 w-6 sm:h-7 sm:w-7 text-[#fd5523]" />
             </div>
-            <p className="text-sm font-medium text-slate-500 mt-1">
+            <p className="text-xs sm:text-sm font-medium text-slate-500 mt-1">
               Inspect student lesson completion, quiz test scores, and certification records.
             </p>
           </div>
 
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2.5 w-full sm:w-auto">
             <Button
               variant="outline"
               size="sm"
               onClick={loadGradebook}
               disabled={loading}
-              className="rounded-xl h-10 px-3.5 text-xs font-bold border-slate-200 hover:bg-slate-50"
+              className="flex-1 sm:flex-none rounded-xl h-11 sm:h-10 px-3.5 text-xs font-bold border-slate-200 hover:bg-slate-50 min-h-[44px]"
             >
               <RotateCcw className={cn("h-3.5 w-3.5 mr-1.5", loading && "animate-spin")} />
               Refresh
@@ -181,7 +181,7 @@ export function GradebookTab({
             <Button
               onClick={exportCSV}
               disabled={!data?.students.length}
-              className="bg-[#062e39] hover:bg-[#0a4555] text-white rounded-xl h-10 px-4 text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm"
+              className="flex-1 sm:flex-none bg-[#062e39] hover:bg-[#0a4555] text-white rounded-xl h-11 sm:h-10 px-4 text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-sm min-h-[44px]"
             >
               <Download className="h-3.5 w-3.5" />
               Export CSV
@@ -190,7 +190,7 @@ export function GradebookTab({
         </div>
 
         {/* 4 Summary Stat Cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
           {/* Stat 1 */}
           <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-xs flex items-center gap-4">
             <div className="h-11 w-11 rounded-xl bg-orange-50 text-[#fd5523] flex items-center justify-center shrink-0 border border-orange-100">
@@ -265,14 +265,14 @@ export function GradebookTab({
           </div>
 
           {/* Status selector */}
-          <div className="flex items-center gap-1 bg-white p-1 rounded-xl border border-slate-200 shrink-0">
+          <div className="flex items-center gap-1 bg-white p-1 rounded-xl border border-slate-200 shrink-0 overflow-x-auto scrollbar-none touch-pan-x">
             {(["all", "active", "completed", "inactive"] as const).map((status) => (
               <button
                 key={status}
                 type="button"
                 onClick={() => setStatusFilter(status)}
                 className={cn(
-                  "px-3 py-1.5 rounded-lg text-xs font-bold capitalize transition-all",
+                  "min-h-[38px] px-3 py-1.5 rounded-lg text-xs font-bold capitalize transition-all shrink-0",
                   statusFilter === status
                     ? "bg-[#fd5523] text-white shadow-2xs"
                     : "text-slate-500 hover:text-slate-800"
@@ -302,7 +302,7 @@ export function GradebookTab({
       </div>
 
       {/* Gradebook Table View */}
-      <div className="flex-1 overflow-y-auto px-6 sm:px-8 pb-8">
+      <div className="flex-1 overflow-y-auto px-3 sm:px-6 lg:px-8 pb-8">
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20 text-slate-400">
             <Loader2 className="h-9 w-9 animate-spin mb-3 text-[#fd5523]" />
@@ -463,24 +463,24 @@ export function GradebookTab({
 
       {/* Slide-over / Modal for Student Detailed Gradebook Inspection */}
       {selectedStudent && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in-0 duration-150">
-          <div className="bg-white rounded-3xl max-w-2xl w-full p-6 sm:p-8 shadow-2xl border border-slate-200 relative max-h-[90vh] overflow-y-auto space-y-6">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in-0 duration-150">
+          <div className="bg-white rounded-2xl sm:rounded-3xl max-w-2xl w-full p-4 sm:p-8 shadow-2xl border border-slate-200 relative max-h-[85dvh] overflow-y-auto space-y-4 sm:space-y-6">
             {/* Modal Header */}
-            <div className="flex items-start justify-between gap-4 border-b border-slate-100 pb-5">
-              <div className="flex items-center gap-3.5">
-                <div className="h-12 w-12 rounded-2xl bg-orange-50 text-[#fd5523] flex items-center justify-center font-bold text-base overflow-hidden border border-orange-100 shrink-0">
+            <div className="flex items-start justify-between gap-4 border-b border-slate-100 pb-4 sm:pb-5">
+              <div className="flex items-center gap-3 sm:gap-3.5 min-w-0">
+                <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-xl sm:rounded-2xl bg-orange-50 text-[#fd5523] flex items-center justify-center font-bold text-sm sm:text-base overflow-hidden border border-orange-100 shrink-0">
                   {selectedStudent.avatar_url ? (
                     <img src={selectedStudent.avatar_url} alt="" className="h-full w-full object-cover" />
                   ) : (
                     selectedStudent.full_name.charAt(0).toUpperCase()
                   )}
                 </div>
-                <div>
-                  <h3 className="text-xl font-black text-slate-900 tracking-tight leading-tight">
+                <div className="min-w-0">
+                  <h3 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight leading-tight truncate">
                     {selectedStudent.full_name}
                   </h3>
-                  <p className="text-xs text-slate-400 font-medium flex items-center gap-1.5 mt-0.5">
-                    <Mail className="h-3 w-3" /> {selectedStudent.email}
+                  <p className="text-xs text-slate-400 font-medium flex items-center gap-1.5 mt-0.5 truncate">
+                    <Mail className="h-3 w-3 shrink-0" /> <span className="truncate">{selectedStudent.email}</span>
                   </p>
                 </div>
               </div>
@@ -488,14 +488,14 @@ export function GradebookTab({
               <button
                 type="button"
                 onClick={() => setSelectedStudent(null)}
-                className="h-8 w-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center transition-colors"
+                className="h-8 w-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center transition-colors shrink-0"
               >
                 <X className="h-4 w-4" />
               </button>
             </div>
 
             {/* Quick Metrics */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3">
               <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-100">
                 <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">
                   Lesson Progress

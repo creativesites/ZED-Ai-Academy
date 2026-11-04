@@ -169,6 +169,71 @@ export function ClassroomTabs({
   return (
     <div className="flex flex-col lg:flex-row gap-4 lg:gap-8 pb-24 lg:pb-0">
       {/* 
+        Mobile Header Controls: Cohort Selector & Horizontal Tab Strip (Visible on mobile/tablet)
+      */}
+      <div className="lg:hidden flex flex-col gap-3">
+        {/* Mobile Cohort / Section Selector */}
+        {cohorts.length > 0 && (
+          <div className="bg-white rounded-2xl p-3 border border-slate-200/80 shadow-sm flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="h-8 w-8 rounded-xl bg-[#062e39] text-white flex items-center justify-center shrink-0 text-xs font-black">
+                {selectedCohort?.name ? selectedCohort.name.charAt(0) : "C"}
+              </div>
+              <div className="min-w-0">
+                <span className="text-[9px] font-black uppercase tracking-wider text-slate-400 block leading-tight">
+                  Active Cohort
+                </span>
+                <p className="text-xs font-black text-[#062e39] truncate">
+                  {activeCohortId === "all" ? "All Cohorts (Institution)" : selectedCohort?.name || "Active Cohort"}
+                </p>
+              </div>
+            </div>
+
+            <Select value={activeCohortId} onValueChange={(v) => setActiveCohortId(v ?? "all")}>
+              <SelectTrigger className="h-9 px-3 w-auto min-w-[120px] rounded-xl bg-slate-50 border-slate-200 text-xs font-bold text-slate-700 shrink-0">
+                <SelectValue placeholder="Switch Cohort" />
+              </SelectTrigger>
+              <SelectContent align="end">
+                <SelectItem value="all" className="text-xs font-bold">
+                  All Cohorts (Institution)
+                </SelectItem>
+                {cohorts.map((c) => (
+                  <SelectItem key={c.id} value={c.id} className="text-xs font-medium">
+                    {c.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+
+        {/* Mobile Top Horizontal Scrollable Tab Bar */}
+        <div className="-mx-1 px-1 overflow-x-auto scrollbar-none py-1 flex items-center gap-1.5 touch-pan-x">
+          {filteredTabs.map((tab) => {
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => {
+                  setActiveTab(tab.id);
+                  setIsMobileMoreOpen(false);
+                }}
+                className={cn(
+                  "flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold shrink-0 transition-all min-h-[40px] cursor-pointer",
+                  isActive
+                    ? "bg-[#fd5523] text-white shadow-md shadow-[#fd5523]/25 scale-[1.02]"
+                    : "bg-white border border-slate-200/80 text-slate-600 hover:bg-slate-50"
+                )}
+              >
+                <tab.icon className={cn("h-3.5 w-3.5 shrink-0", isActive ? "text-white" : "text-slate-500")} />
+                <span className="whitespace-nowrap">{tab.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* 
         Desktop Sidebar: Visible only on lg screens 
       */}
       <aside className="hidden lg:flex w-72 shrink-0 bg-white rounded-[2.5rem] p-6 shadow-xl shadow-slate-200/50 border border-slate-100 flex-col gap-4 sticky top-4 h-fit">
@@ -208,7 +273,7 @@ export function ClassroomTabs({
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
                   className={cn(
-                    "flex items-center gap-3.5 px-5 py-3.5 rounded-[1.25rem] text-xs font-black uppercase tracking-widest transition-all w-full",
+                    "flex items-center gap-3.5 px-5 py-3.5 rounded-[1.25rem] text-xs font-black uppercase tracking-widest transition-all w-full cursor-pointer",
                     isActive
                       ? "bg-[#fd5523] text-white shadow-lg shadow-[#fd5523]/30 scale-[1.02]"
                       : "text-slate-400 hover:bg-slate-50 hover:text-slate-600"
@@ -224,10 +289,10 @@ export function ClassroomTabs({
       </aside>
 
       {/* 
-        Mobile Bottom Navigation: Fixed to bottom on small screens 
+        Mobile Bottom Navigation Dock: Fixed to bottom on small screens with iOS safe-area support
       */}
-      <nav className="lg:hidden fixed bottom-6 left-4 right-4 z-50 bg-white/95 backdrop-blur-lg border border-slate-200 shadow-2xl rounded-3xl px-3 py-2">
-        <div className="flex justify-between items-center max-w-md mx-auto">
+      <nav className="lg:hidden fixed bottom-[max(1rem,env(safe-area-inset-bottom))] left-3 right-3 sm:left-6 sm:right-6 z-40 bg-white/95 backdrop-blur-lg border border-slate-200 shadow-2xl rounded-2xl sm:rounded-3xl px-2 py-1.5 max-w-lg mx-auto">
+        <div className="flex justify-between items-center">
           {mobilePrimaryTabs.map((tab) => {
             const isActive = activeTab === tab.id;
             return (
@@ -237,11 +302,11 @@ export function ClassroomTabs({
                   setActiveTab(tab.id);
                   setIsMobileMoreOpen(false);
                 }}
-                className="flex flex-col items-center gap-1 flex-1 py-1"
+                className="flex flex-col items-center gap-0.5 flex-1 py-1 min-h-[44px] justify-center cursor-pointer"
               >
                 <div
                   className={cn(
-                    "p-2 rounded-2xl transition-all",
+                    "p-1.5 rounded-xl transition-all",
                     isActive ? "bg-[#fd5523] text-white shadow-md shadow-[#fd5523]/30" : "text-slate-400 hover:text-slate-600"
                   )}
                 >
@@ -249,7 +314,7 @@ export function ClassroomTabs({
                 </div>
                 <span
                   className={cn(
-                    "text-[10px] font-bold truncate text-center",
+                    "text-[9px] font-bold truncate text-center leading-tight",
                     isActive ? "text-[#fd5523]" : "text-slate-400"
                   )}
                 >
@@ -262,11 +327,11 @@ export function ClassroomTabs({
           {/* More Menu Trigger */}
           <button
             onClick={() => setIsMobileMoreOpen((prev) => !prev)}
-            className="flex flex-col items-center gap-1 flex-1 py-1"
+            className="flex flex-col items-center gap-0.5 flex-1 py-1 min-h-[44px] justify-center cursor-pointer"
           >
             <div
               className={cn(
-                "p-2 rounded-2xl transition-all relative",
+                "p-1.5 rounded-xl transition-all relative",
                 isMoreTabActive || isMobileMoreOpen
                   ? "bg-[#062e39] text-white shadow-md"
                   : "text-slate-400 hover:text-slate-600"
@@ -274,12 +339,12 @@ export function ClassroomTabs({
             >
               <MoreHorizontal className="h-4 w-4" />
               {isMoreTabActive && (
-                <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-[#fd5523] ring-2 ring-white" />
+                <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-[#fd5523] ring-2 ring-white" />
               )}
             </div>
             <span
               className={cn(
-                "text-[10px] font-bold truncate text-center",
+                "text-[9px] font-bold truncate text-center leading-tight",
                 isMoreTabActive || isMobileMoreOpen ? "text-[#062e39]" : "text-slate-400"
               )}
             >
@@ -299,15 +364,15 @@ export function ClassroomTabs({
           />
 
           {/* Bottom Sheet */}
-          <div className="relative z-10 bg-white rounded-t-[2.5rem] p-6 pb-28 shadow-2xl border-t border-slate-100 animate-in slide-in-from-bottom duration-300 max-h-[80vh] overflow-y-auto">
-            <div className="flex items-center justify-between pb-4 border-b border-slate-100 mb-4">
+          <div className="relative z-10 bg-white rounded-t-[2rem] p-5 pb-[max(6rem,calc(env(safe-area-inset-bottom)+5rem))] shadow-2xl border-t border-slate-100 animate-in slide-in-from-bottom duration-300 max-h-[85dvh] overflow-y-auto">
+            <div className="flex items-center justify-between pb-3.5 border-b border-slate-100 mb-4">
               <div>
-                <h4 className="text-sm font-black text-[#062e39]">Additional Classroom Tools</h4>
-                <p className="text-[11px] text-slate-400">Collaborate, interact and manage</p>
+                <h4 className="text-sm font-black text-[#062e39]">Classroom Tools</h4>
+                <p className="text-[11px] text-slate-400">Collaborate, interact and track learning</p>
               </div>
               <button
                 onClick={() => setIsMobileMoreOpen(false)}
-                className="h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-slate-200"
+                className="h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-slate-200 cursor-pointer"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -324,7 +389,7 @@ export function ClassroomTabs({
                       setIsMobileMoreOpen(false);
                     }}
                     className={cn(
-                      "flex items-center gap-3 p-3.5 rounded-2xl border text-left transition-all",
+                      "flex items-center gap-3 p-3.5 rounded-2xl border text-left transition-all min-h-[56px] cursor-pointer",
                       isActive
                         ? "bg-[#fd5523] text-white border-[#fd5523] shadow-md shadow-[#fd5523]/20"
                         : "bg-slate-50 border-slate-100 text-slate-700 hover:bg-slate-100"
@@ -355,8 +420,8 @@ export function ClassroomTabs({
       )}
 
       {/* Main Content Area */}
-      <main className="flex-1 flex flex-col bg-white rounded-[2rem] lg:rounded-[2.5rem] shadow-2xl shadow-slate-200/60 border border-slate-100 overflow-hidden min-h-[80vh] lg:min-h-[700px]">
-        <div className="p-1 flex-1 flex flex-col relative min-h-0">
+      <main className="flex-1 flex flex-col bg-white rounded-2xl sm:rounded-[2rem] lg:rounded-[2.5rem] shadow-xl sm:shadow-2xl shadow-slate-200/60 border border-slate-100 overflow-hidden min-h-[70dvh] lg:min-h-[700px]">
+        <div className="p-0 sm:p-1 flex-1 flex flex-col relative min-h-0">
           {activeTab === "overview" && (
             <div className="p-4 md:p-6">
               <OverviewTab

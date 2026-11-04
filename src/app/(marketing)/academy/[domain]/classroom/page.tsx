@@ -43,20 +43,22 @@ export default async function TenantClassroomPage({
   const isAdminOrInstructor = access.isSuperAdmin || isTeachingRole(access.tenantRole);
 
   return (
-    <div className="bg-slate-50 min-h-screen py-12 md:py-20">
-      <div className="container max-w-7xl px-4">
-        <div className="mb-10 flex flex-col sm:flex-row items-center sm:items-start gap-6 text-center sm:text-left">
-          <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-3xl bg-white shadow-2xl border border-slate-100 p-4">
-            <Building2 className="h-10 w-10 text-[#062e39]" />
-          </div>
-          <div className="space-y-1">
-            <h1 className="text-3xl md:text-5xl font-black text-[#062e39] tracking-tight leading-none uppercase">
-              {company.name} <span className="text-[#fd5523]">Classroom</span>
-            </h1>
-            <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 mt-4">
-               <span className="px-4 py-1.5 rounded-full bg-[#fd5523]/10 text-[#fd5523] text-[10px] font-black uppercase tracking-[0.2em] border border-[#fd5523]/10">
-                 {isAdminOrInstructor ? "Teaching Workspace" : "Student Workspace"}
-               </span>
+    <div className="bg-slate-50 min-h-[100dvh] pt-20 sm:pt-24 pb-28 lg:pb-16">
+      <div className="container max-w-7xl px-3 sm:px-6 lg:px-8">
+        <div className="mb-5 sm:mb-8 flex items-center justify-between gap-3 flex-wrap">
+          <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+            <div className="flex h-12 w-12 sm:h-16 sm:w-16 shrink-0 items-center justify-center rounded-2xl bg-white shadow-md border border-slate-100 p-2.5 sm:p-3">
+              <Building2 className="h-6 w-6 sm:h-8 sm:w-8 text-[#062e39]" />
+            </div>
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="px-2.5 py-0.5 rounded-full bg-[#fd5523]/10 text-[#fd5523] text-[9px] sm:text-[10px] font-black uppercase tracking-wider border border-[#fd5523]/10">
+                  {isAdminOrInstructor ? "Teaching Console" : "Student Classroom"}
+                </span>
+              </div>
+              <h1 className="text-xl sm:text-2xl md:text-4xl font-black text-[#062e39] tracking-tight truncate uppercase mt-0.5">
+                {company.name} <span className="text-[#fd5523]">Classroom</span>
+              </h1>
             </div>
           </div>
         </div>

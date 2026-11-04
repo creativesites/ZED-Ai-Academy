@@ -286,15 +286,15 @@ export function DiscussionsTab({
   }
 
   return (
-    <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden flex flex-col md:flex-row h-[750px] max-h-[85vh]">
-      {/* LEFT: Topics & Channels Sidebar */}
-      <div className="w-full md:w-72 bg-slate-50/70 border-b md:border-b-0 md:border-r border-slate-100 flex flex-col shrink-0">
+    <div className="bg-white rounded-2xl sm:rounded-3xl border border-slate-100 shadow-sm overflow-hidden flex flex-col md:flex-row h-[750px] max-h-[85dvh] min-h-[480px]">
+      {/* LEFT: Topics & Channels Sidebar (Desktop) */}
+      <div className="hidden md:flex md:w-72 bg-slate-50/70 border-r border-slate-100 flex-col shrink-0">
         <div className="p-4 border-b border-slate-100 flex items-center justify-between">
           <div>
             <h3 className="text-xs font-black uppercase tracking-wider text-slate-800">
               Class Discussions
             </h3>
-            <p className="text-[10px] text-slate-400 font-medium">Topic channels & forums</p>
+            <p className="text-[10px] text-slate-400 font-medium">Topic channels &amp; forums</p>
           </div>
           {isAdminOrInstructor && (
             <Button
@@ -355,8 +355,47 @@ export function DiscussionsTab({
 
       {/* RIGHT: Chat Feed & Input */}
       <div className="flex-1 flex flex-col min-w-0 bg-[#f8fafc]/50">
+        {/* Mobile Horizontal Channels Strip (md:hidden) */}
+        <div className="md:hidden border-b border-slate-100 bg-slate-50/80 px-3 py-2 shrink-0">
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+              Discussions &amp; Channels
+            </span>
+            {isAdminOrInstructor && (
+              <button
+                type="button"
+                onClick={() => setIsNewChannelOpen(true)}
+                className="text-[11px] font-bold text-[#fd5523] flex items-center gap-1"
+              >
+                <Plus className="h-3 w-3" /> New Channel
+              </button>
+            )}
+          </div>
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none touch-pan-x">
+            {channels.map((ch) => {
+              const isSelected = ch.id === selectedChannelId;
+              const IconComp = getChannelIcon(ch.icon);
+              return (
+                <button
+                  key={ch.id}
+                  onClick={() => setSelectedChannelId(ch.id)}
+                  className={cn(
+                    "min-h-[38px] px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 flex items-center gap-1.5 transition-all",
+                    isSelected
+                      ? "bg-[#062e39] text-white shadow-xs"
+                      : "bg-white border border-slate-200/80 text-slate-600 hover:bg-slate-50"
+                  )}
+                >
+                  <IconComp className={cn("h-3.5 w-3.5", isSelected ? "text-[#fd5523]" : "text-slate-400")} />
+                  <span>{ch.display_name}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
         {/* Channel Header */}
-        <div className="px-6 py-4 bg-white border-b border-slate-100 flex items-center justify-between shrink-0">
+        <div className="px-4 sm:px-6 py-3 sm:py-4 bg-white border-b border-slate-100 flex items-center justify-between shrink-0">
           <div className="min-w-0">
             <div className="flex items-center gap-2">
               <Hash className="h-4 w-4 text-[#fd5523]" />
@@ -387,7 +426,7 @@ export function DiscussionsTab({
         {/* Messages Feed */}
         <div
           ref={scrollRef}
-          className="flex-1 overflow-y-auto px-6 py-6 space-y-5 scroll-smooth"
+          className="flex-1 overflow-y-auto px-3 sm:px-6 py-4 sm:py-6 space-y-4 sm:space-y-5 scroll-smooth"
         >
           {loadingMessages ? (
             <div className="flex flex-col items-center justify-center h-full text-slate-400">
@@ -563,7 +602,7 @@ export function DiscussionsTab({
         )}
 
         {/* Input Bar */}
-        <div className="p-4 bg-white border-t border-slate-100 flex items-end gap-2 shrink-0">
+        <div className="p-2.5 sm:p-4 bg-white border-t border-slate-100 flex items-end gap-2 shrink-0">
           <input
             type="file"
             ref={fileInputRef}
@@ -576,7 +615,7 @@ export function DiscussionsTab({
             variant="ghost"
             size="icon"
             onClick={() => fileInputRef.current?.click()}
-            className="h-10 w-10 text-slate-400 hover:text-slate-600 rounded-xl shrink-0"
+            className="h-11 w-11 min-h-[44px] min-w-[44px] text-slate-400 hover:text-slate-600 rounded-xl shrink-0"
             title="Attach file or screenshot"
           >
             <Paperclip className="h-4 w-4" />
@@ -594,7 +633,7 @@ export function DiscussionsTab({
           <Button
             onClick={handlePost}
             disabled={pending || (!content.trim() && !attachmentFile)}
-            className="h-10 px-4 bg-[#fd5523] hover:bg-[#e0481d] text-white rounded-xl shadow-md shadow-[#fd5523]/20 shrink-0 gap-1.5"
+            className="h-11 min-h-[44px] px-3.5 sm:px-4 bg-[#fd5523] hover:bg-[#e0481d] text-white rounded-xl shadow-md shadow-[#fd5523]/20 shrink-0 gap-1.5"
           >
             {pending ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -607,8 +646,8 @@ export function DiscussionsTab({
 
       {/* MODAL: New Channel */}
       {isNewChannelOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-100 animate-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
+          <div className="bg-white rounded-2xl sm:rounded-3xl max-w-md w-full p-4 sm:p-6 shadow-2xl border border-slate-100 animate-in zoom-in-95 duration-200 max-h-[85dvh] overflow-y-auto">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <h3 className="text-base font-black text-[#062e39]">Create Discussion Channel</h3>
               <Button

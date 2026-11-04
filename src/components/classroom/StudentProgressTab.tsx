@@ -78,16 +78,16 @@ export function StudentProgressTab({
   }
 
   return (
-    <div className="p-4 md:p-8 space-y-6 animate-in fade-in duration-300">
+    <div className="p-3 sm:p-6 md:p-8 space-y-4 sm:space-y-6 animate-in fade-in duration-300">
       {/* 1. Header Banner & High-Yield Metric Cards */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#062e39] via-[#094150] to-[#062e39] p-6 md:p-8 text-white shadow-xl">
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative z-10">
+      <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-br from-[#062e39] via-[#094150] to-[#062e39] p-4 sm:p-6 md:p-8 text-white shadow-xl">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 sm:gap-6 relative z-10">
           <div>
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 text-sky-200 text-xs font-black uppercase tracking-wider mb-2 border border-white/10">
               <GraduationCap className="h-3.5 w-3.5 text-[#fd5523]" />
               Academic Transcript &amp; Performance
             </span>
-            <h2 className="text-2xl md:text-3xl font-black text-white">Your Learning Journey</h2>
+            <h2 className="text-xl sm:text-2xl md:text-3xl font-black text-white">Your Learning Journey</h2>
             <p className="text-xs md:text-sm text-slate-300 max-w-xl mt-1 font-medium">
               Track course completion, quiz proficiency, homework evaluation scores, and earned credentials.
             </p>
@@ -96,7 +96,7 @@ export function StudentProgressTab({
           {progress.nextLesson && (
             <Link
               href={`/academy/${companySlug}/course/${progress.nextLesson.course_slug}`}
-              className="inline-flex items-center gap-2 px-5 py-3.5 rounded-2xl bg-[#fd5523] hover:bg-[#e0481d] text-white text-xs font-black shadow-xl shadow-[#fd5523]/30 transition-all shrink-0"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3.5 min-h-[44px] rounded-2xl bg-[#fd5523] hover:bg-[#e0481d] text-white text-xs font-black shadow-xl shadow-[#fd5523]/30 transition-all shrink-0"
             >
               <BookOpen className="h-4 w-4" />
               Resume: {progress.nextLesson.title}
@@ -106,13 +106,13 @@ export function StudentProgressTab({
         </div>
 
         {/* 4 Performance Metric Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-6 pt-6 border-t border-white/10">
-          <div className="p-4 rounded-2xl bg-white/5 backdrop-blur-sm border border-white/10">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3 mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-white/10">
+          <div className="p-3.5 sm:p-4 rounded-xl sm:rounded-2xl bg-white/5 backdrop-blur-sm border border-white/10">
             <span className="text-[10px] font-black uppercase tracking-wider text-slate-300 block">
               Curriculum Progress
             </span>
             <div className="flex items-baseline gap-1.5 mt-1">
-              <span className="text-2xl font-black text-white">{progress.completionPercent}%</span>
+              <span className="text-xl sm:text-2xl font-black text-white">{progress.completionPercent}%</span>
               <span className="text-[10px] text-slate-300">
                 ({progress.completedLessons}/{progress.totalLessons} lessons)
               </span>
@@ -120,12 +120,12 @@ export function StudentProgressTab({
             <Progress value={progress.completionPercent} className="h-1.5 mt-2 bg-white/10 [&>div]:bg-[#fd5523]" />
           </div>
 
-          <div className="p-4 rounded-2xl bg-white/5 backdrop-blur-sm border border-white/10">
+          <div className="p-3.5 sm:p-4 rounded-xl sm:rounded-2xl bg-white/5 backdrop-blur-sm border border-white/10">
             <span className="text-[10px] font-black uppercase tracking-wider text-slate-300 block">
               Quiz Average
             </span>
             <div className="flex items-baseline gap-1.5 mt-1">
-              <span className="text-2xl font-black text-white">{progress.avgQuizScore}%</span>
+              <span className="text-xl sm:text-2xl font-black text-white">{progress.avgQuizScore}%</span>
               <span className="text-[10px] text-slate-300">({progress.quizzes.length} tests)</span>
             </div>
             <span className="text-[10px] text-emerald-300 font-bold block mt-2">
@@ -133,12 +133,12 @@ export function StudentProgressTab({
             </span>
           </div>
 
-          <div className="p-4 rounded-2xl bg-white/5 backdrop-blur-sm border border-white/10">
+          <div className="p-3.5 sm:p-4 rounded-xl sm:rounded-2xl bg-white/5 backdrop-blur-sm border border-white/10">
             <span className="text-[10px] font-black uppercase tracking-wider text-slate-300 block">
               Coursework Mark
             </span>
             <div className="flex items-baseline gap-1.5 mt-1">
-              <span className="text-2xl font-black text-white">{progress.avgAssignmentScore}</span>
+              <span className="text-xl sm:text-2xl font-black text-white">{progress.avgAssignmentScore}</span>
               <span className="text-[10px] text-slate-300">/ 100 avg</span>
             </div>
             <span className="text-[10px] text-sky-300 font-bold block mt-2">
@@ -146,12 +146,12 @@ export function StudentProgressTab({
             </span>
           </div>
 
-          <div className="p-4 rounded-2xl bg-white/5 backdrop-blur-sm border border-white/10">
+          <div className="p-3.5 sm:p-4 rounded-xl sm:rounded-2xl bg-white/5 backdrop-blur-sm border border-white/10">
             <span className="text-[10px] font-black uppercase tracking-wider text-slate-300 block">
               Live Attendance
             </span>
             <div className="flex items-baseline gap-1.5 mt-1">
-              <span className="text-2xl font-black text-white">{progress.attendancePercent}%</span>
+              <span className="text-xl sm:text-2xl font-black text-white">{progress.attendancePercent}%</span>
               <span className="text-[10px] text-slate-300">
                 ({progress.totalClassesAttended}/{progress.totalClassSessions || 1})
               </span>
@@ -164,11 +164,11 @@ export function StudentProgressTab({
       </div>
 
       {/* 2. Navigation Sub-Tabs */}
-      <div className="flex items-center gap-2 border-b border-slate-200 pb-3 overflow-x-auto scrollbar-none">
+      <div className="flex items-center gap-1.5 sm:gap-2 border-b border-slate-200 pb-2.5 sm:pb-3 overflow-x-auto scrollbar-none -mx-3 px-3 sm:mx-0 sm:px-0 touch-pan-x">
         <button
           onClick={() => setActiveSubTab("assignments")}
           className={cn(
-            "px-4 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-2",
+            "min-h-[44px] shrink-0 whitespace-nowrap px-3.5 sm:px-4 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-2",
             activeSubTab === "assignments"
               ? "bg-[#062e39] text-white shadow-sm"
               : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
@@ -181,7 +181,7 @@ export function StudentProgressTab({
         <button
           onClick={() => setActiveSubTab("quizzes")}
           className={cn(
-            "px-4 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-2",
+            "min-h-[44px] shrink-0 whitespace-nowrap px-3.5 sm:px-4 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-2",
             activeSubTab === "quizzes"
               ? "bg-[#062e39] text-white shadow-sm"
               : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
@@ -194,7 +194,7 @@ export function StudentProgressTab({
         <button
           onClick={() => setActiveSubTab("attendance")}
           className={cn(
-            "px-4 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-2",
+            "min-h-[44px] shrink-0 whitespace-nowrap px-3.5 sm:px-4 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-2",
             activeSubTab === "attendance"
               ? "bg-[#062e39] text-white shadow-sm"
               : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
@@ -207,7 +207,7 @@ export function StudentProgressTab({
         <button
           onClick={() => setActiveSubTab("certificates")}
           className={cn(
-            "px-4 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-2",
+            "min-h-[44px] shrink-0 whitespace-nowrap px-3.5 sm:px-4 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-2",
             activeSubTab === "certificates"
               ? "bg-[#062e39] text-white shadow-sm"
               : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
@@ -228,21 +228,21 @@ export function StudentProgressTab({
               <p className="text-xs font-bold text-slate-600">No assignment submissions recorded</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
               {progress.assignments.map((item) => (
                 <div
                   key={item.id}
-                  className="p-5 rounded-3xl bg-white border border-slate-100 shadow-sm space-y-3 hover:border-slate-200 transition-all"
+                  className="p-4 sm:p-5 rounded-2xl sm:rounded-3xl bg-white border border-slate-100 shadow-sm space-y-3 hover:border-slate-200 transition-all"
                 >
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                    <div className="min-w-0">
                       <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">
                         Coursework Submission
                       </span>
-                      <h4 className="text-sm font-black text-[#062e39] mt-0.5">{item.title}</h4>
+                      <h4 className="text-sm font-black text-[#062e39] mt-0.5 break-words">{item.title}</h4>
                     </div>
 
-                    <div className="text-right">
+                    <div className="sm:text-right shrink-0">
                       {item.grade !== null && item.grade !== undefined ? (
                         <span className="text-lg font-black text-emerald-600">
                           {item.grade} <span className="text-xs text-slate-400 font-bold">/ {item.max_points}</span>
@@ -255,7 +255,7 @@ export function StudentProgressTab({
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3 text-[11px] text-slate-400 font-medium">
+                  <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-[11px] text-slate-400 font-medium">
                     <span className="flex items-center gap-1">
                       <Clock className="h-3 w-3" />
                       Submitted {new Date(item.submitted_at).toLocaleDateString()}
@@ -286,30 +286,30 @@ export function StudentProgressTab({
       {activeSubTab === "quizzes" && (
         <div className="space-y-3">
           {progress.quizzes.length === 0 ? (
-            <div className="p-8 text-center text-slate-400 bg-white rounded-3xl border border-slate-100">
+            <div className="p-6 sm:p-8 text-center text-slate-400 bg-white rounded-2xl sm:rounded-3xl border border-slate-100">
               <TrendingUp className="h-8 w-8 text-slate-300 mx-auto mb-2" />
               <p className="text-xs font-bold text-slate-600">No quiz attempts logged yet</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
               {progress.quizzes.map((quiz) => (
                 <div
                   key={quiz.id}
-                  className="p-5 rounded-3xl bg-white border border-slate-100 shadow-sm flex items-center justify-between gap-4"
+                  className="p-4 sm:p-5 rounded-2xl sm:rounded-3xl bg-white border border-slate-100 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4"
                 >
-                  <div className="space-y-1">
+                  <div className="space-y-1 min-w-0">
                     <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">
                       Lesson Assessment
                     </span>
-                    <h4 className="text-sm font-black text-[#062e39]">{quiz.title}</h4>
+                    <h4 className="text-sm font-black text-[#062e39] break-words">{quiz.title}</h4>
                     <span className="text-[10px] text-slate-400 block font-medium">
                       Completed on {new Date(quiz.taken_at).toLocaleDateString()}
                     </span>
                   </div>
 
-                  <div className="text-right shrink-0">
+                  <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center gap-2 shrink-0">
                     <span className={cn(
-                      "text-xl font-black block",
+                      "text-lg sm:text-xl font-black block",
                       quiz.passed ? "text-emerald-600" : "text-amber-600"
                     )}>
                       {quiz.score}%
@@ -330,19 +330,19 @@ export function StudentProgressTab({
 
       {/* C. Attendance */}
       {activeSubTab === "attendance" && (
-        <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
+        <div className="bg-white rounded-2xl sm:rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
           {progress.attendanceRecords.length === 0 ? (
-            <div className="p-8 text-center text-slate-400">
+            <div className="p-6 sm:p-8 text-center text-slate-400">
               <UserCheck className="h-8 w-8 text-slate-300 mx-auto mb-2" />
               <p className="text-xs font-bold text-slate-600">No live attendance sessions recorded yet</p>
             </div>
           ) : (
             <div className="divide-y divide-slate-100">
               {progress.attendanceRecords.map((att, idx) => (
-                <div key={idx} className="p-4 flex items-center justify-between gap-4 hover:bg-slate-50 transition-colors">
-                  <div className="flex items-center gap-3">
+                <div key={idx} className="p-3.5 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-4 hover:bg-slate-50 transition-colors">
+                  <div className="flex items-center gap-3 min-w-0">
                     <div className={cn(
-                      "h-8 w-8 rounded-xl flex items-center justify-center font-bold text-xs",
+                      "h-8 w-8 rounded-xl flex items-center justify-center font-bold text-xs shrink-0",
                       att.status === "present"
                         ? "bg-emerald-100 text-emerald-700"
                         : att.status === "late"
@@ -351,8 +351,8 @@ export function StudentProgressTab({
                     )}>
                       {att.status === "present" ? "✓" : att.status === "late" ? "⏱" : "✕"}
                     </div>
-                    <div>
-                      <p className="text-xs font-bold text-slate-800">
+                    <div className="min-w-0">
+                      <p className="text-xs font-bold text-slate-800 truncate">
                         Class Session Date: {new Date(att.date).toLocaleDateString([], { weekday: "short", month: "short", day: "numeric", year: "numeric" })}
                       </p>
                       <p className="text-[10px] text-slate-400">Verified by Classroom Live Presence</p>
@@ -360,7 +360,7 @@ export function StudentProgressTab({
                   </div>
 
                   <span className={cn(
-                    "text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full border",
+                    "text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full border self-start sm:self-auto",
                     att.status === "present"
                       ? "bg-emerald-50 text-emerald-800 border-emerald-200"
                       : att.status === "late"
@@ -380,7 +380,7 @@ export function StudentProgressTab({
       {activeSubTab === "certificates" && (
         <div className="space-y-4">
           {progress.certificates.length === 0 ? (
-            <div className="p-8 text-center text-slate-400 bg-white rounded-3xl border border-slate-100">
+            <div className="p-6 sm:p-8 text-center text-slate-400 bg-white rounded-2xl sm:rounded-3xl border border-slate-100">
               <Award className="h-8 w-8 text-slate-300 mx-auto mb-2" />
               <p className="text-xs font-bold text-slate-600">No certificates issued yet</p>
               <p className="text-[11px] text-slate-400 mt-1">
@@ -388,27 +388,27 @@ export function StudentProgressTab({
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
               {progress.certificates.map((cert) => (
                 <div
                   key={cert.id}
-                  className="p-6 rounded-3xl bg-gradient-to-br from-amber-500/10 via-orange-500/5 to-white border border-amber-200 shadow-sm space-y-4"
+                  className="p-4 sm:p-6 rounded-2xl sm:rounded-3xl bg-gradient-to-br from-amber-500/10 via-orange-500/5 to-white border border-amber-200 shadow-sm space-y-4"
                 >
                   <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-2xl bg-amber-100 text-amber-800 flex items-center justify-center">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="h-10 w-10 rounded-2xl bg-amber-100 text-amber-800 flex items-center justify-center shrink-0">
                         <Award className="h-5 w-5" />
                       </div>
-                      <div>
+                      <div className="min-w-0">
                         <span className="text-[10px] font-black uppercase tracking-wider text-amber-800">
                           Verified Credential
                         </span>
-                        <h4 className="text-sm font-black text-[#062e39]">{cert.course_title}</h4>
+                        <h4 className="text-sm font-black text-[#062e39] truncate">{cert.course_title}</h4>
                       </div>
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between text-[11px] text-slate-500 pt-2 border-t border-amber-100">
+                  <div className="flex flex-wrap items-center justify-between gap-1 text-[11px] text-slate-500 pt-2 border-t border-amber-100">
                     <span>Issued: {new Date(cert.issued_at).toLocaleDateString()}</span>
                     <span className="font-mono text-[10px] text-slate-400">ID: {cert.public_id}</span>
                   </div>
@@ -418,7 +418,7 @@ export function StudentProgressTab({
                       href={cert.file_url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#062e39] text-white text-xs font-bold hover:bg-[#fd5523] transition-colors"
+                      className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 min-h-[44px] rounded-xl bg-[#062e39] text-white text-xs font-bold hover:bg-[#fd5523] transition-colors"
                     >
                       <Download className="h-3.5 w-3.5" />
                       Download Official Certificate

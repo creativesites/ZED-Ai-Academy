@@ -158,56 +158,56 @@ export function OverviewTab({
   }, [schedules, selectedCohort?.id, companySlug]);
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-300">
+    <div className="space-y-4 sm:space-y-6 animate-in fade-in duration-300">
       {/* 1. Header Banner & Live Classroom Status */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#062e39] via-[#094150] to-[#062e39] p-6 md:p-8 text-white shadow-xl">
-        <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+      <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-br from-[#062e39] via-[#094150] to-[#062e39] p-4 sm:p-6 md:p-8 text-white shadow-xl">
+        <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 sm:gap-6">
           <div className="space-y-2 max-w-2xl">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md text-sky-200 text-xs font-black uppercase tracking-wider border border-white/10">
+            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full bg-white/10 backdrop-blur-md text-sky-200 text-[11px] sm:text-xs font-black uppercase tracking-wider border border-white/10">
                 <GraduationCap className="h-3.5 w-3.5 text-[#fd5523]" />
                 {selectedCohort?.name || "All Cohorts (Institution)"}
               </span>
 
               {selectedCohort?.academic_period && (
-                <span className="inline-flex items-center px-3 py-1 rounded-full bg-white/10 text-slate-200 text-xs font-semibold">
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-white/10 text-slate-200 text-[11px] sm:text-xs font-semibold">
                   {selectedCohort.academic_period}
                 </span>
               )}
 
               {selectedCohort?.course && (
-                <span className="inline-flex items-center px-3 py-1 rounded-full bg-white/5 text-slate-300 text-xs font-semibold">
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-white/5 text-slate-300 text-[11px] sm:text-xs font-semibold">
                   {selectedCohort.course.title}
                 </span>
               )}
 
               {isLive ? (
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-500 text-white text-xs font-black uppercase tracking-wider animate-pulse shadow-lg shadow-red-500/50">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-red-500 text-white text-[11px] sm:text-xs font-black uppercase tracking-wider animate-pulse shadow-lg shadow-red-500/50">
                   <span className="h-2 w-2 rounded-full bg-white animate-ping" />
                   Live Session Active
                 </span>
               ) : (
-                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-bold">
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-bold">
                   Classroom Ready
                 </span>
               )}
             </div>
 
-            <h1 className="text-2xl md:text-3xl font-black tracking-tight text-white">
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-black tracking-tight text-white">
               {isAdminOrInstructor ? "Faculty Workspace & Teaching Console" : "Welcome to your Classroom"}
             </h1>
-            <p className="text-xs md:text-sm text-slate-300 font-medium leading-relaxed">
+            <p className="text-xs sm:text-sm text-slate-300 font-medium leading-relaxed">
               {isAdminOrInstructor
                 ? "Manage class sessions, distribute learning materials, evaluate coursework, and guide student cohorts."
                 : "Your central hub for class schedule, learning materials, coursework submissions, and discussions."}
             </p>
           </div>
 
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0 w-full md:w-auto">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3 shrink-0 w-full md:w-auto">
             {isLive ? (
               <Button
                 onClick={() => onNavigateTab("session")}
-                className="bg-red-500 hover:bg-red-600 text-white font-black text-xs px-6 py-5 rounded-2xl shadow-xl shadow-red-500/30 gap-2 border border-red-400"
+                className="bg-red-500 hover:bg-red-600 text-white font-black text-xs px-5 py-4 sm:px-6 sm:py-5 rounded-xl sm:rounded-2xl shadow-xl shadow-red-500/30 gap-2 border border-red-400 min-h-[44px] justify-center cursor-pointer"
               >
                 <Video className="h-4 w-4 animate-bounce" />
                 Join Live Classroom Now
@@ -215,7 +215,7 @@ export function OverviewTab({
             ) : isAdminOrInstructor ? (
               <Button
                 onClick={() => onNavigateTab("session")}
-                className="bg-[#fd5523] hover:bg-[#e0481d] text-white font-black text-xs px-6 py-5 rounded-2xl shadow-xl shadow-[#fd5523]/30 gap-2"
+                className="bg-[#fd5523] hover:bg-[#e0481d] text-white font-black text-xs px-5 py-4 sm:px-6 sm:py-5 rounded-xl sm:rounded-2xl shadow-xl shadow-[#fd5523]/30 gap-2 min-h-[44px] justify-center cursor-pointer"
               >
                 <Video className="h-4 w-4" />
                 Start Live Session
@@ -225,7 +225,7 @@ export function OverviewTab({
             {courses.length > 0 && (
               <Link
                 href={`/academy/${companySlug}/course/${courses[0]?.slug || ""}`}
-                className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-white/10 hover:bg-white/20 text-white text-xs font-black backdrop-blur-md transition-all border border-white/15"
+                className="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl sm:rounded-2xl bg-white/10 hover:bg-white/20 text-white text-xs font-black backdrop-blur-md transition-all border border-white/15 min-h-[44px]"
               >
                 <BookOpen className="h-4 w-4 text-[#fd5523]" />
                 Course Player
@@ -238,19 +238,19 @@ export function OverviewTab({
 
       {/* 2. Instructor Teaching Priority Alerts & Quick Action Register */}
       {isAdminOrInstructor && (
-        <div className="space-y-4">
+        <div className="space-y-3 sm:space-y-4">
           {/* Actionable Teaching Priority Alert Banner */}
           {instructorStats && instructorStats.pendingGradingCount > 0 && (
-            <div className="p-4 md:p-5 rounded-3xl bg-amber-50 border border-amber-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 animate-in slide-in-from-top-2">
-              <div className="flex items-center gap-3.5">
-                <div className="h-10 w-10 rounded-2xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-md shadow-amber-500/20">
-                  <AlertCircle className="h-5 w-5" />
+            <div className="p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl bg-amber-50 border border-amber-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 animate-in slide-in-from-top-2">
+              <div className="flex items-center gap-3">
+                <div className="h-9 w-9 sm:h-10 sm:w-10 rounded-xl sm:rounded-2xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-md shadow-amber-500/20">
+                  <AlertCircle className="h-4.5 w-4.5 sm:h-5 sm:w-5" />
                 </div>
                 <div>
-                  <h4 className="text-xs font-black uppercase tracking-wider text-amber-800">
+                  <h4 className="text-[11px] sm:text-xs font-black uppercase tracking-wider text-amber-800">
                     Teaching Action Required
                   </h4>
-                  <p className="text-sm font-black text-slate-800">
+                  <p className="text-xs sm:text-sm font-black text-slate-800">
                     {instructorStats.pendingGradingCount} coursework submission
                     {instructorStats.pendingGradingCount > 1 ? "s" : ""} awaiting your evaluation and grading
                   </p>
@@ -258,7 +258,7 @@ export function OverviewTab({
               </div>
               <Button
                 onClick={() => onNavigateTab("assignments")}
-                className="bg-amber-600 hover:bg-amber-700 text-white font-black text-xs rounded-xl shadow-md gap-1.5 shrink-0"
+                className="bg-amber-600 hover:bg-amber-700 text-white font-black text-xs rounded-xl shadow-md gap-1.5 w-full sm:w-auto min-h-[42px] justify-center cursor-pointer"
               >
                 Review &amp; Grade Now
                 <ArrowRight className="h-3.5 w-3.5" />
@@ -268,16 +268,16 @@ export function OverviewTab({
 
           {/* Quick Stats Overview */}
           {instructorStats && (
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3">
               <div
                 onClick={() => onNavigateTab("students")}
-                className="p-4 rounded-2xl bg-white border border-slate-100 shadow-sm flex items-center justify-between hover:border-slate-200 cursor-pointer transition-all"
+                className="p-3.5 sm:p-4 rounded-xl sm:rounded-2xl bg-white border border-slate-100 shadow-sm flex items-center justify-between hover:border-slate-200 cursor-pointer transition-all min-h-[64px]"
               >
                 <div>
                   <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">
                     Cohort Roster
                   </span>
-                  <p className="text-xl font-black text-[#062e39] mt-0.5">
+                  <p className="text-lg sm:text-xl font-black text-[#062e39] mt-0.5">
                     {instructorStats.activeStudentsCount} Enrolled Learners
                   </p>
                 </div>
@@ -286,13 +286,13 @@ export function OverviewTab({
 
               <div
                 onClick={() => onNavigateTab("materials")}
-                className="p-4 rounded-2xl bg-white border border-slate-100 shadow-sm flex items-center justify-between hover:border-slate-200 cursor-pointer transition-all"
+                className="p-3.5 sm:p-4 rounded-xl sm:rounded-2xl bg-white border border-slate-100 shadow-sm flex items-center justify-between hover:border-slate-200 cursor-pointer transition-all min-h-[64px]"
               >
                 <div>
                   <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">
                     Class Library
                   </span>
-                  <p className="text-xl font-black text-[#062e39] mt-0.5">
+                  <p className="text-lg sm:text-xl font-black text-[#062e39] mt-0.5">
                     {instructorStats.materialsCount} Documents &amp; Handouts
                   </p>
                 </div>
@@ -301,13 +301,13 @@ export function OverviewTab({
 
               <div
                 onClick={() => onNavigateTab("session")}
-                className="p-4 rounded-2xl bg-white border border-slate-100 shadow-sm flex items-center justify-between hover:border-slate-200 cursor-pointer transition-all"
+                className="p-3.5 sm:p-4 rounded-xl sm:rounded-2xl bg-white border border-slate-100 shadow-sm flex items-center justify-between hover:border-slate-200 cursor-pointer transition-all min-h-[64px]"
               >
                 <div>
                   <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">
                     Virtual Classroom
                   </span>
-                  <p className="text-xl font-black text-[#062e39] mt-0.5">
+                  <p className="text-lg sm:text-xl font-black text-[#062e39] mt-0.5">
                     {sessionState.is_session_active ? "Session Running" : "Classroom Ready"}
                   </p>
                 </div>
@@ -317,40 +317,40 @@ export function OverviewTab({
           )}
 
           {/* Instructor Quick Actions */}
-          <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm space-y-4">
+          <div className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-slate-100 shadow-sm space-y-3 sm:space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-xs font-black uppercase tracking-wider text-slate-400">
+                <h3 className="text-[10px] sm:text-xs font-black uppercase tracking-wider text-slate-400">
                   Faculty Quick Actions
                 </h3>
-                <p className="text-sm font-black text-[#062e39] mt-0.5">
-                  Immediate Classroom Management Commands
+                <p className="text-xs sm:text-sm font-black text-[#062e39] mt-0.5">
+                  Classroom Management Commands
                 </p>
               </div>
-              <span className="text-[10px] font-bold text-slate-400 bg-slate-50 px-2.5 py-1 rounded-full border border-slate-100">
-                Instructor Authority
+              <span className="text-[9px] sm:text-[10px] font-bold text-slate-400 bg-slate-50 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full border border-slate-100">
+                Instructor
               </span>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3">
               <button
                 onClick={() => onNavigateTab("session")}
-                className="p-4 rounded-2xl border border-slate-100 hover:border-red-200 hover:bg-red-50/40 transition-all text-left group flex flex-col justify-between h-28"
+                className="p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-slate-100 hover:border-red-200 hover:bg-red-50/40 transition-all text-left group flex flex-col justify-between min-h-[88px] sm:h-28 cursor-pointer"
               >
-                <div className="h-9 w-9 rounded-xl bg-red-100 text-red-600 flex items-center justify-center group-hover:scale-105 transition-transform">
+                <div className="h-8 w-8 sm:h-9 sm:w-9 rounded-xl bg-red-100 text-red-600 flex items-center justify-center group-hover:scale-105 transition-transform">
                   <Video className="h-4 w-4" />
                 </div>
                 <div>
                   <p className="text-xs font-black text-slate-800 group-hover:text-red-700">Live Class</p>
-                  <p className="text-[10px] text-slate-400">Launch session</p>
+                  <p className="text-[10px] text-slate-400">Launch room</p>
                 </div>
               </button>
 
               <button
                 onClick={() => onNavigateTab("materials")}
-                className="p-4 rounded-2xl border border-slate-100 hover:border-sky-200 hover:bg-sky-50/40 transition-all text-left group flex flex-col justify-between h-28"
+                className="p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-slate-100 hover:border-sky-200 hover:bg-sky-50/40 transition-all text-left group flex flex-col justify-between min-h-[88px] sm:h-28 cursor-pointer"
               >
-                <div className="h-9 w-9 rounded-xl bg-sky-100 text-sky-700 flex items-center justify-center group-hover:scale-105 transition-transform">
+                <div className="h-8 w-8 sm:h-9 sm:w-9 rounded-xl bg-sky-100 text-sky-700 flex items-center justify-center group-hover:scale-105 transition-transform">
                   <Upload className="h-4 w-4" />
                 </div>
                 <div>
@@ -361,9 +361,9 @@ export function OverviewTab({
 
               <button
                 onClick={() => onNavigateTab("assignments")}
-                className="p-4 rounded-2xl border border-slate-100 hover:border-indigo-200 hover:bg-indigo-50/40 transition-all text-left group flex flex-col justify-between h-28"
+                className="p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-slate-100 hover:border-indigo-200 hover:bg-indigo-50/40 transition-all text-left group flex flex-col justify-between min-h-[88px] sm:h-28 cursor-pointer"
               >
-                <div className="h-9 w-9 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center group-hover:scale-105 transition-transform">
+                <div className="h-8 w-8 sm:h-9 sm:w-9 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center group-hover:scale-105 transition-transform">
                   <FileText className="h-4 w-4" />
                 </div>
                 <div>
@@ -374,22 +374,22 @@ export function OverviewTab({
 
               <button
                 onClick={() => onNavigateTab("noticeboard")}
-                className="p-4 rounded-2xl border border-slate-100 hover:border-amber-200 hover:bg-amber-50/40 transition-all text-left group flex flex-col justify-between h-28"
+                className="p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-slate-100 hover:border-amber-200 hover:bg-amber-50/40 transition-all text-left group flex flex-col justify-between min-h-[88px] sm:h-28 cursor-pointer"
               >
-                <div className="h-9 w-9 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center group-hover:scale-105 transition-transform">
+                <div className="h-8 w-8 sm:h-9 sm:w-9 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center group-hover:scale-105 transition-transform">
                   <Bell className="h-4 w-4" />
                 </div>
                 <div>
                   <p className="text-xs font-black text-slate-800 group-hover:text-amber-800">Broadcast</p>
-                  <p className="text-[10px] text-slate-400">Announce notice</p>
+                  <p className="text-[10px] text-slate-400">Post notice</p>
                 </div>
               </button>
 
               <button
                 onClick={() => onNavigateTab("timetable")}
-                className="p-4 rounded-2xl border border-slate-100 hover:border-purple-200 hover:bg-purple-50/40 transition-all text-left group flex flex-col justify-between h-28"
+                className="p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-slate-100 hover:border-purple-200 hover:bg-purple-50/40 transition-all text-left group flex flex-col justify-between min-h-[88px] sm:h-28 cursor-pointer"
               >
-                <div className="h-9 w-9 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center group-hover:scale-105 transition-transform">
+                <div className="h-8 w-8 sm:h-9 sm:w-9 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center group-hover:scale-105 transition-transform">
                   <Calendar className="h-4 w-4" />
                 </div>
                 <div>
@@ -400,9 +400,9 @@ export function OverviewTab({
 
               <button
                 onClick={() => onNavigateTab("gradebook")}
-                className="p-4 rounded-2xl border border-slate-100 hover:border-emerald-200 hover:bg-emerald-50/40 transition-all text-left group flex flex-col justify-between h-28"
+                className="p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-slate-100 hover:border-emerald-200 hover:bg-emerald-50/40 transition-all text-left group flex flex-col justify-between min-h-[88px] sm:h-28 cursor-pointer"
               >
-                <div className="h-9 w-9 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center group-hover:scale-105 transition-transform">
+                <div className="h-8 w-8 sm:h-9 sm:w-9 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center group-hover:scale-105 transition-transform">
                   <UserCheck className="h-4 w-4" />
                 </div>
                 <div>
@@ -417,19 +417,19 @@ export function OverviewTab({
 
       {/* 3. Student Resume Learning Banner (Direct Course Player Link) */}
       {!isAdminOrInstructor && studentProgress?.nextLesson && (
-        <div className="p-6 rounded-3xl bg-gradient-to-r from-orange-500/10 via-amber-500/5 to-white border border-orange-200/70 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="h-12 w-12 rounded-2xl bg-[#fd5523] text-white flex items-center justify-center shrink-0 shadow-lg shadow-[#fd5523]/30">
-              <BookOpen className="h-6 w-6" />
+        <div className="p-4 sm:p-6 rounded-2xl sm:rounded-3xl bg-gradient-to-r from-orange-500/10 via-amber-500/5 to-white border border-orange-200/70 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3.5 sm:gap-4">
+          <div className="flex items-center gap-3.5">
+            <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-xl sm:rounded-2xl bg-[#fd5523] text-white flex items-center justify-center shrink-0 shadow-lg shadow-[#fd5523]/30">
+              <BookOpen className="h-5 w-5 sm:h-6 sm:w-6" />
             </div>
-            <div>
-              <span className="text-[10px] font-black uppercase tracking-wider text-[#fd5523] block">
+            <div className="min-w-0">
+              <span className="text-[10px] font-black uppercase tracking-wider text-[#fd5523] block leading-tight">
                 Up Next In Your Curriculum
               </span>
-              <h3 className="text-base font-black text-[#062e39] mt-0.5">
+              <h3 className="text-sm sm:text-base font-black text-[#062e39] mt-0.5 truncate">
                 {studentProgress.nextLesson.title}
               </h3>
-              <p className="text-xs text-slate-500 font-medium">
+              <p className="text-[11px] sm:text-xs text-slate-500 font-medium truncate">
                 Course: {studentProgress.nextLesson.course_title}
               </p>
             </div>
@@ -437,7 +437,7 @@ export function OverviewTab({
 
           <Link
             href={`/academy/${companySlug}/course/${studentProgress.nextLesson.course_slug}`}
-            className="inline-flex items-center gap-2 px-6 py-3.5 rounded-2xl bg-[#fd5523] hover:bg-[#e0481d] text-white text-xs font-black shadow-lg shadow-[#fd5523]/30 transition-all shrink-0"
+            className="inline-flex items-center justify-center gap-2 px-5 py-3 sm:px-6 sm:py-3.5 rounded-xl sm:rounded-2xl bg-[#fd5523] hover:bg-[#e0481d] text-white text-xs font-black shadow-lg shadow-[#fd5523]/30 transition-all w-full sm:w-auto shrink-0 min-h-[44px]"
           >
             Resume Lesson
             <ArrowRight className="h-4 w-4" />
@@ -446,16 +446,16 @@ export function OverviewTab({
       )}
 
       {/* 4. Next Scheduled Live Class Card (Calendar Sync + Direct Join) */}
-      <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm space-y-4">
+      <div className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-slate-100 shadow-sm space-y-3.5 sm:space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
             <div className="flex items-center gap-2">
               <span className="h-2 w-2 rounded-full bg-[#fd5523]" />
-              <h3 className="text-xs font-black uppercase tracking-wider text-slate-400">
+              <h3 className="text-[10px] sm:text-xs font-black uppercase tracking-wider text-slate-400">
                 Next Scheduled Class
               </h3>
             </div>
-            <p className="text-base font-black text-[#062e39] mt-0.5">
+            <p className="text-sm sm:text-base font-black text-[#062e39] mt-0.5">
               Live Lesson &amp; Workshop Timetable
             </p>
           </div>
@@ -464,17 +464,17 @@ export function OverviewTab({
             variant="ghost"
             size="sm"
             onClick={() => onNavigateTab("timetable")}
-            className="text-xs font-black text-[#fd5523] hover:text-[#e0481d] w-fit p-0 h-auto"
+            className="text-xs font-black text-[#fd5523] hover:text-[#e0481d] w-fit p-0 h-auto cursor-pointer"
           >
             Full Timetable Calendar <ChevronRight className="h-3.5 w-3.5 ml-1" />
           </Button>
         </div>
 
         {nextScheduleInfo ? (
-          <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200/80 flex flex-col md:flex-row items-start md:items-center justify-between gap-5">
-            <div className="space-y-1.5 max-w-xl">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#062e39] text-white text-[11px] font-black">
+          <div className="p-3.5 sm:p-5 rounded-xl sm:rounded-2xl bg-slate-50 border border-slate-200/80 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 sm:gap-5">
+            <div className="space-y-1.5 max-w-xl min-w-0 w-full">
+              <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#062e39] text-white text-[10px] sm:text-[11px] font-black">
                   <Clock className="h-3 w-3 text-sky-400" />
                   {nextScheduleInfo.dayStr} at {nextScheduleInfo.timeStr}
                 </span>
@@ -485,12 +485,12 @@ export function OverviewTab({
 
                 {nextScheduleInfo.schedule.is_recurring && (
                   <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-slate-200 text-slate-700 text-[10px] font-semibold">
-                    Weekly Recurring
+                    Weekly
                   </span>
                 )}
               </div>
 
-              <h4 className="text-base font-black text-[#062e39]">
+              <h4 className="text-sm sm:text-base font-black text-[#062e39] truncate">
                 {nextScheduleInfo.schedule.title}
               </h4>
 
@@ -506,19 +506,19 @@ export function OverviewTab({
               ) : null}
             </div>
 
-            <div className="flex flex-wrap items-center gap-2 shrink-0 w-full md:w-auto">
+            <div className="grid grid-cols-3 sm:flex items-center gap-1.5 sm:gap-2 w-full md:w-auto shrink-0">
               <Button
                 onClick={() => onNavigateTab("session")}
-                className="bg-[#fd5523] hover:bg-[#e0481d] text-white font-bold text-xs rounded-xl shadow-md shadow-[#fd5523]/20 gap-1.5 flex-1 md:flex-initial"
+                className="bg-[#fd5523] hover:bg-[#e0481d] text-white font-bold text-xs rounded-xl shadow-md shadow-[#fd5523]/20 gap-1.5 col-span-3 sm:col-span-1 min-h-[42px] justify-center cursor-pointer"
               >
-                <Video className="h-3.5 w-3.5" />
+                <Video className="h-4 w-4" />
                 Join Live Room
               </Button>
 
               <Button
                 variant="outline"
                 onClick={() => window.open(getGoogleCalendarUrl(nextScheduleInfo.details), "_blank")}
-                className="border-slate-200 text-slate-700 hover:bg-white text-xs font-bold rounded-xl gap-1.5"
+                className="border-slate-200 text-slate-700 hover:bg-white text-[11px] sm:text-xs font-bold rounded-xl gap-1 col-span-2 sm:col-span-1 min-h-[42px] justify-center cursor-pointer"
                 title="Add this class to Google Calendar"
               >
                 <CalendarPlus className="h-3.5 w-3.5 text-sky-600" />
@@ -528,7 +528,7 @@ export function OverviewTab({
               <Button
                 variant="outline"
                 onClick={() => downloadIcsFile(nextScheduleInfo.details)}
-                className="border-slate-200 text-slate-700 hover:bg-white text-xs font-bold rounded-xl gap-1.5"
+                className="border-slate-200 text-slate-700 hover:bg-white text-[11px] sm:text-xs font-bold rounded-xl gap-1 col-span-1 min-h-[42px] justify-center cursor-pointer"
                 title="Download .ics event file"
               >
                 <Download className="h-3.5 w-3.5 text-slate-500" />
@@ -537,7 +537,7 @@ export function OverviewTab({
             </div>
           </div>
         ) : (
-          <div className="p-8 text-center text-slate-400 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+          <div className="p-6 sm:p-8 text-center text-slate-400 bg-slate-50 rounded-xl sm:rounded-2xl border border-dashed border-slate-200">
             <Calendar className="h-8 w-8 text-slate-300 mx-auto mb-2" />
             <p className="text-xs font-bold text-slate-600">No scheduled live classes this week</p>
             <p className="text-[11px] text-slate-400 mt-0.5">
@@ -548,18 +548,18 @@ export function OverviewTab({
       </div>
 
       {/* 5. Main Dashboard Split Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 items-start">
         {/* Left Column (8 cols): Academic Progress & Coursework Tasks & Broadcasts */}
-        <div className="lg:col-span-8 space-y-6">
+        <div className="lg:col-span-8 space-y-4 sm:space-y-6">
           {/* Student Progress Overview Card */}
           {!isAdminOrInstructor && (
-            <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm space-y-4">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-slate-100 shadow-sm space-y-3.5 sm:space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3">
                 <div>
-                  <h3 className="text-xs font-black uppercase tracking-wider text-slate-400">
+                  <h3 className="text-[10px] sm:text-xs font-black uppercase tracking-wider text-slate-400">
                     Your Academic Progress
                   </h3>
-                  <p className="text-lg font-black text-[#062e39] mt-0.5">
+                  <p className="text-base sm:text-lg font-black text-[#062e39] mt-0.5">
                     {studentProgress ? `${studentProgress.completionPercent}% Coursework Completed` : "Curriculum Tracking"}
                   </p>
                 </div>
@@ -568,7 +568,7 @@ export function OverviewTab({
                   variant="outline"
                   size="sm"
                   onClick={() => onNavigateTab("progress")}
-                  className="border-slate-200 hover:bg-slate-50 text-xs font-black text-[#062e39] rounded-xl gap-1.5 w-fit"
+                  className="border-slate-200 hover:bg-slate-50 text-xs font-black text-[#062e39] rounded-xl gap-1.5 w-full sm:w-auto min-h-[40px] justify-center cursor-pointer"
                 >
                   <Award className="h-3.5 w-3.5 text-[#fd5523]" />
                   View Academic Transcript &amp; Grades
@@ -591,27 +591,27 @@ export function OverviewTab({
               </div>
 
               {/* 3 Academic Metrics Pills */}
-              <div className="grid grid-cols-3 gap-3 pt-2">
-                <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-100">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3 pt-1">
+                <div className="p-3 sm:p-3.5 rounded-xl sm:rounded-2xl bg-slate-50 border border-slate-100 flex sm:block items-center justify-between">
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
                     Quiz Average
                   </span>
-                  <div className="flex items-baseline gap-1 mt-0.5">
-                    <span className="text-base font-black text-[#062e39]">
+                  <div className="flex items-baseline gap-1 mt-0 sm:mt-0.5">
+                    <span className="text-sm sm:text-base font-black text-[#062e39]">
                       {studentProgress?.avgQuizScore || 0}%
                     </span>
                     <span className="text-[10px] text-slate-400">
-                      ({studentProgress?.quizzes.length || 0} taken)
+                      ({studentProgress?.quizzes.length || 0} tests)
                     </span>
                   </div>
                 </div>
 
-                <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-100">
+                <div className="p-3 sm:p-3.5 rounded-xl sm:rounded-2xl bg-slate-50 border border-slate-100 flex sm:block items-center justify-between">
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
                     Coursework Score
                   </span>
-                  <div className="flex items-baseline gap-1 mt-0.5">
-                    <span className="text-base font-black text-[#062e39]">
+                  <div className="flex items-baseline gap-1 mt-0 sm:mt-0.5">
+                    <span className="text-sm sm:text-base font-black text-[#062e39]">
                       {studentProgress?.avgAssignmentScore ? `${studentProgress.avgAssignmentScore} pts` : "—"}
                     </span>
                     <span className="text-[10px] text-slate-400">
@@ -620,12 +620,12 @@ export function OverviewTab({
                   </div>
                 </div>
 
-                <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-100">
+                <div className="p-3 sm:p-3.5 rounded-xl sm:rounded-2xl bg-slate-50 border border-slate-100 flex sm:block items-center justify-between">
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
                     Live Attendance
                   </span>
-                  <div className="flex items-baseline gap-1 mt-0.5">
-                    <span className="text-base font-black text-emerald-600">
+                  <div className="flex items-baseline gap-1 mt-0 sm:mt-0.5">
+                    <span className="text-sm sm:text-base font-black text-emerald-600">
                       {studentProgress ? `${studentProgress.attendancePercent}%` : "100%"}
                     </span>
                     <span className="text-[10px] text-slate-400">
@@ -638,32 +638,32 @@ export function OverviewTab({
           )}
 
           {/* Upcoming Assignments / Tasks */}
-          <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm space-y-4">
+          <div className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-slate-100 shadow-sm space-y-3.5 sm:space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-xs font-black uppercase tracking-wider text-slate-400">
+                <h3 className="text-[10px] sm:text-xs font-black uppercase tracking-wider text-slate-400">
                   Coursework &amp; Tasks
                 </h3>
-                <p className="text-base font-black text-[#062e39]">Assignments Due Soon</p>
+                <p className="text-sm sm:text-base font-black text-[#062e39]">Assignments Due Soon</p>
               </div>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => onNavigateTab("assignments")}
-                className="text-xs font-black text-[#fd5523] hover:text-[#e0481d]"
+                className="text-xs font-black text-[#fd5523] hover:text-[#e0481d] cursor-pointer"
               >
-                View All Tasks <ChevronRight className="h-3.5 w-3.5 ml-1" />
+                View All <ChevronRight className="h-3.5 w-3.5 ml-0.5" />
               </Button>
             </div>
 
             {assignments.length === 0 ? (
-              <div className="p-8 text-center text-slate-400 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
-                <FileText className="h-8 w-8 text-slate-300 mx-auto mb-2" />
+              <div className="p-6 sm:p-8 text-center text-slate-400 bg-slate-50 rounded-xl sm:rounded-2xl border border-dashed border-slate-200">
+                <FileText className="h-7 w-7 text-slate-300 mx-auto mb-2" />
                 <p className="text-xs font-bold text-slate-600">No pending assignments</p>
                 <p className="text-[11px] text-slate-400 mt-0.5">You're completely up to date!</p>
               </div>
             ) : (
-              <div className="space-y-2.5">
+              <div className="space-y-2 sm:space-y-2.5">
                 {assignments.slice(0, 3).map((a) => {
                   const isDone = a.my_submission?.status === "submitted" || a.my_submission?.status === "graded";
                   const isPast = new Date(a.due_date) < new Date();
@@ -671,12 +671,12 @@ export function OverviewTab({
                     <div
                       key={a.id}
                       onClick={() => onNavigateTab("assignments")}
-                      className="p-4 rounded-2xl border border-slate-100 hover:border-slate-200 hover:bg-slate-50/50 transition-all flex items-center justify-between gap-4 cursor-pointer group"
+                      className="p-3.5 sm:p-4 rounded-xl sm:rounded-2xl border border-slate-100 hover:border-slate-200 hover:bg-slate-50/50 transition-all flex items-center justify-between gap-3 cursor-pointer group"
                     >
                       <div className="flex items-center gap-3 min-w-0">
                         <div
                           className={cn(
-                            "h-10 w-10 rounded-xl flex items-center justify-center shrink-0",
+                            "h-9 w-9 sm:h-10 sm:w-10 rounded-xl flex items-center justify-center shrink-0",
                             isDone
                               ? "bg-emerald-50 text-emerald-600"
                               : isPast
@@ -684,13 +684,13 @@ export function OverviewTab({
                               : "bg-sky-50 text-sky-600"
                           )}
                         >
-                          <FileText className="h-5 w-5" />
+                          <FileText className="h-4.5 w-4.5 sm:h-5 sm:w-5" />
                         </div>
                         <div className="min-w-0">
                           <h4 className="text-xs font-black text-[#062e39] group-hover:text-[#fd5523] transition-colors truncate">
                             {a.title}
                           </h4>
-                          <p className="text-[10px] text-slate-400">
+                          <p className="text-[10px] text-slate-400 truncate">
                             Due {new Date(a.due_date).toLocaleDateString([], { month: "short", day: "numeric" })} • {a.max_points} pts
                           </p>
                         </div>
@@ -698,15 +698,15 @@ export function OverviewTab({
 
                       <div className="shrink-0">
                         {isDone ? (
-                          <span className="inline-flex items-center gap-1 text-[10px] font-black text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg">
+                          <span className="inline-flex items-center gap-1 text-[10px] font-black text-emerald-700 bg-emerald-50 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg">
                             <CheckCircle2 className="h-3 w-3" /> Submitted
                           </span>
                         ) : isPast ? (
-                          <span className="inline-flex items-center gap-1 text-[10px] font-black text-red-700 bg-red-50 px-2.5 py-1 rounded-lg">
+                          <span className="inline-flex items-center gap-1 text-[10px] font-black text-red-700 bg-red-50 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg">
                             <AlertCircle className="h-3 w-3" /> Overdue
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1 text-[10px] font-black text-sky-700 bg-sky-50 px-2.5 py-1 rounded-lg">
+                          <span className="inline-flex items-center gap-1 text-[10px] font-black text-sky-700 bg-sky-50 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg">
                             <Clock className="h-3 w-3" /> Due Soon
                           </span>
                         )}
@@ -719,46 +719,46 @@ export function OverviewTab({
           </div>
 
           {/* Recent Notices / Broadcasts */}
-          <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm space-y-4">
+          <div className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-slate-100 shadow-sm space-y-3.5 sm:space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-xs font-black uppercase tracking-wider text-slate-400">
+                <h3 className="text-[10px] sm:text-xs font-black uppercase tracking-wider text-slate-400">
                   Noticeboard Broadcasts
                 </h3>
-                <p className="text-base font-black text-[#062e39]">Latest Class Announcements</p>
+                <p className="text-sm sm:text-base font-black text-[#062e39]">Class Announcements</p>
               </div>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => onNavigateTab("noticeboard")}
-                className="text-xs font-black text-[#fd5523] hover:text-[#e0481d]"
+                className="text-xs font-black text-[#fd5523] hover:text-[#e0481d] cursor-pointer"
               >
-                View Noticeboard <ChevronRight className="h-3.5 w-3.5 ml-1" />
+                View All <ChevronRight className="h-3.5 w-3.5 ml-0.5" />
               </Button>
             </div>
 
             {announcements.length === 0 ? (
-              <div className="p-8 text-center text-slate-400 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
-                <Bell className="h-8 w-8 text-slate-300 mx-auto mb-2" />
+              <div className="p-6 sm:p-8 text-center text-slate-400 bg-slate-50 rounded-xl sm:rounded-2xl border border-dashed border-slate-200">
+                <Bell className="h-7 w-7 text-slate-300 mx-auto mb-2" />
                 <p className="text-xs font-bold text-slate-600">No announcements posted</p>
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-2.5 sm:space-y-3">
                 {announcements.slice(0, 2).map((notice) => (
                   <div
                     key={notice.id}
                     onClick={() => onNavigateTab("noticeboard")}
-                    className="p-4 rounded-2xl border border-slate-100 hover:border-slate-200 hover:bg-slate-50/50 transition-all space-y-1.5 cursor-pointer"
+                    className="p-3.5 sm:p-4 rounded-xl sm:rounded-2xl border border-slate-100 hover:border-slate-200 hover:bg-slate-50/50 transition-all space-y-1 cursor-pointer"
                   >
                     <div className="flex items-center justify-between gap-2">
-                      <span className="text-[10px] font-black uppercase tracking-wider text-[#fd5523]">
-                        {notice.priority === "urgent" ? "🚨 Urgent Alert" : "📢 Class Announcement"}
+                      <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-[#fd5523]">
+                        {notice.priority === "urgent" ? "🚨 Urgent Alert" : "📢 Notice"}
                       </span>
                       <span className="text-[10px] text-slate-400 font-medium">
                         {new Date(notice.created_at).toLocaleDateString([], { month: "short", day: "numeric" })}
                       </span>
                     </div>
-                    <h4 className="text-xs font-black text-[#062e39]">{notice.title}</h4>
+                    <h4 className="text-xs font-black text-[#062e39] truncate">{notice.title}</h4>
                     <p className="text-xs text-slate-600 line-clamp-2 font-medium">
                       {notice.content}
                     </p>
@@ -770,34 +770,34 @@ export function OverviewTab({
         </div>
 
         {/* Right Column (4 cols): Assigned Instructor & Documents & AI Study Packs */}
-        <div className="lg:col-span-4 space-y-6">
+        <div className="lg:col-span-4 space-y-4 sm:space-y-6">
           {/* Assigned Instructor Card */}
           {assignedInstructor && (
-            <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm space-y-4">
+            <div className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-slate-100 shadow-sm space-y-3 sm:space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-xs font-black uppercase tracking-wider text-slate-400">
+                  <h3 className="text-[10px] sm:text-xs font-black uppercase tracking-wider text-slate-400">
                     Cohort Faculty Lead
                   </h3>
-                  <p className="text-sm font-black text-[#062e39]">Assigned Instructor</p>
+                  <p className="text-xs sm:text-sm font-black text-[#062e39]">Assigned Instructor</p>
                 </div>
-                <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">
+                <span className="text-[9px] sm:text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">
                   Active
                 </span>
               </div>
 
-              <div className="flex items-center gap-3.5 pt-1">
-                <Avatar className="h-12 w-12 border-2 border-slate-100">
+              <div className="flex items-center gap-3 pt-0.5">
+                <Avatar className="h-10 w-10 sm:h-12 sm:w-12 border-2 border-slate-100">
                   <AvatarImage src={assignedInstructor.avatar_url || ""} />
-                  <AvatarFallback className="bg-[#062e39] text-white font-black text-sm">
+                  <AvatarFallback className="bg-[#062e39] text-white font-black text-xs sm:text-sm">
                     {assignedInstructor.full_name?.charAt(0) || "T"}
                   </AvatarFallback>
                 </Avatar>
                 <div className="min-w-0 flex-1">
-                  <h4 className="text-sm font-black text-[#062e39] truncate">
+                  <h4 className="text-xs sm:text-sm font-black text-[#062e39] truncate">
                     {assignedInstructor.full_name || "Lead Instructor"}
                   </h4>
-                  <p className="text-[11px] text-slate-400 truncate">
+                  <p className="text-[10px] sm:text-[11px] text-slate-400 truncate">
                     {assignedInstructor.email || "Faculty Mentor"}
                   </p>
                   <span className="text-[10px] text-[#fd5523] font-bold block mt-0.5">
@@ -809,7 +809,7 @@ export function OverviewTab({
               <Button
                 onClick={() => onNavigateTab("discussions")}
                 variant="outline"
-                className="w-full border-slate-200 text-[#062e39] hover:bg-slate-50 text-xs font-bold rounded-xl gap-2 mt-2"
+                className="w-full border-slate-200 text-[#062e39] hover:bg-slate-50 text-xs font-bold rounded-xl gap-2 mt-2 min-h-[42px] justify-center cursor-pointer"
               >
                 <MessageSquare className="h-3.5 w-3.5 text-[#fd5523]" />
                 Ask Question in Lounge
@@ -818,26 +818,26 @@ export function OverviewTab({
           )}
 
           {/* Quick Learning Materials Shelf */}
-          <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm space-y-4">
+          <div className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-slate-100 shadow-sm space-y-3 sm:space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-xs font-black uppercase tracking-wider text-slate-400">
+                <h3 className="text-[10px] sm:text-xs font-black uppercase tracking-wider text-slate-400">
                   Documents &amp; Handouts
                 </h3>
-                <p className="text-sm font-black text-[#062e39]">Recently Added</p>
+                <p className="text-xs sm:text-sm font-black text-[#062e39]">Recently Added</p>
               </div>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => onNavigateTab("materials")}
-                className="text-xs font-black text-[#fd5523] hover:text-[#e0481d]"
+                className="text-xs font-black text-[#fd5523] hover:text-[#e0481d] cursor-pointer"
               >
                 Browse <FolderOpen className="h-3.5 w-3.5 ml-1" />
               </Button>
             </div>
 
             {materials.length === 0 ? (
-              <div className="p-6 text-center text-slate-400 bg-slate-50 rounded-2xl">
+              <div className="p-5 sm:p-6 text-center text-slate-400 bg-slate-50 rounded-xl sm:rounded-2xl">
                 <FolderOpen className="h-6 w-6 text-slate-300 mx-auto mb-1" />
                 <p className="text-xs font-bold text-slate-600">No documents yet</p>
               </div>
@@ -849,7 +849,7 @@ export function OverviewTab({
                     href={m.file_url || "#"}
                     target="_blank"
                     rel="noreferrer"
-                    className="flex items-center gap-3 p-3 rounded-2xl border border-slate-100 hover:border-sky-300 hover:bg-sky-50/30 transition-all group"
+                    className="flex items-center gap-2.5 sm:gap-3 p-2.5 sm:p-3 rounded-xl sm:rounded-2xl border border-slate-100 hover:border-sky-300 hover:bg-sky-50/30 transition-all group min-h-[44px]"
                   >
                     <div className="h-8 w-8 rounded-xl bg-sky-100 text-sky-700 flex items-center justify-center shrink-0">
                       <FileText className="h-4 w-4" />
@@ -868,22 +868,22 @@ export function OverviewTab({
           </div>
 
           {/* AI Study Packs Card */}
-          <div className="p-6 rounded-3xl bg-gradient-to-br from-orange-500/10 via-amber-500/5 to-white border border-orange-200/60 shadow-sm space-y-3">
+          <div className="p-4 sm:p-6 rounded-2xl sm:rounded-3xl bg-gradient-to-br from-orange-500/10 via-amber-500/5 to-white border border-orange-200/60 shadow-sm space-y-2.5 sm:space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 text-[#fd5523]">
-                <Sparkles className="h-5 w-5" />
-                <h4 className="text-sm font-black text-[#062e39]">AI Study Packs</h4>
+                <Sparkles className="h-4.5 w-4.5 sm:h-5 sm:w-5" />
+                <h4 className="text-xs sm:text-sm font-black text-[#062e39]">AI Study Packs</h4>
               </div>
-              <span className="text-[10px] font-black uppercase tracking-wider text-[#fd5523] bg-orange-100/60 px-2.5 py-0.5 rounded-full">
+              <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-[#fd5523] bg-orange-100/60 px-2 py-0.5 rounded-full">
                 Interactive
               </span>
             </div>
             <p className="text-xs text-slate-600 font-medium leading-relaxed">
-              Master class topics with AI-synthesized summaries, interactive flashcards, and revision quizzes.
+              Master class topics with AI summaries, flashcards, and revision quizzes.
             </p>
             <Button
               onClick={() => setIsStudyPacksModalOpen(true)}
-              className="w-full bg-[#fd5523] hover:bg-[#e0481d] text-white font-bold text-xs rounded-xl shadow-md shadow-[#fd5523]/20 gap-1.5"
+              className="w-full bg-[#fd5523] hover:bg-[#e0481d] text-white font-bold text-xs rounded-xl shadow-md shadow-[#fd5523]/20 gap-1.5 min-h-[42px] justify-center cursor-pointer"
             >
               <Sparkles className="h-3.5 w-3.5" />
               {isAdminOrInstructor ? "Manage Study Packs" : "Study & Practice Now"}
@@ -891,17 +891,17 @@ export function OverviewTab({
           </div>
 
           {/* Classroom Community & Discussion Shortcut */}
-          <div className="p-6 rounded-3xl bg-gradient-to-br from-indigo-50 to-sky-50/60 border border-indigo-100 space-y-3">
+          <div className="p-4 sm:p-6 rounded-2xl sm:rounded-3xl bg-gradient-to-br from-indigo-50 to-sky-50/60 border border-indigo-100 space-y-2.5 sm:space-y-3">
             <div className="flex items-center gap-2 text-indigo-700">
-              <Sparkles className="h-5 w-5" />
-              <h4 className="text-sm font-black">Classroom Lounge</h4>
+              <Sparkles className="h-4.5 w-4.5 sm:h-5 sm:w-5" />
+              <h4 className="text-xs sm:text-sm font-black">Classroom Lounge</h4>
             </div>
             <p className="text-xs text-slate-600 font-medium leading-relaxed">
               Have questions about homework or upcoming classes? Ask in the topic discussion channels.
             </p>
             <Button
               onClick={() => onNavigateTab("discussions")}
-              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-md shadow-indigo-600/20"
+              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-md shadow-indigo-600/20 min-h-[42px] justify-center cursor-pointer"
             >
               Open Class Discussions
             </Button>

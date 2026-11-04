@@ -404,7 +404,7 @@ export function MaterialsTab({
   return (
     <div className="flex flex-col lg:flex-row min-h-[750px] bg-slate-50/50">
       {/* ── Left Sidebar: Folders List (Matching Image 3) ────────────────── */}
-      <aside className="w-full lg:w-72 shrink-0 border-r border-slate-200/70 bg-white p-5 flex flex-col justify-between">
+      <aside className="hidden lg:flex w-72 shrink-0 border-r border-slate-200/70 bg-white p-5 flex-col justify-between">
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <h3 className="text-base font-black text-slate-900 tracking-tight flex items-center gap-2">
@@ -532,12 +532,86 @@ export function MaterialsTab({
       </aside>
 
       {/* ── Main Area: Documents & Materials Explorer ──────────────────────── */}
-      <main className="flex-1 p-5 sm:p-8 flex flex-col space-y-6 overflow-hidden">
+      <main className="flex-1 p-3 sm:p-6 lg:p-8 flex flex-col space-y-4 sm:space-y-6 overflow-hidden min-w-0">
+        {/* Mobile Horizontal Folder Selector (lg:hidden) */}
+        <div className="lg:hidden space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+              Folders &amp; Learning Units
+            </span>
+            {isAdminOrInstructor && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsFolderModalOpen(true)}
+                className="h-7 px-2 rounded-lg text-xs font-bold text-[#fd5523] hover:bg-[#fd5523]/10"
+              >
+                <Plus className="h-3.5 w-3.5 mr-1" /> New Folder
+              </Button>
+            )}
+          </div>
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none -mx-3 px-3 sm:mx-0 sm:px-0 touch-pan-x">
+            <button
+              onClick={() => setSelectedFolderId("all")}
+              className={cn(
+                "min-h-[40px] px-3.5 py-1.5 rounded-xl text-xs font-bold shrink-0 flex items-center gap-2 transition-all",
+                selectedFolderId === "all"
+                  ? "bg-[#062e39] text-white shadow-xs"
+                  : "bg-white border border-slate-200/80 text-slate-600 hover:bg-slate-50"
+              )}
+            >
+              <Folder className="h-3.5 w-3.5 text-[#fd5523]" />
+              <span>All Documents</span>
+              <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-black/10">
+                {materials.length}
+              </span>
+            </button>
+
+            <button
+              onClick={() => setSelectedFolderId("unfiled")}
+              className={cn(
+                "min-h-[40px] px-3.5 py-1.5 rounded-xl text-xs font-bold shrink-0 flex items-center gap-2 transition-all",
+                selectedFolderId === "unfiled"
+                  ? "bg-[#062e39] text-white shadow-xs"
+                  : "bg-white border border-slate-200/80 text-slate-600 hover:bg-slate-50"
+              )}
+            >
+              <FileText className="h-3.5 w-3.5 text-slate-400" />
+              <span>Unfiled</span>
+            </button>
+
+            {folders.map((folder) => {
+              const isSelected = selectedFolderId === folder.id;
+              return (
+                <button
+                  key={folder.id}
+                  onClick={() => setSelectedFolderId(folder.id)}
+                  className={cn(
+                    "min-h-[40px] px-3.5 py-1.5 rounded-xl text-xs font-bold shrink-0 flex items-center gap-2 transition-all",
+                    isSelected
+                      ? "bg-slate-900 text-white shadow-xs"
+                      : "bg-white border border-slate-200/80 text-slate-600 hover:bg-slate-50"
+                  )}
+                >
+                  <div
+                    className="h-2.5 w-2.5 rounded-full shrink-0"
+                    style={{ backgroundColor: folder.color }}
+                  />
+                  <span>{folder.name}</span>
+                  <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-slate-100 text-slate-600">
+                    {folder.materials_count || 0}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
         {/* Top Header & Actions */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="text-2xl font-black text-[#062e39] tracking-tight">
+              <h2 className="text-xl sm:text-2xl font-black text-[#062e39] tracking-tight">
                 {activeFolderName}
               </h2>
               <span className="text-xs px-2.5 py-0.5 rounded-full bg-slate-100 font-black text-slate-500">
@@ -553,7 +627,7 @@ export function MaterialsTab({
             <div className="flex items-center gap-2">
               <Button
                 onClick={() => setIsUploadModalOpen(true)}
-                className="bg-[#fd5523] hover:bg-[#ef4a16] text-white rounded-xl text-xs font-bold px-4 py-2.5 flex items-center gap-2 shadow-lg shadow-[#fd5523]/20"
+                className="w-full sm:w-auto min-h-[44px] bg-[#fd5523] hover:bg-[#ef4a16] text-white rounded-xl text-xs font-bold px-4 py-2.5 flex items-center justify-center gap-2 shadow-lg shadow-[#fd5523]/20"
               >
                 <Plus className="h-4 w-4" />
                 Upload Material
@@ -690,7 +764,7 @@ export function MaterialsTab({
         </div>
 
         {/* ── Category Pills Strip ─────────────────────────────────────────── */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none -mx-3 px-3 sm:mx-0 sm:px-0 touch-pan-x">
           {DOCUMENT_CATEGORIES.map((cat) => {
             const isSelected = selectedCategory === cat.value;
             return (
@@ -698,7 +772,7 @@ export function MaterialsTab({
                 key={cat.value}
                 onClick={() => setSelectedCategory(cat.value)}
                 className={cn(
-                  "px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all",
+                  "min-h-[38px] px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all shrink-0",
                   isSelected
                     ? "bg-[#062e39] text-white shadow-sm"
                     : "bg-white border border-slate-200/80 text-slate-600 hover:border-slate-300 hover:bg-slate-50"
@@ -739,7 +813,7 @@ export function MaterialsTab({
           </div>
         ) : viewMode === "grid" ? (
           /* Grid View (Faithful to Image 3) */
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
             {filteredMaterials.map((item) => {
               const meta = getTypeMeta(item.material_type);
               const Icon = meta.icon;
@@ -747,7 +821,7 @@ export function MaterialsTab({
               return (
                 <div
                   key={item.id}
-                  className="group relative flex flex-col justify-between p-5 rounded-3xl bg-white border border-slate-100 shadow-sm hover:shadow-xl hover:border-[#fd5523]/30 transition-all"
+                  className="group relative flex flex-col justify-between p-4 sm:p-5 rounded-2xl sm:rounded-3xl bg-white border border-slate-100 shadow-sm hover:shadow-xl hover:border-[#fd5523]/30 transition-all"
                 >
                   <div>
                     {/* Card Top: Type badge, cohort tag, and options */}
@@ -1021,7 +1095,7 @@ export function MaterialsTab({
 
       {/* ── Dialog: Create New Folder ──────────────────────────────────────── */}
       <Dialog open={isFolderModalOpen} onOpenChange={setIsFolderModalOpen}>
-        <DialogContent className="sm:max-w-[440px] rounded-3xl p-6">
+        <DialogContent className="w-[95vw] sm:max-w-[440px] rounded-2xl sm:rounded-3xl p-4 sm:p-6 max-h-[85dvh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-xl font-black text-[#062e39]">
               Create New Folder
@@ -1077,7 +1151,7 @@ export function MaterialsTab({
 
       {/* ── Dialog: Upload Learning Material ──────────────────────────────── */}
       <Dialog open={isUploadModalOpen} onOpenChange={setIsUploadModalOpen}>
-        <DialogContent className="sm:max-w-[560px] rounded-3xl p-6 max-h-[85vh] overflow-y-auto">
+        <DialogContent className="w-[95vw] sm:max-w-[560px] rounded-2xl sm:rounded-3xl p-4 sm:p-6 max-h-[85dvh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-xl font-black text-[#062e39]">
               Upload Learning Material
@@ -1290,7 +1364,7 @@ export function MaterialsTab({
 
       {/* ── Dialog: Document Preview Modal ─────────────────────────────────── */}
       <Dialog open={!!previewMaterial} onOpenChange={() => setPreviewMaterial(null)}>
-        <DialogContent className="sm:max-w-[700px] rounded-3xl p-0 overflow-hidden border-none shadow-2xl">
+        <DialogContent className="w-[95vw] sm:max-w-[700px] rounded-2xl sm:rounded-3xl p-0 overflow-hidden border-none shadow-2xl max-h-[85dvh] flex flex-col">
           {previewMaterial && (
             <div>
               <div className="p-6 bg-[#062e39] text-white flex items-start justify-between">
@@ -1392,7 +1466,7 @@ export function MaterialsTab({
 
       {/* ── Dialog: Document Version History ─────────────────────────────────── */}
       <Dialog open={!!versionModalDoc} onOpenChange={() => setVersionModalDoc(null)}>
-        <DialogContent className="sm:max-w-[620px] rounded-3xl p-6 max-h-[85vh] overflow-y-auto">
+        <DialogContent className="w-[95vw] sm:max-w-[620px] rounded-2xl sm:rounded-3xl p-4 sm:p-6 max-h-[85dvh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-xl font-black text-[#062e39] flex items-center gap-2">
               <History className="h-5 w-5 text-[#fd5523]" />
@@ -1500,7 +1574,7 @@ export function MaterialsTab({
 
       {/* ── Dialog: Student Reading Acknowledgements (Instructor) ───────────── */}
       <Dialog open={!!acksModalDoc} onOpenChange={() => setAcksModalDoc(null)}>
-        <DialogContent className="sm:max-w-[540px] rounded-3xl p-6 max-h-[85vh] overflow-y-auto">
+        <DialogContent className="w-[95vw] sm:max-w-[540px] rounded-2xl sm:rounded-3xl p-4 sm:p-6 max-h-[85dvh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-xl font-black text-[#062e39] flex items-center gap-2">
               <CheckCheck className="h-5 w-5 text-emerald-600" />

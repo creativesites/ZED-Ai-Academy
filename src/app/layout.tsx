@@ -1,14 +1,10 @@
 import type { Metadata, Viewport } from "next";
-import { DM_Sans, JetBrains_Mono } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import { SiteIntelligenceDock } from "@/components/shared/site-intelligence-dock";
 import NextTopLoader from "nextjs-toploader";
 import { NetworkStatusProvider } from "@/components/providers/NetworkStatusProvider";
 import { SWRProvider } from "@/components/providers/SWRProvider";
 import "./globals.css";
-
-const dmSans = DM_Sans({ variable: "--font-dm-sans", subsets: ["latin"], display: "swap" });
-const jetbrainsMono = JetBrains_Mono({ variable: "--font-jetbrains-mono", subsets: ["latin"] });
 
 export const viewport: Viewport = {
   themeColor: "#062e39",
@@ -39,7 +35,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <ClerkProvider>
       <html
         lang="en"
-        className={`${dmSans.variable} ${jetbrainsMono.variable} h-full antialiased`}
+        className="h-full antialiased"
       >
         <body className="min-h-full flex flex-col overflow-x-hidden bg-background text-foreground">
           <NextTopLoader

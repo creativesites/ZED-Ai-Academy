@@ -63,16 +63,16 @@ export function StudentsTab({
   );
 
   return (
-    <div className="flex h-full flex-col bg-slate-50/30">
+    <div className="flex h-full flex-col bg-slate-50/30 animate-in fade-in duration-300">
       {/* Header */}
-      <div className="p-8 pb-4">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+      <div className="p-3 sm:p-6 lg:p-8 pb-4">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-6">
           <div>
-            <h2 className="text-3xl font-black text-[#062e39] tracking-tight flex items-center gap-3">
+            <h2 className="text-xl sm:text-2xl md:text-3xl font-black text-[#062e39] tracking-tight flex items-center gap-2 sm:gap-3">
               Student Directory
-              <Users className="h-7 w-7 text-[#fd5523]" />
+              <Users className="h-6 w-6 sm:h-7 sm:w-7 text-[#fd5523]" />
             </h2>
-            <p className="text-slate-500 font-medium mt-1">Manage and track your academy's learners.</p>
+            <p className="text-xs sm:text-sm text-slate-500 font-medium mt-1">Manage and track your academy's learners.</p>
           </div>
           {isAdminOrInstructor && (
             <Button 
@@ -83,7 +83,7 @@ export function StudentsTab({
                   description: "Send this to your students so they can sign up."
                 });
               }}
-              className="bg-[#fd5523] text-white hover:bg-[#ef4a16] rounded-2xl h-12 px-6 font-black text-sm uppercase tracking-widest shadow-xl shadow-[#fd5523]/20 transition-all hover:scale-[1.02] flex items-center gap-2"
+              className="bg-[#fd5523] text-white hover:bg-[#ef4a16] rounded-xl sm:rounded-2xl h-11 sm:h-12 px-5 sm:px-6 font-black text-xs sm:text-sm uppercase tracking-widest shadow-xl shadow-[#fd5523]/20 transition-all hover:scale-[1.02] flex items-center justify-center gap-2 w-full md:w-auto min-h-[44px]"
             >
               <UserPlus className="h-4 w-4" />
               Invite Student
@@ -91,52 +91,52 @@ export function StudentsTab({
           )}
         </div>
 
-        <div className="mt-8 flex flex-col sm:flex-row gap-4">
+        <div className="mt-4 sm:mt-8 flex flex-col sm:flex-row gap-3 sm:gap-4">
           <div className="relative flex-1 group">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-[#fd5523] transition-colors" />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 sm:h-5 sm:w-5 text-slate-400 group-focus-within:text-[#fd5523] transition-colors" />
             <Input 
               placeholder="Search by name or email..." 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-12 h-14 rounded-2xl border-slate-100 bg-white shadow-sm focus:ring-[#fd5523]/10 focus:border-[#fd5523]/30 transition-all font-medium"
+              className="pl-11 sm:pl-12 h-11 sm:h-14 rounded-xl sm:rounded-2xl border-slate-100 bg-white shadow-sm focus:ring-[#fd5523]/10 focus:border-[#fd5523]/30 transition-all font-medium text-xs sm:text-sm"
             />
           </div>
-          <Button variant="outline" className="h-14 w-14 rounded-2xl border-slate-100 bg-white shrink-0 shadow-sm text-slate-400 hover:text-[#fd5523]">
-            <ListFilter className="h-6 w-6" />
+          <Button variant="outline" className="hidden sm:flex h-11 sm:h-14 w-11 sm:w-14 rounded-xl sm:rounded-2xl border-slate-100 bg-white shrink-0 shadow-sm text-slate-400 hover:text-[#fd5523]">
+            <ListFilter className="h-5 w-5 sm:h-6 sm:w-6" />
           </Button>
         </div>
       </div>
 
       {/* Student List */}
-      <div className="flex-1 overflow-y-auto px-8 pb-8">
+      <div className="flex-1 overflow-y-auto px-3 sm:px-8 pb-8">
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20 text-slate-400">
             <Loader2 className="h-10 w-10 animate-spin mb-4 text-[#fd5523]" />
             <p className="text-[10px] font-black uppercase tracking-widest">Accessing Student Records...</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-3 sm:gap-4">
             {filteredStudents.map((student) => (
-              <div key={student.id} className="bg-white rounded-[2rem] p-6 border border-slate-100 shadow-sm hover:shadow-xl hover:border-[#fd5523]/30 transition-all group flex items-center gap-6 relative overflow-hidden">
+              <div key={student.id} className="bg-white rounded-2xl sm:rounded-[2rem] p-4 sm:p-6 border border-slate-100 shadow-sm hover:shadow-xl hover:border-[#fd5523]/30 transition-all group flex items-center gap-3 sm:gap-6 relative overflow-hidden">
                 <div className="absolute -right-4 -bottom-4 opacity-[0.03] group-hover:opacity-[0.08] transition-opacity pointer-events-none">
                   <LayoutGrid className="h-24 w-24" />
                 </div>
                 
-                <div className="h-16 w-16 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0 overflow-hidden shadow-inner group-hover:scale-105 transition-transform duration-500">
+                <div className="h-12 w-12 sm:h-16 sm:w-16 rounded-xl sm:rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0 overflow-hidden shadow-inner group-hover:scale-105 transition-transform duration-500">
                   {student.avatar_url ? (
                     <img src={student.avatar_url} alt="" className="h-full w-full object-cover" />
                   ) : (
-                    <Users className="h-8 w-8 text-slate-200" />
+                    <Users className="h-6 w-6 sm:h-8 sm:w-8 text-slate-200" />
                   )}
                 </div>
 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
-                    <h4 className="text-lg font-black text-[#062e39] truncate group-hover:text-[#fd5523] transition-colors">{student.full_name || "Unknown Learner"}</h4>
-                    <div className="px-2 py-0.5 rounded bg-emerald-50 text-emerald-600 text-[8px] font-black uppercase tracking-widest border border-emerald-100">Active</div>
+                    <h4 className="text-sm sm:text-lg font-black text-[#062e39] truncate group-hover:text-[#fd5523] transition-colors">{student.full_name || "Unknown Learner"}</h4>
+                    <div className="px-2 py-0.5 rounded bg-emerald-50 text-emerald-600 text-[8px] font-black uppercase tracking-widest border border-emerald-100 shrink-0">Active</div>
                   </div>
                   <div className="flex items-center gap-4 text-slate-400 font-bold text-xs truncate">
-                    <span className="flex items-center gap-1.5"><Mail className="h-3.5 w-3.5" /> {student.email}</span>
+                    <span className="flex items-center gap-1.5 truncate"><Mail className="h-3.5 w-3.5 shrink-0" /> <span className="truncate">{student.email}</span></span>
                   </div>
                 </div>
 

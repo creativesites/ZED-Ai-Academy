@@ -155,12 +155,12 @@ export function NoticeBoardTab({
   });
 
   return (
-    <div className="flex h-full flex-col p-6 md:p-8 bg-slate-50/40 space-y-6">
+    <div className="flex h-full flex-col p-3 sm:p-6 md:p-8 bg-slate-50/40 space-y-4 sm:space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <h2 className="text-2xl font-black text-[#062e39] tracking-tight">
+            <h2 className="text-xl sm:text-2xl font-black text-[#062e39] tracking-tight">
               Class Notice Board
             </h2>
             <span className="text-xs px-2.5 py-0.5 rounded-full bg-slate-100 font-black text-slate-500">
@@ -177,14 +177,14 @@ export function NoticeBoardTab({
             <DialogTrigger render={(props) => (
               <Button
                 {...props}
-                className="bg-[#fd5523] text-white hover:bg-[#ef4a16] rounded-xl h-11 px-5 font-bold text-xs uppercase tracking-wider shadow-lg shadow-[#fd5523]/20 flex items-center gap-2"
+                className="bg-[#fd5523] text-white hover:bg-[#ef4a16] rounded-xl h-11 px-5 font-bold text-xs uppercase tracking-wider shadow-lg shadow-[#fd5523]/20 flex items-center justify-center gap-2 w-full sm:w-auto min-h-[44px]"
               >
                 <Plus className="h-4 w-4" /> Broadcast Notice
               </Button>
             )} />
-            <DialogContent className="sm:max-w-[540px] rounded-3xl p-6">
+            <DialogContent className="w-[95vw] sm:max-w-[540px] rounded-2xl sm:rounded-3xl p-4 sm:p-6 max-h-[85dvh] overflow-y-auto">
               <DialogHeader>
-                <DialogTitle className="text-2xl font-black text-[#062e39]">
+                <DialogTitle className="text-xl sm:text-2xl font-black text-[#062e39]">
                   Broadcast Announcement
                 </DialogTitle>
               </DialogHeader>
@@ -279,11 +279,11 @@ export function NoticeBoardTab({
       </div>
 
       {/* Filter Chips */}
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto pb-1 scrollbar-none -mx-3 px-3 sm:mx-0 sm:px-0 touch-pan-x">
         <button
           onClick={() => setSelectedFilter("all")}
           className={cn(
-            "px-4 py-2 rounded-xl text-xs font-bold transition-all",
+            "min-h-[40px] px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all shrink-0 whitespace-nowrap",
             selectedFilter === "all"
               ? "bg-[#062e39] text-white shadow-sm"
               : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200/80"
@@ -298,7 +298,7 @@ export function NoticeBoardTab({
               key={p.value}
               onClick={() => setSelectedFilter(p.value)}
               className={cn(
-                "px-4 py-2 rounded-xl text-xs font-bold transition-all",
+                "min-h-[40px] px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all shrink-0 whitespace-nowrap",
                 selectedFilter === p.value
                   ? "bg-[#fd5523] text-white shadow-sm"
                   : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200/80"
@@ -311,14 +311,14 @@ export function NoticeBoardTab({
       </div>
 
       {/* Notices List */}
-      <div className="flex-1 overflow-y-auto space-y-4">
+      <div className="flex-1 overflow-y-auto space-y-3 sm:space-y-4">
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20 text-slate-400">
             <Loader2 className="h-8 w-8 animate-spin text-[#fd5523] mb-3" />
             <p className="text-xs font-bold uppercase tracking-widest">Loading notices...</p>
           </div>
         ) : filteredAnnouncements.length === 0 ? (
-          <div className="text-center py-20 bg-white rounded-3xl border-2 border-dashed border-slate-200 p-8">
+          <div className="text-center py-16 sm:py-20 bg-white rounded-2xl sm:rounded-3xl border-2 border-dashed border-slate-200 p-6 sm:p-8">
             <div className="h-16 w-16 rounded-2xl bg-orange-50 text-[#fd5523] flex items-center justify-center mx-auto mb-4">
               <Bell className="h-8 w-8" />
             </div>
@@ -337,7 +337,7 @@ export function NoticeBoardTab({
               <div
                 key={notice.id}
                 className={cn(
-                  "bg-white rounded-3xl p-6 border shadow-sm transition-all hover:shadow-md",
+                  "bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 border shadow-sm transition-all hover:shadow-md",
                   notice.is_pinned
                     ? "border-amber-300/80 bg-amber-50/20 shadow-amber-500/5"
                     : isUrgent
