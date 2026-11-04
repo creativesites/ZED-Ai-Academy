@@ -76,7 +76,7 @@ export async function POST(req: NextRequest) {
   // Send confirmation email (non-blocking)
   if (email) {
     const firstName = clerkUser?.firstName ?? "there";
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://academy.zedai.org";
     sendEnrollmentConfirmation({
       toEmail: email,
       toName: firstName,

@@ -142,7 +142,7 @@ export async function generateCertificate(courseId: string) {
 
   if (email && courseResult.data) {
     const firstName = clerkUser?.firstName ?? clerkUser?.fullName?.split(" ")[0] ?? "there";
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://academy.zedai.org";
     sendCertificateIssued({
       toEmail: email,
       toName: firstName,
