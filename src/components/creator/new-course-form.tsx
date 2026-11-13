@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useFormStatus } from "react-dom";
 import Link from "next/link";
 import { createCourse } from "@/actions/courses";
 import { CourseBlueprintAssistant } from "@/components/creator/course-blueprint-assistant";
@@ -13,7 +14,27 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { COURSE_CATEGORIES } from "@/lib/course-experience";
 import { COURSE_DOMAIN_PRESETS, type CourseDomainPresetId } from "@/lib/course-domain-presets";
-import { ArrowLeft, Briefcase, CircleDollarSign, Layers, Rocket, ShieldCheck } from "lucide-react";
+import { ArrowLeft, Briefcase, CircleDollarSign, Layers, Loader2, Rocket, ShieldCheck } from "lucide-react";
+
+function DeployStudioButton() {
+  const { pending } = useFormStatus();
+  return (
+    <Button
+      type="submit"
+      disabled={pending}
+      className="rounded-full bg-[#fd5523] px-12 py-7 text-xl font-bold text-white transition-all hover:bg-[#ef4a16] hover:scale-105 active:scale-95 shadow-xl disabled:opacity-70"
+    >
+      {pending ? (
+        <>
+          <Loader2 className="mr-3 h-5 w-5 animate-spin" />
+          Deploying Studio...
+        </>
+      ) : (
+        "Deploy Course Studio"
+      )}
+    </Button>
+  );
+}
 
 type Blueprint = {
   title: string;
@@ -260,11 +281,9 @@ export function NewCourseForm({
                 </section>
 
                 <div className="flex items-center justify-between gap-6 rounded-[2.5rem] bg-[#062e39] p-6 shadow-2xl">
-                  <Button type="submit" className="rounded-full bg-[#fd5523] px-12 py-7 text-xl font-bold text-white transition-all hover:bg-[#ef4a16] hover:scale-105 active:scale-95 shadow-xl">
-                    Deploy Course Studio
-                  </Button>
+                  <DeployStudioButton />
                   <Link
-                    href="/creator/courses"
+                    href={backLink}
                     className={cn(
                       buttonVariants({ variant: "ghost" }),
                       "rounded-full border border-white/20 px-8 text-white/75 hover:bg-white/10 hover:text-white flex items-center justify-center h-10"

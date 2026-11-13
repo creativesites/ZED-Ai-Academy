@@ -43,6 +43,7 @@ import Link from "next/link";
 import { toast } from "sonner";
 import { AIBlueprintAssistant } from "./ai-blueprint-assistant";
 import { AICurriculumGenerator } from "./ai-curriculum-generator";
+import { getLessonEditorPath } from "@/lib/courses/course-routes";
 
 type LessonItem = { id: string; title: string; position: number; is_preview: boolean; content_block_count?: number };
 type ModuleItem = { id: string; title: string; position: number; lessons: LessonItem[] };
@@ -50,11 +51,13 @@ type ModuleItem = { id: string; title: string; position: number; lessons: Lesson
 function SortableLesson({
   lesson,
   courseId,
+  tenantSlug,
   onPreviewToggled,
   onDelete,
 }: {
   lesson: LessonItem;
   courseId: string;
+  tenantSlug?: string;
   onPreviewToggled: (id: string, next: boolean) => void;
   onDelete: (id: string) => void;
 }) {
@@ -67,7 +70,7 @@ function SortableLesson({
     const next = !lesson.is_preview;
     startTransition(async () => {
       try {
-        await updateLesson(lesson.id, courseId, { is_preview: next });
+        await updateLesson(lesson.id, courseId, { is_preview: next }, tenantSlug);
         onPreviewToggled(lesson.id, next);
         toast.success(next ? "Lesson set to preview" : "Lesson set to draft");
       } catch (err) {
@@ -80,7 +83,7 @@ function SortableLesson({
     if (!confirm(`Delete lesson "${lesson.title}"?`)) return;
     startTransition(async () => {
       try {
-        await deleteLesson(lesson.id, courseId);
+        await deleteLesson(lesson.id, courseId, tenantSlug);
         onDelete(lesson.id);
         toast.success("Lesson deleted");
       } catch (err) {
@@ -117,7 +120,7 @@ function SortableLesson({
       </div>
 
       <Link
-        href={`/creator/courses/${courseId}/lessons/${lesson.id}`}
+        href={getLessonEditorPath(courseId, lesson.id, tenantSlug)}
         className="min-w-0 flex-1 truncate text-sm font-medium text-[#062e39] transition-colors hover:text-[#fd5523] sm:text-base"
       >
         <div className="flex min-w-0 flex-col">
@@ -160,7 +163,7 @@ function SortableLesson({
 
         <div className="flex items-center gap-1">
           <Link
-            href={`/creator/courses/${courseId}/lessons/${lesson.id}`}
+            href={getLessonEditorPath(courseId, lesson.id, tenantSlug)}
             className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-50 text-slate-400 transition-all hover:bg-[#062e39] hover:text-white sm:h-8 sm:w-8"
           >
             <Pencil className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
@@ -181,12 +184,14 @@ function SortableLesson({
 function SortableModule({
   mod,
   courseId,
+  tenantSlug,
   expanded,
   onExpandedChange,
   onRefresh,
 }: {
   mod: ModuleItem;
   courseId: string;
+  tenantSlug?: string;
   expanded: boolean;
   onExpandedChange: (next: boolean) => void;
   onRefresh: () => void;
@@ -218,7 +223,7 @@ function SortableModule({
 
     startTransition(async () => {
       try {
-        await reorderLessons(mod.id, courseId, reordered.map((l) => l.id));
+        await reorderLessons(mod.id, courseId, reordered.map((l) => l.id), tenantSlug);
       } catch (err) {
         toast.error(err instanceof Error ? err.message : "Unable to reorder lessons.");
       }
@@ -235,7 +240,7 @@ function SortableModule({
 
     startTransition(async () => {
       try {
-        await updateModule(mod.id, courseId, trimmed);
+        await updateModule(mod.id, courseId, trimmed, tenantSlug);
         setEditing(false);
         toast.success("Module renamed");
       } catch (err) {
@@ -248,7 +253,7 @@ function SortableModule({
     if (!confirm(`Delete module "${mod.title}" and all its lessons?`)) return;
     startTransition(async () => {
       try {
-        await deleteModule(mod.id, courseId);
+        await deleteModule(mod.id, courseId, tenantSlug);
         toast.success("Module deleted");
         onRefresh();
       } catch (err) {
@@ -262,8 +267,9 @@ function SortableModule({
     startTransition(async () => {
       try {
         toast.success("Opening lesson editor…");
-        await createLesson(mod.id, lessonTitle.trim());
+        await createLesson(mod.id, lessonTitle.trim(), tenantSlug);
       } catch (err) {
+        if (err instanceof Error && err.message.includes("NEXT_REDIRECT")) return;
         toast.error(err instanceof Error ? err.message : "Unable to create lesson.");
       }
     });
@@ -344,6 +350,7 @@ function SortableModule({
                   key={lesson.id}
                   lesson={lesson}
                   courseId={courseId}
+                  tenantSlug={tenantSlug}
                   onPreviewToggled={(lessonId, next) =>
                     setLessons((prev) =>
                       prev.map((l) => (l.id === lessonId ? { ...l, is_preview: next } : l))
@@ -410,9 +417,11 @@ function SortableModule({
 export function CurriculumBuilder({
   courseId,
   initialModules,
+  tenantSlug,
 }: {
   courseId: string;
   initialModules: ModuleItem[];
+  tenantSlug?: string;
 }) {
   const router = useRouter();
   const [modules, setModules] = useState(initialModules);
@@ -463,7 +472,7 @@ export function CurriculumBuilder({
 
     startTransition(async () => {
       try {
-        await reorderModules(courseId, reordered.map((m) => m.id));
+        await reorderModules(courseId, reordered.map((m) => m.id), tenantSlug);
       } catch (err) {
         toast.error(err instanceof Error ? err.message : "Unable to reorder modules.");
       }
@@ -474,7 +483,7 @@ export function CurriculumBuilder({
     if (!newModuleTitle.trim()) return;
     startTransition(async () => {
       try {
-        await createModule(courseId, newModuleTitle.trim());
+        await createModule(courseId, newModuleTitle.trim(), tenantSlug);
         setNewModuleTitle("");
         setAddingModule(false);
         router.refresh();
@@ -569,6 +578,7 @@ export function CurriculumBuilder({
                 key={mod.id}
                 mod={mod}
                 courseId={courseId}
+                tenantSlug={tenantSlug}
                 expanded={expandedMap[mod.id] ?? true}
                 onExpandedChange={(next) => setExpandedMap((prev) => ({ ...prev, [mod.id]: next }))}
                 onRefresh={() => router.refresh()}

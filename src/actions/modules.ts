@@ -3,23 +3,15 @@
 import { revalidatePath } from "next/cache";
 import { auth } from "@clerk/nextjs/server";
 import { createClient } from "@/lib/supabase/server";
+import { assertCanManageCourse } from "@/lib/courses/course-auth-server";
+import { getCourseEditorPath } from "@/lib/courses/course-routes";
 
-async function verifyInstructor(supabase: Awaited<ReturnType<typeof createClient>>, courseId: string, userId: string) {
-  const { data } = await supabase
-    .from("courses")
-    .select("id")
-    .eq("id", courseId)
-    .eq("instructor_id", userId)
-    .single();
-  if (!data) throw new Error("Unauthorized");
-}
-
-export async function createModule(courseId: string, title: string) {
+export async function createModule(courseId: string, title: string, tenantSlug?: string) {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
 
   const supabase = createClient();
-  await verifyInstructor(supabase, courseId, userId);
+  await assertCanManageCourse(supabase, courseId, userId);
 
   const { data: existing } = await supabase
     .from("modules")
@@ -36,48 +28,62 @@ export async function createModule(courseId: string, title: string) {
     .insert({ course_id: courseId, title, position: nextPosition });
 
   if (error) throw new Error(error.message);
-  revalidatePath(`/creator/courses/${courseId}`);
+  revalidatePath(getCourseEditorPath(courseId, tenantSlug));
 }
 
-export async function updateModule(moduleId: string, courseId: string, title: string) {
+export async function updateModule(
+  moduleId: string,
+  courseId: string,
+  title: string,
+  tenantSlug?: string
+) {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
 
   const supabase = createClient();
-  await verifyInstructor(supabase, courseId, userId);
+  await assertCanManageCourse(supabase, courseId, userId);
 
   const { error } = await supabase
     .from("modules")
     .update({ title })
-    .eq("id", moduleId);
+    .eq("id", moduleId)
+    .eq("course_id", courseId);
 
   if (error) throw new Error(error.message);
-  revalidatePath(`/creator/courses/${courseId}`);
+  revalidatePath(getCourseEditorPath(courseId, tenantSlug));
 }
 
-export async function deleteModule(moduleId: string, courseId: string) {
+export async function deleteModule(moduleId: string, courseId: string, tenantSlug?: string) {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
 
   const supabase = createClient();
-  await verifyInstructor(supabase, courseId, userId);
+  await assertCanManageCourse(supabase, courseId, userId);
 
-  const { error } = await supabase.from("modules").delete().eq("id", moduleId);
+  const { error } = await supabase
+    .from("modules")
+    .delete()
+    .eq("id", moduleId)
+    .eq("course_id", courseId);
   if (error) throw new Error(error.message);
-  revalidatePath(`/creator/courses/${courseId}`);
+  revalidatePath(getCourseEditorPath(courseId, tenantSlug));
 }
 
-export async function reorderModules(courseId: string, orderedIds: string[]) {
+export async function reorderModules(
+  courseId: string,
+  orderedIds: string[],
+  tenantSlug?: string
+) {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
 
   const supabase = createClient();
-  await verifyInstructor(supabase, courseId, userId);
+  await assertCanManageCourse(supabase, courseId, userId);
 
   await Promise.all(
     orderedIds.map((id, index) =>
-      supabase.from("modules").update({ position: index + 1 }).eq("id", id)
+      supabase.from("modules").update({ position: index + 1 }).eq("id", id).eq("course_id", courseId)
     )
   );
-  revalidatePath(`/creator/courses/${courseId}`);
+  revalidatePath(getCourseEditorPath(courseId, tenantSlug));
 }

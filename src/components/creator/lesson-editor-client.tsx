@@ -330,7 +330,7 @@ function BlockEditor({
   if (block.type === "tutor_session")
     return <TutorSessionBlockEditor content={asTyped(c)} courseId={courseId} lessonId={lessonId} onChange={emit} />;
   if (block.type === "quiz")
-    return <QuizBuilder lessonId={block.id} courseId={courseId} initialQuiz={quiz ?? null} initialQuestions={quiz?.quiz_questions ?? []} />;
+    return <QuizBuilder lessonId={lessonId} courseId={courseId} initialQuiz={quiz ?? null} initialQuestions={quiz?.quiz_questions ?? []} />;
 
   return <p className="text-sm text-slate-500">Block type &quot;{block.type}&quot; editor coming soon.</p>;
 }
@@ -615,6 +615,7 @@ export function LessonEditorClient({
   moduleTitle,
   initialBlocks,
   quiz,
+  tenantSlug,
 }: {
   lesson: { id: string; title: string; is_preview: boolean };
   courseId: string;
@@ -622,6 +623,7 @@ export function LessonEditorClient({
   moduleTitle: string;
   initialBlocks: Block[];
   quiz?: Quiz | null;
+  tenantSlug?: string;
 }) {
   const [blocks, setBlocks] = useState(initialBlocks);
   const [title, setTitle] = useState(lesson.title);
@@ -643,7 +645,7 @@ export function LessonEditorClient({
 
   function handleSaveMeta() {
     startSaveMeta(async () => {
-      await updateLesson(lesson.id, courseId, { title, is_preview: isPreview });
+      await updateLesson(lesson.id, courseId, { title, is_preview: isPreview }, tenantSlug);
       toast.success("Lesson saved");
     });
   }

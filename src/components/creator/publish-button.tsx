@@ -11,9 +11,10 @@ import { toast } from "sonner";
 type Props = {
   courseId: string;
   status: "draft" | "published" | "archived";
+  tenantSlug?: string;
 };
 
-export function PublishButton({ courseId, status }: Props) {
+export function PublishButton({ courseId, status, tenantSlug }: Props) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const isPublished = status === "published";
@@ -21,7 +22,7 @@ export function PublishButton({ courseId, status }: Props) {
   function toggle() {
     startTransition(async () => {
       try {
-        await publishCourse(courseId, !isPublished);
+        await publishCourse(courseId, !isPublished, tenantSlug);
         toast.success(isPublished ? "Course moved to draft." : "Course published.");
         router.refresh();
       } catch (err) {

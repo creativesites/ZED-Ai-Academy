@@ -6,13 +6,12 @@ import { auth } from "@clerk/nextjs/server";
 import { createClient } from "@/lib/supabase/server";
 import type { CourseLevel, PriceType } from "@/types/database";
 import { ZEDAI_TENANT_ID } from "@/lib/tenants/constants";
-
-function slugify(text: string) {
-  return text
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "");
-}
+import {
+  getCourseEditorPath,
+  getCourseListPath,
+  normalizeCourseSlug,
+} from "@/lib/courses/course-routes";
+import { assertCanManageCourse } from "@/lib/courses/course-auth-server";
 
 function normalizePrice(
   priceType: PriceType,
@@ -120,7 +119,12 @@ export async function createCourse(formData: FormData) {
 
   if (!companyId) throw new Error("Select an academy before creating a course.");
 
-  const title = formData.get("title") as string;
+  const rawTitle = (formData.get("title") as string | null) ?? "";
+  const title = rawTitle.trim();
+  if (!title) {
+    throw new Error("Course title is required.");
+  }
+
   const description = formData.get("description") as string;
   const category = formData.get("category") as string;
   const thumbnailUrl = formData.get("thumbnail_url") as string;
@@ -128,7 +132,7 @@ export async function createCourse(formData: FormData) {
   const priceType = (formData.get("price_type") as PriceType) ?? "free";
   const priceAmount = normalizePrice(priceType, formData.get("price_amount"));
 
-  const baseSlug = slugify(title);
+  const baseSlug = normalizeCourseSlug(title);
   let slug = baseSlug;
   let attempt = 0;
   while (true) {
@@ -164,26 +168,28 @@ export async function createCourse(formData: FormData) {
   }
 
   if (tenantSlug) {
-    revalidatePath(`/academy/${tenantSlug}/admin/courses`);
-    redirect(`/academy/${tenantSlug}/admin/courses/${course.id}`);
+    revalidatePath(getCourseListPath(tenantSlug));
+    redirect(getCourseEditorPath(course.id, tenantSlug));
   }
 
   revalidatePath("/creator/courses");
-  redirect(`/creator/courses/${course.id}`);
+  redirect(getCourseEditorPath(course.id));
 }
 
-export async function updateCourse(courseId: string, formData: FormData) {
-  const { userId, orgId } = await auth();
+export async function updateCourse(courseId: string, formData: FormData, tenantSlug?: string) {
+  const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
 
   const supabase = createClient();
+  await assertCanManageCourse(supabase, courseId, userId);
+
   const priceType = formData.get("price_type") as PriceType;
   const priceAmount = normalizePrice(priceType, formData.get("price_amount"));
 
   const { error } = await supabase
     .from("courses")
     .update({
-      title: formData.get("title") as string,
+      title: ((formData.get("title") as string) ?? "").trim(),
       description: (formData.get("description") as string) || null,
       thumbnail_url: (formData.get("thumbnail_url") as string) || null,
       category: (formData.get("category") as string) || null,
@@ -191,19 +197,22 @@ export async function updateCourse(courseId: string, formData: FormData) {
       price_type: priceType,
       price_amount: priceAmount,
     })
-    .eq("id", courseId)
-    .eq(orgId ? "company_id" : "instructor_id", orgId || userId);
+    .eq("id", courseId);
 
   if (error) throw new Error(error.message);
 
   revalidatePath(`/creator/courses/${courseId}`);
+  if (tenantSlug) {
+    revalidatePath(getCourseEditorPath(courseId, tenantSlug));
+  }
 }
 
-export async function publishCourse(courseId: string, publish: boolean) {
-  const { userId, orgId } = await auth();
+export async function publishCourse(courseId: string, publish: boolean, tenantSlug?: string) {
+  const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
 
   const supabase = createClient();
+  await assertCanManageCourse(supabase, courseId, userId);
 
   if (publish) {
     await assertPublishReadiness(supabase, courseId);
@@ -212,26 +221,29 @@ export async function publishCourse(courseId: string, publish: boolean) {
   const { error } = await supabase
     .from("courses")
     .update({ status: publish ? "published" : "draft" })
-    .eq("id", courseId)
-    .eq(orgId ? "company_id" : "instructor_id", orgId || userId);
+    .eq("id", courseId);
 
   if (error) throw new Error(error.message);
   revalidatePath(`/creator/courses/${courseId}`);
+  if (tenantSlug) {
+    revalidatePath(getCourseEditorPath(courseId, tenantSlug));
+  }
 }
 
-export async function deleteCourse(courseId: string) {
-  const { userId, orgId } = await auth();
+export async function deleteCourse(courseId: string, tenantSlug?: string) {
+  const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
 
   const supabase = createClient();
+  await assertCanManageCourse(supabase, courseId, userId);
 
   const { error } = await supabase
     .from("courses")
     .delete()
-    .eq("id", courseId)
-    .eq(orgId ? "company_id" : "instructor_id", orgId || userId);
+    .eq("id", courseId);
 
   if (error) throw new Error(error.message);
-  revalidatePath("/creator/courses");
-  redirect("/creator/courses");
+  const listPath = getCourseListPath(tenantSlug);
+  revalidatePath(listPath);
+  redirect(listPath);
 }

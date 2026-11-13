@@ -224,7 +224,7 @@ export default async function TenantAdminCoursesPage({
                 {/* Footer Actions */}
                 <div className="p-6 pt-0 flex items-center gap-2">
                   <Link
-                    href={`/creator/courses/${course.id}`}
+                    href={`/academy/${company.slug}/admin/courses/${course.id}`}
                     className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-slate-50 hover:bg-[#062e39] text-[#062e39] hover:text-white text-xs font-bold transition-all shadow-sm"
                   >
                     <Pencil className="h-3.5 w-3.5" />

@@ -15,7 +15,7 @@ import { COURSE_CATEGORIES } from "@/lib/course-experience";
 import { uploadMedia } from "@/actions/upload";
 import type { Course } from "@/types/database";
 
-export function CourseSettingsForm({ course }: { course: Course }) {
+export function CourseSettingsForm({ course, tenantSlug }: { course: Course; tenantSlug?: string }) {
   const router = useRouter();
   const [saving, startSave] = useTransition();
   const [publishPending, startPublish] = useTransition();
@@ -27,7 +27,7 @@ export function CourseSettingsForm({ course }: { course: Course }) {
   function handleSubmit(formData: FormData) {
     startSave(async () => {
       try {
-        await updateCourse(course.id, formData);
+        await updateCourse(course.id, formData, tenantSlug);
         toast.success("Course details updated.");
         router.refresh();
       } catch (err) {
@@ -40,7 +40,7 @@ export function CourseSettingsForm({ course }: { course: Course }) {
     startPublish(async () => {
       const targetPublish = status !== "published";
       try {
-        await publishCourse(course.id, targetPublish);
+        await publishCourse(course.id, targetPublish, tenantSlug);
         setStatus(targetPublish ? "published" : "draft");
         toast.success(targetPublish ? "Course published." : "Course moved to draft.");
         router.refresh();
@@ -54,7 +54,7 @@ export function CourseSettingsForm({ course }: { course: Course }) {
     if (!confirm(`Permanently delete "${course.title}"? This cannot be undone.`)) return;
     startDelete(async () => {
       try {
-        await deleteCourse(course.id);
+        await deleteCourse(course.id, tenantSlug);
       } catch (err) {
         toast.error(err instanceof Error ? err.message : "Unable to delete course.");
       }
