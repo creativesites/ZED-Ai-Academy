@@ -1093,8 +1093,10 @@ export function LessonEditorClient({
                 lessonId={lesson.id}
                 courseId={courseId}
                 lessonTitle={title}
+                existingBlockTypes={blocks.map((b) => b.type)}
                 onBlocksGenerated={(newBlocks) => {
                   setBlocks((prev) => [...prev, ...newBlocks]);
+                  setAsideTab("preview");
                   setActiveTab("editor");
                 }}
               />
