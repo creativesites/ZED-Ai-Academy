@@ -2,11 +2,10 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, Sparkles, WandSparkles } from "lucide-react";
+import { Check, Loader2, Sparkles, WandSparkles } from "lucide-react";
 
-type BlueprintResponse = {
+export type CourseBlueprintResponse = {
   title: string;
   description: string;
   category: string;
@@ -21,17 +20,19 @@ type BlueprintResponse = {
 export function CourseBlueprintAssistant({
   onApply,
 }: {
-  onApply: (blueprint: BlueprintResponse) => void;
+  onApply: (blueprint: CourseBlueprintResponse) => void;
 }) {
   const [brief, setBrief] = useState(
     "Build an AI course for professionals who want to save time on real work, not study theory."
   );
   const [loading, setLoading] = useState(false);
-  const [blueprint, setBlueprint] = useState<BlueprintResponse | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [blueprint, setBlueprint] = useState<CourseBlueprintResponse | null>(null);
 
   async function handleGenerate() {
     if (!brief.trim()) return;
     setLoading(true);
+    setError(null);
 
     try {
       const response = await fetch("/api/ai/generate-course-blueprint", {
@@ -44,108 +45,128 @@ export function CourseBlueprintAssistant({
         throw new Error("Unable to generate a course blueprint right now.");
       }
 
-      const payload = (await response.json()) as BlueprintResponse;
+      const payload = (await response.json()) as CourseBlueprintResponse;
       setBlueprint(payload);
-    } catch {
+    } catch (err) {
       setBlueprint(null);
+      setError(err instanceof Error ? err.message : "Failed to generate blueprint.");
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <section className="marketing-shell mesh-orange noise overflow-hidden rounded-[2.5rem] border-0 p-8 text-white shadow-2xl">
-      <div className="relative z-10 flex flex-wrap items-start justify-between gap-6">
-        <div className="max-w-2xl">
-          <div className="marketing-kicker bg-white/10 text-white">
-            <Sparkles className="mr-2 h-3.5 w-3.5" />
+    <section className="rounded-2xl sm:rounded-3xl bg-gradient-to-br from-[#062e39] to-[#0b3f4d] p-5 sm:p-7 text-white shadow-lg border border-white/10">
+      <div className="flex flex-col gap-6 lg:grid lg:grid-cols-[1.15fr_0.85fr] lg:items-start">
+        <div className="space-y-4">
+          <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-[#fd8d69]">
+            <Sparkles className="h-3.5 w-3.5" />
             AI Course Architect
           </div>
-          <h2 className="mt-6 text-3xl font-bold tracking-tight">
-            Generate a professional-first <br />
-            course blueprint
-          </h2>
-          <p className="mt-4 text-lg leading-relaxed text-white/80">
-            Describe the audience, business problem, or workflow you want to transform. The assistant will propose a title, learning angle, pricing posture, and a practical module arc.
-          </p>
-        </div>
-      </div>
+          <div>
+            <h2 className="text-xl sm:text-2xl font-bold tracking-tight">
+              Draft a course blueprint from an idea
+            </h2>
+            <p className="mt-1.5 text-sm leading-relaxed text-white/75">
+              Describe your target audience and the workflow you want to teach. Review the proposal and apply it to prefill your course form.
+            </p>
+          </div>
 
-      <div className="relative z-10 mt-8 grid gap-8 lg:grid-cols-[1.2fr_0.8fr]">
-        <div className="space-y-4">
           <Textarea
             value={brief}
             onChange={(event) => setBrief(event.target.value)}
-            rows={6}
-            className="resize-none rounded-[2rem] border-white/10 bg-white/10 p-6 text-lg font-medium text-white placeholder:text-white/30 focus:border-[#fd8d69] focus:ring-[#fd8d69]/10"
-            placeholder="Example: AI course for law firms to speed up document review, summarize case files, and reduce admin time."
+            rows={3}
+            className="resize-none rounded-xl border-white/15 bg-white/10 p-3.5 text-sm font-medium text-white placeholder:text-white/40 focus:border-[#fd8d69] focus:ring-[#fd8d69]/20"
+            placeholder="Example: AI course for law firms to speed up document review and summarize case files."
           />
-          <div className="flex flex-wrap gap-4">
+
+          {error && (
+            <p className="text-xs font-medium text-red-300 bg-red-500/15 border border-red-400/20 rounded-xl px-3 py-2">
+              {error}
+            </p>
+          )}
+
+          <div className="flex flex-wrap items-center gap-3">
             <Button
               type="button"
               onClick={handleGenerate}
-              disabled={loading}
-              className="rounded-full bg-white px-8 py-6 text-lg font-bold text-[#062e39] shadow-xl transition-all hover:bg-white/90 hover:scale-105 active:scale-95"
+              disabled={loading || !brief.trim()}
+              className="h-10 rounded-xl bg-[#fd5523] px-5 text-xs sm:text-sm font-bold text-white shadow-md hover:bg-[#ef4a16] disabled:opacity-60"
             >
-              {loading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <WandSparkles className="mr-2 h-5 w-5" />}
-              Generate Blueprint
+              {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <WandSparkles className="mr-2 h-4 w-4" />}
+              {loading ? "Generating..." : "Generate Blueprint"}
             </Button>
-            {blueprint ? (
+
+            {blueprint && (
               <Button
                 type="button"
                 onClick={() => onApply(blueprint)}
-                className="rounded-full border-2 border-white/20 bg-transparent px-8 py-6 text-lg font-bold text-white transition-all hover:bg-white/10"
+                className="h-10 rounded-xl bg-white px-5 text-xs sm:text-sm font-bold text-[#062e39] hover:bg-slate-100"
               >
+                <Check className="mr-1.5 h-4 w-4 text-emerald-600" />
                 Apply to Form
               </Button>
-            ) : null}
+            )}
           </div>
         </div>
 
-        <div className="rounded-[2.5rem] border border-white/10 bg-white/10 p-8 backdrop-blur-xl">
+        <div className="rounded-2xl border border-white/10 bg-white/5 p-4 sm:p-5">
           {blueprint ? (
-            <div className="space-y-6">
+            <div className="space-y-4">
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-white/50">Suggested Identity</p>
-                <h3 className="mt-3 text-2xl font-bold tracking-tight">{blueprint.title}</h3>
-                <p className="mt-3 text-base leading-relaxed text-white/70">{blueprint.description}</p>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-[#fd8d69]">
+                  Proposed Course
+                </p>
+                <h3 className="mt-1 text-base sm:text-lg font-bold leading-snug">{blueprint.title}</h3>
+                <p className="mt-1.5 text-xs leading-relaxed text-white/75 line-clamp-3">
+                  {blueprint.description}
+                </p>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="rounded-2xl bg-white/5 p-4 border border-white/5">
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-white/40">Ideal Audience</p>
-                  <p className="mt-2 font-bold text-white">{blueprint.audience}</p>
+              <div className="grid grid-cols-2 gap-2.5 text-xs">
+                <div className="rounded-xl bg-white/5 p-3 border border-white/5">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-white/45">Audience</p>
+                  <p className="mt-1 font-semibold text-white line-clamp-2">{blueprint.audience}</p>
                 </div>
-                <div className="rounded-2xl bg-white/5 p-4 border border-white/5">
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-white/40">First Quick Win</p>
-                  <p className="mt-2 font-bold text-white">{blueprint.quick_win}</p>
+                <div className="rounded-xl bg-white/5 p-3 border border-white/5">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-white/45">Quick Win</p>
+                  <p className="mt-1 font-semibold text-white line-clamp-2">{blueprint.quick_win}</p>
                 </div>
               </div>
 
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-white/50">Core Curriculum Arc</p>
-                <div className="mt-4 space-y-2">
-                  {blueprint.module_outline.map((item, i) => (
-                    <div key={item} className="flex items-center gap-3 rounded-2xl bg-white/5 px-4 py-3 text-sm font-bold text-white border border-white/5">
-                      <span className="text-[#fd8d69] opacity-60">0{i+1}</span>
-                      {item}
-                    </div>
-                  ))}
+              {blueprint.module_outline.length > 0 && (
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-white/50 mb-2">
+                    Module Outline
+                  </p>
+                  <div className="space-y-1.5 max-h-36 overflow-y-auto pr-1">
+                    {blueprint.module_outline.map((item, i) => (
+                      <div
+                        key={item}
+                        className="flex items-center gap-2.5 rounded-lg bg-white/5 px-3 py-2 text-xs font-medium text-white/90"
+                      >
+                        <span className="text-[#fd8d69] font-bold shrink-0">0{i + 1}</span>
+                        <span className="truncate">{item}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           ) : (
-            <div className="flex h-full min-h-64 flex-col justify-center">
-              <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-white/50">Intelligence Output</p>
-              <ul className="mt-6 space-y-4">
+            <div className="space-y-3 py-2">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-white/50">
+                What You&apos;ll Get
+              </p>
+              <ul className="space-y-2.5">
                 {[
-                  "Title tuned for high professional conversion",
-                  "Pricing and category posture recommendation",
-                  "Quick-win opener & capstone project angle",
-                  "A curriculum arc built around practical ROI"
+                  "Conversion-focused course title & summary",
+                  "Suggested category, level & pricing model",
+                  "Target audience & quick-win framing",
+                  "Practical module outline ready to build",
                 ].map((text) => (
-                  <li key={text} className="flex items-center gap-3 text-base font-medium text-white/70">
-                    <div className="h-2 w-2 rounded-full bg-[#fd8d69]" />
+                  <li key={text} className="flex items-center gap-2.5 text-xs sm:text-sm text-white/80">
+                    <span className="h-1.5 w-1.5 rounded-full bg-[#fd8d69] shrink-0" />
                     {text}
                   </li>
                 ))}

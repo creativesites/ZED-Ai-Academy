@@ -4,7 +4,10 @@ import { useState } from "react";
 import { useFormStatus } from "react-dom";
 import Link from "next/link";
 import { createCourse } from "@/actions/courses";
-import { CourseBlueprintAssistant } from "@/components/creator/course-blueprint-assistant";
+import {
+  CourseBlueprintAssistant,
+  type CourseBlueprintResponse,
+} from "@/components/creator/course-blueprint-assistant";
 import { Button } from "@/components/ui/button";
 import { buttonVariants } from "@/components/ui/button-variants";
 import { cn } from "@/lib/utils";
@@ -14,7 +17,18 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { COURSE_CATEGORIES } from "@/lib/course-experience";
 import { COURSE_DOMAIN_PRESETS, type CourseDomainPresetId } from "@/lib/course-domain-presets";
-import { ArrowLeft, Briefcase, CircleDollarSign, Layers, Loader2, Rocket, ShieldCheck } from "lucide-react";
+import {
+  ArrowLeft,
+  BookOpen,
+  Briefcase,
+  CheckCircle2,
+  CircleDollarSign,
+  ImageIcon,
+  Layers,
+  Loader2,
+  Rocket,
+  Sparkles,
+} from "lucide-react";
 
 function DeployStudioButton() {
   const { pending } = useFormStatus();
@@ -22,12 +36,12 @@ function DeployStudioButton() {
     <Button
       type="submit"
       disabled={pending}
-      className="rounded-full bg-[#fd5523] px-12 py-7 text-xl font-bold text-white transition-all hover:bg-[#ef4a16] hover:scale-105 active:scale-95 shadow-xl disabled:opacity-70"
+      className="h-12 w-full sm:w-auto rounded-xl bg-[#fd5523] px-7 text-sm font-bold text-white transition-all hover:bg-[#ef4a16] active:scale-[0.99] shadow-md disabled:opacity-70"
     >
       {pending ? (
         <>
-          <Loader2 className="mr-3 h-5 w-5 animate-spin" />
-          Deploying Studio...
+          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          Creating Course...
         </>
       ) : (
         "Deploy Course Studio"
@@ -35,18 +49,6 @@ function DeployStudioButton() {
     </Button>
   );
 }
-
-type Blueprint = {
-  title: string;
-  description: string;
-  category: string;
-  level: "beginner" | "intermediate" | "advanced";
-  price_type: "free" | "one_time" | "subscription_only" | "both";
-  audience: string;
-  quick_win: string;
-  capstone: string;
-  module_outline: string[];
-};
 
 interface NewCourseFormProps {
   companyId?: string;
@@ -64,12 +66,13 @@ export function NewCourseForm({
   const [thumbnailUrl, setThumbnailUrl] = useState("");
   const [category, setCategory] = useState("");
   const [level, setLevel] = useState("");
-  const [priceType, setPriceType] = useState<Blueprint["price_type"]>("free");
+  const [priceType, setPriceType] = useState<CourseBlueprintResponse["price_type"]>("free");
   const [priceAmount, setPriceAmount] = useState("");
-  const [blueprint, setBlueprint] = useState<Blueprint | null>(null);
+  const [blueprint, setBlueprint] = useState<CourseBlueprintResponse | null>(null);
+  const [showAiAssistant, setShowAiAssistant] = useState(false);
   const [domainPreset, setDomainPreset] = useState<CourseDomainPresetId>("ai-professional");
 
-  function applyBlueprint(next: Blueprint) {
+  function applyBlueprint(next: CourseBlueprintResponse) {
     setBlueprint(next);
     setTitle(next.title);
     setDescription(next.description);
@@ -78,192 +81,257 @@ export function NewCourseForm({
     setPriceType(next.price_type);
     const matchingPreset = COURSE_DOMAIN_PRESETS.find((preset) => preset.suggestedCategory === next.category);
     if (matchingPreset) setDomainPreset(matchingPreset.id);
+    setShowAiAssistant(false);
   }
 
   const backLink = cancelHref || (tenantSlug ? `/academy/${tenantSlug}/admin/courses` : "/creator/courses");
+  const showsPriceAmount = priceType === "one_time" || priceType === "both";
 
   return (
-    <div className="space-y-10">
-      <div className="flex items-center justify-between gap-6">
-        <div className="flex items-center gap-4">
+    <div className="space-y-6 sm:space-y-8">
+      {/* Compact Header */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-start sm:items-center gap-3">
           <Link
             href={backLink}
+            aria-label="Back to courses"
             className={cn(
               buttonVariants({ variant: "ghost" }),
-              "rounded-full h-12 w-12 p-0 text-slate-400 hover:bg-[#062e39] hover:text-white transition-all flex items-center justify-center"
+              "h-10 w-10 shrink-0 rounded-xl border border-slate-200 bg-white p-0 text-slate-500 hover:bg-slate-100 hover:text-[#062e39]"
             )}
           >
-            <ArrowLeft className="h-6 w-6" />
+            <ArrowLeft className="h-4 w-4" />
           </Link>
           <div>
-            <h1 className="text-4xl font-bold tracking-tight text-[#062e39]">Create New Curriculum</h1>
-            <p className="text-slate-500 font-medium mt-1 text-lg">Bring your expertise to life with a professional-first approach.</p>
+            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-[#062e39]">
+              Create New Course
+            </h1>
+            <p className="text-sm text-slate-500 mt-0.5">
+              Set up your course basics and launch the curriculum studio.
+            </p>
           </div>
         </div>
+
+        <Button
+          type="button"
+          variant={showAiAssistant ? "secondary" : "outline"}
+          onClick={() => setShowAiAssistant((prev) => !prev)}
+          className={cn(
+            "h-10 w-full sm:w-auto rounded-xl px-4 text-xs font-bold uppercase tracking-wider transition-all",
+            showAiAssistant
+              ? "bg-[#062e39] text-white hover:bg-[#0a4055]"
+              : "border-[#fd5523]/30 bg-[#fff6ee] text-[#fd5523] hover:bg-[#fd5523] hover:text-white"
+          )}
+        >
+          <Sparkles className="mr-2 h-4 w-4" />
+          {showAiAssistant ? "Hide AI Architect" : "Draft with AI"}
+        </Button>
       </div>
 
-      <CourseBlueprintAssistant onApply={applyBlueprint} />
+      {/* Collapsible AI Course Architect */}
+      {showAiAssistant && <CourseBlueprintAssistant onApply={applyBlueprint} />}
 
-      <div className="grid gap-10 xl:grid-cols-[1fr_360px]">
-        <div className="space-y-8">
-          <Card className="marketing-card rounded-[3rem] border-0 p-4 shadow-xl">
-            <CardContent className="p-8">
-              <form action={createCourse} className="space-y-10">
-                {companyId && <input type="hidden" name="company_id" value={companyId} />}
-                {tenantSlug && <input type="hidden" name="tenant_slug" value={tenantSlug} />}
-                <section className="space-y-6">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#fff6ee] text-[#fd5523]">
-                      <Briefcase className="h-5 w-5" />
-                    </div>
-                    <h3 className="text-lg font-bold uppercase tracking-[0.15em] text-[#062e39]">Commercial Identity</h3>
+      {blueprint && !showAiAssistant && (
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-2xl border border-emerald-200 bg-emerald-50/70 px-4 py-3 text-sm text-emerald-900">
+          <div className="flex items-center gap-2.5">
+            <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
+            <span className="font-semibold">
+              AI Blueprint applied — review or edit any field below before creating.
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowAiAssistant(true)}
+            className="text-xs font-bold text-emerald-700 underline underline-offset-2 self-start sm:self-auto"
+          >
+            Reopen AI Architect
+          </button>
+        </div>
+      )}
+
+      {/* Main Content Grid */}
+      <div className="grid gap-6 lg:grid-cols-[1fr_320px] lg:items-start">
+        <Card className="rounded-2xl sm:rounded-3xl border border-slate-200/80 bg-white shadow-sm">
+          <CardContent className="p-5 sm:p-8">
+            <form action={createCourse} className="space-y-8">
+              {companyId && <input type="hidden" name="company_id" value={companyId} />}
+              {tenantSlug && <input type="hidden" name="tenant_slug" value={tenantSlug} />}
+
+              {/* Section 1: Course Basics */}
+              <section className="space-y-5 border-b border-slate-100 pb-7">
+                <div className="flex items-center gap-2.5">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#fff6ee] text-[#fd5523]">
+                    <Briefcase className="h-4 w-4" />
                   </div>
+                  <h2 className="text-sm font-black uppercase tracking-wider text-[#062e39]">
+                    Course Basics
+                  </h2>
+                </div>
 
-                  <div className="space-y-3">
-                    <Label htmlFor="title" className="text-sm font-bold uppercase tracking-widest text-slate-500">
-                      Curriculum Title
+                <div className="space-y-2">
+                  <Label htmlFor="title" className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                    Course Title <span className="text-[#fd5523]">*</span>
+                  </Label>
+                  <Input
+                    id="title"
+                    name="title"
+                    value={title}
+                    onChange={(event) => setTitle(event.target.value)}
+                    placeholder="e.g. AI Workflows for Client-Facing Teams"
+                    required
+                    className="h-12 rounded-xl border-slate-200 bg-white text-base font-semibold text-[#062e39] focus:border-[#fd5523] focus:ring-[#fd5523]/10"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="description" className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                    Transformation Summary
+                  </Label>
+                  <Textarea
+                    id="description"
+                    name="description"
+                    value={description}
+                    onChange={(event) => setDescription(event.target.value)}
+                    placeholder="Describe the practical outcome, who this is for, and what learners will build or apply."
+                    rows={4}
+                    className="resize-none rounded-xl border-slate-200 bg-white p-3.5 text-sm leading-relaxed text-[#062e39] focus:border-[#fd5523] focus:ring-[#fd5523]/10"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="thumbnail_url" className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                    Cover Image URL (Optional)
+                  </Label>
+                  <Input
+                    id="thumbnail_url"
+                    name="thumbnail_url"
+                    type="url"
+                    value={thumbnailUrl}
+                    onChange={(event) => setThumbnailUrl(event.target.value)}
+                    placeholder="https://..."
+                    className="h-11 rounded-xl border-slate-200 bg-white text-sm text-[#062e39]"
+                  />
+                </div>
+              </section>
+
+              {/* Section 2: Track & Audience */}
+              <section className="space-y-5 border-b border-slate-100 pb-7">
+                <div className="flex items-center gap-2.5">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#fff6ee] text-[#fd5523]">
+                    <Layers className="h-4 w-4" />
+                  </div>
+                  <h2 className="text-sm font-black uppercase tracking-wider text-[#062e39]">
+                    Track & Audience
+                  </h2>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                    Course Track
+                  </Label>
+                  <input type="hidden" name="domain_preset" value={domainPreset} />
+                  <div className="grid gap-2.5 sm:grid-cols-2">
+                    {COURSE_DOMAIN_PRESETS.map((preset) => (
+                      <button
+                        key={preset.id}
+                        type="button"
+                        onClick={() => {
+                          setDomainPreset(preset.id);
+                          if (!category) setCategory(preset.suggestedCategory);
+                        }}
+                        className={cn(
+                          "rounded-xl border p-3.5 text-left transition-all",
+                          domainPreset === preset.id
+                            ? "border-[#fd5523] bg-[#fff6ee]/70 shadow-sm"
+                            : "border-slate-200 bg-white hover:border-slate-300"
+                        )}
+                      >
+                        <p className="text-sm font-bold text-[#062e39]">{preset.label}</p>
+                        <p className="mt-1 text-xs leading-relaxed text-slate-500">{preset.description}</p>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                      Category
                     </Label>
-                    <Input
-                      id="title"
-                      name="title"
-                      value={title}
-                      onChange={(event) => setTitle(event.target.value)}
-                      placeholder="e.g. AI Workflows for Client-Facing Teams"
-                      required
-                      className="h-14 rounded-2xl border-slate-200 bg-white text-xl font-bold text-[#062e39] transition-all focus:border-[#fd5523] focus:ring-[#fd5523]/10"
-                    />
-                  </div>
-
-                  <div className="space-y-3">
-                    <Label htmlFor="description" className="text-sm font-bold uppercase tracking-widest text-slate-500">
-                      Transformation Summary
-                    </Label>
-                    <Textarea
-                      id="description"
-                      name="description"
-                      value={description}
-                      onChange={(event) => setDescription(event.target.value)}
-                      placeholder="Focus on the professional outcome, first quick win, and what learners will be able to apply at work."
-                      rows={5}
-                      className="resize-none rounded-[2rem] border-slate-200 bg-white p-6 text-lg leading-relaxed text-[#062e39] focus:border-[#fd5523] focus:ring-[#fd5523]/10"
-                    />
-                  </div>
-
-                  <div className="space-y-3">
-                    <Label htmlFor="thumbnail_url" className="text-sm font-bold uppercase tracking-widest text-slate-500">
-                      Visual Identity (URL)
-                    </Label>
-                    <Input
-                      id="thumbnail_url"
-                      name="thumbnail_url"
-                      type="url"
-                      value={thumbnailUrl}
-                      onChange={(event) => setThumbnailUrl(event.target.value)}
-                      placeholder="https://..."
-                      className="h-14 rounded-2xl border-slate-200 bg-white text-base text-[#062e39]"
-                    />
-                  </div>
-                </section>
-
-                <section className="space-y-6">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#fff6ee] text-[#fd5523]">
-                      <Layers className="h-5 w-5" />
-                    </div>
-                    <h3 className="text-lg font-bold uppercase tracking-[0.15em] text-[#062e39]">Professional Fit</h3>
-                  </div>
-
-                  <div className="space-y-3">
-                    <Label className="text-sm font-bold uppercase tracking-widest text-slate-500">Course Track</Label>
-                    <input type="hidden" name="domain_preset" value={domainPreset} />
-                    <div className="grid gap-3 md:grid-cols-2">
-                      {COURSE_DOMAIN_PRESETS.map((preset) => (
-                        <button
-                          key={preset.id}
-                          type="button"
-                          onClick={() => {
-                            setDomainPreset(preset.id);
-                            if (!category) setCategory(preset.suggestedCategory);
-                          }}
-                          className={cn(
-                            "rounded-[1.5rem] border p-4 text-left transition-all",
-                            domainPreset === preset.id
-                              ? "border-[#fd5523] bg-[#fff6ee] shadow-sm"
-                              : "border-slate-200 bg-white hover:border-[#fd5523]/30"
-                          )}
-                        >
-                          <p className="text-sm font-bold text-[#062e39]">{preset.label}</p>
-                          <p className="mt-1 text-xs leading-relaxed text-slate-500">{preset.description}</p>
-                        </button>
+                    <select
+                      name="category"
+                      value={category}
+                      onChange={(event) => setCategory(event.target.value)}
+                      className="flex h-11 w-full rounded-xl border border-slate-200 bg-white px-3.5 text-sm font-semibold text-[#062e39] outline-none transition-all focus:border-[#fd5523] focus:ring-2 focus:ring-[#fd5523]/10"
+                    >
+                      <option value="">Select category</option>
+                      {COURSE_CATEGORIES.map((item) => (
+                        <option key={item} value={item}>
+                          {item}
+                        </option>
                       ))}
-                    </div>
+                    </select>
                   </div>
 
-                  <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                    <div className="space-y-3">
-                      <Label className="text-sm font-bold uppercase tracking-widest text-slate-500">Category</Label>
-                      <select
-                        name="category"
-                        value={category}
-                        onChange={(event) => setCategory(event.target.value)}
-                        className="flex h-14 w-full rounded-2xl border border-slate-200 bg-white px-5 text-base font-bold text-[#062e39] outline-none transition-all focus:border-[#fd5523] focus:ring-2 focus:ring-[#fd5523]/10"
-                      >
-                        <option value="">Select category</option>
-                        {COURSE_CATEGORIES.map((item) => (
-                          <option key={item} value={item}>
-                            {item}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div className="space-y-3">
-                      <Label className="text-sm font-bold uppercase tracking-widest text-slate-500">Target Level</Label>
-                      <select
-                        name="level"
-                        value={level}
-                        onChange={(event) => setLevel(event.target.value)}
-                        className="flex h-14 w-full rounded-2xl border border-slate-200 bg-white px-5 text-base font-bold text-[#062e39] outline-none transition-all focus:border-[#fd5523] focus:ring-2 focus:ring-[#fd5523]/10"
-                      >
-                        <option value="">Select level</option>
-                        <option value="beginner">Beginner</option>
-                        <option value="intermediate">Intermediate</option>
-                        <option value="advanced">Advanced</option>
-                      </select>
-                    </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                      Target Level
+                    </Label>
+                    <select
+                      name="level"
+                      value={level}
+                      onChange={(event) => setLevel(event.target.value)}
+                      className="flex h-11 w-full rounded-xl border border-slate-200 bg-white px-3.5 text-sm font-semibold text-[#062e39] outline-none transition-all focus:border-[#fd5523] focus:ring-2 focus:ring-[#fd5523]/10"
+                    >
+                      <option value="">Select level</option>
+                      <option value="beginner">Beginner</option>
+                      <option value="intermediate">Intermediate</option>
+                      <option value="advanced">Advanced</option>
+                    </select>
                   </div>
-                </section>
+                </div>
+              </section>
 
-                <section className="space-y-6">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#fff6ee] text-[#fd5523]">
-                      <CircleDollarSign className="h-5 w-5" />
-                    </div>
-                    <h3 className="text-lg font-bold uppercase tracking-[0.15em] text-[#062e39]">Commercial Model</h3>
+              {/* Section 3: Pricing */}
+              <section className="space-y-5">
+                <div className="flex items-center gap-2.5">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#fff6ee] text-[#fd5523]">
+                    <CircleDollarSign className="h-4 w-4" />
+                  </div>
+                  <h2 className="text-sm font-black uppercase tracking-wider text-[#062e39]">
+                    Pricing
+                  </h2>
+                </div>
+
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                      Pricing Model
+                    </Label>
+                    <select
+                      name="price_type"
+                      value={priceType}
+                      onChange={(event) =>
+                        setPriceType(event.target.value as CourseBlueprintResponse["price_type"])
+                      }
+                      className="flex h-11 w-full rounded-xl border border-slate-200 bg-white px-3.5 text-sm font-semibold text-[#062e39] outline-none transition-all focus:border-[#fd5523] focus:ring-2 focus:ring-[#fd5523]/10"
+                    >
+                      <option value="free">Free</option>
+                      <option value="one_time">One-time purchase</option>
+                      <option value="subscription_only">Subscription only</option>
+                      <option value="both">Both (purchase or subscribe)</option>
+                    </select>
                   </div>
 
-                  <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                    <div className="space-y-3">
-                      <Label className="text-sm font-bold uppercase tracking-widest text-slate-500">Pricing Model</Label>
-                      <select
-                        name="price_type"
-                        value={priceType}
-                        onChange={(event) => setPriceType(event.target.value as Blueprint["price_type"])}
-                        className="flex h-14 w-full rounded-2xl border border-slate-200 bg-white px-5 text-base font-bold text-[#062e39] outline-none transition-all focus:border-[#fd5523] focus:ring-2 focus:ring-[#fd5523]/10"
-                      >
-                        <option value="free">Free</option>
-                        <option value="one_time">One-time purchase</option>
-                        <option value="subscription_only">Subscription only</option>
-                        <option value="both">Both (purchase or subscribe)</option>
-                      </select>
-                    </div>
-
-                    <div className="space-y-3">
-                      <Label htmlFor="price_amount" className="text-sm font-bold uppercase tracking-widest text-slate-500">
+                  {showsPriceAmount && (
+                    <div className="space-y-2">
+                      <Label htmlFor="price_amount" className="text-xs font-bold uppercase tracking-wider text-slate-500">
                         Price (ZMW)
                       </Label>
                       <div className="relative">
-                        <span className="absolute left-5 top-1/2 -translate-y-1/2 font-bold text-slate-400">ZK</span>
+                        <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">
+                          ZK
+                        </span>
                         <Input
                           id="price_amount"
                           name="price_amount"
@@ -273,97 +341,92 @@ export function NewCourseForm({
                           value={priceAmount}
                           onChange={(event) => setPriceAmount(event.target.value)}
                           placeholder="e.g. 250"
-                          className="h-14 rounded-2xl border-slate-200 bg-white pl-12 text-xl font-bold text-[#062e39]"
+                          className="h-11 rounded-xl border-slate-200 bg-white pl-10 text-sm font-bold text-[#062e39]"
                         />
                       </div>
                     </div>
-                  </div>
-                </section>
-
-                <div className="flex items-center justify-between gap-6 rounded-[2.5rem] bg-[#062e39] p-6 shadow-2xl">
-                  <DeployStudioButton />
-                  <Link
-                    href={backLink}
-                    className={cn(
-                      buttonVariants({ variant: "ghost" }),
-                      "rounded-full border border-white/20 px-8 text-white/75 hover:bg-white/10 hover:text-white flex items-center justify-center h-10"
-                    )}
-                  >
-                    Cancel
-                  </Link>
+                  )}
                 </div>
-              </form>
-            </CardContent>
-          </Card>
-        </div>
+              </section>
 
-        <aside className="space-y-8">
-          <Card className="marketing-outline-card rounded-[2.5rem] border-0 bg-[#062e39] p-8 text-white shadow-xl">
-            <CardContent className="space-y-6 p-0">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 text-[#fd8d69]">
-                  <Rocket className="h-5 w-5" />
-                </div>
-                <h3 className="text-sm font-bold uppercase tracking-[0.2em]">Strategy Guide</h3>
+              {/* Action Bar */}
+              <div className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-3 pt-4 border-t border-slate-100">
+                <Link
+                  href={backLink}
+                  className={cn(
+                    buttonVariants({ variant: "outline" }),
+                    "h-12 w-full sm:w-auto rounded-xl border-slate-200 px-6 text-sm font-bold text-slate-600 hover:bg-slate-50 flex items-center justify-center"
+                  )}
+                >
+                  Cancel
+                </Link>
+                <DeployStudioButton />
               </div>
-              
-              <ul className="space-y-5">
-                {[
-                  "Deliver a visible win in the first 15 minutes.",
-                  "Teach a workflow learners can use at work today.",
-                  "Include a real-world project, not just theory.",
-                  "End with privacy and accuracy checks."
-                ].map((text) => (
-                  <li key={text} className="flex gap-4 text-sm leading-relaxed text-white/70">
-                    <div className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[#fd8d69]" />
-                    {text}
-                  </li>
-                ))}
-              </ul>
-            </CardContent>
-          </Card>
+            </form>
+          </CardContent>
+        </Card>
 
-          <Card className="marketing-card rounded-[2.5rem] border-0 p-8 shadow-xl">
-            <CardContent className="space-y-6 p-0 text-[#062e39]">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#fff6ee] text-[#fd5523]">
-                  <ShieldCheck className="h-5 w-5" />
-                </div>
-                <h3 className="text-sm font-bold uppercase tracking-[0.2em]">Launch Status</h3>
-              </div>
-              
-              {blueprint ? (
-                <div className="space-y-4">
-                  <div className="inline-flex items-center gap-2 rounded-full bg-green-100 px-4 py-1.5 text-xs font-bold text-green-700">
-                    <div className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse" />
-                    BLUEPRINT SYNCED
-                  </div>
-                  <div className="space-y-4 pt-2">
-                    <div>
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Target Audience</p>
-                      <p className="mt-1 font-bold leading-snug">{blueprint.audience}</p>
-                    </div>
-                    <div>
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Quick Win</p>
-                      <p className="mt-1 font-bold leading-snug">{blueprint.quick_win}</p>
-                    </div>
-                  </div>
-                </div>
+        {/* Right Sidebar: Live Preview & Tips */}
+        <aside className="space-y-5 lg:sticky lg:top-24">
+          <Card className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
+            <div className="aspect-video w-full bg-slate-100 flex items-center justify-center overflow-hidden">
+              {thumbnailUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={thumbnailUrl}
+                  alt={title || "Course cover preview"}
+                  className="h-full w-full object-cover"
+                />
               ) : (
-                <div className="space-y-4">
-                  <p className="text-sm leading-relaxed text-slate-500 font-medium">
-                    Generate a blueprint above to unlock a stronger title, clearer promise, and a professional-first module arc.
-                  </p>
-                  <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
-                    <div className="h-full bg-slate-300 w-1/4" />
-                  </div>
+                <div className="flex flex-col items-center gap-1.5 text-slate-400">
+                  <ImageIcon className="h-7 w-7" />
+                  <span className="text-[11px] font-semibold">Cover preview</span>
                 </div>
               )}
+            </div>
+            <CardContent className="p-4 space-y-2.5">
+              <div className="flex items-center justify-between gap-2 text-[11px] font-bold uppercase tracking-wider">
+                <span className="text-[#fd5523] truncate">{category || "Category"}</span>
+                <span className="text-slate-400 shrink-0">{level || "Level"}</span>
+              </div>
+              <h3 className="font-bold text-base text-[#062e39] leading-snug line-clamp-2">
+                {title || "Your Course Title"}
+              </h3>
+              <p className="text-xs text-slate-500 line-clamp-2">
+                {description || "A brief summary of what learners will achieve in this course."}
+              </p>
+              <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-[#062e39]">
+                <span className="flex items-center gap-1.5 text-slate-400 font-medium">
+                  <BookOpen className="h-3.5 w-3.5" /> Draft Studio
+                </span>
+                <span>
+                  {priceType === "free"
+                    ? "Free"
+                    : priceType === "subscription_only"
+                      ? "Subscription"
+                      : priceAmount
+                        ? `ZMW ${priceAmount}`
+                        : "Paid"}
+                </span>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="rounded-2xl border-0 bg-[#062e39] p-5 text-white shadow-sm">
+            <CardContent className="space-y-3 p-0">
+              <div className="flex items-center gap-2 text-[#fd8d69]">
+                <Rocket className="h-4 w-4" />
+                <h3 className="text-xs font-bold uppercase tracking-widest">Course Tips</h3>
+              </div>
+              <ul className="space-y-2.5 text-xs leading-relaxed text-white/75">
+                <li>• Promise a concrete skill or workflow learners can apply right away.</li>
+                <li>• Keep modules focused (3–5 lessons per module).</li>
+                <li>• You can upload a cover image and build modules inside the studio next.</li>
+              </ul>
             </CardContent>
           </Card>
         </aside>
       </div>
     </div>
-
   );
 }

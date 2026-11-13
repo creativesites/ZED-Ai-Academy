@@ -37,7 +37,7 @@ export default async function TenantAdminNewCoursePage({
   }
 
   return (
-    <div className="container max-w-7xl px-4 py-8 md:py-12">
+    <div className="container max-w-7xl px-4 py-6 sm:py-10">
       <NewCourseForm
         companyId={company.id}
         tenantSlug={company.slug}

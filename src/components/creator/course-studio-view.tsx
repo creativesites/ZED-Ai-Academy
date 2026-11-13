@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button-variants";
+import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { CourseSettingsForm } from "@/components/creator/course-settings-form";
@@ -159,62 +160,55 @@ export async function CourseStudioView({
   return (
     <>
       <Toaster />
-      <div
-        className="w-full px-4 py-6 sm:px-6 md:px-8 lg:container lg:mx-auto lg:py-10 xl:px-0"
-        style={{ paddingBottom: "80px" }}
-      >
-        <div className="mb-6 sm:mb-8 md:mb-10 px-1">
-          <div className="mb-4 flex items-center gap-2.5 sm:gap-3">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-9 rounded px-2.5 text-slate-500 hover:bg-slate-100 hover:text-[#062e39] transition-colors"
+      <div className="container max-w-7xl mx-auto px-4 py-6 sm:py-10 pb-20">
+        <div className="mb-6 sm:mb-8">
+          <div className="mb-3 flex items-center gap-2.5">
+            <Link
+              href={backHref}
+              className={cn(
+                buttonVariants({ variant: "ghost", size: "sm" }),
+                "h-9 rounded-xl px-2.5 text-slate-500 hover:bg-slate-100 hover:text-[#062e39] inline-flex items-center gap-1.5 text-sm font-bold"
+              )}
             >
-              <Link href={backHref} className="inline-flex items-center justify-center gap-2 text-sm font-bold">
-                <ArrowLeft className="h-4 w-4 shrink-0" />
-                <span className="hidden text-sm sm:block">Courses</span>
-                <span className="sm:hidden">Back</span>
-              </Link>
-            </Button>
+              <ArrowLeft className="h-4 w-4 shrink-0" />
+              <span>Courses</span>
+            </Link>
 
             <span className="text-slate-300 font-light select-none">/</span>
 
             <Badge
-              className={`${STATUS_PILL[course.status] || STATUS_PILL.draft} text-xs sm:text-sm font-black tracking-wide px-2.5 py-0.5 rounded-lg shrink-0`}
+              className={`${STATUS_PILL[course.status] || STATUS_PILL.draft} text-xs font-black uppercase tracking-wider px-2.5 py-0.5 rounded-lg shrink-0`}
             >
               {course.status}
             </Badge>
           </div>
 
-          <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between lg:gap-8 max-w-100">
-            <div className="min-w-0 flex-1 space-y-1.5">
-              <h1 className="text-2xl font-bold tracking-tight text-[#062e39] sm:text-3xl md:text-4xl break-words">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between lg:gap-8">
+            <div className="min-w-0 flex-1 space-y-1">
+              <h1 className="text-2xl font-black tracking-tight text-[#062e39] sm:text-3xl break-words">
                 {course.title}
               </h1>
               {course.description && (
-                <p className="text-base sm:text-sm leading-relaxed text-slate-500 line-clamp-2 max-w-3xl">
+                <p className="text-sm leading-relaxed text-slate-500 line-clamp-2 max-w-3xl">
                   {course.description}
                 </p>
               )}
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full sm:flex sm:w-auto sm:shrink-0 sm:items-center">
-              <Button
-                variant="outline"
-                className="h-11 sm:h-10 w-full sm:w-auto rounded border-slate-200 px-4 text-base sm:text-sm font-bold text-[#062e39] hover:bg-[#fff6ee] active:scale-98 transition-all shadow-sm"
-                style={{ borderRadius: "12px" }}
+            <div className="grid grid-cols-2 gap-2.5 w-full sm:flex sm:w-auto sm:shrink-0 sm:items-center">
+              <Link
+                href={previewHref}
+                target="_blank"
+                className={cn(
+                  buttonVariants({ variant: "outline" }),
+                  "h-10 w-full sm:w-auto rounded-xl border-slate-200 px-4 text-sm font-bold text-[#062e39] hover:bg-[#fff6ee] inline-flex items-center justify-center gap-2 shadow-sm"
+                )}
               >
-                <Link
-                  href={previewHref}
-                  target="_blank"
-                  className="flex direction-row items-center justify-center gap-2 w-full h-full"
-                >
-                  <Eye className="h-4 w-4 shrink-0" />
-                  <span className="text-sm">{course.status === "published" ? "View Live" : "Preview"}</span>
-                </Link>
-              </Button>
+                <Eye className="h-4 w-4 shrink-0" />
+                <span>{course.status === "published" ? "View Live" : "Preview"}</span>
+              </Link>
 
-              <div className="w-full sm:w-auto [&>button]:w-full [&>button]:h-11 sm:[&>button]:h-10 [&>button]:rounded-xl">
+              <div className="w-full sm:w-auto [&>button]:w-full [&>button]:h-10 [&>button]:rounded-xl">
                 <PublishButton courseId={courseId} status={course.status} tenantSlug={tenantSlug} />
               </div>
             </div>
