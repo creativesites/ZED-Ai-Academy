@@ -2,6 +2,7 @@ import {
   CalendarDays,
   Clock3,
   Plus,
+  Video,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -191,7 +192,7 @@ export default async function TenantAdminLiveSessionsPage({
 
         <div className="lg:col-span-5 space-y-10">
           {/* Active Services */}
-          <section className="bg-white rounded-[2.5rem] p-10 border border-slate-100 shadow-sm">
+          <section className="bg-white rounded-2xl sm:rounded-[2.5rem] p-5 sm:p-8 border border-slate-100 shadow-sm">
             <h3 className="text-sm font-black uppercase tracking-widest text-[#062e39] mb-8 flex items-center gap-3">
               <Video className="h-5 w-5 text-[#fd5523]" /> Published Services
             </h3>
