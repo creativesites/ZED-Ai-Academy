@@ -191,7 +191,7 @@ export function AIBlueprintAssistant({ courseId }: AIBlueprintAssistantProps) {
           }
         }}
       >
-        <DialogContent className="w-[calc(100vw-1.5rem)] max-w-3xl max-h-[88vh] flex flex-col gap-0 p-0 overflow-hidden rounded-2xl sm:rounded-3xl border border-slate-200 shadow-2xl">
+        <DialogContent className="w-[calc(100vw-1.5rem)] max-w-[calc(100vw-1.5rem)] sm:max-w-3xl lg:max-w-4xl max-h-[88vh] flex flex-col gap-0 p-0 overflow-hidden rounded-2xl sm:rounded-3xl border border-slate-200 shadow-2xl">
           <DialogHeader className="p-5 sm:p-6 bg-[#062e39] text-white shrink-0">
             <div className="flex items-center gap-3">
               <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#fd5523] text-white shrink-0">

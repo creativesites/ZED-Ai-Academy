@@ -737,40 +737,40 @@ export function LessonEditorClient({
 
         {/* Searchable Block Library Modal (Desktop & Mobile, auto-dismisses on add) */}
         <Dialog open={showBlockPicker} onOpenChange={setShowBlockPicker}>
-          <DialogContent className="w-[calc(100vw-1.5rem)] max-w-3xl max-h-[85vh] flex flex-col gap-0 p-0 overflow-hidden rounded-2xl sm:rounded-3xl border border-slate-200 shadow-2xl">
+          <DialogContent className="w-[calc(100vw-1.5rem)] max-w-[calc(100vw-1.5rem)] sm:max-w-[92vw] lg:max-w-[88vw] xl:max-w-6xl max-h-[90vh] flex flex-col gap-0 p-0 overflow-hidden rounded-2xl sm:rounded-3xl border border-slate-200 shadow-2xl">
             <DialogHeader className="p-5 sm:p-6 border-b border-slate-100 bg-white shrink-0">
-              <div className="flex items-center gap-3">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#fff6ee] text-[#fd5523]">
+              <div className="flex items-center gap-3 pr-8">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#fff6ee] text-[#fd5523]">
                   <Plus className="h-5 w-5" />
                 </div>
                 <div className="text-left">
-                  <DialogTitle className="text-lg font-bold text-[#062e39]">
+                  <DialogTitle className="text-lg sm:text-xl font-bold text-[#062e39]">
                     Add Content Block
                   </DialogTitle>
-                  <DialogDescription className="text-xs text-slate-500">
+                  <DialogDescription className="text-xs sm:text-sm text-slate-500">
                     Click any block below to insert it into your lesson.
                   </DialogDescription>
                 </div>
               </div>
 
-              <div className="mt-4 flex flex-col sm:flex-row gap-3">
-                <div className="relative flex-1">
-                  <Search className="h-4 w-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+              <div className="mt-4 flex flex-col md:flex-row md:items-center gap-3">
+                <div className="relative flex-1 min-w-0 md:max-w-md">
+                  <Search className="h-4 w-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                   <Input
                     value={blockSearch}
                     onChange={(e) => setBlockSearch(e.target.value)}
                     placeholder="Search blocks (e.g. Video, Quiz, Steps)..."
-                    className="h-10 pl-9 rounded-xl border-slate-200 bg-slate-50 text-sm focus:bg-white"
+                    className="h-10 w-full pl-10 rounded-xl border-slate-200 bg-slate-50 text-sm focus:bg-white"
                   />
                 </div>
-                <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
+                <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0">
                   {["All", ...TOOLBAR_GROUPS.map((g) => g.heading)].map((cat) => (
                     <button
                       key={cat}
                       type="button"
                       onClick={() => setBlockCategory(cat)}
                       className={cn(
-                        "px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-colors",
+                        "px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-colors",
                         blockCategory === cat
                           ? "bg-[#062e39] text-white"
                           : "bg-slate-100 text-slate-600 hover:bg-slate-200"
@@ -801,11 +801,11 @@ export function LessonEditorClient({
                 if (matchingTypes.length === 0) return null;
 
                 return (
-                  <div key={group.heading} className="space-y-2.5">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                  <div key={group.heading} className="space-y-3">
+                    <p className="text-[11px] font-black uppercase tracking-widest text-slate-400">
                       {group.heading}
                     </p>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                       {matchingTypes.map((type) => {
                         const meta = BLOCK_META[type];
                         const Icon = meta.icon;
@@ -815,14 +815,14 @@ export function LessonEditorClient({
                             type="button"
                             onClick={() => addBlock(type)}
                             disabled={adding}
-                            className="group flex items-center gap-3 rounded-xl border border-slate-200/80 bg-white p-3 text-left transition-all hover:border-[#fd5523]/50 hover:bg-[#fff6ee]/40 hover:shadow-sm active:scale-[0.98]"
+                            className="group flex items-center gap-3 rounded-xl border border-slate-200/80 bg-white p-3.5 text-left transition-all hover:border-[#fd5523]/50 hover:bg-[#fff6ee]/40 hover:shadow-sm active:scale-[0.98]"
                           >
                             <div
-                              className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${meta.bgColor} ${meta.color}`}
+                              className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${meta.bgColor} ${meta.color}`}
                             >
-                              <Icon className="h-4 w-4" />
+                              <Icon className="h-5 w-5" />
                             </div>
-                            <span className="text-xs sm:text-sm font-bold text-[#062e39] truncate">
+                            <span className="text-sm font-bold text-[#062e39] truncate">
                               {meta.label}
                             </span>
                           </button>
