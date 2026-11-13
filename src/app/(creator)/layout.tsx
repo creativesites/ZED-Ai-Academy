@@ -5,15 +5,12 @@ import { ensureProfile } from "@/lib/supabase/ensure-profile";
 import { requireOnboarding } from "@/lib/require-onboarding";
 import { syncActiveOrganization } from "@/actions/company";
 import { companyAdminNeedsAcademySetup } from "@/lib/company-admin-setup";
-import Header2Wrapper from "@/components/layout/Header2Wrapper";
-import Footer1 from "@/components/layout/footer/Footer1";
+import { CreatorNavbar } from "@/components/creator/CreatorNavbar";
 import { NotificationBellServer } from "@/components/shared/notification-bell-server";
-import "../../../public/assets/css/style.css"
-import 'swiper/css'
-// import "swiper/css/navigation"
-import "swiper/css/pagination"
-import 'swiper/css/free-mode';
-import { dmSans } from '@/lib/font'
+import "../../../public/assets/css/style.css";
+import "swiper/css";
+import "swiper/css/pagination";
+import "swiper/css/free-mode";
 
 export default async function CreatorLayout({ children }: { children: React.ReactNode }) {
   const { userId, orgId } = await auth();
@@ -58,14 +55,11 @@ export default async function CreatorLayout({ children }: { children: React.Reac
   }
 
   return (
-    <div className="page-wrapper">
-      <Header2Wrapper>
+    <div className="min-h-screen bg-slate-50">
+      <CreatorNavbar>
         <NotificationBellServer />
-      </Header2Wrapper>
-      <div id="page-content">
-        {children}
-      </div>
-      <Footer1 />
+      </CreatorNavbar>
+      <main>{children}</main>
     </div>
   );
 }

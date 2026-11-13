@@ -53,6 +53,13 @@ import { LessonPreviewPane } from "@/components/creator/lesson-preview-pane";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   GripVertical,
   Trash2,
   Video,
@@ -84,6 +91,7 @@ import {
   ShieldAlert,
   Smartphone,
   Mic,
+  Search,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -629,10 +637,13 @@ export function LessonEditorClient({
   const [title, setTitle] = useState(lesson.title);
   const [isPreview, setIsPreview] = useState(lesson.is_preview);
   const [activeTab, setActiveTab] = useState<"editor" | "preview">("editor");
+  const [asideTab, setAsideTab] = useState<"preview" | "ai">("preview");
   const [savingMeta, startSaveMeta] = useTransition();
   const [adding, startAdd] = useTransition();
   const [, startReorder] = useTransition();
-  const [showMobileSidebar, setShowMobileSidebar] = useState(false);
+  const [showBlockPicker, setShowBlockPicker] = useState(false);
+  const [blockSearch, setBlockSearch] = useState("");
+  const [blockCategory, setBlockCategory] = useState<string>("All");
   const [showTour, setShowTour] = useState(() => {
     if (typeof window === "undefined") return false;
     return !window.localStorage.getItem("lesson_editor_tour_seen");
@@ -671,8 +682,10 @@ export function LessonEditorClient({
       content: DEFAULT_CONTENT[type],
     };
 
-    // Optimistically update UI immediately
+    // Optimistically update UI and auto-dismiss block picker modal/sheet
     setBlocks((prev) => [...prev, newBlock]);
+    setShowBlockPicker(false);
+    setBlockSearch("");
     toast.success(`${BLOCK_META[type]?.label ?? type} block added`);
 
     startAdd(async () => {
@@ -709,43 +722,119 @@ export function LessonEditorClient({
         }} />
       )}
 
-      <div className="space-y-6 pb-24 sm:space-y-10 sm:pb-0">
+      <div className="space-y-6 pb-24 sm:space-y-8 sm:pb-0">
         {/* Mobile FAB (only visible on small screens) */}
-        <div className="fixed bottom-6 right-6 z-40 block sm:hidden">
+        <div className="fixed bottom-6 right-6 z-40 block lg:hidden">
           <button
-            onClick={() => setShowMobileSidebar(true)}
+            type="button"
+            aria-label="Add content block"
+            onClick={() => setShowBlockPicker(true)}
             className="flex h-14 w-14 items-center justify-center rounded-full bg-[#fd5523] text-white shadow-xl transition-all hover:scale-105 hover:bg-[#ef4a16] active:scale-95"
           >
             <Plus className="h-6 w-6" />
           </button>
         </div>
 
-        {/* Mobile bottom sheet */}
-        {showMobileSidebar && (
-          <div className="fixed inset-0 z-50 flex items-end bg-black/50 sm:hidden">
-            <div className="max-h-[85vh] w-full overflow-y-auto rounded-t-3xl bg-white animate-in slide-in-from-bottom">
-              <div className="sticky top-0 pt-4 px-4 flex items-center justify-between bg-white w-full pb-2">
-                <h2 className="text-xl font-bold text-[#062e39]">Add Content</h2>
-                <button onClick={() => setShowMobileSidebar(false)} className="rounded-full p-2 hover:bg-slate-100">
-                  <X className="h-5 w-5" />
-                </button>
+        {/* Searchable Block Library Modal (Desktop & Mobile, auto-dismisses on add) */}
+        <Dialog open={showBlockPicker} onOpenChange={setShowBlockPicker}>
+          <DialogContent className="w-[calc(100vw-1.5rem)] max-w-3xl max-h-[85vh] flex flex-col gap-0 p-0 overflow-hidden rounded-2xl sm:rounded-3xl border border-slate-200 shadow-2xl">
+            <DialogHeader className="p-5 sm:p-6 border-b border-slate-100 bg-white shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#fff6ee] text-[#fd5523]">
+                  <Plus className="h-5 w-5" />
+                </div>
+                <div className="text-left">
+                  <DialogTitle className="text-lg font-bold text-[#062e39]">
+                    Add Content Block
+                  </DialogTitle>
+                  <DialogDescription className="text-xs text-slate-500">
+                    Click any block below to insert it into your lesson.
+                  </DialogDescription>
+                </div>
               </div>
-              <LessonEditorSidebarContent
-                groups={TOOLBAR_GROUPS}
-                hasQuiz={hasQuiz}
-                adding={adding}
-                addBlock={addBlock}
-                lessonId={lesson.id}
-                courseId={courseId}
-                lessonTitle={title}
-                onBlocksGenerated={(newBlocks) => {
-                  setBlocks((prev) => [...prev, ...newBlocks]);
-                  setShowMobileSidebar(false);
-                }}
-              />
+
+              <div className="mt-4 flex flex-col sm:flex-row gap-3">
+                <div className="relative flex-1">
+                  <Search className="h-4 w-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                  <Input
+                    value={blockSearch}
+                    onChange={(e) => setBlockSearch(e.target.value)}
+                    placeholder="Search blocks (e.g. Video, Quiz, Steps)..."
+                    className="h-10 pl-9 rounded-xl border-slate-200 bg-slate-50 text-sm focus:bg-white"
+                  />
+                </div>
+                <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
+                  {["All", ...TOOLBAR_GROUPS.map((g) => g.heading)].map((cat) => (
+                    <button
+                      key={cat}
+                      type="button"
+                      onClick={() => setBlockCategory(cat)}
+                      className={cn(
+                        "px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-colors",
+                        blockCategory === cat
+                          ? "bg-[#062e39] text-white"
+                          : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                      )}
+                    >
+                      {cat === "All" ? "All" : cat.split(" ")[0]}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </DialogHeader>
+
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6 bg-slate-50/50">
+              {TOOLBAR_GROUPS.filter(
+                (group) => blockCategory === "All" || group.heading === blockCategory
+              ).map((group) => {
+                const matchingTypes = group.types
+                  .filter((type) => type !== "quiz" || !hasQuiz)
+                  .filter((type) => {
+                    if (!blockSearch.trim()) return true;
+                    const label = BLOCK_META[type]?.label ?? type;
+                    return (
+                      label.toLowerCase().includes(blockSearch.toLowerCase()) ||
+                      type.toLowerCase().includes(blockSearch.toLowerCase())
+                    );
+                  });
+
+                if (matchingTypes.length === 0) return null;
+
+                return (
+                  <div key={group.heading} className="space-y-2.5">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                      {group.heading}
+                    </p>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                      {matchingTypes.map((type) => {
+                        const meta = BLOCK_META[type];
+                        const Icon = meta.icon;
+                        return (
+                          <button
+                            key={type}
+                            type="button"
+                            onClick={() => addBlock(type)}
+                            disabled={adding}
+                            className="group flex items-center gap-3 rounded-xl border border-slate-200/80 bg-white p-3 text-left transition-all hover:border-[#fd5523]/50 hover:bg-[#fff6ee]/40 hover:shadow-sm active:scale-[0.98]"
+                          >
+                            <div
+                              className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${meta.bgColor} ${meta.color}`}
+                            >
+                              <Icon className="h-4 w-4" />
+                            </div>
+                            <span className="text-xs sm:text-sm font-bold text-[#062e39] truncate">
+                              {meta.label}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
-          </div>
-        )}
+          </DialogContent>
+        </Dialog>
 
         {/* Header / Meta Section */}
         <section className="rounded-2xl sm:rounded-3xl bg-gradient-to-r from-[#062e39] to-[#0a4055] p-5 sm:p-7 shadow-lg">
@@ -770,14 +859,13 @@ export function LessonEditorClient({
                 className="h-11 sm:h-12 flex-1 rounded-xl border-white/15 bg-white/10 text-base font-semibold text-white placeholder:text-white/40 focus:border-[#fd8d69] focus:ring-[#fd8d69]/20"
               />
 
-              <label className="group relative flex h-11 sm:h-12 w-full md:w-auto shrink-0 items-center justify-between gap-4 cursor-pointer select-none rounded-xl border border-white/15 bg-white/5 px-4 transition-all hover:bg-white/10">
-                <input
-                  type="checkbox"
-                  checked={isPreview}
-                  onChange={(e) => setIsPreview(e.target.checked)}
-                  className="peer sr-only"
-                />
-
+              <button
+                type="button"
+                role="switch"
+                aria-checked={isPreview}
+                onClick={() => setIsPreview((prev) => !prev)}
+                className="flex h-11 sm:h-12 w-full md:w-auto shrink-0 items-center justify-between gap-4 cursor-pointer select-none rounded-xl border border-white/15 bg-white/5 px-4 transition-all hover:bg-white/10 text-left"
+              >
                 <div className="flex flex-col leading-tight min-w-0">
                   <span
                     className={cn(
@@ -787,12 +875,19 @@ export function LessonEditorClient({
                   >
                     {isPreview ? "Public Preview" : "Private Lesson"}
                   </span>
-                  <span className="text-xs font-bold text-white">
+                  <span className="text-xs font-bold text-white whitespace-nowrap">
                     {isPreview ? "Free for anyone" : "Enrolled only"}
                   </span>
                 </div>
 
-                <div className="relative h-6 w-11 shrink-0 rounded-full border border-white/15 bg-black/40 transition-all peer-checked:bg-[#fd5523] peer-checked:border-[#fd5523]">
+                <div
+                  className={cn(
+                    "relative h-6 w-11 shrink-0 rounded-full border transition-all",
+                    isPreview
+                      ? "bg-[#fd5523] border-[#fd5523]"
+                      : "bg-black/40 border-white/15"
+                  )}
+                >
                   <div
                     className={cn(
                       "absolute top-[2px] left-[2px] flex h-4.5 w-4.5 items-center justify-center rounded-full bg-white shadow-sm transition-transform duration-200",
@@ -806,7 +901,7 @@ export function LessonEditorClient({
                     )}
                   </div>
                 </div>
-              </label>
+              </button>
 
               <Button
                 onClick={handleSaveMeta}
@@ -847,12 +942,12 @@ export function LessonEditorClient({
             )}
           >
             <Smartphone className="h-3.5 w-3.5" />
-            <span>Device Preview</span>
+            <span>Preview & AI</span>
             <span className="flex h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse ml-0.5" />
           </button>
         </div>
 
-        {/* Main Grid: Content Stack + Preview/Tools */}
+        {/* Main Grid: Content Stack + Sticky Preview/AI */}
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px] xl:grid-cols-[minmax(0,1fr)_440px] 2xl:grid-cols-[minmax(0,1fr)_480px] w-full items-start">
           {/* Content Blocks */}
           <div
@@ -861,9 +956,43 @@ export function LessonEditorClient({
               activeTab === "preview" && "hidden lg:block"
             )}
           >
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-bold text-[#062e39] sm:text-xl">Content Stack</h2>
-              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 sm:text-xs">{blocks.length} Blocks</p>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <h2 className="text-lg font-bold text-[#062e39] sm:text-xl">Content Stack</h2>
+                <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                  {blocks.length} {blocks.length === 1 ? "Block" : "Blocks"}
+                </span>
+              </div>
+
+              {/* Quick-add bar + Browse All Blocks */}
+              <div className="flex flex-wrap items-center gap-1.5">
+                {(["text", "video", "image", "quiz"] as ContentBlockType[])
+                  .filter((t) => t !== "quiz" || !hasQuiz)
+                  .map((type) => {
+                    const meta = BLOCK_META[type];
+                    const Icon = meta.icon;
+                    return (
+                      <button
+                        key={type}
+                        type="button"
+                        onClick={() => addBlock(type)}
+                        disabled={adding}
+                        className="hidden sm:inline-flex items-center gap-1.5 h-9 px-3 rounded-xl border border-slate-200 bg-white text-xs font-bold text-[#062e39] hover:border-[#fd5523]/40 hover:bg-[#fff6ee]/60 transition-all"
+                      >
+                        <Icon className={cn("h-3.5 w-3.5", meta.color)} />
+                        <span>{meta.label}</span>
+                      </button>
+                    );
+                  })}
+                <Button
+                  type="button"
+                  onClick={() => setShowBlockPicker(true)}
+                  className="h-9 rounded-xl bg-[#fd5523] px-3.5 text-xs font-bold text-white hover:bg-[#ef4a16] shadow-xs"
+                >
+                  <Plus className="mr-1.5 h-3.5 w-3.5" />
+                  Add Block
+                </Button>
+              </div>
             </div>
 
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
@@ -886,44 +1015,90 @@ export function LessonEditorClient({
               </div>
             </DndContext>
 
-            {blocks.length === 0 && (
-              <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 py-16 text-center sm:rounded-3xl sm:py-24">
-                <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#fff6ee] text-[#fd5523] sm:h-20 sm:w-20 sm:rounded-3xl">
-                  <Sparkles className="h-8 w-8 sm:h-10 sm:w-10" />
+            {blocks.length > 0 ? (
+              <button
+                type="button"
+                onClick={() => setShowBlockPicker(true)}
+                className="w-full py-3.5 rounded-2xl border-2 border-dashed border-slate-200 bg-white/60 text-xs font-bold uppercase tracking-wider text-slate-500 hover:border-[#fd5523]/50 hover:text-[#fd5523] hover:bg-[#fff6ee]/40 transition-all flex items-center justify-center gap-2"
+              >
+                <Plus className="h-4 w-4" />
+                Add Another Block
+              </button>
+            ) : (
+              <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 bg-white/70 py-14 text-center sm:rounded-3xl sm:py-20 px-4">
+                <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#fff6ee] text-[#fd5523] sm:h-16 sm:w-16">
+                  <Sparkles className="h-7 w-7 sm:h-8 sm:w-8" />
                 </div>
-                <h3 className="text-xl font-bold text-[#062e39] sm:text-2xl">Empty Lesson Canvas</h3>
-                <p className="mx-auto mt-2 max-w-xs px-2 text-sm text-slate-500 sm:max-w-sm sm:text-base">
-                  Tap the <span className="font-bold text-[#fd5523]">+ button</span> (bottom right) or use AI Co-Author to add your first content block.
+                <h3 className="text-lg font-bold text-[#062e39] sm:text-xl">Empty Lesson Canvas</h3>
+                <p className="mx-auto mt-1.5 max-w-sm text-sm text-slate-500">
+                  Add a content block manually or let AI Co-Author draft your lesson blocks.
                 </p>
+                <Button
+                  type="button"
+                  onClick={() => setShowBlockPicker(true)}
+                  className="mt-5 h-10 rounded-xl bg-[#fd5523] px-5 text-xs sm:text-sm font-bold text-white hover:bg-[#ef4a16]"
+                >
+                  <Plus className="mr-1.5 h-4 w-4" />
+                  Add Your First Block
+                </Button>
               </div>
             )}
           </div>
 
           <aside
             className={cn(
-              "space-y-6 w-full min-w-0",
+              "space-y-4 w-full min-w-0 lg:sticky lg:top-20",
               activeTab === "editor" && "hidden lg:block"
             )}
           >
-            <LessonPreviewPane
-              title={title}
-              moduleTitle={moduleTitle}
-              blocks={blocks}
-              quiz={quiz}
-            />
+            {/* Clean Right-Column Mode Switcher: Device Preview vs AI Co-Author */}
+            <div className="grid grid-cols-2 gap-1.5 p-1 rounded-2xl bg-white border border-slate-200/80 shadow-xs">
+              <button
+                type="button"
+                onClick={() => setAsideTab("preview")}
+                className={cn(
+                  "flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs font-bold transition-all",
+                  asideTab === "preview"
+                    ? "bg-[#062e39] text-white shadow-xs"
+                    : "text-slate-600 hover:text-[#062e39]"
+                )}
+              >
+                <Smartphone className="h-3.5 w-3.5" />
+                <span>Device Preview</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setAsideTab("ai")}
+                className={cn(
+                  "flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs font-bold transition-all",
+                  asideTab === "ai"
+                    ? "bg-[#fd5523] text-white shadow-xs"
+                    : "text-slate-600 hover:text-[#062e39]"
+                )}
+              >
+                <Sparkles className="h-3.5 w-3.5" />
+                <span>AI Co-Author</span>
+              </button>
+            </div>
 
-            <div className="space-y-6">
-              <LessonEditorSidebarContent
-                groups={TOOLBAR_GROUPS}
-                hasQuiz={hasQuiz}
-                adding={adding}
-                addBlock={addBlock}
+            {asideTab === "preview" ? (
+              <LessonPreviewPane
+                title={title}
+                moduleTitle={moduleTitle}
+                blocks={blocks}
+                quiz={quiz}
+              />
+            ) : (
+              <AILessonGenerator
                 lessonId={lesson.id}
                 courseId={courseId}
                 lessonTitle={title}
-                onBlocksGenerated={(newBlocks) => setBlocks((prev) => [...prev, ...newBlocks])}
+                onBlocksGenerated={(newBlocks) => {
+                  setBlocks((prev) => [...prev, ...newBlocks]);
+                  setActiveTab("editor");
+                }}
               />
-            </div>
+            )}
           </aside>
         </div>
       </div>
