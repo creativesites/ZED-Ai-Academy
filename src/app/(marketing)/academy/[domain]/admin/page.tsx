@@ -32,7 +32,7 @@ export default async function AdminTenantHubPage({
   ] = await Promise.all([
     supabase.from("company_members").select("*", { count: "exact", head: true }).eq("company_id", company.id).eq("role", "learner"),
     supabase.from("courses").select("*", { count: "exact", head: true }).eq("company_id", company.id),
-    supabase.from("enrollments").select("*", { count: "exact", head: true }).eq("company_id", company.id).eq("status", "pending"),
+    supabase.from("enrollments").select("*", { count: "exact", head: true }).eq("company_id", company.id).eq("status", "pending_payment"),
     supabase.from("class_schedules").select("*").eq("company_id", company.id).order("starts_at"),
     supabase.from("enrollments").select("id, status, enrolled_at, profiles(full_name, email)").eq("company_id", company.id).order("enrolled_at", { ascending: false }).limit(5)
   ]);
@@ -88,7 +88,7 @@ export default async function AdminTenantHubPage({
               { label: "Active Students", value: studentCount || 0, icon: Users, accent: "bg-blue-50 text-blue-600", href: `${base}/enrollments` },
               { label: "Total Courses", value: courseCount || 0, icon: BookOpen, accent: "bg-emerald-50 text-emerald-600", href: `${base}/courses` },
               { label: "Scheduled Today", value: todaysClassCount === 1 ? "1 Class" : `${todaysClassCount} Classes`, icon: Calendar, accent: "bg-amber-50 text-amber-600", href: `${base}/classroom?tab=timetable` },
-              { label: "Pending Approvals", value: pendingCount || 0, icon: AlertCircle, accent: "bg-indigo-50 text-indigo-600", href: `${base}/enrollments?status=pending` },
+              { label: "Pending Approvals", value: pendingCount || 0, icon: AlertCircle, accent: "bg-indigo-50 text-indigo-600", href: `${base}/enrollments?status=pending_payment` },
             ].map((kpi) => (
               <Link
                 key={kpi.label}

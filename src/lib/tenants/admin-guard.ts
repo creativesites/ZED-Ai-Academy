@@ -13,9 +13,8 @@ export interface TenantAdminPageContext {
     slug: string;
     admin_id: string | null;
     teacher_code: string | null;
-    invite_code: string | null;
     logo_url: string | null;
-    brand_color: string | null;
+    primary_color: string | null;
   };
   access: Awaited<ReturnType<typeof getCurrentTenantAccess>>;
 }
@@ -38,7 +37,7 @@ export async function requireTenantAdminPage(
 
   const { data: company } = await supabase
     .from("companies")
-    .select("id, name, slug, admin_id, teacher_code, invite_code, logo_url, brand_color")
+    .select("id, name, slug, admin_id, teacher_code, logo_url, primary_color")
     .eq("slug", domain)
     .single();
 
