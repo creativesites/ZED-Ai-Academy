@@ -1,16 +1,8 @@
-import { auth } from "@clerk/nextjs/server";
-import { redirect, notFound } from "next/navigation";
-import Link from "next/link";
 import {
   CalendarDays,
-  CheckCircle,
   Clock3,
   Plus,
-  Video,
-  XCircle,
-  ChevronLeft
 } from "lucide-react";
-import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/button";
 import {
   confirmLiveSessionBooking,
@@ -28,6 +20,7 @@ import type {
 } from "@/types/database";
 import { InstructorJoinButton } from "@/components/creator/instructor-join-button";
 import { cn } from "@/lib/utils";
+import { requireTenantAdminPage } from "@/lib/tenants/admin-guard";
 
 export const metadata = { title: "Live Sessions Studio — Admin Hub" };
 
@@ -62,31 +55,7 @@ export default async function TenantAdminLiveSessionsPage({
   params: Promise<{ domain: string }>;
 }) {
   const { domain } = await params;
-  const { userId } = await auth();
-  if (!userId) redirect(`/sign-in?redirect_url=/academy/${domain}/admin/live-sessions`);
-
-  const supabase = createClient();
-  
-  // 1. Fetch Company
-  const { data: company } = await supabase
-    .from("companies")
-    .select("id, name, slug")
-    .eq("slug", domain)
-    .single();
-
-  if (!company) notFound();
-
-  // 2. Security Check
-  const { data: membership } = await supabase
-    .from("company_members")
-    .select("role")
-    .eq("company_id", company.id)
-    .eq("profile_id", userId)
-    .single();
-
-  if (!membership || (membership.role !== "company_admin" && membership.role !== "teacher")) {
-    redirect(`/academy/${company.slug}/classroom`);
-  }
+  const { userId, supabase, company } = await requireTenantAdminPage(domain);
 
   const [
     { data: coursesData },
@@ -126,20 +95,20 @@ export default async function TenantAdminLiveSessionsPage({
   const upcomingBookings = bookings.filter((booking) => booking.status !== "requested");
 
   return (
-    <div className="container max-w-7xl py-12">
-      <div className="mb-10 flex flex-col justify-between gap-5 md:flex-row md:items-center">
+    <div className="container max-w-7xl px-4 py-6 sm:py-10">
+      <div className="mb-8 sm:mb-10 flex flex-col justify-between gap-4 md:flex-row md:items-center">
         <div>
-          <h1 className="text-4xl font-black tracking-tight text-[#062e39] uppercase">Live Sessions Studio</h1>
-          <p className="mt-2 text-slate-500 font-medium text-lg">
+          <h1 className="text-2xl sm:text-4xl font-black tracking-tight text-[#062e39] uppercase">Live Sessions Studio</h1>
+          <p className="mt-1.5 text-slate-500 font-medium text-sm sm:text-lg">
             Manage your bookable sessions and availability for {company.name}.
           </p>
         </div>
       </div>
 
-      <div className="grid gap-10 lg:grid-cols-12">
-        <div className="lg:col-span-7 space-y-10">
+      <div className="grid gap-6 sm:gap-8 lg:grid-cols-12">
+        <div className="lg:col-span-7 space-y-6 sm:space-y-8">
           {/* Create Session Type */}
-          <section className="bg-white rounded-[2.5rem] p-10 border border-slate-100 shadow-sm">
+          <section className="bg-white rounded-2xl sm:rounded-[2.5rem] p-5 sm:p-8 border border-slate-100 shadow-sm">
             <div className="mb-8 flex items-center gap-3">
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#fff6ee] text-[#fd5523]">
                 <Plus className="h-6 w-6" />
@@ -249,7 +218,7 @@ export default async function TenantAdminLiveSessionsPage({
           </section>
 
           {/* Pending Requests */}
-          <section className="bg-white rounded-[2.5rem] p-10 border border-slate-100 shadow-sm">
+          <section className="bg-white rounded-2xl sm:rounded-[2.5rem] p-5 sm:p-8 border border-slate-100 shadow-sm">
              <h3 className="text-sm font-black uppercase tracking-widest text-[#062e39] mb-8 flex items-center gap-3">
                <CalendarDays className="h-5 w-5 text-[#fd5523]" /> Session Requests
              </h3>
@@ -279,7 +248,7 @@ export default async function TenantAdminLiveSessionsPage({
           </section>
 
           {/* Upcoming Sessions */}
-          <section className="bg-white rounded-[2.5rem] p-10 border border-slate-100 shadow-sm">
+          <section className="bg-white rounded-2xl sm:rounded-[2.5rem] p-5 sm:p-8 border border-slate-100 shadow-sm">
              <h3 className="text-sm font-black uppercase tracking-widest text-[#062e39] mb-8">Confirmed Sessions</h3>
              <div className="space-y-4">
                 {upcomingBookings.map((booking) => (

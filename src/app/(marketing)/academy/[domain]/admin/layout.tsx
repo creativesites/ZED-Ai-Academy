@@ -42,7 +42,7 @@ export default async function TenantAdminLayout({
   return (
     <div className="bg-slate-50 min-h-screen">
       <TenantAdminNavbar slug={company.slug} name={company.name} />
-      <main>
+      <main className="pb-20 md:pb-0">
         {children}
       </main>
     </div>

@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 import type { Metadata } from "next";
 import TenantHomeNavBar from "@/components/tenant/TenantHomeNavBar";
-import { getCurrentTenantAccess } from "@/lib/tenants/access";
+import { getCurrentTenantAccess, isTeachingRole } from "@/lib/tenants/access";
 
 type PageProps = {
   params: Promise<{ domain: string; slug: string }>;
@@ -79,7 +79,13 @@ export default async function TenantCourseDetailPage({ params, searchParams }: P
   const course = courseRaw as any;
 
   if (!course) notFound();
-  if (course.status !== "published" && course.instructor_id !== userId && !access?.isSuperAdmin) {
+  const canPreviewDraft =
+    course.instructor_id === userId ||
+    access?.isSuperAdmin ||
+    (userId && tenant.admin_id === userId) ||
+    isTeachingRole(access?.tenantRole);
+
+  if (course.status !== "published" && !canPreviewDraft) {
     notFound();
   }
 
