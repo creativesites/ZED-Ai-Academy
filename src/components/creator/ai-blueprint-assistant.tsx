@@ -1,44 +1,111 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
-import { 
-  Sparkles, 
-  Copy, 
-  Check, 
-  FileJson, 
-  Download, 
-  Upload, 
+import {
+  Sparkles,
+  Copy,
+  Check,
+  FileJson,
+  Download,
+  Upload,
   Loader2,
-  AlertCircle
+  WandSparkles,
+  Trash2,
+  BookOpen,
+  Layers,
 } from "lucide-react";
-import { exportCourseBlueprint, importCourseBlueprint, type CourseBlueprint } from "@/actions/course-ai";
+import {
+  exportCourseBlueprint,
+  importCourseBlueprint,
+  scaffoldCurriculum,
+  type CourseBlueprint,
+} from "@/actions/course-ai";
+import { COURSE_DOMAIN_PRESETS, type CourseDomainPresetId } from "@/lib/course-domain-presets";
 import { toast } from "sonner";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { cn } from "@/lib/utils";
 
 interface AIBlueprintAssistantProps {
   courseId: string;
 }
 
+type GeneratedModule = {
+  title: string;
+  lessons: { title: string }[];
+};
+
 export function AIBlueprintAssistant({ courseId }: AIBlueprintAssistantProps) {
+  const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState("export");
+  const [activeTab, setActiveTab] = useState("generate");
+
+  // Generate tab state
+  const [domainPreset, setDomainPreset] = useState<CourseDomainPresetId>("ai-professional");
+  const [brief, setBrief] = useState("");
+  const [generating, setGenerating] = useState(false);
+  const [previewModules, setPreviewModules] = useState<GeneratedModule[] | null>(null);
+  const [applyingGenerated, startApplyGenerated] = useTransition();
+
+  // Export tab state
   const [copied, setCopied] = useState(false);
   const [blueprint, setBlueprint] = useState<CourseBlueprint | null>(null);
   const [promptText, setPromptText] = useState("");
-  const [importJson, setImportJson] = useState("");
   const [isExporting, setIsExporting] = useState(false);
+
+  // Import tab state
+  const [importJson, setImportJson] = useState("");
   const [isImporting, startImport] = useTransition();
+
+  async function handleGenerate() {
+    if (generating) return;
+    setGenerating(true);
+    setPreviewModules(null);
+    try {
+      const res = await fetch("/api/ai/generate-curriculum", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ courseId, brief, domainPreset }),
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        throw new Error(data.error || "Unable to generate blueprint.");
+      }
+      setPreviewModules(Array.isArray(data.modules) ? data.modules : []);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to generate blueprint.");
+    } finally {
+      setGenerating(false);
+    }
+  }
+
+  function removeGeneratedModule(index: number) {
+    setPreviewModules((prev) => (prev ? prev.filter((_, idx) => idx !== index) : prev));
+  }
+
+  function handleApplyGenerated() {
+    if (!previewModules || previewModules.length === 0) return;
+    startApplyGenerated(async () => {
+      try {
+        await scaffoldCurriculum(courseId, previewModules);
+        toast.success("AI blueprint applied to your curriculum!");
+        setIsOpen(false);
+        setPreviewModules(null);
+        router.refresh();
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Failed to apply blueprint.");
+      }
+    });
+  }
 
   async function handleExport() {
     setIsExporting(true);
@@ -46,207 +113,356 @@ export function AIBlueprintAssistant({ courseId }: AIBlueprintAssistantProps) {
       const data = await exportCourseBlueprint(courseId);
       setBlueprint(data.blueprint);
       setPromptText(data.promptText);
-    } catch (err) {
-      toast.error("Failed to export course structure");
+    } catch {
+      toast.error("Failed to export course structure.");
     } finally {
       setIsExporting(false);
     }
   }
 
   function handleCopy() {
+    if (!promptText) return;
     navigator.clipboard.writeText(promptText);
     setCopied(true);
-    toast.success("AI Prompt copied to clipboard!");
+    toast.success("AI prompt copied to clipboard!");
     setTimeout(() => setCopied(false), 2000);
   }
 
-  async function handleImport() {
-    if (!importJson.trim()) return;
+  function handleDownloadJson() {
+    if (!blueprint) return;
+    const blob = new Blob([JSON.stringify(blueprint, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${(blueprint.title || "course-blueprint").toLowerCase().replace(/[^a-z0-9]+/g, "-")}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
 
+  function handleImport() {
+    if (!importJson.trim()) return;
     try {
       const parsed = JSON.parse(importJson) as CourseBlueprint;
       if (!parsed.modules || !Array.isArray(parsed.modules)) {
         throw new Error("Invalid blueprint format: 'modules' array is missing.");
       }
-
       startImport(async () => {
         try {
           await importCourseBlueprint(courseId, parsed);
-          toast.success("Curriculum updated successfully!");
+          toast.success("Curriculum imported successfully!");
           setIsOpen(false);
           setImportJson("");
+          router.refresh();
         } catch (err) {
-          toast.error(err instanceof Error ? err.message : "Import failed");
+          toast.error(err instanceof Error ? err.message : "Import failed.");
         }
       });
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Invalid JSON format");
+      toast.error(err instanceof Error ? err.message : "Invalid JSON format.");
     }
   }
 
-  return (
-    <Dialog open={isOpen} onOpenChange={(open) => {
-      setIsOpen(open);
-      if (open && activeTab === "export" && !promptText) {
-        handleExport();
-      }
-    }}>
-      <DialogTrigger 
-        nativeButton={false}
-        render={
-          <Button 
-            variant="outline" 
-            className="rounded-full border-[#fd5523]/20 bg-[#fff6ee] text-[#fd5523] hover:bg-[#fd5523] hover:text-white"
-          >
-            <Sparkles className="mr-2 h-4 w-4" />
-            AI Blueprint Assistant
-          </Button>
-        }
-      />
-      <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col gap-0 p-0 overflow-hidden rounded-[2.5rem] border-0 shadow-2xl">
-        <DialogHeader className="p-8 bg-[#062e39] text-white">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 bg-[#fd5523] rounded-xl">
-              <Sparkles className="h-5 w-5 text-white" />
-            </div>
-            <DialogTitle className="text-2xl font-bold">AI Blueprint Assistant</DialogTitle>
-          </div>
-          <DialogDescription className="text-white/70 text-base">
-            Export your course to AI for expansion, or import AI-generated curriculum files.
-          </DialogDescription>
-        </DialogHeader>
+  const totalGeneratedLessons =
+    previewModules?.reduce((sum, mod) => sum + mod.lessons.length, 0) ?? 0;
 
-        <div className="flex-1 overflow-hidden">
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
-            <div className="px-8 border-b">
-              <TabsList className="h-14 bg-transparent gap-8">
-                <TabsTrigger 
-                  value="export" 
-                  className="h-14 rounded-none border-b-2 border-transparent data-[state=active]:border-[#fd5523] data-[state=active]:bg-transparent data-[state=active]:shadow-none text-base font-bold"
+  return (
+    <>
+      <Button
+        type="button"
+        variant="outline"
+        onClick={() => {
+          setIsOpen(true);
+          if (activeTab === "export" && !promptText) {
+            handleExport();
+          }
+        }}
+        className="h-9 rounded-xl border-[#fd5523]/25 bg-[#fff6ee] px-3.5 text-xs font-bold text-[#fd5523] hover:bg-[#fd5523] hover:text-white transition-all shadow-xs"
+      >
+        <Sparkles className="mr-1.5 h-3.5 w-3.5" />
+        AI Blueprint Assistant
+      </Button>
+
+      <Dialog
+        open={isOpen}
+        onOpenChange={(open) => {
+          setIsOpen(open);
+          if (open && activeTab === "export" && !promptText) {
+            handleExport();
+          }
+        }}
+      >
+        <DialogContent className="w-[calc(100vw-1.5rem)] max-w-3xl max-h-[88vh] flex flex-col gap-0 p-0 overflow-hidden rounded-2xl sm:rounded-3xl border border-slate-200 shadow-2xl">
+          <DialogHeader className="p-5 sm:p-6 bg-[#062e39] text-white shrink-0">
+            <div className="flex items-center gap-3">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#fd5523] text-white shrink-0">
+                <Sparkles className="h-4 w-4" />
+              </div>
+              <div className="text-left">
+                <DialogTitle className="text-lg sm:text-xl font-bold text-white">
+                  AI Blueprint Assistant
+                </DialogTitle>
+                <DialogDescription className="text-white/75 text-xs sm:text-sm mt-0.5">
+                  Generate a module & lesson outline in-app, or export/import JSON blueprints.
+                </DialogDescription>
+              </div>
+            </div>
+          </DialogHeader>
+
+          <Tabs
+            value={activeTab}
+            onValueChange={(val) => {
+              setActiveTab(val);
+              if (val === "export" && !promptText) {
+                handleExport();
+              }
+            }}
+            className="flex-1 flex flex-col min-h-0"
+          >
+            <div className="px-4 sm:px-6 border-b border-slate-200 bg-slate-50/60 shrink-0 overflow-x-auto">
+              <TabsList className="h-12 bg-transparent gap-4 sm:gap-6 p-0">
+                <TabsTrigger
+                  value="generate"
+                  className="h-12 rounded-none border-b-2 border-transparent px-1 text-xs sm:text-sm font-bold text-slate-500 data-[state=active]:border-[#fd5523] data-[state=active]:text-[#062e39] data-[state=active]:bg-transparent data-[state=active]:shadow-none"
                 >
-                  <Download className="mr-2 h-4 w-4" />
-                  Export to AI
+                  <WandSparkles className="mr-1.5 h-3.5 w-3.5" />
+                  Generate with AI
                 </TabsTrigger>
-                <TabsTrigger 
-                  value="import" 
-                  className="h-14 rounded-none border-b-2 border-transparent data-[state=active]:border-[#fd5523] data-[state=active]:bg-transparent data-[state=active]:shadow-none text-base font-bold"
+                <TabsTrigger
+                  value="export"
+                  className="h-12 rounded-none border-b-2 border-transparent px-1 text-xs sm:text-sm font-bold text-slate-500 data-[state=active]:border-[#fd5523] data-[state=active]:text-[#062e39] data-[state=active]:bg-transparent data-[state=active]:shadow-none"
                 >
-                  <Upload className="mr-2 h-4 w-4" />
+                  <Download className="mr-1.5 h-3.5 w-3.5" />
+                  Export
+                </TabsTrigger>
+                <TabsTrigger
+                  value="import"
+                  className="h-12 rounded-none border-b-2 border-transparent px-1 text-xs sm:text-sm font-bold text-slate-500 data-[state=active]:border-[#fd5523] data-[state=active]:text-[#062e39] data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+                >
+                  <Upload className="mr-1.5 h-3.5 w-3.5" />
                   Import JSON
                 </TabsTrigger>
               </TabsList>
             </div>
 
-            <ScrollArea className="flex-1 p-8">
-              <TabsContent value="export" className="mt-0 outline-none">
-                <div className="space-y-6">
-                  <div className="bg-slate-50 rounded-2xl p-6 border border-slate-100">
-                    <h3 className="font-bold text-[#062e39] mb-2 flex items-center gap-2">
-                      <FileJson className="h-4 w-4 text-[#fd5523]" />
-                      AI Training Prompt
-                    </h3>
-                    <p className="text-sm text-slate-500 mb-4">
-                      Copy this prompt and paste it into any LLM (Claude, ChatGPT, or Gemini). It contains your current course structure and instructions for the AI to follow.
-                    </p>
-                    <div className="relative">
-                      {isExporting ? (
-                        <div className="h-64 flex flex-col items-center justify-center bg-white rounded-xl border border-slate-200 gap-3">
-                          <Loader2 className="h-8 w-8 animate-spin text-[#fd5523]" />
-                          <p className="text-sm font-medium text-slate-500">Preparing blueprint...</p>
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6">
+              {/* TAB 1: IN-APP AI GENERATOR */}
+              <TabsContent value="generate" className="mt-0 space-y-5 outline-none">
+                <div className="space-y-2">
+                  <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                    1. Choose Course Track
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {COURSE_DOMAIN_PRESETS.map((preset) => (
+                      <button
+                        key={preset.id}
+                        type="button"
+                        onClick={() => setDomainPreset(preset.id)}
+                        className={cn(
+                          "rounded-xl border p-3 text-left transition-all",
+                          domainPreset === preset.id
+                            ? "border-[#fd5523] bg-[#fff6ee]"
+                            : "border-slate-200 bg-white hover:border-slate-300"
+                        )}
+                      >
+                        <p className="text-xs font-bold text-[#062e39]">{preset.label}</p>
+                        <p className="text-[11px] text-slate-500 mt-0.5 line-clamp-1">
+                          {preset.description}
+                        </p>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                    2. Focus & Learning Goals (Optional)
+                  </p>
+                  <Textarea
+                    value={brief}
+                    onChange={(e) => setBrief(e.target.value)}
+                    rows={3}
+                    placeholder="e.g. Focus on hands-on client reporting workflows, include a capstone audit..."
+                    className="resize-none rounded-xl border-slate-200 text-sm"
+                  />
+                </div>
+
+                <div className="flex flex-wrap items-center gap-3">
+                  <Button
+                    type="button"
+                    onClick={handleGenerate}
+                    disabled={generating}
+                    className="h-10 rounded-xl bg-[#062e39] px-5 text-xs sm:text-sm font-bold text-white hover:bg-[#0a4055]"
+                  >
+                    {generating ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Generating Blueprint...
+                      </>
+                    ) : (
+                      <>
+                        <WandSparkles className="mr-2 h-4 w-4" />
+                        {previewModules ? "Regenerate" : "Generate Blueprint"}
+                      </>
+                    )}
+                  </Button>
+                </div>
+
+                {previewModules && (
+                  <div className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 text-xs font-bold text-[#062e39]">
+                        <Layers className="h-4 w-4 text-[#fd5523]" />
+                        <span>
+                          Proposed Outline: {previewModules.length} modules · {totalGeneratedLessons} lessons
+                        </span>
+                      </div>
+                      <Button
+                        type="button"
+                        onClick={handleApplyGenerated}
+                        disabled={applyingGenerated || previewModules.length === 0}
+                        className="h-9 rounded-xl bg-[#fd5523] px-4 text-xs font-bold text-white hover:bg-[#ef4a16]"
+                      >
+                        {applyingGenerated ? (
+                          <>
+                            <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                            Applying...
+                          </>
+                        ) : (
+                          <>
+                            <Check className="mr-1.5 h-3.5 w-3.5" />
+                            Apply to Course
+                          </>
+                        )}
+                      </Button>
+                    </div>
+
+                    <div className="space-y-2.5 max-h-60 overflow-y-auto pr-1">
+                      {previewModules.map((mod, idx) => (
+                        <div
+                          key={`${mod.title}-${idx}`}
+                          className="rounded-xl border border-slate-200 bg-white p-3 space-y-2"
+                        >
+                          <div className="flex items-center justify-between gap-2">
+                            <p className="text-xs sm:text-sm font-bold text-[#062e39]">
+                              Module {idx + 1}: {mod.title}
+                            </p>
+                            <button
+                              type="button"
+                              onClick={() => removeGeneratedModule(idx)}
+                              className="p-1 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50"
+                              title="Remove module"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+                          <ul className="space-y-1 pl-1">
+                            {mod.lessons.map((lesson, lIdx) => (
+                              <li
+                                key={`${lesson.title}-${lIdx}`}
+                                className="flex items-center gap-2 text-xs text-slate-600"
+                              >
+                                <BookOpen className="h-3 w-3 text-slate-400 shrink-0" />
+                                <span>{lesson.title}</span>
+                              </li>
+                            ))}
+                          </ul>
                         </div>
-                      ) : (
-                        <>
-                          <Textarea 
-                            value={promptText} 
-                            readOnly 
-                            className="h-80 bg-white font-mono text-xs p-4 rounded-xl border-slate-200 leading-relaxed"
-                          />
-                          <Button 
-                            size="sm" 
-                            onClick={handleCopy}
-                            className="absolute top-3 right-3 rounded-lg bg-[#062e39] text-white hover:bg-[#0a4055]"
-                          >
-                            {copied ? <Check className="h-4 w-4 mr-1" /> : <Copy className="h-4 w-4 mr-1" />}
-                            {copied ? "Copied" : "Copy Prompt"}
-                          </Button>
-                        </>
-                      )}
+                      ))}
                     </div>
                   </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="p-4 rounded-2xl bg-blue-50 border border-blue-100 flex gap-3">
-                      <AlertCircle className="h-5 w-5 text-blue-500 shrink-0 mt-0.5" />
-                      <div>
-                        <p className="text-sm font-bold text-blue-900">Expert Tip</p>
-                        <p className="text-xs text-blue-700 leading-relaxed">
-                          Ask the AI to "add 3 more modules focused on practical applications" or "suggest content blocks for Module 2".
-                        </p>
-                      </div>
-                    </div>
-                    <div className="p-4 rounded-2xl bg-amber-50 border border-amber-100 flex gap-3">
-                      <Sparkles className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
-                      <div>
-                        <p className="text-sm font-bold text-amber-900">JSON Only</p>
-                        <p className="text-xs text-amber-700 leading-relaxed">
-                          Ensure the AI returns ONLY the JSON object. You'll paste that JSON into the Import tab.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                )}
               </TabsContent>
 
-              <TabsContent value="import" className="mt-0 outline-none">
-                <div className="space-y-6">
-                  <div className="bg-slate-50 rounded-2xl p-6 border border-slate-100">
-                    <h3 className="font-bold text-[#062e39] mb-2 flex items-center gap-2">
-                      <Upload className="h-4 w-4 text-[#fd5523]" />
-                      Import AI Response
-                    </h3>
-                    <p className="text-sm text-slate-500 mb-4">
-                      Paste the JSON object returned by the AI below. It will automatically create missing modules and lessons.
-                    </p>
-                    <Textarea 
-                      value={importJson} 
-                      onChange={(e) => setImportJson(e.target.value)}
-                      placeholder='{ "title": "...", "modules": [...] }'
-                      className="h-80 bg-white font-mono text-xs p-4 rounded-xl border-slate-200 leading-relaxed focus:border-[#fd5523] focus:ring-[#fd5523]/10"
-                    />
+              {/* TAB 2: EXPORT */}
+              <TabsContent value="export" className="mt-0 space-y-4 outline-none">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div className="flex items-center gap-2 text-sm font-bold text-[#062e39]">
+                    <FileJson className="h-4 w-4 text-[#fd5523]" />
+                    Course Structure & Prompt
                   </div>
-
-                  <div className="flex items-center justify-end gap-3">
-                    <Button 
-                      variant="ghost" 
-                      className="rounded-full"
-                      onClick={() => setImportJson("")}
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={handleDownloadJson}
+                      disabled={!blueprint}
+                      className="h-9 rounded-xl text-xs font-bold"
                     >
-                      Clear
+                      <Download className="mr-1.5 h-3.5 w-3.5" />
+                      Download JSON
                     </Button>
-                    <Button 
-                      disabled={!importJson.trim() || isImporting} 
-                      onClick={handleImport}
-                      className="rounded-full bg-[#fd5523] px-8 text-white hover:bg-[#ef4a16] shadow-lg shadow-[#fd5523]/20"
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={handleCopy}
+                      disabled={!promptText}
+                      className="h-9 rounded-xl bg-[#062e39] text-white hover:bg-[#0a4055] text-xs font-bold"
                     >
-                      {isImporting ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Building Curriculum...
-                        </>
-                      ) : (
-                        <>
-                          <Check className="mr-2 h-4 w-4" />
-                          Apply AI Blueprint
-                        </>
-                      )}
+                      {copied ? <Check className="mr-1.5 h-3.5 w-3.5" /> : <Copy className="mr-1.5 h-3.5 w-3.5" />}
+                      {copied ? "Copied" : "Copy Prompt"}
                     </Button>
                   </div>
                 </div>
+
+                {isExporting ? (
+                  <div className="h-56 flex flex-col items-center justify-center bg-slate-50 rounded-xl border border-slate-200 gap-2">
+                    <Loader2 className="h-6 w-6 animate-spin text-[#fd5523]" />
+                    <p className="text-xs font-medium text-slate-500">Exporting course blueprint...</p>
+                  </div>
+                ) : (
+                  <Textarea
+                    value={promptText}
+                    readOnly
+                    className="h-64 bg-slate-50 font-mono text-xs p-3.5 rounded-xl border-slate-200 leading-relaxed"
+                  />
+                )}
               </TabsContent>
-            </ScrollArea>
+
+              {/* TAB 3: IMPORT JSON */}
+              <TabsContent value="import" className="mt-0 space-y-4 outline-none">
+                <p className="text-xs sm:text-sm text-slate-500">
+                  Paste a valid blueprint JSON object with a <code className="text-[#062e39] font-semibold">modules</code> array to create modules and lessons automatically.
+                </p>
+                <Textarea
+                  value={importJson}
+                  onChange={(e) => setImportJson(e.target.value)}
+                  placeholder='{ "title": "...", "modules": [{ "title": "Module 1", "lessons": [{ "title": "Lesson 1", "content_blocks": [] }] }] }'
+                  className="h-64 bg-slate-50 font-mono text-xs p-3.5 rounded-xl border-slate-200 leading-relaxed focus:border-[#fd5523]"
+                />
+                <div className="flex items-center justify-end gap-2.5">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className="h-10 rounded-xl text-xs font-bold"
+                    onClick={() => setImportJson("")}
+                  >
+                    Clear
+                  </Button>
+                  <Button
+                    type="button"
+                    disabled={!importJson.trim() || isImporting}
+                    onClick={handleImport}
+                    className="h-10 rounded-xl bg-[#fd5523] px-5 text-xs sm:text-sm font-bold text-white hover:bg-[#ef4a16]"
+                  >
+                    {isImporting ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Importing...
+                      </>
+                    ) : (
+                      <>
+                        <Check className="mr-2 h-4 w-4" />
+                        Apply JSON Blueprint
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </TabsContent>
+            </div>
           </Tabs>
-        </div>
-      </DialogContent>
-    </Dialog>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

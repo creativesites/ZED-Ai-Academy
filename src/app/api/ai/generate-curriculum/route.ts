@@ -4,6 +4,7 @@ import { gemini } from "@/lib/ai/gemini";
 import { modelFor } from "@/lib/ai/models";
 import { NextRequest } from "next/server";
 import { getCourseDomainPreset } from "@/lib/course-domain-presets";
+import { canManageCourse } from "@/lib/courses/course-auth-server";
 
 export async function POST(req: NextRequest) {
   const { userId } = await auth();
@@ -14,13 +15,18 @@ export async function POST(req: NextRequest) {
   const preset = getCourseDomainPreset(domainPreset);
 
   const supabase = createClient();
+  const { allowed } = await canManageCourse(supabase, courseId, userId);
+  if (!allowed) {
+    return Response.json({ error: "Not found" }, { status: 404 });
+  }
+
   const { data: course } = await supabase
     .from("courses")
-    .select("title, description, category, level, instructor_id")
+    .select("title, description, category, level")
     .eq("id", courseId)
     .single();
 
-  if (!course || course.instructor_id !== userId) {
+  if (!course) {
     return Response.json({ error: "Not found" }, { status: 404 });
   }
 

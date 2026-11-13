@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button-variants";
+import { cn } from "@/lib/utils";
 import { ArrowLeft } from "lucide-react";
 import { LessonEditorClient } from "@/components/creator/lesson-editor-client";
 import { Toaster } from "@/components/ui/sonner";
@@ -72,16 +73,18 @@ export async function LessonStudioView({
   return (
     <>
       <Toaster />
-      <div className="max-w-100 sm:px-6 lg:px-8 space-y-6">
+      <div className="container max-w-7xl mx-auto px-4 py-6 sm:py-8 space-y-6">
         <div className="flex items-center gap-3">
-          <Button
-            variant="ghost"
-            className="text-slate-500 hover:text-slate-800"
-            render={<Link href={getCourseEditorPath(courseId, tenantSlug)} />}
+          <Link
+            href={getCourseEditorPath(courseId, tenantSlug)}
+            className={cn(
+              buttonVariants({ variant: "ghost", size: "sm" }),
+              "h-9 rounded-xl px-3 text-slate-500 hover:bg-slate-100 hover:text-[#062e39] inline-flex items-center gap-2 text-sm font-bold"
+            )}
           >
-            <ArrowLeft className="h-4 w-4 mr-1 max-w-100" />
-            {courseTitle}
-          </Button>
+            <ArrowLeft className="h-4 w-4 shrink-0" />
+            <span className="truncate max-w-[240px] sm:max-w-md">{courseTitle}</span>
+          </Link>
         </div>
 
         <LessonEditorClient

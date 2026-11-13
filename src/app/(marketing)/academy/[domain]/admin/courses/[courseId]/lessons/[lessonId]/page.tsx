@@ -49,13 +49,11 @@ export default async function TenantAdminLessonEditorPage({
   if (!course) notFound();
 
   return (
-    <div className="container max-w-7xl px-4 py-8 md:py-12">
-      <LessonStudioView
-        courseId={course.id}
-        courseTitle={course.title}
-        lessonId={lessonId}
-        tenantSlug={company.slug}
-      />
-    </div>
+    <LessonStudioView
+      courseId={course.id}
+      courseTitle={course.title}
+      lessonId={lessonId}
+      tenantSlug={company.slug}
+    />
   );
 }

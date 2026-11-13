@@ -748,84 +748,80 @@ export function LessonEditorClient({
         )}
 
         {/* Header / Meta Section */}
-        <section className="rounded-2xl bg-gradient-to-r from-[#062e39] to-[#0a4055] p-5 shadow-2xl sm:rounded-[2.5rem] sm:p-8">
-          <div className="space-y-4 sm:space-y-6">
-            <div className="flex items-center gap-2 sm:gap-3">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white text-[#fd5523] shadow-lg sm:h-12 sm:w-12 sm:rounded-2xl">
-                <Pencil className="h-4 w-4 sm:h-6 sm:w-6" />
+        <section className="rounded-2xl sm:rounded-3xl bg-gradient-to-r from-[#062e39] to-[#0a4055] p-5 sm:p-7 shadow-lg">
+          <div className="space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-[#fd5523] shadow-sm">
+                <Pencil className="h-5 w-5" />
               </div>
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-white/60 sm:text-xs">Lesson Studio</p>
-                <h1 className="text-xl font-bold text-white tracking-tight sm:text-3xl">
+              <div className="min-w-0">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-white/60">Lesson Studio</p>
+                <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight truncate">
                   {title || "Untitled Lesson"}
                 </h1>
               </div>
             </div>
 
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+            <div className="flex flex-col gap-3 md:flex-row md:items-center">
               <Input
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="Lesson title..."
-                className="h-10 flex-1 rounded-xl border-white/10 bg-white/10 text-base font-medium text-white placeholder:text-white/30 focus:border-[#fd8d69] focus:ring-[#fd8d69]/10 sm:h-14 sm:rounded-2xl sm:text-xl sm:font-bold"
+                className="h-11 sm:h-12 flex-1 rounded-xl border-white/15 bg-white/10 text-base font-semibold text-white placeholder:text-white/40 focus:border-[#fd8d69] focus:ring-[#fd8d69]/20"
               />
-              
-              <label className="group relative mb-12 flex h-16 w-full sm:w-fit shrink-0 items-center justify-between sm:justify-start gap-6 cursor-pointer select-none rounded-2xl border border-white/10 bg-white/[0.03] p-3 pl-4 pr-4 sm:pr-5 transition-all duration-200 hover:bg-white/[0.06] hover:border-white/20 active:scale-[0.99] shadow-lg">
+
+              <label className="group relative flex h-11 sm:h-12 w-full md:w-auto shrink-0 items-center justify-between gap-4 cursor-pointer select-none rounded-xl border border-white/15 bg-white/5 px-4 transition-all hover:bg-white/10">
                 <input
                   type="checkbox"
                   checked={isPreview}
                   onChange={(e) => setIsPreview(e.target.checked)}
                   className="peer sr-only"
                 />
-                
-                {/* Text Labels - Shifted to left side for standard mobile layout rhythm */}
-                <div className="flex flex-col min-w-0">
-                  <span className={cn(
-                    "text-xs font-black uppercase tracking-wider transition-colors duration-200",
-                    isPreview ? "text-[#fd8d69]" : "text-white/60"
-                  )}>
+
+                <div className="flex flex-col leading-tight min-w-0">
+                  <span
+                    className={cn(
+                      "text-[10px] font-black uppercase tracking-wider",
+                      isPreview ? "text-[#fd8d69]" : "text-white/60"
+                    )}
+                  >
                     {isPreview ? "Public Preview" : "Private Lesson"}
                   </span>
-                  <span className="text-sm font-black text-white tracking-wide mt-0.5">
-                    {isPreview ? "FREE FOR ANYONE" : "ENROLLED MEMBERS"}
+                  <span className="text-xs font-bold text-white">
+                    {isPreview ? "Free for anyone" : "Enrolled only"}
                   </span>
                 </div>
 
-                {/* Custom Toggle Track - Scaled up for easy mobile viewing */}
-                <div className="relative mt-6 h-7 w-12 shrink-0 rounded-full border border-white/10 bg-black/40 transition-all duration-200 peer-checked:bg-[#fd5523] peer-checked:border-[#fd5523] shadow-inner">
-                  {/* Toggle Thumb */}
-                  <div className={cn(
-                    "absolute top-[3px] left-[3px] flex h-5 w-5 items-center justify-center rounded-full bg-white shadow-md transition-all duration-200 ease-out",
-                    isPreview ? "translate-x-5" : "translate-x-0"
-                  )}>
+                <div className="relative h-6 w-11 shrink-0 rounded-full border border-white/15 bg-black/40 transition-all peer-checked:bg-[#fd5523] peer-checked:border-[#fd5523]">
+                  <div
+                    className={cn(
+                      "absolute top-[2px] left-[2px] flex h-4.5 w-4.5 items-center justify-center rounded-full bg-white shadow-sm transition-transform duration-200",
+                      isPreview ? "translate-x-5" : "translate-x-0"
+                    )}
+                  >
                     {isPreview ? (
-                      <Eye className="h-3 w-3 text-[#fd5523]" />
+                      <Eye className="h-2.5 w-2.5 text-[#fd5523]" />
                     ) : (
-                      <div className="h-2 w-2 rounded-full bg-slate-400" />
+                      <div className="h-1.5 w-1.5 rounded-full bg-slate-400" />
                     )}
                   </div>
                 </div>
-
-                {/* Ambient Glow Effect when Active */}
-                {isPreview && (
-                  <div className="absolute inset-0 rounded-2xl bg-[#fd5523]/[0.03] blur-md pointer-events-none" />
-                )}
               </label>
+
               <Button
                 onClick={handleSaveMeta}
                 disabled={savingMeta}
-                className="h-10 rounded-xl bg-white px-4 text-sm font-bold text-[#062e39] shadow-xl transition-all hover:bg-white/90 hover:scale-[1.02] active:scale-95 sm:h-14 sm:rounded-2xl sm:px-8 sm:text-lg"
+                className="h-11 sm:h-12 w-full md:w-auto shrink-0 rounded-xl bg-white px-6 text-sm font-bold text-[#062e39] shadow-md transition-all hover:bg-slate-100"
               >
-                {savingMeta ? <Loader2 className="mr-1 h-4 w-4 animate-spin sm:mr-2 sm:h-5 sm:w-5" /> : <Save className="mr-1 h-4 w-4 sm:mr-2 sm:h-5 sm:w-5" />}
-                <span className="hidden sm:inline">Commit Changes</span>
-                <span className="sm:hidden">Save</span>
+                {savingMeta ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                <span>Commit Changes</span>
               </Button>
             </div>
           </div>
         </section>
 
         {/* Responsive Studio View Switcher (Tabs on Mobile/Tablet) */}
-        <div className="flex xl:hidden items-center justify-center p-1.5 rounded-2xl bg-slate-100/90 border border-slate-200/80 shadow-inner mx-auto max-w-sm">
+        <div className="flex lg:hidden items-center justify-center p-1.5 rounded-2xl bg-slate-100/90 border border-slate-200/80 shadow-inner mx-auto max-w-sm">
           <button
             type="button"
             onClick={() => setActiveTab("editor")}
@@ -857,21 +853,21 @@ export function LessonEditorClient({
         </div>
 
         {/* Main Grid: Content Stack + Preview/Tools */}
-        <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_460px] 2xl:grid-cols-[minmax(0,1fr)_520px] w-full">
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px] xl:grid-cols-[minmax(0,1fr)_440px] 2xl:grid-cols-[minmax(0,1fr)_480px] w-full items-start">
           {/* Content Blocks */}
           <div
             className={cn(
-              "space-y-4 sm:space-y-6 w-full min-w-0",
-              activeTab === "preview" && "hidden xl:block"
+              "space-y-4 sm:space-y-5 w-full min-w-0",
+              activeTab === "preview" && "hidden lg:block"
             )}
           >
-            <div className="flex items-center justify-between px-4">
+            <div className="flex items-center justify-between">
               <h2 className="text-lg font-bold text-[#062e39] sm:text-xl">Content Stack</h2>
               <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 sm:text-xs">{blocks.length} Blocks</p>
             </div>
 
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-              <div className="space-y-3 sm:space-y-4 px-4">
+              <div className="space-y-3 sm:space-y-4">
                 <SortableContext items={blocks.map((b) => b.id)} strategy={verticalListSortingStrategy}>
                   {blocks.map((block) => (
                     <SortableBlock
@@ -906,7 +902,7 @@ export function LessonEditorClient({
           <aside
             className={cn(
               "space-y-6 w-full min-w-0",
-              activeTab === "editor" && "hidden xl:block"
+              activeTab === "editor" && "hidden lg:block"
             )}
           >
             <LessonPreviewPane
