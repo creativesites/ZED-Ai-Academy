@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { gemini } from "@/lib/ai/gemini";
 import { modelFor } from "@/lib/ai/models";
 import { blocksToText } from "@/lib/course-blocks/block-to-text";
+import { canManageCourse } from "@/lib/courses/course-auth-server";
 import { NextRequest } from "next/server";
 
 type GeneratedQuestion = {
@@ -45,13 +46,8 @@ export async function POST(req: NextRequest) {
     return Response.json({ error: "Unauthorized" }, { status: 403 });
   }
 
-  const { data: course } = await supabase
-    .from("courses")
-    .select("instructor_id")
-    .eq("id", courseId)
-    .single();
-
-  if (!course || course.instructor_id !== userId) {
+  const { allowed } = await canManageCourse(supabase, courseId, userId);
+  if (!allowed) {
     return Response.json({ error: "Unauthorized" }, { status: 403 });
   }
 

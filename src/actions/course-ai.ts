@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { auth } from "@clerk/nextjs/server";
 import { createClient } from "@/lib/supabase/server";
+import { canManageCourse } from "@/lib/courses/course-auth-server";
 import type { ContentBlockType, Json, CourseLevel } from "@/types/database";
 
 export type BlueprintContentBlock = {
@@ -40,6 +41,8 @@ export async function exportCourseBlueprint(courseId: string) {
   if (!userId) throw new Error("Unauthorized");
 
   const supabase = createClient();
+  const { allowed } = await canManageCourse(supabase, courseId, userId);
+  if (!allowed) throw new Error("Unauthorized");
 
   // Fetch course basics
   const { data: course } = await supabase
@@ -163,6 +166,8 @@ export async function importCourseBlueprint(courseId: string, blueprint: CourseB
   if (!userId) throw new Error("Unauthorized");
 
   const supabase = createClient();
+  const { allowed } = await canManageCourse(supabase, courseId, userId);
+  if (!allowed) throw new Error("Unauthorized");
 
   // 1. Update course metadata if requested
   if (blueprint.title || blueprint.description) {
@@ -279,13 +284,8 @@ export async function scaffoldCurriculum(
   if (!userId) throw new Error("Unauthorized");
 
   const supabase = createClient();
-
-  const { data: course } = await supabase
-    .from("courses")
-    .select("instructor_id")
-    .eq("id", courseId)
-    .single();
-  if (!course || course.instructor_id !== userId) throw new Error("Unauthorized");
+  const { allowed } = await canManageCourse(supabase, courseId, userId);
+  if (!allowed) throw new Error("Unauthorized");
 
   const { data: existing } = await supabase
     .from("modules")

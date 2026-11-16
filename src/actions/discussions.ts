@@ -2,6 +2,7 @@
 
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { createClient } from "@/lib/supabase/server";
+import { canManageCourse } from "@/lib/courses/course-auth-server";
 import { revalidatePath } from "next/cache";
 
 export async function postDiscussion(courseId: string, courseSlug: string, lessonId: string, content: string, parentId?: string, isPublic: boolean = true) {
@@ -69,9 +70,11 @@ export async function updateDiscussionStatus(id: string, courseId: string, statu
   if (!userId) throw new Error("Not authenticated.");
 
   const supabase = createClient();
-  // Check if instructor and get slug for revalidation
-  const { data: course } = await supabase.from("courses").select("slug, instructor_id").eq("id", courseId).single();
-  if (course?.instructor_id !== userId) throw new Error("Only instructors can moderate.");
+  const { allowed } = await canManageCourse(supabase, courseId, userId);
+  if (!allowed) throw new Error("Only instructors can moderate.");
+
+  const { data: course } = await supabase.from("courses").select("slug").eq("id", courseId).single();
+  if (!course) throw new Error("Course not found.");
 
   await supabase.from("discussions").update({ status }).eq("id", id);
   revalidatePath(`/courses/${course.slug}/learn`);

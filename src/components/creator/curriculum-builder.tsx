@@ -42,7 +42,6 @@ import {
 import Link from "next/link";
 import { toast } from "sonner";
 import { AIBlueprintAssistant } from "./ai-blueprint-assistant";
-import { AICurriculumGenerator } from "./ai-curriculum-generator";
 import { getLessonEditorPath } from "@/lib/courses/course-routes";
 
 type LessonItem = { id: string; title: string; position: number; is_preview: boolean; content_block_count?: number };
@@ -555,8 +554,6 @@ export function CurriculumBuilder({
           </Button>
         </div>
       </div>
-
-      <AICurriculumGenerator courseId={courseId} />
 
       {/* Search bar */}
       <div className="relative">

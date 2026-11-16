@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { auth } from "@clerk/nextjs/server";
 import { createServiceClient } from "@/lib/supabase/server";
+import { canManageCourse } from "@/lib/courses/course-auth-server";
 import { gemini } from "@/lib/ai/gemini";
 import { modelFor } from "@/lib/ai/models";
 import type { Json } from "@/types/database";
@@ -141,7 +142,8 @@ export async function submitPracticeExercise(formData: FormData) {
     .single();
   if (!course) throw new Error("Course not found");
 
-  if (course.instructor_id !== userId) {
+  const { allowed: isCourseManager } = await canManageCourse(supabase, course.id, userId);
+  if (!isCourseManager) {
     const { data: enrollment } = await supabase
       .from("enrollments")
       .select("id")
@@ -313,7 +315,8 @@ export async function reviewPracticeSubmission(formData: FormData) {
     .eq("id", submission.course_id)
     .single();
 
-  if (profile.role !== "super_admin" && course?.instructor_id !== userId) {
+  const { allowed: canReview } = await canManageCourse(supabase, submission.course_id, userId);
+  if (profile.role !== "super_admin" && !canReview) {
     throw new Error("Unauthorized");
   }
 
