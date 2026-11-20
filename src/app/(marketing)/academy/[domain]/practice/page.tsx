@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: { params: Promise<{ domain: string }> }) {
   const { domain } = await params;
-  return { title: `Practice Room — ${domain}` };
+  return { title: `Teacher's Room — ${domain}` };
 }
 
 // /academy/[domain]/practice: the Practice Room for one academy. Its tenant library plus the platform packs.

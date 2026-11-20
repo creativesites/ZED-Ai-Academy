@@ -26,7 +26,7 @@ export function PracticeLibrary({ groups, sessionHref, browseHref, browseLabel, 
     <div className="bg-slate-50 min-h-screen">
       <div className="container mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-14">
         <header className="mb-8 max-w-2xl space-y-2">
-          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-blue-600">Practice Room</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-blue-600">Teacher&apos;s Room</p>
           <h1 className="font-heading text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">{heading}</h1>
           <p className="text-base text-slate-600">{subheading}</p>
         </header>

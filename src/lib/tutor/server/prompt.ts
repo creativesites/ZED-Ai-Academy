@@ -1,6 +1,5 @@
-import { liveToolDeclarations, MAX_EVENTS_PER_TURN } from "../events.ts";
+import { eventTypesForPack, liveToolDeclarations, MAX_EVENTS_PER_TURN } from "../events.ts";
 import { SKILL_PACK_SAFETY, skillPackPrompt } from "../skill-packs.ts";
-import { TUTOR_EVENT_TYPES } from "../turn-schema.ts";
 
 // Layered system prompt (plan section 2.4). Pure: no I/O and no "@/" imports, so it can be tested
 // with node:test. Layers, in order:
@@ -50,23 +49,32 @@ export type BuildSystemPromptInput = {
 const PLATFORM_RULES = `You are an AI teacher on Zed AI Academy. You teach through a short, focused scenario with one learner.
 Core rules:
 - Stay on the scenario goal. Keep each teacher turn short: one or two sentences of speech unless the learner asked for more.
-- Move the scenario along through its beats. Ask the learner to respond when you expect them to speak (listen).
+- Move the scenario along through its steps. Ask the learner to respond when you expect them to speak (listen).
 - Be patient and warm. Never mock the learner.
 - Respect the time box. When the goal is met or time is almost up, wrap up and end the session with a one-sentence summary.`;
 
-const LIVE_CONTRACT = `Output contract (live voice session):
-- Speak naturally as the teacher. Your speech is the teacher's "say" output; do not write it as text or JSON.
-- For everything that is not speech, call the tool functions: ${liveToolDeclarations()
-  .map((t) => t.name)
-  .join(", ")}.
-  - gesture and mood express body language. trace_tone shows tone contours. show_card and show_text put words on screen.
-  - listen hands the turn to the learner, with an expected answer or a hint when useful.
-  - note_mistake silently records a learner mistake for the report. Never mention it aloud.
-  - advance_scene moves to the next beat by id. end_session ends the session.
-- Call tools as you speak. Do not describe the tool call aloud.`;
+const TEACHING_TOOLS = `How to use the stage (all subjects):
+- show_board puts content next to you: bullets or steps for an explanation, equation for a worked line, code, a small table, or a note. Keep it short (at most 8 items). Use reveal_step to show items one at a time as you talk about them.
+- ask_choice asks a multiple-choice question on the board. Never say which option is right before the learner answers. The learner's reply arrives as "I choose: <option>".
+- ask_confidence asks how sure the learner feels. A reply of "Lost" or "Unsure" means: simplify, give a concrete example, then check again.
+- note_evidence silently records what an answer shows about an objective (correct, partial or misconception). Use it after every real check. Never mention it aloud.
+- show_lesson_ref points back to part of the lesson; play_clip plays a YouTube segment only when its video id appears in the lesson content.
+- advance_step moves to the next step of the flow by id. award is for a clearly met objective, at most once or twice a session.`;
 
-function textContract(mode: "voice" | "text"): string {
-  const types = TUTOR_EVENT_TYPES.join(", ");
+function liveContract(skillPack: string): string {
+  const tools = liveToolDeclarations(skillPack).map((t) => t.name).join(", ");
+  return `Output contract (live voice session):
+- Speak naturally as the teacher. Your speech is the teacher's "say" output; do not write it as text or JSON.
+- For everything that is not speech, call the tool functions: ${tools}.
+- gesture and mood express body language. listen hands the turn to the learner, with an expected answer or a hint when useful.
+- end_session ends the session.
+- Call tools as you speak. Do not describe the tool call aloud.
+
+${TEACHING_TOOLS}`;
+}
+
+function textContract(mode: "voice" | "text", skillPack: string): string {
+  const types = eventTypesForPack(skillPack).join(", ");
   const speech =
     mode === "voice"
       ? "Everything the teacher says aloud goes in a say event, because it is spoken by text-to-speech."
@@ -75,14 +83,16 @@ function textContract(mode: "voice" | "text"): string {
 - Respond ONLY with a JSON object of the form {"events": [...]}. No prose outside the JSON, no markdown.
 - Each event has a "type" from: ${types}. Set only the fields for that type.
 - ${speech}
-- Use show_card for a vocabulary card, show_text for a written prompt, trace_tone for tone contours, listen when you need the learner to answer, note_mistake for silent error logs, advance_scene to change beat, end_session to finish.
-- At most ${MAX_EVENTS_PER_TURN} events per turn. Usually 2 to 4.`;
+- Use show_text for a short written prompt, listen when you need the learner to answer, end_session to finish.
+- At most ${MAX_EVENTS_PER_TURN} events per turn. Usually 2 to 5.
+
+${TEACHING_TOOLS}`;
 }
 
 function scenarioBlock(scenario: PromptScenario): string {
   const beats = scenario.beats.length
     ? scenario.beats.map((b) => `- ${b.id}: ${b.goal}`).join("\n")
-    : "- (no beats given; use your judgement within the goal)";
+    : "- (no steps given; use your judgement within the goal)";
   const targets = scenario.targetItems.length
     ? scenario.targetItems
         .map((t) => [t.text, t.pron ? `(${t.pron})` : "", t.meaning ? `= ${t.meaning}` : ""].filter(Boolean).join(" "))
@@ -95,7 +105,7 @@ function scenarioBlock(scenario: PromptScenario): string {
     scenario.examTask ? `Exam task: ${scenario.examTask}` : null,
     scenario.roleNotes ? `Role in this session: ${scenario.roleNotes}` : null,
     `Time box: ${scenario.maxMinutes} minutes.`,
-    `Beats (advance by id):\n${beats}`,
+    `Steps (advance_step by id):\n${beats}`,
     `Target items to practise: ${targets}`,
   ]
     .filter((line): line is string => line !== null)
@@ -134,7 +144,7 @@ function lessonBlock(lessonText: string): string {
 }
 
 export function buildSystemPrompt(input: BuildSystemPromptInput): string {
-  const contract = input.mode === "live" ? LIVE_CONTRACT : textContract(input.mode);
+  const contract = input.mode === "live" ? liveContract(input.skillPack) : textContract(input.mode, input.skillPack);
 
   const platformLayer = [PLATFORM_RULES, contract, SKILL_PACK_SAFETY].join("\n\n");
   const skillLayer = skillPackPrompt(input.skillPack);

@@ -95,7 +95,7 @@ export type LearnerMistake = { said: string; correct: string; category: string }
 export type StoredTurn = { learner_text: string | null; events: unknown };
 
 /**
- * Mistakes from `note_mistake` events across all turns, de-duplicated on (said, correct), capped.
+ * Mistakes from `note_mistake` events, and non-correct `note_evidence` events (v2), across all turns, de-duplicated on (said, correct), capped.
  * Invalid stored events are skipped.
  */
 export function collectNoteMistakes(turns: StoredTurn[], limit = MAX_REPORT_MISTAKES): LearnerMistake[] {
@@ -104,8 +104,23 @@ export function collectNoteMistakes(turns: StoredTurn[], limit = MAX_REPORT_MIST
   for (const turn of turns) {
     for (const raw of Array.isArray(turn.events) ? turn.events : []) {
       const parsed = tutorEventSchema.safeParse(raw);
-      if (!parsed.success || parsed.data.type !== "note_mistake") continue;
-      const { said, correct, category } = parsed.data;
+      if (!parsed.success) continue;
+      let said: string;
+      let correct: string;
+      let category: string;
+      if (parsed.data.type === "note_mistake") {
+        ({ said, correct, category } = parsed.data);
+      } else if (parsed.data.type === "note_evidence" && parsed.data.result !== "correct") {
+        // v2: a misconception or partial answer about an objective. Needs something the learner said or did.
+        const ev = parsed.data;
+        const what = (ev.said ?? ev.detail ?? "").trim();
+        if (!what) continue;
+        said = what;
+        correct = (ev.correct ?? ev.objective).trim();
+        category = ev.result;
+      } else {
+        continue;
+      }
       const key = `${said}\u0000${correct}`;
       if (seen.has(key)) continue;
       seen.add(key);

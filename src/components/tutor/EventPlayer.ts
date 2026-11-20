@@ -7,6 +7,10 @@ import { visemeTimelineFromText } from "@/lib/tutor/visemes";
 // knows which mode (Live, Voice, Text) produced the events. Stop it with stop(); it leaves no timers.
 
 export type CardItem = Extract<TutorEvent, { type: "show_card" }>["item"];
+export type BoardEvent = Extract<TutorEvent, { type: "show_board" }>;
+export type ClipEvent = Extract<TutorEvent, { type: "play_clip" }>;
+export type LessonRefEvent = Extract<TutorEvent, { type: "show_lesson_ref" }>;
+export type EvidenceEvent = Extract<TutorEvent, { type: "note_evidence" }>;
 
 export interface PlayerUI {
   onCaption(text: string, romanization?: string, translation?: string): void;
@@ -15,7 +19,19 @@ export interface PlayerUI {
   onListen(expect?: string, hint?: string): void;
   onMistake(m: { said: string; correct: string; category: string }): void;
   onEnd(summary?: string): void;
-  onAdvance?(beat: string): void;
+  /** advance_scene (v1) and advance_step (v2). */
+  onAdvance?(step: string): void;
+  // v2 teaching events. Optional, so older hosts (Avatar Lab, showcase) keep working.
+  onBoard?(board: BoardEvent): void;
+  /** Reveal up to `index`, or the next item when undefined. */
+  onReveal?(index?: number): void;
+  onChoice?(question: string, options: string[]): void;
+  onConfidence?(prompt?: string): void;
+  onLessonRef?(ref: LessonRefEvent): void;
+  onClip?(clip: ClipEvent): void;
+  onEvidence?(evidence: EvidenceEvent): void;
+  onScene?(scene: string): void;
+  onAward?(title: string, detail?: string): void;
 }
 
 export type SaySpeechEvent = Extract<TutorEvent, { type: "say" }>;
@@ -185,6 +201,49 @@ export class EventPlayer {
 
       case "advance_scene":
         this.ui.onAdvance?.(ev.beat);
+        return true;
+
+      case "advance_step":
+        this.ui.onAdvance?.(ev.step);
+        return true;
+
+      case "show_board":
+        this.ui.onBoard?.(ev);
+        return true;
+
+      case "reveal_step":
+        this.ui.onReveal?.(ev.index);
+        return true;
+
+      case "ask_choice":
+        this.avatar.setListening(true);
+        this.ui.onChoice?.(ev.question, ev.options);
+        return true;
+
+      case "ask_confidence":
+        this.avatar.setListening(true);
+        this.ui.onConfidence?.(ev.prompt);
+        return true;
+
+      case "show_lesson_ref":
+        this.ui.onLessonRef?.(ev);
+        return true;
+
+      case "play_clip":
+        this.ui.onClip?.(ev);
+        return true;
+
+      case "note_evidence":
+        this.ui.onEvidence?.(ev);
+        return true;
+
+      case "switch_scene":
+        this.ui.onScene?.(ev.scene);
+        return true;
+
+      case "award":
+        this.avatar.playGesture("celebrate");
+        this.ui.onAward?.(ev.title, ev.detail);
         return true;
 
       case "end_session":

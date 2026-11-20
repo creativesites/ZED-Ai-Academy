@@ -254,7 +254,7 @@ export function PersonaStudio({
         <div>
           <h2 className="text-base font-bold text-[#062e39]">Your Academy&apos;s Animated AI Teachers</h2>
           <p className="text-xs text-slate-500">
-            Customize appearance, 3D/Rive scene backdrop, voice, and teaching personality. Used across courses and Practice Room.
+            Customize appearance, 3D/Rive scene backdrop, voice, and teaching personality. Used across courses and the Teacher&apos;s Room.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -617,7 +617,7 @@ export function PersonaStudio({
                 onChange={(e) => setDraft((d) => ({ ...d, isActive: e.target.checked }))}
                 className="h-4 w-4 accent-[#fd5523]"
               />
-              Active (available in courses & Practice Room)
+              Active (available in courses &amp; the Teacher&apos;s Room)
             </label>
 
             <div className="flex items-center gap-2">

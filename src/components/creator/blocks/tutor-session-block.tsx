@@ -103,7 +103,7 @@ export function TutorSessionBlockEditor({
     <div className="space-y-5">
       <div className="space-y-2">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <Label className="text-sm text-slate-700">Speaking Scenario</Label>
+          <Label className="text-sm text-slate-700">AI Teacher flow</Label>
           {companyId && (
             <Button
               type="button"
@@ -121,7 +121,7 @@ export function TutorSessionBlockEditor({
         {!loadError && scenarios === null && <p className="text-sm text-slate-500">Loading scenarios…</p>}
         {scenarios && scenarios.length === 0 && (
           <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-600">
-            <p className="font-semibold text-slate-800">No speaking scenarios yet</p>
+            <p className="font-semibold text-slate-800">No AI Teacher flows yet</p>
             <p className="mt-1 text-xs text-slate-500">
               Create your first animated AI teacher role-play right here — manually or drafted automatically by AI from this lesson&apos;s content.
             </p>

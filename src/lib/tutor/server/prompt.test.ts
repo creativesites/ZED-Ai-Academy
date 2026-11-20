@@ -45,7 +45,8 @@ test("text mode also instructs JSON output", () => {
 
 test("live mode instructs tool functions and does not ask for JSON", () => {
   const prompt = buildSystemPrompt(input({ mode: "live" }));
-  assert.match(prompt, /call the tool functions: gesture, mood, show_card, show_text, trace_tone, listen, note_mistake, advance_scene, end_session/);
+  assert.match(prompt, /call the tool functions: gesture, mood, show_card, show_text, trace_tone, listen, note_mistake, end_session, show_board/);
+  assert.doesNotMatch(prompt, /advance_scene/);
   assert.match(prompt, /do not write it as text or JSON/);
   assert.doesNotMatch(prompt, /Respond ONLY with a JSON object/);
 });
@@ -84,9 +85,17 @@ test("no lesson text is said plainly", () => {
   assert.doesNotMatch(prompt, /<lesson_content>/);
 });
 
-test("unknown skill packs fall back to the general tutor fragment", () => {
+test("unknown skill packs fall back to the general teacher fragment", () => {
   const prompt = buildSystemPrompt(input({ skillPack: "health-sim" }));
-  assert.match(prompt, /Skill pack: general tutor/);
+  assert.match(prompt, /Skill pack: general teacher/);
+});
+
+test("non-language packs get no language policy and no language-only events", () => {
+  const prompt = buildSystemPrompt(input({ skillPack: "general-tutor", mode: "text" }));
+  assert.doesNotMatch(prompt, /Language policy/);
+  assert.doesNotMatch(prompt, /show_card|trace_tone/);
+  assert.match(prompt, /show_board/);
+  assert.match(prompt, /note_evidence/);
 });
 
 test("the safety rules are always present", () => {

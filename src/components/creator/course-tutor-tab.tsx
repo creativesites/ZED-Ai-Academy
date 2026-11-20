@@ -95,7 +95,7 @@ export function CourseTutorTab({
         handleSaved(updated);
         toast.success(
           nextVis === "tenant_library"
-            ? "Shared to Academy Practice Room"
+            ? "Shared to the academy Teacher's Room"
             : "Limited to this course"
         );
       } catch (err) {
@@ -124,9 +124,9 @@ export function CourseTutorTab({
         <div className="space-y-1">
           <div className="inline-flex items-center gap-1.5 rounded-full bg-[#fff6ee] px-3 py-1 text-[10px] font-black uppercase tracking-widest text-[#fd5523]">
             <Sparkles className="h-3.5 w-3.5" />
-            Animated AI Language Teacher
+            Animated AI Teacher
           </div>
-          <h2 className="text-xl font-black text-[#062e39]">Course Speaking Scenarios</h2>
+          <h2 className="text-xl font-black text-[#062e39]">AI Teacher Flows</h2>
           <p className="max-w-2xl text-xs text-slate-500 sm:text-sm">
             Create interactive role-plays, guided speaking lessons, or oral checks for this course. Published scenarios appear in your Lesson Studio &quot;Speaking&quot; blocks.
           </p>
@@ -149,7 +149,7 @@ export function CourseTutorTab({
             className="h-10 rounded-xl bg-[#fd5523] px-4 text-xs font-bold text-white hover:bg-[#ea4817]"
           >
             <Plus className="mr-1.5 h-4 w-4" />
-            New Speaking Scenario
+            New AI Teacher Flow
           </Button>
         </div>
       </div>
@@ -187,7 +187,7 @@ export function CourseTutorTab({
               label="Animated AI teacher"
             />
           </div>
-          <h3 className="mt-4 text-lg font-black text-[#062e39]">Add your first AI speaking scenario</h3>
+          <h3 className="mt-4 text-lg font-black text-[#062e39]">Add your first AI Teacher flow</h3>
           <p className="mx-auto mt-1 max-w-md text-xs text-slate-500 sm:text-sm">
             Draft a speaking role-play manually or let AI build one from your course curriculum. Learners will practise out loud with the animated 3D/Rive teacher.
           </p>
@@ -200,7 +200,7 @@ export function CourseTutorTab({
             className="mt-5 h-11 rounded-xl bg-[#fd5523] px-6 font-bold text-white hover:bg-[#ea4817]"
           >
             <Sparkles className="mr-2 h-4 w-4" />
-            Create Speaking Scenario
+            Create AI Teacher Flow
           </Button>
         </div>
       ) : (
@@ -266,7 +266,7 @@ export function CourseTutorTab({
                   >
                     {s.visibility === "tenant_library" ? (
                       <>
-                        <Globe className="h-3 w-3 text-emerald-600" /> Practice Room
+                        <Globe className="h-3 w-3 text-emerald-600" /> Teacher&apos;s Room
                       </>
                     ) : (
                       <>
@@ -330,9 +330,9 @@ export function CourseTutorTab({
 
       <Dialog open={Boolean(previewScenario)} onOpenChange={(o) => !o && setPreviewScenario(null)}>
         <DialogContent className="h-[85vh] max-w-5xl overflow-hidden p-0">
-          <DialogTitle className="sr-only">Preview Speaking Scenario</DialogTitle>
+          <DialogTitle className="sr-only">Preview AI Teacher Flow</DialogTitle>
           <DialogDescription className="sr-only">
-            Run this speaking scenario with the animated AI teacher.
+            Run this flow with the animated AI teacher.
           </DialogDescription>
           {previewScenario && (
             <TutorSession

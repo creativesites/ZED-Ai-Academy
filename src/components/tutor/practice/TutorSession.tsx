@@ -5,9 +5,10 @@ import type { AvatarDriver } from "@/components/tutor/avatar/types";
 import type { TeacherStageHandle } from "@/components/tutor/avatar/TeacherStage";
 import type { TeacherEngine } from "@/components/tutor/avatar/Teacher";
 import type { AvatarEvent, PersonaLook } from "@/components/tutor/avatar/types";
-import { EventPlayer, type CardItem, type PlayerUI } from "@/components/tutor/EventPlayer";
+import { EventPlayer, type CardItem, type ClipEvent, type LessonRefEvent, type PlayerUI } from "@/components/tutor/EventPlayer";
+import { boardFromEvent, choiceReply, revealBoard, type BoardState, type ConfidenceLevel } from "@/lib/tutor/board";
 import type { TutorEvent } from "@/lib/tutor/events";
-import type { SceneArtboard } from "@/lib/tutor/rive-driver";
+import { SCENE_ARTBOARDS, type SceneArtboard } from "@/lib/tutor/rive-driver";
 import { tutorErrorMessage } from "@/lib/tutor/client-errors";
 import type { TutorReportContent } from "@/lib/tutor/report-model";
 import { shouldSendRecording } from "@/lib/tutor/recording";
@@ -26,6 +27,8 @@ import { ReportCard } from "./ReportCard";
 import { SceneBackdrop } from "./SceneBackdrop";
 import { SpeakingStage, type Caption } from "./SpeakingStage";
 import { StartPanel, type StartInfo } from "./StartPanel";
+import { TeachingBoard, type ChoiceState } from "./TeachingBoard";
+import { useLiteMode } from "./use-lite-mode";
 import styles from "./practice.module.css";
 import { TeacherAudio } from "./teacher-audio";
 import { useReducedMotion } from "./use-reduced-motion";
@@ -80,6 +83,10 @@ export function TutorSession({
 }: TutorSessionProps) {
   const reducedMotion = useReducedMotion();
   const api = client ?? httpTutorClient;
+  const [lite, setLite] = useLiteMode();
+  // switch_scene (v2) can change the backdrop mid-session; it starts at the page's scene.
+  const [sceneOverride, setSceneOverride] = useState<SceneArtboard | null>(null);
+  const activeScene = sceneOverride ?? scene;
 
   const [phase, setPhase] = useState<Phase>("intro");
   const [error, setError] = useState<string | null>(null);
@@ -96,6 +103,13 @@ export function TutorSession({
   const [caption, setCaption] = useState<Caption | null>(null);
   const [card, setCard] = useState<CardItem | null>(null);
   const [whiteboard, setWhiteboard] = useState<string | null>(null);
+  // Teaching surface (event contract v2).
+  const [board, setBoard] = useState<BoardState | null>(null);
+  const [choice, setChoice] = useState<ChoiceState | null>(null);
+  const [confidence, setConfidence] = useState<{ prompt?: string } | null>(null);
+  const [lessonRefs, setLessonRefs] = useState<LessonRefEvent[]>([]);
+  const [clip, setClip] = useState<ClipEvent | null>(null);
+  const [award, setAward] = useState<{ title: string; detail?: string } | null>(null);
   const [listenHint, setListenHint] = useState<{ expect?: string; hint?: string } | null>(null);
   const [lastSaid, setLastSaid] = useState<string | null>(null);
   const [thinking, setThinking] = useState(false);
@@ -167,6 +181,23 @@ export function TutorSession({
         pendingEndRef.current = true;
       },
       onAdvance: () => undefined,
+      onBoard: (b) => {
+        setBoard(boardFromEvent(b));
+        setWhiteboard(null);
+      },
+      onReveal: (index) => setBoard((b) => (b ? revealBoard(b, index) : b)),
+      onChoice: (question, options) => setChoice({ question, options }),
+      onConfidence: (prompt) => setConfidence({ prompt }),
+      onLessonRef: (ref) => setLessonRefs((refs) => [...refs.filter((r) => r.label !== ref.label), ref].slice(-3)),
+      onClip: (c) => setClip(c),
+      onEvidence: () => undefined,
+      onScene: (name) => {
+        if ((SCENE_ARTBOARDS as readonly string[]).includes(name)) setSceneOverride(name as SceneArtboard);
+      },
+      onAward: (title, detail) => {
+        setAward({ title, detail });
+        avatarRef.current?.celebrate();
+      },
     };
 
     playerRef.current = new EventPlayer({ avatar, ui, speak: teacherAudio.speak });
@@ -249,6 +280,7 @@ export function TutorSession({
       audioRef.current?.stopPlayback();
       setTeacherSpeaking(false);
       setListenHint(null);
+      setConfidence(null);
       setError(null);
       setThinking(true);
       avatarRef.current?.setThinking(true);
@@ -395,6 +427,9 @@ export function TutorSession({
 
     sessionIdRef.current = data.sessionId;
     audioRef.current?.setLanguage(data.persona.languages?.[0]);
+    // Lite keeps teacher audio off (no downloads) until the learner turns sound on.
+    audioRef.current?.setMuted(lite);
+    setMuted(lite);
     modeRef.current = data.mode === "text" ? "text" : "voice";
     setMode(modeRef.current);
     setTeacherName(data.persona.displayName ?? data.persona.name);
@@ -414,13 +449,20 @@ export function TutorSession({
     setCaption(null);
     setCard(null);
     setWhiteboard(null);
+    setSceneOverride(null);
+    setBoard(null);
+    setChoice(null);
+    setConfidence(null);
+    setLessonRefs([]);
+    setClip(null);
+    setAward(null);
     setListenHint(null);
     setLastSaid(null);
 
     setPhaseBoth("live");
     await speakEvents(data.openingEvents ?? []);
     if (pendingEndRef.current) void finalize("completed");
-  }, [api, client, origin, scenarioId, lessonId, assignmentId, setPhaseBoth, speakEvents, finalize]);
+  }, [api, client, origin, scenarioId, lessonId, assignmentId, lite, setPhaseBoth, speakEvents, finalize]);
 
   const changeMode = (next: InputMode) => {
     if (next === modeRef.current) return;
@@ -437,6 +479,25 @@ export function TutorSession({
   const handleSendText = (text: string) => {
     audioRef.current?.unlock();
     void submitTurn({ kind: "text", text });
+  };
+
+  const handleChoose = (option: string) => {
+    setChoice((c) => (c ? { ...c, picked: option } : c));
+    handleSendText(choiceReply(option));
+  };
+
+  const handleConfidence = (level: ConfidenceLevel) => {
+    setConfidence(null);
+    handleSendText(level);
+  };
+
+  const toggleLite = () => {
+    const next = !lite;
+    setLite(next);
+    if (next) {
+      audioRef.current?.setMuted(true);
+      setMuted(true);
+    }
   };
 
   const practiseAgain = () => {
@@ -488,7 +549,7 @@ export function TutorSession({
   if (phase === "intro" || phase === "starting") {
     return (
       <div className={`${styles.room} flex min-h-[100dvh] flex-col justify-center px-4 py-8`}>
-        <SceneBackdrop scene={scene} className="absolute inset-0 h-full w-full" />
+        {!lite && <SceneBackdrop scene={activeScene} className="absolute inset-0 h-full w-full" />}
         <div className="relative z-10">
           <StartPanel
             info={info}
@@ -505,7 +566,7 @@ export function TutorSession({
   if (phase === "report" && report) {
     return (
       <div className={`${styles.room} flex min-h-[100dvh] flex-col justify-center px-4 py-8`}>
-        <SceneBackdrop scene={scene} className="absolute inset-0 h-full w-full" />
+        {!lite && <SceneBackdrop scene={activeScene} className="absolute inset-0 h-full w-full" />}
         <div className="relative z-10">
           <ReportCard
             report={report}
@@ -523,27 +584,55 @@ export function TutorSession({
   const canTalk = phase === "live" && mode === "voice" && !thinking && !micBlocked && !ending;
   const canType = phase === "live" && !thinking && !ending;
 
+  const hasBoard = Boolean(board || choice || confidence || lessonRefs.length || clip || award);
+
   return (
     <div className={`${styles.room} flex min-h-[100dvh] flex-col`}>
-      <SceneBackdrop scene={scene} className="absolute inset-0 h-full w-full" />
-      <div className="relative z-10 mx-auto flex w-full max-w-[640px] flex-1 flex-col gap-3 px-3 pb-[max(16px,env(safe-area-inset-bottom))] pt-[max(12px,env(safe-area-inset-top))] sm:px-4">
-        <SpeakingStage
-          avatarRef={avatarRef}
-          onAvatarEvent={avatarEvent}
-          reducedMotion={reducedMotion}
-          engine={engine}
-          scene={scene}
-          look={look}
-          teacherName={teacherName}
-          sceneTitle={sceneTitle}
-          modeLabel={mode === "voice" ? "Voice" : "Text"}
-          caption={caption}
-          card={card}
-          onDismissCard={() => setCard(null)}
-          whiteboard={whiteboard}
-        />
+      {!lite && <SceneBackdrop scene={activeScene} className="absolute inset-0 h-full w-full" />}
+      <div
+        className={`relative z-10 mx-auto flex w-full flex-1 flex-col gap-3 px-3 pb-[max(16px,env(safe-area-inset-bottom))] pt-[max(12px,env(safe-area-inset-top))] sm:px-4 ${
+          hasBoard
+            ? "max-w-[640px] lg:grid lg:max-w-[1160px] lg:grid-cols-[minmax(0,560px)_minmax(0,1fr)] lg:items-start lg:gap-5"
+            : "max-w-[640px]"
+        }`}
+      >
+        <div className={lite ? "mx-auto w-full max-w-[420px] lg:col-start-1 lg:row-start-1" : "lg:col-start-1 lg:row-start-1"}>
+          <SpeakingStage
+            avatarRef={avatarRef}
+            onAvatarEvent={avatarEvent}
+            reducedMotion={reducedMotion}
+            engine={lite ? "placeholder" : engine}
+            scene={activeScene}
+            look={look}
+            teacherName={teacherName}
+            sceneTitle={sceneTitle}
+            modeLabel={`${mode === "voice" ? "Voice" : "Text"}${lite ? " · Lite" : ""}`}
+            caption={caption}
+            card={card}
+            onDismissCard={() => setCard(null)}
+            whiteboard={whiteboard}
+          />
+        </div>
 
-        <div className={`${styles.glass} rounded-[24px] p-4`}>
+        {hasBoard && (
+          <div className="lg:col-start-2 lg:row-span-2 lg:row-start-1">
+            <TeachingBoard
+              board={board}
+              choice={choice}
+              confidence={confidence}
+              lessonRefs={lessonRefs}
+              clip={clip}
+              award={award}
+              lite={lite}
+              disabled={thinking || phase !== "live"}
+              onChoose={handleChoose}
+              onConfidence={handleConfidence}
+              onDismissAward={() => setAward(null)}
+            />
+          </div>
+        )}
+
+        <div className={`${styles.glass} rounded-[24px] p-4 lg:col-start-1 lg:row-start-2`}>
           <Composer
             mode={mode}
             modes={modes}
@@ -583,6 +672,16 @@ export function TutorSession({
             {goal ? " · " : null}
             Up to {maxMinutes} min
           </p>
+          <div className="mt-2 flex justify-center">
+            <button
+              type="button"
+              onClick={toggleLite}
+              aria-pressed={lite}
+              className="rounded-full border border-[var(--line-strong)] bg-white/80 px-3 py-1.5 text-[12px] font-semibold text-[var(--ink-dim)] hover:bg-[var(--soft-hover)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus)]"
+            >
+              {lite ? "Data saver on · switch to full stage" : "Use data saver (Lite)"}
+            </button>
+          </div>
         </div>
       </div>
     </div>

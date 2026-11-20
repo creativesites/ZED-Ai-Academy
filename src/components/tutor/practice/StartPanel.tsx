@@ -35,9 +35,9 @@ export function StartPanel({ info, micPermission, starting, error, onStart }: St
   return (
     <section aria-labelledby="start-title" className={`${styles.glass} mx-auto grid w-full max-w-[560px] gap-4 rounded-[28px] p-5 sm:p-7`}>
       <div className="grid gap-1">
-        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--ink-dim)]">Practice Room</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--ink-dim)]">AI Teacher</p>
         <h1 id="start-title" className="font-heading text-2xl font-semibold leading-tight text-[var(--ink)]">
-          {info ? info.title : "Practice session"}
+          {info ? info.title : "AI Teacher session"}
         </h1>
         {info && <p className="text-sm text-[var(--ink-dim)]">With {info.teacherName}</p>}
       </div>

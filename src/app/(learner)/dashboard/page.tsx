@@ -223,7 +223,7 @@ export default async function DashboardPage() {
           </div>
         )}
 
-        {/* AI Language Teacher Spotlight */}
+        {/* AI Teacher Spotlight */}
         <div className="mb-8">
           <TutorSpotlightBanner />
         </div>

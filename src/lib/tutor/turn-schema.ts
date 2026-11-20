@@ -1,5 +1,5 @@
 import { GESTURES, MOODS, TONE_SHAPES } from "./contract.generated.ts";
-import { MAX_EVENTS_PER_TURN } from "./events.ts";
+import { BOARD_KINDS, EVIDENCE_RESULTS, MAX_BOARD_ITEMS, MAX_EVENTS_PER_TURN } from "./events.ts";
 
 // JSON Schema passed as responseJsonSchema for Voice and Text turns (Gemini structured output).
 // Hand-written in the subset Gemini accepts. It mirrors tutorTurnResponseSchema in events.ts;
@@ -16,6 +16,16 @@ export const TUTOR_EVENT_TYPES = [
   "note_mistake",
   "advance_scene",
   "end_session",
+  "show_board",
+  "reveal_step",
+  "ask_choice",
+  "ask_confidence",
+  "show_lesson_ref",
+  "play_clip",
+  "note_evidence",
+  "advance_step",
+  "switch_scene",
+  "award",
 ] as const;
 
 export const TUTOR_TURN_JSON_SCHEMA = {
@@ -30,7 +40,7 @@ export const TUTOR_TURN_JSON_SCHEMA = {
         properties: {
           type: { type: "string", enum: [...TUTOR_EVENT_TYPES] },
           // say
-          text: { type: "string", description: "say: what the teacher speaks aloud. show_text: text to write on the board." },
+          text: { type: "string", description: "say: what the teacher speaks aloud. show_text: a short written prompt. show_board: equation, code or note text." },
           romanization: { type: "string" },
           translation: { type: "string" },
           // gesture
@@ -72,6 +82,36 @@ export const TUTOR_TURN_JSON_SCHEMA = {
           beat: { type: "string" },
           // end_session
           summary: { type: "string" },
+          // show_board (also uses title, text, language)
+          kind: { type: "string", enum: [...BOARD_KINDS] },
+          title: { type: "string", description: "show_board: board heading. award: what was achieved." },
+          items: { type: "array", items: { type: "string" }, maxItems: MAX_BOARD_ITEMS },
+          rows: { type: "array", items: { type: "array", items: { type: "string" } }, maxItems: MAX_BOARD_ITEMS },
+          language: { type: "string" },
+          revealed: { type: "integer", minimum: 0, maximum: MAX_BOARD_ITEMS },
+          // reveal_step
+          index: { type: "integer", minimum: 0, maximum: MAX_BOARD_ITEMS },
+          // ask_choice / ask_confidence
+          question: { type: "string" },
+          options: { type: "array", items: { type: "string" }, minItems: 2, maxItems: 5 },
+          prompt: { type: "string" },
+          // show_lesson_ref
+          label: { type: "string" },
+          blockId: { type: "string" },
+          seconds: { type: "integer", minimum: 0 },
+          // play_clip
+          videoId: { type: "string" },
+          start: { type: "integer", minimum: 0 },
+          end: { type: "integer", minimum: 0 },
+          caption: { type: "string" },
+          // note_evidence (also uses said, correct)
+          objective: { type: "string" },
+          result: { type: "string", enum: [...EVIDENCE_RESULTS] },
+          detail: { type: "string", description: "note_evidence detail. award: short detail." },
+          // advance_step
+          step: { type: "string" },
+          // switch_scene
+          scene: { type: "string" },
         },
         required: ["type"],
       },

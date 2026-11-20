@@ -58,6 +58,8 @@ export async function synthesizeCachedSpeech(text: string, voice: string): Promi
 export async function mintLiveToken(input: {
   systemInstruction: string;
   voiceName: string;
+  /** The session's skill pack, so Live only gets the tools that pack is taught. */
+  skillPack?: string | null;
 }): Promise<{ token: string; liveModel: string; expireTime: string }> {
   const liveModel = modelFor("tutorLive");
   const now = Date.now();
@@ -68,7 +70,7 @@ export async function mintLiveToken(input: {
     systemInstruction: input.systemInstruction,
     tools: [
       {
-        functionDeclarations: liveToolDeclarations().map((decl) => ({
+        functionDeclarations: liveToolDeclarations(input.skillPack ?? undefined).map((decl) => ({
           name: decl.name,
           description: decl.description,
           parametersJsonSchema: decl.parameters,

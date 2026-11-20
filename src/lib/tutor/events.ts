@@ -10,6 +10,14 @@ const gestureSchema = z.enum(GESTURES);
 const toneShapeSchema = z.enum(TONE_SHAPES);
 const moodSchema = z.enum(MOODS);
 
+export const BOARD_KINDS = ["bullets", "steps", "equation", "code", "table", "note"] as const;
+export type BoardKind = (typeof BOARD_KINDS)[number];
+export const EVIDENCE_RESULTS = ["correct", "partial", "misconception"] as const;
+export type EvidenceResult = (typeof EVIDENCE_RESULTS)[number];
+export const MAX_BOARD_ITEMS = 8;
+export const MAX_EVENTS_PER_TURN = 12;
+const YOUTUBE_ID = /^[A-Za-z0-9_-]{11}$/;
+
 export const tutorEventSchema = z.discriminatedUnion("type", [
   z.object({
     type: z.literal("say"),
@@ -68,18 +76,133 @@ export const tutorEventSchema = z.discriminatedUnion("type", [
     type: z.literal("end_session"),
     summary: z.string().optional(),
   }),
+  // ---- v2 teaching events (any subject). See docs/rive + the ZAI Teacher design. ----
+  z
+    .object({
+      type: z.literal("show_board"),
+      kind: z.enum(BOARD_KINDS),
+      title: z.string().max(120).optional(),
+      items: z.array(z.string().min(1).max(240)).max(MAX_BOARD_ITEMS).optional(),
+      text: z.string().max(1200).optional(),
+      rows: z.array(z.array(z.string().max(120)).min(1).max(5)).max(MAX_BOARD_ITEMS).optional(),
+      language: z.string().max(24).optional(),
+      /** How many items to show at once; reveal_step shows the rest one by one. Defaults to all. */
+      revealed: z.number().int().min(0).max(MAX_BOARD_ITEMS).optional(),
+    })
+    .refine((b) => (b.items && b.items.length > 0) || (b.text && b.text.trim() !== "") || (b.rows && b.rows.length > 0), {
+      message: "show_board needs items, text or rows",
+    }),
+  z.object({
+    type: z.literal("reveal_step"),
+    /** Zero-based item index to reveal up to. Omitted: reveal the next item. */
+    index: z.number().int().min(0).max(MAX_BOARD_ITEMS).optional(),
+  }),
+  z.object({
+    type: z.literal("ask_choice"),
+    question: nonEmpty.max(240),
+    options: z.array(z.string().min(1).max(160)).min(2).max(5),
+  }),
+  z.object({
+    type: z.literal("ask_confidence"),
+    prompt: z.string().max(160).optional(),
+  }),
+  z.object({
+    type: z.literal("show_lesson_ref"),
+    label: nonEmpty.max(160),
+    blockId: z.string().max(64).optional(),
+    seconds: z.number().int().min(0).optional(),
+  }),
+  z.object({
+    type: z.literal("play_clip"),
+    videoId: z.string().regex(YOUTUBE_ID),
+    start: z.number().int().min(0).optional(),
+    end: z.number().int().min(0).optional(),
+    caption: z.string().max(160).optional(),
+  }),
+  z.object({
+    type: z.literal("note_evidence"),
+    objective: nonEmpty.max(200),
+    result: z.enum(EVIDENCE_RESULTS),
+    detail: z.string().max(400).optional(),
+    said: z.string().max(400).optional(),
+    correct: z.string().max(400).optional(),
+  }),
+  z.object({
+    type: z.literal("advance_step"),
+    step: nonEmpty,
+  }),
+  z.object({
+    type: z.literal("switch_scene"),
+    scene: nonEmpty.max(40),
+  }),
+  z.object({
+    type: z.literal("award"),
+    title: nonEmpty.max(80),
+    detail: z.string().max(160).optional(),
+  }),
 ]);
+
+/** Event types v1 shipped with. Kept forever so stored sessions replay. */
+export const V1_EVENT_TYPES = [
+  "say",
+  "gesture",
+  "mood",
+  "show_card",
+  "show_text",
+  "trace_tone",
+  "listen",
+  "note_mistake",
+  "advance_scene",
+  "end_session",
+] as const;
+
+/** Events only language packs may use. Other packs never see them in their prompt or tools. */
+export const LANGUAGE_ONLY_EVENT_TYPES = ["show_card", "trace_tone"] as const;
+
+/** Events every pack is taught to use (v2). */
+export const CORE_EVENT_TYPES = [
+  "say",
+  "gesture",
+  "mood",
+  "show_text",
+  "show_board",
+  "reveal_step",
+  "ask_choice",
+  "ask_confidence",
+  "show_lesson_ref",
+  "play_clip",
+  "listen",
+  "note_evidence",
+  "advance_step",
+  "switch_scene",
+  "award",
+  "end_session",
+] as const;
+
+/** Language packs add vocabulary cards, tone traces and the said/correct mistake log that feeds SRS. */
+export const LANGUAGE_PACK_EVENT_TYPES = [...LANGUAGE_ONLY_EVENT_TYPES, "note_mistake"] as const;
+
+function isLanguagePack(pack: string | null | undefined): boolean {
+  return typeof pack === "string" && pack.startsWith("language-");
+}
+
+/** The event types a skill pack is taught (prompt and Live tools). Parsing still accepts every type. */
+export function eventTypesForPack(pack: string | null | undefined): TutorEventType[] {
+  return isLanguagePack(pack) ? [...CORE_EVENT_TYPES, ...LANGUAGE_PACK_EVENT_TYPES] : [...CORE_EVENT_TYPES];
+}
+
+/** v1 names that have a v2 replacement. The model is taught the v2 names; v1 still parses and plays. */
+export const LEGACY_EVENT_ALIASES = { note_mistake: "note_evidence", advance_scene: "advance_step" } as const;
 
 export type TutorEvent = z.infer<typeof tutorEventSchema>;
 export type TutorEventType = TutorEvent["type"];
 
 export const tutorTurnResponseSchema = z.object({
-  events: z.array(tutorEventSchema).max(12),
+  events: z.array(tutorEventSchema).max(MAX_EVENTS_PER_TURN),
 });
 
 export type TutorTurnResponse = z.infer<typeof tutorTurnResponseSchema>;
 
-export const MAX_EVENTS_PER_TURN = 12;
 
 export type ParseTutorTurnResult =
   | { ok: true; events: TutorEvent[]; dropped: number }
@@ -157,7 +280,15 @@ export type LiveToolDeclaration = {
   };
 };
 
-export function liveToolDeclarations(): LiveToolDeclaration[] {
+/** Live tool declarations. With a pack, only the tools that pack is taught; without one, every tool. */
+export function liveToolDeclarations(pack?: string | null): LiveToolDeclaration[] {
+  const all = allLiveToolDeclarations();
+  if (pack === undefined) return all;
+  const allowed = new Set<string>(eventTypesForPack(pack));
+  return all.filter((d) => allowed.has(d.name));
+}
+
+function allLiveToolDeclarations(): LiveToolDeclaration[] {
   return [
     {
       name: "gesture",
@@ -276,6 +407,121 @@ export function liveToolDeclarations(): LiveToolDeclaration[] {
           summary: { type: "string" },
         },
         required: [],
+      },
+    },
+    {
+      name: "show_board",
+      description:
+        "Put teaching content on the board next to the teacher: bullets, numbered steps, an equation or worked line, code, a small table, or a short note. Only use facts from the lesson content.",
+      parameters: {
+        type: "object",
+        properties: {
+          kind: { type: "string", enum: [...BOARD_KINDS] },
+          title: { type: "string" },
+          items: { type: "array", items: { type: "string" }, maxItems: MAX_BOARD_ITEMS, description: "bullets / steps" },
+          text: { type: "string", description: "equation, code or note" },
+          rows: {
+            type: "array",
+            items: { type: "array", items: { type: "string" } },
+            maxItems: MAX_BOARD_ITEMS,
+            description: "table rows; first row is the header",
+          },
+          language: { type: "string", description: "code language" },
+          revealed: { type: "integer", minimum: 0, maximum: MAX_BOARD_ITEMS, description: "items visible at first" },
+        },
+        required: ["kind"],
+      },
+    },
+    {
+      name: "reveal_step",
+      description: "Reveal the next item on the board (or up to index), in step with what you are saying.",
+      parameters: {
+        type: "object",
+        properties: { index: { type: "integer", minimum: 0, maximum: MAX_BOARD_ITEMS } },
+        required: [],
+      },
+    },
+    {
+      name: "ask_choice",
+      description: "Ask a multiple-choice question on the board. Do not reveal the answer; react to the learner's pick.",
+      parameters: {
+        type: "object",
+        properties: {
+          question: { type: "string" },
+          options: { type: "array", items: { type: "string" }, minItems: 2, maxItems: 5 },
+        },
+        required: ["question", "options"],
+      },
+    },
+    {
+      name: "ask_confidence",
+      description: "Ask the learner how sure they feel (Lost, Unsure, Got it). Use it to decide whether to simplify or move on.",
+      parameters: { type: "object", properties: { prompt: { type: "string" } }, required: [] },
+    },
+    {
+      name: "show_lesson_ref",
+      description: "Point the learner back to part of this lesson, optionally a video time in seconds.",
+      parameters: {
+        type: "object",
+        properties: {
+          label: { type: "string" },
+          blockId: { type: "string" },
+          seconds: { type: "integer", minimum: 0 },
+        },
+        required: ["label"],
+      },
+    },
+    {
+      name: "play_clip",
+      description: "Play a short segment of a YouTube video that appears in the lesson content. Never invent a video id.",
+      parameters: {
+        type: "object",
+        properties: {
+          videoId: { type: "string" },
+          start: { type: "integer", minimum: 0 },
+          end: { type: "integer", minimum: 0 },
+          caption: { type: "string" },
+        },
+        required: ["videoId"],
+      },
+    },
+    {
+      name: "note_evidence",
+      description:
+        "Silently record evidence about a learning objective: correct, partial or misconception, with a short detail. Not shown to the learner.",
+      parameters: {
+        type: "object",
+        properties: {
+          objective: { type: "string", description: "The objective or step goal this answer is evidence for." },
+          result: { type: "string", enum: [...EVIDENCE_RESULTS] },
+          detail: { type: "string" },
+          said: { type: "string" },
+          correct: { type: "string" },
+        },
+        required: ["objective", "result"],
+      },
+    },
+    {
+      name: "advance_step",
+      description: "Move the flow on to the named step.",
+      parameters: {
+        type: "object",
+        properties: { step: { type: "string", description: "Step id from the flow." } },
+        required: ["step"],
+      },
+    },
+    {
+      name: "switch_scene",
+      description: "Change the backdrop scene, for example for a roleplay.",
+      parameters: { type: "object", properties: { scene: { type: "string" } }, required: ["scene"] },
+    },
+    {
+      name: "award",
+      description: "Celebrate a real achievement, such as an objective clearly met. Use rarely.",
+      parameters: {
+        type: "object",
+        properties: { title: { type: "string" }, detail: { type: "string" } },
+        required: ["title"],
       },
     },
   ];

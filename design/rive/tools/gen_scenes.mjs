@@ -155,9 +155,70 @@ function clinic() {
   return { content: fg + frame + mid + sky, amb, cel };
 }
 
+// General-subject scenes (contract 1.2.0). Painted in daylight from the start, each with a teaching
+// surface (contract artboards[...].surfaceRect) the app can line HTML content up with.
+function classroom() {
+  // Cream wall with a soft vertical gradient.
+  const sky = layer('L_sky', 'sky', fullRect('Wall', [lin(0, 0, 0, H, [[0, 'FFF6EA'], [0.7, 'FBEBD6'], [1, 'F3DDC2']])]));
+  // Window on the right: daylight sky, a hill and a tree.
+  const winGlass = rrect({ name: 'WindowGlass', cx: 1990, cy: 560, w: 560, h: 620, r: 18, fills: [lin(0, 250, 0, 870, [[0, 'CFE8FF'], [0.65, 'EAF5FF'], [1, 'F7FBFF']])] });
+  const hill = ellipse({ name: 'Hill', cx: 1990, cy: 830, rx: 268, ry: 46, fills: [{ solid: argb('A9D7A0') }] });
+  const tree = ellipse({ name: 'TreeTop', cx: 2120, cy: 690, rx: 100, ry: 110, fills: [{ solid: argb('6DB37A') }, rad(2090, 660, 120, [[0, 'B8E2A8', 0.6], [1, '2E7A4A', 0.35]])] }) +
+    rrect({ name: 'TreeTrunk', cx: 2120, cy: 815, w: 26, h: 70, r: 8, fills: [{ solid: argb('8A6040') }] });
+  const cloud = ellipse({ name: 'Cloud', cx: 1880, cy: 400, rx: 120, ry: 38, fills: [{ solid: argb('FFFFFF', 0.9) }] });
+  const far = layer('L_far', 'far', winGlass + hill + tree + cloud + glowDisc('SunBeam', 1860, 380, 360, 'FFFFFF', 0.55, ID('SunBeam')));
+  const winTrim = rrect({ name: 'WindowTrim', cx: 1990, cy: 560, w: 576, h: 636, r: 22, fills: [], strokes: [{ w: 26, solid: argb('FFFFFF') }] }) +
+    blob({ name: 'MullV', pts: [[1990, 250], [1990, 870]], closed: false, strokes: [{ w: 14, solid: argb('FFFFFF') }] }) +
+    blob({ name: 'MullH', pts: [[1710, 560], [2270, 560]], closed: false, strokes: [{ w: 14, solid: argb('FFFFFF') }] }) +
+    rrect({ name: 'WindowSill', cx: 1990, cy: 890, w: 640, h: 30, r: 10, fills: [lin(0, 875, 0, 905, [[0, 'FFFFFF'], [1, 'E2D2BC']])] });
+  // Whiteboard: the teaching surface. Left of centre so the teacher stands to its right.
+  const board = rrect({ name: 'BoardShadow', cx: 840, cy: 618, w: 1320, h: 780, r: 24, fills: [{ solid: argb('B89A78', 0.25) }] }) +
+    rrect({ name: 'Board', cx: 830, cy: 600, w: 1300, h: 760, r: 18, fills: [lin(0, 220, 0, 980, [[0, 'FFFFFF'], [1, 'F4F6F8']]), rad(560, 330, 700, [[0, 'FFFFFF', 0.7], [1, 'FFFFFF', 0]])], strokes: [{ w: 22, linear: { x1: 180, y1: 220, x2: 1480, y2: 980, stops: [[0, argb('E2E8F0')], [1, argb('94A3B8')]] } }] }) +
+    // faint marker ghosts so it reads as a used whiteboard
+    blob({ name: 'Ghost1', pts: [[300, 360], [620, 350], [900, 365]], closed: false, strokes: [{ w: 10, cap: 'round', solid: argb('1D4ED8', 0.07) }] }) +
+    blob({ name: 'Ghost2', pts: [[300, 460], [760, 450]], closed: false, strokes: [{ w: 10, cap: 'round', solid: argb('0F766E', 0.07) }] }) +
+    rrect({ name: 'Tray', cx: 830, cy: 1002, w: 900, h: 26, r: 10, fills: [lin(0, 990, 0, 1015, [[0, 'CBD5E1'], [1, '94A3B8']])] }) +
+    rrect({ name: 'MarkerBlue', cx: 620, cy: 982, w: 120, h: 18, r: 9, fills: [{ solid: argb('1D4ED8') }] }) +
+    rrect({ name: 'MarkerGreen', cx: 770, cy: 982, w: 120, h: 18, r: 9, fills: [{ solid: argb('0F766E') }] }) +
+    rrect({ name: 'MarkerOrange', cx: 920, cy: 982, w: 120, h: 18, r: 9, fills: [{ solid: argb('F97316') }] });
+  // Wall clock with a hand that turns slowly (ambient).
+  const clock = ellipse({ name: 'ClockFace', cx: 1590, cy: 190, rx: 74, fills: [{ solid: argb('FFFFFF') }], strokes: [{ w: 10, solid: argb('475569') }] }) +
+    group('ClockHand', 1590, 190, () => blob({ name: 'Hand', pts: [[1590, 190], [1590, 140]], closed: false, strokes: [{ w: 8, cap: 'round', solid: argb('0F172A') }] }), { id: ID('ClockHand') }) +
+    ellipse({ name: 'ClockPin', cx: 1590, cy: 190, rx: 9, fills: [{ solid: argb('0F172A') }] });
+  const mid = layer('L_mid', 'mid', board + winTrim + clock);
+  // Bookshelf and plant on the right, desk across the front.
+  const shelf = rrect({ name: 'Shelf', cx: 2190, cy: 1180, w: 300, h: 340, r: 12, fills: [lin(0, 1010, 0, 1350, [[0, 'C99A6A'], [1, 'A87A4E']])] }) +
+    [1080, 1200].map((y, i) => rrect({ name: 'ShelfBoard', cx: 2190, cy: y, w: 280, h: 12, r: 4, fills: [{ solid: argb('7A5434') }] })).join('') +
+    [[2080, 1040, '1D4ED8'], [2112, 1048, '0F766E'], [2142, 1036, 'F59E0B'], [2172, 1046, 'E2E8F0'], [2240, 1162, 'DC2626'], [2272, 1158, '7C3AED']].map(([x, y, c]) => rrect({ name: 'Book', cx: x, cy: y, w: 26, h: y < 1100 ? 70 : 64, r: 4, fills: [{ solid: argb(c) }] })).join('');
+  const plant = group('Plant', 1660, 1250, () => [-60, -25, 10, 45].map((a, i) => { const t = (a * Math.PI) / 180 - Math.PI / 2; const len = 170 + (i % 2) * 50; const ex = 1660 + Math.cos(t) * len, ey = 1250 + Math.sin(t) * len; return blob({ name: 'Frond', pts: [[1660, 1250], [1660 + (ex - 1660) * 0.5 + 20, 1250 + (ey - 1250) * 0.55], [ex, ey]], closed: false, strokes: [{ w: 22 - i * 2, cap: 'round', linear: { x1: 1660, y1: 1250, x2: ex, y2: ey, stops: [[0, argb('2E7A52')], [1, argb('7ACB8A')]] } }] }); }).join('') + rrect({ name: 'Pot', cx: 1660, cy: 1300, w: 130, h: 110, r: 22, fills: [{ solid: argb('E7C9A9') }] }), { id: ID('Plant') });
+  const frame = layer('L_frame', 'frame', shelf + plant);
+  const fg = layer('L_glow', 'glow', rrect({ name: 'Desk', cx: 1200, cy: 1480, w: 2600, h: 240, r: 0, fills: [lin(0, 1360, 0, 1600, [[0, 'D9B48A'], [1, 'A97E54']])] }) +
+    rrect({ name: 'DeskEdge', cx: 1200, cy: 1362, w: 2600, h: 14, r: 7, fills: [{ solid: argb('FFF1DC', 0.7) }] }) + glowDisc('WarmFloorGlow', 1200, 1500, 1100, 'FFE2B8', 0.3, ID('WarmGlow')));
+  const amb = anim('ambient', 600, 'loop', [['ClockHand', 'rotation', [[0, 0, 'l'], [600, 6.2832, 'l']]], swayK('Plant', 0.025, 300), pulse('SunBeam', 0.6, 0.95, 300)]);
+  const cel = anim('celebrate', 100, 'oneShot', [['WarmGlow', 'opacity', [[0, 1], [40, 1], [100, 1]]], swayK('Plant', 0.08, 100)]);
+  return { content: fg + frame + mid + far + sky, amb, cel };
+}
+function studio() {
+  // Plain, light, brandable studio for data-saver and any-subject flows: a soft wall, one big halo,
+  // a floating panel (the surface) and a low floor. Few shapes, so it is the cheapest scene to draw.
+  const sky = layer('L_sky', 'sky', fullRect('Wall', [lin(0, 0, 0, H, [[0, 'F1FAF8'], [1, 'DDF0EB']])]) +
+    glowDisc('Halo', 1500, 1500, 1300, 'B9E4DA', 0.7, ID('Halo')));
+  const far = layer('L_far', 'far', ellipse({ name: 'OrbA', cx: 2050, cy: 260, rx: 120, fills: [{ solid: argb('CDEFE7', 0.8) }] }) + ellipse({ name: 'OrbB', cx: 260, cy: 1180, rx: 90, fills: [{ solid: argb('DBEAFE', 0.8) }] }));
+  const panel = rrect({ name: 'PanelShadow', cx: 840, cy: 630, w: 1300, h: 780, r: 44, fills: [{ solid: argb('0F766E', 0.08) }] }) +
+    rrect({ name: 'Panel', cx: 820, cy: 600, w: 1280, h: 760, r: 40, fills: [{ solid: argb('FFFFFF') }, rad(520, 300, 800, [[0, 'FFFFFF', 0.6], [1, 'F1F5F9', 0.5]])], strokes: [{ w: 4, solid: argb('CBD5E1', 0.8) }] });
+  const mid = layer('L_mid', 'mid', panel);
+  const frame = layer('L_frame', 'frame', '');
+  const fg = layer('L_glow', 'glow', rrect({ name: 'Floor', cx: 1200, cy: 1490, w: 2600, h: 220, r: 0, fills: [lin(0, 1380, 0, 1600, [[0, 'D3ECE6'], [1, 'B9DED5']])] }) + glowDisc('WarmFloorGlow', 1200, 1500, 900, 'FFFFFF', 0.35, ID('WarmGlow')));
+  const amb = anim('ambient', 480, 'loop', [pulse('Halo', 0.8, 1, 480)]);
+  const cel = anim('celebrate', 100, 'oneShot', [['WarmGlow', 'opacity', [[0, 1], [40, 1], [100, 1]]]]);
+  return { content: fg + frame + mid + far + sky, amb, cel };
+}
+
 // ---------------- assemble artboards ----------------
-const NAMES = ['Scene_TeaHouse', 'Scene_Cafe', 'Scene_Rooftop', 'Scene_Clinic'];
-const builders = [teaHouse, cafe, rooftop, clinic];
+const NAMES = ['Scene_TeaHouse', 'Scene_Cafe', 'Scene_Rooftop', 'Scene_Clinic', 'Scene_Classroom', 'Scene_Studio'];
+const builders = [teaHouse, cafe, rooftop, clinic, classroom, studio];
+// Scenes painted for daylight: their night tint stays light so timeOfDay cannot darken them much.
+const LIGHT_SCENES = new Set([3, 4, 5]);
 const pv = (n) => `${VM.id}-${VM.props[n]}`;
 const cNum = (p, op, v) => `<TransitionViewModelCondition opValue="${op}"><TransitionPropertyViewModelComparator><BindablePropertyNumber><DataBindContext sourcePathIds="${pv(p)}" propertyKey="636"/></BindablePropertyNumber></TransitionPropertyViewModelComparator><TransitionValueNumberComparator value="${v}"/></TransitionViewModelCondition>`;
 const cBool = (p, v) => `<TransitionViewModelCondition><TransitionPropertyViewModelComparator><BindablePropertyBoolean><DataBindContext sourcePathIds="${pv(p)}" propertyKey="634"/></BindablePropertyBoolean></TransitionPropertyViewModelComparator><TransitionValueBooleanComparator value="${v}"/></TransitionViewModelCondition>`;
@@ -170,8 +231,8 @@ builders.forEach((b, i) => {
   animXml.length = 0;
   const sc = b();
   // time of day: night tint + day warmth
-  const tint = rrect({ name: 'NightTint', cx: W / 2, cy: H / 2, w: W, h: H, r: 0, fills: [{ solid: argb(i === 3 ? '3A4A8A' : '0A0A30') }] })
-    .replace('<Shape ', `<Shape opacity="0.3" `).replace(/<\/Shape>$/, `<DataBindContext sourcePathIds="${pv('timeOfDay')}" propertyKey="18" converterId="${conv('tod_tint_' + i, 0, i === 3 ? 0.18 : 0.36, 0, 100)}"/></Shape>`);
+  const tint = rrect({ name: 'NightTint', cx: W / 2, cy: H / 2, w: W, h: H, r: 0, fills: [{ solid: argb(LIGHT_SCENES.has(i) ? '3A4A8A' : '0A0A30') }] })
+    .replace('<Shape ', `<Shape opacity="0.3" `).replace(/<\/Shape>$/, `<DataBindContext sourcePathIds="${pv('timeOfDay')}" propertyKey="18" converterId="${conv('tod_tint_' + i, 0, LIGHT_SCENES.has(i) ? 0.18 : 0.36, 0, 100)}"/></Shape>`);
   const flash = rrect({ name: 'Flash', cx: W / 2, cy: H / 2, w: W, h: H, r: 0, id: ID('Flash'), attrs: ' opacity="0"', fills: [rad(W / 2, 900, 1500, [[0, 'FFE9B0', 0.45], [1, 'FFE9B0', 0]])] });
   const flashAnim = anim('flash', 100, 'oneShot', [['Flash', 'opacity', [[0, 0], [18, 1], [100, 0]]]]);
   const celAnim = sc.cel;

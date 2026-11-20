@@ -237,3 +237,11 @@ test("mergeMistakes puts note-taken mistakes first, dedupes, and caps", () => {
   const many: LearnerMistake[] = Array.from({ length: 30 }, (_, i) => ({ said: `s${i}`, correct: `c${i}`, category: "x" }));
   assert.equal(mergeMistakes([], many).length, 20);
 });
+
+test("non-language sessions do not add their mistakes to vocabulary review", async () => {
+  const { deps, state } = makeStore();
+  const result = await finalizeSessionCore(input({ skillLanguage: null, profileLanguage: "general" }), deps);
+  assert.equal(result.created, true);
+  assert.equal(state.vocabCalls.length, 0);
+  assert.equal(state.profileSaves, 1, "memory is still updated");
+});

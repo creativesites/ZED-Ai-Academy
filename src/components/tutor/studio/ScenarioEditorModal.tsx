@@ -150,7 +150,7 @@ export function ScenarioEditorModal({
       if (data.scenario.scene) setScene(data.scenario.scene);
       if (data.scenario.beats?.length) setBeats(data.scenario.beats);
       if (data.scenario.target_items?.length) setTargetItems(data.scenario.target_items);
-      toast.success("AI drafted your speaking scenario!");
+      toast.success("AI drafted your flow!");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "AI generation failed");
     } finally {
@@ -220,7 +220,7 @@ export function ScenarioEditorModal({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-lg font-black text-[#062e39]">
             <Sparkles className="h-5 w-5 text-[#fd5523]" />
-            {initialScenario ? "Edit Speaking Scenario" : "Create AI Teacher Speaking Scenario"}
+            {initialScenario ? "Edit AI Teacher Flow" : "Create AI Teacher Flow"}
           </DialogTitle>
           <DialogDescription>
             Configure the animated AI teacher, role-play beats, and target phrases for this interactive session.
@@ -390,7 +390,7 @@ export function ScenarioEditorModal({
                 className="h-9 w-full rounded-md border border-slate-200 bg-white px-2.5 text-sm"
               >
                 {courseId && <option value="course">This course only</option>}
-                <option value="tenant_library">Academy Practice Room</option>
+                <option value="tenant_library">Academy Teacher&apos;s Room</option>
               </select>
             </div>
             <div className="space-y-1">

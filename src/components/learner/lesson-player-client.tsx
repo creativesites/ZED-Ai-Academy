@@ -23,6 +23,7 @@ import {
   PlayCircle, ShieldCheck, Sparkles, Trophy, Video, X, Zap, Wand2
 } from "lucide-react";
 import { toast } from "sonner";
+import { courseTeacher } from "@/lib/tutor/course-teacher";
 import { BlockRenderer, type Lesson, type Module, type ContentBlock, type Quiz } from "@/components/course-blocks";
 import {
   parseTutorSessionBlock,
@@ -130,6 +131,8 @@ export function LessonPlayerClient({
   const [certificate, setCertificate] = useState(existingCertificate);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [tutorOpen, setTutorOpen] = useState(false);
+  // One teacher per course: the dock uses the same character as the course's AI Teacher moments.
+  const teacher = courseTeacher(Object.values(tutorScenarios));
   const [studioOpen, setStudioOpen] = useState(false);
   const [studioInitialTool, setStudioInitialTool] = useState<string | undefined>();
   const [studioTargetBlockId, setStudioTargetBlockId] = useState<string | null>(null);
@@ -360,7 +363,7 @@ export function LessonPlayerClient({
             )}
           >
             <Sparkles className={cn("h-4 w-4 text-[#fd5523]", !isSidebarCollapsed && "mr-3")} />
-            {!isSidebarCollapsed && "AI Tutor"}
+            {!isSidebarCollapsed && `Ask ${teacher.name}`}
           </Button>
         </div>
       </aside>
@@ -435,8 +438,8 @@ export function LessonPlayerClient({
               className="flex items-center gap-1.5 rounded-full bg-[#062e39] px-2.5 py-1 text-[9px] md:text-[10px] font-bold uppercase tracking-widest text-white hover:bg-[#0a4055] transition-all shadow-md active:scale-95 mr-2 md:mr-0"
             >
               <Sparkles className="h-3 w-3 text-[#fd8d69]" />
-              <span className="hidden sm:inline">AI Coach</span>
-              <span className="sm:hidden">AI</span>
+              <span className="hidden sm:inline">Ask {teacher.name}</span>
+              <span className="sm:hidden">{teacher.name}</span>
             </button>
           </div>
         </header>
@@ -852,6 +855,7 @@ export function LessonPlayerClient({
               courseTitle={course.title}
               moduleTitle={currentModule?.title}
               sectionTitle={sectionTitle}
+              teacher={teacher}
               onClose={() => setTutorOpen(false)}
             />
           );

@@ -107,7 +107,7 @@ export function TutorStudioHub({
         handleScenarioSaved(updated);
         toast.success(
           nextVis === "tenant_library"
-            ? "Added to Academy Practice Room"
+            ? "Added to the academy Teacher's Room"
             : "Restricted to Course lessons only"
         );
       } catch (err) {
@@ -164,13 +164,13 @@ export function TutorStudioHub({
         <div>
           <span className="inline-flex items-center gap-1.5 rounded-full bg-[#fff6ee] px-3 py-1 text-[10px] font-black uppercase tracking-widest text-[#fd5523]">
             <Sparkles className="h-3.5 w-3.5" />
-            AI Language Teacher Studio
+            AI Teacher Studio
           </span>
           <h1 className="mt-2 text-2xl font-black tracking-tight text-[#062e39] sm:text-3xl">
-            {companyName} — AI Teachers &amp; Speaking Scenarios
+            {companyName} — AI Teachers &amp; Flows
           </h1>
           <p className="mt-1 max-w-2xl text-sm text-slate-500">
-            Design your academy&apos;s animated 3D/Rive teachers, author speaking role-plays, and manage Practice Room access.
+            Design your academy&apos;s animated AI teachers, build teaching flows for any subject, and manage the Teacher&apos;s Room.
           </p>
         </div>
 
@@ -181,7 +181,7 @@ export function TutorStudioHub({
             className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-xs font-bold text-[#062e39] shadow-sm hover:bg-slate-50"
           >
             <Mic className="h-3.5 w-3.5 text-[#fd5523]" />
-            Open Practice Room
+            Open Teacher&apos;s Room
             <ExternalLink className="h-3 w-3 opacity-50" />
           </Link>
         </div>
@@ -226,9 +226,9 @@ export function TutorStudioHub({
         <TabsContent value="scenarios" className="mt-0 space-y-5">
           <div className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h2 className="text-base font-bold text-[#062e39]">Speaking Scenarios</h2>
+              <h2 className="text-base font-bold text-[#062e39]">AI Teacher Flows</h2>
               <p className="text-xs text-slate-500">
-                Published scenarios marked &quot;Practice Room&quot; appear for learners in your academy&apos;s Practice Room and can be embedded in any lesson.
+                Published flows marked &quot;Teacher&apos;s Room&quot; appear for learners in your academy&apos;s Teacher&apos;s Room and can be added to any lesson.
               </p>
             </div>
             <Button
@@ -245,7 +245,7 @@ export function TutorStudioHub({
           {scenarios.length === 0 ? (
             <div className="rounded-3xl border border-dashed border-slate-300 bg-white p-10 text-center">
               <Sparkles className="mx-auto h-10 w-10 text-[#fd5523]" />
-              <h3 className="mt-3 text-base font-bold text-[#062e39]">No speaking scenarios yet</h3>
+              <h3 className="mt-3 text-base font-bold text-[#062e39]">No AI Teacher flows yet</h3>
               <p className="mx-auto mt-1 max-w-md text-xs text-slate-500">
                 Create your first interactive role-play, guided lesson, or oral check with your animated AI teachers.
               </p>
@@ -321,7 +321,7 @@ export function TutorStudioHub({
                       >
                         {s.visibility === "tenant_library" ? (
                           <>
-                            <Globe className="h-3 w-3 text-emerald-600" /> Practice Room
+                            <Globe className="h-3 w-3 text-emerald-600" /> Teacher&apos;s Room
                           </>
                         ) : (
                           <>
@@ -374,9 +374,9 @@ export function TutorStudioHub({
           {/* Tutor Settings */}
           <div className="space-y-5 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
             <div>
-              <h2 className="text-base font-bold text-[#062e39]">Academy Practice Room Settings</h2>
+              <h2 className="text-base font-bold text-[#062e39]">Teacher&apos;s Room Settings</h2>
               <p className="text-xs text-slate-500">
-                Control Practice Room availability, monthly free-practice quotas, and allowed interaction modes.
+                Control Teacher&apos;s Room availability, monthly free-practice quotas, and allowed interaction modes.
               </p>
             </div>
 
@@ -390,7 +390,7 @@ export function TutorStudioHub({
                 className="mt-0.5 h-4 w-4 accent-[#fd5523]"
               />
               <span>
-                <span className="block text-sm font-bold text-[#062e39]">Enable Practice Room</span>
+                <span className="block text-sm font-bold text-[#062e39]">Enable Teacher&apos;s Room</span>
                 <span className="block text-xs text-slate-500">
                   Allow enrolled academy learners to practise freely with published AI teachers at /academy/{companySlug}/practice.
                 </span>

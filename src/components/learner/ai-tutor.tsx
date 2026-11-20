@@ -4,17 +4,20 @@ import { useEffect, useRef, useState } from "react";
 import { Copy, History, Loader2, Send, X } from "lucide-react";
 import { MessageContent } from "./chat-components/MessageContent";
 import { Teacher } from "@/components/tutor/avatar/Teacher";
-import { PERSONA_PRESETS, type PersonaPresetKey } from "@/components/tutor/avatar/persona-presets";
-import type { AvatarDriver } from "@/components/tutor/avatar/types";
+import { PERSONA_PRESETS } from "@/components/tutor/avatar/persona-presets";
+import type { AvatarDriver, PersonaLook } from "@/components/tutor/avatar/types";
+import { useLiteMode } from "@/components/tutor/practice/use-lite-mode";
+import { DEFAULT_TEACHER_NAME } from "@/lib/tutor/course-teacher";
 import type { VisemeValue } from "@/lib/tutor/contract.generated";
 
 type Message = { role: "user" | "assistant"; content: string };
 
+// Teaching moves the learner can ask for in one tap. Same for every subject.
 const STARTER_PROMPTS = [
-  { label: "Build a workflow", body: "Turn this lesson into a step-by-step workflow I can use in my job today." },
-  { label: "Critique my prompt", body: "I'll share a prompt I'm planning to use at work — review it for quality and suggest improvements." },
-  { label: "Plain-language summary", body: "Summarize this lesson in plain language, like I'm explaining it to a colleague who missed it." },
-  { label: "Verification checklist", body: "What should I verify before I trust and share the AI output from this lesson?" },
+  { label: "Explain simpler", body: "Explain the main idea of this lesson more simply, with one everyday example." },
+  { label: "Give me an example", body: "Give me a real, local example of how this lesson applies at work or in a small business." },
+  { label: "Quiz me", body: "Ask me one question at a time to check I understood this lesson. Wait for my answer before the next one." },
+  { label: "Summarise", body: "Summarise this lesson in five short bullet points I can review later." },
 ] as const;
 
 function renderContent(text: string) {
@@ -52,8 +55,11 @@ export function AiTutor({
   lessonTitle,
   moduleTitle,
   sectionTitle,
+  teacher,
   onClose,
 }: {
+  /** The course's AI teacher (see courseTeacher()). Defaults to the platform default teacher. */
+  teacher?: { name: string; look?: Partial<PersonaLook> };
   courseId: string;
   lessonId: string;
   courseTitle: string;
@@ -62,20 +68,18 @@ export function AiTutor({
   sectionTitle?: string;
   onClose: () => void;
 }) {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      role: "assistant",
-      content: "I can help you apply this lesson to real work. Try one of the prompts below, or ask me anything about the lesson.",
-    },
-  ]);
+  const teacherName = teacher?.name ?? DEFAULT_TEACHER_NAME;
+  const greeting = `Hi, I'm ${teacherName}, your teacher for this course. Ask me anything about this lesson, or pick one below.`;
+  const [messages, setMessages] = useState<Message[]>([{ role: "assistant", content: greeting }]);
+  const [lite, setLite] = useLiteMode();
   const [input, setInput] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
-  const [personaKey, setPersonaKey] = useState<PersonaPresetKey>("lin");
   const avatarRef = useRef<AvatarDriver | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const hasUserMessages = messages.some((m) => m.role === "user");
-  const activePersona = PERSONA_PRESETS.find((p) => p.key === personaKey) ?? PERSONA_PRESETS[0];
+  const defaultLook = (PERSONA_PRESETS.find((p) => p.key === "tinashe") ?? PERSONA_PRESETS[0]).look;
+  const look = teacher?.look ?? defaultLook;
 
   const storageKey = `zed-ai-coach-history-${lessonId}-${sectionTitle || "default"}`;
 
@@ -122,7 +126,8 @@ export function AiTutor({
           courseId, 
           lessonId,
           moduleTitle,
-          sectionTitle
+          sectionTitle,
+          teacherName,
         }),
       });
 
@@ -183,25 +188,26 @@ export function AiTutor({
       {/* Panel */}
       <div className="fixed inset-y-0 right-0 z-50 flex w-full flex-col bg-white shadow-2xl sm:w-[420px] sm:border-l sm:border-slate-200">
 
-        {/* Header with Animated AI Teacher */}
-        <div className="flex-shrink-0 bg-gradient-to-br from-[#062e39] via-[#10263a] to-[#1d1438] px-4 py-3">
+        {/* Header: the course's AI teacher */}
+        <div className="flex-shrink-0 border-b border-slate-200 bg-gradient-to-br from-[#ecfdf5] to-[#eff6ff] px-4 py-3">
           <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3 min-w-0">
-              <div className="h-14 w-14 shrink-0 overflow-hidden rounded-2xl border border-white/15 bg-black/25 shadow-lg">
+            <div className="flex min-w-0 items-center gap-3">
+              <div className="h-16 w-16 shrink-0 overflow-hidden rounded-2xl border border-white bg-white/70 shadow-sm">
                 <Teacher
                   ref={avatarRef}
+                  engine={lite ? "placeholder" : "rive"}
                   variant="bust"
-                  persona={activePersona.look}
-                  className="h-14 w-14"
-                  label={`${activePersona.label}, your AI teacher`}
+                  persona={look}
+                  className="h-16 w-16"
+                  label={`${teacherName}, your AI teacher`}
                 />
               </div>
               <div className="min-w-0">
-                <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-[#fd5523]">
-                  AI Teacher · {activePersona.label}
+                <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#0f766e]">
+                  {teacherName} · AI teacher
                 </p>
-                <h6 className="mt-0.5 line-clamp-1 text-sm font-bold text-white">{lessonTitle}</h6>
-                <p className="mt-0.5 line-clamp-1 text-[11px] text-white/50">{courseTitle}</p>
+                <h2 className="mt-0.5 line-clamp-1 text-sm font-bold text-[#062e39]">{lessonTitle}</h2>
+                <p className="mt-0.5 line-clamp-1 text-[11px] text-slate-600">{courseTitle}</p>
               </div>
             </div>
             <div className="flex items-center gap-1">
@@ -209,50 +215,34 @@ export function AiTutor({
                 type="button"
                 onClick={() => {
                   if (confirm("Clear chat history for this section?")) {
-                    setMessages([{
-                      role: "assistant",
-                      content: "I can help you apply this lesson to real work. Try one of the prompts below, or ask me anything about the lesson.",
-                    }]);
+                    setMessages([{ role: "assistant", content: greeting }]);
                     localStorage.removeItem(storageKey);
                   }
                 }}
-                className="shrink-0 rounded-full px-2 py-1 text-[9px] font-bold uppercase tracking-wider text-white/50 transition-colors hover:bg-white/10 hover:text-[#fd5523]"
+                className="shrink-0 rounded-full px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-600 transition-colors hover:bg-white hover:text-[#062e39]"
               >
                 Clear
               </button>
               <button
                 type="button"
                 onClick={onClose}
-                className="shrink-0 rounded-full p-1.5 text-white/50 transition-colors hover:bg-white/10 hover:text-white"
-                aria-label="Close AI coach"
+                className="shrink-0 rounded-full p-2 text-slate-600 transition-colors hover:bg-white hover:text-[#062e39]"
+                aria-label={`Close ${teacherName}`}
               >
                 <X className="h-4 w-4" />
               </button>
             </div>
           </div>
-
-          {/* Persona switcher pills */}
-          <div className="mt-2.5 flex items-center gap-1.5 overflow-x-auto pb-0.5">
-            {PERSONA_PRESETS.map((p) => {
-              const selected = p.key === personaKey;
-              return (
-                <button
-                  key={p.key}
-                  type="button"
-                  onClick={() => {
-                    setPersonaKey(p.key);
-                    avatarRef.current?.playGesture("wave");
-                  }}
-                  className={`shrink-0 rounded-full px-2.5 py-0.5 text-[10px] font-bold transition-colors ${
-                    selected
-                      ? "bg-[#fd5523] text-white"
-                      : "bg-white/10 text-white/70 hover:bg-white/20 hover:text-white"
-                  }`}
-                >
-                  {p.label}
-                </button>
-              );
-            })}
+          <div className="mt-2 flex items-center justify-between gap-2 text-[11px] text-slate-600">
+            <span>Answers come from this course.</span>
+            <button
+              type="button"
+              onClick={() => setLite(!lite)}
+              aria-pressed={lite}
+              className="rounded-full border border-slate-300 bg-white/80 px-2.5 py-1 font-semibold hover:bg-white"
+            >
+              {lite ? "Data saver on" : "Data saver off"}
+            </button>
           </div>
         </div>
 

@@ -8,7 +8,7 @@ import { PERSONA_PRESETS } from "@/components/tutor/avatar/persona-presets";
 export function TutorSpotlightBanner({
   practiceHref = "/practice",
   showcaseHref = "/ai-tutor",
-  title = "Speak out loud with your animated AI Language Teacher",
+  title = "Learn out loud with your animated AI Teacher",
   description = "Practise Mandarin, Spanish, French, or course role-plays with real-time voice feedback, tone trails, and flashcards.",
 }: {
   practiceHref?: string;
@@ -36,7 +36,7 @@ export function TutorSpotlightBanner({
           <div className="space-y-1.5">
             <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-0.5 text-[10px] font-black uppercase tracking-widest text-amber-300">
               <Sparkles className="h-3 w-3" />
-              ZAI Tutor · Practice Room
+              ZAI Teacher · Teacher&apos;s Room
             </span>
             <h2 className="text-lg font-black tracking-tight text-white sm:text-xl">{title}</h2>
             <p className="max-w-xl text-xs leading-relaxed text-white/75 sm:text-sm">{description}</p>
@@ -49,7 +49,7 @@ export function TutorSpotlightBanner({
             className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#fd5523] px-5 py-3 text-xs font-black uppercase tracking-wider text-white shadow-lg shadow-[#fd5523]/25 transition-all hover:bg-[#ea4817] sm:flex-initial"
           >
             <Mic className="h-4 w-4" />
-            <span>Open Practice Room</span>
+            <span>Open Teacher&apos;s Room</span>
             <ArrowRight className="h-3.5 w-3.5" />
           </Link>
           <Link

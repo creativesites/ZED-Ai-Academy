@@ -96,3 +96,21 @@ test("toneStats only applies to Mandarin and counts tone mistakes", () => {
   assert.deepEqual(toneStats("zh", mistakes), { toneMistakes: 1, totalMistakes: 2 });
   assert.deepEqual(toneStats("es", mistakes), {});
 });
+
+test("collectNoteMistakes includes v2 misconceptions and partials, not correct evidence", () => {
+  const evidenceTurns = [
+    {
+      learner_text: "tone",
+      events: [
+        { type: "note_evidence", objective: "Apply the three checks", result: "correct", detail: "named numbers" },
+        { type: "note_evidence", objective: "Apply the three checks", result: "misconception", detail: "said the tone check catches prices" },
+        { type: "note_evidence", objective: "Protect data", result: "partial", said: "share the name only", correct: "share nothing personal" },
+        { type: "note_evidence", objective: "No detail", result: "misconception" },
+      ],
+    },
+  ];
+  assert.deepEqual(collectNoteMistakes(evidenceTurns), [
+    { said: "said the tone check catches prices", correct: "Apply the three checks", category: "misconception" },
+    { said: "share the name only", correct: "share nothing personal", category: "partial" },
+  ]);
+});

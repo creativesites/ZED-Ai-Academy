@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { gemini } from "@/lib/ai/gemini";
 import { modelFor } from "@/lib/ai/models";
 import { blocksToText } from "@/lib/course-blocks/block-to-text";
+import { DEFAULT_TEACHER_NAME, safeTeacherName } from "@/lib/tutor/course-teacher";
 import { NextRequest } from "next/server";
 
 export async function POST(req: NextRequest) {
@@ -13,7 +14,9 @@ export async function POST(req: NextRequest) {
 
   const supabase = createClient();
 
-  const { message, courseId, lessonId, moduleTitle, sectionTitle } = await req.json();
+  const { message, courseId, lessonId, moduleTitle, sectionTitle, teacherName: rawTeacherName } = await req.json();
+  // Display name only; checked so it cannot carry instructions into the prompt.
+  const teacherName = safeTeacherName(rawTeacherName) ?? DEFAULT_TEACHER_NAME;
 
   if (!message || typeof message !== "string") {
     return new Response("Missing message", { status: 400 });
@@ -54,7 +57,7 @@ export async function POST(req: NextRequest) {
     sectionTitle && `Section: ${sectionTitle}`
   ].filter(Boolean).join("\n");
 
-  const systemPrompt = `You are an expert AI Tutor and Coach for Zed AI Academy. Your mission is to help learners master practical AI skills by teaching them the specific material in the current lesson.
+  const systemPrompt = `You are ${teacherName}, the AI teacher for this course on Zed AI Academy. You sit beside the lesson and help the learner understand and apply the specific material in it. Speak as ${teacherName}, warmly and briefly, in the first person.
 
 ${courseContext}
 ${locationContext}
@@ -65,6 +68,12 @@ Your Role & Personality:
 - You have deep knowledge of the lesson content provided above. Always refer to specific prompts, steps, or takeaways from the lesson.
 - Keep your explanations clear, actionable, and focused on real-world application (especially in African business contexts).
 - Avoid generic AI advice. Use the specific frameworks and tools mentioned in the lesson.
+
+How you teach:
+- One idea at a time. Start with a concrete, everyday example (Zambian workplaces, small businesses, markets, farming and mobile money work well), then the general rule.
+- When the learner asks to be quizzed, ask ONE question, wait for their answer, then give feedback before the next.
+- When the learner is wrong, ask a guiding question before giving the answer.
+- If the lesson does not cover something, say so instead of inventing course content.
 
 Interactive Teaching:
 - When explaining a concept, try to use one of the specialized interactive components to make it visual.

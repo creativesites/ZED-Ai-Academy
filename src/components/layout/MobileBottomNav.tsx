@@ -370,7 +370,7 @@ export function MobileBottomNav() {
         },
         {
           href: `/academy/${academySlug}/practice`,
-          label: "Practice",
+          label: "Teacher",
           icon: Mic,
           active: pathname.startsWith(`/academy/${academySlug}/practice`),
         },
@@ -405,7 +405,7 @@ export function MobileBottomNav() {
   const tabs: TabItem[] = [
     { href: "/",          label: "Home",      icon: Home,            active: pathActive("/") },
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, active: pathname === "/dashboard" },
-    { href: "/practice",  label: "Practice",  icon: Mic,             active: pathname?.startsWith("/practice") ?? false },
+    { href: "/practice",  label: "Teacher",  icon: Mic,             active: pathname?.startsWith("/practice") ?? false },
     { href: "/dashboard/schedule", label: "Schedule", icon: Calendar, active: pathname?.startsWith("/dashboard/schedule") ?? false },
     { href: "/courses",   label: "Courses",   icon: BookOpen,        active: pathActive("/courses") },
   ];

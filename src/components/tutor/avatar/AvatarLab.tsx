@@ -97,6 +97,26 @@ function describeTutor(ev: TutorEvent): string {
       return `advance_scene ${ev.beat}`;
     case "end_session":
       return `end_session${ev.summary ? ` "${ev.summary}"` : ""}`;
+    case "show_board":
+      return `show_board ${ev.kind}${ev.title ? ` "${ev.title}"` : ""}`;
+    case "reveal_step":
+      return `reveal_step${ev.index !== undefined ? ` ${ev.index}` : ""}`;
+    case "ask_choice":
+      return `ask_choice "${ev.question}" [${ev.options.join(" | ")}]`;
+    case "ask_confidence":
+      return "ask_confidence";
+    case "show_lesson_ref":
+      return `show_lesson_ref ${ev.label}`;
+    case "play_clip":
+      return `play_clip ${ev.videoId}`;
+    case "note_evidence":
+      return `note_evidence ${ev.result}: ${ev.objective}`;
+    case "advance_step":
+      return `advance_step ${ev.step}`;
+    case "switch_scene":
+      return `switch_scene ${ev.scene}`;
+    case "award":
+      return `award "${ev.title}"`;
   }
 }
 

@@ -185,7 +185,8 @@ export async function finalizeSessionCore<R>(
     total_speaking_ms: (previous?.total_speaking_ms ?? 0) + learnerMs + teacherMs,
   });
 
-  await deps.addMistakeVocabulary(mistakes);
+  // Vocabulary review (SRS) is a Language pack feature: other subjects' mistakes are not words to drill.
+  if (input.skillLanguage) await deps.addMistakeVocabulary(mistakes);
 
   return { report: claim.report, created: true };
 }
