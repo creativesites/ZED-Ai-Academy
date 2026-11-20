@@ -24,20 +24,34 @@ async function requireInstructor(companyId: string) {
   return requireTenantTeacher(companyId);
 }
 
-// Session State (supports both Academy-wide and Cohort-specific concurrent sessions)
+// Session State (cleanly separated between Academy-wide and Cohort-specific concurrent sessions)
 export async function getCompanySessionState(companyId: string, cohortId?: string | null) {
   const { supabase } = await requireTenantMember(companyId);
 
-  if (cohortId && cohortId !== "all") {
-    const { data: groupData } = await supabase
+  const isCohortScoped = Boolean(cohortId && cohortId !== "all");
+  if (isCohortScoped) {
+    const { data: groupData, error } = await supabase
       .from("classroom_groups")
       .select("is_session_active, active_room_name, active_schedule_id, active_session_id")
-      .eq("id", cohortId)
+      .eq("id", cohortId!)
+      .eq("company_id", companyId)
       .maybeSingle();
 
-    if (groupData?.is_session_active) {
-      return groupData as any;
+    if (error || !groupData) {
+      return {
+        is_session_active: false,
+        active_room_name: null,
+        active_schedule_id: null,
+        active_session_id: null,
+      };
     }
+
+    return {
+      is_session_active: Boolean((groupData as any).is_session_active),
+      active_room_name: (groupData as any).active_room_name ?? null,
+      active_schedule_id: (groupData as any).active_schedule_id ?? null,
+      active_session_id: (groupData as any).active_session_id ?? null,
+    };
   }
 
   const { data, error } = await supabase
@@ -46,7 +60,14 @@ export async function getCompanySessionState(companyId: string, cohortId?: strin
     .eq("id", companyId)
     .single();
   
-  if (error) return { is_session_active: false, active_room_name: null, active_schedule_id: null, active_session_id: null };
+  if (error || !data) {
+    return {
+      is_session_active: false,
+      active_room_name: null,
+      active_schedule_id: null,
+      active_session_id: null,
+    };
+  }
   return data as any;
 }
 
@@ -59,8 +80,9 @@ export async function toggleClassroomSession(
   cohortId: string | null = null
 ) {
   const { supabase, userId } = await requireInstructor(companyId);
+  const isCohortScoped = Boolean(cohortId && cohortId !== "all");
 
-  let activeSessionId = null;
+  let activeSessionId: string | null = null;
 
   if (active) {
     // Starting a session: Create history record linked to cohort if scoped
@@ -68,7 +90,7 @@ export async function toggleClassroomSession(
       .from("classroom_sessions") as any)
       .insert({
         company_id: companyId,
-        cohort_id: cohortId && cohortId !== "all" ? cohortId : null,
+        cohort_id: isCohortScoped ? cohortId : null,
         schedule_id: scheduleId || null,
         room_name: roomName || "Unknown Room",
       })
@@ -84,11 +106,11 @@ export async function toggleClassroomSession(
       const { data: company } = await supabase.from("companies").select("name").eq("id", companyId).maybeSingle();
       let studentIds: string[] = [];
 
-      if (cohortId && cohortId !== "all") {
+      if (isCohortScoped) {
         const { data: groupMembers } = await supabase
           .from("classroom_group_members")
           .select("profile_id")
-          .eq("group_id", cohortId);
+          .eq("group_id", cohortId!);
         studentIds = (groupMembers ?? []).map((m: any) => m.profile_id).filter((pid: string) => pid && pid !== userId);
       } else {
         const { data: members } = await supabase
@@ -101,6 +123,7 @@ export async function toggleClassroomSession(
 
       if (studentIds.length > 0) {
         const companyName = company?.name || "Your Academy";
+        const cohortQuery = isCohortScoped ? `&cohort=${cohortId}` : "";
         const notifications = studentIds.map((pid: string) => ({
           user_id: pid,
           type: "live_session",
@@ -109,9 +132,9 @@ export async function toggleClassroomSession(
           data: {
             company_id: companyId,
             company_slug: companySlug,
-            cohort_id: cohortId,
+            cohort_id: isCohortScoped ? cohortId : null,
             schedule_id: scheduleId,
-            url: `/academy/${companySlug}/classroom?tab=session`,
+            url: `/academy/${companySlug}/classroom?tab=session${cohortQuery}`,
           },
         }));
         await supabase.from("notifications").insert(notifications as any);
@@ -120,24 +143,23 @@ export async function toggleClassroomSession(
       console.error("Failed to dispatch live session notifications:", notifErr);
     }
   } else {
-    // Ending a session: update ended_at and calculate duration
-    let targetSessionId = null;
-    if (cohortId && cohortId !== "all") {
+    // Ending a session: update ended_at on the matching scope's active session only
+    let targetSessionId: string | null = null;
+    if (isCohortScoped) {
       const { data: groupData } = await supabase
         .from("classroom_groups")
         .select("active_session_id")
-        .eq("id", cohortId)
+        .eq("id", cohortId!)
+        .eq("company_id", companyId)
         .maybeSingle();
-      targetSessionId = groupData?.active_session_id;
-    }
-
-    if (!targetSessionId) {
+      targetSessionId = (groupData as any)?.active_session_id ?? null;
+    } else {
       const { data: companyData } = await supabase
         .from("companies")
         .select("active_session_id")
         .eq("id", companyId)
         .single();
-      targetSessionId = companyData?.active_session_id;
+      targetSessionId = (companyData as any)?.active_session_id ?? null;
     }
       
     if (targetSessionId) {
@@ -145,37 +167,41 @@ export async function toggleClassroomSession(
       await (supabase
         .from("classroom_sessions") as any)
         .update({ ended_at: endedAt })
-        .eq("id", targetSessionId);
+        .eq("id", targetSessionId)
+        .eq("company_id", companyId);
     }
   }
 
-  // Update cohort record if cohort-scoped
-  if (cohortId && cohortId !== "all") {
-    await (supabase.from("classroom_groups") as any)
+  // Update ONLY the targeted scope so concurrent cohort sessions never clobber each other or academy-wide state
+  if (isCohortScoped) {
+    const { error } = await (supabase.from("classroom_groups") as any)
       .update({
         is_session_active: active,
         active_room_name: active ? roomName : null,
         active_schedule_id: active ? scheduleId : null,
         active_session_id: activeSessionId,
       })
-      .eq("id", cohortId);
+      .eq("id", cohortId!)
+      .eq("company_id", companyId);
+
+    if (error) throw new Error(error.message);
+  } else {
+    const { error } = await supabase
+      .from("companies")
+      .update({ 
+        is_session_active: active,
+        active_room_name: active ? roomName : null,
+        active_schedule_id: active ? scheduleId : null,
+        active_session_id: activeSessionId
+      } as any)
+      .eq("id", companyId);
+
+    if (error) throw new Error(error.message);
   }
 
-  // Also maintain company level session for compatibility
-  const { error } = await supabase
-    .from("companies")
-    .update({ 
-      is_session_active: active,
-      active_room_name: active ? roomName : null,
-      active_schedule_id: active ? scheduleId : null,
-      active_session_id: activeSessionId
-    } as any)
-    .eq("id", companyId);
-
-  if (error) throw new Error(error.message);
   revalidatePath(`/academy/${companySlug}/admin/classroom`);
   revalidatePath(`/academy/${companySlug}/classroom`);
-  return { success: true };
+  return { success: true, activeSessionId, roomName: active ? roomName : null };
 }
 
 // Announcements & Notice Board with Priority & Push Notifications

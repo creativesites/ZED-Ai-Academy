@@ -1,8 +1,12 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { createServiceClient } from "@/lib/supabase/server";
 import { requireTenantMember, requireTenantTeacher } from "@/lib/tenants/access";
-import { uploadFileToClassroomBucket } from "@/lib/storage/classroom-bucket";
+import {
+  signClassroomStorageUrls,
+  uploadFileToClassroomBucket,
+} from "@/lib/storage/classroom-bucket";
 
 export interface ClassroomChannel {
   id: string;
@@ -195,10 +199,31 @@ export async function getClassroomMessages(
     return [];
   }
 
-  return (data ?? []).map((msg: any) => ({
+  const rows = (data ?? []).map((msg: any) => ({
     ...msg,
     attachments: Array.isArray(msg.attachments) ? msg.attachments : [],
   }));
+
+  const urlsToSign: Array<string | null | undefined> = [];
+  for (const msg of rows) {
+    for (const att of msg.attachments) {
+      urlsToSign.push(att?.url);
+    }
+  }
+
+  if (urlsToSign.length > 0) {
+    const serviceClient = createServiceClient();
+    const signedMap = await signClassroomStorageUrls(serviceClient, urlsToSign);
+    return rows.map((msg) => ({
+      ...msg,
+      attachments: msg.attachments.map((att: any) => ({
+        ...att,
+        url: att?.url ? (signedMap.get(att.url) ?? att.url) : att?.url,
+      })),
+    }));
+  }
+
+  return rows;
 }
 
 export async function postClassroomMessage(formData: FormData) {
@@ -217,7 +242,8 @@ export async function postClassroomMessage(formData: FormData) {
   if (file && file.size > 0) {
     const cleanFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
     const filePath = `${companyId}/discussions/${channelId}/${Date.now()}_${cleanFileName}`;
-    const { publicUrl } = await uploadFileToClassroomBucket(supabase, filePath, file, false);
+    const serviceClient = createServiceClient();
+    const { publicUrl } = await uploadFileToClassroomBucket(serviceClient, filePath, file, false);
 
     attachments.push({
       name: file.name,
@@ -252,7 +278,23 @@ export async function postClassroomMessage(formData: FormData) {
     throw new Error(error.message);
   }
 
-  return { success: true, message: newMsg };
+  let responseMsg: any = newMsg;
+  if (attachments.length > 0 && newMsg) {
+    const serviceClient = createServiceClient();
+    const signedMap = await signClassroomStorageUrls(
+      serviceClient,
+      attachments.map((a) => a.url)
+    );
+    responseMsg = {
+      ...newMsg,
+      attachments: attachments.map((att) => ({
+        ...att,
+        url: signedMap.get(att.url) ?? att.url,
+      })),
+    };
+  }
+
+  return { success: true, message: responseMsg };
 }
 
 export async function deleteClassroomMessage(

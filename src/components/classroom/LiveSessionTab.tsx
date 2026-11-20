@@ -42,6 +42,7 @@ export function LiveSessionTab({
   const [hasJoined, setHasJoined] = useState(false);
   const [isInitializing, setIsInitializing] = useState(false);
   const [roomName, setRoomName] = useState<string | null>(null);
+  const [appId, setAppId] = useState<string | null>(null);
   const [activeScheduleId, setActiveScheduleId] = useState<string | null>(null);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [jwt, setJwt] = useState<string | null>(null);
@@ -52,8 +53,6 @@ export function LiveSessionTab({
   const [selectedScheduleId, setSelectedScheduleId] = useState<string | null>(null);
   const [showAttendance, setShowAttendance] = useState(false);
   const [showDeviceModal, setShowDeviceModal] = useState(false);
-
-  const APP_ID = "vpaas-magic-cookie-37a3214c11ef406c81cc165d3d1c2f4f";  
 
   // --- Effect: Sync Session State & Data ---
   useEffect(() => {
@@ -124,23 +123,6 @@ export function LiveSessionTab({
     }
   }, [hasJoined, isAdminOrInstructor, activeSessionId, companyId, activeScheduleId]);
 
-  // --- Effect: Service Worker Cleanup (Safe without reload loop) ---
-  useEffect(() => {
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.getRegistrations().then(registrations => {
-        if (registrations.length > 0) {
-          Promise.all(registrations.map(r => r.unregister())).then(() => {
-            const reloaded = sessionStorage.getItem("sw_cleaned_up");
-            if (!reloaded) {
-              sessionStorage.setItem("sw_cleaned_up", "true");
-              window.location.reload();
-            }
-          });
-        }
-      });
-    }
-  }, []);
-
   // --- Handlers ---
   async function handleStartSession() {
     setIsInitializing(true);
@@ -149,15 +131,31 @@ export function LiveSessionTab({
       const generatedRoom = `classroom-${companySlug}-${Math.random().toString(36).slice(2, 7)}`;
       
       // 1. Persist state to Database
-      await toggleClassroomSession(companyId, companySlug, true, generatedRoom, selectedScheduleId, activeCohortId);
+      const toggleRes = await toggleClassroomSession(
+        companyId,
+        companySlug,
+        true,
+        generatedRoom,
+        selectedScheduleId,
+        activeCohortId
+      );
       
-      // 2. Generate Security Token
-      const result = await generateJitsiToken(generatedRoom, true);
+      // 2. Generate Server-Authorized Security Token
+      const result = await generateJitsiToken({
+        scope: "classroom",
+        companyId,
+        cohortId: activeCohortId,
+      });
       
-      if (result.success && result.token) {
+      if (result.success) {
         setJwt(result.token);
-        setRoomName(generatedRoom);
+        setAppId(result.appId);
+        setRoomName(result.roomName);
         setActiveScheduleId(selectedScheduleId);
+        if (toggleRes?.activeSessionId) {
+          setActiveSessionId(toggleRes.activeSessionId);
+        }
+        setIsSessionActive(true);
         setHasJoined(true);
         toast.success("Live Classroom Started!");
       } else {
@@ -167,7 +165,7 @@ export function LiveSessionTab({
       console.error(err);
       setError(err.message || "Failed to initialize studio");
       toast.error("Failed to start live session");
-      await toggleClassroomSession(companyId, companySlug, false, null, null, activeCohortId);
+      await toggleClassroomSession(companyId, companySlug, false, null, null, activeCohortId).catch(() => null);
     } finally {
       setIsInitializing(false);
     }
@@ -181,9 +179,15 @@ export function LiveSessionTab({
     setIsInitializing(true);
     setError(null);
     try {
-      const result = await generateJitsiToken(roomName, false);
-      if (result.success && result.token) {
+      const result = await generateJitsiToken({
+        scope: "classroom",
+        companyId,
+        cohortId: activeCohortId,
+      });
+      if (result.success) {
         setJwt(result.token);
+        setAppId(result.appId);
+        setRoomName(result.roomName);
         setHasJoined(true);
       } else {
         throw new Error(result.error || "Failed to join studio");
@@ -200,7 +204,9 @@ export function LiveSessionTab({
     try {
       await toggleClassroomSession(companyId, companySlug, false, null, null, activeCohortId);
       setHasJoined(false);
+      setIsSessionActive(false);
       setJwt(null);
+      setAppId(null);
       setRoomName(null);
       toast.success("Session Ended");
     } catch (e) {
@@ -397,9 +403,9 @@ export function LiveSessionTab({
       {/* Video Content */}
       <div className="flex-1 relative flex min-h-0">
         <div className="flex-1 relative bg-black min-h-[500px]">
-          {roomName && jwt && (
+          {roomName && jwt && appId && (
             <JaaSMeeting
-              appId={APP_ID}
+              appId={appId}
               roomName={roomName}
               jwt={jwt}
               configOverwrite={{

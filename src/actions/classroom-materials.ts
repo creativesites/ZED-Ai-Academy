@@ -8,8 +8,16 @@ import {
   CLASSROOM_MATERIALS_BUCKET as BUCKET,
   CLASSROOM_MAX_FILE_BYTES as MAX_FILE_BYTES,
   ensureClassroomBucket as ensureMaterialsBucket,
+  extractClassroomStoragePath,
+  signClassroomStorageUrls,
   uploadFileToClassroomBucket,
 } from "@/lib/storage/classroom-bucket";
+import {
+  extractMissingColumnName,
+  insertSingleWithSchemaFallback,
+  isMissingTableError,
+  updateWithSchemaFallback,
+} from "@/lib/supabase/schema-fallback";
 
 async function ensureProfileRow(
   serviceClient: ReturnType<typeof createServiceClient>,
@@ -219,50 +227,57 @@ export async function getClassroomMaterials(
 
   const { userId, supabase } = await requireTenantMember(companyId);
 
-  let query = supabase
-    .from("classroom_materials")
-    .select(`
-      *,
-      author:profiles!classroom_materials_author_id_fkey(full_name, avatar_url, email),
-      folder:classroom_folders(name, color),
-      cohort:classroom_groups(name, color),
-      course:courses(id, title, slug)
-    `)
-    .eq("company_id", companyId);
+  const buildMaterialsQuery = (includeCategoryFilter: boolean) => {
+    let q = supabase
+      .from("classroom_materials")
+      .select(`
+        *,
+        author:profiles!classroom_materials_author_id_fkey(full_name, avatar_url, email),
+        folder:classroom_folders(name, color),
+        cohort:classroom_groups(name, color),
+        course:courses(id, title, slug)
+      `)
+      .eq("company_id", companyId);
 
-  if (options.folderId) {
-    if (options.folderId === "unfiled") {
-      query = query.is("folder_id", null);
-    } else {
-      query = query.eq("folder_id", options.folderId);
+    if (options.folderId) {
+      if (options.folderId === "unfiled") {
+        q = q.is("folder_id", null);
+      } else {
+        q = q.eq("folder_id", options.folderId);
+      }
     }
-  }
 
-  if (options.cohortId && options.cohortId !== "all") {
-    query = query.or(`cohort_id.eq.${options.cohortId},cohort_id.is.null`);
-  }
+    if (options.cohortId && options.cohortId !== "all") {
+      q = q.or(`cohort_id.eq.${options.cohortId},cohort_id.is.null`);
+    }
 
-  if (options.courseId && options.courseId !== "all") {
-    query = query.eq("course_id", options.courseId);
-  }
+    if (options.courseId && options.courseId !== "all") {
+      q = q.eq("course_id", options.courseId);
+    }
 
-  if (options.materialType && options.materialType !== "all") {
-    query = query.eq("material_type", options.materialType as any);
-  }
+    if (options.materialType && options.materialType !== "all") {
+      q = q.eq("material_type", options.materialType as any);
+    }
 
-  if (options.category && options.category !== "all") {
-    query = query.eq("category", options.category);
-  }
+    if (includeCategoryFilter && options.category && options.category !== "all") {
+      q = q.eq("category", options.category);
+    }
 
-  if (options.sort === "title") {
-    query = query.order("title", { ascending: true });
-  } else if (options.sort === "created") {
-    query = query.order("created_at", { ascending: false });
-  } else {
-    query = query.order("updated_at", { ascending: false });
-  }
+    if (options.sort === "title") {
+      q = q.order("title", { ascending: true });
+    } else if (options.sort === "created") {
+      q = q.order("created_at", { ascending: false });
+    } else {
+      q = q.order("updated_at", { ascending: false });
+    }
 
-  const { data, error } = await query;
+    return q;
+  };
+
+  let { data, error } = await buildMaterialsQuery(true);
+  if (error && extractMissingColumnName(error.message) === "category") {
+    ({ data, error } = await buildMaterialsQuery(false));
+  }
   if (error) {
     console.error("Failed to load classroom materials:", error);
     return [];
@@ -315,6 +330,19 @@ export async function getClassroomMaterials(
     list = list.filter((m) => m.tags && m.tags.includes(options.tag!));
   }
 
+  // Sign private storage URLs in a single batch call (external links remain untouched)
+  if (list.length > 0) {
+    const serviceClient = createServiceClient();
+    const signedMap = await signClassroomStorageUrls(
+      serviceClient,
+      list.map((m) => m.file_url)
+    );
+    list = list.map((m) => ({
+      ...m,
+      file_url: m.file_url ? (signedMap.get(m.file_url) ?? m.file_url) : null,
+    }));
+  }
+
   return list;
 }
 
@@ -348,7 +376,20 @@ export async function getPinnedClassroomMaterials(
     return [];
   }
 
-  return (data ?? []) as any[];
+  const items = (data ?? []) as any[];
+  if (items.length > 0) {
+    const serviceClient = createServiceClient();
+    const signedMap = await signClassroomStorageUrls(
+      serviceClient,
+      items.map((m) => m.file_url)
+    );
+    return items.map((m) => ({
+      ...m,
+      file_url: m.file_url ? (signedMap.get(m.file_url) ?? m.file_url) : null,
+    }));
+  }
+
+  return items;
 }
 
 export interface MaterialSignedUploadSession {
@@ -363,11 +404,26 @@ export async function createMaterialSignedUpload(
   fileName: string,
   prefix?: string
 ): Promise<MaterialSignedUploadSession> {
-  await requireTenantTeacher(companyId);
+  // Learners can upload assignment submissions (prefix "sub-..."), scoped to their own userId.
+  // All other uploads (materials, assignment attachments, versions) require teacher/admin role.
+  const isStudentSubmission = Boolean(prefix && prefix.startsWith("sub-"));
+  let uniquePath: string;
+
+  if (isStudentSubmission) {
+    const { userId } = await requireTenantMember(companyId);
+    uniquePath = buildSafeMaterialPath(
+      companyId,
+      fileName || "submission",
+      `submissions/${userId}/${prefix}`
+    );
+  } else {
+    await requireTenantTeacher(companyId);
+    uniquePath = buildSafeMaterialPath(companyId, fileName || "material", prefix);
+  }
+
   const serviceClient = createServiceClient();
   await ensureMaterialsBucket(serviceClient);
 
-  const uniquePath = buildSafeMaterialPath(companyId, fileName || "material", prefix);
   const { data, error } = await serviceClient.storage
     .from(BUCKET)
     .createSignedUploadUrl(uniquePath);
@@ -376,15 +432,12 @@ export async function createMaterialSignedUpload(
     throw new Error(error?.message || "Could not initialize storage upload URL.");
   }
 
-  const { data: publicData } = serviceClient.storage
-    .from(BUCKET)
-    .getPublicUrl(uniquePath);
-
   return {
     path: data.path,
     token: data.token,
     signedUrl: data.signedUrl,
-    publicUrl: publicData.publicUrl,
+    // Store the canonical bucket-relative path in DB; signed read URLs are minted on fetch
+    publicUrl: uniquePath,
   };
 }
 
@@ -420,9 +473,10 @@ export async function createClassroomMaterialRecord(input: {
     .map((t) => t.trim())
     .filter(Boolean);
 
-  const { data: newMaterial, error } = await serviceClient
-    .from("classroom_materials")
-    .insert({
+  const { data: newMaterial, error } = await insertSingleWithSchemaFallback(
+    serviceClient,
+    "classroom_materials",
+    {
       company_id: input.companyId,
       folder_id: input.folderId && input.folderId !== "unfiled" ? input.folderId : null,
       cohort_id: input.cohortId && input.cohortId !== "all" ? input.cohortId : null,
@@ -439,9 +493,8 @@ export async function createClassroomMaterialRecord(input: {
       tags,
       is_pinned: Boolean(input.isPinned),
       is_published: input.isPublished !== false,
-    })
-    .select()
-    .single();
+    }
+  );
 
   if (error) throw new Error(error.message);
 
@@ -537,7 +590,7 @@ export async function recordDocumentVersion(input: {
   const serviceClient = createServiceClient();
   await ensureProfileRow(serviceClient, userId);
 
-  const { data: existingVersions } = await serviceClient
+  const { data: existingVersions, error: verSelectError } = await serviceClient
     .from("class_document_versions")
     .select("version_number")
     .eq("document_id", input.documentId)
@@ -546,16 +599,18 @@ export async function recordDocumentVersion(input: {
 
   const nextVersion = (existingVersions?.[0]?.version_number || 1) + 1;
 
-  await serviceClient.from("class_document_versions").insert({
-    document_id: input.documentId,
-    version_number: nextVersion,
-    file_url: input.fileUrl,
-    file_name: input.fileName,
-    file_size_bytes: input.fileSizeBytes,
-    mime_type: input.mimeType || "application/octet-stream",
-    change_note: input.changeNote?.trim() || null,
-    uploaded_by: userId,
-  });
+  if (!isMissingTableError(verSelectError?.message)) {
+    await serviceClient.from("class_document_versions").insert({
+      document_id: input.documentId,
+      version_number: nextVersion,
+      file_url: input.fileUrl,
+      file_name: input.fileName,
+      file_size_bytes: input.fileSizeBytes,
+      mime_type: input.mimeType || "application/octet-stream",
+      change_note: input.changeNote?.trim() || null,
+      uploaded_by: userId,
+    });
+  }
 
   await serviceClient
     .from("classroom_materials")
@@ -613,7 +668,19 @@ export async function getDocumentVersions(documentId: string, companyId: string)
     console.error("Failed to load document versions:", error);
     return [];
   }
-  return data ?? [];
+  const versions = data ?? [];
+  if (versions.length > 0) {
+    const serviceClient = createServiceClient();
+    const signedMap = await signClassroomStorageUrls(
+      serviceClient,
+      versions.map((v: any) => v.file_url)
+    );
+    return versions.map((v: any) => ({
+      ...v,
+      file_url: v.file_url ? (signedMap.get(v.file_url) ?? v.file_url) : v.file_url,
+    }));
+  }
+  return versions;
 }
 
 export async function toggleBookmarkDocument(documentId: string, companyId: string, companySlug: string) {
@@ -724,9 +791,10 @@ export async function updateClassroomMaterial(input: {
     .map((t) => t.trim())
     .filter(Boolean);
 
-  const { error } = await supabase
-    .from("classroom_materials")
-    .update({
+  const { error } = await updateWithSchemaFallback(
+    supabase,
+    "classroom_materials",
+    {
       title,
       description: input.description?.trim() || null,
       material_type: (input.materialType || "document") as any,
@@ -738,9 +806,9 @@ export async function updateClassroomMaterial(input: {
       requires_acknowledgement: Boolean(input.requiresAcknowledgement),
       is_pinned: Boolean(input.isPinned),
       updated_at: new Date().toISOString(),
-    })
-    .eq("id", input.materialId)
-    .eq("company_id", input.companyId);
+    },
+    { id: input.materialId, company_id: input.companyId }
+  );
 
   if (error) throw new Error(error.message);
 
@@ -767,13 +835,11 @@ export async function deleteClassroomMaterial(materialId: string, companyId: str
   if (error) throw new Error(error.message);
 
   // Attempt to delete from storage if hosted internally
-  if (material?.file_url && material.file_url.includes(BUCKET)) {
+  const storagePath = extractClassroomStoragePath(material?.file_url);
+  if (storagePath) {
     try {
-      const parts = material.file_url.split(`${BUCKET}/`);
-      if (parts[1]) {
-        const serviceClient = createServiceClient();
-        await serviceClient.storage.from(BUCKET).remove([parts[1]]);
-      }
+      const serviceClient = createServiceClient();
+      await serviceClient.storage.from(BUCKET).remove([storagePath]);
     } catch (e) {
       console.warn("Storage deletion warning:", e);
     }

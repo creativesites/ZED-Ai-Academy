@@ -2,8 +2,13 @@
 
 import { auth } from "@clerk/nextjs/server";
 import { revalidatePath } from "next/cache";
+import { createServiceClient } from "@/lib/supabase/server";
 import { requireTenantMember, requireTenantTeacher } from "@/lib/tenants/access";
-import { uploadFileToClassroomBucket } from "@/lib/storage/classroom-bucket";
+import {
+  signClassroomStorageUrls,
+  uploadFileToClassroomBucket,
+} from "@/lib/storage/classroom-bucket";
+import { insertSingleWithSchemaFallback } from "@/lib/supabase/schema-fallback";
 
 export interface RubricCriterion {
   id: string;
@@ -109,11 +114,36 @@ export async function getClassroomAssignments(
       .in("assignment_id", assignmentIds)
       .eq("student_id", userId);
 
-    const submissionMap = new Map((submissions ?? []).map((s: any) => [s.assignment_id, s]));
+    const serviceClient = createServiceClient();
+    const urlsToSign: Array<string | null | undefined> = [];
+    for (const a of assignments as any[]) {
+      if (Array.isArray(a.attachments)) {
+        for (const att of a.attachments) urlsToSign.push(att?.url);
+      }
+    }
+    for (const s of submissions ?? []) {
+      urlsToSign.push((s as any).file_url);
+    }
+    const signedMap = await signClassroomStorageUrls(serviceClient, urlsToSign);
+
+    const submissionMap = new Map(
+      (submissions ?? []).map((s: any) => [
+        s.assignment_id,
+        {
+          ...s,
+          file_url: s.file_url ? (signedMap.get(s.file_url) ?? s.file_url) : null,
+        },
+      ])
+    );
 
     return assignments.map((a: any) => ({
       ...a,
-      attachments: Array.isArray(a.attachments) ? a.attachments : [],
+      attachments: Array.isArray(a.attachments)
+        ? a.attachments.map((att: any) => ({
+            ...att,
+            url: att?.url ? (signedMap.get(att.url) ?? att.url) : att?.url,
+          }))
+        : [],
       rubric: Array.isArray(a.rubric) ? a.rubric : [],
       my_submission: submissionMap.get(a.id) ?? null,
     }));
@@ -123,6 +153,15 @@ export async function getClassroomAssignments(
       .from("classroom_assignment_submissions")
       .select("id, assignment_id, status")
       .in("assignment_id", assignmentIds);
+
+    const serviceClient = createServiceClient();
+    const urlsToSign: Array<string | null | undefined> = [];
+    for (const a of assignments as any[]) {
+      if (Array.isArray(a.attachments)) {
+        for (const att of a.attachments) urlsToSign.push(att?.url);
+      }
+    }
+    const signedMap = await signClassroomStorageUrls(serviceClient, urlsToSign);
 
     const countsMap = new Map<string, { total: number; graded: number; pending: number }>();
     for (const aId of assignmentIds) {
@@ -142,7 +181,12 @@ export async function getClassroomAssignments(
 
     return assignments.map((a: any) => ({
       ...a,
-      attachments: Array.isArray(a.attachments) ? a.attachments : [],
+      attachments: Array.isArray(a.attachments)
+        ? a.attachments.map((att: any) => ({
+            ...att,
+            url: att?.url ? (signedMap.get(att.url) ?? att.url) : att?.url,
+          }))
+        : [],
       rubric: Array.isArray(a.rubric) ? a.rubric : [],
       submissions_count: countsMap.get(a.id) ?? { total: 0, graded: 0, pending: 0 },
     }));
@@ -198,7 +242,8 @@ export async function createClassroomAssignment(formData: FormData) {
   } else if (file && file.size > 0) {
     const cleanFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
     const filePath = `${companyId}/assignments/${Date.now()}_${cleanFileName}`;
-    const { publicUrl } = await uploadFileToClassroomBucket(supabase, filePath, file, false);
+    const serviceClient = createServiceClient();
+    const { publicUrl } = await uploadFileToClassroomBucket(serviceClient, filePath, file, false);
 
     attachments.push({
       name: file.name,
@@ -208,9 +253,10 @@ export async function createClassroomAssignment(formData: FormData) {
     });
   }
 
-  const { data: newAssignment, error } = await supabase
-    .from("classroom_assignments")
-    .insert({
+  const { data: newAssignment, error } = await insertSingleWithSchemaFallback(
+    supabase,
+    "classroom_assignments",
+    {
       company_id: companyId,
       cohort_id: cohortId,
       course_id: courseId,
@@ -223,9 +269,8 @@ export async function createClassroomAssignment(formData: FormData) {
       attachments: attachments as any,
       rubric: rubric as any,
       is_published: true,
-    })
-    .select()
-    .single();
+    }
+  );
 
   if (error) {
     console.error("Create assignment error:", error);
@@ -331,7 +376,8 @@ export async function submitClassroomAssignment(formData: FormData) {
   } else if (file && file.size > 0) {
     const cleanFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
     const filePath = `${companyId}/submissions/${assignmentId}/${userId}_${Date.now()}_${cleanFileName}`;
-    const { publicUrl } = await uploadFileToClassroomBucket(supabase, filePath, file, true);
+    const serviceClient = createServiceClient();
+    const { publicUrl } = await uploadFileToClassroomBucket(serviceClient, filePath, file, true);
 
     fileUrl = publicUrl;
     fileName = file.name;
@@ -395,7 +441,20 @@ export async function getAssignmentSubmissionsForInstructor(
     throw new Error(error.message);
   }
 
-  return data ?? [];
+  const rows = data ?? [];
+  if (rows.length > 0) {
+    const serviceClient = createServiceClient();
+    const signedMap = await signClassroomStorageUrls(
+      serviceClient,
+      rows.map((r: any) => r.file_url)
+    );
+    return rows.map((r: any) => ({
+      ...r,
+      file_url: r.file_url ? (signedMap.get(r.file_url) ?? r.file_url) : null,
+    }));
+  }
+
+  return rows;
 }
 
 export async function gradeClassroomSubmission(formData: FormData) {
