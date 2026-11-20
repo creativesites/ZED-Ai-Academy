@@ -86,7 +86,7 @@ export async function selfEnrollTenantAdmin(
   if (cohortId && cohortId !== "all") {
     const { data: groupMember } = await supabase
       .from("classroom_group_members")
-      .select("id")
+      .select("profile_id")
       .eq("group_id", cohortId)
       .eq("profile_id", userId)
       .maybeSingle();
@@ -221,7 +221,7 @@ export async function enrollOrInviteTenantStudents(input: {
         if (cohortId) {
           const { data: existingGroupMember } = await supabase
             .from("classroom_group_members")
-            .select("id")
+            .select("profile_id")
             .eq("group_id", cohortId)
             .eq("profile_id", existingProfile.id)
             .maybeSingle();

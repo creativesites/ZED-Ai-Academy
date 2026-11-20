@@ -384,6 +384,7 @@ export interface Database {
           notes?: string | null;
         };
         Update: {
+          company_id?: string | null;
           completed_at?: string | null;
           status?: EnrollmentStatus;
           notes?: string | null;

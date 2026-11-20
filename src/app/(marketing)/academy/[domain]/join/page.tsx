@@ -72,7 +72,7 @@ async function applyPendingLearnerAssignments({
     if (validGroup) {
       const { data: existingMember } = await service
         .from("classroom_group_members")
-        .select("id")
+        .select("profile_id")
         .eq("group_id", cohortId)
         .eq("profile_id", userId)
         .maybeSingle();
