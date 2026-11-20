@@ -1,14 +1,10 @@
-import { auth } from "@clerk/nextjs/server";
-import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
-import { getCurrentTenantAccess, isTeachingRole } from "@/lib/tenants/access";
-import { 
-  BookOpen, Plus, Eye, Pencil, Users, 
-  Sparkles, Layers, ArrowRight, ShieldCheck, CheckCircle2, Clock
+import {
+  BookOpen, Plus, Eye, Pencil, Users,
+  Sparkles, CheckCircle2, Clock
 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { formatPrice } from "@/lib/course-experience";
+import { requireTenantAdminPage } from "@/lib/tenants/admin-guard";
 import type { Course } from "@/types/database";
 
 export const metadata = {
@@ -27,27 +23,7 @@ export default async function TenantAdminCoursesPage({
   params: Promise<{ domain: string }>;
 }) {
   const { domain } = await params;
-  const { userId } = await auth();
-
-  if (!userId) {
-    redirect(`/sign-in?redirect_url=/academy/${domain}/admin/courses`);
-  }
-
-  const supabase = createClient();
-  const { data: company } = await supabase
-    .from("companies")
-    .select("id, name, slug, primary_color")
-    .eq("slug", domain)
-    .single();
-
-  if (!company) notFound();
-
-  const access = await getCurrentTenantAccess(company.id);
-  const isAuthorized = access?.isSuperAdmin || isTeachingRole(access?.tenantRole);
-
-  if (!isAuthorized) {
-    redirect(`/academy/${company.slug}/classroom`);
-  }
+  const { supabase, company } = await requireTenantAdminPage(domain);
 
   // Fetch courses belonging to this tenant
   const { data: coursesRaw } = await supabase
@@ -73,26 +49,26 @@ export default async function TenantAdminCoursesPage({
   const draftCount = courses.filter((c) => c.status === "draft").length;
 
   return (
-    <div className="container max-w-7xl px-4 py-8 md:py-12">
+    <div className="container max-w-7xl px-4 py-6 sm:py-10">
       {/* Top Header */}
-      <div className="mb-10 flex flex-col gap-6 md:flex-row md:items-center justify-between">
+      <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-center justify-between">
         <div>
-          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#fd5523]/10 text-[#fd5523] text-xs font-black uppercase tracking-wider mb-3">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#fd5523]/10 text-[#fd5523] text-[11px] font-black uppercase tracking-wider mb-2">
             <Sparkles className="h-3.5 w-3.5" />
             <span>Curriculum Studio</span>
           </div>
-          <h1 className="text-3xl md:text-5xl font-black text-[#062e39] tracking-tight leading-none uppercase">
+          <h1 className="text-2xl sm:text-4xl font-black text-[#062e39] tracking-tight leading-none uppercase">
             {company.name} <span className="text-[#fd5523]">Courses</span>
           </h1>
-          <p className="mt-2 text-slate-500 text-sm sm:text-base font-medium">
-            Manage your courses, modular lessons, and monetization for this academy.
+          <p className="mt-1.5 text-slate-500 text-sm font-medium">
+            Manage courses, modular lessons, and monetization for this academy.
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center">
           <Link
             href={`/academy/${company.slug}/admin/courses/new`}
-            className="flex items-center gap-2 h-14 px-8 rounded-2xl bg-[#fd5523] text-white text-xs font-black uppercase tracking-[0.2em] hover:scale-105 active:scale-95 transition-all shadow-xl shadow-[#fd5523]/20"
+            className="w-full sm:w-auto justify-center flex items-center gap-2 h-11 px-6 rounded-xl bg-[#fd5523] text-white text-xs font-black uppercase tracking-wider hover:bg-[#ef4a16] transition-all shadow-md shadow-[#fd5523]/20"
           >
             <Plus className="h-4 w-4" />
             <span>Create Course</span>
@@ -101,58 +77,58 @@ export default async function TenantAdminCoursesPage({
       </div>
 
       {/* Summary KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10">
-        <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm flex items-center gap-4">
-          <div className="h-12 w-12 rounded-2xl bg-slate-50 text-[#062e39] flex items-center justify-center shrink-0">
-            <BookOpen className="h-6 w-6" />
+      <div className="grid grid-cols-3 gap-3 sm:gap-4 mb-8">
+        <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-xs flex flex-col sm:flex-row sm:items-center gap-3">
+          <div className="h-10 w-10 rounded-xl bg-slate-100 text-[#062e39] flex items-center justify-center shrink-0">
+            <BookOpen className="h-5 w-5" />
           </div>
           <div>
-            <p className="text-2xl font-black text-[#062e39]">{courses.length}</p>
-            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Total Curricula</p>
+            <p className="text-xl sm:text-2xl font-black text-[#062e39] leading-none">{courses.length}</p>
+            <p className="text-[10px] font-black uppercase tracking-wider text-slate-400 mt-1">Total</p>
           </div>
         </div>
 
-        <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm flex items-center gap-4">
-          <div className="h-12 w-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
-            <CheckCircle2 className="h-6 w-6" />
+        <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-xs flex flex-col sm:flex-row sm:items-center gap-3">
+          <div className="h-10 w-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+            <CheckCircle2 className="h-5 w-5" />
           </div>
           <div>
-            <p className="text-2xl font-black text-[#062e39]">{publishedCount}</p>
-            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Live & Published</p>
+            <p className="text-xl sm:text-2xl font-black text-[#062e39] leading-none">{publishedCount}</p>
+            <p className="text-[10px] font-black uppercase tracking-wider text-slate-400 mt-1">Published</p>
           </div>
         </div>
 
-        <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm flex items-center gap-4">
-          <div className="h-12 w-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
-            <Clock className="h-6 w-6" />
+        <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-xs flex flex-col sm:flex-row sm:items-center gap-3">
+          <div className="h-10 w-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+            <Clock className="h-5 w-5" />
           </div>
           <div>
-            <p className="text-2xl font-black text-[#062e39]">{draftCount}</p>
-            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Drafts in Progress</p>
+            <p className="text-xl sm:text-2xl font-black text-[#062e39] leading-none">{draftCount}</p>
+            <p className="text-[10px] font-black uppercase tracking-wider text-slate-400 mt-1">Drafts</p>
           </div>
         </div>
       </div>
 
       {/* Courses Grid */}
       {courses.length === 0 ? (
-        <div className="bg-white rounded-[2.5rem] p-12 text-center border border-slate-100 shadow-sm max-w-xl mx-auto my-12">
-          <div className="h-16 w-16 rounded-2xl bg-[#fff6ee] text-[#fd5523] flex items-center justify-center mx-auto mb-4">
-            <BookOpen className="h-8 w-8" />
+        <div className="bg-white rounded-2xl sm:rounded-3xl p-8 sm:p-12 text-center border-2 border-dashed border-slate-200 max-w-xl mx-auto my-8">
+          <div className="h-14 w-14 rounded-2xl bg-[#fff6ee] text-[#fd5523] flex items-center justify-center mx-auto mb-4">
+            <BookOpen className="h-7 w-7" />
           </div>
           <h2 className="text-xl font-black text-[#062e39]">No courses created yet</h2>
           <p className="text-sm text-slate-500 mt-2 mb-6">
-            Start building your academy curriculum. You can design self-paced modules, interactive quizzes, and AI tutor prompts.
+            Start building your academy curriculum with modular lessons, interactive quizzes, and AI assistance.
           </p>
           <Link
             href={`/academy/${company.slug}/admin/courses/new`}
-            className="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-[#fd5523] text-white text-xs font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-lg"
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[#fd5523] text-white text-xs font-black uppercase tracking-wider hover:bg-[#ef4a16] transition-all shadow-md"
           >
             <Plus className="h-4 w-4" />
             <span>Create First Course</span>
           </Link>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {courses.map((course) => {
             const statusConfig = STATUS_BADGES[course.status as Course["status"]] || STATUS_BADGES.draft;
             const studentsCount = enrollmentMap.get(course.id) ?? 0;
@@ -161,35 +137,36 @@ export default async function TenantAdminCoursesPage({
             return (
               <div
                 key={course.id}
-                className="bg-white rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between overflow-hidden group hover:-translate-y-1"
+                className="bg-white rounded-2xl border border-slate-200/80 shadow-xs hover:shadow-md transition-all duration-200 flex flex-col justify-between overflow-hidden group"
               >
                 <div>
-                  {/* Thumbnail / Header */}
-                  <div className="h-44 w-full bg-slate-100 relative overflow-hidden">
+                  {/* 16:9 Thumbnail */}
+                  <div className="aspect-video w-full bg-slate-100 relative overflow-hidden">
                     {course.thumbnail_url ? (
+                      // eslint-disable-next-line @next/next/no-img-element
                       <img
                         src={course.thumbnail_url}
                         alt={course.title}
-                        className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />
                     ) : (
-                      <div className="h-full w-full flex items-center justify-center bg-gradient-to-br from-[#062e39] to-[#0a4055] text-white/20">
-                        <BookOpen className="h-12 w-12" />
+                      <div className="h-full w-full flex items-center justify-center bg-gradient-to-br from-[#062e39] to-[#0a4055] text-white/25">
+                        <BookOpen className="h-10 w-10" />
                       </div>
                     )}
-                    <div className="absolute top-4 left-4">
-                      <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border shadow-sm ${statusConfig.className}`}>
+                    <div className="absolute top-3 left-3">
+                      <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider border shadow-xs ${statusConfig.className}`}>
                         {statusConfig.label}
                       </span>
                     </div>
-                    <div className="absolute top-4 right-4 bg-white/95 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-black text-[#062e39] shadow-sm">
+                    <div className="absolute top-3 right-3 bg-white/95 backdrop-blur-sm px-2.5 py-1 rounded-lg text-[11px] font-black text-[#062e39] shadow-xs">
                       {priceLabel}
                     </div>
                   </div>
 
                   {/* Body Content */}
-                  <div className="p-6">
-                    <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-[#fd5523] mb-2">
+                  <div className="p-5">
+                    <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-[#fd5523] mb-1.5">
                       <span>{course.category || "General"}</span>
                       {course.level && (
                         <>
@@ -199,22 +176,22 @@ export default async function TenantAdminCoursesPage({
                       )}
                     </div>
 
-                    <h3 className="text-lg font-black text-[#062e39] tracking-tight group-hover:text-[#fd5523] transition-colors line-clamp-2">
+                    <h3 className="text-base sm:text-lg font-bold text-[#062e39] tracking-tight group-hover:text-[#fd5523] transition-colors line-clamp-2">
                       {course.title}
                     </h3>
-                    
+
                     {course.description && (
-                      <p className="mt-2 text-xs text-slate-500 line-clamp-2 leading-relaxed">
+                      <p className="mt-1.5 text-xs text-slate-500 line-clamp-2 leading-relaxed">
                         {course.description}
                       </p>
                     )}
 
-                    <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+                    <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
                       <div className="flex items-center gap-1.5">
                         <Users className="h-3.5 w-3.5 text-slate-400" />
                         <span className="font-bold text-slate-700">{studentsCount}</span> enrolled
                       </div>
-                      <span className="text-[10px] text-slate-400 font-mono">
+                      <span className="text-[10px] text-slate-400 font-mono truncate max-w-[120px]">
                         /{course.slug}
                       </span>
                     </div>
@@ -222,19 +199,19 @@ export default async function TenantAdminCoursesPage({
                 </div>
 
                 {/* Footer Actions */}
-                <div className="p-6 pt-0 flex items-center gap-2">
+                <div className="px-5 pb-5 pt-0 flex items-center gap-2">
                   <Link
                     href={`/academy/${company.slug}/admin/courses/${course.id}`}
-                    className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-slate-50 hover:bg-[#062e39] text-[#062e39] hover:text-white text-xs font-bold transition-all shadow-sm"
+                    className="flex-1 flex items-center justify-center gap-2 h-10 rounded-xl bg-[#062e39] hover:bg-[#0a4055] text-white text-xs font-bold transition-all"
                   >
                     <Pencil className="h-3.5 w-3.5" />
-                    <span>Edit Curriculum</span>
+                    <span>Open Studio</span>
                   </Link>
 
                   <Link
                     href={`/academy/${company.slug}/courses/${course.slug}`}
                     target="_blank"
-                    className="h-10 w-10 flex items-center justify-center rounded-xl bg-slate-50 hover:bg-[#fd5523] text-slate-400 hover:text-white transition-all shadow-sm"
+                    className="h-10 w-10 flex items-center justify-center rounded-xl border border-slate-200 bg-white hover:bg-[#fff6ee] text-slate-500 hover:text-[#fd5523] transition-all"
                     title="Preview Course"
                   >
                     <Eye className="h-4 w-4" />

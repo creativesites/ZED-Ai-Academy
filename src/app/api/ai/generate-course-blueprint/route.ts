@@ -3,33 +3,46 @@ import { gemini } from "@/lib/ai/gemini";
 import { modelFor } from "@/lib/ai/models";
 import { NextRequest } from "next/server";
 
+type SourceFilePayload = {
+  name: string;
+  mimeType: string;
+  base64: string;
+};
+
 export async function POST(req: NextRequest) {
   const { userId } = await auth();
   if (!userId) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { brief } = await req.json();
+  const body = (await req.json()) as {
+    brief?: string;
+    sourceText?: string;
+    sourceFile?: SourceFilePayload;
+  };
 
-  if (!brief || typeof brief !== "string") {
-    return Response.json({ error: "Missing course brief" }, { status: 400 });
+  const brief = typeof body.brief === "string" ? body.brief.trim() : "";
+  const sourceText = typeof body.sourceText === "string" ? body.sourceText.trim().slice(0, 30000) : "";
+  const sourceFile = body.sourceFile;
+
+  if (!brief && !sourceText && !sourceFile?.base64) {
+    return Response.json({ error: "Provide a course brief or upload source materials." }, { status: 400 });
   }
 
-  const systemInstruction = `You design premium, practical AI courses for working professionals.
+  const systemInstruction = `You design premium, practical courses on Zed AI Academy.
 
 Return only valid JSON without markdown fences or explanatory text.`;
 
-  const prompt = `You are designing an AI course for working professionals on Zed AI Academy.
+  const prompt = `You are designing a course for Zed AI Academy.
 
 The academy prioritizes:
 - output-first learning
 - practical workflows over theory
-- one quick win in the first 15 minutes
-- role-specific applications
-- a final real-work project
-- a short privacy and accuracy audit
+- one quick win early in the course
+- clear, role-specific or learner-specific outcomes
+- a final real-world project or assessment
 
-Given the brief below, return ONLY valid JSON with this exact shape:
+Given the brief and/or uploaded source materials below, return ONLY valid JSON with this exact shape:
 {
   "title": "string",
   "description": "string",
@@ -43,19 +56,30 @@ Given the brief below, return ONLY valid JSON with this exact shape:
 }
 
 Rules:
-- title should sound premium but practical
+- title should sound clear, credible, and practical
 - description should be 2 sentences max
 - module_outline must contain exactly 4 modules
-- modules should follow: quick win, frameworks/tools, workflow build, safety/capstone
-- never mention transformers, AGI, or deep theory unless absolutely required by the brief
+- If source materials are provided, ground the title, summary, and module outline strictly in those materials without inventing unsupported facts or fabricated citations.
+${brief ? `\nCreator Brief:\n${brief}` : ""}
+${sourceText ? `\nUploaded Source Material:\n${sourceText}` : ""}`;
 
-Brief:
-${brief}`;
+  const contents =
+    sourceFile?.base64 && sourceFile.mimeType
+      ? [
+          {
+            inlineData: {
+              mimeType: sourceFile.mimeType,
+              data: sourceFile.base64,
+            },
+          },
+          { text: prompt },
+        ]
+      : prompt;
 
   try {
     const response = await gemini.models.generateContent({
       model: modelFor("courseBlueprint"),
-      contents: prompt,
+      contents,
       config: {
         systemInstruction,
         maxOutputTokens: 1200,
@@ -91,15 +115,14 @@ ${brief}`;
       !parsed.audience ||
       !parsed.quick_win ||
       !parsed.capstone ||
-      !Array.isArray(parsed.module_outline) ||
-      parsed.module_outline.length !== 4
+      !Array.isArray(parsed.module_outline)
     ) {
-      return Response.json({ error: "Generated blueprint failed validation" }, { status: 500 });
+      return Response.json({ error: "Incomplete blueprint returned" }, { status: 500 });
     }
 
     return Response.json(parsed);
   } catch (error) {
     console.error("Course blueprint generation error:", error);
-    return Response.json({ error: "Failed to generate blueprint" }, { status: 500 });
+    return Response.json({ error: "Unable to generate blueprint" }, { status: 500 });
   }
 }

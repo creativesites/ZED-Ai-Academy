@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { CourseSettingsForm } from "@/components/creator/course-settings-form";
 import { CurriculumBuilder } from "@/components/creator/curriculum-builder";
 import { PublishButton } from "@/components/creator/publish-button";
+import { CourseAIReview } from "@/components/creator/course-ai-review";
 import { getCourseListPath } from "@/lib/courses/course-routes";
 import {
   ArrowLeft,
@@ -275,7 +276,7 @@ export async function CourseStudioView({
             </TabsList>
           </div>
 
-          <TabsContent value="overview" className="mt-0">
+          <TabsContent value="overview" className="mt-0 space-y-6">
             <div className="flex flex-col gap-6 lg:flex-row lg:gap-6">
               <div className="w-full lg:flex-[3]">
                 <div className="rounded-2xl border-0 bg-white p-5 shadow-sm sm:rounded-[2rem] sm:p-6 md:p-8">
@@ -402,6 +403,7 @@ export async function CourseStudioView({
                 )}
               </div>
             </div>
+            <CourseAIReview courseId={courseId} />
           </TabsContent>
 
           <TabsContent value="curriculum" className="mt-0">
@@ -525,6 +527,7 @@ export async function CourseStudioView({
                 </div>
               </div>
             </div>
+            <CourseAIReview courseId={courseId} />
           </TabsContent>
         </Tabs>
       </div>

@@ -13,15 +13,15 @@ export default async function SettingsPage() {
 
   if (!orgId) {
     return (
-      <div className="container" style={{ paddingTop: "60px", paddingBottom: "80px" }}>
-        <Card className="rounded-[2.5rem] border-0 shadow-xl overflow-hidden bg-[#fff6ee]">
-          <CardContent className="p-12 text-center space-y-6">
-            <div className="mx-auto h-20 w-20 bg-white rounded-3xl flex items-center justify-center text-[#fd5523] shadow-sm">
-              <Building2 className="h-10 w-10" />
+      <div className="container max-w-4xl mx-auto px-4 py-8 sm:py-12">
+        <Card className="rounded-2xl sm:rounded-3xl border border-slate-200/80 shadow-sm overflow-hidden bg-[#fff6ee]">
+          <CardContent className="p-6 sm:p-12 text-center space-y-4">
+            <div className="mx-auto h-16 w-16 bg-white rounded-2xl flex items-center justify-center text-[#fd5523] shadow-sm">
+              <Building2 className="h-8 w-8" />
             </div>
-            <h1 className="text-3xl font-bold text-[#062e39]">Organization Required</h1>
-            <p className="text-lg text-slate-600 max-w-lg mx-auto leading-relaxed">
-              To customize your site settings, you must be actively operating within an Organization. Please use the switcher in the header to select or create your Academy Organization.
+            <h1 className="text-2xl sm:text-3xl font-bold text-[#062e39]">Organization Required</h1>
+            <p className="text-sm sm:text-base text-slate-600 max-w-lg mx-auto leading-relaxed">
+              To customize your site settings, you must be actively operating within an Organization. Please select or create your Academy Organization first.
             </p>
           </CardContent>
         </Card>

@@ -105,17 +105,17 @@ export default async function CreatorLiveSessionsPage() {
   const upcomingBookings = bookings.filter((booking) => booking.status !== "requested");
 
   return (
-    <main className="container" style={{ paddingTop: "60px", paddingBottom: "120px" }}>
-      <div className="mb-10 flex flex-col justify-between gap-5 md:flex-row md:items-end">
+    <main className="container max-w-7xl mx-auto px-4 py-6 sm:py-10">
+      <div className="mb-8 flex flex-col justify-between gap-4 md:flex-row md:items-end">
         <div>
-          <p className="text-xs font-black uppercase tracking-[0.25em] text-[#fd5523]">Creator Studio</p>
-          <h1 className="mt-3 text-4xl font-bold tracking-tight text-[#062e39]">Live Sessions</h1>
-          <p className="mt-3 max-w-2xl text-slate-500">
+          <p className="text-xs font-black uppercase tracking-[0.2em] text-[#fd5523]">Creator Studio</p>
+          <h1 className="mt-2 text-2xl sm:text-4xl font-black tracking-tight text-[#062e39]">Live Sessions</h1>
+          <p className="mt-2 max-w-2xl text-sm sm:text-base text-slate-500">
             Set your availability, publish bookable session types, and confirm learner requests.
           </p>
         </div>
-        <Link href="/creator/courses" className="text-sm font-bold text-[#062e39] hover:text-[#fd5523]">
-          Back to courses
+        <Link href="/creator/courses" className="text-xs sm:text-sm font-bold text-[#062e39] hover:text-[#fd5523]">
+          ← Back to courses
         </Link>
       </div>
 

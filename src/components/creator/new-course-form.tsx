@@ -7,6 +7,7 @@ import { createCourse } from "@/actions/courses";
 import {
   CourseBlueprintAssistant,
   type CourseBlueprintResponse,
+  type ReferenceMaterialPayload,
 } from "@/components/creator/course-blueprint-assistant";
 import { Button } from "@/components/ui/button";
 import { buttonVariants } from "@/components/ui/button-variants";
@@ -69,7 +70,8 @@ export function NewCourseForm({
   const [priceType, setPriceType] = useState<CourseBlueprintResponse["price_type"]>("free");
   const [priceAmount, setPriceAmount] = useState("");
   const [blueprint, setBlueprint] = useState<CourseBlueprintResponse | null>(null);
-  const [showAiAssistant, setShowAiAssistant] = useState(false);
+  const [referenceMaterial, setReferenceMaterial] = useState<ReferenceMaterialPayload | null>(null);
+  const [assistantMode, setAssistantMode] = useState<"idea" | "materials" | null>(null);
   const [domainPreset, setDomainPreset] = useState<CourseDomainPresetId>("ai-professional");
 
   function applyBlueprint(next: CourseBlueprintResponse) {
@@ -81,7 +83,7 @@ export function NewCourseForm({
     setPriceType(next.price_type);
     const matchingPreset = COURSE_DOMAIN_PRESETS.find((preset) => preset.suggestedCategory === next.category);
     if (matchingPreset) setDomainPreset(matchingPreset.id);
-    setShowAiAssistant(false);
+    setAssistantMode(null);
   }
 
   const backLink = cancelHref || (tenantSlug ? `/academy/${tenantSlug}/admin/courses` : "/creator/courses");
@@ -112,26 +114,75 @@ export function NewCourseForm({
           </div>
         </div>
 
-        <Button
-          type="button"
-          variant={showAiAssistant ? "secondary" : "outline"}
-          onClick={() => setShowAiAssistant((prev) => !prev)}
-          className={cn(
-            "h-10 w-full sm:w-auto rounded-xl px-4 text-xs font-bold uppercase tracking-wider transition-all",
-            showAiAssistant
-              ? "bg-[#062e39] text-white hover:bg-[#0a4055]"
-              : "border-[#fd5523]/30 bg-[#fff6ee] text-[#fd5523] hover:bg-[#fd5523] hover:text-white"
-          )}
-        >
-          <Sparkles className="mr-2 h-4 w-4" />
-          {showAiAssistant ? "Hide AI Architect" : "Draft with AI"}
-        </Button>
+        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+          <Button
+            type="button"
+            variant={assistantMode === "materials" ? "secondary" : "outline"}
+            onClick={() =>
+              setAssistantMode((prev) => (prev === "materials" ? null : "materials"))
+            }
+            className={cn(
+              "h-10 flex-1 sm:flex-none rounded-xl px-4 text-xs font-bold uppercase tracking-wider transition-all",
+              assistantMode === "materials"
+                ? "bg-[#062e39] text-white hover:bg-[#0a4055]"
+                : "border-slate-200 bg-white text-[#062e39] hover:bg-slate-50"
+            )}
+          >
+            <BookOpen className="mr-2 h-4 w-4 text-[#fd5523]" />
+            From Materials
+          </Button>
+          <Button
+            type="button"
+            variant={assistantMode === "idea" ? "secondary" : "outline"}
+            onClick={() => setAssistantMode((prev) => (prev === "idea" ? null : "idea"))}
+            className={cn(
+              "h-10 flex-1 sm:flex-none rounded-xl px-4 text-xs font-bold uppercase tracking-wider transition-all",
+              assistantMode === "idea"
+                ? "bg-[#062e39] text-white hover:bg-[#0a4055]"
+                : "border-[#fd5523]/30 bg-[#fff6ee] text-[#fd5523] hover:bg-[#fd5523] hover:text-white"
+            )}
+          >
+            <Sparkles className="mr-2 h-4 w-4" />
+            Draft with AI
+          </Button>
+        </div>
       </div>
 
-      {/* Collapsible AI Course Architect */}
-      {showAiAssistant && <CourseBlueprintAssistant onApply={applyBlueprint} />}
+      {/* Collapsible AI / Materials Course Starter */}
+      {assistantMode && (
+        <CourseBlueprintAssistant
+          key={assistantMode}
+          initialMode={assistantMode}
+          onApply={applyBlueprint}
+          onAttachReference={(material) => {
+            setReferenceMaterial(material);
+            setAssistantMode(null);
+          }}
+        />
+      )}
 
-      {blueprint && !showAiAssistant && (
+      {referenceMaterial && !assistantMode && (
+        <div className="rounded-2xl border border-slate-200 bg-white p-4 space-y-2 shadow-xs">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-xs font-bold uppercase tracking-wider text-[#062e39] flex items-center gap-2">
+              <BookOpen className="h-4 w-4 text-[#fd5523]" />
+              Reference Material: {referenceMaterial.fileName}
+            </span>
+            <button
+              type="button"
+              onClick={() => setReferenceMaterial(null)}
+              className="text-xs font-semibold text-slate-400 hover:text-red-600"
+            >
+              Remove
+            </button>
+          </div>
+          <p className="text-xs text-slate-600 whitespace-pre-wrap line-clamp-4 bg-slate-50 rounded-xl p-3 border border-slate-100">
+            {referenceMaterial.notes}
+          </p>
+        </div>
+      )}
+
+      {blueprint && !assistantMode && (
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-2xl border border-emerald-200 bg-emerald-50/70 px-4 py-3 text-sm text-emerald-900">
           <div className="flex items-center gap-2.5">
             <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
@@ -141,10 +192,10 @@ export function NewCourseForm({
           </div>
           <button
             type="button"
-            onClick={() => setShowAiAssistant(true)}
+            onClick={() => setAssistantMode("idea")}
             className="text-xs font-bold text-emerald-700 underline underline-offset-2 self-start sm:self-auto"
           >
-            Reopen AI Architect
+            Reopen Assistant
           </button>
         </div>
       )}
