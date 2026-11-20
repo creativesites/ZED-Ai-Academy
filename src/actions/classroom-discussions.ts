@@ -286,7 +286,7 @@ export async function postClassroomMessage(formData: FormData) {
       attachments.map((a) => a.url)
     );
     responseMsg = {
-      ...newMsg,
+      ...(newMsg as Record<string, any>),
       attachments: attachments.map((att) => ({
         ...att,
         url: signedMap.get(att.url) ?? att.url,

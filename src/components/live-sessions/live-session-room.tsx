@@ -13,8 +13,6 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { DeviceTestModal } from "@/components/live-sessions/device-test-modal";
 
-const APP_ID = "vpaas-magic-cookie-37a3214c11ef406c81cc165d3d1c2f4f";
-
 type LiveQuestion = {
   id: string;
   author: string;
@@ -41,6 +39,8 @@ export function LiveSessionRoom({
   onLeave,
 }: LiveSessionRoomProps) {
   const [jwt, setJwt] = useState<string | null>(null);
+  const [appId, setAppId] = useState<string | null>(null);
+  const [resolvedRoomName, setResolvedRoomName] = useState<string>(roomName);
   const [attendanceId, setAttendanceId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -74,9 +74,13 @@ export function LiveSessionRoom({
         setLoading(true);
         setError(null);
 
-        // 1. Generate Jitsi JWT Token
-        const result = await generateJitsiToken(roomName, isInstructor);
-        if (!result.success || !result.token) {
+        // 1. Generate Server-Authorized Jitsi JWT Token
+        const result = await generateJitsiToken({
+          scope: "booking",
+          bookingId,
+          roomName,
+        });
+        if (!result.success) {
           throw new Error(result.error || "Failed to generate security token for live room");
         }
 
@@ -90,6 +94,8 @@ export function LiveSessionRoom({
 
         if (mounted) {
           setJwt(result.token);
+          setAppId(result.appId);
+          setResolvedRoomName(result.roomName);
         }
       } catch (err) {
         if (mounted) {
@@ -302,10 +308,10 @@ export function LiveSessionRoom({
       {/* Main Studio Body (Video + Interactive Panel) */}
       <div className="flex-1 bg-black relative flex min-h-0">
         <div className="flex-1 relative min-h-0">
-          {jwt && roomName && (
+          {jwt && resolvedRoomName && appId && (
             <JaaSMeeting
-              appId={APP_ID}
-              roomName={roomName}
+              appId={appId}
+              roomName={resolvedRoomName}
               jwt={jwt}
               configOverwrite={{
                 startWithAudioMuted: false,

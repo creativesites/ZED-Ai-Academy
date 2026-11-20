@@ -10,40 +10,19 @@ import { generateJitsiToken } from "@/actions/jitsi";
 const Container = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [roomName, setRoomName] = useState<string | null>(null);
+  const [appId, setAppId] = useState<string | null>(null);
   const [jwt, setJwt] = useState<string | null>(null);
-  const [swUnregistered, setSwUnregistered] = useState(false);
-
-  const APP_ID = "vpaas-magic-cookie-37a3214c11ef406c81cc165d3d1c2f4f";
-
-  // Clear any existing service workers (like coi-serviceworker) that might be blocking external scripts
-  useEffect(() => {
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.getRegistrations().then(registrations => {
-        if (registrations.length > 0) {
-          console.log(`Found ${registrations.length} service workers. Unregistering...`);
-          Promise.all(registrations.map(r => r.unregister())).then(() => {
-            console.log("Service workers unregistered. Reloading to clear state...");
-            setSwUnregistered(true);
-            window.location.reload();
-          });
-        } else {
-          setSwUnregistered(true);
-        }
-      });
-    } else {
-      setSwUnregistered(true);
-    }
-  }, []);
 
   const handleCreateMeeting = async () => {
     setIsGenerating(true);
     try {
       const newRoom = `zed-academy-${Math.random().toString(36).slice(2, 12)}`;
-      const result = await generateJitsiToken(newRoom);
+      const result = await generateJitsiToken({ scope: "test", roomName: newRoom });
       
-      if (result.success && result.token) {
+      if (result.success) {
         setJwt(result.token);
-        setRoomName(newRoom);
+        setAppId(result.appId);
+        setRoomName(result.roomName);
         toast.success("Studio room initialized with JaaS!");
       } else {
         toast.error(result.error || "Failed to generate meeting token");
@@ -58,7 +37,7 @@ const Container = () => {
 
   return (
     <div className="h-full w-full">
-      {roomName && jwt ? (
+      {roomName && jwt && appId ? (
         <div className="flex flex-col h-full w-full bg-[#062e39] rounded-3xl shadow-2xl overflow-hidden border border-white/10 animate-in fade-in zoom-in-95 duration-500">
           {/* Header */}
           <div className="flex items-center justify-between px-6 py-4 bg-white/5 border-b border-white/10">
@@ -71,7 +50,7 @@ const Container = () => {
                 variant="ghost" 
                 size="sm" 
                 onClick={() => {
-                  navigator.clipboard.writeText(`https://8x8.vc/${APP_ID}/${roomName}`);
+                  navigator.clipboard.writeText(`https://8x8.vc/${appId}/${roomName}`);
                   toast.success("Invite link copied");
                 }}
                 className="text-white/50 hover:text-white hover:bg-white/10 text-xs"
@@ -95,7 +74,7 @@ const Container = () => {
           {/* Video Area */}
           <div className="flex-1 bg-black relative">
             <JaaSMeeting
-              appId={APP_ID}
+              appId={appId}
               roomName={roomName}
               jwt={jwt}
               configOverwrite={{
@@ -166,7 +145,7 @@ const Container = () => {
 
           <Button 
             onClick={handleCreateMeeting} 
-            disabled={isGenerating || !swUnregistered}
+            disabled={isGenerating}
             size="lg"
             className="h-16 px-12 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xl shadow-2xl shadow-indigo-200 transition-all active:scale-95 disabled:opacity-70 group"
           >
