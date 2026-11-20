@@ -72,8 +72,8 @@ import {
   getPinnedClassroomMaterials,
   createClassroomFolder,
   deleteClassroomFolder,
-  createMaterialSignedUpload,
   createClassroomMaterialRecord,
+  updateClassroomMaterial,
   recordDocumentVersion,
   togglePinClassroomMaterial,
   deleteClassroomMaterial,
@@ -85,7 +85,7 @@ import {
   type ClassroomFolder,
   type ClassroomMaterial,
 } from "@/actions/classroom-materials";
-import { createClient as createBrowserSupabase } from "@/lib/supabase/client";
+import { uploadClassroomFileWithSignedUrl } from "@/lib/storage/client-signed-upload";
 
 const FOLDER_COLORS = [
   { name: "Orange", hex: "#fd5523" },
@@ -181,6 +181,7 @@ export function MaterialsTab({
   // Modals
   const [isFolderModalOpen, setIsFolderModalOpen] = useState(false);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const [editingMaterial, setEditingMaterial] = useState<ClassroomMaterial | null>(null);
   const [previewMaterial, setPreviewMaterial] = useState<ClassroomMaterial | null>(null);
 
   // Version History Modal
@@ -275,6 +276,7 @@ export function MaterialsTab({
   }
 
   function resetUploadForm() {
+    setEditingMaterial(null);
     setUploadTitle("");
     setUploadMaterialType("pdf");
     setUploadCategory("lecture_notes");
@@ -289,6 +291,22 @@ export function MaterialsTab({
     setUploadPinned(false);
     setUploadError(null);
     setMaterialSourceType("file");
+  }
+
+  function openEditMaterial(item: ClassroomMaterial) {
+    setEditingMaterial(item);
+    setUploadError(null);
+    setUploadTitle(item.title);
+    setUploadMaterialType(item.material_type || "document");
+    setUploadCategory(item.category || "lecture_notes");
+    setUploadFolderId(item.folder_id || "unfiled");
+    setUploadCohortId(item.cohort_id || "all");
+    setUploadCourseId(item.course_id || "all");
+    setUploadTags((item.tags ?? []).join(", "));
+    setUploadDescription(item.description || "");
+    setUploadReqAck(Boolean(item.requires_acknowledgement));
+    setUploadPinned(Boolean(item.is_pinned));
+    setIsUploadModalOpen(true);
   }
 
   // Client-side search filtering
@@ -328,7 +346,7 @@ export function MaterialsTab({
     });
   }
 
-  // Handle Material Upload (direct signed upload -> Supabase Storage, bypassing Vercel 4.5 MB limit)
+  // Handle Material Upload or Edit (direct signed upload -> Supabase Storage, bypassing Vercel 4.5 MB limit)
   async function handleUploadMaterial(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setUploadError(null);
@@ -339,6 +357,39 @@ export function MaterialsTab({
       toast.error(msg);
       return;
     }
+
+    if (editingMaterial) {
+      setIsUploading(true);
+      try {
+        await updateClassroomMaterial({
+          materialId: editingMaterial.id,
+          companyId,
+          companySlug,
+          title: uploadTitle.trim(),
+          description: uploadDescription,
+          materialType: uploadMaterialType,
+          category: uploadCategory,
+          folderId: uploadFolderId,
+          cohortId: uploadCohortId || "all",
+          courseId: uploadCourseId || "all",
+          tags: uploadTags,
+          requiresAcknowledgement: uploadReqAck,
+          isPinned: uploadPinned,
+        });
+        toast.success("Material details updated!");
+        setIsUploadModalOpen(false);
+        resetUploadForm();
+        loadData();
+      } catch (err: any) {
+        const msg = err?.message || "Failed to update material";
+        setUploadError(msg);
+        toast.error(msg);
+      } finally {
+        setIsUploading(false);
+      }
+      return;
+    }
+
     if (materialSourceType === "file" && !uploadFile) {
       const msg = "Please select or drop a file to upload.";
       setUploadError(msg);
@@ -356,29 +407,15 @@ export function MaterialsTab({
     try {
       let resolvedFileUrl: string | null =
         materialSourceType === "link" ? uploadExternalUrl.trim() : null;
-      let resolvedFileName: string | null = uploadFile?.name ?? null;
-      let resolvedFileSize = uploadFile?.size ?? 0;
+      const resolvedFileName: string | null = uploadFile?.name ?? null;
+      const resolvedFileSize = uploadFile?.size ?? 0;
       const resolvedMimeType = uploadFile?.type || "application/octet-stream";
 
       if (materialSourceType === "file" && uploadFile) {
-        let uploadedDirect = false;
         try {
-          const session = await createMaterialSignedUpload(companyId, uploadFile.name);
-          const browserSupabase = createBrowserSupabase();
-          const { error: signedUploadErr } = await browserSupabase.storage
-            .from("classroom-materials")
-            .uploadToSignedUrl(session.path, session.token, uploadFile, {
-              contentType: resolvedMimeType,
-            });
-
-          if (signedUploadErr) {
-            throw new Error(signedUploadErr.message);
-          }
-
-          resolvedFileUrl = session.publicUrl;
-          uploadedDirect = true;
+          const uploaded = await uploadClassroomFileWithSignedUrl(companyId, uploadFile);
+          resolvedFileUrl = uploaded.publicUrl;
         } catch (directErr) {
-          // Fallback to /api multipart upload for smaller files if direct storage upload fails
           if (uploadFile.size <= 4 * 1024 * 1024) {
             const formData = new FormData();
             formData.append("companyId", companyId);
@@ -417,10 +454,6 @@ export function MaterialsTab({
           }
 
           throw directErr;
-        }
-
-        if (uploadedDirect && !resolvedFileUrl) {
-          throw new Error("Could not resolve public file URL after upload.");
         }
       }
 
@@ -541,27 +574,20 @@ export function MaterialsTab({
     startUploadVersion(async () => {
       try {
         try {
-          const session = await createMaterialSignedUpload(
+          const uploaded = await uploadClassroomFileWithSignedUrl(
             companyId,
-            versionFile.name,
+            versionFile,
             `${versionModalDoc.id}-ver`
           );
-          const browserSupabase = createBrowserSupabase();
-          const { error: signedErr } = await browserSupabase.storage
-            .from("classroom-materials")
-            .uploadToSignedUrl(session.path, session.token, versionFile, {
-              contentType: versionFile.type || "application/octet-stream",
-            });
-          if (signedErr) throw new Error(signedErr.message);
 
           await recordDocumentVersion({
             companyId,
             companySlug,
             documentId: versionModalDoc.id,
-            fileUrl: session.publicUrl,
+            fileUrl: uploaded.publicUrl,
             fileName: versionFile.name,
             fileSizeBytes: versionFile.size,
-            mimeType: versionFile.type || "application/octet-stream",
+            mimeType: uploaded.type,
             changeNote: versionChangeNote,
           });
         } catch (signedErr) {
@@ -1124,6 +1150,12 @@ export function MaterialsTab({
                               <>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem
+                                  onClick={() => openEditMaterial(item)}
+                                  className="cursor-pointer gap-2"
+                                >
+                                  <Edit className="h-3.5 w-3.5" /> Edit Details
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
                                   onClick={() => handleTogglePin(item.id)}
                                   className="cursor-pointer gap-2"
                                 >
@@ -1371,25 +1403,30 @@ export function MaterialsTab({
         </DialogContent>
       </Dialog>
 
-      {/* ── Dialog: Upload Learning Material ──────────────────────────────── */}
+      {/* ── Dialog: Upload / Edit Learning Material ───────────────────────── */}
       <Dialog
         open={isUploadModalOpen}
         onOpenChange={(open) => {
           setIsUploadModalOpen(open);
-          if (open) {
+          if (!open) {
+            setEditingMaterial(null);
+            setUploadError(null);
+          } else if (!editingMaterial) {
             setUploadFolderId(selectedFolderId !== "all" ? selectedFolderId : "unfiled");
             setUploadCohortId(activeCohortId || "all");
             setUploadCourseId(selectedCourseId || "all");
           }
         }}
       >
-        <DialogContent className="w-[calc(100vw-1.5rem)] max-w-[calc(100vw-1.5rem)] sm:max-w-2xl rounded-2xl sm:rounded-3xl p-4 sm:p-6 max-h-[90dvh] overflow-y-auto">
+        <DialogContent className="w-[calc(100vw-1.5rem)] max-w-[calc(100vw-1.5rem)] sm:max-w-2xl rounded-2xl p-4 sm:p-6 max-h-[90dvh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-lg sm:text-xl font-black text-[#062e39]">
-              Upload Learning Material
+            <DialogTitle className="text-lg sm:text-xl font-bold text-[#062e39]">
+              {editingMaterial ? "Edit Learning Material" : "Upload Learning Material"}
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={handleUploadMaterial} className="space-y-4 pt-2">
+            {!editingMaterial && (
+              <>
             {/* Source Type Toggle */}
             <div className="grid grid-cols-2 gap-2">
               <button
@@ -1490,6 +1527,8 @@ export function MaterialsTab({
                   className="h-11 rounded-xl text-xs"
                 />
               </div>
+            )}
+              </>
             )}
 
             <div className="space-y-1.5">
@@ -1654,10 +1693,10 @@ export function MaterialsTab({
                 {isUploading ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin mr-1.5" />
-                    Uploading &amp; Publishing...
+                    {editingMaterial ? "Saving Changes..." : "Uploading & Publishing..."}
                   </>
                 ) : (
-                  "Save & Publish Material"
+                  editingMaterial ? "Save Changes" : "Save & Publish Material"
                 )}
               </Button>
             </DialogFooter>
@@ -1710,15 +1749,37 @@ export function MaterialsTab({
                   </div>
                 )}
 
-                {/* PDF Viewer or Preview Frame if applicable */}
+                {/* Inline Media / PDF Preview */}
                 {previewMaterial.file_url ? (
-                  previewMaterial.material_type === "pdf" ? (
-                    <div className="border border-slate-200 rounded-2xl overflow-hidden h-[340px]">
+                  previewMaterial.material_type === "pdf" ||
+                  /\.pdf(\?|$)/i.test(previewMaterial.file_url) ? (
+                    <div className="border border-slate-200 rounded-2xl overflow-hidden h-[360px]">
                       <iframe
                         src={previewMaterial.file_url}
                         className="w-full h-full"
                         title={previewMaterial.title}
                       />
+                    </div>
+                  ) : /\.(png|jpe?g|gif|webp|svg)(\?|$)/i.test(previewMaterial.file_url) ? (
+                    <div className="border border-slate-200 rounded-2xl overflow-hidden bg-slate-50 p-2 flex items-center justify-center max-h-[360px]">
+                      <img
+                        src={previewMaterial.file_url}
+                        alt={previewMaterial.title}
+                        className="max-h-[340px] w-auto object-contain rounded-xl"
+                      />
+                    </div>
+                  ) : previewMaterial.material_type === "video" ||
+                    /\.(mp4|webm|mov)(\?|$)/i.test(previewMaterial.file_url) ? (
+                    <div className="border border-slate-200 rounded-2xl overflow-hidden bg-black">
+                      <video
+                        src={previewMaterial.file_url}
+                        controls
+                        className="w-full max-h-[360px]"
+                      />
+                    </div>
+                  ) : /\.(mp3|wav|ogg|m4a)(\?|$)/i.test(previewMaterial.file_url) ? (
+                    <div className="border border-slate-200 rounded-2xl bg-slate-50 p-4">
+                      <audio src={previewMaterial.file_url} controls className="w-full" />
                     </div>
                   ) : (
                     <div className="p-6 text-center border-2 border-dashed border-slate-200 rounded-2xl bg-slate-50 space-y-3">
@@ -1726,7 +1787,10 @@ export function MaterialsTab({
                         <Download className="h-6 w-6" />
                       </div>
                       <p className="text-xs font-bold text-slate-700">
-                        {previewMaterial.title} ({formatBytes(previewMaterial.file_size_bytes)})
+                        {previewMaterial.title}{" "}
+                        {previewMaterial.file_size_bytes > 0
+                          ? `(${formatBytes(previewMaterial.file_size_bytes)})`
+                          : ""}
                       </p>
                       <a
                         href={previewMaterial.file_url}

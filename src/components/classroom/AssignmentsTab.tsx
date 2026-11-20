@@ -60,6 +60,7 @@ import {
 } from "@/actions/classroom-assignments";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { uploadClassroomFileWithSignedUrl } from "@/lib/storage/client-signed-upload";
 
 interface AssignmentsTabProps {
   companyId: string;
@@ -221,7 +222,23 @@ export function AssignmentsTab({
         formData.append("courseId", newCourseId);
         formData.append("rubric", JSON.stringify(newRubricCriteria));
         if (attachmentFile) {
-          formData.append("file", attachmentFile);
+          try {
+            const uploaded = await uploadClassroomFileWithSignedUrl(
+              companyId,
+              attachmentFile,
+              "assign"
+            );
+            formData.append("preUploadedFileUrl", uploaded.publicUrl);
+            formData.append("preUploadedFileName", uploaded.name);
+            formData.append("preUploadedFileSize", String(uploaded.size));
+            formData.append("preUploadedFileType", uploaded.type);
+          } catch (uploadErr) {
+            if (attachmentFile.size <= 4 * 1024 * 1024) {
+              formData.append("file", attachmentFile);
+            } else {
+              throw uploadErr;
+            }
+          }
         }
 
         await createClassroomAssignment(formData);
@@ -268,7 +285,24 @@ export function AssignmentsTab({
         formData.append("companyId", companyId);
         formData.append("companySlug", companySlug);
         formData.append("assignmentId", selectedAssignment.id);
-        if (submissionFile) formData.append("file", submissionFile);
+        if (submissionFile) {
+          try {
+            const uploaded = await uploadClassroomFileWithSignedUrl(
+              companyId,
+              submissionFile,
+              `sub-${selectedAssignment.id}`
+            );
+            formData.append("preUploadedFileUrl", uploaded.publicUrl);
+            formData.append("preUploadedFileName", uploaded.name);
+            formData.append("preUploadedFileSize", String(uploaded.size));
+          } catch (uploadErr) {
+            if (submissionFile.size <= 4 * 1024 * 1024) {
+              formData.append("file", submissionFile);
+            } else {
+              throw uploadErr;
+            }
+          }
+        }
         if (repoUrl.trim()) formData.append("repoUrl", repoUrl.trim());
         if (submissionNotes.trim()) formData.append("submissionText", submissionNotes.trim());
 
@@ -404,11 +438,11 @@ export function AssignmentsTab({
   }
 
   return (
-    <div className="space-y-4 sm:space-y-6 animate-in fade-in duration-300">
+    <div className="p-3 sm:p-5 lg:p-6 space-y-4 sm:space-y-5 animate-in fade-in duration-300">
       {/* Top Banner: Academic Context & Action Bar */}
-      <div className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-slate-100 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2 text-xs font-bold text-slate-400 mb-1">
+      <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-3.5">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-1.5 text-[11px] font-semibold text-slate-400 mb-1">
             <span>Classroom</span>
             <span>•</span>
             <span className="text-[#fd5523] uppercase tracking-wider">
@@ -417,18 +451,18 @@ export function AssignmentsTab({
             {selectedAssignment?.course && (
               <>
                 <span>•</span>
-                <span className="text-slate-600">{selectedAssignment.course.title}</span>
+                <span className="text-slate-600 truncate max-w-[200px]">{selectedAssignment.course.title}</span>
               </>
             )}
           </div>
-          <h2 className="text-xl sm:text-2xl font-black text-[#062e39] tracking-tight">Assignments & Tasks</h2>
+          <h2 className="text-lg sm:text-xl font-bold text-[#062e39] tracking-tight">Assignments &amp; Tasks</h2>
           <p className="text-xs text-slate-500 mt-0.5">
             Homework, lab assignments, project deliverables, and rubric evaluations.
           </p>
         </div>
 
-        <div className="flex items-center gap-3 self-stretch md:self-auto justify-between md:justify-end">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100 text-slate-600 text-xs font-bold">
+        <div className="flex flex-wrap items-center gap-2.5 self-stretch md:self-auto justify-between md:justify-end">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 text-slate-600 text-[11px] font-semibold">
             <Users className="h-3.5 w-3.5" />
             {isAdminOrInstructor ? "Instructor Mode" : "Viewing as Student"}
           </div>
@@ -436,9 +470,9 @@ export function AssignmentsTab({
           {isAdminOrInstructor && (
             <Button
               onClick={() => setIsCreateOpen(true)}
-              className="bg-[#fd5523] hover:bg-[#e0481d] text-white rounded-xl text-xs font-black px-4 py-2 min-h-[44px] shadow-lg shadow-[#fd5523]/20 gap-2"
+              className="bg-[#fd5523] hover:bg-[#e0481d] text-white rounded-xl text-xs font-semibold px-4 h-9 shadow-xs gap-1.5"
             >
-              <Plus className="h-4 w-4" />
+              <Plus className="h-3.5 w-3.5" />
               New Assignment
             </Button>
           )}

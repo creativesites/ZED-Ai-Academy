@@ -180,10 +180,22 @@ export async function createClassroomAssignment(formData: FormData) {
     }
   }
 
-  // File Attachment
+  // File Attachment (prefer pre-uploaded signed URL for large files up to 50 MB)
   const attachments: AssignmentAttachment[] = [];
+  const preUrl = (formData.get("preUploadedFileUrl") as string)?.trim();
+  const preName = (formData.get("preUploadedFileName") as string)?.trim();
+  const preSize = parseInt((formData.get("preUploadedFileSize") as string) || "0", 10);
+  const preType = (formData.get("preUploadedFileType") as string)?.trim();
   const file = formData.get("file") as File | null;
-  if (file && file.size > 0) {
+
+  if (preUrl && preName) {
+    attachments.push({
+      name: preName,
+      url: preUrl,
+      size: Number.isFinite(preSize) ? preSize : 0,
+      type: preType || "application/octet-stream",
+    });
+  } else if (file && file.size > 0) {
     const cleanFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
     const filePath = `${companyId}/assignments/${Date.now()}_${cleanFileName}`;
     const { publicUrl } = await uploadFileToClassroomBucket(supabase, filePath, file, false);
@@ -308,7 +320,15 @@ export async function submitClassroomAssignment(formData: FormData) {
   let fileName: string | null = null;
   let fileSizeBytes: number = 0;
 
-  if (file && file.size > 0) {
+  const preUrl = (formData.get("preUploadedFileUrl") as string)?.trim();
+  const preName = (formData.get("preUploadedFileName") as string)?.trim();
+  const preSize = parseInt((formData.get("preUploadedFileSize") as string) || "0", 10);
+
+  if (preUrl && preName) {
+    fileUrl = preUrl;
+    fileName = preName;
+    fileSizeBytes = Number.isFinite(preSize) ? preSize : 0;
+  } else if (file && file.size > 0) {
     const cleanFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
     const filePath = `${companyId}/submissions/${assignmentId}/${userId}_${Date.now()}_${cleanFileName}`;
     const { publicUrl } = await uploadFileToClassroomBucket(supabase, filePath, file, true);

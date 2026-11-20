@@ -696,7 +696,57 @@ export async function togglePinClassroomMaterial(materialId: string, companyId: 
   if (error) throw new Error(error.message);
 
   revalidatePath(`/academy/${companySlug}/classroom`);
+  revalidatePath(`/academy/${companySlug}/admin/classroom`);
   return { isPinned: !current.is_pinned };
+}
+
+export async function updateClassroomMaterial(input: {
+  materialId: string;
+  companyId: string;
+  companySlug: string;
+  title: string;
+  description?: string | null;
+  materialType?: string;
+  category?: string;
+  folderId?: string | null;
+  cohortId?: string | null;
+  courseId?: string | null;
+  tags?: string;
+  requiresAcknowledgement?: boolean;
+  isPinned?: boolean;
+}) {
+  const { supabase } = await requireTenantTeacher(input.companyId);
+  const title = input.title?.trim();
+  if (!title) throw new Error("Material title is required");
+
+  const tags = (input.tags ?? "")
+    .split(",")
+    .map((t) => t.trim())
+    .filter(Boolean);
+
+  const { error } = await supabase
+    .from("classroom_materials")
+    .update({
+      title,
+      description: input.description?.trim() || null,
+      material_type: (input.materialType || "document") as any,
+      category: input.category || "lecture_notes",
+      folder_id: input.folderId && input.folderId !== "unfiled" ? input.folderId : null,
+      cohort_id: input.cohortId && input.cohortId !== "all" ? input.cohortId : null,
+      course_id: input.courseId && input.courseId !== "all" ? input.courseId : null,
+      tags,
+      requires_acknowledgement: Boolean(input.requiresAcknowledgement),
+      is_pinned: Boolean(input.isPinned),
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", input.materialId)
+    .eq("company_id", input.companyId);
+
+  if (error) throw new Error(error.message);
+
+  revalidatePath(`/academy/${input.companySlug}/classroom`);
+  revalidatePath(`/academy/${input.companySlug}/admin/classroom`);
+  return { success: true };
 }
 
 export async function deleteClassroomMaterial(materialId: string, companyId: string, companySlug: string) {

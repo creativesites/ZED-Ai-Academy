@@ -155,19 +155,19 @@ export function NoticeBoardTab({
   });
 
   return (
-    <div className="flex h-full flex-col p-3 sm:p-6 md:p-8 bg-slate-50/40 space-y-4 sm:space-y-6">
+    <div className="flex h-full flex-col p-3 sm:p-5 lg:p-6 bg-slate-50/40 space-y-4">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <div className="flex items-center gap-2">
-            <h2 className="text-xl sm:text-2xl font-black text-[#062e39] tracking-tight">
+            <h2 className="text-lg sm:text-xl font-bold text-[#062e39] tracking-tight">
               Class Notice Board
             </h2>
-            <span className="text-xs px-2.5 py-0.5 rounded-full bg-slate-100 font-black text-slate-500">
+            <span className="text-xs px-2.5 py-0.5 rounded-full bg-slate-100 font-bold text-slate-500">
               {announcements.length}
             </span>
           </div>
-          <p className="text-xs md:text-sm text-slate-500 font-medium mt-1">
+          <p className="text-xs text-slate-500 mt-0.5">
             Important broadcasts, urgent alerts, exam reminders, and schedule updates.
           </p>
         </div>
@@ -177,14 +177,14 @@ export function NoticeBoardTab({
             <DialogTrigger render={(props) => (
               <Button
                 {...props}
-                className="bg-[#fd5523] text-white hover:bg-[#ef4a16] rounded-xl h-11 px-5 font-bold text-xs uppercase tracking-wider shadow-lg shadow-[#fd5523]/20 flex items-center justify-center gap-2 w-full sm:w-auto min-h-[44px]"
+                className="bg-[#fd5523] text-white hover:bg-[#ef4a16] rounded-xl h-10 px-4 font-semibold text-xs shadow-xs flex items-center justify-center gap-1.5 w-full sm:w-auto"
               >
                 <Plus className="h-4 w-4" /> Broadcast Notice
               </Button>
             )} />
-            <DialogContent className="w-[95vw] sm:max-w-[540px] rounded-2xl sm:rounded-3xl p-4 sm:p-6 max-h-[85dvh] overflow-y-auto">
+            <DialogContent className="w-[95vw] sm:max-w-[540px] rounded-2xl p-4 sm:p-6 max-h-[85dvh] overflow-y-auto">
               <DialogHeader>
-                <DialogTitle className="text-xl sm:text-2xl font-black text-[#062e39]">
+                <DialogTitle className="text-lg sm:text-xl font-bold text-[#062e39]">
                   Broadcast Announcement
                 </DialogTitle>
               </DialogHeader>
@@ -266,7 +266,7 @@ export function NoticeBoardTab({
                   <Button
                     type="submit"
                     disabled={isPosting}
-                    className="w-full bg-[#fd5523] hover:bg-[#ef4a16] text-white font-bold rounded-xl h-12 shadow-lg shadow-[#fd5523]/20"
+                    className="w-full bg-[#fd5523] hover:bg-[#ef4a16] text-white font-semibold rounded-xl h-10 text-xs sm:text-sm shadow-xs"
                   >
                     {isPosting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                     Broadcast Announcement &amp; Alert Students
@@ -318,11 +318,11 @@ export function NoticeBoardTab({
             <p className="text-xs font-bold uppercase tracking-widest">Loading notices...</p>
           </div>
         ) : filteredAnnouncements.length === 0 ? (
-          <div className="text-center py-16 sm:py-20 bg-white rounded-2xl sm:rounded-3xl border-2 border-dashed border-slate-200 p-6 sm:p-8">
-            <div className="h-16 w-16 rounded-2xl bg-orange-50 text-[#fd5523] flex items-center justify-center mx-auto mb-4">
-              <Bell className="h-8 w-8" />
+          <div className="text-center py-14 bg-white rounded-2xl border-2 border-dashed border-slate-200 p-6">
+            <div className="h-14 w-14 rounded-2xl bg-orange-50 text-[#fd5523] flex items-center justify-center mx-auto mb-3.5">
+              <Bell className="h-7 w-7" />
             </div>
-            <h3 className="text-lg font-black text-[#062e39]">No announcements posted</h3>
+            <h3 className="text-base sm:text-lg font-bold text-[#062e39]">No announcements posted</h3>
             <p className="text-xs text-slate-400 font-medium mt-1 max-w-sm mx-auto">
               Check back for updates, room assignments, and academic alerts from your instructors.
             </p>
@@ -337,7 +337,7 @@ export function NoticeBoardTab({
               <div
                 key={notice.id}
                 className={cn(
-                  "bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 border shadow-sm transition-all hover:shadow-md",
+                  "bg-white rounded-2xl p-4 sm:p-5 border shadow-xs transition-all hover:shadow-sm",
                   notice.is_pinned
                     ? "border-amber-300/80 bg-amber-50/20 shadow-amber-500/5"
                     : isUrgent

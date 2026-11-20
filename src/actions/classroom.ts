@@ -816,8 +816,32 @@ export async function getSessionHistory(companyId: string) {
       .in("session_id", sessionIds);
       
     if (attendanceData) {
+      const profileIds = Array.from(
+        new Set((attendanceData as any[]).map((a) => a.profile_id).filter(Boolean))
+      );
+      let profileMap: Record<string, { full_name: string | null; email: string | null; avatar_url: string | null }> = {};
+
+      if (profileIds.length > 0) {
+        const { data: profilesData } = await supabase
+          .from("profiles")
+          .select("id, full_name, email, avatar_url")
+          .in("id", profileIds);
+        for (const p of (profilesData ?? []) as any[]) {
+          profileMap[p.id] = {
+            full_name: p.full_name,
+            email: p.email,
+            avatar_url: p.avatar_url,
+          };
+        }
+      }
+
       return sessions.map((session: any) => {
-        const records = (attendanceData as any[]).filter(a => a.session_id === session.id);
+        const records = (attendanceData as any[])
+          .filter((a) => a.session_id === session.id)
+          .map((a) => ({
+            ...a,
+            profile: profileMap[a.profile_id] ?? null,
+          }));
         const presentCount = records.filter((a: any) => a.status === "present").length;
         
         return {
