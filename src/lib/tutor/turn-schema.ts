@@ -1,9 +1,12 @@
 import { GESTURES, MOODS, TONE_SHAPES } from "./contract.generated.ts";
-import { BOARD_KINDS, EVIDENCE_RESULTS, MAX_BOARD_ITEMS, MAX_EVENTS_PER_TURN } from "./events.ts";
+import { BOARD_KINDS, EVIDENCE_RESULTS } from "./events.ts";
 
 // JSON Schema passed as responseJsonSchema for Voice and Text turns (Gemini structured output).
 // Hand-written in the subset Gemini accepts. It mirrors tutorTurnResponseSchema in events.ts;
 // parseTutorTurn stays the source of truth and drops anything this schema lets through.
+// Keep it loose: number bounds, array length limits and nested arrays multiply the constraint
+// states, and past Gemini's limit every turn fails with 400 "too many states for serving".
+// Bounds live in events.ts instead; turn-schema.test.ts keeps them out of here.
 
 export const TUTOR_EVENT_TYPES = [
   "say",
@@ -33,7 +36,6 @@ export const TUTOR_TURN_JSON_SCHEMA = {
   properties: {
     events: {
       type: "array",
-      maxItems: MAX_EVENTS_PER_TURN,
       items: {
         type: "object",
         description: "One teacher event. Set only the fields that belong to its type.",
@@ -46,10 +48,10 @@ export const TUTOR_TURN_JSON_SCHEMA = {
           // gesture
           name: { type: "string", enum: [...GESTURES] },
           toneShape: { type: "string", enum: [...TONE_SHAPES] },
-          countTo: { type: "integer", minimum: 1, maximum: 5 },
+          countTo: { type: "integer", description: "1 to 5." },
           // mood
           mood: { type: "string", enum: [...MOODS] },
-          intensity: { type: "number", minimum: 0, maximum: 100 },
+          intensity: { type: "number", description: "0 to 100." },
           // show_card
           item: {
             type: "object",
@@ -67,8 +69,6 @@ export const TUTOR_TURN_JSON_SCHEMA = {
           tones: {
             type: "array",
             items: { type: "string", enum: [...TONE_SHAPES] },
-            minItems: 1,
-            maxItems: 4,
           },
           labels: { type: "array", items: { type: "string" } },
           // listen
@@ -85,24 +85,24 @@ export const TUTOR_TURN_JSON_SCHEMA = {
           // show_board (also uses title, text, language)
           kind: { type: "string", enum: [...BOARD_KINDS] },
           title: { type: "string", description: "show_board: board heading. award: what was achieved." },
-          items: { type: "array", items: { type: "string" }, maxItems: MAX_BOARD_ITEMS },
-          rows: { type: "array", items: { type: "array", items: { type: "string" } }, maxItems: MAX_BOARD_ITEMS },
+          items: { type: "array", items: { type: "string" } },
+          rows: { type: "array", items: { type: "array", items: { type: "string" } } },
           language: { type: "string" },
-          revealed: { type: "integer", minimum: 0, maximum: MAX_BOARD_ITEMS },
+          revealed: { type: "integer" },
           // reveal_step
-          index: { type: "integer", minimum: 0, maximum: MAX_BOARD_ITEMS },
+          index: { type: "integer" },
           // ask_choice / ask_confidence
           question: { type: "string" },
-          options: { type: "array", items: { type: "string" }, minItems: 2, maxItems: 5 },
+          options: { type: "array", items: { type: "string" } },
           prompt: { type: "string" },
           // show_lesson_ref
           label: { type: "string" },
           blockId: { type: "string" },
-          seconds: { type: "integer", minimum: 0 },
+          seconds: { type: "integer" },
           // play_clip
           videoId: { type: "string" },
-          start: { type: "integer", minimum: 0 },
-          end: { type: "integer", minimum: 0 },
+          start: { type: "integer" },
+          end: { type: "integer" },
           caption: { type: "string" },
           // note_evidence (also uses said, correct)
           objective: { type: "string" },
