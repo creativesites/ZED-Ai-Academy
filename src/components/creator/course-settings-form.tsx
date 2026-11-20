@@ -24,9 +24,18 @@ import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
 import { COURSE_CATEGORIES } from "@/lib/course-experience";
 import { uploadMedia } from "@/actions/upload";
+import { setCourseClassLinks } from "@/actions/classroom";
 import type { Course } from "@/types/database";
 
-export function CourseSettingsForm({ course, tenantSlug }: { course: Course; tenantSlug?: string }) {
+export function CourseSettingsForm({
+  course,
+  tenantSlug,
+  companyClasses = [],
+}: {
+  course: Course;
+  tenantSlug?: string;
+  companyClasses?: { id: string; name: string; course_id: string | null }[];
+}) {
   const router = useRouter();
   const [saving, startSave] = useTransition();
   const [publishPending, startPublish] = useTransition();
@@ -34,14 +43,26 @@ export function CourseSettingsForm({ course, tenantSlug }: { course: Course; ten
   const [status, setStatus] = useState<Course["status"]>(course.status);
   const [thumbnailUrl, setThumbnailUrl] = useState(course.thumbnail_url ?? "");
   const [priceType, setPriceType] = useState<Course["price_type"]>(course.price_type);
+  const [selectedClassIds, setSelectedClassIds] = useState<string[]>(() =>
+    companyClasses.filter((g) => g.course_id === course.id).map((g) => g.id)
+  );
   const [uploading, setUploading] = useState(false);
 
   const showsPriceAmount = priceType === "one_time" || priceType === "both";
+
+  function toggleClassId(id: string) {
+    setSelectedClassIds((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
+  }
 
   function handleSubmit(formData: FormData) {
     startSave(async () => {
       try {
         await updateCourse(course.id, formData, tenantSlug);
+        if (course.company_id && companyClasses.length > 0) {
+          await setCourseClassLinks(course.company_id, course.id, selectedClassIds, tenantSlug);
+        }
         toast.success("Course details updated.");
         router.refresh();
       } catch (err) {
@@ -337,6 +358,40 @@ export function CourseSettingsForm({ course, tenantSlug }: { course: Course; ten
               )}
             </CardContent>
           </Card>
+
+          {companyClasses.length > 0 && (
+            <Card className="rounded-2xl sm:rounded-3xl border border-slate-200/80 bg-white shadow-sm lg:col-span-2">
+              <CardContent className="p-5 sm:p-6 space-y-3">
+                <div>
+                  <h3 className="text-sm font-black uppercase tracking-wider text-[#062e39]">
+                    Belongs to Subjects / Classes
+                  </h3>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Choose which academy classes or cohorts this course belongs to.
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {companyClasses.map((cls) => {
+                    const active = selectedClassIds.includes(cls.id);
+                    return (
+                      <button
+                        key={cls.id}
+                        type="button"
+                        onClick={() => toggleClassId(cls.id)}
+                        className={`px-3.5 py-2 rounded-xl text-xs font-bold border transition-all ${
+                          active
+                            ? "border-[#fd5523] bg-[#fff6ee] text-[#fd5523]"
+                            : "border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100"
+                        }`}
+                      >
+                        {cls.name}
+                      </button>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
 
         {/* Action Bar */}

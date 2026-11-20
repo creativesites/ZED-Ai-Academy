@@ -4,8 +4,9 @@ import { revalidatePath } from "next/cache";
 import { auth } from "@clerk/nextjs/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { ensureTenantMembership } from "@/actions/tenants";
+import { canAccessTenantAdmin } from "@/lib/tenants/admin-helpers";
 
-async function requireAdmin() {
+async function requireEnrollmentAccess(companyId?: string | null) {
   const { userId } = await auth();
   if (!userId) throw new Error("Not authenticated");
 
@@ -16,14 +17,50 @@ async function requireAdmin() {
     .eq("id", userId)
     .single();
 
-  if (profile?.role !== "super_admin" && profile?.role !== "instructor") {
-    throw new Error("Not authorized");
+  if (profile?.role === "super_admin" || profile?.role === "instructor") {
+    return { userId, supabase };
   }
-  return { userId, supabase };
+
+  if (companyId) {
+    const [{ data: company }, { data: member }] = await Promise.all([
+      supabase.from("companies").select("admin_id").eq("id", companyId).maybeSingle(),
+      supabase
+        .from("company_members")
+        .select("role")
+        .eq("company_id", companyId)
+        .eq("profile_id", userId)
+        .eq("status", "active")
+        .maybeSingle(),
+    ]);
+
+    if (
+      canAccessTenantAdmin({
+        userId,
+        companyAdminId: company?.admin_id ?? null,
+        isSuperAdmin: false,
+        tenantRole: member?.role ?? null,
+      })
+    ) {
+      return { userId, supabase };
+    }
+  }
+
+  throw new Error("Not authorized");
+}
+
+async function requireAdmin() {
+  return requireEnrollmentAccess(null);
 }
 
 export async function activateEnrollment(enrollmentId: string) {
-  const { supabase } = await requireAdmin();
+  const service = createServiceClient();
+  const { data: existing } = await service
+    .from("enrollments")
+    .select("company_id")
+    .eq("id", enrollmentId)
+    .maybeSingle();
+
+  const { supabase } = await requireEnrollmentAccess(existing?.company_id ?? null);
 
   const { data, error } = await supabase
     .from("enrollments")
@@ -55,7 +92,14 @@ export async function activateEnrollment(enrollmentId: string) {
 }
 
 export async function revokeEnrollment(enrollmentId: string) {
-  const { supabase } = await requireAdmin();
+  const service = createServiceClient();
+  const { data: existing } = await service
+    .from("enrollments")
+    .select("company_id")
+    .eq("id", enrollmentId)
+    .maybeSingle();
+
+  const { supabase } = await requireEnrollmentAccess(existing?.company_id ?? null);
 
   const { data, error } = await supabase
     .from("enrollments")

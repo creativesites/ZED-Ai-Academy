@@ -1572,3 +1572,34 @@ export async function getInstructorOverviewStats(
   };
 }
 
+export async function setCourseClassLinks(
+  companyId: string,
+  courseId: string,
+  groupIds: string[],
+  companySlug?: string
+) {
+  const { supabase } = await requireInstructor(companyId);
+
+  // Clear course_id on classes previously linked to this course, then assign selected ones
+  await supabase
+    .from("classroom_groups")
+    .update({ course_id: null } as any)
+    .eq("company_id", companyId)
+    .eq("course_id", courseId);
+
+  if (groupIds.length > 0) {
+    await supabase
+      .from("classroom_groups")
+      .update({ course_id: courseId } as any)
+      .eq("company_id", companyId)
+      .in("id", groupIds);
+  }
+
+  if (companySlug) {
+    revalidatePath(`/academy/${companySlug}/classroom`);
+    revalidatePath(`/academy/${companySlug}/admin/classroom`);
+    revalidatePath(`/academy/${companySlug}/admin/courses/${courseId}`);
+  }
+  return { success: true };
+}
+

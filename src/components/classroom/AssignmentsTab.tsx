@@ -82,6 +82,7 @@ export function AssignmentsTab({
   const [loading, setLoading] = useState(true);
   const [activeListTab, setActiveListTab] = useState<"todo" | "past">("todo");
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCourseFilter, setSelectedCourseFilter] = useState("all");
   const [selectedAssignmentId, setSelectedAssignmentId] = useState<string | null>(null);
   const [mobileView, setMobileView] = useState<"list" | "detail">("list");
 
@@ -147,7 +148,11 @@ export function AssignmentsTab({
       const matchesSearch =
         a.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (a.description && a.description.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        (a.cohort && a.cohort.name.toLowerCase().includes(searchQuery.toLowerCase()));
+        (a.cohort && a.cohort.name.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (a.course && a.course.title.toLowerCase().includes(searchQuery.toLowerCase()));
+
+      const matchesCourse =
+        selectedCourseFilter === "all" || a.course_id === selectedCourseFilter;
 
       const isGradedOrSubmitted =
         a.my_submission?.status === "graded" || a.my_submission?.status === "submitted";
@@ -155,16 +160,16 @@ export function AssignmentsTab({
 
       if (activeListTab === "todo") {
         if (!isAdminOrInstructor && a.my_submission?.status === "graded") return false;
-        return matchesSearch;
+        return matchesSearch && matchesCourse;
       } else {
         // "past"
         if (!isAdminOrInstructor) {
-          return matchesSearch && (isGradedOrSubmitted || isPastDue);
+          return matchesSearch && matchesCourse && (isGradedOrSubmitted || isPastDue);
         }
-        return matchesSearch && isPastDue;
+        return matchesSearch && matchesCourse && isPastDue;
       }
     });
-  }, [assignments, searchQuery, activeListTab, isAdminOrInstructor]);
+  }, [assignments, searchQuery, selectedCourseFilter, activeListTab, isAdminOrInstructor]);
 
   const grouped = useMemo(() => {
     const now = new Date();
@@ -471,18 +476,29 @@ export function AssignmentsTab({
               </button>
             </div>
 
-            {/* Search Box */}
-            <div className="relative">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-              <Input
-                placeholder="Search assignments..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 pr-9 h-10 rounded-xl bg-slate-50 border-slate-200 text-xs font-medium focus:bg-white"
-              />
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-300 border border-slate-200 rounded px-1.5 py-0.5">
-                /
-              </span>
+            {/* Search & Course Filter */}
+            <div className="flex flex-col sm:flex-row gap-2">
+              <div className="relative flex-1">
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                <Input
+                  placeholder="Search assignments..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-9 pr-3 h-10 rounded-xl bg-slate-50 border-slate-200 text-xs font-medium focus:bg-white"
+                />
+              </div>
+              {courses.length > 0 && (
+                <select
+                  value={selectedCourseFilter}
+                  onChange={(e) => setSelectedCourseFilter(e.target.value)}
+                  className="h-10 rounded-xl border border-slate-200 bg-slate-50 px-3 text-xs font-semibold text-[#062e39] outline-none focus:border-[#fd5523] sm:max-w-[160px]"
+                >
+                  <option value="all">All Courses</option>
+                  {courses.map((c) => (
+                    <option key={c.id} value={c.id}>{c.title}</option>
+                  ))}
+                </select>
+              )}
             </div>
 
             {/* Assignment Groups */}

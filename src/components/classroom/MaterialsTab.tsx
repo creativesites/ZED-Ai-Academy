@@ -38,6 +38,7 @@ import {
   History,
   CheckCheck,
   FileCheck,
+  BookOpen,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -149,12 +150,14 @@ export function MaterialsTab({
   companySlug,
   isAdminOrInstructor,
   cohorts = [],
+  courses = [],
   activeCohortId,
 }: {
   companyId: string;
   companySlug: string;
   isAdminOrInstructor: boolean;
   cohorts?: Array<{ id: string; name: string }>;
+  courses?: Array<{ id: string; title: string; slug?: string }>;
   activeCohortId?: string | null;
 }) {
   const [folders, setFolders] = useState<ClassroomFolder[]>([]);
@@ -166,6 +169,7 @@ export function MaterialsTab({
   const [selectedFolderId, setSelectedFolderId] = useState<string>("all");
   const [selectedType, setSelectedType] = useState<string>("all");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [selectedCourseId, setSelectedCourseId] = useState<string>("all");
   const [isBookmarksOnly, setIsBookmarksOnly] = useState(false);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
@@ -194,9 +198,22 @@ export function MaterialsTab({
   const [folderColor, setFolderColor] = useState("#fd5523");
   const [isCreatingFolder, startCreateFolder] = useTransition();
 
-  // New Material Form State
-  const [isUploading, startUpload] = useTransition();
+  // Controlled Upload Material Form State
+  const [isUploading, setIsUploading] = useState(false);
   const [materialSourceType, setMaterialSourceType] = useState<"file" | "link">("file");
+  const [uploadTitle, setUploadTitle] = useState("");
+  const [uploadMaterialType, setUploadMaterialType] = useState("pdf");
+  const [uploadCategory, setUploadCategory] = useState("lecture_notes");
+  const [uploadFolderId, setUploadFolderId] = useState("unfiled");
+  const [uploadCohortId, setUploadCohortId] = useState(activeCohortId || "all");
+  const [uploadCourseId, setUploadCourseId] = useState("all");
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [uploadExternalUrl, setUploadExternalUrl] = useState("");
+  const [uploadTags, setUploadTags] = useState("");
+  const [uploadDescription, setUploadDescription] = useState("");
+  const [uploadReqAck, setUploadReqAck] = useState(false);
+  const [uploadPinned, setUploadPinned] = useState(false);
+  const [isDraggingFile, setIsDraggingFile] = useState(false);
 
   // Load Data
   async function loadData() {
@@ -207,6 +224,7 @@ export function MaterialsTab({
         getClassroomMaterials(companyId, {
           folderId: selectedFolderId === "all" ? undefined : selectedFolderId,
           cohortId: activeCohortId,
+          courseId: selectedCourseId === "all" ? undefined : selectedCourseId,
           materialType: selectedType === "all" ? undefined : selectedType,
           category: selectedCategory === "all" ? undefined : selectedCategory,
           isBookmarkedOnly: isBookmarksOnly,
@@ -227,7 +245,46 @@ export function MaterialsTab({
 
   useEffect(() => {
     loadData();
-  }, [companyId, activeCohortId, selectedFolderId, selectedType, selectedCategory, isBookmarksOnly, sortBy]);
+  }, [companyId, activeCohortId, selectedFolderId, selectedCourseId, selectedType, selectedCategory, isBookmarksOnly, sortBy]);
+
+  function handleSelectMaterialFile(file: File | null) {
+    if (!file) return;
+    if (file.size > 50 * 1024 * 1024) {
+      toast.error("File exceeds 50 MB limit.");
+      return;
+    }
+    setUploadFile(file);
+    setMaterialSourceType("file");
+
+    const lower = file.name.toLowerCase();
+    if (lower.endsWith(".pdf")) setUploadMaterialType("pdf");
+    else if (lower.endsWith(".ppt") || lower.endsWith(".pptx") || lower.endsWith(".key")) setUploadMaterialType("slides");
+    else if (lower.endsWith(".xls") || lower.endsWith(".xlsx") || lower.endsWith(".csv")) setUploadMaterialType("worksheet");
+    else if (lower.endsWith(".py") || lower.endsWith(".ipynb") || lower.endsWith(".js") || lower.endsWith(".ts") || lower.endsWith(".json")) setUploadMaterialType("code");
+    else if (lower.endsWith(".mp4") || lower.endsWith(".mov") || lower.endsWith(".webm")) setUploadMaterialType("video");
+    else setUploadMaterialType("document");
+
+    if (!uploadTitle.trim()) {
+      const cleanTitle = file.name.replace(/\.[^/.]+$/, "").replace(/[_-]+/g, " ").trim();
+      setUploadTitle(cleanTitle);
+    }
+  }
+
+  function resetUploadForm() {
+    setUploadTitle("");
+    setUploadMaterialType("pdf");
+    setUploadCategory("lecture_notes");
+    setUploadFolderId(selectedFolderId !== "all" ? selectedFolderId : "unfiled");
+    setUploadCohortId(activeCohortId || "all");
+    setUploadCourseId(selectedCourseId || "all");
+    setUploadFile(null);
+    setUploadExternalUrl("");
+    setUploadTags("");
+    setUploadDescription("");
+    setUploadReqAck(false);
+    setUploadPinned(false);
+    setMaterialSourceType("file");
+  }
 
   // Client-side search filtering
   const filteredMaterials = useMemo(() => {
@@ -267,25 +324,60 @@ export function MaterialsTab({
   }
 
   // Handle Material Upload
-  function handleUploadMaterial(e: React.FormEvent<HTMLFormElement>) {
+  async function handleUploadMaterial(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    const form = e.currentTarget;
-    const formData = new FormData(form);
-    formData.append("companyId", companyId);
-    formData.append("companySlug", companySlug);
-    if (activeCohortId) formData.append("cohortId", activeCohortId);
+    if (!uploadTitle.trim()) {
+      toast.error("Please enter a material title.");
+      return;
+    }
+    if (materialSourceType === "file" && !uploadFile) {
+      toast.error("Please select or drop a file to upload.");
+      return;
+    }
+    if (materialSourceType === "link" && !uploadExternalUrl.trim()) {
+      toast.error("Please enter an external resource URL.");
+      return;
+    }
 
-    startUpload(async () => {
-      try {
-        await createClassroomMaterial(formData);
-        toast.success("Learning material added successfully!");
-        setIsUploadModalOpen(false);
-        form.reset();
-        loadData();
-      } catch (err: any) {
-        toast.error(err.message || "Failed to upload material");
+    setIsUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("companyId", companyId);
+      formData.append("companySlug", companySlug);
+      formData.append("title", uploadTitle.trim());
+      formData.append("materialType", uploadMaterialType);
+      formData.append("category", uploadCategory);
+      formData.append("folderId", uploadFolderId);
+      formData.append("cohortId", uploadCohortId || "all");
+      formData.append("courseId", uploadCourseId || "all");
+      formData.append("tags", uploadTags);
+      formData.append("description", uploadDescription);
+      formData.append("requiresAcknowledgement", uploadReqAck ? "true" : "false");
+      formData.append("isPinned", uploadPinned ? "true" : "false");
+      if (materialSourceType === "file" && uploadFile) {
+        formData.append("file", uploadFile);
+      } else if (materialSourceType === "link" && uploadExternalUrl.trim()) {
+        formData.append("externalUrl", uploadExternalUrl.trim());
       }
-    });
+
+      const res = await fetch("/api/classroom/materials/upload", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || data.error) {
+        throw new Error(data.error || "Failed to upload learning material.");
+      }
+
+      toast.success("Learning material uploaded and published!");
+      setIsUploadModalOpen(false);
+      resetUploadForm();
+      loadData();
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to upload material");
+    } finally {
+      setIsUploading(false);
+    }
   }
 
   // Toggle Pin
@@ -708,6 +800,22 @@ export function MaterialsTab({
               </SelectContent>
             </Select>
 
+            {courses.length > 0 && (
+              <Select value={selectedCourseId} onValueChange={(v) => setSelectedCourseId(v ?? "all")}>
+                <SelectTrigger className="h-10 rounded-xl border-slate-200 text-xs w-[150px] bg-slate-50">
+                  <SelectValue placeholder="Course" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all" className="text-xs font-bold">All Courses</SelectItem>
+                  {courses.map((c) => (
+                    <SelectItem key={c.id} value={c.id} className="text-xs">
+                      {c.title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+
             {/* Sort Dropdown */}
             <Select value={sortBy} onValueChange={(v: any) => setSortBy(v ?? "updated")}>
               <SelectTrigger className="h-10 rounded-xl border-slate-200 text-xs w-[130px] bg-slate-50">
@@ -841,6 +949,13 @@ export function MaterialsTab({
                           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 text-[10px] font-bold">
                             <Users className="h-2.5 w-2.5" />
                             {item.cohort.name}
+                          </span>
+                        )}
+
+                        {item.course && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 text-[10px] font-bold max-w-[140px] truncate">
+                            <BookOpen className="h-2.5 w-2.5 shrink-0" />
+                            <span className="truncate">{item.course.title}</span>
                           </span>
                         )}
                       </div>
@@ -1150,159 +1265,119 @@ export function MaterialsTab({
       </Dialog>
 
       {/* ── Dialog: Upload Learning Material ──────────────────────────────── */}
-      <Dialog open={isUploadModalOpen} onOpenChange={setIsUploadModalOpen}>
-        <DialogContent className="w-[95vw] sm:max-w-[560px] rounded-2xl sm:rounded-3xl p-4 sm:p-6 max-h-[85dvh] overflow-y-auto">
+      <Dialog
+        open={isUploadModalOpen}
+        onOpenChange={(open) => {
+          setIsUploadModalOpen(open);
+          if (open) {
+            setUploadFolderId(selectedFolderId !== "all" ? selectedFolderId : "unfiled");
+            setUploadCohortId(activeCohortId || "all");
+            setUploadCourseId(selectedCourseId || "all");
+          }
+        }}
+      >
+        <DialogContent className="w-[calc(100vw-1.5rem)] max-w-[calc(100vw-1.5rem)] sm:max-w-2xl rounded-2xl sm:rounded-3xl p-4 sm:p-6 max-h-[90dvh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-xl font-black text-[#062e39]">
+            <DialogTitle className="text-lg sm:text-xl font-black text-[#062e39]">
               Upload Learning Material
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={handleUploadMaterial} className="space-y-4 pt-2">
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                Material Title
-              </label>
-              <Input
-                name="title"
-                placeholder="e.g. Chapter 4 Lecture Slides (PDF)"
-                required
-                className="h-11 rounded-xl text-xs"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                  Material Type
-                </label>
-                <Select name="materialType" defaultValue="pdf">
-                  <SelectTrigger className="h-11 rounded-xl text-xs">
-                    <SelectValue placeholder="Type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="pdf" className="text-xs">PDF Document</SelectItem>
-                    <SelectItem value="document" className="text-xs">Word / Doc</SelectItem>
-                    <SelectItem value="slides" className="text-xs">Slides & Presentation</SelectItem>
-                    <SelectItem value="worksheet" className="text-xs">Worksheet / Exercise</SelectItem>
-                    <SelectItem value="code" className="text-xs">Code / Notebook</SelectItem>
-                    <SelectItem value="link" className="text-xs">External Resource URL</SelectItem>
-                    <SelectItem value="video" className="text-xs">Video / Recording</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                  Category
-                </label>
-                <Select name="category" defaultValue="lecture_notes">
-                  <SelectTrigger className="h-11 rounded-xl text-xs">
-                    <SelectValue placeholder="Category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {DOCUMENT_CATEGORIES.filter((c) => c.value !== "all").map((cat) => (
-                      <SelectItem key={cat.value} value={cat.value} className="text-xs">
-                        {cat.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                Folder
-              </label>
-              <Select name="folderId" defaultValue={selectedFolderId !== "all" ? selectedFolderId : "unfiled"}>
-                <SelectTrigger className="h-11 rounded-xl text-xs">
-                  <SelectValue placeholder="Folder" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="unfiled" className="text-xs">Unfiled</SelectItem>
-                  {folders.map((f) => (
-                    <SelectItem key={f.id} value={f.id} className="text-xs">
-                      {f.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {cohorts.length > 0 && (
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                  Target Cohort / Class Section
-                </label>
-                <Select name="cohortId" defaultValue={activeCohortId || "all"}>
-                  <SelectTrigger className="h-11 rounded-xl text-xs">
-                    <SelectValue placeholder="Target Cohort" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all" className="text-xs">All Cohorts in Academy</SelectItem>
-                    {cohorts.map((c) => (
-                      <SelectItem key={c.id} value={c.id} className="text-xs">
-                        {c.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-
             {/* Source Type Toggle */}
-            <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                Resource Source
-              </label>
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => setMaterialSourceType("file")}
-                  className={cn(
-                    "p-2.5 rounded-xl text-xs font-bold border transition-all flex items-center justify-center gap-1.5",
-                    materialSourceType === "file"
-                      ? "bg-[#fd5523]/10 border-[#fd5523] text-[#fd5523]"
-                      : "bg-slate-50 border-slate-200 text-slate-600"
-                  )}
-                >
-                  <Upload className="h-3.5 w-3.5" />
-                  Upload File
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setMaterialSourceType("link")}
-                  className={cn(
-                    "p-2.5 rounded-xl text-xs font-bold border transition-all flex items-center justify-center gap-1.5",
-                    materialSourceType === "link"
-                      ? "bg-[#fd5523]/10 border-[#fd5523] text-[#fd5523]"
-                      : "bg-slate-50 border-slate-200 text-slate-600"
-                  )}
-                >
-                  <Link2 className="h-3.5 w-3.5" />
-                  Web / Cloud Link
-                </button>
-              </div>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setMaterialSourceType("file")}
+                className={cn(
+                  "p-2.5 rounded-xl text-xs font-bold border transition-all flex items-center justify-center gap-1.5",
+                  materialSourceType === "file"
+                    ? "bg-[#fd5523]/10 border-[#fd5523] text-[#fd5523]"
+                    : "bg-slate-50 border-slate-200 text-slate-600"
+                )}
+              >
+                <Upload className="h-3.5 w-3.5" />
+                Upload File
+              </button>
+              <button
+                type="button"
+                onClick={() => setMaterialSourceType("link")}
+                className={cn(
+                  "p-2.5 rounded-xl text-xs font-bold border transition-all flex items-center justify-center gap-1.5",
+                  materialSourceType === "link"
+                    ? "bg-[#fd5523]/10 border-[#fd5523] text-[#fd5523]"
+                    : "bg-slate-50 border-slate-200 text-slate-600"
+                )}
+              >
+                <Link2 className="h-3.5 w-3.5" />
+                Web / Cloud Link
+              </button>
             </div>
 
+            {/* Drag-and-drop File Dropzone OR External Link */}
             {materialSourceType === "file" ? (
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                  File Upload (Up to 50 MB)
+              uploadFile ? (
+                <div className="flex items-center justify-between gap-3 rounded-2xl border border-emerald-200 bg-emerald-50/60 p-3.5">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="h-10 w-10 rounded-xl bg-white border border-emerald-200 flex items-center justify-center text-[#fd5523] shrink-0">
+                      <FileText className="h-5 w-5" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs sm:text-sm font-bold text-[#062e39] truncate">{uploadFile.name}</p>
+                      <p className="text-[11px] text-slate-500">{formatBytes(uploadFile.size)}</p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setUploadFile(null)}
+                    className="h-8 w-8 rounded-lg hover:bg-white text-slate-500 hover:text-red-600 flex items-center justify-center shrink-0"
+                    aria-label="Remove file"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              ) : (
+                <label
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    setIsDraggingFile(true);
+                  }}
+                  onDragLeave={() => setIsDraggingFile(false)}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    setIsDraggingFile(false);
+                    handleSelectMaterialFile(e.dataTransfer.files?.[0] ?? null);
+                  }}
+                  className={cn(
+                    "flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed p-6 text-center transition-all",
+                    isDraggingFile
+                      ? "border-[#fd5523] bg-[#fff6ee]"
+                      : "border-slate-200 bg-slate-50/70 hover:border-[#fd5523]/50 hover:bg-[#fff6ee]/40"
+                  )}
+                >
+                  <div className="h-11 w-11 rounded-2xl bg-white shadow-xs border border-slate-200/80 flex items-center justify-center text-[#fd5523] mb-2.5">
+                    <Upload className="h-5 w-5" />
+                  </div>
+                  <span className="text-xs sm:text-sm font-bold text-[#062e39]">
+                    Drag &amp; drop your file here, or click to browse
+                  </span>
+                  <span className="text-[11px] text-slate-400 mt-1">
+                    PDF, Slides, Docs, Spreadsheets, Notebooks, or Videos (up to 50 MB)
+                  </span>
+                  <input
+                    type="file"
+                    onChange={(e) => handleSelectMaterialFile(e.target.files?.[0] ?? null)}
+                    className="hidden"
+                  />
                 </label>
-                <Input
-                  name="file"
-                  type="file"
-                  className="rounded-xl border-slate-200 text-xs h-11 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-[#fd5523]/10 file:text-[#fd5523]"
-                />
-              </div>
+              )
             ) : (
               <div className="space-y-1.5">
                 <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                  External Resource URL
+                  External Resource URL <span className="text-[#fd5523]">*</span>
                 </label>
                 <Input
-                  name="externalUrl"
+                  value={uploadExternalUrl}
+                  onChange={(e) => setUploadExternalUrl(e.target.value)}
                   type="url"
                   placeholder="https://drive.google.com/... or https://github.com/..."
                   className="h-11 rounded-xl text-xs"
@@ -1312,10 +1387,112 @@ export function MaterialsTab({
 
             <div className="space-y-1.5">
               <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                Material Title <span className="text-[#fd5523]">*</span>
+              </label>
+              <Input
+                value={uploadTitle}
+                onChange={(e) => setUploadTitle(e.target.value)}
+                placeholder="e.g. Chapter 4 Lecture Slides"
+                required
+                className="h-11 rounded-xl text-xs sm:text-sm"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                  Course Association
+                </label>
+                <select
+                  value={uploadCourseId}
+                  onChange={(e) => setUploadCourseId(e.target.value)}
+                  className="flex h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-[#062e39] outline-none focus:border-[#fd5523]"
+                >
+                  <option value="all">General Academy Resource</option>
+                  {courses.map((c) => (
+                    <option key={c.id} value={c.id}>{c.title}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                  Subject / Class Section
+                </label>
+                <select
+                  value={uploadCohortId}
+                  onChange={(e) => setUploadCohortId(e.target.value)}
+                  className="flex h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-[#062e39] outline-none focus:border-[#fd5523]"
+                >
+                  <option value="all">All Classes / Sections</option>
+                  {cohorts.map((c) => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                  Material Type
+                </label>
+                <select
+                  value={uploadMaterialType}
+                  onChange={(e) => setUploadMaterialType(e.target.value)}
+                  className="flex h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-[#062e39] outline-none focus:border-[#fd5523]"
+                >
+                  <option value="pdf">PDF Document</option>
+                  <option value="document">Word / Doc</option>
+                  <option value="slides">Slides &amp; Deck</option>
+                  <option value="worksheet">Worksheet</option>
+                  <option value="code">Code / Notebook</option>
+                  <option value="link">External Link</option>
+                  <option value="video">Video / Recording</option>
+                </select>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                  Category
+                </label>
+                <select
+                  value={uploadCategory}
+                  onChange={(e) => setUploadCategory(e.target.value)}
+                  className="flex h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-[#062e39] outline-none focus:border-[#fd5523]"
+                >
+                  {DOCUMENT_CATEGORIES.filter((c) => c.value !== "all").map((cat) => (
+                    <option key={cat.value} value={cat.value}>
+                      {cat.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                  Folder
+                </label>
+                <select
+                  value={uploadFolderId}
+                  onChange={(e) => setUploadFolderId(e.target.value)}
+                  className="flex h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-[#062e39] outline-none focus:border-[#fd5523]"
+                >
+                  <option value="unfiled">Unfiled</option>
+                  {folders.map((f) => (
+                    <option key={f.id} value={f.id}>{f.name}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
                 Tags (Comma separated)
               </label>
               <Input
-                name="tags"
+                value={uploadTags}
+                onChange={(e) => setUploadTags(e.target.value)}
                 placeholder="e.g. Week 1, Lecture, Core Reading"
                 className="h-11 rounded-xl text-xs"
               />
@@ -1326,36 +1503,49 @@ export function MaterialsTab({
                 Description / Learning Notes
               </label>
               <Textarea
-                name="description"
+                value={uploadDescription}
+                onChange={(e) => setUploadDescription(e.target.value)}
                 placeholder="Brief summary or reading instructions for students..."
                 className="rounded-xl text-xs resize-none h-20"
               />
             </div>
 
             <div className="space-y-2 pt-1 border-t border-slate-100">
-              <div className="flex items-center gap-2">
-                <input type="checkbox" name="requiresAcknowledgement" value="true" id="reqAckCheck" className="rounded" />
-                <label htmlFor="reqAckCheck" className="text-xs font-bold text-slate-700 cursor-pointer">
-                  Require student reading sign-off / acknowledgement
-                </label>
-              </div>
+              <label className="flex items-center gap-2 text-xs font-bold text-slate-700 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={uploadReqAck}
+                  onChange={(e) => setUploadReqAck(e.target.checked)}
+                  className="rounded"
+                />
+                Require student reading sign-off / acknowledgement
+              </label>
 
-              <div className="flex items-center gap-2">
-                <input type="checkbox" name="isPinned" value="true" id="isPinnedCheck" className="rounded" />
-                <label htmlFor="isPinnedCheck" className="text-xs font-bold text-slate-700 cursor-pointer">
-                  Pin to top of materials shelf
-                </label>
-              </div>
+              <label className="flex items-center gap-2 text-xs font-bold text-slate-700 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={uploadPinned}
+                  onChange={(e) => setUploadPinned(e.target.checked)}
+                  className="rounded"
+                />
+                Pin to top of materials shelf
+              </label>
             </div>
 
-            <DialogFooter className="pt-3">
+            <DialogFooter className="pt-2">
               <Button
                 type="submit"
                 disabled={isUploading}
-                className="w-full bg-[#fd5523] hover:bg-[#ef4a16] text-white font-bold rounded-xl h-12 shadow-lg shadow-[#fd5523]/20"
+                className="w-full bg-[#fd5523] hover:bg-[#ef4a16] text-white font-bold rounded-xl h-11 text-xs sm:text-sm shadow-sm"
               >
-                {isUploading ? <Loader2 className="h-4 w-4 animate-spin mr-1.5" /> : null}
-                Save &amp; Publish Material
+                {isUploading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin mr-1.5" />
+                    Uploading &amp; Publishing...
+                  </>
+                ) : (
+                  "Save & Publish Material"
+                )}
               </Button>
             </DialogFooter>
           </form>

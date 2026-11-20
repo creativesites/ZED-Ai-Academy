@@ -8,7 +8,8 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { getCompanyStudents, getClassroomGroups, addGroupMember, removeGroupMember } from "@/actions/classroom";
+import { getCompanyStudents, getClassroomGroups, getCompanyCourses, addGroupMember, removeGroupMember } from "@/actions/classroom";
+import { StudentInviteModal } from "@/components/tenant/admin/StudentInviteModal";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import {
@@ -35,25 +36,30 @@ export function StudentsTab({
 }) {
   const [students, setStudents] = useState<any[]>([]);
   const [groups, setGroups] = useState<any[]>([]);
+  const [courses, setCourses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+
+  async function load() {
+    try {
+      const [studentData, groupData, courseData] = await Promise.all([
+        getCompanyStudents(companyId),
+        getClassroomGroups(companyId),
+        getCompanyCourses(companyId),
+      ]);
+      setStudents(studentData);
+      setGroups(groupData);
+      setCourses(courseData);
+    } catch (e) {
+      console.error(e);
+      toast.error("Failed to load students");
+    } finally {
+      setLoading(false);
+    }
+  }
 
   useEffect(() => {
-    async function load() {
-      try {
-        const [studentData, groupData] = await Promise.all([
-          getCompanyStudents(companyId),
-          getClassroomGroups(companyId)
-        ]);
-        setStudents(studentData);
-        setGroups(groupData);
-      } catch (e) {
-        console.error(e);
-        toast.error("Failed to load students");
-      } finally {
-        setLoading(false);
-      }
-    }
     load();
   }, [companyId]);
 
@@ -75,21 +81,27 @@ export function StudentsTab({
             <p className="text-xs sm:text-sm text-slate-500 font-medium mt-1">Manage and track your academy's learners.</p>
           </div>
           {isAdminOrInstructor && (
-            <Button 
-              onClick={() => {
-                const url = `${window.location.origin}/academy/${companySlug}`;
-                navigator.clipboard.writeText(url);
-                toast.success("Invite Link Copied!", {
-                  description: "Send this to your students so they can sign up."
-                });
-              }}
-              className="bg-[#fd5523] text-white hover:bg-[#ef4a16] rounded-xl sm:rounded-2xl h-11 sm:h-12 px-5 sm:px-6 font-black text-xs sm:text-sm uppercase tracking-widest shadow-xl shadow-[#fd5523]/20 transition-all hover:scale-[1.02] flex items-center justify-center gap-2 w-full md:w-auto min-h-[44px]"
+            <Button
+              type="button"
+              onClick={() => setIsInviteModalOpen(true)}
+              className="bg-[#fd5523] text-white hover:bg-[#ef4a16] rounded-xl h-11 px-5 font-bold text-xs uppercase tracking-wider shadow-sm transition-all flex items-center justify-center gap-2 w-full md:w-auto min-h-[44px]"
             >
               <UserPlus className="h-4 w-4" />
               Invite Student
             </Button>
           )}
         </div>
+
+        <StudentInviteModal
+          open={isInviteModalOpen}
+          onOpenChange={setIsInviteModalOpen}
+          companyId={companyId}
+          companySlug={companySlug}
+          courses={courses}
+          cohorts={groups}
+          defaultMode="single"
+          onSuccess={load}
+        />
 
         <div className="mt-4 sm:mt-8 flex flex-col sm:flex-row gap-3 sm:gap-4">
           <div className="relative flex-1 group">

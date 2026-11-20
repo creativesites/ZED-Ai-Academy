@@ -7,9 +7,9 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-dm-sans);
-  --font-mono: var(--font-jetbrains-mono);
-  --font-heading: var(--font-dm-sans);
+  --font-sans: var(--font-inter), "Inter", system-ui, -apple-system, sans-serif;
+  --font-mono: var(--font-jetbrains-mono), "JetBrains Mono", ui-monospace, monospace;
+  --font-heading: var(--font-plus-jakarta), "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -48,8 +48,11 @@
 }
 
 :root {
-  --font-dm-sans: "DM Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-inter: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-plus-jakarta: "Plus Jakarta Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-jetbrains-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  --logistiq-font: var(--font-inter);
+  --logistiq-font-two: var(--font-plus-jakarta);
   --background: oklch(0.975 0.01 65);
   --foreground: oklch(0.28 0.04 220);
   --card: oklch(1 0 0);
@@ -134,10 +137,10 @@
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans text-[15px] leading-relaxed;
     background-image:
-      radial-gradient(circle at top left, rgba(253, 85, 35, 0.14), transparent 28%),
-      radial-gradient(circle at top right, rgba(6, 46, 57, 0.1), transparent 24%),
+      radial-gradient(circle at top left, rgba(253, 85, 35, 0.12), transparent 28%),
+      radial-gradient(circle at top right, rgba(6, 46, 57, 0.08), transparent 24%),
       linear-gradient(180deg, #fffaf6 0%, #fff 34%, #fff8f2 100%);
   }
 
@@ -152,8 +155,21 @@
   h4,
   h5,
   h6 {
-    font-family: var(--font-heading), var(--font-dm-sans), sans-serif;
-    letter-spacing: -0.03em;
+    font-family: var(--font-heading), var(--font-sans), sans-serif;
+    letter-spacing: -0.02em;
+    line-height: 1.18;
+  }
+
+  h1 {
+    font-size: clamp(1.5rem, 2.5vw, 2.25rem);
+  }
+
+  h2 {
+    font-size: clamp(1.25rem, 2vw, 1.75rem);
+  }
+
+  h3 {
+    font-size: clamp(1.05rem, 1.4vw, 1.35rem);
   }
 
   a {

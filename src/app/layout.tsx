@@ -1,10 +1,30 @@
 import type { Metadata, Viewport } from "next";
 import { ClerkProvider } from "@clerk/nextjs";
-import { SiteIntelligenceDock } from "@/components/shared/site-intelligence-dock";
+import { Inter, Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
 import NextTopLoader from "nextjs-toploader";
 import { NetworkStatusProvider } from "@/components/providers/NetworkStatusProvider";
 import { SWRProvider } from "@/components/providers/SWRProvider";
 import "./globals.css";
+
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+  display: "swap",
+});
+
+const plusJakarta = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  weight: ["500", "600", "700", "800"],
+  variable: "--font-plus-jakarta",
+  display: "swap",
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  variable: "--font-jetbrains-mono",
+  display: "swap",
+});
 
 export const viewport: Viewport = {
   themeColor: "#062e39",
@@ -35,9 +55,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <ClerkProvider>
       <html
         lang="en"
-        className="h-full antialiased"
+        className={`h-full antialiased ${inter.variable} ${plusJakarta.variable} ${jetbrainsMono.variable}`}
       >
-        <body className="min-h-full flex flex-col overflow-x-hidden bg-background text-foreground">
+        <body className="min-h-full flex flex-col overflow-x-hidden bg-background text-foreground font-sans">
           <NextTopLoader
             color="#fd5523"
             initialPosition={0.08}
@@ -52,7 +72,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <NetworkStatusProvider>
             <SWRProvider>{children}</SWRProvider>
           </NetworkStatusProvider>
-          {/* <SiteIntelligenceDock /> */}
         </body>
       </html>
     </ClerkProvider>

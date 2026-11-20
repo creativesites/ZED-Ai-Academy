@@ -203,33 +203,33 @@ export function OverviewTab({
             </p>
           </div>
 
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3 shrink-0 w-full md:w-auto">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 shrink-0 w-full md:w-auto">
             {isLive ? (
               <Button
                 onClick={() => onNavigateTab("session")}
-                className="bg-red-500 hover:bg-red-600 text-white font-black text-xs px-5 py-4 sm:px-6 sm:py-5 rounded-xl sm:rounded-2xl shadow-xl shadow-red-500/30 gap-2 border border-red-400 min-h-[44px] justify-center cursor-pointer"
+                className="bg-red-500 hover:bg-red-600 text-white font-bold text-xs h-10 px-4 rounded-xl shadow-md gap-2 border border-red-400 justify-center cursor-pointer whitespace-nowrap"
               >
-                <Video className="h-4 w-4 animate-bounce" />
-                Join Live Classroom Now
+                <Video className="h-4 w-4 animate-bounce shrink-0" />
+                <span>Join Live Class</span>
               </Button>
             ) : isAdminOrInstructor ? (
               <Button
                 onClick={() => onNavigateTab("session")}
-                className="bg-[#fd5523] hover:bg-[#e0481d] text-white font-black text-xs px-5 py-4 sm:px-6 sm:py-5 rounded-xl sm:rounded-2xl shadow-xl shadow-[#fd5523]/30 gap-2 min-h-[44px] justify-center cursor-pointer"
+                className="bg-[#fd5523] hover:bg-[#e0481d] text-white font-bold text-xs h-10 px-4 rounded-xl shadow-md gap-2 justify-center cursor-pointer whitespace-nowrap"
               >
-                <Video className="h-4 w-4" />
-                Start Live Session
+                <Video className="h-4 w-4 shrink-0" />
+                <span>Start Live Class</span>
               </Button>
             ) : null}
 
             {courses.length > 0 && (
               <Link
                 href={`/academy/${companySlug}/course/${courses[0]?.slug || ""}`}
-                className="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl sm:rounded-2xl bg-white/10 hover:bg-white/20 text-white text-xs font-black backdrop-blur-md transition-all border border-white/15 min-h-[44px]"
+                className="inline-flex items-center justify-center gap-2 h-10 px-4 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold backdrop-blur-md transition-all border border-white/15 whitespace-nowrap"
               >
-                <BookOpen className="h-4 w-4 text-[#fd5523]" />
-                Course Player
-                <ArrowRight className="h-3.5 w-3.5" />
+                <BookOpen className="h-4 w-4 text-[#fd5523] shrink-0" />
+                <span>Course Player</span>
+                <ArrowRight className="h-3.5 w-3.5 shrink-0" />
               </Link>
             )}
           </div>

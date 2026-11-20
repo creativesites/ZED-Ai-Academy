@@ -1,5 +1,5 @@
 import { auth } from "@clerk/nextjs/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createServiceClient } from "@/lib/supabase/server";
 import type { CompanyMemberRole, UserRole } from "@/types/database";
 
 export type TenantMembership = {
@@ -15,48 +15,51 @@ export type TenantProfile = {
 };
 
 export async function getCurrentTenantAccess(companyId: string) {
-  const { userId, orgId: activeOrgId, orgRole: activeOrgRole, orgSlug: activeOrgSlug } = await auth();
+  const { userId, orgId: activeOrgId, orgRole: activeOrgRole } = await auth();
   if (!userId) return null;
 
-  // If the requested company matches the active Clerk organization, use Clerk data as source of truth
-  if (activeOrgId === companyId) {
-    return {
-      userId,
-      profile: null, // We are bypassing profile fetch for performance as requested
-      membership: {
-        company_id: activeOrgId,
-        profile_id: userId,
-        status: "active",
-        role: (activeOrgRole?.replace("org:", "") || "learner") as CompanyMemberRole,
-      } as TenantMembership,
-      isSuperAdmin: activeOrgRole === "org:admin", // Simplified, may need global check
-      isMember: true,
-      tenantRole: (activeOrgRole?.replace("org:", "") || "learner") as CompanyMemberRole,
-    };
-  }
-
   const supabase = createClient();
-  const [{ data: profile }, { data: member }] = await Promise.all([
+  const service = createServiceClient();
+
+  const [{ data: profile }, { data: member }, { data: company }] = await Promise.all([
     supabase.from("profiles").select("role, company_id").eq("id", userId).maybeSingle(),
-    supabase
+    service
       .from("company_members")
       .select("company_id, profile_id, status, role")
       .eq("company_id", companyId)
       .eq("profile_id", userId)
       .eq("status", "active")
       .maybeSingle(),
+    service
+      .from("companies")
+      .select("admin_id")
+      .eq("id", companyId)
+      .maybeSingle(),
   ]);
 
   const typedProfile = profile as TenantProfile | null;
   const typedMember = member as TenantMembership | null;
+  const isOwner = Boolean(company?.admin_id && company.admin_id === userId);
+  const clerkMatchesOrg = activeOrgId === companyId;
+  const clerkRole = clerkMatchesOrg
+    ? ((activeOrgRole?.replace("org:", "") || "learner") as CompanyMemberRole)
+    : null;
+
+  const isSuperAdmin =
+    typedProfile?.role === "super_admin" ||
+    (clerkMatchesOrg && activeOrgRole === "org:admin");
+
+  const effectiveRole: CompanyMemberRole | null =
+    typedMember?.role ?? (isOwner ? "company_admin" : clerkRole);
 
   return {
     userId,
     profile: typedProfile,
     membership: typedMember,
-    isSuperAdmin: typedProfile?.role === "super_admin",
-    isMember: !!typedMember,
-    tenantRole: typedMember?.role ?? null,
+    isOwner,
+    isSuperAdmin,
+    isMember: Boolean(typedMember || isOwner || clerkMatchesOrg),
+    tenantRole: effectiveRole,
   };
 }
 
@@ -70,7 +73,10 @@ export async function requireTenantMember(companyId: string) {
 
 export async function requireTenantAdmin(companyId: string) {
   const access = await getCurrentTenantAccess(companyId);
-  const isAdmin = access?.isSuperAdmin || access?.tenantRole === "company_admin";
+  const isAdmin =
+    access?.isSuperAdmin ||
+    access?.isOwner ||
+    access?.tenantRole === "company_admin";
   if (!access || !isAdmin) {
     throw new Error("Tenant admin permissions required.");
   }
@@ -81,6 +87,7 @@ export async function requireTenantTeacher(companyId: string) {
   const access = await getCurrentTenantAccess(companyId);
   const canTeach =
     access?.isSuperAdmin ||
+    access?.isOwner ||
     access?.tenantRole === "company_admin" ||
     access?.tenantRole === "teacher" ||
     access?.tenantRole === "instructor";

@@ -117,7 +117,7 @@ export default async function AdminTenantHubPage({
                 Edit Schedule
               </Link>
             </div>
-            <TimetableCalendar schedules={schedules || []} />
+            <TimetableCalendar schedules={schedules || []} companySlug={company.slug} />
           </div>
         </div>
 

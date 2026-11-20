@@ -56,6 +56,11 @@ export interface ClassroomMaterial {
     name: string;
     color: string;
   } | null;
+  course?: {
+    id: string;
+    title: string;
+    slug: string;
+  } | null;
 }
 
 // ─── Folders ─────────────────────────────────────────────────────────────────
@@ -149,6 +154,7 @@ export async function getClassroomMaterials(
     | {
         folderId?: string | null;
         cohortId?: string | null;
+        courseId?: string | null;
         search?: string;
         materialType?: string;
         category?: string;
@@ -172,7 +178,8 @@ export async function getClassroomMaterials(
       *,
       author:profiles!classroom_materials_author_id_fkey(full_name, avatar_url, email),
       folder:classroom_folders(name, color),
-      cohort:classroom_groups(name, color)
+      cohort:classroom_groups(name, color),
+      course:courses(id, title, slug)
     `)
     .eq("company_id", companyId);
 
@@ -186,6 +193,10 @@ export async function getClassroomMaterials(
 
   if (options.cohortId && options.cohortId !== "all") {
     query = query.or(`cohort_id.eq.${options.cohortId},cohort_id.is.null`);
+  }
+
+  if (options.courseId && options.courseId !== "all") {
+    query = query.eq("course_id", options.courseId);
   }
 
   if (options.materialType && options.materialType !== "all") {
@@ -325,12 +336,13 @@ export async function createClassroomMaterial(formData: FormData) {
       throw new Error(`File size exceeds 50 MB limit`);
     }
 
-    const ext = file.name.split(".").pop()?.toLowerCase() ?? "bin";
-    const safeName = file.name
-      .replace(/[^a-zA-Z0-9.-]/g, "_")
+    const ext = file.name.includes(".") ? file.name.split(".").pop()?.toLowerCase() ?? "bin" : "bin";
+    const baseName = file.name
+      .replace(/\.[^/.]+$/, "")
+      .replace(/[^a-zA-Z0-9_-]/g, "_")
       .toLowerCase()
-      .slice(0, 50);
-    const uniquePath = `${companyId}/${Date.now()}-${safeName}.${ext}`;
+      .slice(0, 50) || "material";
+    const uniquePath = `${companyId}/${Date.now()}-${baseName}.${ext}`;
 
     const buffer = await file.arrayBuffer();
     const { error: uploadError } = await serviceClient.storage
@@ -341,19 +353,34 @@ export async function createClassroomMaterial(formData: FormData) {
       });
 
     if (uploadError) {
-      // If bucket didn't exist or failed, fallback to public courses_media bucket
-      const { error: fallbackError } = await serviceClient.storage
-        .from("courses_media")
+      // Ensure bucket exists on first use or fallback to courses_media
+      await serviceClient.storage.createBucket(BUCKET, { public: true }).catch(() => null);
+      const { error: retryError } = await serviceClient.storage
+        .from(BUCKET)
         .upload(uniquePath, buffer, {
           contentType: file.type || "application/octet-stream",
           upsert: false,
         });
 
-      if (fallbackError) throw new Error(fallbackError.message);
-      const { data: publicData } = serviceClient.storage
-        .from("courses_media")
-        .getPublicUrl(uniquePath);
-      fileUrl = publicData.publicUrl;
+      if (!retryError) {
+        const { data: publicData } = serviceClient.storage
+          .from(BUCKET)
+          .getPublicUrl(uniquePath);
+        fileUrl = publicData.publicUrl;
+      } else {
+        const { error: fallbackError } = await serviceClient.storage
+          .from("courses_media")
+          .upload(uniquePath, buffer, {
+            contentType: file.type || "application/octet-stream",
+            upsert: false,
+          });
+
+        if (fallbackError) throw new Error(fallbackError.message);
+        const { data: publicData } = serviceClient.storage
+          .from("courses_media")
+          .getPublicUrl(uniquePath);
+        fileUrl = publicData.publicUrl;
+      }
     } else {
       const { data: publicData } = serviceClient.storage
         .from(BUCKET)

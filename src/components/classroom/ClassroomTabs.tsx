@@ -150,7 +150,7 @@ export function ClassroomTabs({
     { id: "session" as const, label: "Live Room", icon: Video },
     { id: "students" as const, label: "Students", icon: Users, instructorOnly: true },
     { id: "gradebook" as const, label: "Gradebook", icon: GraduationCap, instructorOnly: true },
-    { id: "groups" as const, label: "Cohorts", icon: UsersRound, instructorOnly: true },
+    { id: "groups" as const, label: "Classes & Courses", icon: UsersRound, instructorOnly: true },
     { id: "history" as const, label: "History", icon: History, instructorOnly: true },
   ];
 
@@ -262,7 +262,7 @@ export function ClassroomTabs({
         )}
 
         <div>
-          <h3 className="px-4 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-3">
+          <h3 className="px-3 text-[10px] font-black uppercase tracking-[0.18em] text-slate-400 mb-2">
             Classroom Tools
           </h3>
           <div className="space-y-1">
@@ -273,13 +273,13 @@ export function ClassroomTabs({
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
                   className={cn(
-                    "flex items-center gap-3.5 px-5 py-3.5 rounded-[1.25rem] text-xs font-black uppercase tracking-widest transition-all w-full cursor-pointer",
+                    "flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all w-full cursor-pointer",
                     isActive
-                      ? "bg-[#fd5523] text-white shadow-lg shadow-[#fd5523]/30 scale-[1.02]"
-                      : "text-slate-400 hover:bg-slate-50 hover:text-slate-600"
+                      ? "bg-[#fd5523] text-white shadow-sm shadow-[#fd5523]/25"
+                      : "text-slate-600 hover:bg-slate-50 hover:text-[#062e39]"
                   )}
                 >
-                  <tab.icon className={cn("h-4 w-4", isActive ? "text-white" : "text-slate-400")} />
+                  <tab.icon className={cn("h-4 w-4 shrink-0", isActive ? "text-white" : "text-slate-400")} />
                   <span className="truncate">{tab.label}</span>
                 </button>
               );
@@ -472,6 +472,7 @@ export function ClassroomTabs({
               companySlug={companySlug}
               isAdminOrInstructor={isAdminOrInstructor}
               cohorts={cohorts}
+              courses={courses}
               activeCohortId={activeCohortId === "all" ? null : activeCohortId}
             />
           )}

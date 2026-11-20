@@ -119,6 +119,16 @@ export async function CourseStudioView({
   const avgRating =
     reviewRows.length > 0 ? reviewRows.reduce((s, r) => s + r.rating, 0) / reviewRows.length : null;
 
+  let companyClasses: { id: string; name: string; course_id: string | null }[] = [];
+  if (course.company_id) {
+    const { data: groupsRaw } = await supabase
+      .from("classroom_groups")
+      .select("id, name, course_id")
+      .eq("company_id", course.company_id)
+      .order("name");
+    companyClasses = (groupsRaw ?? []) as { id: string; name: string; course_id: string | null }[];
+  }
+
   const now = new Date();
   const weeklyData: { week: string; count: number }[] = Array.from({ length: 8 }).map((_, i) => {
     const d = new Date(now);
@@ -411,7 +421,7 @@ export async function CourseStudioView({
           </TabsContent>
 
           <TabsContent value="settings" className="mt-0">
-            <CourseSettingsForm course={course} tenantSlug={tenantSlug} />
+            <CourseSettingsForm course={course} tenantSlug={tenantSlug} companyClasses={companyClasses} />
           </TabsContent>
 
           <TabsContent value="analytics" className="mt-0">

@@ -5,6 +5,7 @@ import {
   BookOpen, RotateCcw,
 } from "lucide-react";
 import { EnrollmentActions } from "@/components/admin/enrollment-actions";
+import { EnrollmentsToolbarActions } from "@/components/tenant/admin/EnrollmentsToolbarActions";
 import { requireTenantAdminPage } from "@/lib/tenants/admin-guard";
 
 export const metadata = { title: "Enrollment Management — Admin Hub" };
@@ -85,12 +86,19 @@ export default async function TenantEnrollmentsPage({ params, searchParams }: Pa
     rows = rows.filter((r) => r.course_id === courseFilter);
   }
 
-  // 4. Fetch Courses for filter
-  const { data: allCourses } = await supabase
-    .from("courses")
-    .select("id, title")
-    .eq("company_id", company.id)
-    .order("title");
+  // 4. Fetch Courses and Cohorts for filter & invite modal
+  const [{ data: allCourses }, { data: allCohorts }] = await Promise.all([
+    supabase
+      .from("courses")
+      .select("id, title")
+      .eq("company_id", company.id)
+      .order("title"),
+    supabase
+      .from("classroom_groups")
+      .select("id, name")
+      .eq("company_id", company.id)
+      .order("name"),
+  ]);
 
   const tabs = [
     { key: "all", label: "All", count: allCount ?? 0 },
@@ -105,13 +113,22 @@ export default async function TenantEnrollmentsPage({ params, searchParams }: Pa
     <div className="container max-w-7xl px-4 py-6 sm:py-10">
       <div className="space-y-6 sm:space-y-8">
         {/* Header */}
-        <div>
-          <h1 className="text-2xl sm:text-4xl font-black tracking-tight text-[#062e39] uppercase">
-            Enrollment Management
-          </h1>
-          <p className="text-slate-500 font-medium mt-1.5 text-sm sm:text-lg">
-            Manage student access and track payments for {company.name}.
-          </p>
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-[#062e39] uppercase">
+              Enrollment Management
+            </h1>
+            <p className="text-slate-500 font-medium mt-1 text-sm sm:text-base">
+              Manage student access, self-enroll, or bulk-register learners for {company.name}.
+            </p>
+          </div>
+
+          <EnrollmentsToolbarActions
+            companyId={company.id}
+            companySlug={company.slug}
+            courses={allCourses ?? []}
+            cohorts={allCohorts ?? []}
+          />
         </div>
 
         {/* KPI row */}
