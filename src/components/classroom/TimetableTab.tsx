@@ -424,15 +424,15 @@ export function TimetableTab({ companyId, isAdminOrInstructor, companySlug }: { 
                             <div className="mt-4 lg:mt-0 lg:ml-4 grid grid-cols-2 sm:flex sm:items-center gap-2 w-full sm:w-auto">
                               <a
                                 href={`/academy/${companySlug}/classroom?tab=session&scheduleId=${lesson.id}`}
-                                className="h-11 sm:h-12 px-4 sm:px-6 rounded-xl bg-[#fd5523] text-white font-black text-[10px] sm:text-xs uppercase tracking-widest hover:bg-[#ef4a16] transition-all shadow-md shadow-[#fd5523]/20 flex items-center justify-center gap-1.5 min-h-[44px]"
+                                className="h-9 px-3.5 rounded-xl bg-[#fd5523] text-white font-semibold text-xs hover:bg-[#ef4a16] transition-all shadow-xs flex items-center justify-center gap-1.5"
                               >
-                                <Video className="h-3.5 w-3.5" />
+                                <Video className="h-3.5 w-3.5 shrink-0" />
                                 <span>Join Room</span>
                               </a>
                               <Button 
                                 onClick={() => setSelectedLesson(lesson)}
                                 variant="outline"
-                                className="h-11 sm:h-12 px-4 sm:px-6 rounded-xl border-slate-200 text-[#062e39] font-black text-[10px] sm:text-xs uppercase tracking-widest hover:bg-slate-100 transition-all min-h-[44px]"
+                                className="h-9 px-3.5 rounded-xl border-slate-200 text-[#062e39] font-semibold text-xs hover:bg-slate-100 transition-all"
                               >
                                 Details
                               </Button>
@@ -447,10 +447,10 @@ export function TimetableTab({ companyId, isAdminOrInstructor, companySlug }: { 
               
               {/* Empty State - Mobile responsive */}
               {schedules.length === 0 && (
-                <div className="text-center py-16 sm:py-24 bg-white rounded-3xl sm:rounded-[4rem] border-2 border-dashed border-slate-100">
-                  <CalendarDays className="mx-auto h-16 w-16 sm:h-24 sm:w-24 text-slate-50 mb-6 sm:mb-8" />
-                  <h3 className="text-2xl sm:text-3xl font-black text-[#062e39] px-4">Timetable Clear</h3>
-                  <p className="text-slate-400 mt-2 font-bold max-w-xs mx-auto px-4 text-sm sm:text-base">
+                <div className="text-center py-14 sm:py-18 bg-white rounded-2xl border-2 border-dashed border-slate-200/80">
+                  <CalendarDays className="mx-auto h-12 w-12 text-slate-300 mb-3" />
+                  <h3 className="text-lg sm:text-xl font-bold text-[#062e39] px-4">Timetable Clear</h3>
+                  <p className="text-slate-500 mt-1.5 font-normal max-w-xs mx-auto px-4 text-xs sm:text-sm">
                     Your weekly school schedule will appear here once added by the instructor.
                   </p>
                 </div>
@@ -461,18 +461,18 @@ export function TimetableTab({ companyId, isAdminOrInstructor, companySlug }: { 
 
       {/* Lesson Details Dialog - Mobile Responsive */}
       <Dialog open={!!selectedLesson} onOpenChange={() => setSelectedLesson(null)}>
-        <DialogContent className="sm:max-w-[600px] rounded-2xl sm:rounded-[2.5rem] p-0 overflow-hidden border-none shadow-2xl w-[95vw] sm:w-full mx-auto max-h-[85dvh] flex flex-col">
-           <div className="bg-[#062e39] p-5 sm:p-8 text-white relative shrink-0">
-              <div className="absolute top-0 right-0 p-8 sm:p-12 opacity-10 pointer-events-none">
-                 <BookOpen className="h-32 w-32 sm:h-40 sm:w-40" />
+        <DialogContent className="sm:max-w-[560px] rounded-2xl p-0 overflow-hidden border-none shadow-2xl w-[95vw] sm:w-full mx-auto max-h-[85dvh] flex flex-col">
+           <div className="bg-[#062e39] p-5 sm:p-6 text-white relative shrink-0">
+              <div className="absolute top-0 right-0 p-6 opacity-10 pointer-events-none">
+                 <BookOpen className="h-28 w-28" />
               </div>
-              <button onClick={() => setSelectedLesson(null)} className="absolute top-4 right-4 sm:top-6 sm:right-6 h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-all">
-                 <X className="h-4 w-4 sm:h-5 sm:w-5" />
+              <button onClick={() => setSelectedLesson(null)} className="absolute top-4 right-4 h-8 w-8 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-all">
+                 <X className="h-4 w-4" />
               </button>
-              <div className="px-3 py-1 sm:px-4 sm:py-1.5 rounded-full bg-[#fd5523] text-white text-[8px] sm:text-[10px] font-black uppercase tracking-widest inline-block mb-3 sm:mb-4">
+              <div className="px-2.5 py-0.5 rounded-full bg-[#fd5523] text-white text-[10px] font-bold uppercase tracking-wider inline-block mb-2.5">
                  {selectedLesson?.schedule_type?.replace('_', ' ')}
               </div>
-              <h2 className="text-xl sm:text-3xl lg:text-4xl font-black tracking-tight mb-2 break-words pr-8">{selectedLesson?.title}</h2>
+              <h2 className="text-lg sm:text-2xl font-bold tracking-tight mb-1.5 break-words pr-8">{selectedLesson?.title}</h2>
               <p className="text-white/60 font-bold flex items-center gap-2 text-xs sm:text-sm">
                  <Clock className="h-3 w-3 sm:h-4 sm:w-4" /> Every {DAYS[(selectedLesson?.day_of_week || 1) - 1]} at {selectedLesson?.start_time_only?.slice(0, 5)}
               </p>

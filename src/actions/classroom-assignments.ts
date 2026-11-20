@@ -3,6 +3,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { revalidatePath } from "next/cache";
 import { requireTenantMember, requireTenantTeacher } from "@/lib/tenants/access";
+import { uploadFileToClassroomBucket } from "@/lib/storage/classroom-bucket";
 
 export interface RubricCriterion {
   id: string;
@@ -183,31 +184,16 @@ export async function createClassroomAssignment(formData: FormData) {
   const attachments: AssignmentAttachment[] = [];
   const file = formData.get("file") as File | null;
   if (file && file.size > 0) {
-    const fileExt = file.name.split(".").pop();
     const cleanFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
     const filePath = `${companyId}/assignments/${Date.now()}_${cleanFileName}`;
+    const { publicUrl } = await uploadFileToClassroomBucket(supabase, filePath, file, false);
 
-    const { error: uploadError } = await supabase.storage
-      .from("classroom-materials")
-      .upload(filePath, file, {
-        contentType: file.type || "application/octet-stream",
-        upsert: false,
-      });
-
-    if (uploadError) {
-      console.error("Failed to upload assignment attachment:", uploadError);
-    } else {
-      const { data: publicUrlData } = supabase.storage
-        .from("classroom-materials")
-        .getPublicUrl(filePath);
-
-      attachments.push({
-        name: file.name,
-        url: publicUrlData.publicUrl,
-        size: file.size,
-        type: file.type,
-      });
-    }
+    attachments.push({
+      name: file.name,
+      url: publicUrl,
+      size: file.size,
+      type: file.type || "application/octet-stream",
+    });
   }
 
   const { data: newAssignment, error } = await supabase
@@ -325,24 +311,9 @@ export async function submitClassroomAssignment(formData: FormData) {
   if (file && file.size > 0) {
     const cleanFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
     const filePath = `${companyId}/submissions/${assignmentId}/${userId}_${Date.now()}_${cleanFileName}`;
+    const { publicUrl } = await uploadFileToClassroomBucket(supabase, filePath, file, true);
 
-    const { error: uploadError } = await supabase.storage
-      .from("classroom-materials")
-      .upload(filePath, file, {
-        contentType: file.type || "application/octet-stream",
-        upsert: true,
-      });
-
-    if (uploadError) {
-      console.error("Upload submission file error:", uploadError);
-      throw new Error(`Failed to upload file: ${uploadError.message}`);
-    }
-
-    const { data: publicUrlData } = supabase.storage
-      .from("classroom-materials")
-      .getPublicUrl(filePath);
-
-    fileUrl = publicUrlData.publicUrl;
+    fileUrl = publicUrl;
     fileName = file.name;
     fileSizeBytes = file.size;
   }

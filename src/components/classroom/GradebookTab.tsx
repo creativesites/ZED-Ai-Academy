@@ -152,27 +152,27 @@ export function GradebookTab({
   return (
     <div className="flex h-full flex-col bg-slate-50/40 animate-in fade-in duration-300">
       {/* Header & Metrics */}
-      <div className="p-3 sm:p-6 lg:p-8 pb-4 space-y-4 sm:space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="p-3 sm:p-5 lg:p-6 pb-4 space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <div className="flex items-center gap-2.5">
-              <h2 className="text-xl sm:text-2xl lg:text-3xl font-black text-[#062e39] tracking-tight">
+            <div className="flex items-center gap-2">
+              <h2 className="text-lg sm:text-xl font-bold text-[#062e39] tracking-tight">
                 Student Gradebook &amp; Analytics
               </h2>
-              <GraduationCap className="h-6 w-6 sm:h-7 sm:w-7 text-[#fd5523]" />
+              <GraduationCap className="h-5 w-5 text-[#fd5523] shrink-0" />
             </div>
-            <p className="text-xs sm:text-sm font-medium text-slate-500 mt-1">
+            <p className="text-xs text-slate-500 mt-0.5">
               Inspect student lesson completion, quiz test scores, and certification records.
             </p>
           </div>
 
-          <div className="flex items-center gap-2.5 w-full sm:w-auto">
+          <div className="flex items-center gap-2 w-full sm:w-auto">
             <Button
               variant="outline"
               size="sm"
               onClick={loadGradebook}
               disabled={loading}
-              className="flex-1 sm:flex-none rounded-xl h-11 sm:h-10 px-3.5 text-xs font-bold border-slate-200 hover:bg-slate-50 min-h-[44px]"
+              className="flex-1 sm:flex-none rounded-xl h-9 px-3.5 text-xs font-semibold border-slate-200 hover:bg-slate-50"
             >
               <RotateCcw className={cn("h-3.5 w-3.5 mr-1.5", loading && "animate-spin")} />
               Refresh
@@ -181,7 +181,7 @@ export function GradebookTab({
             <Button
               onClick={exportCSV}
               disabled={!data?.students.length}
-              className="flex-1 sm:flex-none bg-[#062e39] hover:bg-[#0a4555] text-white rounded-xl h-11 sm:h-10 px-4 text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-sm min-h-[44px]"
+              className="flex-1 sm:flex-none bg-[#062e39] hover:bg-[#0a4555] text-white rounded-xl h-9 px-4 text-xs font-semibold flex items-center justify-center gap-1.5 transition-all shadow-xs"
             >
               <Download className="h-3.5 w-3.5" />
               Export CSV

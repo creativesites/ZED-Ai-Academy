@@ -115,10 +115,10 @@ export default async function TenantEnrollmentsPage({ params, searchParams }: Pa
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-[#062e39] uppercase">
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[#062e39]">
               Enrollment Management
             </h1>
-            <p className="text-slate-500 font-medium mt-1 text-sm sm:text-base">
+            <p className="text-slate-500 mt-1 text-xs sm:text-sm">
               Manage student access, self-enroll, or bulk-register learners for {company.name}.
             </p>
           </div>
@@ -139,33 +139,33 @@ export default async function TenantEnrollmentsPage({ params, searchParams }: Pa
             { label: "Pending", value: pendingCount ?? 0, icon: Clock3, accent: "bg-amber-50 text-amber-600" },
             { label: "Revoked", value: revokedCount ?? 0, icon: XCircle, accent: "bg-red-50 text-red-500" },
           ].map((kpi) => (
-            <div key={kpi.label} className="bg-white rounded-2xl sm:rounded-[2rem] border border-slate-100 p-4 sm:p-6 shadow-sm">
-              <div className={`mb-3 sm:mb-4 flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-xl sm:rounded-2xl ${kpi.accent}`}>
-                <kpi.icon className="h-4 w-4 sm:h-5 sm:w-5" />
+            <div key={kpi.label} className="bg-white rounded-2xl border border-slate-200/80 p-4 sm:p-5 shadow-xs">
+              <div className={`mb-2.5 flex h-9 w-9 items-center justify-center rounded-xl ${kpi.accent}`}>
+                <kpi.icon className="h-4 w-4" />
               </div>
-              <p className="text-2xl sm:text-3xl font-black tracking-tight text-[#062e39]">{kpi.value}</p>
-              <p className="mt-1 text-[10px] sm:text-xs font-black uppercase tracking-widest text-slate-400">{kpi.label}</p>
+              <p className="text-xl sm:text-2xl font-bold tracking-tight text-[#062e39]">{kpi.value}</p>
+              <p className="mt-0.5 text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-slate-400">{kpi.label}</p>
             </div>
           ))}
         </div>
 
         {/* Filters */}
-        <div className="bg-white rounded-2xl sm:rounded-[2.5rem] border border-slate-100 p-4 sm:p-6 lg:p-8 shadow-sm">
-          <form method="GET" className="flex flex-col lg:flex-row lg:items-center gap-4 sm:gap-6">
+        <div className="bg-white rounded-2xl border border-slate-200/80 p-4 sm:p-5 shadow-xs">
+          <form method="GET" className="flex flex-col lg:flex-row lg:items-center gap-3 sm:gap-4">
             <input type="hidden" name="status" value={statusFilter} />
-            <div className="flex flex-wrap gap-2 flex-1">
+            <div className="flex flex-wrap gap-1.5 flex-1">
               {tabs.map((tab) => (
                 <Link
                   key={tab.key}
                   href={`/academy/${company.slug}/admin/enrollments?status=${tab.key}${q ? `&q=${encodeURIComponent(q)}` : ""}${courseFilter ? `&course=${courseFilter}` : ""}`}
-                  className={`flex items-center gap-2 rounded-xl px-3.5 sm:px-5 py-2 sm:py-2.5 text-[11px] sm:text-xs font-black uppercase tracking-widest transition-all ${
+                  className={`flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold transition-all ${
                     statusFilter === tab.key
                       ? "bg-[#062e39] text-white"
-                      : "bg-slate-50 text-slate-500 hover:bg-slate-100"
+                      : "bg-slate-50 text-slate-600 hover:bg-slate-100"
                   }`}
                 >
                   {tab.label}
-                  <span className={`rounded-lg px-2 py-0.5 text-[10px] font-black ${
+                  <span className={`rounded-md px-1.5 py-0.5 text-[10px] font-bold ${
                     statusFilter === tab.key ? "bg-white/20 text-white" : "bg-white text-slate-400"
                   }`}>
                     {tab.count}
@@ -174,17 +174,17 @@ export default async function TenantEnrollmentsPage({ params, searchParams }: Pa
               ))}
             </div>
 
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3 w-full lg:w-auto">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full lg:w-auto">
               <input
                 name="q"
                 defaultValue={q}
                 placeholder="Search students..."
-                className="h-11 sm:h-12 w-full sm:w-56 rounded-xl border border-slate-100 bg-slate-50 px-4 text-sm text-[#062e39] placeholder:text-slate-400 focus:bg-white focus:border-[#fd5523] outline-none transition-all"
+                className="h-10 w-full sm:w-52 rounded-xl border border-slate-200 bg-slate-50 px-3.5 text-xs sm:text-sm text-[#062e39] placeholder:text-slate-400 focus:bg-white focus:border-[#fd5523] outline-none transition-all"
               />
               <select
                 name="course"
                 defaultValue={courseFilter}
-                className="h-11 sm:h-12 w-full sm:w-44 rounded-xl border border-slate-100 bg-slate-50 px-3.5 text-sm text-[#062e39] focus:bg-white focus:border-[#fd5523] outline-none transition-all"
+                className="h-10 w-full sm:w-44 rounded-xl border border-slate-200 bg-slate-50 px-3 text-xs sm:text-sm text-[#062e39] focus:bg-white focus:border-[#fd5523] outline-none transition-all"
               >
                 <option value="">All Courses</option>
                 {(allCourses ?? []).map((c) => (
@@ -194,7 +194,7 @@ export default async function TenantEnrollmentsPage({ params, searchParams }: Pa
               <div className="flex items-center gap-2">
                 <button
                   type="submit"
-                  className="h-11 sm:h-12 flex-1 sm:flex-none px-6 sm:px-8 rounded-xl bg-[#062e39] text-white text-xs font-black uppercase tracking-widest hover:bg-[#0a3a48] transition-all"
+                  className="h-10 flex-1 sm:flex-none px-5 rounded-xl bg-[#062e39] text-white text-xs font-semibold hover:bg-[#0a3a48] transition-all"
                 >
                   Filter
                 </button>
@@ -202,7 +202,7 @@ export default async function TenantEnrollmentsPage({ params, searchParams }: Pa
                   <Link
                     href={`/academy/${company.slug}/admin/enrollments`}
                     title="Reset filters"
-                    className="h-11 sm:h-12 px-3.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-500 hover:text-[#fd5523] flex items-center justify-center transition-colors"
+                    className="h-10 px-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-500 hover:text-[#fd5523] flex items-center justify-center transition-colors"
                   >
                     <RotateCcw className="h-4 w-4" />
                   </Link>
@@ -213,7 +213,7 @@ export default async function TenantEnrollmentsPage({ params, searchParams }: Pa
         </div>
 
         {/* Enrollments List */}
-        <div className="bg-white rounded-2xl sm:rounded-[2.5rem] border border-slate-100 shadow-sm overflow-hidden">
+        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
           {rows.length === 0 ? (
             <div className="py-16 sm:py-24 text-center px-4">
               <Users className="mx-auto mb-4 h-12 w-12 sm:h-16 sm:w-16 text-slate-200" />

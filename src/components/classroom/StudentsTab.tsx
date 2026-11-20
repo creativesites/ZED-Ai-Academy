@@ -209,12 +209,12 @@ export function StudentsTab({
             ))}
 
             {filteredStudents.length === 0 && (
-              <div className="col-span-full py-20 text-center bg-white rounded-[3rem] border-2 border-dashed border-slate-100">
-                <div className="h-20 w-20 rounded-3xl bg-slate-50 flex items-center justify-center mx-auto mb-6">
-                   <Users className="h-10 w-10 text-slate-200" />
+              <div className="col-span-full py-14 text-center bg-white rounded-2xl border-2 border-dashed border-slate-200/80">
+                <div className="h-14 w-14 rounded-2xl bg-slate-50 flex items-center justify-center mx-auto mb-4">
+                   <Users className="h-7 w-7 text-slate-300" />
                 </div>
-                <h3 className="text-xl font-black text-[#062e39]">No Students Found</h3>
-                <p className="text-slate-400 font-medium mt-2 max-w-xs mx-auto">
+                <h3 className="text-lg font-bold text-[#062e39]">No Students Found</h3>
+                <p className="text-slate-400 text-xs mt-1.5 max-w-xs mx-auto">
                   {searchQuery ? `No results for "${searchQuery}"` : "This academy doesn't have any students enrolled yet."}
                 </p>
               </div>

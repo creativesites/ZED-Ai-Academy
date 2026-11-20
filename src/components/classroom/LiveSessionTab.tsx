@@ -242,15 +242,15 @@ export function LiveSessionTab({
   // --- Conditional Renders: Inactive State (Student View) ---
   if (!isSessionActive && !isAdminOrInstructor) {
     return (
-      <div className="flex h-full min-h-[500px] flex-col items-center justify-center p-8 text-center bg-slate-50">
-        <div className="relative mb-8">
-           <div className="absolute -inset-4 bg-[#fd5523]/10 rounded-full blur-2xl animate-pulse" />
-           <div className="relative h-24 w-24 rounded-3xl bg-white shadow-xl border border-slate-100 flex items-center justify-center">
-             <Video className="h-10 w-10 text-slate-300" />
+      <div className="flex h-full min-h-[420px] flex-col items-center justify-center p-6 text-center bg-slate-50">
+        <div className="relative mb-5">
+           <div className="absolute -inset-3 bg-[#fd5523]/10 rounded-full blur-xl animate-pulse" />
+           <div className="relative h-16 w-16 rounded-2xl bg-white shadow-sm border border-slate-200/80 flex items-center justify-center">
+             <Video className="h-7 w-7 text-slate-400" />
            </div>
         </div>
-        <h2 className="text-3xl font-black text-[#062e39] tracking-tight">Classroom is Closed</h2>
-        <p className="mt-4 text-slate-500 max-w-sm leading-relaxed">
+        <h2 className="text-xl sm:text-2xl font-bold text-[#062e39] tracking-tight">Classroom is Closed</h2>
+        <p className="mt-2 text-xs sm:text-sm text-slate-500 max-w-sm leading-relaxed">
           The instructor has not started the live session yet. You will be able to join as soon as they go live.
         </p>
       </div>

@@ -4,62 +4,12 @@ import { revalidatePath } from "next/cache";
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { requireTenantMember, requireTenantTeacher } from "@/lib/tenants/access";
-
-const BUCKET = "classroom-materials";
-const MAX_FILE_BYTES = 50 * 1024 * 1024; // 50 MB
-
-const ALLOWED_MATERIAL_MIME_TYPES = [
-  "application/pdf",
-  "application/msword",
-  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-  "application/vnd.ms-powerpoint",
-  "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-  "application/vnd.ms-excel",
-  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-  "text/plain",
-  "text/markdown",
-  "text/csv",
-  "text/html",
-  "text/x-python",
-  "text/javascript",
-  "application/javascript",
-  "application/json",
-  "application/zip",
-  "application/x-zip-compressed",
-  "application/octet-stream",
-  "video/mp4",
-  "video/webm",
-  "video/quicktime",
-  "audio/mpeg",
-  "audio/wav",
-  "image/jpeg",
-  "image/png",
-  "image/webp",
-  "image/gif",
-  "image/svg+xml",
-];
-
-async function ensureMaterialsBucket(serviceClient: ReturnType<typeof createServiceClient>) {
-  const { data: existing } = await serviceClient.storage.getBucket(BUCKET);
-  if (!existing) {
-    await serviceClient.storage
-      .createBucket(BUCKET, {
-        public: true,
-        fileSizeLimit: MAX_FILE_BYTES,
-        allowedMimeTypes: ALLOWED_MATERIAL_MIME_TYPES,
-      })
-      .catch(() => null);
-    return;
-  }
-
-  await serviceClient.storage
-    .updateBucket(BUCKET, {
-      public: true,
-      fileSizeLimit: MAX_FILE_BYTES,
-      allowedMimeTypes: ALLOWED_MATERIAL_MIME_TYPES,
-    })
-    .catch(() => null);
-}
+import {
+  CLASSROOM_MATERIALS_BUCKET as BUCKET,
+  CLASSROOM_MAX_FILE_BYTES as MAX_FILE_BYTES,
+  ensureClassroomBucket as ensureMaterialsBucket,
+  uploadFileToClassroomBucket,
+} from "@/lib/storage/classroom-bucket";
 
 async function ensureProfileRow(
   serviceClient: ReturnType<typeof createServiceClient>,
@@ -545,30 +495,9 @@ export async function createClassroomMaterial(formData: FormData) {
   let fileSizeBytes = 0;
 
   if (file && file.size > 0) {
-    if (file.size > MAX_FILE_BYTES) {
-      throw new Error("File size exceeds 50 MB limit");
-    }
-
-    await ensureMaterialsBucket(serviceClient);
     const uniquePath = buildSafeMaterialPath(companyId, file.name);
-    const bodyBuffer = Buffer.from(await file.arrayBuffer());
-    const contentType = file.type || "application/octet-stream";
-
-    const { error: uploadError } = await serviceClient.storage
-      .from(BUCKET)
-      .upload(uniquePath, bodyBuffer, {
-        contentType,
-        upsert: false,
-      });
-
-    if (uploadError) {
-      throw new Error(`Storage upload failed: ${uploadError.message}`);
-    }
-
-    const { data: publicData } = serviceClient.storage
-      .from(BUCKET)
-      .getPublicUrl(uniquePath);
-    fileUrl = publicData.publicUrl;
+    const uploaded = await uploadFileToClassroomBucket(serviceClient, uniquePath, file, false);
+    fileUrl = uploaded.publicUrl;
     fileSizeBytes = file.size;
   }
 
@@ -650,33 +579,18 @@ export async function uploadDocumentVersion(formData: FormData) {
   const file = formData.get("file") as File | null;
 
   if (!file || file.size === 0) throw new Error("A replacement file is required");
-  if (file.size > MAX_FILE_BYTES) throw new Error("File size exceeds 50 MB limit");
 
   await requireTenantTeacher(companyId);
   const serviceClient = createServiceClient();
-  await ensureMaterialsBucket(serviceClient);
 
   const uniquePath = buildSafeMaterialPath(companyId, file.name, `${documentId}-ver`);
-  const bodyBuffer = Buffer.from(await file.arrayBuffer());
-
-  const { error: uploadError } = await serviceClient.storage
-    .from(BUCKET)
-    .upload(uniquePath, bodyBuffer, {
-      contentType: file.type || "application/octet-stream",
-      upsert: false,
-    });
-
-  if (uploadError) throw new Error(`Storage upload failed: ${uploadError.message}`);
-
-  const { data: publicData } = serviceClient.storage
-    .from(BUCKET)
-    .getPublicUrl(uniquePath);
+  const uploaded = await uploadFileToClassroomBucket(serviceClient, uniquePath, file, false);
 
   return recordDocumentVersion({
     companyId,
     companySlug,
     documentId,
-    fileUrl: publicData.publicUrl,
+    fileUrl: uploaded.publicUrl,
     fileName: file.name,
     fileSizeBytes: file.size,
     mimeType: file.type || "application/octet-stream",

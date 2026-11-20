@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { requireTenantMember, requireTenantTeacher } from "@/lib/tenants/access";
+import { uploadFileToClassroomBucket } from "@/lib/storage/classroom-bucket";
 
 export interface ClassroomChannel {
   id: string;
@@ -216,28 +217,13 @@ export async function postClassroomMessage(formData: FormData) {
   if (file && file.size > 0) {
     const cleanFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
     const filePath = `${companyId}/discussions/${channelId}/${Date.now()}_${cleanFileName}`;
-
-    const { error: uploadError } = await supabase.storage
-      .from("classroom-materials")
-      .upload(filePath, file, {
-        contentType: file.type || "application/octet-stream",
-        upsert: false,
-      });
-
-    if (uploadError) {
-      console.error("Failed to upload discussion attachment:", uploadError);
-      throw new Error(`Attachment upload failed: ${uploadError.message}`);
-    }
-
-    const { data: publicUrlData } = supabase.storage
-      .from("classroom-materials")
-      .getPublicUrl(filePath);
+    const { publicUrl } = await uploadFileToClassroomBucket(supabase, filePath, file, false);
 
     attachments.push({
       name: file.name,
-      url: publicUrlData.publicUrl,
+      url: publicUrl,
       size: file.size,
-      type: file.type,
+      type: file.type || "application/octet-stream",
     });
   }
 

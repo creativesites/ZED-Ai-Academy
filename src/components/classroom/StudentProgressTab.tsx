@@ -78,17 +78,17 @@ export function StudentProgressTab({
   }
 
   return (
-    <div className="p-3 sm:p-6 md:p-8 space-y-4 sm:space-y-6 animate-in fade-in duration-300">
+    <div className="p-3 sm:p-5 md:p-6 space-y-4 sm:space-y-5 animate-in fade-in duration-300">
       {/* 1. Header Banner & High-Yield Metric Cards */}
-      <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-br from-[#062e39] via-[#094150] to-[#062e39] p-4 sm:p-6 md:p-8 text-white shadow-xl">
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 sm:gap-6 relative z-10">
-          <div>
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 text-sky-200 text-xs font-black uppercase tracking-wider mb-2 border border-white/10">
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#062e39] via-[#094150] to-[#062e39] p-4 sm:p-6 text-white shadow-sm">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 relative z-10">
+          <div className="min-w-0">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/10 text-sky-200 text-[10px] font-bold uppercase tracking-wider mb-1.5 border border-white/10">
               <GraduationCap className="h-3.5 w-3.5 text-[#fd5523]" />
               Academic Transcript &amp; Performance
             </span>
-            <h2 className="text-xl sm:text-2xl md:text-3xl font-black text-white">Your Learning Journey</h2>
-            <p className="text-xs md:text-sm text-slate-300 max-w-xl mt-1 font-medium">
+            <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-white">Your Learning Journey</h2>
+            <p className="text-xs text-slate-300 max-w-xl mt-1">
               Track course completion, quiz proficiency, homework evaluation scores, and earned credentials.
             </p>
           </div>
@@ -96,11 +96,11 @@ export function StudentProgressTab({
           {progress.nextLesson && (
             <Link
               href={`/academy/${companySlug}/course/${progress.nextLesson.course_slug}`}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3.5 min-h-[44px] rounded-2xl bg-[#fd5523] hover:bg-[#e0481d] text-white text-xs font-black shadow-xl shadow-[#fd5523]/30 transition-all shrink-0"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 h-9 rounded-xl bg-[#fd5523] hover:bg-[#e0481d] text-white text-xs font-semibold shadow-xs transition-all shrink-0 max-w-full"
             >
-              <BookOpen className="h-4 w-4" />
-              Resume: {progress.nextLesson.title}
-              <ArrowRight className="h-3.5 w-3.5" />
+              <BookOpen className="h-3.5 w-3.5 shrink-0" />
+              <span className="truncate">Resume: {progress.nextLesson.title}</span>
+              <ArrowRight className="h-3.5 w-3.5 shrink-0" />
             </Link>
           )}
         </div>
