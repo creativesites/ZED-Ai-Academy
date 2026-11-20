@@ -261,21 +261,21 @@ export function LiveSessionTab({
   if (!hasJoined) {
     return (
       <div className="flex h-full min-h-[500px] flex-col items-center justify-center p-4 lg:p-8 bg-slate-50">
-        <div className="max-w-md w-full bg-white rounded-[2rem] lg:rounded-[2.5rem] p-8 lg:p-10 shadow-2xl border border-slate-100 text-center relative overflow-hidden">
-          <div className="mb-8 flex h-20 w-20 mx-auto items-center justify-center rounded-3xl bg-[#fd5523]/10 text-[#fd5523] shadow-inner">
-            <Video className="h-10 w-10" />
+        <div className="max-w-md w-full bg-white rounded-2xl p-6 sm:p-8 shadow-sm border border-slate-200/80 text-center relative overflow-hidden">
+          <div className="mb-5 flex h-14 w-14 mx-auto items-center justify-center rounded-2xl bg-[#fd5523]/10 text-[#fd5523]">
+            <Video className="h-7 w-7" />
           </div>
-          <h2 className="text-2xl lg:text-3xl font-black text-[#062e39] mb-3 tracking-tight">
+          <h2 className="text-xl sm:text-2xl font-bold text-[#062e39] mb-2 tracking-tight">
             {isAdminOrInstructor && !isSessionActive ? "Start Live Session" : "Virtual Classroom"}
           </h2>
           
           {isAdminOrInstructor && !isSessionActive && (
-            <div className="mb-6 text-left">
-              <label className="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-400 mb-2 block ml-1">
+            <div className="mb-5 text-left">
+              <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5 block">
                 Attach to Schedule
               </label>
               <select 
-                className="w-full h-14 px-4 rounded-xl border border-slate-200 bg-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-[#fd5523]/20 transition-all appearance-none"
+                className="w-full h-10 px-3 rounded-xl border border-slate-200 bg-slate-50 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-[#fd5523]/20 transition-all"
                 value={selectedScheduleId || ""}
                 onChange={(e) => setSelectedScheduleId(e.target.value || null)}
               >
@@ -289,14 +289,14 @@ export function LiveSessionTab({
             </div>
           )}
 
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-2.5">
             <Button 
               onClick={isAdminOrInstructor && !isSessionActive ? handleStartSession : handleJoinSession}
               disabled={isInitializing}
-              className="w-full h-16 rounded-2xl bg-[#fd5523] text-white font-black text-lg lg:text-xl hover:bg-[#ef4a16] shadow-xl shadow-[#fd5523]/20 transition-all active:scale-[0.98]"
+              className="w-full h-11 rounded-xl bg-[#fd5523] text-white font-semibold text-sm hover:bg-[#ef4a16] shadow-sm transition-all"
             >
               {isInitializing ? (
-                <Loader2 className="h-6 w-6 animate-spin" />
+                <Loader2 className="h-5 w-5 animate-spin" />
               ) : (
                 isAdminOrInstructor && !isSessionActive ? "Start Class Now" : "Join Room"
               )}
@@ -306,7 +306,7 @@ export function LiveSessionTab({
               type="button"
               variant="outline"
               onClick={() => setShowDeviceModal(true)}
-              className="w-full h-11 rounded-xl border-slate-200 text-slate-700 hover:border-[#fd5523] text-xs font-bold"
+              className="w-full h-10 rounded-xl border-slate-200 text-slate-700 hover:border-[#fd5523] text-xs font-semibold"
             >
               Test Camera & Microphone
             </Button>

@@ -190,8 +190,13 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
     return NextResponse.redirect(targetUrl);
   }
 
-  // Apply Subdomain Rewrite Logic
-  if (isTenantSubdomain && subdomain) {
+  // Apply Subdomain Rewrite Logic (never rewrite API or tRPC endpoints)
+  if (
+    isTenantSubdomain &&
+    subdomain &&
+    !pathname.startsWith('/api/') &&
+    !pathname.startsWith('/trpc/')
+  ) {
     const requestHeaders = new Headers(req.headers);
     requestHeaders.set('x-tenant-slug', subdomain);
 

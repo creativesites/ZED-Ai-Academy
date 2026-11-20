@@ -72,7 +72,9 @@ import {
   getPinnedClassroomMaterials,
   createClassroomFolder,
   deleteClassroomFolder,
-  createClassroomMaterial,
+  createMaterialSignedUpload,
+  createClassroomMaterialRecord,
+  recordDocumentVersion,
   togglePinClassroomMaterial,
   deleteClassroomMaterial,
   toggleBookmarkDocument,
@@ -83,6 +85,7 @@ import {
   type ClassroomFolder,
   type ClassroomMaterial,
 } from "@/actions/classroom-materials";
+import { createClient as createBrowserSupabase } from "@/lib/supabase/client";
 
 const FOLDER_COLORS = [
   { name: "Orange", hex: "#fd5523" },
@@ -200,6 +203,7 @@ export function MaterialsTab({
 
   // Controlled Upload Material Form State
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const [materialSourceType, setMaterialSourceType] = useState<"file" | "link">("file");
   const [uploadTitle, setUploadTitle] = useState("");
   const [uploadMaterialType, setUploadMaterialType] = useState("pdf");
@@ -283,6 +287,7 @@ export function MaterialsTab({
     setUploadDescription("");
     setUploadReqAck(false);
     setUploadPinned(false);
+    setUploadError(null);
     setMaterialSourceType("file");
   }
 
@@ -323,58 +328,129 @@ export function MaterialsTab({
     });
   }
 
-  // Handle Material Upload
+  // Handle Material Upload (direct signed upload -> Supabase Storage, bypassing Vercel 4.5 MB limit)
   async function handleUploadMaterial(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    setUploadError(null);
+
     if (!uploadTitle.trim()) {
-      toast.error("Please enter a material title.");
+      const msg = "Please enter a material title.";
+      setUploadError(msg);
+      toast.error(msg);
       return;
     }
     if (materialSourceType === "file" && !uploadFile) {
-      toast.error("Please select or drop a file to upload.");
+      const msg = "Please select or drop a file to upload.";
+      setUploadError(msg);
+      toast.error(msg);
       return;
     }
     if (materialSourceType === "link" && !uploadExternalUrl.trim()) {
-      toast.error("Please enter an external resource URL.");
+      const msg = "Please enter an external resource URL.";
+      setUploadError(msg);
+      toast.error(msg);
       return;
     }
 
     setIsUploading(true);
     try {
-      const formData = new FormData();
-      formData.append("companyId", companyId);
-      formData.append("companySlug", companySlug);
-      formData.append("title", uploadTitle.trim());
-      formData.append("materialType", uploadMaterialType);
-      formData.append("category", uploadCategory);
-      formData.append("folderId", uploadFolderId);
-      formData.append("cohortId", uploadCohortId || "all");
-      formData.append("courseId", uploadCourseId || "all");
-      formData.append("tags", uploadTags);
-      formData.append("description", uploadDescription);
-      formData.append("requiresAcknowledgement", uploadReqAck ? "true" : "false");
-      formData.append("isPinned", uploadPinned ? "true" : "false");
+      let resolvedFileUrl: string | null =
+        materialSourceType === "link" ? uploadExternalUrl.trim() : null;
+      let resolvedFileName: string | null = uploadFile?.name ?? null;
+      let resolvedFileSize = uploadFile?.size ?? 0;
+      const resolvedMimeType = uploadFile?.type || "application/octet-stream";
+
       if (materialSourceType === "file" && uploadFile) {
-        formData.append("file", uploadFile);
-      } else if (materialSourceType === "link" && uploadExternalUrl.trim()) {
-        formData.append("externalUrl", uploadExternalUrl.trim());
+        let uploadedDirect = false;
+        try {
+          const session = await createMaterialSignedUpload(companyId, uploadFile.name);
+          const browserSupabase = createBrowserSupabase();
+          const { error: signedUploadErr } = await browserSupabase.storage
+            .from("classroom-materials")
+            .uploadToSignedUrl(session.path, session.token, uploadFile, {
+              contentType: resolvedMimeType,
+            });
+
+          if (signedUploadErr) {
+            throw new Error(signedUploadErr.message);
+          }
+
+          resolvedFileUrl = session.publicUrl;
+          uploadedDirect = true;
+        } catch (directErr) {
+          // Fallback to /api multipart upload for smaller files if direct storage upload fails
+          if (uploadFile.size <= 4 * 1024 * 1024) {
+            const formData = new FormData();
+            formData.append("companyId", companyId);
+            formData.append("companySlug", companySlug);
+            formData.append("title", uploadTitle.trim());
+            formData.append("materialType", uploadMaterialType);
+            formData.append("category", uploadCategory);
+            formData.append("folderId", uploadFolderId);
+            formData.append("cohortId", uploadCohortId || "all");
+            formData.append("courseId", uploadCourseId || "all");
+            formData.append("tags", uploadTags);
+            formData.append("description", uploadDescription);
+            formData.append("requiresAcknowledgement", uploadReqAck ? "true" : "false");
+            formData.append("isPinned", uploadPinned ? "true" : "false");
+            formData.append("file", uploadFile);
+
+            const res = await fetch("/api/classroom/materials/upload", {
+              method: "POST",
+              body: formData,
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok || data.error) {
+              const directMsg = directErr instanceof Error ? directErr.message : "";
+              throw new Error(
+                data.error ||
+                  directMsg ||
+                  `Upload failed (HTTP ${res.status})`
+              );
+            }
+
+            toast.success("Learning material uploaded and published!");
+            setIsUploadModalOpen(false);
+            resetUploadForm();
+            loadData();
+            return;
+          }
+
+          throw directErr;
+        }
+
+        if (uploadedDirect && !resolvedFileUrl) {
+          throw new Error("Could not resolve public file URL after upload.");
+        }
       }
 
-      const res = await fetch("/api/classroom/materials/upload", {
-        method: "POST",
-        body: formData,
+      await createClassroomMaterialRecord({
+        companyId,
+        companySlug,
+        title: uploadTitle.trim(),
+        description: uploadDescription,
+        materialType: uploadMaterialType,
+        category: uploadCategory,
+        folderId: uploadFolderId,
+        cohortId: uploadCohortId || "all",
+        courseId: uploadCourseId || "all",
+        tags: uploadTags,
+        requiresAcknowledgement: uploadReqAck,
+        isPinned: uploadPinned,
+        fileUrl: resolvedFileUrl,
+        fileName: resolvedFileName,
+        fileSizeBytes: resolvedFileSize,
+        mimeType: resolvedMimeType,
       });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok || data.error) {
-        throw new Error(data.error || "Failed to upload learning material.");
-      }
 
       toast.success("Learning material uploaded and published!");
       setIsUploadModalOpen(false);
       resetUploadForm();
       loadData();
     } catch (err: any) {
-      toast.error(err?.message || "Failed to upload material");
+      const msg = err?.message || "Failed to upload material";
+      setUploadError(msg);
+      toast.error(msg);
     } finally {
       setIsUploading(false);
     }
@@ -457,21 +533,48 @@ export function MaterialsTab({
     }
   }
 
-  // Handle Version Upload
+  // Handle Version Upload (signed upload direct to storage)
   function handleUploadVersion(e: React.FormEvent) {
     e.preventDefault();
     if (!versionModalDoc || !versionFile) return;
 
     startUploadVersion(async () => {
       try {
-        const fd = new FormData();
-        fd.append("companyId", companyId);
-        fd.append("companySlug", companySlug);
-        fd.append("documentId", versionModalDoc.id);
-        fd.append("file", versionFile);
-        if (versionChangeNote) fd.append("changeNote", versionChangeNote);
+        try {
+          const session = await createMaterialSignedUpload(
+            companyId,
+            versionFile.name,
+            `${versionModalDoc.id}-ver`
+          );
+          const browserSupabase = createBrowserSupabase();
+          const { error: signedErr } = await browserSupabase.storage
+            .from("classroom-materials")
+            .uploadToSignedUrl(session.path, session.token, versionFile, {
+              contentType: versionFile.type || "application/octet-stream",
+            });
+          if (signedErr) throw new Error(signedErr.message);
 
-        await uploadDocumentVersion(fd);
+          await recordDocumentVersion({
+            companyId,
+            companySlug,
+            documentId: versionModalDoc.id,
+            fileUrl: session.publicUrl,
+            fileName: versionFile.name,
+            fileSizeBytes: versionFile.size,
+            mimeType: versionFile.type || "application/octet-stream",
+            changeNote: versionChangeNote,
+          });
+        } catch (signedErr) {
+          if (versionFile.size > 4 * 1024 * 1024) throw signedErr;
+          const fd = new FormData();
+          fd.append("companyId", companyId);
+          fd.append("companySlug", companySlug);
+          fd.append("documentId", versionModalDoc.id);
+          fd.append("file", versionFile);
+          if (versionChangeNote) fd.append("changeNote", versionChangeNote);
+          await uploadDocumentVersion(fd);
+        }
+
         toast.success("New document version uploaded!");
         setVersionFile(null);
         setVersionChangeNote("");
@@ -494,13 +597,13 @@ export function MaterialsTab({
       : currentFolder?.name || "Folder";
 
   return (
-    <div className="flex flex-col lg:flex-row min-h-[750px] bg-slate-50/50">
-      {/* ── Left Sidebar: Folders List (Matching Image 3) ────────────────── */}
-      <aside className="hidden lg:flex w-72 shrink-0 border-r border-slate-200/70 bg-white p-5 flex-col justify-between">
-        <div className="space-y-6">
+    <div className="flex flex-col lg:flex-row min-h-[640px] bg-slate-50/40">
+      {/* ── Left Sidebar: Folders List ───────────────────────────────────── */}
+      <aside className="hidden lg:flex w-60 shrink-0 border-r border-slate-200/70 bg-white/80 p-4 flex-col justify-between">
+        <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-base font-black text-slate-900 tracking-tight flex items-center gap-2">
-              <Folder className="h-5 w-5 text-[#fd5523]" />
+            <h3 className="text-sm font-bold text-slate-900 tracking-tight flex items-center gap-2">
+              <Folder className="h-4 w-4 text-[#fd5523]" />
               Folders
             </h3>
             {isAdminOrInstructor && (
@@ -624,7 +727,7 @@ export function MaterialsTab({
       </aside>
 
       {/* ── Main Area: Documents & Materials Explorer ──────────────────────── */}
-      <main className="flex-1 p-3 sm:p-6 lg:p-8 flex flex-col space-y-4 sm:space-y-6 overflow-hidden min-w-0">
+      <main className="flex-1 p-3 sm:p-5 lg:p-6 flex flex-col space-y-4 overflow-hidden min-w-0">
         {/* Mobile Horizontal Folder Selector (lg:hidden) */}
         <div className="lg:hidden space-y-2">
           <div className="flex items-center justify-between">
@@ -716,13 +819,17 @@ export function MaterialsTab({
           </div>
 
           {isAdminOrInstructor && (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 w-full sm:w-auto">
               <Button
-                onClick={() => setIsUploadModalOpen(true)}
-                className="w-full sm:w-auto min-h-[44px] bg-[#fd5523] hover:bg-[#ef4a16] text-white rounded-xl text-xs font-bold px-4 py-2.5 flex items-center justify-center gap-2 shadow-lg shadow-[#fd5523]/20"
+                type="button"
+                onClick={() => {
+                  setUploadError(null);
+                  setIsUploadModalOpen(true);
+                }}
+                className="w-full sm:w-auto h-10 bg-[#fd5523] hover:bg-[#ef4a16] text-white rounded-xl text-xs font-semibold px-4 flex items-center justify-center gap-2 shadow-sm"
               >
-                <Plus className="h-4 w-4" />
-                Upload Material
+                <Plus className="h-4 w-4 shrink-0" />
+                <span>Upload Material</span>
               </Button>
             </div>
           )}
@@ -773,22 +880,22 @@ export function MaterialsTab({
         )}
 
         {/* ── Toolbar: Search, Filters, and View Mode Toggle ────────────────── */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-3 rounded-2xl bg-white border border-slate-100 shadow-xs">
-          <div className="relative flex-1 max-w-md">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 p-3 rounded-2xl bg-white border border-slate-200/80 shadow-xs">
+          <div className="relative flex-1 min-w-0 md:max-w-sm">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
             <Input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search materials by title, description or tag..."
-              className="pl-10 h-10 rounded-xl border-slate-200 text-xs bg-slate-50 focus:bg-white"
+              placeholder="Search materials..."
+              className="pl-10 h-9 rounded-xl border-slate-200 text-xs bg-slate-50 focus:bg-white w-full"
             />
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2 min-w-0">
             {/* Type Filter */}
             <Select value={selectedType} onValueChange={(v) => setSelectedType(v ?? "all")}>
-              <SelectTrigger className="h-10 rounded-xl border-slate-200 text-xs w-[140px] bg-slate-50">
+              <SelectTrigger className="h-9 rounded-xl border-slate-200 text-xs flex-1 sm:flex-none sm:w-[132px] bg-slate-50 min-w-[110px]">
                 <SelectValue placeholder="Type" />
               </SelectTrigger>
               <SelectContent>
@@ -802,7 +909,7 @@ export function MaterialsTab({
 
             {courses.length > 0 && (
               <Select value={selectedCourseId} onValueChange={(v) => setSelectedCourseId(v ?? "all")}>
-                <SelectTrigger className="h-10 rounded-xl border-slate-200 text-xs w-[150px] bg-slate-50">
+                <SelectTrigger className="h-9 rounded-xl border-slate-200 text-xs flex-1 sm:flex-none sm:w-[144px] bg-slate-50 min-w-[120px]">
                   <SelectValue placeholder="Course" />
                 </SelectTrigger>
                 <SelectContent>
@@ -818,7 +925,7 @@ export function MaterialsTab({
 
             {/* Sort Dropdown */}
             <Select value={sortBy} onValueChange={(v: any) => setSortBy(v ?? "updated")}>
-              <SelectTrigger className="h-10 rounded-xl border-slate-200 text-xs w-[130px] bg-slate-50">
+              <SelectTrigger className="h-9 rounded-xl border-slate-200 text-xs w-[124px] bg-slate-50">
                 <SelectValue placeholder="Sort by" />
               </SelectTrigger>
               <SelectContent>
@@ -833,7 +940,7 @@ export function MaterialsTab({
               type="button"
               onClick={() => setIsBookmarksOnly((prev) => !prev)}
               className={cn(
-                "h-10 px-3 rounded-xl border text-xs font-bold flex items-center gap-1.5 transition-all",
+                "h-9 px-3 rounded-xl border text-xs font-semibold flex items-center gap-1.5 transition-all",
                 isBookmarksOnly
                   ? "bg-[#fd5523] text-white border-[#fd5523] shadow-sm shadow-[#fd5523]/30"
                   : "bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100"
@@ -1532,11 +1639,17 @@ export function MaterialsTab({
               </label>
             </div>
 
+            {uploadError && (
+              <div className="rounded-xl border border-red-200 bg-red-50 px-3.5 py-2.5 text-xs font-medium text-red-700">
+                {uploadError}
+              </div>
+            )}
+
             <DialogFooter className="pt-2">
               <Button
                 type="submit"
                 disabled={isUploading}
-                className="w-full bg-[#fd5523] hover:bg-[#ef4a16] text-white font-bold rounded-xl h-11 text-xs sm:text-sm shadow-sm"
+                className="w-full bg-[#fd5523] hover:bg-[#ef4a16] text-white font-semibold rounded-xl h-10 text-xs sm:text-sm shadow-sm"
               >
                 {isUploading ? (
                   <>

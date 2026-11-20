@@ -158,78 +158,78 @@ export function OverviewTab({
   }, [schedules, selectedCohort?.id, companySlug]);
 
   return (
-    <div className="space-y-4 sm:space-y-6 animate-in fade-in duration-300">
+    <div className="space-y-4 sm:space-y-5 animate-in fade-in duration-300">
       {/* 1. Header Banner & Live Classroom Status */}
-      <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-br from-[#062e39] via-[#094150] to-[#062e39] p-4 sm:p-6 md:p-8 text-white shadow-xl">
-        <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 sm:gap-6">
-          <div className="space-y-2 max-w-2xl">
-            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full bg-white/10 backdrop-blur-md text-sky-200 text-[11px] sm:text-xs font-black uppercase tracking-wider border border-white/10">
-                <GraduationCap className="h-3.5 w-3.5 text-[#fd5523]" />
-                {selectedCohort?.name || "All Cohorts (Institution)"}
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#062e39] via-[#094150] to-[#062e39] p-4 sm:p-5 md:p-6 text-white shadow-sm">
+        <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div className="space-y-1.5 max-w-2xl min-w-0">
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-white/10 text-sky-200 text-[10px] font-bold uppercase tracking-wider border border-white/10 max-w-full truncate">
+                <GraduationCap className="h-3 w-3 text-[#fd5523] shrink-0" />
+                <span className="truncate">{selectedCohort?.name || "All Classes"}</span>
               </span>
 
               {selectedCohort?.academic_period && (
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-white/10 text-slate-200 text-[11px] sm:text-xs font-semibold">
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-white/10 text-slate-200 text-[10px] font-semibold">
                   {selectedCohort.academic_period}
                 </span>
               )}
 
               {selectedCohort?.course && (
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-white/5 text-slate-300 text-[11px] sm:text-xs font-semibold">
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-white/5 text-slate-300 text-[10px] font-semibold max-w-[200px] truncate">
                   {selectedCohort.course.title}
                 </span>
               )}
 
               {isLive ? (
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-red-500 text-white text-[11px] sm:text-xs font-black uppercase tracking-wider animate-pulse shadow-lg shadow-red-500/50">
-                  <span className="h-2 w-2 rounded-full bg-white animate-ping" />
-                  Live Session Active
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-red-500 text-white text-[10px] font-bold uppercase tracking-wider animate-pulse">
+                  <span className="h-1.5 w-1.5 rounded-full bg-white animate-ping" />
+                  Live Now
                 </span>
               ) : (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-bold">
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-semibold">
                   Classroom Ready
                 </span>
               )}
             </div>
 
-            <h1 className="text-xl sm:text-2xl md:text-3xl font-black tracking-tight text-white">
-              {isAdminOrInstructor ? "Faculty Workspace & Teaching Console" : "Welcome to your Classroom"}
-            </h1>
-            <p className="text-xs sm:text-sm text-slate-300 font-medium leading-relaxed">
+            <h2 className="text-lg sm:text-xl md:text-2xl font-bold tracking-tight text-white">
+              {isAdminOrInstructor ? "Teaching Console" : "Your Classroom Hub"}
+            </h2>
+            <p className="text-xs text-slate-300 font-normal leading-relaxed">
               {isAdminOrInstructor
-                ? "Manage class sessions, distribute learning materials, evaluate coursework, and guide student cohorts."
-                : "Your central hub for class schedule, learning materials, coursework submissions, and discussions."}
+                ? "Run live sessions, publish learning materials, grade coursework, and manage cohorts."
+                : "Access schedules, study materials, coursework assignments, and discussions."}
             </p>
           </div>
 
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 shrink-0 w-full md:w-auto">
+          <div className="flex flex-wrap items-center gap-2 shrink-0 w-full md:w-auto">
             {isLive ? (
               <Button
                 onClick={() => onNavigateTab("session")}
-                className="bg-red-500 hover:bg-red-600 text-white font-bold text-xs h-10 px-4 rounded-xl shadow-md gap-2 border border-red-400 justify-center cursor-pointer whitespace-nowrap"
+                className="flex-1 sm:flex-none bg-red-500 hover:bg-red-600 text-white font-semibold text-xs h-9 px-3.5 rounded-xl shadow-xs gap-1.5 justify-center cursor-pointer"
               >
-                <Video className="h-4 w-4 animate-bounce shrink-0" />
-                <span>Join Live Class</span>
+                <Video className="h-3.5 w-3.5 animate-pulse shrink-0" />
+                <span>Join Live</span>
               </Button>
             ) : isAdminOrInstructor ? (
               <Button
                 onClick={() => onNavigateTab("session")}
-                className="bg-[#fd5523] hover:bg-[#e0481d] text-white font-bold text-xs h-10 px-4 rounded-xl shadow-md gap-2 justify-center cursor-pointer whitespace-nowrap"
+                className="flex-1 sm:flex-none bg-[#fd5523] hover:bg-[#e0481d] text-white font-semibold text-xs h-9 px-3.5 rounded-xl shadow-xs gap-1.5 justify-center cursor-pointer"
               >
-                <Video className="h-4 w-4 shrink-0" />
-                <span>Start Live Class</span>
+                <Video className="h-3.5 w-3.5 shrink-0" />
+                <span>Start Live</span>
               </Button>
             ) : null}
 
             {courses.length > 0 && (
               <Link
                 href={`/academy/${companySlug}/course/${courses[0]?.slug || ""}`}
-                className="inline-flex items-center justify-center gap-2 h-10 px-4 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold backdrop-blur-md transition-all border border-white/15 whitespace-nowrap"
+                className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 h-9 px-3.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-semibold transition-all border border-white/15"
               >
-                <BookOpen className="h-4 w-4 text-[#fd5523] shrink-0" />
+                <BookOpen className="h-3.5 w-3.5 text-[#fd5523] shrink-0" />
                 <span>Course Player</span>
-                <ArrowRight className="h-3.5 w-3.5 shrink-0" />
+                <ArrowRight className="h-3 w-3 shrink-0" />
               </Link>
             )}
           </div>
@@ -271,142 +271,148 @@ export function OverviewTab({
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3">
               <div
                 onClick={() => onNavigateTab("students")}
-                className="p-3.5 sm:p-4 rounded-xl sm:rounded-2xl bg-white border border-slate-100 shadow-sm flex items-center justify-between hover:border-slate-200 cursor-pointer transition-all min-h-[64px]"
+                className="p-3.5 rounded-xl bg-white border border-slate-200/80 shadow-xs flex items-center justify-between hover:border-slate-300 cursor-pointer transition-all"
               >
-                <div>
-                  <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">
+                <div className="min-w-0">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
                     Cohort Roster
                   </span>
-                  <p className="text-lg sm:text-xl font-black text-[#062e39] mt-0.5">
+                  <p className="text-base sm:text-lg font-bold text-[#062e39] mt-0.5 truncate">
                     {instructorStats.activeStudentsCount} Enrolled Learners
                   </p>
                 </div>
-                <Users className="h-5 w-5 text-sky-600" />
+                <Users className="h-4.5 w-4.5 text-sky-600 shrink-0" />
               </div>
 
               <div
                 onClick={() => onNavigateTab("materials")}
-                className="p-3.5 sm:p-4 rounded-xl sm:rounded-2xl bg-white border border-slate-100 shadow-sm flex items-center justify-between hover:border-slate-200 cursor-pointer transition-all min-h-[64px]"
+                className="p-3.5 rounded-xl bg-white border border-slate-200/80 shadow-xs flex items-center justify-between hover:border-slate-300 cursor-pointer transition-all"
               >
-                <div>
-                  <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">
+                <div className="min-w-0">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
                     Class Library
                   </span>
-                  <p className="text-lg sm:text-xl font-black text-[#062e39] mt-0.5">
+                  <p className="text-base sm:text-lg font-bold text-[#062e39] mt-0.5 truncate">
                     {instructorStats.materialsCount} Documents &amp; Handouts
                   </p>
                 </div>
-                <FolderOpen className="h-5 w-5 text-indigo-600" />
+                <FolderOpen className="h-4.5 w-4.5 text-indigo-600 shrink-0" />
               </div>
 
               <div
                 onClick={() => onNavigateTab("session")}
-                className="p-3.5 sm:p-4 rounded-xl sm:rounded-2xl bg-white border border-slate-100 shadow-sm flex items-center justify-between hover:border-slate-200 cursor-pointer transition-all min-h-[64px]"
+                className="p-3.5 rounded-xl bg-white border border-slate-200/80 shadow-xs flex items-center justify-between hover:border-slate-300 cursor-pointer transition-all"
               >
-                <div>
-                  <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">
+                <div className="min-w-0">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
                     Virtual Classroom
                   </span>
-                  <p className="text-lg sm:text-xl font-black text-[#062e39] mt-0.5">
+                  <p className="text-base sm:text-lg font-bold text-[#062e39] mt-0.5 truncate">
                     {sessionState.is_session_active ? "Session Running" : "Classroom Ready"}
                   </p>
                 </div>
-                <Video className={cn("h-5 w-5", sessionState.is_session_active ? "text-red-500 animate-pulse" : "text-emerald-600")} />
+                <Video className={cn("h-4.5 w-4.5 shrink-0", sessionState.is_session_active ? "text-red-500 animate-pulse" : "text-emerald-600")} />
               </div>
             </div>
           )}
 
           {/* Instructor Quick Actions */}
-          <div className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-slate-100 shadow-sm space-y-3 sm:space-y-4">
-            <div className="flex items-center justify-between">
+          <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-xs space-y-3">
+            <div className="flex items-center justify-between gap-2">
               <div>
-                <h3 className="text-[10px] sm:text-xs font-black uppercase tracking-wider text-slate-400">
+                <h3 className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
                   Faculty Quick Actions
                 </h3>
-                <p className="text-xs sm:text-sm font-black text-[#062e39] mt-0.5">
-                  Classroom Management Commands
+                <p className="text-xs sm:text-sm font-bold text-[#062e39] mt-0.5">
+                  Classroom Tools
                 </p>
               </div>
-              <span className="text-[9px] sm:text-[10px] font-bold text-slate-400 bg-slate-50 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full border border-slate-100">
+              <span className="text-[10px] font-semibold text-slate-500 bg-slate-50 px-2.5 py-0.5 rounded-full border border-slate-200/80">
                 Instructor
               </span>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
               <button
+                type="button"
                 onClick={() => onNavigateTab("session")}
-                className="p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-slate-100 hover:border-red-200 hover:bg-red-50/40 transition-all text-left group flex flex-col justify-between min-h-[88px] sm:h-28 cursor-pointer"
+                className="p-3 rounded-xl border border-slate-200/70 hover:border-red-200 hover:bg-red-50/40 transition-all text-left group flex flex-col justify-between min-h-[76px] cursor-pointer"
               >
-                <div className="h-8 w-8 sm:h-9 sm:w-9 rounded-xl bg-red-100 text-red-600 flex items-center justify-center group-hover:scale-105 transition-transform">
-                  <Video className="h-4 w-4" />
+                <div className="h-7 w-7 rounded-lg bg-red-100 text-red-600 flex items-center justify-center group-hover:scale-105 transition-transform">
+                  <Video className="h-3.5 w-3.5" />
                 </div>
-                <div>
-                  <p className="text-xs font-black text-slate-800 group-hover:text-red-700">Live Class</p>
+                <div className="mt-2">
+                  <p className="text-xs font-semibold text-slate-800 group-hover:text-red-700">Live Class</p>
                   <p className="text-[10px] text-slate-400">Launch room</p>
                 </div>
               </button>
 
               <button
+                type="button"
                 onClick={() => onNavigateTab("materials")}
-                className="p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-slate-100 hover:border-sky-200 hover:bg-sky-50/40 transition-all text-left group flex flex-col justify-between min-h-[88px] sm:h-28 cursor-pointer"
+                className="p-3 rounded-xl border border-slate-200/70 hover:border-sky-200 hover:bg-sky-50/40 transition-all text-left group flex flex-col justify-between min-h-[76px] cursor-pointer"
               >
-                <div className="h-8 w-8 sm:h-9 sm:w-9 rounded-xl bg-sky-100 text-sky-700 flex items-center justify-center group-hover:scale-105 transition-transform">
-                  <Upload className="h-4 w-4" />
+                <div className="h-7 w-7 rounded-lg bg-sky-100 text-sky-700 flex items-center justify-center group-hover:scale-105 transition-transform">
+                  <Upload className="h-3.5 w-3.5" />
                 </div>
-                <div>
-                  <p className="text-xs font-black text-slate-800 group-hover:text-sky-700">Upload Files</p>
+                <div className="mt-2">
+                  <p className="text-xs font-semibold text-slate-800 group-hover:text-sky-700">Upload Files</p>
                   <p className="text-[10px] text-slate-400">Notes &amp; slides</p>
                 </div>
               </button>
 
               <button
+                type="button"
                 onClick={() => onNavigateTab("assignments")}
-                className="p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-slate-100 hover:border-indigo-200 hover:bg-indigo-50/40 transition-all text-left group flex flex-col justify-between min-h-[88px] sm:h-28 cursor-pointer"
+                className="p-3 rounded-xl border border-slate-200/70 hover:border-indigo-200 hover:bg-indigo-50/40 transition-all text-left group flex flex-col justify-between min-h-[76px] cursor-pointer"
               >
-                <div className="h-8 w-8 sm:h-9 sm:w-9 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center group-hover:scale-105 transition-transform">
-                  <FileText className="h-4 w-4" />
+                <div className="h-7 w-7 rounded-lg bg-indigo-100 text-indigo-700 flex items-center justify-center group-hover:scale-105 transition-transform">
+                  <FileText className="h-3.5 w-3.5" />
                 </div>
-                <div>
-                  <p className="text-xs font-black text-slate-800 group-hover:text-indigo-700">Set Tasks</p>
+                <div className="mt-2">
+                  <p className="text-xs font-semibold text-slate-800 group-hover:text-indigo-700">Set Tasks</p>
                   <p className="text-[10px] text-slate-400">Assignments</p>
                 </div>
               </button>
 
               <button
+                type="button"
                 onClick={() => onNavigateTab("noticeboard")}
-                className="p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-slate-100 hover:border-amber-200 hover:bg-amber-50/40 transition-all text-left group flex flex-col justify-between min-h-[88px] sm:h-28 cursor-pointer"
+                className="p-3 rounded-xl border border-slate-200/70 hover:border-amber-200 hover:bg-amber-50/40 transition-all text-left group flex flex-col justify-between min-h-[76px] cursor-pointer"
               >
-                <div className="h-8 w-8 sm:h-9 sm:w-9 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center group-hover:scale-105 transition-transform">
-                  <Bell className="h-4 w-4" />
+                <div className="h-7 w-7 rounded-lg bg-amber-100 text-amber-800 flex items-center justify-center group-hover:scale-105 transition-transform">
+                  <Bell className="h-3.5 w-3.5" />
                 </div>
-                <div>
-                  <p className="text-xs font-black text-slate-800 group-hover:text-amber-800">Broadcast</p>
+                <div className="mt-2">
+                  <p className="text-xs font-semibold text-slate-800 group-hover:text-amber-800">Broadcast</p>
                   <p className="text-[10px] text-slate-400">Post notice</p>
                 </div>
               </button>
 
               <button
+                type="button"
                 onClick={() => onNavigateTab("timetable")}
-                className="p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-slate-100 hover:border-purple-200 hover:bg-purple-50/40 transition-all text-left group flex flex-col justify-between min-h-[88px] sm:h-28 cursor-pointer"
+                className="p-3 rounded-xl border border-slate-200/70 hover:border-purple-200 hover:bg-purple-50/40 transition-all text-left group flex flex-col justify-between min-h-[76px] cursor-pointer"
               >
-                <div className="h-8 w-8 sm:h-9 sm:w-9 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center group-hover:scale-105 transition-transform">
-                  <Calendar className="h-4 w-4" />
+                <div className="h-7 w-7 rounded-lg bg-purple-100 text-purple-700 flex items-center justify-center group-hover:scale-105 transition-transform">
+                  <Calendar className="h-3.5 w-3.5" />
                 </div>
-                <div>
-                  <p className="text-xs font-black text-slate-800 group-hover:text-purple-700">Schedule</p>
+                <div className="mt-2">
+                  <p className="text-xs font-semibold text-slate-800 group-hover:text-purple-700">Schedule</p>
                   <p className="text-[10px] text-slate-400">Timetable slots</p>
                 </div>
               </button>
 
               <button
+                type="button"
                 onClick={() => onNavigateTab("gradebook")}
-                className="p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-slate-100 hover:border-emerald-200 hover:bg-emerald-50/40 transition-all text-left group flex flex-col justify-between min-h-[88px] sm:h-28 cursor-pointer"
+                className="p-3 rounded-xl border border-slate-200/70 hover:border-emerald-200 hover:bg-emerald-50/40 transition-all text-left group flex flex-col justify-between min-h-[76px] cursor-pointer"
               >
-                <div className="h-8 w-8 sm:h-9 sm:w-9 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center group-hover:scale-105 transition-transform">
-                  <UserCheck className="h-4 w-4" />
+                <div className="h-7 w-7 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center group-hover:scale-105 transition-transform">
+                  <UserCheck className="h-3.5 w-3.5" />
                 </div>
-                <div>
-                  <p className="text-xs font-black text-slate-800 group-hover:text-emerald-700">Gradebook</p>
+                <div className="mt-2">
+                  <p className="text-xs font-semibold text-slate-800 group-hover:text-emerald-700">Gradebook</p>
                   <p className="text-[10px] text-slate-400">Record marks</p>
                 </div>
               </button>
@@ -506,33 +512,33 @@ export function OverviewTab({
               ) : null}
             </div>
 
-            <div className="grid grid-cols-3 sm:flex items-center gap-1.5 sm:gap-2 w-full md:w-auto shrink-0">
+            <div className="flex flex-wrap items-center gap-2 w-full md:w-auto shrink-0">
               <Button
                 onClick={() => onNavigateTab("session")}
-                className="bg-[#fd5523] hover:bg-[#e0481d] text-white font-bold text-xs rounded-xl shadow-md shadow-[#fd5523]/20 gap-1.5 col-span-3 sm:col-span-1 min-h-[42px] justify-center cursor-pointer"
+                className="bg-[#fd5523] hover:bg-[#e0481d] text-white font-semibold text-xs rounded-xl shadow-xs gap-1.5 h-9 px-3.5 flex-1 sm:flex-none justify-center cursor-pointer"
               >
-                <Video className="h-4 w-4" />
-                Join Live Room
+                <Video className="h-3.5 w-3.5 shrink-0" />
+                <span>Join Room</span>
               </Button>
 
               <Button
                 variant="outline"
                 onClick={() => window.open(getGoogleCalendarUrl(nextScheduleInfo.details), "_blank")}
-                className="border-slate-200 text-slate-700 hover:bg-white text-[11px] sm:text-xs font-bold rounded-xl gap-1 col-span-2 sm:col-span-1 min-h-[42px] justify-center cursor-pointer"
+                className="border-slate-200 text-slate-700 hover:bg-white text-xs font-semibold rounded-xl gap-1 h-9 px-3 flex-1 sm:flex-none justify-center cursor-pointer"
                 title="Add this class to Google Calendar"
               >
-                <CalendarPlus className="h-3.5 w-3.5 text-sky-600" />
-                Google Cal
+                <CalendarPlus className="h-3.5 w-3.5 text-sky-600 shrink-0" />
+                <span>Google Cal</span>
               </Button>
 
               <Button
                 variant="outline"
                 onClick={() => downloadIcsFile(nextScheduleInfo.details)}
-                className="border-slate-200 text-slate-700 hover:bg-white text-[11px] sm:text-xs font-bold rounded-xl gap-1 col-span-1 min-h-[42px] justify-center cursor-pointer"
+                className="border-slate-200 text-slate-700 hover:bg-white text-xs font-semibold rounded-xl gap-1 h-9 px-3 justify-center cursor-pointer"
                 title="Download .ics event file"
               >
-                <Download className="h-3.5 w-3.5 text-slate-500" />
-                .ICS
+                <Download className="h-3.5 w-3.5 text-slate-500 shrink-0" />
+                <span>.ICS</span>
               </Button>
             </div>
           </div>
@@ -568,11 +574,11 @@ export function OverviewTab({
                   variant="outline"
                   size="sm"
                   onClick={() => onNavigateTab("progress")}
-                  className="border-slate-200 hover:bg-slate-50 text-xs font-black text-[#062e39] rounded-xl gap-1.5 w-full sm:w-auto min-h-[40px] justify-center cursor-pointer"
+                  className="border-slate-200 hover:bg-slate-50 text-xs font-semibold text-[#062e39] rounded-xl gap-1.5 w-full sm:w-auto h-9 px-3.5 justify-center cursor-pointer"
                 >
-                  <Award className="h-3.5 w-3.5 text-[#fd5523]" />
-                  View Academic Transcript &amp; Grades
-                  <ChevronRight className="h-3.5 w-3.5" />
+                  <Award className="h-3.5 w-3.5 text-[#fd5523] shrink-0" />
+                  <span>Transcript &amp; Grades</span>
+                  <ChevronRight className="h-3.5 w-3.5 shrink-0" />
                 </Button>
               </div>
 

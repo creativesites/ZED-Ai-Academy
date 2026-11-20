@@ -1,12 +1,109 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { auth } from "@clerk/nextjs/server";
+import { auth, currentUser } from "@clerk/nextjs/server";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { requireTenantMember, requireTenantTeacher } from "@/lib/tenants/access";
 
 const BUCKET = "classroom-materials";
 const MAX_FILE_BYTES = 50 * 1024 * 1024; // 50 MB
+
+const ALLOWED_MATERIAL_MIME_TYPES = [
+  "application/pdf",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/vnd.ms-powerpoint",
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+  "application/vnd.ms-excel",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  "text/plain",
+  "text/markdown",
+  "text/csv",
+  "text/html",
+  "text/x-python",
+  "text/javascript",
+  "application/javascript",
+  "application/json",
+  "application/zip",
+  "application/x-zip-compressed",
+  "application/octet-stream",
+  "video/mp4",
+  "video/webm",
+  "video/quicktime",
+  "audio/mpeg",
+  "audio/wav",
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/gif",
+  "image/svg+xml",
+];
+
+async function ensureMaterialsBucket(serviceClient: ReturnType<typeof createServiceClient>) {
+  const { data: existing } = await serviceClient.storage.getBucket(BUCKET);
+  if (!existing) {
+    await serviceClient.storage
+      .createBucket(BUCKET, {
+        public: true,
+        fileSizeLimit: MAX_FILE_BYTES,
+        allowedMimeTypes: ALLOWED_MATERIAL_MIME_TYPES,
+      })
+      .catch(() => null);
+    return;
+  }
+
+  await serviceClient.storage
+    .updateBucket(BUCKET, {
+      public: true,
+      fileSizeLimit: MAX_FILE_BYTES,
+      allowedMimeTypes: ALLOWED_MATERIAL_MIME_TYPES,
+    })
+    .catch(() => null);
+}
+
+async function ensureProfileRow(
+  serviceClient: ReturnType<typeof createServiceClient>,
+  userId: string
+) {
+  const { data: existingProfile } = await serviceClient
+    .from("profiles")
+    .select("id")
+    .eq("id", userId)
+    .maybeSingle();
+
+  if (existingProfile) return;
+
+  const user = await currentUser().catch(() => null);
+  const email = user?.emailAddresses?.[0]?.emailAddress ?? null;
+  const fullName =
+    [user?.firstName, user?.lastName].filter(Boolean).join(" ").trim() ||
+    user?.username ||
+    email ||
+    "Academy Instructor";
+
+  await serviceClient
+    .from("profiles")
+    .upsert(
+      {
+        id: userId,
+        email,
+        full_name: fullName,
+        avatar_url: user?.imageUrl ?? null,
+      },
+      { onConflict: "id" }
+    );
+}
+
+function buildSafeMaterialPath(companyId: string, fileName: string, prefix?: string) {
+  const ext = fileName.includes(".") ? fileName.split(".").pop()?.toLowerCase() ?? "bin" : "bin";
+  const baseName =
+    fileName
+      .replace(/\.[^/.]+$/, "")
+      .replace(/[^a-zA-Z0-9_-]/g, "_")
+      .toLowerCase()
+      .slice(0, 50) || "material";
+  return `${companyId}/${prefix ? `${prefix}-` : ""}${Date.now()}-${baseName}.${ext}`;
+}
 
 export interface ClassroomFolder {
   id: string;
@@ -304,6 +401,122 @@ export async function getPinnedClassroomMaterials(
   return (data ?? []) as any[];
 }
 
+export interface MaterialSignedUploadSession {
+  path: string;
+  token: string;
+  signedUrl: string;
+  publicUrl: string;
+}
+
+export async function createMaterialSignedUpload(
+  companyId: string,
+  fileName: string,
+  prefix?: string
+): Promise<MaterialSignedUploadSession> {
+  await requireTenantTeacher(companyId);
+  const serviceClient = createServiceClient();
+  await ensureMaterialsBucket(serviceClient);
+
+  const uniquePath = buildSafeMaterialPath(companyId, fileName || "material", prefix);
+  const { data, error } = await serviceClient.storage
+    .from(BUCKET)
+    .createSignedUploadUrl(uniquePath);
+
+  if (error || !data) {
+    throw new Error(error?.message || "Could not initialize storage upload URL.");
+  }
+
+  const { data: publicData } = serviceClient.storage
+    .from(BUCKET)
+    .getPublicUrl(uniquePath);
+
+  return {
+    path: data.path,
+    token: data.token,
+    signedUrl: data.signedUrl,
+    publicUrl: publicData.publicUrl,
+  };
+}
+
+export async function createClassroomMaterialRecord(input: {
+  companyId: string;
+  companySlug: string;
+  title: string;
+  description?: string | null;
+  materialType?: string;
+  category?: string;
+  visibility?: string;
+  requiresAcknowledgement?: boolean;
+  folderId?: string | null;
+  cohortId?: string | null;
+  courseId?: string | null;
+  isPinned?: boolean;
+  isPublished?: boolean;
+  tags?: string;
+  fileUrl?: string | null;
+  fileName?: string | null;
+  fileSizeBytes?: number;
+  mimeType?: string | null;
+}) {
+  const title = input.title?.trim();
+  if (!title) throw new Error("Material title is required");
+
+  const { userId } = await requireTenantTeacher(input.companyId);
+  const serviceClient = createServiceClient();
+  await ensureProfileRow(serviceClient, userId);
+
+  const tags = (input.tags || "")
+    .split(",")
+    .map((t) => t.trim())
+    .filter(Boolean);
+
+  const { data: newMaterial, error } = await serviceClient
+    .from("classroom_materials")
+    .insert({
+      company_id: input.companyId,
+      folder_id: input.folderId && input.folderId !== "unfiled" ? input.folderId : null,
+      cohort_id: input.cohortId && input.cohortId !== "all" ? input.cohortId : null,
+      course_id: input.courseId && input.courseId !== "all" ? input.courseId : null,
+      author_id: userId,
+      title,
+      description: input.description?.trim() || null,
+      material_type: (input.materialType || "document") as any,
+      category: input.category || "lecture_notes",
+      visibility: input.visibility || "class",
+      requires_acknowledgement: Boolean(input.requiresAcknowledgement),
+      file_url: input.fileUrl?.trim() || null,
+      file_size_bytes: input.fileSizeBytes ?? 0,
+      tags,
+      is_pinned: Boolean(input.isPinned),
+      is_published: input.isPublished !== false,
+    })
+    .select()
+    .single();
+
+  if (error) throw new Error(error.message);
+
+  if (input.fileUrl && (input.fileSizeBytes ?? 0) > 0) {
+    try {
+      await serviceClient.from("class_document_versions").insert({
+        document_id: (newMaterial as any).id,
+        version_number: 1,
+        file_url: input.fileUrl,
+        file_name: input.fileName || title,
+        file_size_bytes: input.fileSizeBytes ?? 0,
+        mime_type: input.mimeType || "application/octet-stream",
+        change_note: "Initial upload",
+        uploaded_by: userId,
+      });
+    } catch (verErr) {
+      console.warn("Could not record initial document version:", verErr);
+    }
+  }
+
+  revalidatePath(`/academy/${input.companySlug}/classroom`);
+  revalidatePath(`/academy/${input.companySlug}/admin/classroom`);
+  return newMaterial;
+}
+
 export async function createClassroomMaterial(formData: FormData) {
   const companyId = formData.get("companyId") as string;
   const companySlug = formData.get("companySlug") as string;
@@ -326,122 +539,107 @@ export async function createClassroomMaterial(formData: FormData) {
 
   const { userId } = await requireTenantTeacher(companyId);
   const serviceClient = createServiceClient();
+  await ensureProfileRow(serviceClient, userId);
 
   let fileUrl = externalUrl || null;
   let fileSizeBytes = 0;
 
-  // Handle uploaded file if present
   if (file && file.size > 0) {
     if (file.size > MAX_FILE_BYTES) {
-      throw new Error(`File size exceeds 50 MB limit`);
+      throw new Error("File size exceeds 50 MB limit");
     }
 
-    const ext = file.name.includes(".") ? file.name.split(".").pop()?.toLowerCase() ?? "bin" : "bin";
-    const baseName = file.name
-      .replace(/\.[^/.]+$/, "")
-      .replace(/[^a-zA-Z0-9_-]/g, "_")
-      .toLowerCase()
-      .slice(0, 50) || "material";
-    const uniquePath = `${companyId}/${Date.now()}-${baseName}.${ext}`;
+    await ensureMaterialsBucket(serviceClient);
+    const uniquePath = buildSafeMaterialPath(companyId, file.name);
+    const bodyBuffer = Buffer.from(await file.arrayBuffer());
+    const contentType = file.type || "application/octet-stream";
 
-    const buffer = await file.arrayBuffer();
     const { error: uploadError } = await serviceClient.storage
       .from(BUCKET)
-      .upload(uniquePath, buffer, {
-        contentType: file.type || "application/octet-stream",
+      .upload(uniquePath, bodyBuffer, {
+        contentType,
         upsert: false,
       });
 
     if (uploadError) {
-      // Ensure bucket exists on first use or fallback to courses_media
-      await serviceClient.storage.createBucket(BUCKET, { public: true }).catch(() => null);
-      const { error: retryError } = await serviceClient.storage
-        .from(BUCKET)
-        .upload(uniquePath, buffer, {
-          contentType: file.type || "application/octet-stream",
-          upsert: false,
-        });
-
-      if (!retryError) {
-        const { data: publicData } = serviceClient.storage
-          .from(BUCKET)
-          .getPublicUrl(uniquePath);
-        fileUrl = publicData.publicUrl;
-      } else {
-        const { error: fallbackError } = await serviceClient.storage
-          .from("courses_media")
-          .upload(uniquePath, buffer, {
-            contentType: file.type || "application/octet-stream",
-            upsert: false,
-          });
-
-        if (fallbackError) throw new Error(fallbackError.message);
-        const { data: publicData } = serviceClient.storage
-          .from("courses_media")
-          .getPublicUrl(uniquePath);
-        fileUrl = publicData.publicUrl;
-      }
-    } else {
-      const { data: publicData } = serviceClient.storage
-        .from(BUCKET)
-        .getPublicUrl(uniquePath);
-      fileUrl = publicData.publicUrl;
+      throw new Error(`Storage upload failed: ${uploadError.message}`);
     }
 
+    const { data: publicData } = serviceClient.storage
+      .from(BUCKET)
+      .getPublicUrl(uniquePath);
+    fileUrl = publicData.publicUrl;
     fileSizeBytes = file.size;
   }
 
-  // Parse comma-separated tags
-  const tags = rawTags
-    .split(",")
-    .map((t) => t.trim())
-    .filter(Boolean);
+  return createClassroomMaterialRecord({
+    companyId,
+    companySlug,
+    title,
+    description,
+    materialType,
+    category,
+    visibility,
+    requiresAcknowledgement,
+    folderId,
+    cohortId,
+    courseId,
+    isPinned,
+    isPublished,
+    tags: rawTags,
+    fileUrl,
+    fileName: file?.name || title,
+    fileSizeBytes,
+    mimeType: file?.type || "application/octet-stream",
+  });
+}
 
-  const { data: newMaterial, error } = await serviceClient
+export async function recordDocumentVersion(input: {
+  companyId: string;
+  companySlug: string;
+  documentId: string;
+  fileUrl: string;
+  fileName: string;
+  fileSizeBytes: number;
+  mimeType?: string | null;
+  changeNote?: string | null;
+}) {
+  const { userId } = await requireTenantTeacher(input.companyId);
+  const serviceClient = createServiceClient();
+  await ensureProfileRow(serviceClient, userId);
+
+  const { data: existingVersions } = await serviceClient
+    .from("class_document_versions")
+    .select("version_number")
+    .eq("document_id", input.documentId)
+    .order("version_number", { ascending: false })
+    .limit(1);
+
+  const nextVersion = (existingVersions?.[0]?.version_number || 1) + 1;
+
+  await serviceClient.from("class_document_versions").insert({
+    document_id: input.documentId,
+    version_number: nextVersion,
+    file_url: input.fileUrl,
+    file_name: input.fileName,
+    file_size_bytes: input.fileSizeBytes,
+    mime_type: input.mimeType || "application/octet-stream",
+    change_note: input.changeNote?.trim() || null,
+    uploaded_by: userId,
+  });
+
+  await serviceClient
     .from("classroom_materials")
-    .insert({
-      company_id: companyId,
-      folder_id: folderId && folderId !== "unfiled" ? folderId : null,
-      cohort_id: cohortId && cohortId !== "all" ? cohortId : null,
-      course_id: courseId && courseId !== "all" ? courseId : null,
-      author_id: userId,
-      title,
-      description,
-      material_type: materialType as any,
-      category,
-      visibility,
-      requires_acknowledgement: requiresAcknowledgement,
-      file_url: fileUrl,
-      file_size_bytes: fileSizeBytes,
-      tags,
-      is_pinned: isPinned,
-      is_published: isPublished,
+    .update({
+      file_url: input.fileUrl,
+      file_size_bytes: input.fileSizeBytes,
+      updated_at: new Date().toISOString(),
     })
-    .select()
-    .single();
+    .eq("id", input.documentId);
 
-  if (error) throw new Error(error.message);
-
-  // If a file was uploaded, create initial version 1 record
-  if (file && file.size > 0 && fileUrl) {
-    try {
-      await serviceClient.from("class_document_versions").insert({
-        document_id: (newMaterial as any).id,
-        version_number: 1,
-        file_url: fileUrl,
-        file_name: file.name,
-        file_size_bytes: fileSizeBytes,
-        mime_type: file.type || "application/octet-stream",
-        change_note: "Initial upload",
-        uploaded_by: userId,
-      });
-    } catch (verErr) {
-      console.warn("Could not record initial document version:", verErr);
-    }
-  }
-
-  revalidatePath(`/academy/${companySlug}/classroom`);
-  return newMaterial;
+  revalidatePath(`/academy/${input.companySlug}/classroom`);
+  revalidatePath(`/academy/${input.companySlug}/admin/classroom`);
+  return { success: true, version: nextVersion, fileUrl: input.fileUrl };
 }
 
 export async function uploadDocumentVersion(formData: FormData) {
@@ -454,78 +652,36 @@ export async function uploadDocumentVersion(formData: FormData) {
   if (!file || file.size === 0) throw new Error("A replacement file is required");
   if (file.size > MAX_FILE_BYTES) throw new Error("File size exceeds 50 MB limit");
 
-  const { userId } = await requireTenantTeacher(companyId);
+  await requireTenantTeacher(companyId);
   const serviceClient = createServiceClient();
+  await ensureMaterialsBucket(serviceClient);
 
-  // Find next version number
-  const { data: existingVersions } = await serviceClient
-    .from("class_document_versions")
-    .select("version_number")
-    .eq("document_id", documentId)
-    .order("version_number", { ascending: false })
-    .limit(1);
+  const uniquePath = buildSafeMaterialPath(companyId, file.name, `${documentId}-ver`);
+  const bodyBuffer = Buffer.from(await file.arrayBuffer());
 
-  const nextVersion = (existingVersions?.[0]?.version_number || 1) + 1;
-
-  const ext = file.name.split(".").pop()?.toLowerCase() ?? "bin";
-  const safeName = file.name
-    .replace(/[^a-zA-Z0-9.-]/g, "_")
-    .toLowerCase()
-    .slice(0, 50);
-  const uniquePath = `${companyId}/${documentId}-v${nextVersion}-${Date.now()}-${safeName}.${ext}`;
-
-  const buffer = await file.arrayBuffer();
-  let fileUrl = "";
   const { error: uploadError } = await serviceClient.storage
     .from(BUCKET)
-    .upload(uniquePath, buffer, {
+    .upload(uniquePath, bodyBuffer, {
       contentType: file.type || "application/octet-stream",
       upsert: false,
     });
 
-  if (uploadError) {
-    const { error: fallbackError } = await serviceClient.storage
-      .from("courses_media")
-      .upload(uniquePath, buffer, {
-        contentType: file.type || "application/octet-stream",
-        upsert: false,
-      });
-    if (fallbackError) throw new Error(fallbackError.message);
-    const { data: publicData } = serviceClient.storage
-      .from("courses_media")
-      .getPublicUrl(uniquePath);
-    fileUrl = publicData.publicUrl;
-  } else {
-    const { data: publicData } = serviceClient.storage
-      .from(BUCKET)
-      .getPublicUrl(uniquePath);
-    fileUrl = publicData.publicUrl;
-  }
+  if (uploadError) throw new Error(`Storage upload failed: ${uploadError.message}`);
 
-  // Record new version in class_document_versions
-  await serviceClient.from("class_document_versions").insert({
-    document_id: documentId,
-    version_number: nextVersion,
-    file_url: fileUrl,
-    file_name: file.name,
-    file_size_bytes: file.size,
-    mime_type: file.type || "application/octet-stream",
-    change_note: changeNote,
-    uploaded_by: userId,
+  const { data: publicData } = serviceClient.storage
+    .from(BUCKET)
+    .getPublicUrl(uniquePath);
+
+  return recordDocumentVersion({
+    companyId,
+    companySlug,
+    documentId,
+    fileUrl: publicData.publicUrl,
+    fileName: file.name,
+    fileSizeBytes: file.size,
+    mimeType: file.type || "application/octet-stream",
+    changeNote,
   });
-
-  // Update master document file reference and size
-  await serviceClient
-    .from("classroom_materials")
-    .update({
-      file_url: fileUrl,
-      file_size_bytes: file.size,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", documentId);
-
-  revalidatePath(`/academy/${companySlug}/classroom`);
-  return { success: true, version: nextVersion, fileUrl };
 }
 
 export async function getDocumentVersions(documentId: string, companyId: string) {

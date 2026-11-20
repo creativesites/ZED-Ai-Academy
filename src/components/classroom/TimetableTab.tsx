@@ -203,9 +203,9 @@ export function TimetableTab({ companyId, isAdminOrInstructor, companySlug }: { 
         {isAdminOrInstructor && (
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger render={(props) => (
-              <Button {...props} className="bg-[#fd5523] text-white hover:bg-[#ef4a16] min-h-[44px] rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-[#fd5523]/20 transition-all hover:scale-[1.02] w-full sm:w-auto font-black text-xs uppercase tracking-wider">
-                <Plus className="h-4 w-4" />
-                Add Subject
+              <Button {...props} className="bg-[#fd5523] text-white hover:bg-[#ef4a16] h-10 px-4 rounded-xl flex items-center justify-center gap-1.5 shadow-xs transition-all w-full sm:w-auto font-semibold text-xs">
+                <Plus className="h-4 w-4 shrink-0" />
+                <span>Add Subject</span>
               </Button>
             )} />
             <DialogContent className="sm:max-w-[600px] rounded-2xl sm:rounded-[2rem] overflow-hidden w-[95vw] sm:w-full mx-auto max-h-[85dvh] flex flex-col p-0">
@@ -328,7 +328,7 @@ export function TimetableTab({ companyId, isAdminOrInstructor, companySlug }: { 
                     </div>
                   </div>
                   <DialogFooter>
-                    <Button type="submit" disabled={isPosting} className="w-full bg-[#fd5523] hover:bg-[#ef4a16] h-14 rounded-2xl text-white font-black text-base sm:text-lg shadow-xl shadow-[#fd5523]/20">
+                    <Button type="submit" disabled={isPosting} className="w-full bg-[#fd5523] hover:bg-[#ef4a16] h-10 rounded-xl text-white font-semibold text-xs sm:text-sm shadow-xs">
                       {isPosting ? <Loader2 className="h-5 w-5 sm:h-6 sm:w-6 animate-spin mr-2" /> : null}
                       Save to Timetable
                     </Button>
@@ -510,13 +510,13 @@ export function TimetableTab({ companyId, isAdminOrInstructor, companySlug }: { 
               </div>
 
               {/* Direct Join & Calendar Action Strip */}
-              <div className="space-y-2.5 pt-1">
+              <div className="space-y-2 pt-1">
                  <a
                    href={`/academy/${companySlug}/classroom?tab=session&scheduleId=${selectedLesson?.id}`}
-                   className="w-full flex items-center justify-center gap-2 h-12 sm:h-14 rounded-2xl bg-[#fd5523] text-white font-black text-xs sm:text-sm uppercase tracking-widest hover:bg-[#ef4a16] transition-all shadow-xl shadow-[#fd5523]/25 min-h-[44px]"
+                   className="w-full flex items-center justify-center gap-2 h-10 rounded-xl bg-[#fd5523] text-white font-semibold text-xs hover:bg-[#ef4a16] transition-all shadow-xs"
                  >
-                   <Video className="h-4 w-4 sm:h-5 sm:w-5" />
-                   Enter Live Classroom
+                   <Video className="h-4 w-4 shrink-0" />
+                   <span>Enter Live Classroom</span>
                  </a>
 
                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -524,26 +524,26 @@ export function TimetableTab({ companyId, isAdminOrInstructor, companySlug }: { 
                      href={selectedLesson ? getGoogleCalendarUrl(selectedLesson, companySlug) : "#"}
                      target="_blank"
                      rel="noopener noreferrer"
-                     className="flex items-center justify-center gap-2 h-11 rounded-xl bg-slate-50 text-[#062e39] font-bold text-xs hover:bg-slate-100 border border-slate-200 transition-all min-h-[44px]"
+                     className="flex items-center justify-center gap-2 h-9 rounded-xl bg-slate-50 text-[#062e39] font-semibold text-xs hover:bg-slate-100 border border-slate-200 transition-all"
                    >
-                     <Calendar className="h-4 w-4 text-[#fd5523]" />
-                     Add to Google Calendar
+                     <Calendar className="h-3.5 w-3.5 text-[#fd5523] shrink-0" />
+                     <span>Google Calendar</span>
                    </a>
 
                    <button
                      type="button"
                      onClick={() => selectedLesson && downloadIcsFile(selectedLesson, companySlug)}
-                     className="flex items-center justify-center gap-2 h-11 rounded-xl bg-slate-50 text-[#062e39] font-bold text-xs hover:bg-slate-100 border border-slate-200 transition-all min-h-[44px]"
+                     className="flex items-center justify-center gap-2 h-9 rounded-xl bg-slate-50 text-[#062e39] font-semibold text-xs hover:bg-slate-100 border border-slate-200 transition-all"
                    >
-                     <Download className="h-4 w-4 text-slate-500" />
-                     Download iCal (.ics)
+                     <Download className="h-3.5 w-3.5 text-slate-500 shrink-0" />
+                     <span>Download .ics</span>
                    </button>
                  </div>
               </div>
 
-              {/* Action Buttons - Column on mobile, row on tablet */}
+              {/* Action Buttons - Wrap cleanly on mobile */}
               <div className="pt-2 grid grid-cols-2 sm:grid-cols-4 gap-2">
-                 <Button onClick={() => setSelectedLesson(null)} className="h-11 sm:h-12 rounded-xl bg-slate-100 text-[#062e39] font-black text-xs uppercase tracking-widest hover:bg-slate-200 transition-all min-h-[44px]">
+                 <Button onClick={() => setSelectedLesson(null)} className="h-9 rounded-xl bg-slate-100 text-[#062e39] font-semibold text-xs hover:bg-slate-200 transition-all">
                     Close
                  </Button>
                  {isAdminOrInstructor && (
@@ -551,10 +551,10 @@ export function TimetableTab({ companyId, isAdminOrInstructor, companySlug }: { 
                      <Button 
                        onClick={() => selectedLesson && handleSendReminder(selectedLesson.id)}
                        disabled={sendingReminder}
-                       className="h-11 sm:h-12 rounded-xl bg-amber-500 text-white font-black text-xs uppercase tracking-widest hover:bg-amber-600 transition-all shadow-sm min-h-[44px]"
+                       className="h-9 rounded-xl bg-amber-500 text-white font-semibold text-xs hover:bg-amber-600 transition-all shadow-xs"
                      >
-                        {sendingReminder ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Bell className="h-4 w-4 mr-1" />}
-                        Remind Class
+                        {sendingReminder ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <Bell className="h-3.5 w-3.5 mr-1" />}
+                        Remind
                      </Button>
                      <Button onClick={async () => {
                        if (!selectedLesson) return;
@@ -567,7 +567,7 @@ export function TimetableTab({ companyId, isAdminOrInstructor, companySlug }: { 
                        } catch (e: any) {
                          toast.error(e.message);
                        }
-                     }} className="h-12 rounded-xl bg-indigo-50 text-indigo-600 font-black text-xs uppercase tracking-widest hover:bg-indigo-100 transition-all border border-indigo-100">
+                     }} className="h-9 rounded-xl bg-indigo-50 text-indigo-600 font-semibold text-xs hover:bg-indigo-100 transition-all border border-indigo-100">
                         Duplicate
                      </Button>
                      <Button onClick={async () => {
@@ -581,7 +581,7 @@ export function TimetableTab({ companyId, isAdminOrInstructor, companySlug }: { 
                        } catch (e: any) {
                          toast.error(e.message);
                        }
-                     }} className="h-12 rounded-xl bg-red-50 text-red-600 font-black text-xs uppercase tracking-widest hover:bg-red-100 transition-all border border-red-100">
+                     }} className="h-9 rounded-xl bg-red-50 text-red-600 font-semibold text-xs hover:bg-red-100 transition-all border border-red-100">
                         Cancel
                      </Button>
                    </>

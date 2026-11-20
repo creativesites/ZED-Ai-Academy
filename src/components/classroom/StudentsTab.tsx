@@ -71,23 +71,23 @@ export function StudentsTab({
   return (
     <div className="flex h-full flex-col bg-slate-50/30 animate-in fade-in duration-300">
       {/* Header */}
-      <div className="p-3 sm:p-6 lg:p-8 pb-4">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-6">
+      <div className="p-3 sm:p-5 lg:p-6 pb-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <h2 className="text-xl sm:text-2xl md:text-3xl font-black text-[#062e39] tracking-tight flex items-center gap-2 sm:gap-3">
+            <h2 className="text-lg sm:text-xl font-bold text-[#062e39] tracking-tight flex items-center gap-2">
               Student Directory
-              <Users className="h-6 w-6 sm:h-7 sm:w-7 text-[#fd5523]" />
+              <Users className="h-5 w-5 text-[#fd5523]" />
             </h2>
-            <p className="text-xs sm:text-sm text-slate-500 font-medium mt-1">Manage and track your academy's learners.</p>
+            <p className="text-xs text-slate-500 mt-0.5">Manage and track your academy's learners.</p>
           </div>
           {isAdminOrInstructor && (
             <Button
               type="button"
               onClick={() => setIsInviteModalOpen(true)}
-              className="bg-[#fd5523] text-white hover:bg-[#ef4a16] rounded-xl h-11 px-5 font-bold text-xs uppercase tracking-wider shadow-sm transition-all flex items-center justify-center gap-2 w-full md:w-auto min-h-[44px]"
+              className="bg-[#fd5523] text-white hover:bg-[#ef4a16] rounded-xl h-10 px-4 font-semibold text-xs shadow-xs transition-all flex items-center justify-center gap-1.5 w-full sm:w-auto"
             >
-              <UserPlus className="h-4 w-4" />
-              Invite Student
+              <UserPlus className="h-4 w-4 shrink-0" />
+              <span>Invite Student</span>
             </Button>
           )}
         </div>
@@ -103,24 +103,24 @@ export function StudentsTab({
           onSuccess={load}
         />
 
-        <div className="mt-4 sm:mt-8 flex flex-col sm:flex-row gap-3 sm:gap-4">
+        <div className="mt-4 flex flex-col sm:flex-row gap-2.5">
           <div className="relative flex-1 group">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 sm:h-5 sm:w-5 text-slate-400 group-focus-within:text-[#fd5523] transition-colors" />
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-[#fd5523] transition-colors" />
             <Input 
               placeholder="Search by name or email..." 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-11 sm:pl-12 h-11 sm:h-14 rounded-xl sm:rounded-2xl border-slate-100 bg-white shadow-sm focus:ring-[#fd5523]/10 focus:border-[#fd5523]/30 transition-all font-medium text-xs sm:text-sm"
+              className="pl-10 h-10 rounded-xl border-slate-200 bg-white shadow-xs focus:ring-[#fd5523]/10 focus:border-[#fd5523]/30 transition-all font-medium text-xs sm:text-sm"
             />
           </div>
-          <Button variant="outline" className="hidden sm:flex h-11 sm:h-14 w-11 sm:w-14 rounded-xl sm:rounded-2xl border-slate-100 bg-white shrink-0 shadow-sm text-slate-400 hover:text-[#fd5523]">
-            <ListFilter className="h-5 w-5 sm:h-6 sm:w-6" />
+          <Button variant="outline" className="hidden sm:flex h-10 w-10 rounded-xl border-slate-200 bg-white shrink-0 shadow-xs text-slate-400 hover:text-[#fd5523]">
+            <ListFilter className="h-4 w-4" />
           </Button>
         </div>
       </div>
 
       {/* Student List */}
-      <div className="flex-1 overflow-y-auto px-3 sm:px-8 pb-8">
+      <div className="flex-1 overflow-y-auto px-3 sm:px-6 pb-6">
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20 text-slate-400">
             <Loader2 className="h-10 w-10 animate-spin mb-4 text-[#fd5523]" />
@@ -129,7 +129,7 @@ export function StudentsTab({
         ) : (
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-3 sm:gap-4">
             {filteredStudents.map((student) => (
-              <div key={student.id} className="bg-white rounded-2xl sm:rounded-[2rem] p-4 sm:p-6 border border-slate-100 shadow-sm hover:shadow-xl hover:border-[#fd5523]/30 transition-all group flex items-center gap-3 sm:gap-6 relative overflow-hidden">
+              <div key={student.id} className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-xs hover:shadow-md hover:border-[#fd5523]/30 transition-all group flex items-center gap-3 sm:gap-4 relative overflow-hidden">
                 <div className="absolute -right-4 -bottom-4 opacity-[0.03] group-hover:opacity-[0.08] transition-opacity pointer-events-none">
                   <LayoutGrid className="h-24 w-24" />
                 </div>
