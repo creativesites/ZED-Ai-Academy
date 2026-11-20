@@ -1,13 +1,22 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Plus, Sparkles } from "lucide-react";
 import { listTutorScenariosForCourse, type TutorScenarioOption } from "@/actions/tutor-scenarios";
+import {
+  listAvailablePersonasForCourse,
+  type PersonaRecord,
+  type ScenarioRecord,
+} from "@/actions/tutor-authoring";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Teacher } from "@/components/tutor/avatar/Teacher";
+import { DEFAULT_PERSONA_LOOK } from "@/components/tutor/avatar/types";
 import { TutorSession } from "@/components/tutor/practice/TutorSession";
+import { ScenarioEditorModal } from "@/components/tutor/studio/ScenarioEditorModal";
 import {
   TUTOR_SESSION_STYLES,
   TUTOR_STYLE_LABELS,
@@ -46,13 +55,26 @@ export function TutorSessionBlockEditor({
   const [title, setTitle] = useState(content.title ?? "");
   const [intro, setIntro] = useState(content.intro ?? "");
   const [scenarios, setScenarios] = useState<TutorScenarioOption[] | null>(null);
+  const [personas, setPersonas] = useState<PersonaRecord[]>([]);
+  const [companyId, setCompanyId] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [creatorOpen, setCreatorOpen] = useState(false);
 
   useEffect(() => {
     let alive = true;
-    listTutorScenariosForCourse(courseId)
-      .then((list) => alive && setScenarios(list))
+    Promise.all([
+      listTutorScenariosForCourse(courseId),
+      listAvailablePersonasForCourse(courseId).catch(() => null),
+    ])
+      .then(([list, personaCtx]) => {
+        if (!alive) return;
+        setScenarios(list);
+        if (personaCtx) {
+          setCompanyId(personaCtx.companyId);
+          setPersonas(personaCtx.personas);
+        }
+      })
       .catch((err: unknown) => alive && setLoadError(err instanceof Error ? err.message : "Could not load scenarios"));
     return () => {
       alive = false;
@@ -63,23 +85,57 @@ export function TutorSessionBlockEditor({
     onChange({ scenarioId, style, required, title, intro, ...patch });
   }
 
+  async function handleScenarioCreated(saved: ScenarioRecord) {
+    try {
+      const refreshed = await listTutorScenariosForCourse(courseId);
+      setScenarios(refreshed);
+    } catch {
+      // Keep local state if refresh fails
+    }
+    setScenarioId(saved.id);
+    setStyle(saved.style);
+    emit({ scenarioId: saved.id, style: saved.style });
+  }
+
   const selected = scenarios?.find((s) => s.id === scenarioId) ?? null;
 
   return (
     <div className="space-y-5">
-      <div className="space-y-1.5">
-        <Label className="text-sm text-slate-700">Scenario</Label>
+      <div className="space-y-2">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <Label className="text-sm text-slate-700">Speaking Scenario</Label>
+          {companyId && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setCreatorOpen(true)}
+              className="h-8 rounded-lg border-[#fd5523]/30 bg-[#fff6ee] px-3 text-xs font-bold text-[#fd5523] hover:bg-[#ffebdc]"
+            >
+              <Plus className="mr-1 h-3.5 w-3.5" />
+              Create / AI Draft Scenario
+            </Button>
+          )}
+        </div>
         {loadError && <p className="text-sm text-red-600">{loadError}</p>}
         {!loadError && scenarios === null && <p className="text-sm text-slate-500">Loading scenarios…</p>}
         {scenarios && scenarios.length === 0 && (
           <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-600">
             <p className="font-semibold text-slate-800">No speaking scenarios yet</p>
-            <p className="mt-1">
-              A scenario is a role-play with a persona, goals and target words. Scenarios are created in the
-              tutor authoring tools, which are not in the course studio yet. Once one is published for this
-              course, the academy library, or ZAI&apos;s starter packs, it appears here. See{" "}
-              <code className="text-xs">docs/LANGUAGE_IMPLEMENTATION_PLAN.md</code> (section 2.5) for how scenarios work.
+            <p className="mt-1 text-xs text-slate-500">
+              Create your first animated AI teacher role-play right here — manually or drafted automatically by AI from this lesson&apos;s content.
             </p>
+            {companyId && (
+              <Button
+                type="button"
+                size="sm"
+                onClick={() => setCreatorOpen(true)}
+                className="mt-3 rounded-xl bg-[#fd5523] text-xs font-bold text-white hover:bg-[#ea4817]"
+              >
+                <Sparkles className="mr-1.5 h-3.5 w-3.5" />
+                Create Scenario with AI Teacher
+              </Button>
+            )}
           </div>
         )}
         {scenarios && scenarios.length > 0 && (
@@ -108,10 +164,23 @@ export function TutorSessionBlockEditor({
           </select>
         )}
         {selected && (
-          <p className="text-xs text-slate-500">
-            {selected.persona ? `${selected.persona.displayName ?? selected.persona.name} · ` : ""}
-            up to {selected.maxMinutes} min · {selected.goal}
-          </p>
+          <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50/70 p-3">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-gradient-to-b from-[#1a1338] to-[#321b4e]">
+              <Teacher
+                variant="bust"
+                persona={selected.persona?.look ?? DEFAULT_PERSONA_LOOK}
+                className="h-12 w-12"
+                label={selected.persona?.displayName ?? selected.persona?.name ?? "AI Teacher"}
+              />
+            </div>
+            <div className="min-w-0 text-xs text-slate-600">
+              <p className="font-semibold text-[#062e39]">
+                {selected.persona ? `${selected.persona.displayName ?? selected.persona.name} · ` : ""}
+                up to {selected.maxMinutes} min
+              </p>
+              <p className="line-clamp-2 text-slate-500">{selected.goal}</p>
+            </div>
+          </div>
         )}
       </div>
 
@@ -222,6 +291,18 @@ export function TutorSessionBlockEditor({
           )}
         </DialogContent>
       </Dialog>
+
+      {creatorOpen && companyId && (
+        <ScenarioEditorModal
+          open={creatorOpen}
+          onOpenChange={setCreatorOpen}
+          companyId={companyId}
+          courseId={courseId}
+          lessonId={lessonId}
+          personas={personas}
+          onSaved={handleScenarioCreated}
+        />
+      )}
     </div>
   );
 }

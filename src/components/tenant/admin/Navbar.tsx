@@ -16,6 +16,7 @@ import {
   Layers,
   UserCheck,
   MoreHorizontal,
+  Sparkles,
 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -39,6 +40,7 @@ export function TenantAdminNavbar({ slug, name }: { slug: string; name: string }
   const navItems: NavItem[] = [
     { label: "Dashboard", shortLabel: "Hub", href: base, icon: LayoutDashboard, exact: true },
     { label: "Courses", href: `${base}/courses`, icon: BookOpen },
+    { label: "AI Teachers", shortLabel: "AI Tutor", href: `${base}/ai-teachers`, icon: Sparkles },
     { label: "Enrollments", shortLabel: "Students", href: `${base}/enrollments`, icon: UserCheck },
     { label: "Classroom", href: `${base}/classroom`, icon: Layers },
     { label: "Staff", href: `${base}/staff`, icon: Users },

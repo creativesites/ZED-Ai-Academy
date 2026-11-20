@@ -1,5 +1,11 @@
 export const COURSE_DOMAIN_PRESETS = [
   {
+    id: "language-learning",
+    label: "Language Learning & AI Teacher",
+    description: "Mandarin, Spanish, French, or English courses with animated AI speaking teachers, role-plays, and tone practice.",
+    suggestedCategory: "Languages",
+  },
+  {
     id: "ai-professional",
     label: "AI & Digital Skills",
     description: "Prompting, automation, analytics, and workplace AI adoption.",

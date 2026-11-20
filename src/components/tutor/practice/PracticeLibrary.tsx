@@ -3,6 +3,8 @@ import { ArrowRight, Clock3, Library, Mic, MessageSquareText } from "lucide-reac
 import type { LanguageGroup } from "@/lib/tutor/practice-library";
 import { startableModes } from "@/lib/tutor/practice-library";
 import type { PracticeLibraryItem } from "@/lib/tutor/practice-library";
+import { Teacher } from "@/components/tutor/avatar/Teacher";
+import { DEFAULT_PERSONA_LOOK } from "@/components/tutor/avatar/types";
 
 // Server-rendered library of scenarios, grouped by language and level. Each card opens a session.
 
@@ -66,22 +68,34 @@ function ScenarioCard({ item, href }: { item: PracticeLibraryItem; href: string 
       href={href}
       className="group flex h-full flex-col justify-between gap-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
     >
-      <div className="space-y-2">
-        <div className="flex flex-wrap items-center gap-2">
-          {item.level && (
-            <span className="rounded-full border border-blue-100 bg-blue-50 px-2.5 py-0.5 text-xs font-semibold text-blue-700">
-              {item.level}
-            </span>
-          )}
-          {item.visibility === "platform" && (
-            <span className="rounded-full border border-slate-200 bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-600">
-              Starter pack
-            </span>
-          )}
+      <div className="space-y-3">
+        <div className="flex items-start gap-3.5">
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-b from-[#1a1338] to-[#321b4e] shadow-sm">
+            <Teacher
+              variant="bust"
+              persona={item.personaLook ?? DEFAULT_PERSONA_LOOK}
+              className="h-14 w-14"
+              label={item.personaName ?? "Animated AI teacher"}
+            />
+          </div>
+          <div className="min-w-0 flex-1 space-y-1">
+            <div className="flex flex-wrap items-center gap-1.5">
+              {item.level && (
+                <span className="rounded-full border border-blue-100 bg-blue-50 px-2.5 py-0.5 text-xs font-semibold text-blue-700">
+                  {item.level}
+                </span>
+              )}
+              {item.visibility === "platform" && (
+                <span className="rounded-full border border-slate-200 bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-600">
+                  Starter pack
+                </span>
+              )}
+            </div>
+            <h3 className="font-heading text-lg font-semibold leading-snug text-slate-900">{item.title}</h3>
+          </div>
         </div>
-        <h3 className="font-heading text-lg font-semibold leading-snug text-slate-900">{item.title}</h3>
         <p className="line-clamp-3 text-sm leading-relaxed text-slate-600">{item.goal}</p>
-        {item.personaName && <p className="text-sm text-slate-500">With {item.personaName}</p>}
+        {item.personaName && <p className="text-sm font-medium text-slate-500">With {item.personaName}</p>}
       </div>
 
       <div className="flex items-center justify-between gap-3 border-t border-slate-100 pt-4">

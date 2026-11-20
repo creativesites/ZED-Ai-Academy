@@ -3,6 +3,7 @@ import { createServiceClient } from "@/lib/supabase/server";
 import type { PracticeLibraryItem } from "../practice-library.ts";
 import { startableModes } from "../practice-library.ts";
 import type { Mode, SkillPack } from "../scenario.ts";
+import { personaLookFromVariant, sceneFromValue } from "../tutor-session-block.ts";
 
 // The scenarios a learner may see in the Practice Room. The service client bypasses RLS, so the
 // visibility rules are applied here, from the verified Clerk user id:
@@ -17,7 +18,7 @@ export type PracticeLibraryResult =
   | { ok: false; reason: "not_tenant_member" };
 
 const SCENARIO_COLUMNS =
-  "id, company_id, title, goal, skill_pack, level, max_minutes, allowed_modes, visibility, persona_id";
+  "id, company_id, title, goal, skill_pack, level, max_minutes, allowed_modes, visibility, persona_id, scene";
 
 export async function loadPracticeLibrary(userId: string, scope: PracticeLibraryScope): Promise<PracticeLibraryResult> {
   const supabase = createServiceClient();
@@ -64,22 +65,35 @@ export async function loadPracticeLibrary(userId: string, scope: PracticeLibrary
   const rows = [...(libraryRes.data ?? []), ...(platformRes.data ?? [])] as ScenarioRow[];
   const personaIds = [...new Set(rows.map((r) => r.persona_id).filter((id): id is string => !!id))];
   const { data: personas } = personaIds.length
-    ? await supabase.from("ai_personas").select("id, name, display_name").in("id", personaIds)
+    ? await supabase.from("ai_personas").select("id, name, display_name, rive_variant").in("id", personaIds)
     : { data: [] };
-  const personaName = new Map((personas ?? []).map((p) => [p.id, p.display_name ?? p.name]));
+  const personaMap = new Map(
+    (personas ?? []).map((p) => [
+      p.id,
+      {
+        name: p.display_name ?? p.name,
+        look: personaLookFromVariant(p.rive_variant),
+      },
+    ])
+  );
 
   const items: PracticeLibraryItem[] = rows
-    .map((row) => ({
-      id: row.id,
-      title: row.title,
-      goal: row.goal,
-      skillPack: row.skill_pack as SkillPack,
-      level: row.level,
-      maxMinutes: row.max_minutes,
-      allowedModes: row.allowed_modes as Mode[],
-      visibility: row.visibility as "tenant_library" | "platform",
-      personaName: row.persona_id ? personaName.get(row.persona_id) ?? null : null,
-    }))
+    .map((row) => {
+      const p = row.persona_id ? personaMap.get(row.persona_id) : undefined;
+      return {
+        id: row.id,
+        title: row.title,
+        goal: row.goal,
+        skillPack: row.skill_pack as SkillPack,
+        level: row.level,
+        maxMinutes: row.max_minutes,
+        allowedModes: row.allowed_modes as Mode[],
+        visibility: row.visibility as "tenant_library" | "platform",
+        personaName: p?.name ?? null,
+        personaLook: p?.look,
+        scene: sceneFromValue(row.scene),
+      };
+    })
     // Scenarios that only allow live cannot start yet, so they are not offered.
     .filter((item) => startableModes(item.allowedModes).length > 0);
 
@@ -108,4 +122,5 @@ type ScenarioRow = {
   allowed_modes: string[];
   visibility: string;
   persona_id: string | null;
+  scene: string | null;
 };

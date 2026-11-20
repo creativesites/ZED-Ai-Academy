@@ -20,6 +20,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import type { CompanyMemberRole, UserRole } from "@/types/database";
 import { getUpcomingUserClasses } from "@/actions/classroom";
+import { TutorSpotlightBanner } from "@/components/tutor/TutorSpotlightBanner";
 
 export const metadata = { title: "Your Academies — Zed AI Academy" };
 export const dynamic = "force-dynamic";
@@ -221,6 +222,11 @@ export default async function DashboardPage() {
             </Link>
           </div>
         )}
+
+        {/* AI Language Teacher Spotlight */}
+        <div className="mb-8">
+          <TutorSpotlightBanner />
+        </div>
 
         {/* Academies Section */}
         <div className="mb-8">

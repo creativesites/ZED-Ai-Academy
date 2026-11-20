@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { useAuth } from "@clerk/nextjs";
 import {
   BookOpen, Home, LayoutDashboard, Rocket,
-  LogIn, Globe, GraduationCap, MoreHorizontal, Calendar,
+  LogIn, Globe, GraduationCap, MoreHorizontal, Calendar, Mic,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useProfileNav } from "@/hooks/use-profile-nav";
@@ -332,9 +332,10 @@ export function MobileBottomNav() {
       <NavShell
         label="Mobile navigation"
         tabs={[
-          { href: "/",        label: "Home",    icon: Home,    active: pathActive("/") },
-          { href: "/courses", label: "Courses", icon: BookOpen, active: pathActive("/courses") },
-          { href: "/sign-in", label: "Sign in", icon: LogIn,   active: pathActive("/sign-in") },
+          { href: "/",         label: "Home",     icon: Home,     active: pathActive("/") },
+          { href: "/ai-tutor", label: "AI Tutor", icon: Mic,      active: pathActive("/ai-tutor") },
+          { href: "/courses",  label: "Courses",  icon: BookOpen, active: pathActive("/courses") },
+          { href: "/sign-in",  label: "Sign in",  icon: LogIn,    active: pathActive("/sign-in") },
         ]}
       />
     );
@@ -368,6 +369,12 @@ export function MobileBottomNav() {
           active: pathname.startsWith(`/academy/${academySlug}/classroom`),
         },
         {
+          href: `/academy/${academySlug}/practice`,
+          label: "Practice",
+          icon: Mic,
+          active: pathname.startsWith(`/academy/${academySlug}/practice`),
+        },
+        {
           href: `/academy/${academySlug}/classroom?tab=timetable`,
           label: "Timetable",
           icon: Calendar,
@@ -398,6 +405,7 @@ export function MobileBottomNav() {
   const tabs: TabItem[] = [
     { href: "/",          label: "Home",      icon: Home,            active: pathActive("/") },
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, active: pathname === "/dashboard" },
+    { href: "/practice",  label: "Practice",  icon: Mic,             active: pathname?.startsWith("/practice") ?? false },
     { href: "/dashboard/schedule", label: "Schedule", icon: Calendar, active: pathname?.startsWith("/dashboard/schedule") ?? false },
     { href: "/courses",   label: "Courses",   icon: BookOpen,        active: pathActive("/courses") },
   ];

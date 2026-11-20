@@ -19,6 +19,8 @@ export default async function PracticeSessionPage({ params }: { params: Promise<
     <TutorSession
       origin="practice"
       scenarioId={item.id}
+      scene={item.scene}
+      look={item.personaLook}
       preview={{
         teacherName: item.personaName ?? undefined,
         title: item.title,

@@ -4,6 +4,8 @@ import { useState } from "react";
 import { createPortal } from "react-dom";
 import { CheckCircle, Mic, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Teacher } from "@/components/tutor/avatar/Teacher";
+import { DEFAULT_PERSONA_LOOK } from "@/components/tutor/avatar/types";
 import { TutorSession } from "@/components/tutor/practice/TutorSession";
 import {
   TUTOR_STYLE_LABELS,
@@ -49,11 +51,18 @@ export function TutorSessionBlock({
     <section className="overflow-hidden rounded-[2rem] border border-slate-100 bg-white shadow-xl">
       <div className="flex flex-col gap-6 p-6 md:p-10">
         <div className="flex items-start gap-4">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-cyan-50 text-cyan-700">
-            <Mic className="h-6 w-6" />
+          <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-b from-[#1a1338] to-[#321b4e] shadow-md">
+            <Teacher
+              variant="bust"
+              persona={persona?.look ?? DEFAULT_PERSONA_LOOK}
+              className="h-16 w-16"
+              label={personaName ?? "Animated AI teacher"}
+            />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-cyan-700">Speaking practice</p>
+            <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-cyan-700">
+              {personaName ? `Speaking practice · ${personaName}` : "Speaking practice"}
+            </p>
             <h3 className="text-xl font-bold leading-snug text-[#062e39]">{title}</h3>
           </div>
         </div>

@@ -14,6 +14,7 @@ import {
   Menu,
   X,
   GraduationCap,
+  Sparkles,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -21,6 +22,7 @@ import { Button } from "@/components/ui/button";
 const NAV_ITEMS = [
   { label: "Courses", href: "/creator/courses", icon: BookOpen },
   { label: "New Course", href: "/creator/courses/new", icon: PlusCircle },
+  { label: "AI Teachers", href: "/creator/ai-teachers", icon: Sparkles },
   { label: "Live Sessions", href: "/creator/live-sessions", icon: Video },
   { label: "Submissions", href: "/creator/practice-submissions", icon: ClipboardCheck },
   { label: "Settings", href: "/creator/settings", icon: Settings },

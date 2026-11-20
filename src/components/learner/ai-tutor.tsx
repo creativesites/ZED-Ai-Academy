@@ -1,8 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Copy, History, Loader2, Send, Sparkles, X } from "lucide-react";
+import { Copy, History, Loader2, Send, X } from "lucide-react";
 import { MessageContent } from "./chat-components/MessageContent";
+import { Teacher } from "@/components/tutor/avatar/Teacher";
+import { PERSONA_PRESETS, type PersonaPresetKey } from "@/components/tutor/avatar/persona-presets";
+import type { AvatarDriver } from "@/components/tutor/avatar/types";
+import type { VisemeValue } from "@/lib/tutor/contract.generated";
 
 type Message = { role: "user" | "assistant"; content: string };
 
@@ -66,9 +70,12 @@ export function AiTutor({
   ]);
   const [input, setInput] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
+  const [personaKey, setPersonaKey] = useState<PersonaPresetKey>("lin");
+  const avatarRef = useRef<AvatarDriver | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const hasUserMessages = messages.some((m) => m.role === "user");
+  const activePersona = PERSONA_PRESETS.find((p) => p.key === personaKey) ?? PERSONA_PRESETS[0];
 
   const storageKey = `zed-ai-coach-history-${lessonId}-${sectionTitle || "default"}`;
 
@@ -100,6 +107,11 @@ export function AiTutor({
     setInput("");
     setMessages((prev) => [...prev, { role: "user", content: message }]);
     setIsStreaming(true);
+    avatarRef.current?.setThinking(true);
+    avatarRef.current?.setMood("curious", 75);
+
+    let visemeStep = 0;
+    const visemeCycle: VisemeValue[] = [1, 3, 4, 2, 6, 8, 5];
 
     try {
       const res = await fetch("/api/ai/tutor", {
@@ -119,11 +131,16 @@ export function AiTutor({
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
       setMessages((prev) => [...prev, { role: "assistant", content: "" }]);
+      avatarRef.current?.setThinking(false);
+      avatarRef.current?.setSpeaking(true);
+      avatarRef.current?.setMood("warm", 80);
 
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
         const chunk = decoder.decode(value, { stream: true });
+        visemeStep = (visemeStep + 1) % visemeCycle.length;
+        avatarRef.current?.setViseme(visemeCycle[visemeStep]);
         setMessages((prev) => {
           const next = [...prev];
           const last = next[next.length - 1];
@@ -131,12 +148,18 @@ export function AiTutor({
           return next;
         });
       }
+      avatarRef.current?.setMood("happy", 75);
+      avatarRef.current?.playGesture("nod");
     } catch {
+      avatarRef.current?.setMood("concerned", 70);
       setMessages((prev) => [
         ...prev,
         { role: "assistant", content: "Something went wrong. Please try again with a shorter prompt." },
       ]);
     } finally {
+      avatarRef.current?.setThinking(false);
+      avatarRef.current?.setSpeaking(false);
+      avatarRef.current?.setViseme(0);
       setIsStreaming(false);
       textareaRef.current?.focus();
     }
@@ -160,17 +183,25 @@ export function AiTutor({
       {/* Panel */}
       <div className="fixed inset-y-0 right-0 z-50 flex w-full flex-col bg-white shadow-2xl sm:w-[420px] sm:border-l sm:border-slate-200">
 
-        {/* Header */}
-        <div className="flex-shrink-0 bg-[#062e39] px-3 py-2">
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex items-start gap-3">
-              {/* <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#fd5523]/20">
-                <Sparkles className="h-5 w-5 text-[#fd5523]" />
-              </div> */}
+        {/* Header with Animated AI Teacher */}
+        <div className="flex-shrink-0 bg-gradient-to-br from-[#062e39] via-[#10263a] to-[#1d1438] px-4 py-3">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="h-14 w-14 shrink-0 overflow-hidden rounded-2xl border border-white/15 bg-black/25 shadow-lg">
+                <Teacher
+                  ref={avatarRef}
+                  variant="bust"
+                  persona={activePersona.look}
+                  className="h-14 w-14"
+                  label={`${activePersona.label}, your AI teacher`}
+                />
+              </div>
               <div className="min-w-0">
-                <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-[#fd5523]/70">AI Coach</p>
+                <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-[#fd5523]">
+                  AI Teacher · {activePersona.label}
+                </p>
                 <h6 className="mt-0.5 line-clamp-1 text-sm font-bold text-white">{lessonTitle}</h6>
-                <p className="mt-0.5 line-clamp-1 text-[11px] text-white/40">{courseTitle}</p>
+                <p className="mt-0.5 line-clamp-1 text-[11px] text-white/50">{courseTitle}</p>
               </div>
             </div>
             <div className="flex items-center gap-1">
@@ -185,19 +216,43 @@ export function AiTutor({
                     localStorage.removeItem(storageKey);
                   }
                 }}
-                className="shrink-0 rounded-full px-2 py-1 text-[9px] font-bold uppercase tracking-wider text-white/40 transition-colors hover:bg-white/10 hover:text-[#fd5523]"
+                className="shrink-0 rounded-full px-2 py-1 text-[9px] font-bold uppercase tracking-wider text-white/50 transition-colors hover:bg-white/10 hover:text-[#fd5523]"
               >
                 Clear
               </button>
               <button
                 type="button"
                 onClick={onClose}
-                className="shrink-0 rounded-full p-1.5 text-white/40 transition-colors hover:bg-white/10 hover:text-white"
+                className="shrink-0 rounded-full p-1.5 text-white/50 transition-colors hover:bg-white/10 hover:text-white"
                 aria-label="Close AI coach"
               >
                 <X className="h-4 w-4" />
               </button>
             </div>
+          </div>
+
+          {/* Persona switcher pills */}
+          <div className="mt-2.5 flex items-center gap-1.5 overflow-x-auto pb-0.5">
+            {PERSONA_PRESETS.map((p) => {
+              const selected = p.key === personaKey;
+              return (
+                <button
+                  key={p.key}
+                  type="button"
+                  onClick={() => {
+                    setPersonaKey(p.key);
+                    avatarRef.current?.playGesture("wave");
+                  }}
+                  className={`shrink-0 rounded-full px-2.5 py-0.5 text-[10px] font-bold transition-colors ${
+                    selected
+                      ? "bg-[#fd5523] text-white"
+                      : "bg-white/10 text-white/70 hover:bg-white/20 hover:text-white"
+                  }`}
+                >
+                  {p.label}
+                </button>
+              );
+            })}
           </div>
         </div>
 

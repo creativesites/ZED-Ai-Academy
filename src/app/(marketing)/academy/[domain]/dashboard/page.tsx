@@ -4,7 +4,7 @@ import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
 import { 
   ArrowRight, Award, BookOpen, Clock3, GraduationCap, 
-  Play, Sparkles, Trophy, Users, Layout, Building2
+  Play, Sparkles, Trophy, Users, Layout, Building2, Mic
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -104,6 +104,15 @@ export default async function TenantStudentDashboardPage({
                 Enter Classroom 
                 <div className="h-8 w-8 rounded-full bg-white/20 flex items-center justify-center group-hover:rotate-12 transition-transform">
                   <Layout className="h-4 w-4" />
+                </div>
+              </Link>
+              <Link
+                href={`/academy/${company.slug}/practice`}
+                className="group h-20 px-10 rounded-[2rem] bg-white/10 hover:bg-white/20 text-white border border-white/15 text-xs font-black uppercase tracking-[0.2em] flex items-center gap-4 hover:scale-[1.02] active:scale-95 transition-all"
+              >
+                Practice with AI Teacher
+                <div className="h-8 w-8 rounded-full bg-[#fd5523]/30 flex items-center justify-center">
+                  <Mic className="h-4 w-4 text-amber-300" />
                 </div>
               </Link>
             </div>

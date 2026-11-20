@@ -1,4 +1,6 @@
 import type { Mode, SkillPack } from "./scenario.ts";
+import type { TutorPersonaLook } from "./tutor-session-block.ts";
+import type { SceneArtboard } from "./rive-driver.ts";
 
 // Shapes and grouping for the Practice Room library. Pure, no React, no DB.
 
@@ -12,6 +14,8 @@ export type PracticeLibraryItem = {
   allowedModes: Mode[];
   visibility: "tenant_library" | "platform";
   personaName: string | null;
+  personaLook?: Partial<TutorPersonaLook>;
+  scene?: SceneArtboard;
 };
 
 export type LanguageGroup = {

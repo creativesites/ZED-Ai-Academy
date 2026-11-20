@@ -28,6 +28,8 @@ export default async function TenantPracticeSessionPage({
     <TutorSession
       origin="practice"
       scenarioId={item.id}
+      scene={item.scene}
+      look={item.personaLook}
       preview={{
         teacherName: item.personaName ?? undefined,
         title: item.title,

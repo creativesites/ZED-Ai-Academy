@@ -8,7 +8,13 @@ import { CourseSettingsForm } from "@/components/creator/course-settings-form";
 import { CurriculumBuilder } from "@/components/creator/curriculum-builder";
 import { PublishButton } from "@/components/creator/publish-button";
 import { CourseAIReview } from "@/components/creator/course-ai-review";
+import { CourseTutorTab } from "@/components/creator/course-tutor-tab";
 import { getCourseListPath } from "@/lib/courses/course-routes";
+import {
+  listAvailablePersonasForCourse,
+  listScenariosForCourseStudio,
+} from "@/actions/tutor-authoring";
+import { ZEDAI_TENANT_ID } from "@/lib/tenants/constants";
 import {
   ArrowLeft,
   BookOpen,
@@ -17,6 +23,7 @@ import {
   FileText,
   Layers,
   ListChecks,
+  Mic,
   ShieldCheck,
   Sparkles,
   TrendingUp,
@@ -127,6 +134,21 @@ export async function CourseStudioView({
       .eq("company_id", course.company_id)
       .order("name");
     companyClasses = (groupsRaw ?? []) as { id: string; name: string; course_id: string | null }[];
+  }
+
+  let tutorPersonas: Awaited<ReturnType<typeof listAvailablePersonasForCourse>>["personas"] = [];
+  let tutorScenarios: Awaited<ReturnType<typeof listScenariosForCourseStudio>> = [];
+  let tutorCompanyId = course.company_id ?? ZEDAI_TENANT_ID;
+  try {
+    const [personaCtx, scenarioList] = await Promise.all([
+      listAvailablePersonasForCourse(courseId),
+      listScenariosForCourseStudio(courseId),
+    ]);
+    tutorCompanyId = personaCtx.companyId;
+    tutorPersonas = personaCtx.personas;
+    tutorScenarios = scenarioList;
+  } catch {
+    // Non-fatal if tutor tables are not yet populated in this environment
   }
 
   const now = new Date();
@@ -268,6 +290,13 @@ export async function CourseStudioView({
               >
                 <Layers className="mr-1.5 h-3.5 w-3.5 sm:mr-2 sm:h-4 sm:w-4" />
                 Curriculum
+              </TabsTrigger>
+              <TabsTrigger
+                value="ai-teacher"
+                className="h-9 shrink-0 rounded-xl px-3 text-xs font-semibold text-slate-500 data-[state=active]:bg-white data-[state=active]:text-[#062e39] data-[state=active]:shadow-sm sm:h-10 sm:px-5 sm:text-sm"
+              >
+                <Mic className="mr-1.5 h-3.5 w-3.5 text-[#fd5523] sm:mr-2 sm:h-4 sm:w-4" />
+                AI Teacher ({tutorScenarios.length})
               </TabsTrigger>
               <TabsTrigger
                 value="settings"
@@ -418,6 +447,16 @@ export async function CourseStudioView({
 
           <TabsContent value="curriculum" className="mt-0">
             <CurriculumBuilder courseId={courseId} initialModules={modules} tenantSlug={tenantSlug} />
+          </TabsContent>
+
+          <TabsContent value="ai-teacher" className="mt-0">
+            <CourseTutorTab
+              courseId={courseId}
+              companyId={tutorCompanyId}
+              tenantSlug={tenantSlug}
+              initialPersonas={tutorPersonas}
+              initialScenarios={tutorScenarios}
+            />
           </TabsContent>
 
           <TabsContent value="settings" className="mt-0">
