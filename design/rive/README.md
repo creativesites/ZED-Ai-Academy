@@ -5,9 +5,9 @@ Runtime files (what the app loads):
 | File | Contents |
 |---|---|
 | `zai_teacher.riv` | `Teacher` (1200x1500) and `TeacherBust` (512x512) artboards, `TeacherVM`, `TeacherSM`, `BustSM` |
-| `zai_scenes.riv` | `Scene_TeaHouse`, `Scene_Cafe`, `Scene_Rooftop`, `Scene_Clinic`, `SceneVM`, `SceneSM` |
+| `zai_scenes.riv` | `Scene_TeaHouse`, `Scene_Cafe`, `Scene_Rooftop`, `Scene_Clinic`, `Scene_Classroom`, `Scene_Studio`, `SceneVM`, `SceneSM` |
 
-The names, enums and events are defined by `docs/rive/teacher.contract.json` (currently 1.1.0).
+The names, enums and events are defined by `docs/rive/teacher.contract.json` (currently 1.2.0).
 `presets.json` has the view-model values for the five characters (Lín Lǎoshī, Sofía, Camille, Nurse Tendai, Tinashe).
 `QA_REPORT.md` has the test results, tested runtime versions and known gaps.
 
@@ -30,7 +30,7 @@ tools/gen_scenes.mjs  generates scenes/scene.rml
 
 ## Regenerating
 
-Requirements: Node 20+, the Rive CLI (`~/.rive/bin/rive`, tested with 1.5.1), Python 3 with Pillow for the preview helpers.
+Requirements: Node 20+, the Rive CLI (`~/.rive/bin/rive`, tested with 1.10.0; publishing needs `rive login`), Python 3 with Pillow for the preview helpers.
 
 ```bash
 cd design/rive
@@ -38,11 +38,14 @@ node tools/gen_teacher.mjs          # writes teacher/scene.rml
 node tools/gen_scenes.mjs           # writes scenes/scene.rml
 ~/.rive/bin/rive teacher --verify   # compile check (also: rive inspect teacher --summary)
 ~/.rive/bin/rive scenes --verify
-~/.rive/bin/rive teacher --once     # writes teacher/build/zai_teacher.riv
-~/.rive/bin/rive scenes --once      # writes scenes/build/zai_scenes.riv
+~/.rive/bin/rive teacher --publish  # writes teacher/build/zai_teacher.riv
+~/.rive/bin/rive scenes --publish   # writes scenes/build/zai_scenes.riv
 cp teacher/build/zai_teacher.riv zai_teacher.riv
 cp scenes/build/zai_scenes.riv zai_scenes.riv
 ```
+
+The CLI's account is on a plan that adds the Rive splash screen to a published file, so a file published
+this way shows the Rive logo for a moment before its first frame.
 
 Render a frame without a window (set any view-model value with `--data`, fire a gesture with `gesture=` plus `playGesture=1`):
 

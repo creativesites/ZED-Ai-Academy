@@ -52,6 +52,8 @@ const SCENE_LABELS: Record<SceneArtboard, string> = {
   Scene_Cafe: "Seville Café",
   Scene_Rooftop: "Paris Rooftop",
   Scene_Clinic: "Modern Clinic",
+  Scene_Classroom: "Classroom (any subject)",
+  Scene_Studio: "Studio (any subject)",
 };
 
 const COLOR_FIELDS: Array<{ key: keyof PersonaLook; label: string }> = [

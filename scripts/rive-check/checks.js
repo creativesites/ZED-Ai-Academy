@@ -328,7 +328,7 @@
 
     // Scenes: SceneSM and SceneVM on each scene artboard -------------------------------------
     const sceneVm = contract.viewModels.SceneVM;
-    for (const artboard of ["Scene_TeaHouse", "Scene_Cafe", "Scene_Rooftop", "Scene_Clinic"]) {
+    for (const artboard of Object.keys(contract.artboards).filter((name) => name.startsWith("Scene_"))) {
       const scene = await createInstance(sceneFile, artboard, contract.artboards[artboard].stateMachine);
       const sr = scene.r;
       const svmi = bindViewModel(sr, contract.artboards[artboard].viewModel);

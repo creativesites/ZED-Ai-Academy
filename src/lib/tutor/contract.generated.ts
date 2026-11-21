@@ -1,5 +1,5 @@
 // GENERATED — do not edit; run npm run gen:tutor-contract
-// Source: docs/rive/teacher.contract.json (contract version 1.1.0).
+// Source: docs/rive/teacher.contract.json (contract version 1.2.0).
 
 export const GESTURES = ["idle", "wave", "nod", "head_shake", "explain", "point_card", "point_left", "point_right", "thumbs_up", "clap", "think", "listen", "celebrate", "count", "shrug", "beckon", "trace_tone", "oops"] as const;
 
@@ -251,6 +251,16 @@ export const ARTBOARDS = {
     size: [2400, 1500],
     stateMachine: "SceneSM",
     viewModel: "SceneVM"
+  },
+  Scene_Classroom: {
+    size: [2400, 1500],
+    stateMachine: "SceneSM",
+    viewModel: "SceneVM"
+  },
+  Scene_Studio: {
+    size: [2400, 1500],
+    stateMachine: "SceneSM",
+    viewModel: "SceneVM"
   }
 } as const;
 
@@ -307,4 +317,4 @@ export const ANCHORS = {
   mouthCenter: [600, 690]
 } as const;
 
-export const CONTRACT_VERSION = "1.1.0" as const;
+export const CONTRACT_VERSION = "1.2.0" as const;

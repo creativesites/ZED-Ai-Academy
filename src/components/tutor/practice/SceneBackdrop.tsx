@@ -13,6 +13,9 @@ const GLYPHS: Record<SceneArtboard, readonly string[]> = {
   Scene_Cafe: ["¡Hola!", "café", "ñ", "¿", "gracias", "por favor", "té", "á", "é", "pan", "sí"],
   Scene_Rooftop: ["Bonjour", "merci", "ç", "é", "è", "à", "pain", "café", "oui", "ô", "s'il vous plaît"],
   Scene_Clinic: ["Hello", "pain", "how", "when", "where", "breathe", "ache", "fever", "rest", "?"],
+  // Subject-neutral scenes: the marks of any lesson, not one language.
+  Scene_Classroom: ["?", "✓", "+", "=", "÷", "%", "→", "1", "2", "3", "A", "B", "π", "Δ"],
+  Scene_Studio: ["idea", "why", "how", "→", "✓", "?", "!", "+", "=", "…"],
 };
 
 type Particle = { x: number; y: number; size: number; speed: number; alpha: number; glyph: string };

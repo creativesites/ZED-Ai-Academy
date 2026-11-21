@@ -43,6 +43,8 @@ const SCENE_LABELS: Record<SceneArtboard, string> = {
   Scene_Cafe: "Café",
   Scene_Rooftop: "Rooftop",
   Scene_Clinic: "Clinic",
+  Scene_Classroom: "Classroom",
+  Scene_Studio: "Studio",
 };
 
 type BeatRow = { id: string; goal: string; targetItems?: string[] };

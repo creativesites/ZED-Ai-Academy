@@ -358,7 +358,7 @@ const STARTER_PERSONA_META: Record<
     displayName: "Tinashe",
     languages: ["en"],
     voiceName: "Puck",
-    defaultScene: "Scene_Rooftop",
+    defaultScene: "Scene_Classroom",
     personalityPrompt:
       "You are Tinashe, an insightful study coach and tutor who helps learners explain concepts out loud, verify understanding, and apply lessons to real-world work.",
   },

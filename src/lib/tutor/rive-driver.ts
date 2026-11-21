@@ -240,7 +240,14 @@ export class TeacherVmController {
 
 // Scene controller ----------------------------------------------------------------------------
 
-export const SCENE_ARTBOARDS = ["Scene_TeaHouse", "Scene_Cafe", "Scene_Rooftop", "Scene_Clinic"] as const;
+export const SCENE_ARTBOARDS = [
+  "Scene_TeaHouse",
+  "Scene_Cafe",
+  "Scene_Rooftop",
+  "Scene_Clinic",
+  "Scene_Classroom",
+  "Scene_Studio",
+] as const;
 export type SceneArtboard = (typeof SCENE_ARTBOARDS)[number];
 
 /** Scene time for learner-facing pages: daylight, to match the light site (0 = midday, 70 = dusk). */

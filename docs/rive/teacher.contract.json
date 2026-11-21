@@ -1,6 +1,6 @@
 {
-  "$comment": "Single source of truth for the ZAI teacher Rive files and the app code that drives them. Rive artists/agents build to these exact names. App code (src/lib/avatar/contract.ts) is generated from or checked against this file. Bump `version` on any breaking rename. 1.1.0: added faceStyle (enum FaceStyle). tinashe was added as a fifth value for the male tutor.",
-  "version": "1.1.0",
+  "$comment": "Single source of truth for the ZAI teacher Rive files and the app code that drives them. Rive artists/agents build to these exact names. App code (src/lib/avatar/contract.ts) is generated from or checked against this file. Bump `version` on any breaking rename. 1.1.0: added faceStyle (enum FaceStyle). tinashe was added as a fifth value for the male tutor. 1.2.0: added Scene_Classroom and Scene_Studio, subject-neutral scenes for the site-wide teacher.",
+  "version": "1.2.0",
   "files": {
     "teacher": "zai_teacher.riv",
     "scenes": "zai_scenes.riv"
@@ -87,6 +87,24 @@
       "language": "fr"
     },
     "Scene_Clinic": {
+      "size": [
+        2400,
+        1500
+      ],
+      "stateMachine": "SceneSM",
+      "viewModel": "SceneVM",
+      "language": "any"
+    },
+    "Scene_Classroom": {
+      "size": [
+        2400,
+        1500
+      ],
+      "stateMachine": "SceneSM",
+      "viewModel": "SceneVM",
+      "language": "any"
+    },
+    "Scene_Studio": {
       "size": [
         2400,
         1500
