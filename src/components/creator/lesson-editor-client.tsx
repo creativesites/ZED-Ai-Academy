@@ -51,7 +51,12 @@ import { RiskAssessmentBlockEditor } from "@/components/creator/blocks/risk-asse
 import { TutorSessionBlockEditor } from "@/components/creator/blocks/tutor-session-block";
 import { QuizBuilder } from "@/components/creator/quiz-builder";
 import { AILessonGenerator } from "@/components/creator/ai-lesson-generator";
+import { LessonAITeacherPanel } from "@/components/creator/lesson-ai-teacher-panel";
 import { LessonPreviewPane } from "@/components/creator/lesson-preview-pane";
+import type { PersonaRecord, TeacherMomentRecord } from "@/actions/tutor-authoring";
+import type { TutorScenarioOption } from "@/actions/tutor-scenarios";
+import { ZEDAI_TENANT_ID } from "@/lib/tenants/constants";
+import type { TutorSessionBlock } from "@/lib/tutor/tutor-session-block";
 import {
   Dialog,
   DialogContent,
@@ -168,7 +173,7 @@ const BLOCK_META: Record<ContentBlockType, BlockMeta> = {
   discussion_prompt: { label: "Discussion",   description: "Question for the class to discuss", icon: MessagesSquare, color: "text-sky-700", bgColor: "bg-sky-50" },
   assignment:     { label: "Assignment",      description: "Deliverable with assessment notes", icon: ClipboardCheck, color: "text-emerald-700", bgColor: "bg-emerald-50" },
   risk_assessment:{ label: "Risk Assessment", description: "Hazards, risk level, controls", icon: ShieldAlert, color: "text-red-600", bgColor: "bg-red-50" },
-  tutor_session:  { label: "Speaking Practice", description: "AI teacher role-play scene", icon: Mic, color: "text-cyan-700", bgColor: "bg-cyan-50" },
+  tutor_session:  { label: "AI Teacher", description: "Your AI teacher teaches and checks this lesson", icon: Mic, color: "text-cyan-700", bgColor: "bg-cyan-50" },
 };
 
 const TOOLBAR_GROUPS: { heading: string; types: ContentBlockType[] }[] = [
@@ -679,6 +684,8 @@ export function LessonEditorClient({
   lesson,
   courseId,
   courseTitle,
+  courseStatus = "draft",
+  companyId = ZEDAI_TENANT_ID,
   moduleTitle,
   initialBlocks,
   quiz,
@@ -688,10 +695,17 @@ export function LessonEditorClient({
   position,
   prevLesson,
   nextLesson,
+  personas = [],
+  defaultPersonaId = null,
+  availableScenarios = [],
+  momentsAvailable = false,
+  initialMoments = [],
 }: {
   lesson: { id: string; title: string; is_preview: boolean };
   courseId: string;
   courseTitle: string;
+  courseStatus?: string;
+  companyId?: string;
   moduleTitle: string;
   initialBlocks: Block[];
   quiz?: Quiz | null;
@@ -701,14 +715,19 @@ export function LessonEditorClient({
   position: { index: number; total: number };
   prevLesson: NavLesson;
   nextLesson: NavLesson;
+  personas?: PersonaRecord[];
+  defaultPersonaId?: string | null;
+  availableScenarios?: TutorScenarioOption[];
+  momentsAvailable?: boolean;
+  initialMoments?: TeacherMomentRecord[];
 }) {
   const [blocks, setBlocks] = useState(initialBlocks);
   const [title, setTitle] = useState(lesson.title);
   const [isPreview, setIsPreview] = useState(lesson.is_preview);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [insertAt, setInsertAt] = useState<number | null>(null);
-  const [mobileView, setMobileView] = useState<"edit" | "preview" | "ai">("edit");
-  const [asideTab, setAsideTab] = useState<"preview" | "ai">("preview");
+  const [mobileView, setMobileView] = useState<"edit" | "preview" | "ai" | "teacher">("edit");
+  const [asideTab, setAsideTab] = useState<"preview" | "ai" | "teacher">("preview");
   const [statuses, setStatuses] = useState<Record<string, SaveState>>({});
   const flushers = useRef(new Map<string, () => Promise<void>>());
   const titleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -909,6 +928,7 @@ export function LessonEditorClient({
   }
 
   const hasQuiz = blocks.some((b) => b.type === "quiz");
+  const hasTutorSession = blocks.some((b) => b.type === "tutor_session");
   const lessonNumber = position.index >= 0 ? position.index + 1 : null;
 
   const previewPanel = (
@@ -925,6 +945,24 @@ export function LessonEditorClient({
         setMobileView("edit");
         setAsideTab("preview");
         toast.success(`${newBlocks.length} block${newBlocks.length === 1 ? "" : "s"} added`);
+      }}
+    />
+  );
+  const teacherPanel = (
+    <LessonAITeacherPanel
+      courseId={courseId}
+      courseStatus={courseStatus}
+      companyId={companyId}
+      lessonId={lesson.id}
+      lessonTitle={title}
+      blocks={blocks}
+      personas={personas}
+      defaultPersonaId={defaultPersonaId}
+      availableScenarios={availableScenarios}
+      momentsAvailable={momentsAvailable}
+      initialMoments={initialMoments}
+      onInsertTutorBlock={async (content: TutorSessionBlock) => {
+        await insertBlock("tutor_session", content as unknown as Json, null);
       }}
     />
   );
@@ -1031,6 +1069,17 @@ export function LessonEditorClient({
                   />
                 </span>
                 Free preview
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setAsideTab("teacher");
+                  setMobileView("teacher");
+                }}
+                className="inline-flex h-8 items-center gap-1.5 rounded-full border border-[#fd5523]/30 bg-[#fff6ee] px-3 text-xs font-semibold text-[#fd5523] transition-colors hover:bg-[#ffebdc]"
+              >
+                <Mic className="h-3.5 w-3.5" />
+                {hasTutorSession ? "AI Teacher" : "Add an AI teacher"}
               </button>
               <span className="text-xs text-slate-400">
                 {blocks.length} block{blocks.length === 1 ? "" : "s"}
@@ -1161,8 +1210,8 @@ export function LessonEditorClient({
 
         {/* ── Side panel (desktop) / full view (mobile) ─────────── */}
         <aside className={cn("min-w-0 space-y-3 lg:sticky lg:top-32", mobileView === "edit" && "hidden lg:block")}>
-          <div className="hidden grid-cols-2 gap-1 rounded-xl bg-slate-100 p-1 lg:grid">
-            {(["preview", "ai"] as const).map((tab) => (
+          <div className="hidden grid-cols-3 gap-1 rounded-xl bg-slate-100 p-1 lg:grid">
+            {(["preview", "ai", "teacher"] as const).map((tab) => (
               <button
                 key={tab}
                 type="button"
@@ -1172,25 +1221,40 @@ export function LessonEditorClient({
                   asideTab === tab ? "bg-white text-[#062e39] shadow-sm" : "text-slate-500 hover:text-[#062e39]"
                 )}
               >
-                {tab === "preview" ? <Eye className="h-3.5 w-3.5" /> : <Sparkles className="h-3.5 w-3.5 text-[#fd5523]" />}
-                {tab === "preview" ? "Live preview" : "AI co-author"}
+                {tab === "preview" ? (
+                  <Eye className="h-3.5 w-3.5" />
+                ) : tab === "ai" ? (
+                  <Sparkles className="h-3.5 w-3.5 text-[#fd5523]" />
+                ) : (
+                  <Mic className="h-3.5 w-3.5 text-[#fd5523]" />
+                )}
+                {tab === "preview" ? "Preview" : tab === "ai" ? "Co-author" : "AI Teacher"}
               </button>
             ))}
           </div>
           <div className="lg:hidden">
-            {mobileView === "preview" ? previewPanel : mobileView === "ai" ? aiPanel : null}
+            {mobileView === "preview"
+              ? previewPanel
+              : mobileView === "ai"
+                ? aiPanel
+                : mobileView === "teacher"
+                  ? teacherPanel
+                  : null}
           </div>
-          <div className="hidden lg:block">{asideTab === "preview" ? previewPanel : aiPanel}</div>
+          <div className="hidden lg:block">
+            {asideTab === "preview" ? previewPanel : asideTab === "ai" ? aiPanel : teacherPanel}
+          </div>
         </aside>
       </div>
 
       {/* ── Mobile action bar ─────────────────────────────────────── */}
       <nav className="pb-safe fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/95 px-3 pt-2 backdrop-blur lg:hidden">
-        <div className="mx-auto grid max-w-md grid-cols-4 gap-1">
+        <div className="mx-auto grid max-w-md grid-cols-5 gap-1">
           {[
             { id: "edit" as const, label: "Edit", icon: PencilLine },
             { id: "preview" as const, label: "Preview", icon: Eye },
             { id: "ai" as const, label: "AI", icon: Sparkles },
+            { id: "teacher" as const, label: "Teacher", icon: Mic },
           ].map((item) => (
             <button
               key={item.id}

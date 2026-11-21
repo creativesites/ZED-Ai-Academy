@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Plus, Sparkles } from "lucide-react";
 import { listTutorScenariosForCourse, type TutorScenarioOption } from "@/actions/tutor-scenarios";
 import {
@@ -16,7 +16,10 @@ import { Button } from "@/components/ui/button";
 import { Teacher } from "@/components/tutor/avatar/Teacher";
 import { DEFAULT_PERSONA_LOOK } from "@/components/tutor/avatar/types";
 import { TutorSession } from "@/components/tutor/practice/TutorSession";
+import { createTeacherPreviewClient } from "@/components/tutor/studio/previewClient";
 import { ScenarioEditorModal } from "@/components/tutor/studio/ScenarioEditorModal";
+import type { PreviewFlowPayload } from "@/lib/tutor/authoring/preview";
+import type { SkillPack } from "@/lib/tutor/scenario";
 import {
   TUTOR_SESSION_STYLES,
   TUTOR_STYLE_LABELS,
@@ -98,6 +101,38 @@ export function TutorSessionBlockEditor({
   }
 
   const selected = scenarios?.find((s) => s.id === scenarioId) ?? null;
+  const previewFlow = useMemo<PreviewFlowPayload | null>(
+    () =>
+      selected
+        ? {
+            scenarioId: selected.id,
+            courseId,
+            lessonId,
+            companyId,
+            personaId: selected.personaId,
+            title: title || selected.title,
+            goal: selected.goal,
+            style,
+            scene: selected.scene ?? null,
+            maxMinutes: selected.maxMinutes,
+            skillPack: (selected.skillPack as SkillPack) ?? "general-tutor",
+            steps: selected.beats.map((b, i) => ({
+              id: b.id || `step-${i + 1}`,
+              goal: b.goal,
+              boardContent: b.boardContent,
+              checkQuestion: b.checkQuestion,
+              targetItems: b.targetItems,
+            })),
+            targetItems: selected.targetItems,
+          }
+        : null,
+    [selected, courseId, lessonId, companyId, title, style],
+  );
+
+  const previewClient = useMemo(
+    () => (previewFlow ? createTeacherPreviewClient(() => previewFlow) : undefined),
+    [previewFlow],
+  );
 
   return (
     <div className="space-y-5">
@@ -155,7 +190,7 @@ export function TutorSessionBlockEditor({
                 <optgroup key={vis} label={VISIBILITY_LABEL[vis]}>
                   {group.map((s) => (
                     <option key={s.id} value={s.id}>
-                      {s.title}
+                      {s.title}{s.status === "draft" ? " (Draft)" : ""}
                     </option>
                   ))}
                 </optgroup>
@@ -261,34 +296,52 @@ export function TutorSessionBlockEditor({
           disabled={!selected}
           onClick={() => setPreviewOpen(true)}
         >
-          Preview with tutor
+          Test as student
         </Button>
+        {selected?.status === "draft" && (
+          <span className="rounded-full bg-amber-50 px-2.5 py-0.5 text-[11px] font-semibold text-amber-800">
+            Draft — publishes with course
+          </span>
+        )}
         {!selected && <span className="text-xs text-slate-500">Choose a scenario to preview it.</span>}
       </div>
 
       <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
-        <DialogContent className="h-[85vh] max-w-5xl overflow-hidden p-0">
-          <DialogTitle className="sr-only">Preview speaking practice</DialogTitle>
+        <DialogContent className="flex h-[88vh] max-w-5xl flex-col gap-0 overflow-hidden p-0">
+          <DialogTitle className="sr-only">Preview AI Teacher</DialogTitle>
           <DialogDescription className="sr-only">
-            Runs the tutor session as a learner would see it. Previews count as lesson sessions.
+            Runs the AI teacher session as a student preview without saving learner progress.
           </DialogDescription>
-          {previewOpen && selected && (
-            <TutorSession
-              origin="lesson"
-              lessonId={lessonId}
-              scenarioId={selected.id}
-              scene={selected.scene}
-              look={selected.persona?.look}
-              preview={{
-                teacherName: selected.persona?.displayName ?? selected.persona?.name,
-                title: title || selected.title,
-                goal: selected.goal,
-                maxMinutes: selected.maxMinutes,
-                modes: selected.modes,
-              }}
-              onExit={() => setPreviewOpen(false)}
-            />
-          )}
+          <div className="flex items-center justify-between border-b border-amber-200 bg-amber-50 px-4 py-2 text-xs font-semibold text-amber-950">
+            <span>Student preview — no learner progress or report is saved</span>
+            <button
+              type="button"
+              onClick={() => setPreviewOpen(false)}
+              className="rounded px-2 py-0.5 text-amber-800 hover:bg-amber-100"
+            >
+              Close preview
+            </button>
+          </div>
+          <div className="min-h-0 flex-1 overflow-hidden">
+            {previewOpen && selected && (
+              <TutorSession
+                origin="lesson"
+                lessonId={lessonId}
+                scenarioId={selected.id}
+                scene={selected.scene}
+                look={selected.persona?.look}
+                client={previewClient}
+                preview={{
+                  teacherName: selected.persona?.displayName ?? selected.persona?.name,
+                  title: title || selected.title,
+                  goal: selected.goal,
+                  maxMinutes: selected.maxMinutes,
+                  modes: selected.modes,
+                }}
+                onExit={() => setPreviewOpen(false)}
+              />
+            )}
+          </div>
         </DialogContent>
       </Dialog>
 
