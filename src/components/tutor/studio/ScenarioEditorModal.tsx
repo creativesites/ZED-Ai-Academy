@@ -1,10 +1,16 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
-import { Loader2, Plus, Sparkles, Trash2, Wand2 } from "lucide-react";
+import { Loader2, Play, Plus, Sparkles, Trash2, Wand2 } from "lucide-react";
 import { Teacher } from "@/components/tutor/avatar/Teacher";
 import { DEFAULT_PERSONA_LOOK } from "@/components/tutor/avatar/types";
+import { TutorSession } from "@/components/tutor/practice/TutorSession";
+import { FlowStoryboard } from "@/components/tutor/studio/FlowStoryboard";
+import { createTeacherPreviewClient } from "@/components/tutor/studio/previewClient";
+import type { DraftedFlow, FlowDiffEntry, FlowStep } from "@/lib/tutor/authoring/flow";
+import type { PreviewFlowPayload } from "@/lib/tutor/authoring/preview";
+import { AUTHORING_TEMPLATES, type AuthoringTemplateId } from "@/lib/tutor/authoring/templates";
 import { SCENE_ARTBOARDS, type SceneArtboard } from "@/lib/tutor/rive-driver";
 import {
   SCENARIO_STYLES,
@@ -47,7 +53,6 @@ const SCENE_LABELS: Record<SceneArtboard, string> = {
   Scene_Studio: "Studio",
 };
 
-type BeatRow = { id: string; goal: string; targetItems?: string[] };
 type TargetItemRow = { text: string; pron?: string; meaning?: string };
 
 export function ScenarioEditorModal({
@@ -72,15 +77,15 @@ export function ScenarioEditorModal({
   const [title, setTitle] = useState(initialScenario?.title ?? "");
   const [goal, setGoal] = useState(initialScenario?.goal ?? "");
   const [skillPack, setSkillPack] = useState<SkillPack>(
-    (initialScenario?.skill_pack as SkillPack) ?? "language-zh"
+    (initialScenario?.skill_pack as SkillPack) ?? "general-tutor"
   );
   const [personaId, setPersonaId] = useState<string>(
     initialScenario?.persona_id ?? personas[0]?.id ?? ""
   );
-  const [style, setStyle] = useState<ScenarioStyle>(initialScenario?.style ?? "scene");
-  const [scene, setScene] = useState<SceneArtboard>(initialScenario?.scene ?? "Scene_TeaHouse");
-  const [level, setLevel] = useState(initialScenario?.level ?? "A1");
-  const [maxMinutes, setMaxMinutes] = useState(initialScenario?.max_minutes ?? 6);
+  const [style, setStyle] = useState<ScenarioStyle>(initialScenario?.style ?? "guided_lesson");
+  const [scene, setScene] = useState<SceneArtboard>(initialScenario?.scene ?? "Scene_Classroom");
+  const [level, setLevel] = useState(initialScenario?.level ?? "");
+  const [maxMinutes, setMaxMinutes] = useState(initialScenario?.max_minutes ?? 7);
   const [visibility, setVisibility] = useState<"course" | "tenant_library" | "platform">(
     initialScenario?.visibility ?? (courseId ? "course" : "tenant_library")
   );
@@ -93,23 +98,158 @@ export function ScenarioEditorModal({
   const [textAllowed, setTextAllowed] = useState(
     initialScenario ? initialScenario.allowed_modes.includes("text") : true
   );
-  const [beats, setBeats] = useState<BeatRow[]>(
+  const [beats, setBeats] = useState<FlowStep[]>(
     initialScenario?.beats.length
-      ? initialScenario.beats
+      ? initialScenario.beats.map((b) => ({
+          id: b.id,
+          goal: b.goal,
+          boardContent: b.boardContent ?? "",
+          checkQuestion: b.checkQuestion ?? "",
+          ...(b.targetItems?.length ? { targetItems: b.targetItems } : {}),
+        }))
       : [
-          { id: "beat-1", goal: "Greet the learner and introduce the situation" },
-          { id: "beat-2", goal: "Practise the key phrases in a short back-and-forth" },
-          { id: "beat-3", goal: "Wrap up and praise what went well" },
+          {
+            id: "step-1",
+            goal: "Introduce the idea and connect it to everyday life",
+            boardContent: "",
+            checkQuestion: "",
+          },
+          {
+            id: "step-2",
+            goal: "Practise the key concepts with a worked example",
+            boardContent: "",
+            checkQuestion: "",
+          },
+          {
+            id: "step-3",
+            goal: "Check understanding and wrap up",
+            boardContent: "",
+            checkQuestion: "",
+          },
         ]
   );
   const [targetItems, setTargetItems] = useState<TargetItemRow[]>(
     initialScenario?.target_items ?? []
   );
+  const [templateId, setTemplateId] = useState<AuthoringTemplateId>("explain_check");
   const [aiNotes, setAiNotes] = useState("");
   const [isDrafting, setIsDrafting] = useState(false);
+  const [isRevising, setIsRevising] = useState(false);
+  const [undoSnapshot, setUndoSnapshot] = useState<DraftedFlow | null>(null);
+  const [diff, setDiff] = useState<FlowDiffEntry[] | null>(null);
+  const [previewOpen, setPreviewOpen] = useState(false);
   const [isSaving, startSaving] = useTransition();
 
   const selectedPersona = personas.find((p) => p.id === personaId) ?? null;
+
+  const previewFlow = useMemo<PreviewFlowPayload>(
+    () => ({
+      scenarioId: initialScenario?.id ?? null,
+      courseId: courseId ?? initialScenario?.course_id ?? null,
+      lessonId: lessonId ?? initialScenario?.lesson_id ?? null,
+      companyId,
+      personaId: personaId || null,
+      title: title.trim() || "Draft AI Teacher flow",
+      goal: goal.trim() || "Practise this lesson interactively.",
+      style,
+      scene,
+      maxMinutes,
+      skillPack,
+      level: level.trim() || null,
+      steps: beats,
+      targetItems,
+    }),
+    [
+      initialScenario?.id,
+      initialScenario?.course_id,
+      initialScenario?.lesson_id,
+      courseId,
+      lessonId,
+      companyId,
+      personaId,
+      title,
+      goal,
+      style,
+      scene,
+      maxMinutes,
+      skillPack,
+      level,
+      beats,
+      targetItems,
+    ],
+  );
+
+  const previewClient = useMemo(
+    () => createTeacherPreviewClient(() => previewFlow),
+    [previewFlow],
+  );
+
+  function currentAsDraftedFlow(): DraftedFlow {
+    return {
+      title: title.trim() || "Untitled flow",
+      goal: goal.trim() || "Guide the learner through the key concepts.",
+      style,
+      scene,
+      maxMinutes,
+      skillPack,
+      steps: beats.length
+        ? beats
+        : [
+            { id: "step-1", goal: "Intro", boardContent: "", checkQuestion: "" },
+            { id: "step-2", goal: "Practice", boardContent: "", checkQuestion: "" },
+            { id: "step-3", goal: "Check", boardContent: "", checkQuestion: "" },
+          ],
+      targetItems,
+    };
+  }
+
+  function applyDraftedFlow(next: DraftedFlow) {
+    setTitle(next.title);
+    setGoal(next.goal);
+    setStyle(next.style);
+    setScene(next.scene);
+    setMaxMinutes(next.maxMinutes);
+    setSkillPack(next.skillPack);
+    setBeats(next.steps);
+    setTargetItems(next.targetItems);
+  }
+
+  async function handleAiRevise(instruction: string) {
+    if (!courseId) {
+      toast.error("AI revision requires a course context.");
+      return;
+    }
+    const before = currentAsDraftedFlow();
+    setIsRevising(true);
+    try {
+      const res = await fetch("/api/ai/teacher/revise", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          courseId,
+          lessonId: lessonId ?? undefined,
+          flow: before,
+          instruction,
+        }),
+      });
+      const data = (await res.json()) as {
+        error?: string;
+        flow?: DraftedFlow;
+        diff?: FlowDiffEntry[];
+      };
+      if (!res.ok || !data.flow) {
+        throw new Error(data.error || "Could not revise flow");
+      }
+      setUndoSnapshot(before);
+      setDiff(data.diff ?? []);
+      applyDraftedFlow(data.flow);
+      toast.success("Flow updated");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "AI edit failed");
+    } finally {
+      setIsRevising(false);
+    }
+  }
 
   async function handleAiDraft() {
     if (!courseId) {
@@ -127,6 +267,7 @@ export function ScenarioEditorModal({
           skillPack,
           style,
           level,
+          templateId,
           instructions: aiNotes.trim() || undefined,
         }),
       });
@@ -138,7 +279,7 @@ export function ScenarioEditorModal({
           level?: string;
           max_minutes?: number;
           scene?: SceneArtboard;
-          beats?: BeatRow[];
+          beats?: { id: string; goal: string; boardContent?: string; checkQuestion?: string; targetItems?: string[] }[];
           target_items?: TargetItemRow[];
         };
       };
@@ -150,7 +291,17 @@ export function ScenarioEditorModal({
       if (data.scenario.level) setLevel(data.scenario.level);
       if (data.scenario.max_minutes) setMaxMinutes(data.scenario.max_minutes);
       if (data.scenario.scene) setScene(data.scenario.scene);
-      if (data.scenario.beats?.length) setBeats(data.scenario.beats);
+      if (data.scenario.beats?.length) {
+        setBeats(
+          data.scenario.beats.map((b, idx) => ({
+            id: b.id || `step-${idx + 1}`,
+            goal: b.goal,
+            boardContent: b.boardContent ?? "",
+            checkQuestion: b.checkQuestion ?? "",
+            ...(b.targetItems?.length ? { targetItems: b.targetItems } : {}),
+          }))
+        );
+      }
       if (data.scenario.target_items?.length) setTargetItems(data.scenario.target_items);
       toast.success("AI drafted your flow!");
     } catch (err) {
@@ -172,8 +323,10 @@ export function ScenarioEditorModal({
 
     const cleanBeats = beats
       .map((b, i) => ({
-        id: b.id.trim() || `beat-${i + 1}`,
+        id: b.id.trim() || `step-${i + 1}`,
         goal: b.goal.trim(),
+        ...(b.boardContent.trim() ? { boardContent: b.boardContent.trim() } : {}),
+        ...(b.checkQuestion.trim() ? { checkQuestion: b.checkQuestion.trim() } : {}),
         ...(b.targetItems?.length ? { targetItems: b.targetItems } : {}),
       }))
       .filter((b) => b.goal.length > 0);
@@ -232,12 +385,34 @@ export function ScenarioEditorModal({
         <div className="space-y-5 pt-2">
           {/* AI Quick Draft Bar (when inside a course/lesson) */}
           {courseId && (
-            <div className="rounded-2xl border border-[#fd5523]/25 bg-[#fff6ee] p-3.5">
+            <div className="space-y-2 rounded-2xl border border-[#fd5523]/25 bg-[#fff6ee] p-3.5">
+              <div className="flex flex-wrap items-center gap-1.5">
+                {AUTHORING_TEMPLATES.map((tpl) => (
+                  <button
+                    key={tpl.id}
+                    type="button"
+                    aria-pressed={templateId === tpl.id}
+                    onClick={() => {
+                      setTemplateId(tpl.id);
+                      setStyle(tpl.style);
+                      setScene(tpl.defaultScene);
+                      setMaxMinutes(tpl.maxMinutes);
+                    }}
+                    className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold transition-colors ${
+                      templateId === tpl.id
+                        ? "bg-[#fd5523] text-white"
+                        : "border border-slate-200 bg-white text-slate-600 hover:border-[#fd5523]/40"
+                    }`}
+                  >
+                    {tpl.label}
+                  </button>
+                ))}
+              </div>
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                 <Input
                   value={aiNotes}
                   onChange={(e) => setAiNotes(e.target.value)}
-                  placeholder="Optional AI focus (e.g. 'Ordering tea using polite HSK1 greetings')"
+                  placeholder="Optional AI focus (e.g. 'Worked example on kwacha discounts')"
                   className="bg-white text-xs"
                 />
                 <Button
@@ -431,51 +606,27 @@ export function ScenarioEditorModal({
             </label>
           </div>
 
-          {/* Conversation Beats */}
-          <div className="space-y-2 rounded-2xl border border-slate-200 bg-slate-50/60 p-4">
-            <div className="flex items-center justify-between">
-              <Label className="text-xs font-bold uppercase tracking-wider text-slate-600">
-                Conversation Beats ({beats.length})
-              </Label>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() =>
-                  setBeats((prev) => [...prev, { id: `beat-${prev.length + 1}`, goal: "" }])
-                }
-                className="h-7 rounded-lg text-xs"
-              >
-                <Plus className="mr-1 h-3 w-3" /> Add Beat
-              </Button>
-            </div>
-            <div className="space-y-2">
-              {beats.map((b, idx) => (
-                <div key={idx} className="flex items-center gap-2">
-                  <span className="w-6 shrink-0 text-center text-xs font-bold text-slate-400">
-                    {idx + 1}.
-                  </span>
-                  <Input
-                    value={b.goal}
-                    onChange={(e) =>
-                      setBeats((prev) =>
-                        prev.map((row, i) => (i === idx ? { ...row, goal: e.target.value } : row))
-                      )
-                    }
-                    placeholder="Step goal for the AI teacher..."
-                    className="bg-white text-xs"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setBeats((prev) => prev.filter((_, i) => i !== idx))}
-                    className="rounded-lg p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-500"
-                    aria-label="Remove beat"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
-                </div>
-              ))}
-            </div>
+          {/* Storyboard Steps + AI Edit Bar */}
+          <div className="rounded-2xl border border-slate-200 bg-slate-50/60 p-4">
+            <FlowStoryboard
+              steps={beats}
+              onStepsChange={setBeats}
+              onAiRevise={courseId ? handleAiRevise : undefined}
+              isRevising={isRevising}
+              diff={diff}
+              canUndo={Boolean(undoSnapshot)}
+              onUndo={() => {
+                if (!undoSnapshot) return;
+                applyDraftedFlow(undoSnapshot);
+                setUndoSnapshot(null);
+                setDiff(null);
+                toast.success("Reverted to previous version");
+              }}
+              onDismissDiff={() => {
+                setDiff(null);
+                setUndoSnapshot(null);
+              }}
+            />
           </div>
 
           {/* Target Vocabulary / Phrases */}
@@ -549,22 +700,72 @@ export function ScenarioEditorModal({
           </div>
 
           {/* Footer actions */}
-          <div className="flex items-center justify-end gap-2 border-t border-slate-100 pt-4">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              Cancel
-            </Button>
+          <div className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-4">
             <Button
               type="button"
-              disabled={isSaving}
-              onClick={handleSave}
-              className="rounded-xl bg-[#062e39] px-6 font-bold text-white hover:bg-[#0a4352]"
+              variant="outline"
+              onClick={() => setPreviewOpen(true)}
+              className="rounded-xl text-xs font-bold text-[#062e39]"
             >
-              {isSaving && <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />}
-              {initialScenario ? "Save Changes" : "Create Scenario"}
+              <Play className="mr-1.5 h-3.5 w-3.5 text-[#fd5523]" />
+              Test as student
             </Button>
+            <div className="flex items-center gap-2">
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                disabled={isSaving}
+                onClick={handleSave}
+                className="rounded-xl bg-[#062e39] px-6 font-bold text-white hover:bg-[#0a4352]"
+              >
+                {isSaving && <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />}
+                {initialScenario ? "Save Changes" : "Create Scenario"}
+              </Button>
+            </div>
           </div>
         </div>
       </DialogContent>
+
+      <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+        <DialogContent className="flex h-[88vh] max-w-5xl flex-col gap-0 overflow-hidden p-0">
+          <DialogTitle className="sr-only">Test AI Teacher as student</DialogTitle>
+          <DialogDescription className="sr-only">
+            Preview session. No learner progress or report is saved.
+          </DialogDescription>
+          <div className="flex items-center justify-between border-b border-amber-200 bg-amber-50 px-4 py-2 text-xs font-semibold text-amber-950">
+            <span>Student preview — no learner progress or report is saved</span>
+            <button
+              type="button"
+              onClick={() => setPreviewOpen(false)}
+              className="rounded px-2 py-0.5 text-amber-800 hover:bg-amber-100"
+            >
+              Close preview
+            </button>
+          </div>
+          <div className="min-h-0 flex-1 overflow-hidden">
+            {previewOpen && (
+              <TutorSession
+                origin={courseId && lessonId ? "lesson" : "practice"}
+                lessonId={lessonId ?? undefined}
+                scenarioId={initialScenario?.id}
+                scene={scene}
+                look={selectedPersona?.rive_variant}
+                client={previewClient}
+                preview={{
+                  teacherName: selectedPersona?.display_name ?? selectedPersona?.name ?? "AI Teacher",
+                  title: title.trim() || "Draft AI Teacher flow",
+                  goal: goal.trim() || "Practise this flow interactively.",
+                  maxMinutes,
+                  modes: ["voice", "text"],
+                }}
+                onExit={() => setPreviewOpen(false)}
+              />
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </Dialog>
   );
 }

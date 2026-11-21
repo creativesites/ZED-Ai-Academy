@@ -4,7 +4,7 @@ import { auth } from "@clerk/nextjs/server";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
-import { assertCanManageCourse } from "@/lib/courses/course-auth-server";
+import { assertCanManageCourse, assertCanManageLesson } from "@/lib/courses/course-auth-server";
 import { ZEDAI_TENANT_ID } from "@/lib/tenants/constants";
 import {
   FACE_STYLES,
@@ -139,7 +139,13 @@ export type ScenarioRecord = {
   persona_id: string | null;
   title: string;
   goal: string;
-  beats: Array<{ id: string; goal: string; targetItems?: string[] }>;
+  beats: Array<{
+    id: string;
+    goal: string;
+    targetItems?: string[];
+    boardContent?: string;
+    checkQuestion?: string;
+  }>;
   target_items: Array<{ text: string; pron?: string; meaning?: string }>;
   level: string | null;
   exam_task: string | null;
@@ -213,6 +219,11 @@ const personaInputSchema = z.object({
 
 export type UpsertPersonaInput = z.infer<typeof personaInputSchema>;
 
+const authoringBeatSchema = scenarioBeatSchema.extend({
+  boardContent: z.string().trim().max(500).optional(),
+  checkQuestion: z.string().trim().max(300).optional(),
+});
+
 const scenarioInputSchema = z.object({
   id: z.string().uuid().optional(),
   companyId: z.string().min(1),
@@ -222,7 +233,7 @@ const scenarioInputSchema = z.object({
   personaId: z.string().uuid().optional().nullable(),
   title: z.string().trim().min(2, "Title is required").max(140),
   goal: z.string().trim().min(5, "Goal is required").max(600),
-  beats: z.array(scenarioBeatSchema).default([]),
+  beats: z.array(authoringBeatSchema).default([]),
   targetItems: z.array(scenarioTargetItemSchema).default([]),
   level: z.string().trim().max(40).optional().nullable(),
   examTask: z.string().trim().max(80).optional().nullable(),
@@ -807,3 +818,198 @@ export async function listStaffVisibleTutorSessions(
     };
   });
 }
+
+// ─── Course Publish Sync & Teacher Moments ────────────────────────────────────
+
+/**
+ * Publishes any draft course-scoped flows (and teacher moments, if migrated) when a course is published.
+ */
+export async function publishCourseDraftFlows(courseId: string): Promise<void> {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
+  const supabase = createClient();
+  await assertCanManageCourse(supabase, courseId, userId);
+
+  const db = createServiceClient();
+  await db
+    .from("practice_scenarios")
+    .update({ status: "published" })
+    .eq("course_id", courseId)
+    .eq("visibility", "course")
+    .eq("status", "draft");
+
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (db as any)
+      .from("teacher_moments")
+      .update({ status: "published" })
+      .eq("course_id", courseId)
+      .eq("status", "draft");
+  } catch {
+    // teacher_moments migration may not be applied yet; ignore safely.
+  }
+
+  revalidatePath(`/creator/courses/${courseId}`);
+}
+
+export type TeacherMomentRecord = {
+  id: string;
+  company_id: string;
+  course_id: string;
+  lesson_id: string;
+  scenario_id: string;
+  after_block_id: string | null;
+  position: number;
+  title: string | null;
+  prompt: string | null;
+  required: boolean;
+  status: "draft" | "published" | "archived";
+  scenario_title: string | null;
+  scenario_style: string | null;
+  persona_name: string | null;
+};
+
+const teacherMomentInputSchema = z.object({
+  id: z.string().uuid().optional(),
+  courseId: z.string().uuid(),
+  lessonId: z.string().uuid(),
+  scenarioId: z.string().uuid(),
+  afterBlockId: z.string().uuid().nullable().optional(),
+  position: z.number().int().min(0).default(1),
+  title: z.string().trim().max(120).optional().nullable(),
+  prompt: z.string().trim().max(400).optional().nullable(),
+  required: z.boolean().default(false),
+  status: z.enum(["draft", "published", "archived"]).default("published"),
+});
+
+export type UpsertTeacherMomentInput = z.infer<typeof teacherMomentInputSchema>;
+
+function isMissingRelationError(err: { code?: string; message?: string } | null | undefined): boolean {
+  if (!err) return false;
+  return err.code === "42P01" || Boolean(err.message?.includes("teacher_moments"));
+}
+
+function mapMomentRow(row: Record<string, unknown>): TeacherMomentRecord {
+  const scen = (Array.isArray(row.practice_scenarios) ? row.practice_scenarios[0] : row.practice_scenarios) as
+    | { title?: string | null; style?: string | null; ai_personas?: { display_name?: string | null; name?: string | null } | null }
+    | null
+    | undefined;
+  return {
+    id: String(row.id),
+    company_id: String(row.company_id),
+    course_id: String(row.course_id),
+    lesson_id: String(row.lesson_id),
+    scenario_id: String(row.scenario_id),
+    after_block_id: (row.after_block_id as string | null) ?? null,
+    position: Number(row.position ?? 1),
+    title: (row.title as string | null) ?? null,
+    prompt: (row.prompt as string | null) ?? null,
+    required: Boolean(row.required),
+    status: (row.status as TeacherMomentRecord["status"]) ?? "published",
+    scenario_title: scen?.title ?? null,
+    scenario_style: scen?.style ?? null,
+    persona_name: scen?.ai_personas?.display_name ?? scen?.ai_personas?.name ?? null,
+  };
+}
+
+export async function listTeacherMomentsForLesson(
+  lessonId: string,
+  courseId: string,
+): Promise<{ available: boolean; moments: TeacherMomentRecord[] }> {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
+  const supabase = createClient();
+  await assertCanManageLesson(supabase, lessonId, userId, courseId);
+
+  const db = createServiceClient();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (db as any)
+    .from("teacher_moments")
+    .select("id, company_id, course_id, lesson_id, scenario_id, after_block_id, position, title, prompt, required, status, practice_scenarios(title, style, ai_personas(name, display_name))")
+    .eq("lesson_id", lessonId)
+    .eq("course_id", courseId)
+    .order("position", { ascending: true });
+
+  if (error) {
+    if (isMissingRelationError(error)) return { available: false, moments: [] };
+    throw new Error(error.message);
+  }
+
+  return {
+    available: true,
+    moments: ((data ?? []) as Record<string, unknown>[]).map(mapMomentRow),
+  };
+}
+
+export async function upsertTeacherMoment(input: UpsertTeacherMomentInput): Promise<TeacherMomentRecord> {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
+  const parsed = teacherMomentInputSchema.parse(input);
+  const supabase = createClient();
+  await assertCanManageLesson(supabase, parsed.lessonId, userId, parsed.courseId);
+
+  const db = createServiceClient();
+  const { data: course } = await db
+    .from("courses")
+    .select("company_id")
+    .eq("id", parsed.courseId)
+    .single();
+  const companyId = course?.company_id ?? ZEDAI_TENANT_ID;
+
+  const payload = {
+    company_id: companyId,
+    course_id: parsed.courseId,
+    lesson_id: parsed.lessonId,
+    scenario_id: parsed.scenarioId,
+    after_block_id: parsed.afterBlockId ?? null,
+    position: parsed.position,
+    title: parsed.title?.trim() || null,
+    prompt: parsed.prompt?.trim() || null,
+    required: parsed.required,
+    status: parsed.status,
+  };
+
+  const selectCols =
+    "id, company_id, course_id, lesson_id, scenario_id, after_block_id, position, title, prompt, required, status, practice_scenarios(title, style, ai_personas(name, display_name))";
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const table = (db as any).from("teacher_moments");
+  const res = parsed.id
+    ? await table.update(payload).eq("id", parsed.id).eq("lesson_id", parsed.lessonId).select(selectCols).single()
+    : await table.insert({ ...payload, created_by: userId }).select(selectCols).single();
+
+  if (res.error || !res.data) {
+    if (isMissingRelationError(res.error)) {
+      throw new Error("Teacher moments require applying migration 20261122000000_teacher_moments.sql first.");
+    }
+    throw new Error(res.error?.message ?? "Failed to save teacher moment");
+  }
+
+  revalidatePath(`/creator/courses/${parsed.courseId}/lessons/${parsed.lessonId}`);
+  return mapMomentRow(res.data as Record<string, unknown>);
+}
+
+export async function deleteTeacherMoment(momentId: string, lessonId: string, courseId: string): Promise<void> {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
+  const supabase = createClient();
+  await assertCanManageLesson(supabase, lessonId, userId, courseId);
+
+  const db = createServiceClient();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (db as any)
+    .from("teacher_moments")
+    .delete()
+    .eq("id", momentId)
+    .eq("lesson_id", lessonId);
+
+  if (error && !isMissingRelationError(error)) {
+    throw new Error(error.message);
+  }
+  revalidatePath(`/creator/courses/${courseId}/lessons/${lessonId}`);
+}
+

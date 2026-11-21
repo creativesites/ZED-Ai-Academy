@@ -3,6 +3,7 @@
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { publishCourse } from "@/actions/courses";
+import { publishCourseDraftFlows } from "@/actions/tutor-authoring";
 import { EyeOff, Loader2, Rocket } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -28,6 +29,9 @@ export function PublishButton({ courseId, status, tenantSlug, ready = true, vari
     startTransition(async () => {
       try {
         await publishCourse(courseId, !isPublished, tenantSlug);
+        if (!isPublished) {
+          await publishCourseDraftFlows(courseId).catch(() => undefined);
+        }
         toast.success(isPublished ? "Course moved back to draft." : "Your course is live! 🎉");
         router.refresh();
       } catch (err) {
