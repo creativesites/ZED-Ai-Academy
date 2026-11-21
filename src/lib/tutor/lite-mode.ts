@@ -1,6 +1,6 @@
 // Data-saver ("Lite") mode for the AI Teacher. Lite draws the light SVG teacher instead of the Rive
-// files, skips the scene and the animated backdrop, and keeps teacher audio off until the learner
-// turns it on, so a session costs text, not megabytes. Pure helpers here; the hook is in the UI layer.
+// files and skips the scene and the animated backdrop. The teacher still speaks: voice is the lesson,
+// and the learner has a separate mute. Pure helpers here; the hook is in the UI layer.
 
 export const LITE_STORAGE_KEY = "zai.teacher.lite";
 

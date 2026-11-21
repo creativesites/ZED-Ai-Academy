@@ -427,9 +427,10 @@ export function TutorSession({
 
     sessionIdRef.current = data.sessionId;
     audioRef.current?.setLanguage(data.persona.languages?.[0]);
-    // Lite keeps teacher audio off (no downloads) until the learner turns sound on.
-    audioRef.current?.setMuted(lite);
-    setMuted(lite);
+    // Sound starts on, in Lite too: the teacher's voice is the lesson. Lite saves data on the visuals,
+    // and the learner can still mute. (Lite used to start muted, which read as "sound is broken".)
+    audioRef.current?.setMuted(false);
+    setMuted(false);
     modeRef.current = data.mode === "text" ? "text" : "voice";
     setMode(modeRef.current);
     setTeacherName(data.persona.displayName ?? data.persona.name);
@@ -462,7 +463,7 @@ export function TutorSession({
     setPhaseBoth("live");
     await speakEvents(data.openingEvents ?? []);
     if (pendingEndRef.current) void finalize("completed");
-  }, [api, client, origin, scenarioId, lessonId, assignmentId, lite, setPhaseBoth, speakEvents, finalize]);
+  }, [api, client, origin, scenarioId, lessonId, assignmentId, setPhaseBoth, speakEvents, finalize]);
 
   const changeMode = (next: InputMode) => {
     if (next === modeRef.current) return;
@@ -491,14 +492,7 @@ export function TutorSession({
     handleSendText(level);
   };
 
-  const toggleLite = () => {
-    const next = !lite;
-    setLite(next);
-    if (next) {
-      audioRef.current?.setMuted(true);
-      setMuted(true);
-    }
-  };
+  const toggleLite = () => setLite(!lite);
 
   const practiseAgain = () => {
     sessionIdRef.current = null;
