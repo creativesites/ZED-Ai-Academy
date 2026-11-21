@@ -4,64 +4,15 @@ import { revalidatePath } from "next/cache";
 import { auth } from "@clerk/nextjs/server";
 import { createClient } from "@/lib/supabase/server";
 import type { ContentBlockType, Json } from "@/types/database";
+import { assertCanManageLesson } from "@/lib/courses/course-auth-server";
 
 async function verifyBlockOwner(
-  supabase: Awaited<ReturnType<typeof createClient>>,
+  supabase: ReturnType<typeof createClient>,
   lessonId: string,
   userId: string
 ) {
-  const { data: lesson } = await supabase
-    .from("lessons")
-    .select("module_id")
-    .eq("id", lessonId)
-    .single();
-  if (!lesson) throw new Error("Lesson not found");
-
-  const { data: mod } = await supabase
-    .from("modules")
-    .select("course_id")
-    .eq("id", lesson.module_id)
-    .single() as { data: { course_id: string } | null; error: unknown };
-  if (!mod) throw new Error("Module not found");
-
-  const { data: course } = await supabase
-    .from("courses")
-    .select("instructor_id, company_id")
-    .eq("id", mod.course_id)
-    .single() as { data: { instructor_id: string | null; company_id?: string | null } | null; error: unknown };
-  if (!course) throw new Error("Course not found");
-
-  // 1. Super Admin access
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", userId)
-    .maybeSingle();
-  if (profile?.role === "super_admin") {
-    return { courseId: mod.course_id };
-  }
-
-  // 2. Direct Instructor access
-  if (course.instructor_id === userId) {
-    return { courseId: mod.course_id };
-  }
-
-  // 3. Multi-tenant academy staff access (company_admin, teacher, instructor)
-  if (course.company_id) {
-    const { data: member } = await supabase
-      .from("company_members")
-      .select("role")
-      .eq("company_id", course.company_id)
-      .eq("profile_id", userId)
-      .eq("status", "active")
-      .maybeSingle();
-
-    if (member && ["company_admin", "teacher", "instructor"].includes(member.role)) {
-      return { courseId: mod.course_id };
-    }
-  }
-
-  throw new Error("Unauthorized");
+  const { courseId } = await assertCanManageLesson(supabase, lessonId, userId);
+  return { courseId };
 }
 
 export async function createContentBlock(
@@ -152,7 +103,8 @@ export async function updateContentBlock(
   const { error } = await supabase
     .from("content_blocks")
     .update({ content })
-    .eq("id", blockId);
+    .eq("id", blockId)
+    .eq("lesson_id", lessonId);
 
   if (error) throw new Error(error.message);
   revalidatePath(`/creator/courses/${courseId}/lessons/${lessonId}`);
@@ -165,8 +117,26 @@ export async function deleteContentBlock(blockId: string, lessonId: string, cour
   const supabase = createClient();
   await verifyBlockOwner(supabase, lessonId, userId);
 
-  const { error } = await supabase.from("content_blocks").delete().eq("id", blockId);
+  const { data: block } = await supabase
+    .from("content_blocks")
+    .select("type")
+    .eq("id", blockId)
+    .eq("lesson_id", lessonId)
+    .maybeSingle();
+
+  const { error } = await supabase.from("content_blocks").delete().eq("id", blockId).eq("lesson_id", lessonId);
   if (error) throw new Error(error.message);
+
+  // A lesson's quiz lives in its own table; removing the quiz block must remove the quiz too,
+  // otherwise learners still see (and are graded on) a quiz the author deleted.
+  if (block?.type === "quiz") {
+    const { count } = await supabase
+      .from("content_blocks")
+      .select("id", { count: "exact", head: true })
+      .eq("lesson_id", lessonId)
+      .eq("type", "quiz");
+    if (!count) await supabase.from("quizzes").delete().eq("lesson_id", lessonId);
+  }
   revalidatePath(`/creator/courses/${courseId}/lessons/${lessonId}`);
 }
 
@@ -183,7 +153,7 @@ export async function reorderContentBlocks(
 
   await Promise.all(
     orderedIds.map((id, index) =>
-      supabase.from("content_blocks").update({ position: index + 1 }).eq("id", id)
+      supabase.from("content_blocks").update({ position: index + 1 }).eq("id", id).eq("lesson_id", lessonId)
     )
   );
   revalidatePath(`/creator/courses/${courseId}/lessons/${lessonId}`);

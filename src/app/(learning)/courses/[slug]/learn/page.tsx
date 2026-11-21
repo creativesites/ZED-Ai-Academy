@@ -2,6 +2,7 @@ import { currentUser } from "@clerk/nextjs/server";
 import { createClient } from "@/lib/supabase/server";
 import { notFound, redirect } from "next/navigation";
 import { LessonPlayerClient } from "@/components/learner/lesson-player-client";
+import { canManageCourse } from "@/lib/courses/course-auth-server";
 import type { Metadata } from "next";
 import type { Discussion } from "@/types/database";
 import {
@@ -59,9 +60,14 @@ export default async function LearnPage({ params, searchParams }: PageProps) {
   ]);
 
   let enrollment = enrollmentInitial;
+  const { allowed: isManager } = await canManageCourse(supabase, course.id, userId);
 
-  // Auto-enroll if free
-  if (!enrollment && course.price_type === "free") {
+  // Draft/archived courses are only visible to their authors and to learners who already enrolled.
+  if (course.status !== "published" && !isManager && !enrollment) notFound();
+  if (enrollment?.status === "revoked" && !isManager) redirect(`/courses/${slug}`);
+
+  // Auto-enroll if free (published courses only)
+  if (!enrollment && course.price_type === "free" && course.status === "published" && !isManager) {
     const email = clerkUser.emailAddresses.find((e) => e.id === clerkUser.primaryEmailAddressId)?.emailAddress;
     await supabase.from("profiles").upsert({
       id: userId,
@@ -96,16 +102,37 @@ export default async function LearnPage({ params, searchParams }: PageProps) {
   const allLessons = modules.flatMap((m) => m.lessons);
   const allLessonIds = allLessons.map((l) => l.id);
 
-  // Determine active lesson
-  const activeLessonId = lessonIdParam ?? allLessons[0]?.id;
-  if (!activeLessonId) notFound();
+  if (allLessons.length === 0) notFound();
+
+  // Unknown or foreign lesson ids never load content from another course.
+  if (lessonIdParam && !allLessons.some((l) => l.id === lessonIdParam)) {
+    redirect(`/courses/${slug}/learn`);
+  }
+
+  // Resume where the learner left off: first incomplete lesson when no lesson is requested.
+  let activeLessonId: string = lessonIdParam ?? allLessons[0].id;
+  if (!lessonIdParam && enrollment) {
+    const { data: doneRows } = await supabase
+      .from("lesson_progress")
+      .select("lesson_id")
+      .eq("user_id", userId)
+      .eq("completed", true)
+      .in("lesson_id", allLessonIds);
+    const doneIds = new Set((doneRows ?? []).map((r) => r.lesson_id));
+    const resume = allLessons.find((l) => !doneIds.has(l.id));
+    if (resume) activeLessonId = resume.id;
+  }
 
   // Security checks
-  const requestedLesson = allLessons.find((l) => l.id === activeLessonId);
-  const isPreview = !enrollment;
-  if (isPreview && !requestedLesson?.is_preview) redirect(`/courses/${slug}`);
+  const isPreview = !enrollment && !isManager;
+  if (isPreview && !lessonIdParam) {
+    const firstPreview = allLessons.find((l) => l.is_preview);
+    if (!firstPreview) redirect(`/courses/${slug}`);
+    activeLessonId = firstPreview.id;
+  }
+  if (isPreview && !allLessons.find((l) => l.id === activeLessonId)?.is_preview) redirect(`/courses/${slug}`);
 
-  const isPartialEnrollment = enrollment?.status === "pending_payment";
+  const isPartialEnrollment = enrollment?.status === "pending_payment" && !isManager;
   if (isPartialEnrollment) {
     const firstModuleLessonIds = new Set(modules[0]?.lessons.map((l: any) => l.id) ?? []);
     if (!firstModuleLessonIds.has(activeLessonId)) {
@@ -115,7 +142,7 @@ export default async function LearnPage({ params, searchParams }: PageProps) {
   }
 
   // 3. Parallelize queries that depend on activeLessonId or allLessonIds
-  const isInstructor = course.instructor_id === userId;
+  const isInstructor = isManager;
 
   const [
     { data: blocks },
@@ -147,22 +174,35 @@ export default async function LearnPage({ params, searchParams }: PageProps) {
 
   const quizData = quizDataRaw as any;
   let initialQuizAttempt = null;
+  let quizAttemptsUsed = 0;
+  let quizPassed = false;
   if (quizData?.id && userId) {
-    const { data: attempt } = await supabase
+    const { data: attempts } = await supabase
       .from("quiz_attempts")
       .select("id, score, passed, answers, created_at")
       .eq("quiz_id", quizData.id)
       .eq("user_id", userId)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-    initialQuizAttempt = attempt
+      .order("created_at", { ascending: false });
+    quizAttemptsUsed = attempts?.length ?? 0;
+    const best = (attempts ?? []).find((a) => a.passed) ?? attempts?.[0] ?? null;
+    quizPassed = Boolean(best?.passed);
+    initialQuizAttempt = best
       ? {
-          score: attempt.score,
-          passed: attempt.passed,
-          answers: (attempt.answers as Record<string, number[]>) ?? undefined,
+          score: best.score,
+          passed: best.passed,
+          answers: (best.answers as Record<string, number[]>) ?? undefined,
         }
       : null;
+  }
+  // Never ship the answer key to the browser until the learner has passed or used every attempt.
+  const attemptsExhausted =
+    !!quizData?.max_attempts && quizData.max_attempts > 0 && quizAttemptsUsed >= quizData.max_attempts;
+  if (quizData && !quizPassed && !attemptsExhausted) {
+    quizData.quiz_questions = (quizData.quiz_questions ?? []).map((q: any) => ({
+      ...q,
+      correct_indices: [],
+      explanation: null,
+    }));
   }
 
   // Speaking practice placed in this lesson: the published scenarios it points at, and the ones this
@@ -241,6 +281,9 @@ export default async function LearnPage({ params, searchParams }: PageProps) {
       }[]}
       quiz={quizData}
       initialQuizAttempt={initialQuizAttempt}
+      quizAttemptsUsed={quizAttemptsUsed}
+      isManager={isManager}
+      coursePublished={course.status === "published"}
       completedLessonIds={[...completedSet]}
       allDone={allDone}
       existingCertificate={existingCert ?? null}

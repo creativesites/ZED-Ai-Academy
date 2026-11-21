@@ -1,12 +1,8 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { buttonVariants } from "@/components/ui/button-variants";
-import { cn } from "@/lib/utils";
-import { ArrowLeft } from "lucide-react";
 import { LessonEditorClient } from "@/components/creator/lesson-editor-client";
 import { Toaster } from "@/components/ui/sonner";
-import { getCourseEditorPath } from "@/lib/courses/course-routes";
+import { getCourseEditorPath, getLessonEditorPath } from "@/lib/courses/course-routes";
 import type { ContentBlock, ContentBlockType, Json } from "@/types/database";
 
 export async function LessonStudioView({
@@ -70,24 +66,31 @@ export async function LessonStudioView({
     error: unknown;
   };
 
+  // Course outline for prev/next navigation and the "lesson x of y" context.
+  const [{ data: courseRow }, { data: outlineRaw }] = await Promise.all([
+    supabase.from("courses").select("slug").eq("id", courseId).single(),
+    supabase
+      .from("modules")
+      .select("id, title, position, lessons(id, title, position)")
+      .eq("course_id", courseId)
+      .order("position", { ascending: true }),
+  ]);
+  const ordered = ((outlineRaw ?? []) as { id: string; title: string; lessons: { id: string; title: string; position: number }[] }[])
+    .flatMap((m) => [...(m.lessons ?? [])].sort((a, b) => a.position - b.position).map((l) => ({ ...l, moduleTitle: m.title })));
+  const idx = ordered.findIndex((l) => l.id === lessonId);
+  const toNav = (l?: { id: string; title: string }) =>
+    l ? { id: l.id, title: l.title, href: getLessonEditorPath(courseId, l.id, tenantSlug) } : null;
+
   return (
     <>
-      <Toaster />
-      <div className="container max-w-7xl mx-auto px-4 py-6 sm:py-8 space-y-6">
-        <div className="flex items-center gap-3">
-          <Link
-            href={getCourseEditorPath(courseId, tenantSlug)}
-            className={cn(
-              buttonVariants({ variant: "ghost", size: "sm" }),
-              "h-9 rounded-xl px-3 text-slate-500 hover:bg-slate-100 hover:text-[#062e39] inline-flex items-center gap-2 text-sm font-bold"
-            )}
-          >
-            <ArrowLeft className="h-4 w-4 shrink-0" />
-            <span className="truncate max-w-[240px] sm:max-w-md">{courseTitle}</span>
-          </Link>
-        </div>
-
+      <Toaster position="top-center" />
+      <div className="app-surface mx-auto w-full max-w-7xl">
         <LessonEditorClient
+          backHref={getCourseEditorPath(courseId, tenantSlug)}
+          learnerHref={courseRow?.slug ? `/courses/${courseRow.slug}/learn?lesson=${lessonId}` : null}
+          position={{ index: idx, total: ordered.length }}
+          prevLesson={toNav(ordered[idx - 1])}
+          nextLesson={toNav(ordered[idx + 1])}
           lesson={{
             id: lesson.id,
             title: lesson.title,

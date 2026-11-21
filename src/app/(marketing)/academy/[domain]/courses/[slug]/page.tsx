@@ -109,17 +109,37 @@ export default async function TenantCourseDetailPage({ params, searchParams }: P
 
   // 5. Check Active Enrollment
   let isEnrolled = false;
+  let isPendingPayment = false;
+  let completedCount = 0;
   if (userId) {
     const { data: enrollment } = await supabase
       .from("enrollments")
       .select("id, status")
       .eq("user_id", userId)
       .eq("course_id", course.id)
-      .eq("status", "active")
       .maybeSingle();
 
-    isEnrolled = Boolean(enrollment);
+    isEnrolled = enrollment?.status === "active";
+    isPendingPayment = enrollment?.status === "pending_payment";
+
+    const lessonIds = modules.flatMap((m) => m.lessons.map((l) => l.id));
+    if ((isEnrolled || isPendingPayment) && lessonIds.length > 0) {
+      const { count } = await supabase
+        .from("lesson_progress")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", userId)
+        .eq("completed", true)
+        .in("lesson_id", lessonIds);
+      completedCount = count ?? 0;
+    }
   }
+
+  const quizCount = modules.reduce(
+    (acc, m) => acc + m.lessons.filter((l) => (l.content_blocks ?? []).some((b) => b.type === "quiz")).length,
+    0
+  );
+  const firstPreviewLesson = modules.flatMap((m) => m.lessons).find((l) => l.is_preview) ?? null;
+  const progressPct = totalLessons > 0 ? Math.round((completedCount / totalLessons) * 100) : 0;
 
   const brandColor = tenant.primary_color || "#fd5523";
   const isFree = course.price_type === "free";
@@ -152,6 +172,14 @@ export default async function TenantCourseDetailPage({ params, searchParams }: P
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-center">
             
             <div className="lg:col-span-2 space-y-4">
+              {course.thumbnail_url && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={course.thumbnail_url}
+                  alt=""
+                  className="aspect-video w-full rounded-2xl object-cover sm:hidden"
+                />
+              )}
               <div className="flex flex-wrap items-center gap-2.5">
                 <span
                   className="px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-wider text-white"
@@ -204,6 +232,14 @@ export default async function TenantCourseDetailPage({ params, searchParams }: P
 
             {/* Pricing & Enrollment Action Box */}
             <div className="bg-slate-50 rounded-3xl p-6 sm:p-8 border border-slate-100 flex flex-col justify-between space-y-6">
+              {course.thumbnail_url && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={course.thumbnail_url}
+                  alt=""
+                  className="hidden aspect-video w-full rounded-2xl object-cover sm:block"
+                />
+              )}
               <div>
                 <span className="text-xs uppercase font-bold tracking-wider text-slate-400 block mb-1">
                   Tuition
@@ -215,14 +251,39 @@ export default async function TenantCourseDetailPage({ params, searchParams }: P
 
               <div>
                 {isEnrolled ? (
-                  <Link
-                    href={`/courses/${course.slug}/learn`}
-                    className="w-full flex items-center justify-center gap-2 text-white font-bold text-xs uppercase tracking-wider py-4 rounded-2xl shadow-lg transition-all hover:scale-105 active:scale-95"
-                    style={{ backgroundColor: brandColor }}
-                  >
-                    <Play className="h-4 w-4 fill-white" />
-                    <span>Resume Learning</span>
-                  </Link>
+                  <div className="space-y-3">
+                    <div>
+                      <div className="mb-1.5 flex justify-between text-xs font-semibold text-slate-500">
+                        <span>Your progress</span>
+                        <span>{progressPct}%</span>
+                      </div>
+                      <div className="h-2 overflow-hidden rounded-full bg-slate-200">
+                        <div className="h-full rounded-full" style={{ width: `${progressPct}%`, backgroundColor: brandColor }} />
+                      </div>
+                    </div>
+                    <Link
+                      href={`/courses/${course.slug}/learn`}
+                      className="w-full flex items-center justify-center gap-2 text-white font-bold text-sm py-4 rounded-2xl shadow-lg transition-all hover:opacity-90 active:scale-95"
+                      style={{ backgroundColor: brandColor }}
+                    >
+                      <Play className="h-4 w-4 fill-white" />
+                      <span>{completedCount === 0 ? "Start learning" : progressPct === 100 ? "Review course" : "Continue learning"}</span>
+                    </Link>
+                  </div>
+                ) : isPendingPayment ? (
+                  <div className="space-y-3">
+                    <p className="rounded-2xl bg-amber-50 p-3 text-xs font-medium text-amber-800 ring-1 ring-inset ring-amber-200">
+                      Payment pending — Module 1 is open while we confirm your payment.
+                    </p>
+                    <Link
+                      href={`/courses/${course.slug}/learn`}
+                      className="w-full flex items-center justify-center gap-2 text-white font-bold text-sm py-4 rounded-2xl shadow-lg transition-all hover:opacity-90 active:scale-95"
+                      style={{ backgroundColor: brandColor }}
+                    >
+                      <Play className="h-4 w-4 fill-white" />
+                      <span>Start Module 1</span>
+                    </Link>
+                  </div>
                 ) : !userId ? (
                   <Link
                     href={`/sign-in?redirect_url=/academy/${tenant.slug}/courses/${course.slug}`}
@@ -252,6 +313,37 @@ export default async function TenantCourseDetailPage({ params, searchParams }: P
                   </Link>
                 )}
               </div>
+
+              {firstPreviewLesson && !isEnrolled && (
+                <Link
+                  href={`/courses/${course.slug}/learn?lesson=${firstPreviewLesson.id}`}
+                  className="flex w-full items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white py-3 text-sm font-semibold text-slate-700 hover:bg-slate-100"
+                >
+                  <Play className="h-4 w-4" />
+                  Watch a free lesson
+                </Link>
+              )}
+
+              <ul className="space-y-2 border-t border-slate-200 pt-5 text-sm text-slate-600">
+                <li className="flex items-center gap-2.5">
+                  <BookOpen className="h-4 w-4 text-slate-400" />
+                  {totalLessons} lesson{totalLessons === 1 ? "" : "s"} in {modules.length} module{modules.length === 1 ? "" : "s"}
+                </li>
+                {quizCount > 0 && (
+                  <li className="flex items-center gap-2.5">
+                    <CheckCircle className="h-4 w-4 text-slate-400" />
+                    {quizCount} knowledge check{quizCount === 1 ? "" : "s"}
+                  </li>
+                )}
+                <li className="flex items-center gap-2.5">
+                  <Sparkles className="h-4 w-4 text-slate-400" />
+                  AI tutor on every lesson
+                </li>
+                <li className="flex items-center gap-2.5">
+                  <Award className="h-4 w-4 text-slate-400" />
+                  Verified certificate of completion
+                </li>
+              </ul>
             </div>
 
           </div>
@@ -303,10 +395,20 @@ export default async function TenantCourseDetailPage({ params, searchParams }: P
                       </div>
 
                       <div className="flex items-center gap-2">
-                        {les.is_preview ? (
-                          <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-600 border border-emerald-200">
-                            Preview
-                          </span>
+                        {isEnrolled ? (
+                          <Link
+                            href={`/courses/${course.slug}/learn?lesson=${les.id}`}
+                            className="rounded-lg px-2 py-1 text-[11px] font-bold text-slate-600 hover:bg-slate-100"
+                          >
+                            Open
+                          </Link>
+                        ) : les.is_preview ? (
+                          <Link
+                            href={`/courses/${course.slug}/learn?lesson=${les.id}`}
+                            className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100"
+                          >
+                            <Play className="h-3 w-3" /> Preview
+                          </Link>
                         ) : (
                           <Lock className="h-3.5 w-3.5 text-slate-400" />
                         )}

@@ -55,7 +55,7 @@ export default async function CreatorLayout({ children }: { children: React.Reac
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="app-surface min-h-screen bg-slate-50">
       <CreatorNavbar>
         <NotificationBellServer />
       </CreatorNavbar>

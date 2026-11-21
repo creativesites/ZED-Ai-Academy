@@ -5,6 +5,7 @@ import NextTopLoader from "nextjs-toploader";
 import { NetworkStatusProvider } from "@/components/providers/NetworkStatusProvider";
 import { SWRProvider } from "@/components/providers/SWRProvider";
 import "./globals.css";
+import "./app-surface-reset.css";
 
 const inter = Inter({
   subsets: ["latin"],

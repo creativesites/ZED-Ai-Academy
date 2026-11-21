@@ -2,7 +2,6 @@
 
 import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { saveQuizAttempt } from "@/actions/quizzes";
 import {
   CheckCircle,
@@ -45,7 +44,12 @@ export function QuizPlayer({
   lessonId,
   courseSlug,
   onPassed,
+  attemptsUsed = 0,
+  disabled = false,
 }: {
+  attemptsUsed?: number;
+  /** e.g. free-preview visitors: show the questions but don't allow submitting. */
+  disabled?: boolean;
   quiz: Quiz;
   questions: Question[];
   initialAttempt?: {
@@ -74,9 +78,15 @@ export function QuizPlayer({
   );
   const [submitted, setSubmitted] = useState(Boolean(initialAttempt?.passed));
   const [submitting, startSubmit] = useTransition();
+  const [attemptsRemaining, setAttemptsRemaining] = useState<number | null>(
+    quiz.max_attempts > 0 ? Math.max(0, quiz.max_attempts - attemptsUsed) : null
+  );
+  const outOfAttempts = attemptsRemaining === 0 && !result?.passed;
+  // The answer key is only sent once the learner passes or runs out of attempts.
+  const revealed = Boolean(result && Object.keys(result.correctAnswers ?? {}).length > 0);
 
   function toggleAnswer(questionId: string, optionIdx: number) {
-    if (submitted) return;
+    if (submitted || disabled || outOfAttempts) return;
     setAnswers((prev) => {
       const current = prev[questionId] ?? [];
       const has = current.includes(optionIdx);
@@ -100,6 +110,9 @@ export function QuizPlayer({
       try {
         const res = await saveQuizAttempt(quiz.id, answers, lessonId, courseSlug);
         setResult(res);
+        if (res.attemptsRemaining !== undefined && res.attemptsRemaining !== null) {
+          setAttemptsRemaining(res.attemptsRemaining);
+        }
         setSubmitted(true);
         if (res.passed && res.lessonBlocked) {
           // Passed, but the lesson still needs its required speaking practice. The lesson stays open.
@@ -140,6 +153,9 @@ export function QuizPlayer({
           <h3 className="text-xl font-bold text-[#062e39] tracking-tight">{quiz.title ?? "Knowledge Check"}</h3>
           <p className="text-sm font-medium text-slate-500 mt-1">
             {questions.length} question{questions.length !== 1 ? "s" : ""} • {quiz.pass_threshold}% to pass
+            {attemptsRemaining !== null && !result?.passed && (
+              <> • {attemptsRemaining} attempt{attemptsRemaining === 1 ? "" : "s"} left</>
+            )}
           </p>
         </div>
         {submitted && result && (
@@ -159,6 +175,7 @@ export function QuizPlayer({
           const selected = answers[q.id] ?? [];
           const isCorrect =
             submitted &&
+            revealed &&
             result &&
             JSON.stringify([...selected].sort()) ===
               JSON.stringify([...(result.correctAnswers[q.id] ?? [])].sort());
@@ -180,8 +197,8 @@ export function QuizPlayer({
                 {q.options.map((opt, idx) => {
                   const isSelected = selected.includes(idx);
                   const isCorrectOpt =
-                    submitted && result && (result.correctAnswers[q.id] ?? []).includes(idx);
-                  const isWrongOpt = submitted && isSelected && !isCorrectOpt;
+                    submitted && revealed && result && (result.correctAnswers[q.id] ?? []).includes(idx);
+                  const isWrongOpt = submitted && revealed && isSelected && !isCorrectOpt;
 
                   return (
                     <button
@@ -270,22 +287,24 @@ export function QuizPlayer({
                 </div>
                 <h4 className="text-3xl font-bold tracking-tight mb-2">Almost There — {result.score}%</h4>
                 <p className="text-slate-400 font-medium mb-8">
-                  You need {quiz.pass_threshold}% to pass. Re-read the takeaways and give it another shot.
+                  {outOfAttempts
+                    ? "You've used all your attempts. Your instructor can allow more attempts."
+                    : `You need ${quiz.pass_threshold}% to pass. Review the lesson and give it another shot.`}
                 </p>
-                <Button 
+                {!outOfAttempts && <Button 
                   onClick={handleRetry} 
                   className="rounded-2xl bg-[#fd5523] px-10 py-7 text-lg font-bold text-white hover:bg-[#ef4a16] shadow-xl shadow-[#fd5523]/20"
                 >
                   <RotateCcw className="mr-2 h-5 w-5" />
                   Try Again
-                </Button>
+                </Button>}
               </>
             )}
           </div>
         ) : (
           <Button 
             onClick={handleSubmit} 
-            disabled={submitting} 
+            disabled={submitting || disabled || outOfAttempts} 
             className="w-full rounded-[2rem] bg-[#062e39] py-8 text-xl font-bold text-white hover:bg-[#0a4055] transition-all hover:scale-[1.01] active:scale-95 shadow-xl"
           >
             {submitting ? (
@@ -293,7 +312,7 @@ export function QuizPlayer({
             ) : (
               <CheckCircle className="mr-3 h-6 w-6" />
             )}
-            Finalize Answers
+            {disabled ? "Enrol to take this quiz" : outOfAttempts ? "No attempts left" : "Submit answers"}
           </Button>
         )}
       </div>

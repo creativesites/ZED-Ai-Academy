@@ -1,12 +1,14 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import {
   DndContext,
   closestCenter,
   KeyboardSensor,
   PointerSensor,
+  TouchSensor,
   useSensor,
   useSensors,
   type DragEndEvent,
@@ -20,241 +22,348 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { createModule, updateModule, deleteModule, reorderModules } from "@/actions/modules";
-import { createLesson, reorderLessons, updateLesson, deleteLesson } from "@/actions/lessons";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
+import { addLesson, deleteLesson, duplicateLesson, reorderLessons, updateLesson } from "@/actions/lessons";
 import {
-  GripVertical,
-  Plus,
-  Pencil,
-  Trash2,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  ArrowDown,
+  ArrowUp,
   ChevronDown,
-  ChevronRight,
-  FileText,
-  Loader2,
-  Search,
+  Copy,
   Eye,
   EyeOff,
+  GripVertical,
+  HelpCircle,
   Layers,
+  Loader2,
+  MoreHorizontal,
+  Pencil,
+  Plus,
+  Search,
   Sparkles,
+  Trash2,
 } from "lucide-react";
-import Link from "next/link";
 import { toast } from "sonner";
 import { AIBlueprintAssistant } from "./ai-blueprint-assistant";
+import { BulkLessonGenerator } from "./studio/bulk-lesson-generator";
+import { COURSE_DOMAIN_PRESETS, type CourseDomainPresetId } from "@/lib/course-domain-presets";
 import { getLessonEditorPath } from "@/lib/courses/course-routes";
+import { cn } from "@/lib/utils";
 
-type LessonItem = { id: string; title: string; position: number; is_preview: boolean; content_block_count?: number };
+type LessonItem = {
+  id: string;
+  title: string;
+  position: number;
+  is_preview: boolean;
+  content_block_count?: number;
+  has_quiz?: boolean;
+};
 type ModuleItem = { id: string; title: string; position: number; lessons: LessonItem[] };
+
+const MENU_CLASS = "w-52 rounded-xl p-1.5";
+const ITEM_CLASS = "gap-2 rounded-lg px-2.5 py-2 text-[13px] font-medium cursor-pointer";
+
+function isRedirect(err: unknown) {
+  return err instanceof Error && err.message.includes("NEXT_REDIRECT");
+}
+
+function LessonStatus({ lesson }: { lesson: LessonItem }) {
+  const count = lesson.content_block_count ?? 0;
+  if (count === 0) {
+    return (
+      <span className="inline-flex items-center gap-1 text-[11px] font-medium text-amber-600">
+        <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
+        Empty
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-500">
+      <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+      {count} block{count === 1 ? "" : "s"}
+    </span>
+  );
+}
 
 function SortableLesson({
   lesson,
+  index,
+  moduleIndex,
+  isFirst,
+  isLast,
   courseId,
   tenantSlug,
-  onPreviewToggled,
-  onDelete,
+  dragDisabled,
+  onChange,
+  onRemove,
+  onDuplicated,
+  onMove,
 }: {
   lesson: LessonItem;
+  index: number;
+  moduleIndex: number;
+  isFirst: boolean;
+  isLast: boolean;
   courseId: string;
   tenantSlug?: string;
-  onPreviewToggled: (id: string, next: boolean) => void;
-  onDelete: (id: string) => void;
+  dragDisabled: boolean;
+  onChange: (next: LessonItem) => void;
+  onRemove: (id: string) => void;
+  onDuplicated: (sourceId: string, copy: LessonItem) => void;
+  onMove: (id: string, dir: -1 | 1) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: lesson.id,
+    disabled: dragDisabled,
   });
   const [pending, startTransition] = useTransition();
+  const href = getLessonEditorPath(courseId, lesson.id, tenantSlug);
+
+  if (lesson.id.startsWith("temp-")) {
+    return (
+      <li ref={setNodeRef} className="flex items-center gap-3 rounded-xl py-2.5 pl-3 pr-3 opacity-70 sm:pl-6">
+        <span className="w-8 shrink-0 text-xs font-semibold tabular-nums text-slate-400">
+          {moduleIndex + 1}.{index + 1}
+        </span>
+        <span className="min-w-0 flex-1 truncate text-sm font-medium text-[#062e39]">{lesson.title}</span>
+        <Loader2 className="h-4 w-4 shrink-0 animate-spin text-slate-400" />
+      </li>
+    );
+  }
 
   function togglePreview() {
     const next = !lesson.is_preview;
     startTransition(async () => {
       try {
         await updateLesson(lesson.id, courseId, { is_preview: next }, tenantSlug);
-        onPreviewToggled(lesson.id, next);
-        toast.success(next ? "Lesson set to preview" : "Lesson set to draft");
+        onChange({ ...lesson, is_preview: next });
+        toast.success(next ? "Anyone can now preview this lesson" : "Lesson is for enrolled learners only");
       } catch (err) {
         toast.error(err instanceof Error ? err.message : "Unable to update lesson.");
       }
     });
   }
 
+  function handleDuplicate() {
+    startTransition(async () => {
+      try {
+        const copy = await duplicateLesson(lesson.id, courseId, tenantSlug);
+        onDuplicated(lesson.id, copy);
+        toast.success("Lesson duplicated");
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Unable to duplicate lesson.");
+      }
+    });
+  }
+
   function handleDelete() {
-    if (!confirm(`Delete lesson "${lesson.title}"?`)) return;
+    if (!window.confirm(`Delete “${lesson.title}”? Its content and quiz will be removed.`)) return;
     startTransition(async () => {
       try {
         await deleteLesson(lesson.id, courseId, tenantSlug);
-        onDelete(lesson.id);
+        onRemove(lesson.id);
         toast.success("Lesson deleted");
       } catch (err) {
-        if (err instanceof Error && err.message.includes("NEXT_REDIRECT")) return;
+        if (isRedirect(err)) {
+          onRemove(lesson.id);
+          return;
+        }
         toast.error(err instanceof Error ? err.message : "Unable to delete lesson.");
       }
     });
   }
 
-  const blockCount = lesson.content_block_count ?? 0;
-  const contentStatus =
-    blockCount === 0 ? { label: "Empty", classes: "bg-slate-100 text-slate-600" } :
-    blockCount < 3 ? { label: "Started", classes: "bg-amber-100 text-amber-700" } :
-    { label: "Built", classes: "bg-emerald-100 text-emerald-700" };
-
   return (
-    <div
+    <li
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition }}
-      className={`group flex flex-wrap items-center gap-2 rounded-xl border border-slate-200/60 bg-white p-3 shadow-sm transition-all hover:border-[#fd5523]/30 hover:shadow-md sm:gap-3 sm:rounded-2xl sm:p-4 ${
-        isDragging ? "z-10 opacity-50 ring-2 ring-[#fd5523]" : ""
-      }`}
+      className={cn(
+        "group relative flex items-center gap-1 rounded-xl bg-white pr-1 transition-colors hover:bg-slate-50",
+        isDragging && "z-10 shadow-lg ring-2 ring-[#fd5523]/40",
+        pending && "opacity-60"
+      )}
     >
       <button
+        type="button"
+        aria-label="Drag to reorder"
         {...attributes}
         {...listeners}
-        className="touch-none cursor-grab text-slate-400 hover:text-[#fd5523] active:cursor-grabbing"
+        className={cn(
+          "hidden h-10 w-6 shrink-0 cursor-grab touch-none items-center justify-center text-slate-300 hover:text-slate-500 active:cursor-grabbing sm:flex",
+          dragDisabled && "invisible"
+        )}
       >
-        <GripVertical className="h-4 w-4 sm:h-5 sm:w-5" />
+        <GripVertical className="h-4 w-4" />
       </button>
 
-      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#fff6ee] text-[#fd5523] sm:h-10 sm:w-10 sm:rounded-xl">
-        <FileText className="h-4 w-4 sm:h-5 sm:w-5" />
-      </div>
-
-      <Link
-        href={getLessonEditorPath(courseId, lesson.id, tenantSlug)}
-        className="min-w-0 flex-1 truncate text-sm font-medium text-[#062e39] transition-colors hover:text-[#fd5523] sm:text-base"
-      >
-        <div className="flex min-w-0 flex-col">
-          <span className="truncate">{lesson.title}</span>
-          <div className="mt-1 flex flex-wrap items-center gap-2">
-            <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${contentStatus.classes}`}>
-              {contentStatus.label}
-            </span>
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-              {blockCount} block{blockCount === 1 ? "" : "s"}
-            </span>
-          </div>
-        </div>
+      <Link href={href} className="flex min-w-0 flex-1 items-center gap-3 py-2.5 pl-3 sm:pl-0">
+        <span className="w-8 shrink-0 text-xs font-semibold tabular-nums text-slate-400">
+          {moduleIndex + 1}.{index + 1}
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block truncate text-sm font-medium text-[#062e39] group-hover:text-[#fd5523]">
+            {lesson.title}
+          </span>
+          <span className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5">
+            <LessonStatus lesson={lesson} />
+            {lesson.has_quiz && (
+              <span className="inline-flex items-center gap-1 text-[11px] font-medium text-indigo-600">
+                <HelpCircle className="h-3 w-3" /> Quiz
+              </span>
+            )}
+            {lesson.is_preview && (
+              <span className="inline-flex items-center gap-1 text-[11px] font-medium text-[#fd5523]">
+                <Eye className="h-3 w-3" /> Free preview
+              </span>
+            )}
+          </span>
+        </span>
       </Link>
 
-      <div className="flex w-full flex-row items-center justify-between gap-2 pt-2 sm:w-auto sm:pt-0">
-        <button
-          onClick={togglePreview}
-          disabled={pending}
-          className={`rounded-full px-2 py-1 text-[10px] font-semibold uppercase tracking-wider transition-colors sm:px-3 sm:py-1.5 sm:text-xs ${
-            lesson.is_preview
-              ? "bg-[#fd5523] text-white hover:bg-[#ef4a16]"
-              : "bg-slate-100 text-slate-700 hover:bg-slate-200 hover:text-slate-900"
-          }`}
-        >
-          {pending ? (
-            <Loader2 className="h-3 w-3 animate-spin" />
-          ) : lesson.is_preview ? (
-            <span className="inline-flex items-center gap-1">
-              <Eye className="h-3 w-3" /> 
-              <span className="hidden sm:inline">Preview</span>
-            </span>
-          ) : (
-            <span className="inline-flex items-center gap-1">
-              <EyeOff className="h-3 w-3" /> 
-              <span className="hidden sm:inline">Draft</span>
-            </span>
-          )}
-        </button>
+      {pending && <Loader2 className="h-4 w-4 shrink-0 animate-spin text-slate-400" />}
 
-        <div className="flex items-center gap-1">
-          <Link
-            href={getLessonEditorPath(courseId, lesson.id, tenantSlug)}
-            className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-50 text-slate-400 transition-all hover:bg-[#062e39] hover:text-white sm:h-8 sm:w-8"
-          >
-            <Pencil className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-          </Link>
-          <button
-            onClick={handleDelete}
-            disabled={pending}
-            className="flex h-7 w-7 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-500 sm:h-8 sm:w-8"
-          >
-            {pending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
-          </button>
-        </div>
-      </div>
-    </div>
+      <DropdownMenu>
+        <DropdownMenuTrigger
+          aria-label={`Actions for ${lesson.title}`}
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-white hover:text-[#062e39] data-[popup-open]:bg-white data-[popup-open]:text-[#062e39]"
+        >
+          <MoreHorizontal className="h-4 w-4" />
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className={MENU_CLASS}>
+          <DropdownMenuItem className={ITEM_CLASS} render={<Link href={href} />}>
+            <Pencil className="h-4 w-4" /> Edit lesson
+          </DropdownMenuItem>
+          <DropdownMenuItem className={ITEM_CLASS} onClick={togglePreview}>
+            {lesson.is_preview ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            {lesson.is_preview ? "Remove free preview" : "Make free preview"}
+          </DropdownMenuItem>
+          <DropdownMenuItem className={ITEM_CLASS} onClick={handleDuplicate}>
+            <Copy className="h-4 w-4" /> Duplicate
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem className={ITEM_CLASS} disabled={isFirst || dragDisabled} onClick={() => onMove(lesson.id, -1)}>
+            <ArrowUp className="h-4 w-4" /> Move up
+          </DropdownMenuItem>
+          <DropdownMenuItem className={ITEM_CLASS} disabled={isLast || dragDisabled} onClick={() => onMove(lesson.id, 1)}>
+            <ArrowDown className="h-4 w-4" /> Move down
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem className={ITEM_CLASS} variant="destructive" onClick={handleDelete}>
+            <Trash2 className="h-4 w-4" /> Delete
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </li>
   );
 }
 
 function SortableModule({
   mod,
+  index,
+  total,
   courseId,
   tenantSlug,
   expanded,
+  dragDisabled,
   onExpandedChange,
-  onRefresh,
+  onModuleChange,
+  onModuleRemoved,
+  onModuleMove,
 }: {
   mod: ModuleItem;
+  index: number;
+  total: number;
   courseId: string;
   tenantSlug?: string;
   expanded: boolean;
+  dragDisabled: boolean;
   onExpandedChange: (next: boolean) => void;
-  onRefresh: () => void;
+  onModuleChange: (updater: (m: ModuleItem) => ModuleItem) => void;
+  onModuleRemoved: (id: string) => void;
+  onModuleMove: (id: string, dir: -1 | 1) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: mod.id,
+    disabled: dragDisabled,
   });
-
+  const router = useRouter();
   const [editing, setEditing] = useState(false);
   const [title, setTitle] = useState(mod.title);
-  const [addingLesson, setAddingLesson] = useState(false);
+  const [adding, setAdding] = useState(false);
   const [lessonTitle, setLessonTitle] = useState("");
-  const [lessons, setLessons] = useState(mod.lessons);
   const [pending, startTransition] = useTransition();
+  const addInputRef = useRef<HTMLInputElement>(null);
+
+  const [syncedTitle, setSyncedTitle] = useState(mod.title);
+  if (syncedTitle !== mod.title) {
+    setSyncedTitle(mod.title);
+    setTitle(mod.title);
+  }
 
   const lessonSensors = useSensors(
-    useSensor(PointerSensor),
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 6 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
-  function handleLessonDragEnd(event: DragEndEvent) {
-    const { active, over } = event;
-    if (!over || active.id === over.id) return;
-
-    const oldIndex = lessons.findIndex((l) => l.id === active.id);
-    const newIndex = lessons.findIndex((l) => l.id === over.id);
-    const reordered = arrayMove(lessons, oldIndex, newIndex);
-    setLessons(reordered);
-
+  function persistLessonOrder(lessons: LessonItem[]) {
+    onModuleChange((m) => ({ ...m, lessons }));
     startTransition(async () => {
       try {
-        await reorderLessons(mod.id, courseId, reordered.map((l) => l.id), tenantSlug);
+        await reorderLessons(mod.id, courseId, lessons.map((l) => l.id), tenantSlug);
       } catch (err) {
         toast.error(err instanceof Error ? err.message : "Unable to reorder lessons.");
+        router.refresh();
       }
     });
   }
 
-  function handleSaveTitle() {
+  function handleLessonDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = mod.lessons.findIndex((l) => l.id === active.id);
+    const newIndex = mod.lessons.findIndex((l) => l.id === over.id);
+    persistLessonOrder(arrayMove(mod.lessons, oldIndex, newIndex));
+  }
+
+  function moveLesson(id: string, dir: -1 | 1) {
+    const from = mod.lessons.findIndex((l) => l.id === id);
+    const to = from + dir;
+    if (from < 0 || to < 0 || to >= mod.lessons.length) return;
+    persistLessonOrder(arrayMove(mod.lessons, from, to));
+  }
+
+  function saveTitle() {
     const trimmed = title.trim();
+    setEditing(false);
     if (!trimmed || trimmed === mod.title) {
-      setEditing(false);
       setTitle(mod.title);
       return;
     }
-
+    onModuleChange((m) => ({ ...m, title: trimmed }));
     startTransition(async () => {
       try {
         await updateModule(mod.id, courseId, trimmed, tenantSlug);
-        setEditing(false);
-        toast.success("Module renamed");
       } catch (err) {
         toast.error(err instanceof Error ? err.message : "Unable to rename module.");
+        onModuleChange((m) => ({ ...m, title: mod.title }));
       }
     });
   }
 
   function handleDeleteModule() {
-    if (!confirm(`Delete module "${mod.title}" and all its lessons?`)) return;
+    const n = mod.lessons.length;
+    if (!window.confirm(`Delete “${mod.title}”${n ? ` and its ${n} lesson${n === 1 ? "" : "s"}` : ""}? This can't be undone.`)) return;
     startTransition(async () => {
       try {
         await deleteModule(mod.id, courseId, tenantSlug);
+        onModuleRemoved(mod.id);
         toast.success("Module deleted");
-        onRefresh();
       } catch (err) {
         toast.error(err instanceof Error ? err.message : "Unable to delete module.");
       }
@@ -262,149 +371,224 @@ function SortableModule({
   }
 
   function handleAddLesson() {
-    if (!lessonTitle.trim()) return;
-    startTransition(async () => {
-      try {
-        toast.success("Opening lesson editor…");
-        await createLesson(mod.id, lessonTitle.trim(), tenantSlug);
-      } catch (err) {
-        if (err instanceof Error && err.message.includes("NEXT_REDIRECT")) return;
-        toast.error(err instanceof Error ? err.message : "Unable to create lesson.");
-      }
-    });
+    const clean = lessonTitle.trim();
+    if (!clean) return;
+    // Optimistic: clear the field immediately so creators can keep typing the next title.
+    const tempId = `temp-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+    setLessonTitle("");
+    addInputRef.current?.focus();
+    onModuleChange((m) => ({
+      ...m,
+      lessons: [...m.lessons, { id: tempId, title: clean, position: m.lessons.length + 1, is_preview: false, content_block_count: 0 }],
+    }));
+    addLesson(mod.id, clean, tenantSlug)
+      .then((created) =>
+        onModuleChange((m) => ({
+          ...m,
+          lessons: m.lessons.map((l) => (l.id === tempId ? { ...created, content_block_count: 0, has_quiz: false } : l)),
+        }))
+      )
+      .catch((err) => {
+        onModuleChange((m) => ({ ...m, lessons: m.lessons.filter((l) => l.id !== tempId) }));
+        toast.error(err instanceof Error ? err.message : `Couldn't add “${clean}”.`);
+      });
   }
+
+  const emptyCount = mod.lessons.filter((l) => !l.content_block_count).length;
 
   return (
     <div
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition }}
-      className={`overflow-hidden rounded-2xl border border-slate-200 bg-[#fffaf6]/50 shadow-sm transition-all sm:rounded-[2rem] ${
-        isDragging ? "z-20 opacity-50 ring-4 ring-[#fd5523]/20" : ""
-      }`}
+      className={cn(
+        "rounded-2xl border border-slate-200/80 bg-white transition-shadow",
+        isDragging && "z-20 shadow-xl ring-2 ring-[#fd5523]/30"
+      )}
     >
-      {/* Module header - stacked on mobile, row on larger screens */}
-      <div className="flex flex-col gap-2 border-b border-slate-200/60 bg-white p-3 sm:flex-row sm:items-center sm:gap-3 sm:p-4 md:p-5">
-        <div className="flex items-center gap-2">
-          <button
-            {...attributes}
-            {...listeners}
-            className="touch-none cursor-grab text-slate-400 hover:text-[#fd5523] active:cursor-grabbing"
-          >
-            <GripVertical className="h-4 w-4 sm:h-5 sm:w-5" />
-          </button>
+      <div className="flex items-center gap-1 p-2 sm:gap-2 sm:p-3">
+        <button
+          type="button"
+          aria-label="Drag to reorder module"
+          {...attributes}
+          {...listeners}
+          className={cn(
+            "hidden h-9 w-6 shrink-0 cursor-grab touch-none items-center justify-center text-slate-300 hover:text-slate-500 active:cursor-grabbing sm:flex",
+            dragDisabled && "invisible"
+          )}
+        >
+          <GripVertical className="h-4 w-4" />
+        </button>
 
-          <button
-            onClick={() => onExpandedChange(!expanded)}
-            className="text-[#062e39] transition-colors hover:text-[#fd5523]"
-          >
-            {expanded ? <ChevronDown className="h-4 w-4 sm:h-5 sm:w-5" /> : <ChevronRight className="h-4 w-4 sm:h-5 sm:w-5" />}
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={() => onExpandedChange(!expanded)}
+          aria-expanded={expanded}
+          aria-label={expanded ? "Collapse module" : "Expand module"}
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-[#062e39]"
+        >
+          <ChevronDown className={cn("h-4 w-4 transition-transform", !expanded && "-rotate-90")} />
+        </button>
 
-        <div className="flex-1">
+        <div className="min-w-0 flex-1">
           {editing ? (
-            <Input
+            <input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              onBlur={handleSaveTitle}
-              onKeyDown={(e) => e.key === "Enter" && handleSaveTitle()}
-              className="h-9 flex-1 border-[#fd5523]/20 bg-white text-base font-bold text-[#062e39] focus:border-[#fd5523] focus:ring-[#fd5523] sm:h-10 sm:text-lg"
+              onBlur={saveTitle}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") saveTitle();
+                if (e.key === "Escape") {
+                  setTitle(mod.title);
+                  setEditing(false);
+                }
+              }}
               autoFocus
+              maxLength={200}
+              className="h-9 w-full rounded-lg border border-[#fd5523]/40 bg-white px-2.5 text-[15px] font-semibold text-[#062e39] outline-none ring-4 ring-[#fd5523]/10"
             />
           ) : (
-            <div
-              className="flex flex-wrap items-center gap-2 sm:gap-3"
+            <button
+              type="button"
+              onClick={() => onExpandedChange(!expanded)}
               onDoubleClick={() => setEditing(true)}
+              className="block w-full min-w-0 text-left"
             >
-              <span className="text-base font-bold text-[#062e39] sm:text-lg">{mod.title}</span>
-              <Badge variant="outline" className="rounded-full border-[#062e39]/10 bg-slate-50 px-2 py-0 text-[10px] text-slate-500 sm:px-2.5 sm:text-xs">
-                {lessons.length} {lessons.length === 1 ? "Lesson" : "Lessons"}
-              </Badge>
-            </div>
+              <span className="block text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                Module {index + 1}
+              </span>
+              <span className="block truncate text-[15px] font-semibold leading-snug text-[#062e39]">{mod.title}</span>
+            </button>
           )}
         </div>
 
-        <div className="flex items-center justify-end gap-2 border-t border-slate-100 pt-2 sm:border-t-0 sm:pt-0">
-          <button
-            onClick={() => setEditing(true)}
-            className="flex h-7 w-7 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition-colors hover:bg-[#062e39] hover:text-white sm:h-8 sm:w-8"
+        <span className="hidden shrink-0 text-xs text-slate-500 sm:inline">
+          {mod.lessons.length} lesson{mod.lessons.length === 1 ? "" : "s"}
+          {emptyCount > 0 && <span className="text-amber-600"> · {emptyCount} empty</span>}
+        </span>
+
+        {pending && <Loader2 className="h-4 w-4 shrink-0 animate-spin text-slate-400" />}
+
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            aria-label={`Actions for ${mod.title}`}
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-[#062e39] data-[popup-open]:bg-slate-100"
           >
-            <Pencil className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-          </button>
-          <button
-            onClick={handleDeleteModule}
-            className="flex h-7 w-7 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-500 sm:h-8 sm:w-8"
-          >
-            <Trash2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-          </button>
-        </div>
+            <MoreHorizontal className="h-4 w-4" />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className={MENU_CLASS}>
+            <DropdownMenuItem className={ITEM_CLASS} onClick={() => setEditing(true)}>
+              <Pencil className="h-4 w-4" /> Rename
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              className={ITEM_CLASS}
+              onClick={() => {
+                onExpandedChange(true);
+                setAdding(true);
+              }}
+            >
+              <Plus className="h-4 w-4" /> Add lesson
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem className={ITEM_CLASS} disabled={index === 0 || dragDisabled} onClick={() => onModuleMove(mod.id, -1)}>
+              <ArrowUp className="h-4 w-4" /> Move up
+            </DropdownMenuItem>
+            <DropdownMenuItem className={ITEM_CLASS} disabled={index === total - 1 || dragDisabled} onClick={() => onModuleMove(mod.id, 1)}>
+              <ArrowDown className="h-4 w-4" /> Move down
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem className={ITEM_CLASS} variant="destructive" onClick={handleDeleteModule}>
+              <Trash2 className="h-4 w-4" /> Delete module
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       {expanded && (
-        <div className="space-y-2 p-3 sm:space-y-3 sm:p-4">
-          <DndContext sensors={lessonSensors} collisionDetection={closestCenter} onDragEnd={handleLessonDragEnd}>
-            <SortableContext items={lessons.map((l) => l.id)} strategy={verticalListSortingStrategy}>
-              {lessons.map((lesson) => (
-                <SortableLesson
-                  key={lesson.id}
-                  lesson={lesson}
-                  courseId={courseId}
-                  tenantSlug={tenantSlug}
-                  onPreviewToggled={(lessonId, next) =>
-                    setLessons((prev) =>
-                      prev.map((l) => (l.id === lessonId ? { ...l, is_preview: next } : l))
-                    )
-                  }
-                  onDelete={(lessonId) =>
-                    setLessons((prev) => prev.filter((l) => l.id !== lessonId))
-                  }
-                />
-              ))}
-            </SortableContext>
-          </DndContext>
+        <div className="border-t border-slate-100 px-1 pb-2 pt-1 sm:px-2">
+          {mod.lessons.length > 0 && (
+            <DndContext sensors={lessonSensors} collisionDetection={closestCenter} onDragEnd={handleLessonDragEnd}>
+              <SortableContext items={mod.lessons.map((l) => l.id)} strategy={verticalListSortingStrategy}>
+                <ul className="space-y-0.5">
+                  {mod.lessons.map((lesson, i) => (
+                    <SortableLesson
+                      key={lesson.id}
+                      lesson={lesson}
+                      index={i}
+                      moduleIndex={index}
+                      isFirst={i === 0}
+                      isLast={i === mod.lessons.length - 1}
+                      courseId={courseId}
+                      tenantSlug={tenantSlug}
+                      dragDisabled={dragDisabled}
+                      onMove={moveLesson}
+                      onChange={(next) =>
+                        onModuleChange((m) => ({ ...m, lessons: m.lessons.map((l) => (l.id === next.id ? next : l)) }))
+                      }
+                      onRemove={(id) => onModuleChange((m) => ({ ...m, lessons: m.lessons.filter((l) => l.id !== id) }))}
+                      onDuplicated={(sourceId, copy) =>
+                        onModuleChange((m) => {
+                          const at = m.lessons.findIndex((l) => l.id === sourceId);
+                          const next = [...m.lessons];
+                          next.splice(at + 1, 0, copy);
+                          return { ...m, lessons: next };
+                        })
+                      }
+                    />
+                  ))}
+                </ul>
+              </SortableContext>
+            </DndContext>
+          )}
 
-          {addingLesson ? (
-            <div className="flex flex-col gap-3 rounded-xl border border-[#fd5523]/20 bg-white p-3 shadow-sm sm:flex-row sm:items-center sm:rounded-2xl sm:p-4">
-              <Input
+          {adding ? (
+            <div className="mt-1 flex items-center gap-2 rounded-xl border border-[#fd5523]/30 bg-[#fffaf6] p-1.5 pl-3">
+              <Plus className="h-4 w-4 shrink-0 text-[#fd5523]" />
+              <input
+                ref={addInputRef}
                 value={lessonTitle}
                 onChange={(e) => setLessonTitle(e.target.value)}
-                placeholder="Name your lesson..."
-                className="h-10 flex-1 border-0 bg-transparent text-sm font-medium placeholder:text-slate-400 focus:ring-0 sm:text-base"
-                onKeyDown={(e) => e.key === "Enter" && handleAddLesson()}
+                placeholder="Lesson title, then press Enter"
+                maxLength={200}
                 autoFocus
-                onBlur={() => {
-                  if (!lessonTitle.trim()) setAddingLesson(false);
-                }}
-              />
-              <div className="flex gap-2">
-                <Button
-                  size="sm"
-                  className="h-9 rounded-full bg-[#062e39] px-3 text-sm text-white hover:bg-[#0a4055] sm:px-4"
-                  onClick={handleAddLesson}
-                  disabled={pending}
-                >
-                  {pending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Save"}
-                </Button>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="h-9 rounded-full text-sm text-slate-700 hover:text-slate-900"
-                  onClick={() => {
-                    setAddingLesson(false);
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleAddLesson();
+                  }
+                  if (e.key === "Escape") {
+                    setAdding(false);
                     setLessonTitle("");
-                  }}
-                >
-                  Cancel
-                </Button>
-              </div>
+                  }
+                }}
+                className="h-9 min-w-0 flex-1 bg-transparent text-sm text-[#062e39] outline-none placeholder:text-slate-400"
+              />
+              <button
+                type="button"
+                onClick={handleAddLesson}
+                disabled={!lessonTitle.trim()}
+                className="h-9 shrink-0 rounded-lg bg-[#062e39] px-3 text-xs font-semibold text-white disabled:opacity-40"
+              >
+                Add
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setAdding(false);
+                  setLessonTitle("");
+                }}
+                className="h-9 shrink-0 rounded-lg px-2.5 text-xs font-semibold text-slate-500 hover:bg-white"
+              >
+                Done
+              </button>
             </div>
           ) : (
             <button
-              onClick={() => setAddingLesson(true)}
-              className="group flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-slate-200 bg-white py-3 text-sm font-semibold text-slate-600 transition-all hover:border-[#fd5523]/40 hover:bg-[#fff6ee]/50 hover:text-[#fd5523] sm:rounded-2xl sm:py-4 sm:text-base"
+              type="button"
+              onClick={() => setAdding(true)}
+              className="mt-1 flex h-10 w-full items-center gap-2 rounded-xl px-3 text-sm font-medium text-slate-500 transition-colors hover:bg-[#fff6ee] hover:text-[#fd5523]"
             >
-              <Plus className="h-3.5 w-3.5 transition-transform group-hover:rotate-90 sm:h-4 sm:w-4" /> 
-              Add a new lesson
+              <Plus className="h-4 w-4" />
+              Add lesson
             </button>
           )}
         </div>
@@ -417,72 +601,85 @@ export function CurriculumBuilder({
   courseId,
   initialModules,
   tenantSlug,
+  courseCategory,
 }: {
   courseId: string;
   initialModules: ModuleItem[];
   tenantSlug?: string;
+  courseCategory?: string | null;
 }) {
   const router = useRouter();
   const [modules, setModules] = useState(initialModules);
   const [addingModule, setAddingModule] = useState(false);
   const [newModuleTitle, setNewModuleTitle] = useState("");
   const [query, setQuery] = useState("");
-  const [expandedMap, setExpandedMap] = useState<Record<string, boolean>>(() =>
-    Object.fromEntries(initialModules.map((m) => [m.id, true]))
-  );
+  const [expandedMap, setExpandedMap] = useState<Record<string, boolean>>({});
   const [pending, startTransition] = useTransition();
 
+  // Keep local state in sync after server refreshes (AI scaffolding, module creation, …).
+  const [syncedInitial, setSyncedInitial] = useState(initialModules);
+  if (syncedInitial !== initialModules) {
+    setSyncedInitial(initialModules);
+    setModules(initialModules);
+  }
+
   const sensors = useSensors(
-    useSensor(PointerSensor),
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 6 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
-  const moduleCount = modules.length;
   const lessonCount = modules.reduce((sum, m) => sum + m.lessons.length, 0);
-  const startedLessonCount = modules.reduce(
-    (sum, module) => sum + module.lessons.filter((lesson) => (lesson.content_block_count ?? 0) > 0).length,
-    0
+  const builtCount = modules.reduce((sum, m) => sum + m.lessons.filter((l) => (l.content_block_count ?? 0) > 0).length, 0);
+  const searching = query.trim().length > 0;
+  const emptyLessons = modules.flatMap((m) =>
+    m.lessons.filter((l) => !l.content_block_count).map((l) => ({ id: l.id, title: l.title }))
   );
-  const previewLessonCount = modules.reduce(
-    (sum, module) => sum + module.lessons.filter((lesson) => lesson.is_preview).length,
-    0
-  );
+  const defaultPreset: CourseDomainPresetId =
+    COURSE_DOMAIN_PRESETS.find((p) => p.suggestedCategory === courseCategory)?.id ?? "ai-professional";
 
   const filteredModules = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return modules;
     return modules
-      .map((m) => ({
-        ...m,
-        lessons: m.lessons.filter((l) => l.title.toLowerCase().includes(q)),
-      }))
+      .map((m) => ({ ...m, lessons: m.lessons.filter((l) => l.title.toLowerCase().includes(q)) }))
       .filter((m) => m.title.toLowerCase().includes(q) || m.lessons.length > 0);
   }, [modules, query]);
 
-  function handleModuleDragEnd(event: DragEndEvent) {
-    if (query.trim()) return;
-    const { active, over } = event;
-    if (!over || active.id === over.id) return;
-
-    const oldIndex = modules.findIndex((m) => m.id === active.id);
-    const newIndex = modules.findIndex((m) => m.id === over.id);
-    const reordered = arrayMove(modules, oldIndex, newIndex);
-    setModules(reordered);
-
+  function persistModuleOrder(next: ModuleItem[]) {
+    setModules(next);
     startTransition(async () => {
       try {
-        await reorderModules(courseId, reordered.map((m) => m.id), tenantSlug);
+        await reorderModules(courseId, next.map((m) => m.id), tenantSlug);
       } catch (err) {
         toast.error(err instanceof Error ? err.message : "Unable to reorder modules.");
+        router.refresh();
       }
     });
   }
 
+  function handleModuleDragEnd(event: DragEndEvent) {
+    if (searching) return;
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = modules.findIndex((m) => m.id === active.id);
+    const newIndex = modules.findIndex((m) => m.id === over.id);
+    persistModuleOrder(arrayMove(modules, oldIndex, newIndex));
+  }
+
+  function moveModule(id: string, dir: -1 | 1) {
+    const from = modules.findIndex((m) => m.id === id);
+    const to = from + dir;
+    if (from < 0 || to < 0 || to >= modules.length) return;
+    persistModuleOrder(arrayMove(modules, from, to));
+  }
+
   function handleAddModule() {
-    if (!newModuleTitle.trim()) return;
+    const clean = newModuleTitle.trim();
+    if (!clean) return;
     startTransition(async () => {
       try {
-        await createModule(courseId, newModuleTitle.trim(), tenantSlug);
+        await createModule(courseId, clean, tenantSlug);
         setNewModuleTitle("");
         setAddingModule(false);
         router.refresh();
@@ -493,144 +690,173 @@ export function CurriculumBuilder({
     });
   }
 
-  function setAllExpanded(value: boolean) {
-    setExpandedMap(Object.fromEntries(modules.map((m) => [m.id, value])));
+  const addModuleForm = addingModule ? (
+    <div className="flex flex-col gap-2 rounded-2xl border border-[#fd5523]/30 bg-white p-2.5">
+      <input
+        value={newModuleTitle}
+        onChange={(e) => setNewModuleTitle(e.target.value)}
+        placeholder="Module name, e.g. “Getting started”"
+        maxLength={200}
+        autoFocus
+        onKeyDown={(e) => {
+          if (e.key === "Enter") handleAddModule();
+          if (e.key === "Escape") setAddingModule(false);
+        }}
+        className="h-11 w-full min-w-0 rounded-xl bg-slate-50 px-3.5 text-[15px] font-medium text-[#062e39] outline-none ring-[#fd5523]/20 placeholder:text-slate-400 focus:bg-white focus:ring-4"
+      />
+      <div className="flex gap-2">
+        <button
+          type="button"
+          onClick={handleAddModule}
+          disabled={pending || !newModuleTitle.trim()}
+          className="inline-flex h-10 flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-[#fd5523] px-5 text-sm font-semibold text-white hover:bg-[#ef4a16] disabled:opacity-50"
+        >
+          {pending && <Loader2 className="h-4 w-4 animate-spin" />}
+          Add module
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            setAddingModule(false);
+            setNewModuleTitle("");
+          }}
+          className="h-10 whitespace-nowrap rounded-xl px-4 text-sm font-semibold text-slate-500 hover:bg-slate-100"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  ) : null;
+
+  if (modules.length === 0) {
+    return (
+      <div className="space-y-4">
+        <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white">
+          <div className="bg-gradient-to-br from-[#062e39] to-[#0d4d5e] px-5 py-8 text-center text-white sm:px-10 sm:py-12">
+            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10">
+              <Layers className="h-6 w-6 text-[#fd8d69]" />
+            </div>
+            <h2 className="text-xl font-bold sm:text-2xl">Outline your course</h2>
+            <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-white/70">
+              Courses are made of modules, and modules hold lessons. Let AI draft an outline from your course
+              description, or start building it yourself.
+            </p>
+          </div>
+          <div className="grid gap-3 p-4 sm:grid-cols-2 sm:p-6">
+            <div className="flex flex-col rounded-xl border border-[#fd5523]/25 bg-[#fffaf6] p-4">
+              <Sparkles className="mb-2 h-5 w-5 text-[#fd5523]" />
+              <p className="font-semibold text-[#062e39]">Draft with AI</p>
+              <p className="mb-4 mt-1 flex-1 text-sm text-slate-500">
+                Get a 4-module outline in seconds. Review, remove what you don&apos;t need, then apply.
+              </p>
+              <AIBlueprintAssistant
+                courseId={courseId}
+                triggerLabel="Generate outline"
+                triggerClassName="h-10 w-full justify-center border-0 bg-[#fd5523] text-sm text-white hover:bg-[#ef4a16]"
+              />
+            </div>
+            <div className="flex flex-col rounded-xl border border-slate-200 p-4">
+              <Plus className="mb-2 h-5 w-5 text-[#062e39]" />
+              <p className="font-semibold text-[#062e39]">Start from scratch</p>
+              <p className="mb-4 mt-1 flex-1 text-sm text-slate-500">
+                Add your first module and type lesson titles one after another.
+              </p>
+              {addingModule ? (
+                addModuleForm
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setAddingModule(true)}
+                  className="h-10 w-full rounded-xl bg-[#062e39] text-sm font-semibold text-white hover:bg-[#0a4055]"
+                >
+                  Add first module
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="space-y-4 sm:space-y-6">
-      {/* Stats bar - stacked on mobile, row on larger */}
-      <div className="flex flex-col gap-3 rounded-2xl border-0 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:rounded-3xl sm:p-5">
-        <div className="flex items-center justify-center gap-6 text-sm">
-          <div className="flex items-center gap-2">
-            <Layers className="h-4 w-4 text-[#fd5523] sm:h-5 sm:w-5" />
-            <span className="text-[#062e39]">
-              <span className="text-base font-bold sm:text-lg">{moduleCount}</span>{" "}
-              <span className="hidden sm:inline">Modules</span>
-            </span>
-          </div>
-          <div className="h-5 w-px bg-[#062e39]/10" />
-          <div className="flex items-center gap-2">
-            <FileText className="h-4 w-4 text-[#fd5523] sm:h-5 sm:w-5" />
-            <span className="text-[#062e39]">
-              <span className="text-base font-bold sm:text-lg">{lessonCount}</span>{" "}
-              <span className="hidden sm:inline">Lessons</span>
-            </span>
-          </div>
-          <div className="h-5 w-px bg-[#062e39]/10" />
-          <div className="flex items-center gap-2">
-            <Sparkles className="h-4 w-4 text-[#fd5523] sm:h-5 sm:w-5" />
-            <span className="text-[#062e39]">
-              <span className="text-base font-bold sm:text-lg">{startedLessonCount}</span>{" "}
-              <span className="hidden sm:inline">Started</span>
-            </span>
-          </div>
-          <div className="h-5 w-px bg-[#062e39]/10" />
-          <div className="flex items-center gap-2">
-            <Eye className="h-4 w-4 text-[#fd5523] sm:h-5 sm:w-5" />
-            <span className="text-[#062e39]">
-              <span className="text-base font-bold sm:text-lg">{previewLessonCount}</span>{" "}
-              <span className="hidden sm:inline">Previews</span>
-            </span>
-          </div>
-        </div>
-
-        <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
-          <AIBlueprintAssistant courseId={courseId} />
-          <div className="h-5 w-px bg-[#062e39]/10" />
-          <Button
-            variant="ghost"
-            className="h-8 rounded-full px-2 text-xs text-[#062e39] hover:bg-[#fff6ee] hover:text-[#fd5523] sm:h-9 sm:px-3 sm:text-sm"
-            onClick={() => setAllExpanded(true)}
-          >
-            Expand all
-          </Button>
-          <Button
-            variant="ghost"
-            className="h-8 rounded-full px-2 text-xs text-[#062e39] hover:bg-[#fff6ee] hover:text-[#fd5523] sm:h-9 sm:px-3 sm:text-sm"
-            onClick={() => setAllExpanded(false)}
-          >
-            Collapse all
-          </Button>
-        </div>
-      </div>
-
-      {/* Search bar */}
-      <div className="relative">
-        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 sm:left-4 sm:h-5 sm:w-5" />
-        <Input
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Filter modules or lessons..."
-          className="h-11 rounded-xl border-[#062e39]/10 bg-white pl-9 text-sm font-medium text-[#062e39] shadow-sm transition-all focus:border-[#fd5523] focus:ring-[#fd5523]/10 sm:h-14 sm:rounded-2xl sm:pl-12 sm:text-lg"
-        />
-      </div>
-
-      {/* Modules list */}
-      <div className="space-y-3 sm:space-y-4">
-        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleModuleDragEnd}>
-          <SortableContext items={filteredModules.map((m) => m.id)} strategy={verticalListSortingStrategy}>
-            {filteredModules.map((mod) => (
-              <SortableModule
-                key={mod.id}
-                mod={mod}
-                courseId={courseId}
-                tenantSlug={tenantSlug}
-                expanded={expandedMap[mod.id] ?? true}
-                onExpandedChange={(next) => setExpandedMap((prev) => ({ ...prev, [mod.id]: next }))}
-                onRefresh={() => router.refresh()}
-              />
-            ))}
-          </SortableContext>
-        </DndContext>
-      </div>
-
-      {/* Add module button */}
-      {addingModule ? (
-        <div className="flex flex-col gap-3 rounded-2xl border-2 border-[#fd5523]/20 bg-white p-4 shadow-xl sm:flex-row sm:items-center sm:gap-4 sm:rounded-[2.5rem] sm:p-6">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#fff6ee] text-[#fd5523] sm:h-12 sm:w-12 sm:rounded-2xl">
-            <Layers className="h-5 w-5 sm:h-6 sm:w-6" />
-          </div>
-          <Input
-            value={newModuleTitle}
-            onChange={(e) => setNewModuleTitle(e.target.value)}
-            placeholder="What's this module called?"
-            className="h-10 flex-1 border-0 bg-transparent text-base font-bold placeholder:text-slate-300 focus:ring-0 sm:h-12 sm:text-xl"
-            onKeyDown={(e) => e.key === "Enter" && handleAddModule()}
-            autoFocus
-          />
-          <div className="flex gap-2">
-            <Button
-              className="h-9 rounded-full bg-[#fd5523] px-4 text-sm text-white hover:bg-[#ef4a16] sm:h-11 sm:px-8 sm:text-base"
-              onClick={handleAddModule}
-              disabled={pending}
-            >
-              {pending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Create Module"}
-            </Button>
-            <Button
-              variant="ghost"
-              className="h-9 rounded-full text-sm text-slate-500 sm:h-11 sm:text-base"
-              onClick={() => {
-                setAddingModule(false);
-                setNewModuleTitle("");
-              }}
-            >
-              Cancel
-            </Button>
-          </div>
-        </div>
-      ) : (
+    <div className="space-y-3">
+      {/* Toolbar */}
+      <div className="flex flex-wrap items-center gap-2">
+        <p className="mr-auto text-sm text-slate-500">
+          <span className="font-semibold text-[#062e39]">{modules.length}</span> module{modules.length === 1 ? "" : "s"} ·{" "}
+          <span className="font-semibold text-[#062e39]">{lessonCount}</span> lesson{lessonCount === 1 ? "" : "s"}
+          {lessonCount > 0 && (
+            <>
+              {" "}· <span className={cn("font-semibold", builtCount === lessonCount ? "text-emerald-600" : "text-amber-600")}>{builtCount}/{lessonCount}</span> built
+            </>
+          )}
+        </p>
         <button
-          onClick={() => setAddingModule(true)}
-          className="group flex w-full flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-slate-200 bg-white/40 py-8 text-slate-500 transition-all hover:border-[#fd5523]/50 hover:bg-[#fff6ee]/20 hover:text-[#fd5523] sm:gap-4 sm:rounded-[3rem] sm:py-12"
+          type="button"
+          onClick={() => {
+            const anyCollapsed = modules.some((m) => expandedMap[m.id] === false);
+            setExpandedMap(Object.fromEntries(modules.map((m) => [m.id, anyCollapsed])));
+          }}
+          className="h-9 rounded-xl px-3 text-xs font-semibold text-slate-600 hover:bg-white"
         >
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-slate-300 shadow-sm transition-all group-hover:bg-[#fd5523] group-hover:text-white group-hover:shadow-lg group-hover:shadow-[#fd5523]/30 sm:h-16 sm:w-16 sm:rounded-[2rem]">
-            <Plus className="h-6 w-6 transition-transform group-hover:rotate-90 sm:h-8 sm:w-8" />
+          {modules.some((m) => expandedMap[m.id] === false) ? "Expand all" : "Collapse all"}
+        </button>
+        <AIBlueprintAssistant courseId={courseId} triggerLabel="AI outline" />
+      </div>
+
+      <BulkLessonGenerator courseId={courseId} emptyLessons={emptyLessons} defaultPreset={defaultPreset} />
+
+      {lessonCount > 8 && (
+        <div className="relative">
+          <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Find a lesson…"
+            className="h-11 w-full rounded-xl border border-slate-200 bg-white pl-10 pr-3 text-sm text-[#062e39] outline-none ring-[#fd5523]/15 placeholder:text-slate-400 focus:border-[#fd5523]/40 focus:ring-4"
+          />
+        </div>
+      )}
+
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleModuleDragEnd}>
+        <SortableContext items={filteredModules.map((m) => m.id)} strategy={verticalListSortingStrategy}>
+          <div className="space-y-3">
+            {filteredModules.map((mod) => {
+              const realIndex = modules.findIndex((m) => m.id === mod.id);
+              return (
+                <SortableModule
+                  key={mod.id}
+                  mod={mod}
+                  index={realIndex}
+                  total={modules.length}
+                  courseId={courseId}
+                  tenantSlug={tenantSlug}
+                  dragDisabled={searching}
+                  expanded={searching || expandedMap[mod.id] !== false}
+                  onExpandedChange={(next) => setExpandedMap((prev) => ({ ...prev, [mod.id]: next }))}
+                  onModuleChange={(updater) => setModules((prev) => prev.map((m) => (m.id === mod.id ? updater(m) : m)))}
+                  onModuleRemoved={(id) => setModules((prev) => prev.filter((m) => m.id !== id))}
+                  onModuleMove={moveModule}
+                />
+              );
+            })}
           </div>
-          <div className="text-center">
-            <p className="text-base font-bold sm:text-lg">Add a new module</p>
-            <p className="text-xs font-medium opacity-60 sm:text-sm">Organize your course into logical sections</p>
-          </div>
+        </SortableContext>
+      </DndContext>
+
+      {searching && filteredModules.length === 0 && (
+        <p className="py-8 text-center text-sm text-slate-500">No lessons match “{query}”.</p>
+      )}
+
+      {addModuleForm ?? (
+        <button
+          type="button"
+          onClick={() => setAddingModule(true)}
+          className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-slate-200 text-sm font-semibold text-slate-500 transition-colors hover:border-[#fd5523]/40 hover:bg-[#fff6ee]/50 hover:text-[#fd5523]"
+        >
+          <Plus className="h-4 w-4" />
+          Add module
         </button>
       )}
     </div>

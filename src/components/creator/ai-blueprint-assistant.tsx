@@ -37,6 +37,8 @@ import { cn } from "@/lib/utils";
 
 interface AIBlueprintAssistantProps {
   courseId: string;
+  triggerLabel?: string;
+  triggerClassName?: string;
 }
 
 type GeneratedModule = {
@@ -44,7 +46,7 @@ type GeneratedModule = {
   lessons: { title: string }[];
 };
 
-export function AIBlueprintAssistant({ courseId }: AIBlueprintAssistantProps) {
+export function AIBlueprintAssistant({ courseId, triggerLabel, triggerClassName }: AIBlueprintAssistantProps) {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("generate");
@@ -176,10 +178,13 @@ export function AIBlueprintAssistant({ courseId }: AIBlueprintAssistantProps) {
             handleExport();
           }
         }}
-        className="h-9 rounded-xl border-[#fd5523]/25 bg-[#fff6ee] px-3.5 text-xs font-bold text-[#fd5523] hover:bg-[#fd5523] hover:text-white transition-all shadow-xs"
+        className={cn(
+          "h-9 rounded-xl border-[#fd5523]/25 bg-[#fff6ee] px-3.5 text-xs font-bold text-[#fd5523] hover:bg-[#fd5523] hover:text-white transition-all shadow-xs",
+          triggerClassName
+        )}
       >
         <Sparkles className="mr-1.5 h-3.5 w-3.5" />
-        AI Blueprint Assistant
+        {triggerLabel ?? "AI Blueprint Assistant"}
       </Button>
 
       <Dialog

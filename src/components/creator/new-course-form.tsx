@@ -207,6 +207,9 @@ export function NewCourseForm({
             <form action={createCourse} className="space-y-8">
               {companyId && <input type="hidden" name="company_id" value={companyId} />}
               {tenantSlug && <input type="hidden" name="tenant_slug" value={tenantSlug} />}
+              {blueprint?.module_outline?.length ? (
+                <input type="hidden" name="module_outline" value={JSON.stringify(blueprint.module_outline.slice(0, 12))} />
+              ) : null}
 
               {/* Section 1: Course Basics */}
               <section className="space-y-5 border-b border-slate-100 pb-7">

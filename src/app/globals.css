@@ -178,6 +178,20 @@
 }
 
 @layer utilities {
+  .no-scrollbar,
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar,
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  .pb-safe {
+    padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+  }
+
   .marketing-shell {
     position: relative;
     isolation: isolate;
@@ -471,3 +485,41 @@
   details > summary::-webkit-details-marker { display: none; }
   details[open] .faq-icon { transform: rotate(45deg); }
   .faq-icon { transition: transform 0.3s; display: inline-block; }
+/*
+ * The legacy marketing template (public/assets/css/style.css) is loaded unlayered and pulls in
+ * Bootstrap's reboot. Unlayered rules beat every Tailwind utility, so inside app UIs headings,
+ * links, buttons and inputs silently ignored their own classes (square buttons, 17px button text,
+ * oversized headings, recoloured links). Inside `.app-surface` we roll those properties back to the
+ * layered (Tailwind) value so components render exactly as their classes say.
+ */
+:is(.app-surface, [data-slot="dialog-content"], [data-slot="dropdown-menu-content"], [data-slot="sheet-content"]) :is(h1, h2, h3, h4, h5, h6) {
+  color: revert-layer;
+  font-family: revert-layer;
+  font-size: revert-layer;
+  font-weight: revert-layer;
+  line-height: revert-layer;
+  margin: revert-layer;
+}
+:is(.app-surface, [data-slot="dialog-content"], [data-slot="dropdown-menu-content"], [data-slot="sheet-content"]) a[class] {
+  color: revert-layer;
+  text-decoration: revert-layer;
+}
+:is(.app-surface, [data-slot="dialog-content"], [data-slot="dropdown-menu-content"], [data-slot="sheet-content"]) :is(button, input, select, textarea, optgroup) {
+  font-family: revert-layer;
+  font-size: revert-layer;
+  line-height: revert-layer;
+  margin: revert-layer;
+}
+:is(.app-surface, [data-slot="dialog-content"], [data-slot="dropdown-menu-content"], [data-slot="sheet-content"]) button {
+  border-radius: revert-layer;
+}
+:is(.app-surface, [data-slot="dialog-content"], [data-slot="dropdown-menu-content"], [data-slot="sheet-content"]) :is(p, ul, ol, dl, label) {
+  margin: revert-layer;
+  padding: revert-layer;
+}
+:is(.app-surface, [data-slot="dialog-content"], [data-slot="dropdown-menu-content"], [data-slot="sheet-content"]) label {
+  display: revert-layer;
+}
+:is(.app-surface, [data-slot="dialog-content"], [data-slot="dropdown-menu-content"], [data-slot="sheet-content"]) textarea {
+  resize: revert-layer;
+}

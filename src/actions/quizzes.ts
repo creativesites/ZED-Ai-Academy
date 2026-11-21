@@ -5,12 +5,35 @@ import { auth } from "@clerk/nextjs/server";
 import { createClient } from "@/lib/supabase/server";
 import type { Json } from "@/types/database";
 import { pendingRequiredTutorScenarios } from "@/lib/tutor/server/required-tutor-blocks";
+import {
+  assertCanManageLesson,
+  assertCanManageQuiz,
+  getLessonAccess,
+} from "@/lib/courses/course-auth-server";
+
+async function assertCanManageQuestion(
+  supabase: ReturnType<typeof createClient>,
+  questionId: string,
+  userId: string
+) {
+  const { data: q } = await supabase.from("quiz_questions").select("quiz_id").eq("id", questionId).maybeSingle();
+  if (!q?.quiz_id) throw new Error("Question not found.");
+  return assertCanManageQuiz(supabase, q.quiz_id, userId);
+}
 
 export async function createQuiz(lessonId: string, courseId: string) {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
 
   const supabase = createClient();
+  await assertCanManageLesson(supabase, lessonId, userId, courseId);
+
+  const { data: existingQuiz } = await supabase
+    .from("quizzes")
+    .select("*")
+    .eq("lesson_id", lessonId)
+    .maybeSingle();
+  if (existingQuiz) return existingQuiz;
 
   const { data, error } = await supabase
     .from("quizzes")
@@ -33,6 +56,7 @@ export async function updateQuiz(
   if (!userId) throw new Error("Unauthorized");
 
   const supabase = createClient();
+  await assertCanManageQuiz(supabase, quizId, userId);
 
   const { error } = await supabase.from("quizzes").update(updates).eq("id", quizId);
   if (error) throw new Error(error.message);
@@ -54,6 +78,7 @@ export async function addQuestion(
   if (!userId) throw new Error("Unauthorized");
 
   const supabase = createClient();
+  await assertCanManageQuiz(supabase, quizId, userId);
 
   const { data: existing } = await supabase
     .from("quiz_questions")
@@ -98,6 +123,7 @@ export async function updateQuestion(
   if (!userId) throw new Error("Unauthorized");
 
   const supabase = createClient();
+  await assertCanManageQuestion(supabase, questionId, userId);
 
   const { error } = await supabase
     .from("quiz_questions")
@@ -117,6 +143,7 @@ export async function deleteQuestion(
   if (!userId) throw new Error("Unauthorized");
 
   const supabase = createClient();
+  await assertCanManageQuestion(supabase, questionId, userId);
 
   const { error } = await supabase.from("quiz_questions").delete().eq("id", questionId);
   if (error) throw new Error(error.message);
@@ -157,6 +184,8 @@ export async function saveQuizAttempt(
   correctAnswers: Record<string, number[]>;
   /** Passed, but the lesson has required speaking practice still to do, so it was not marked complete. */
   lessonBlocked?: boolean;
+  /** null = unlimited */
+  attemptsRemaining?: number | null;
 }> {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
@@ -165,11 +194,27 @@ export async function saveQuizAttempt(
 
   const { data: quiz } = await supabase
     .from("quizzes")
-    .select("id, lesson_id, pass_threshold")
+    .select("id, lesson_id, pass_threshold, max_attempts")
     .eq("id", quizId)
     .single();
 
   if (!quiz) throw new Error("Quiz not found");
+
+  const access = await getLessonAccess(supabase, quiz.lesson_id, userId);
+  if (!access.allowed) {
+    throw new Error("Enrol in this course to take the knowledge check.");
+  }
+
+  const { data: priorAttempts } = await supabase
+    .from("quiz_attempts")
+    .select("passed")
+    .eq("quiz_id", quizId)
+    .eq("user_id", userId);
+  const attemptsUsed = priorAttempts?.length ?? 0;
+  const alreadyPassed = Boolean(priorAttempts?.some((a) => a.passed));
+  if (!alreadyPassed && quiz.max_attempts && quiz.max_attempts > 0 && attemptsUsed >= quiz.max_attempts) {
+    throw new Error("You have used all attempts for this knowledge check. Ask your instructor to reset it.");
+  }
 
   const { data: questions } = await supabase
     .from("quiz_questions")
@@ -191,6 +236,11 @@ export async function saveQuizAttempt(
   const score = Math.round((correct / questions.length) * 100);
   const passed = score >= quiz.pass_threshold;
 
+  // Practice retakes after a pass are graded but not recorded, so they never undo the pass.
+  if (alreadyPassed) {
+    return { score, passed, correctAnswers, lessonBlocked: false, attemptsRemaining: null };
+  }
+
   await supabase.from("quiz_attempts").insert({
     quiz_id: quizId,
     user_id: userId,
@@ -200,7 +250,9 @@ export async function saveQuizAttempt(
   });
 
   // If passed and lessonId is available, auto-mark lesson complete in lesson_progress
-  const targetLessonId = lessonId || quiz.lesson_id;
+  // Always trust the quiz's own lesson, never the caller-supplied one.
+  void lessonId;
+  const targetLessonId = quiz.lesson_id;
   // Same gate as the manual "Complete" action: required tutor_session blocks must be finished first.
   const lessonBlocked =
     passed && targetLessonId ? (await pendingRequiredTutorScenarios(supabase, targetLessonId, userId)).length > 0 : false;
@@ -233,5 +285,9 @@ export async function saveQuizAttempt(
     }
   }
 
-  return { score, passed, correctAnswers, lessonBlocked };
+  const attemptsRemaining =
+    quiz.max_attempts && quiz.max_attempts > 0 ? Math.max(0, quiz.max_attempts - attemptsUsed - 1) : null;
+  // Only reveal the answer key once the learner has passed or run out of attempts.
+  const reveal = passed || attemptsRemaining === 0;
+  return { score, passed, correctAnswers: reveal ? correctAnswers : {}, lessonBlocked, attemptsRemaining };
 }

@@ -1,10 +1,12 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
+import Link from "next/link";
 import {
   DndContext,
   closestCenter,
   PointerSensor,
+  TouchSensor,
   KeyboardSensor,
   useSensor,
   useSensors,
@@ -50,8 +52,6 @@ import { TutorSessionBlockEditor } from "@/components/creator/blocks/tutor-sessi
 import { QuizBuilder } from "@/components/creator/quiz-builder";
 import { AILessonGenerator } from "@/components/creator/ai-lesson-generator";
 import { LessonPreviewPane } from "@/components/creator/lesson-preview-pane";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   Dialog,
   DialogContent,
@@ -60,44 +60,57 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
-  GripVertical,
-  Trash2,
-  Video,
-  Type,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertCircle,
+  ArrowDown,
+  ArrowLeft,
+  ArrowUp,
+  BookMarked,
+  BookOpen,
+  Check,
+  CheckSquare,
   ChevronDown,
-  ChevronUp,
-  Loader2,
+  ChevronLeft,
+  ChevronRight,
+  ClipboardCheck,
+  Cloud,
+  Copy,
+  ExternalLink,
   Eye,
-  Save,
+  FileText,
+  GripVertical,
   HelpCircle,
   ImageIcon,
-  Megaphone,
-  Wrench,
-  SplitSquareHorizontal,
-  FileText,
-  Plus,
-  Pencil,
-  Sparkles,
   ListOrdered,
-  CheckSquare,
-  Zap,
-  Table,
-  BookOpen,
-  X,
-  Target,
-  BookMarked,
+  Loader2,
+  Megaphone,
   MessagesSquare,
-  ClipboardCheck,
-  ShieldAlert,
-  Smartphone,
   Mic,
+  MoreHorizontal,
+  PencilLine,
+  Plus,
   Search,
+  ShieldAlert,
+  Sparkles,
+  SplitSquareHorizontal,
+  Table,
+  Target,
+  Trash2,
+  Type,
+  Video,
+  Wrench,
+  Zap,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import type { ContentBlockType, Json } from "@/types/database";
 
-// Types and constants (same as before)
 type Block = {
   id: string;
   type: ContentBlockType;
@@ -122,42 +135,50 @@ type Quiz = {
   quiz_questions: QuizQuestion[];
 };
 
-const BLOCK_META: Record<ContentBlockType, { label: string; icon: React.ElementType; color: string; bgColor: string }> = {
-  video:          { label: "Video",          icon: Video,                  color: "text-red-500",     bgColor: "bg-red-50" },
-  text:           { label: "Rich Text",      icon: Type,                   color: "text-[#fd5523]",   bgColor: "bg-[#fff6ee]" },
-  image:          { label: "Visual",         icon: ImageIcon,              color: "text-violet-500",  bgColor: "bg-violet-50" },
-  callout:        { label: "Pro Tip",        icon: Megaphone,              color: "text-amber-500",   bgColor: "bg-amber-50" },
-  tool_spotlight: { label: "AI Tool",        icon: Wrench,                 color: "text-teal-500",    bgColor: "bg-teal-50" },
-  before_after:   { label: "Comparison",     icon: SplitSquareHorizontal,  color: "text-pink-500",    bgColor: "bg-pink-50" },
-  resource:       { label: "Asset",          icon: FileText,               color: "text-blue-600",    bgColor: "bg-blue-50" },
-  quiz:           { label: "Check",          icon: HelpCircle,             color: "text-[#062e39]",   bgColor: "bg-slate-100" },
-  ai_prompt:      { label: "AI Prompt",      icon: Sparkles,               color: "text-[#fd5523]",   bgColor: "bg-[#fff6ee]" },
-  steps:          { label: "Steps",          icon: ListOrdered,            color: "text-indigo-600",  bgColor: "bg-indigo-50" },
-  checklist:      { label: "Checklist",      icon: CheckSquare,            color: "text-emerald-600", bgColor: "bg-emerald-50" },
-  key_takeaway:   { label: "Takeaways",      icon: Zap,                    color: "text-amber-600",   bgColor: "bg-amber-50" },
-  practice_exercise: { label: "Practice",    icon: CheckSquare,            color: "text-emerald-700", bgColor: "bg-emerald-50" },
-  expert_note:    { label: "Expert Note",    icon: Zap,                    color: "text-slate-100",   bgColor: "bg-slate-900" },
-  comparison_table: { label: "Comparison",   icon: Table,                  color: "text-violet-600",  bgColor: "bg-violet-50" },
-  case_study:     { label: "Case Study",     icon: BookOpen,               color: "text-indigo-600",  bgColor: "bg-indigo-50" },
-  meeting:        { label: "Meeting",        icon: Video,                  color: "text-[#fd5523]",   bgColor: "bg-[#fff6ee]" },
-  learning_objectives: { label: "Objectives", icon: Target,               color: "text-sky-600",     bgColor: "bg-sky-50" },
-  glossary:       { label: "Glossary",       icon: BookMarked,             color: "text-violet-600",  bgColor: "bg-violet-50" },
-  discussion_prompt: { label: "Discussion",  icon: MessagesSquare,         color: "text-sky-700",     bgColor: "bg-sky-50" },
-  assignment:     { label: "Assignment",     icon: ClipboardCheck,         color: "text-emerald-700", bgColor: "bg-emerald-50" },
-  risk_assessment:{ label: "Risk",           icon: ShieldAlert,            color: "text-red-600",     bgColor: "bg-red-50" },
-  tutor_session:  { label: "Speaking",       icon: Mic,                    color: "text-cyan-700",    bgColor: "bg-cyan-50" },
+type SaveState = "saved" | "dirty" | "saving" | "error";
+
+type BlockMeta = {
+  label: string;
+  description: string;
+  icon: React.ElementType;
+  color: string;
+  bgColor: string;
+};
+
+const BLOCK_META: Record<ContentBlockType, BlockMeta> = {
+  text:           { label: "Text",            description: "Headings, paragraphs, lists and links", icon: Type, color: "text-[#fd5523]", bgColor: "bg-[#fff6ee]" },
+  video:          { label: "Video",           description: "Embed a YouTube video", icon: Video, color: "text-red-500", bgColor: "bg-red-50" },
+  image:          { label: "Image",           description: "Upload or generate a visual", icon: ImageIcon, color: "text-violet-500", bgColor: "bg-violet-50" },
+  before_after:   { label: "Before / After",  description: "Two images side by side", icon: SplitSquareHorizontal, color: "text-pink-500", bgColor: "bg-pink-50" },
+  callout:        { label: "Callout",         description: "Tip, warning or note box", icon: Megaphone, color: "text-amber-500", bgColor: "bg-amber-50" },
+  tool_spotlight: { label: "Tool Spotlight",  description: "Feature a tool with a link", icon: Wrench, color: "text-teal-500", bgColor: "bg-teal-50" },
+  resource:       { label: "File / Resource", description: "Downloadable worksheet or PDF", icon: FileText, color: "text-blue-600", bgColor: "bg-blue-50" },
+  quiz:           { label: "Quiz",            description: "Scored knowledge check", icon: HelpCircle, color: "text-indigo-600", bgColor: "bg-indigo-50" },
+  ai_prompt:      { label: "Prompt",          description: "Copy-ready prompt for learners", icon: Sparkles, color: "text-[#fd5523]", bgColor: "bg-[#fff6ee]" },
+  steps:          { label: "Steps",           description: "Numbered how-to walkthrough", icon: ListOrdered, color: "text-indigo-600", bgColor: "bg-indigo-50" },
+  checklist:      { label: "Checklist",       description: "Tickable list for learners", icon: CheckSquare, color: "text-emerald-600", bgColor: "bg-emerald-50" },
+  key_takeaway:   { label: "Key Takeaways",   description: "Summary of the main points", icon: Zap, color: "text-amber-600", bgColor: "bg-amber-50" },
+  practice_exercise: { label: "Practice Exercise", description: "Hands-on task with AI feedback", icon: CheckSquare, color: "text-emerald-700", bgColor: "bg-emerald-50" },
+  expert_note:    { label: "Expert Note",     description: "Advanced deep-dive aside", icon: Zap, color: "text-slate-100", bgColor: "bg-slate-800" },
+  comparison_table: { label: "Table",         description: "Compare options in a grid", icon: Table, color: "text-violet-600", bgColor: "bg-violet-50" },
+  case_study:     { label: "Case Study",      description: "Context, action, result", icon: BookOpen, color: "text-indigo-600", bgColor: "bg-indigo-50" },
+  meeting:        { label: "Live Session",    description: "Link a scheduled live class", icon: Video, color: "text-[#fd5523]", bgColor: "bg-[#fff6ee]" },
+  learning_objectives: { label: "Objectives", description: "What learners will be able to do", icon: Target, color: "text-sky-600", bgColor: "bg-sky-50" },
+  glossary:       { label: "Glossary",        description: "Key terms and definitions", icon: BookMarked, color: "text-violet-600", bgColor: "bg-violet-50" },
+  discussion_prompt: { label: "Discussion",   description: "Question for the class to discuss", icon: MessagesSquare, color: "text-sky-700", bgColor: "bg-sky-50" },
+  assignment:     { label: "Assignment",      description: "Deliverable with assessment notes", icon: ClipboardCheck, color: "text-emerald-700", bgColor: "bg-emerald-50" },
+  risk_assessment:{ label: "Risk Assessment", description: "Hazards, risk level, controls", icon: ShieldAlert, color: "text-red-600", bgColor: "bg-red-50" },
+  tutor_session:  { label: "Speaking Practice", description: "AI teacher role-play scene", icon: Mic, color: "text-cyan-700", bgColor: "bg-cyan-50" },
 };
 
 const TOOLBAR_GROUPS: { heading: string; types: ContentBlockType[] }[] = [
-  { heading: "Media & Visuals", types: ["video", "image", "before_after"] },
-  { heading: "Knowledge Delivery", types: ["text", "callout", "tool_spotlight", "resource"] },
-  { heading: "Practical Learning", types: ["ai_prompt", "steps", "checklist", "key_takeaway", "practice_exercise", "assignment"] },
-  { heading: "Classroom & School", types: ["learning_objectives", "glossary", "discussion_prompt"] },
-  { heading: "Technical & Safety", types: ["risk_assessment"] },
-  { heading: "AI Tutor", types: ["tutor_session"] },
-  { heading: "Advanced Learning", types: ["expert_note", "comparison_table", "case_study"] },
-  { heading: "Live & Assessment", types: ["meeting", "quiz"] },
+  { heading: "Essentials", types: ["text", "video", "image", "quiz", "callout", "resource"] },
+  { heading: "Teach", types: ["learning_objectives", "steps", "key_takeaway", "glossary", "case_study", "comparison_table", "before_after", "expert_note", "tool_spotlight", "ai_prompt"] },
+  { heading: "Practice", types: ["practice_exercise", "assignment", "checklist", "discussion_prompt", "tutor_session"] },
+  { heading: "Live & Safety", types: ["meeting", "risk_assessment"] },
 ];
+
+const QUICK_ADD: ContentBlockType[] = ["text", "video", "image", "quiz"];
 
 const DEFAULT_CONTENT: Record<ContentBlockType, Json> = {
   video:          { youtube_id: "", title: "" } as Json,
@@ -198,75 +219,6 @@ const DEFAULT_CONTENT: Record<ContentBlockType, Json> = {
   tutor_session:  { scenarioId: "", style: "scene", required: false, title: "", intro: "" } as Json,
 };
 
-function LessonEditorSidebarContent({
-  groups,
-  hasQuiz,
-  adding,
-  addBlock,
-  lessonId,
-  courseId,
-  lessonTitle,
-  onBlocksGenerated,
-}: {
-  groups: { heading: string; types: ContentBlockType[] }[];
-  hasQuiz: boolean;
-  adding: boolean;
-  addBlock: (type: ContentBlockType) => void;
-  lessonId: string;
-  courseId: string;
-  lessonTitle: string;
-  onBlocksGenerated?: (newBlocks: Block[]) => void;
-}) {
-  return (
-    <div className="space-y-6">
-      <div className="rounded-2xl border-0 bg-white p-4 shadow-xl sm:rounded-[2.5rem] sm:p-6">
-        <div className="mb-4 flex items-center gap-2 text-[#062e39] sm:mb-6">
-          <Plus className="h-4 w-4 text-[#fd5523] sm:h-5 sm:w-5" />
-          <h3 className="text-xs font-bold uppercase tracking-wider sm:text-sm">Block Library</h3>
-        </div>
-        <div className="space-y-6">
-          {groups.map((group) => (
-            <div key={group.heading}>
-              <p className="mb-2 text-[9px] font-bold uppercase tracking-wider text-slate-400 sm:mb-3 sm:text-[10px]">
-                {group.heading}
-              </p>
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-1">
-                {group.types
-                  .filter((type) => type !== "quiz" || !hasQuiz)
-                  .map((type) => {
-                    const meta = BLOCK_META[type];
-                    const Icon = meta.icon;
-                    return (
-                      <button
-                        key={type}
-                        onClick={() => addBlock(type)}
-                        disabled={adding}
-                        className="group flex items-center gap-2 rounded-xl border border-slate-100 bg-white p-2 text-left transition-all hover:border-[#fd5523]/30 hover:bg-[#fff6ee]/20 hover:shadow-md sm:gap-3 sm:p-3"
-                      >
-                        <div
-                          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-transform group-hover:scale-105 sm:h-10 sm:w-10 sm:rounded-xl ${meta.bgColor} ${meta.color}`}
-                        >
-                          {adding ? <Loader2 className="h-4 w-4 animate-spin" /> : <Icon className="h-4 w-4" />}
-                        </div>
-                        <span className="text-xs font-bold text-[#062e39] sm:text-sm">{meta.label}</span>
-                      </button>
-                    );
-                  })}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <AILessonGenerator
-        lessonId={lessonId}
-        courseId={courseId}
-        lessonTitle={lessonTitle}
-        onBlocksGenerated={onBlocksGenerated}
-      />
-    </div>
-  );
-}
 
 // Helper
 const asTyped = <T,>(v: unknown): T => v as T;
@@ -343,61 +295,114 @@ function BlockEditor({
   return <p className="text-sm text-slate-500">Block type &quot;{block.type}&quot; editor coming soon.</p>;
 }
 
-// --- SortableBlock (adjusted padding for mobile) ---
+
+const MENU_CLASS = "w-52 rounded-xl p-1.5";
+const ITEM_CLASS = "gap-2 rounded-lg px-2.5 py-2 text-[13px] font-medium cursor-pointer";
+const AUTOSAVE_MS = 1200;
+
+// ─── Block card with autosave ────────────────────────────────────────────────
 function SortableBlock({
   block,
+  index,
+  total,
   lessonId,
   courseId,
   courseTitle,
   moduleTitle,
   quiz,
+  onContentChange,
+  onStatus,
+  registerFlush,
   onDelete,
-  onSave,
+  onMove,
+  onDuplicate,
+  onInsertBelow,
 }: {
   block: Block;
+  index: number;
+  total: number;
   lessonId: string;
   courseId: string;
   courseTitle: string;
   moduleTitle: string;
   quiz?: Quiz | null;
-  onDelete: (id: string) => void;
-  onSave: (id: string, content: Json) => void;
+  onContentChange: (id: string, content: Json) => void;
+  onStatus: (id: string, state: SaveState | null) => void;
+  registerFlush: (id: string, fn: (() => Promise<void>) | null) => void;
+  onDelete: (block: Block) => void;
+  onMove: (id: string, dir: -1 | 1) => void;
+  onDuplicate: (block: Block) => void;
+  onInsertBelow: (index: number) => void;
 }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: block.id });
-  const [content, setContent] = useState(block.content as Record<string, unknown>);
-  const [saving, startSave] = useTransition();
-  const [deleting, startDelete] = useTransition();
+  const isTemp = block.id.startsWith("temp-");
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: block.id,
+    disabled: isTemp,
+  });
+  const [content, setContent] = useState<Json>(block.content);
+  const [revision, setRevision] = useState(0);
   const [collapsed, setCollapsed] = useState(false);
   const [showAiAssist, setShowAiAssist] = useState(false);
   const [aiPrompt, setAiPrompt] = useState("");
   const [aiGenerating, setAiGenerating] = useState(false);
+  const [, startSave] = useTransition();
 
-  const meta = BLOCK_META[block.type] ?? { label: block.type, icon: FileText, color: "text-slate-500", bgColor: "bg-slate-50" };
+  const latest = useRef<Json>(block.content);
+  const lastSaved = useRef<string>(JSON.stringify(block.content));
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const meta = BLOCK_META[block.type] ?? {
+    label: block.type,
+    description: "",
+    icon: FileText,
+    color: "text-slate-500",
+    bgColor: "bg-slate-50",
+  };
   const Icon = meta.icon;
 
-  function handleSave() {
-    if (block.id.startsWith("temp-")) {
-      toast.error("Block is still saving. Please wait.");
+  const save = useCallback(async () => {
+    if (timer.current) {
+      clearTimeout(timer.current);
+      timer.current = null;
+    }
+    if (block.id.startsWith("temp-")) return;
+    const snapshot = latest.current;
+    const json = JSON.stringify(snapshot);
+    if (json === lastSaved.current) {
+      onStatus(block.id, null);
       return;
     }
-    startSave(async () => {
-      await updateContentBlock(block.id, lessonId, courseId, content as Json);
-      onSave(block.id, content as Json);
-      toast.success("Block saved");
-    });
-  }
+    onStatus(block.id, "saving");
+    try {
+      await updateContentBlock(block.id, lessonId, courseId, snapshot);
+      lastSaved.current = json;
+      onStatus(block.id, JSON.stringify(latest.current) === json ? null : "dirty");
+    } catch (err) {
+      onStatus(block.id, "error");
+      toast.error(err instanceof Error ? err.message : "Couldn't save this block. Check your connection.");
+    }
+  }, [block.id, lessonId, courseId, onStatus]);
 
-  function handleDelete() {
-    if (!confirm("Delete this block?")) return;
-    if (block.id.startsWith("temp-")) {
-      onDelete(block.id);
-      return;
-    }
-    startDelete(async () => {
-      await deleteContentBlock(block.id, lessonId, courseId);
-      onDelete(block.id);
-      toast.success("Block deleted");
-    });
+  useEffect(() => {
+    registerFlush(block.id, save);
+    return () => registerFlush(block.id, null);
+  }, [block.id, registerFlush, save]);
+
+  // Flush pending edits if the block unmounts (navigation, deletion of a neighbour, …).
+  useEffect(() => {
+    return () => {
+      if (timer.current) void save();
+    };
+  }, [save]);
+
+  function handleChange(next: Json) {
+    latest.current = next;
+    setContent(next);
+    onContentChange(block.id, next);
+    if (JSON.stringify(next) === lastSaved.current) return;
+    onStatus(block.id, "dirty");
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = setTimeout(() => startSave(() => save()), AUTOSAVE_MS);
   }
 
   async function handleAiEdit() {
@@ -407,161 +412,159 @@ function SortableBlock({
       const res = await fetch("/api/ai/edit-block-content", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          blockType: block.type,
-          currentContent: content,
-          instruction: aiPrompt
-        }),
+        body: JSON.stringify({ blockType: block.type, currentContent: latest.current, instruction: aiPrompt }),
       });
-
       const data = await res.json();
       if (!res.ok || data.error) throw new Error(data.error || "Failed to update content");
-
-      setContent(data.newContent);
+      handleChange(data.newContent as Json);
+      setRevision((r) => r + 1); // remount the editor so it shows the AI's version
       setAiPrompt("");
       setShowAiAssist(false);
-      toast.success("AI updated block! Click 'Save' to keep changes.");
+      toast.success("Block rewritten — saving automatically.");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "AI content update failed");
+      toast.error(err instanceof Error ? err.message : "AI edit failed");
     } finally {
       setAiGenerating(false);
     }
   }
 
+  const canAiAssist = block.type !== "quiz" && block.type !== "tutor_session" && block.type !== "meeting";
+
   return (
     <div
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition }}
-      className={`group overflow-hidden rounded-2xl border-2 transition-all sm:rounded-[2rem] ${
-        isDragging 
-          ? "opacity-50 shadow-2xl z-20 border-[#fd5523]" 
-          : "border-slate-100 bg-white hover:border-[#fd5523]/20 hover:shadow-xl hover:shadow-[#062e39]/5"
-      }`}
+      className={cn(
+        "group rounded-2xl border bg-white transition-shadow",
+        isDragging ? "z-20 border-[#fd5523]/50 shadow-2xl" : "border-slate-200/80 hover:shadow-sm",
+        isTemp && "opacity-70"
+      )}
     >
-      {/* Block header - more compact on mobile */}
-      <div className="flex flex-wrap items-center gap-2 border-b border-slate-50 bg-[#fffaf6]/30 p-3 sm:flex-nowrap sm:gap-4 sm:p-5">
-        <button {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing touch-none text-slate-400 transition-colors hover:text-[#fd5523]">
-          <GripVertical className="h-4 w-4 sm:h-5 sm:w-5" />
+      <div className="flex items-center gap-1.5 px-2 py-2 sm:px-3">
+        <button
+          type="button"
+          aria-label="Drag to reorder"
+          {...attributes}
+          {...listeners}
+          className="hidden h-8 w-6 cursor-grab touch-none items-center justify-center text-slate-300 hover:text-slate-500 active:cursor-grabbing sm:flex"
+        >
+          <GripVertical className="h-4 w-4" />
+        </button>
+        <button
+          type="button"
+          onClick={() => setCollapsed((v) => !v)}
+          className="flex min-w-0 flex-1 items-center gap-2.5 text-left"
+          aria-expanded={!collapsed}
+        >
+          <span className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-lg", meta.bgColor, meta.color)}>
+            {isTemp ? <Loader2 className="h-4 w-4 animate-spin" /> : <Icon className="h-4 w-4" />}
+          </span>
+          <span className="truncate text-sm font-semibold text-[#062e39]">{meta.label}</span>
+          <ChevronDown className={cn("h-4 w-4 shrink-0 text-slate-400 transition-transform", collapsed && "-rotate-90")} />
         </button>
 
-        <div className="flex items-center gap-2 sm:gap-3">
-          <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${meta.bgColor} ${meta.color} sm:h-10 sm:w-10 sm:rounded-xl`}>
-            <Icon className="h-4 w-4 sm:h-5 sm:w-5" />
-          </div>
-          <span className="text-xs font-bold uppercase tracking-wider text-[#062e39] sm:text-sm sm:tracking-widest">{meta.label}</span>
-        </div>
-
-        <div className="flex-1" />
-
-        <div className="flex items-center gap-1 sm:gap-2">
-          {/* AI Assist Button */}
-          <Button
+        {canAiAssist && (
+          <button
+            type="button"
             onClick={() => setShowAiAssist((v) => !v)}
-            disabled={aiGenerating}
-            size="sm"
-            variant="outline"
-            className="h-8 rounded-full border-blue-200 text-blue-700 bg-blue-50/50 hover:bg-blue-100 hover:text-blue-800 sm:h-9 px-2.5 text-xs font-bold sm:px-3"
+            disabled={isTemp}
+            className={cn(
+              "inline-flex h-8 items-center gap-1 rounded-lg px-2 text-xs font-semibold transition-colors",
+              showAiAssist ? "bg-[#062e39] text-white" : "text-slate-500 hover:bg-[#fff6ee] hover:text-[#fd5523]"
+            )}
           >
-            <Sparkles className="mr-1 h-3.5 w-3.5" />
-            <span className="hidden xs:inline">AI Assist</span>
-          </Button>
-
-          <Button
-            onClick={handleSave}
-            disabled={saving}
-            size="sm"
-            className="h-8 rounded-full bg-[#fd5523] px-3 text-xs font-bold text-white hover:bg-[#ef4a16] sm:h-9 sm:px-4 sm:text-sm"
-          >
-            {saving ? <Loader2 className="mr-1 h-3 w-3 animate-spin sm:mr-1.5" /> : <Save className="mr-1 h-3 w-3 sm:mr-1.5" />}
-            <span className="hidden sm:inline">Save</span>
-          </Button>
-
-          <button
-            onClick={() => setCollapsed((v) => !v)}
-            className="flex h-7 w-7 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition-colors hover:bg-slate-100 sm:h-8 sm:w-8"
-          >
-            {collapsed ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronUp className="h-3.5 w-3.5" />}
+            <Sparkles className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Rewrite</span>
           </button>
+        )}
 
-          <button
-            onClick={handleDelete}
-            disabled={deleting}
-            className="flex h-7 w-7 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-500 disabled:opacity-40 sm:h-8 sm:w-8"
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            aria-label={`${meta.label} block actions`}
+            disabled={isTemp}
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-[#062e39] data-[popup-open]:bg-slate-100"
           >
-            {deleting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
-          </button>
-        </div>
+            <MoreHorizontal className="h-4 w-4" />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className={MENU_CLASS}>
+            <DropdownMenuItem className={ITEM_CLASS} onClick={() => onInsertBelow(index + 1)}>
+              <Plus className="h-4 w-4" /> Add block below
+            </DropdownMenuItem>
+            {block.type !== "quiz" && (
+              <DropdownMenuItem className={ITEM_CLASS} onClick={() => onDuplicate({ ...block, content: latest.current })}>
+                <Copy className="h-4 w-4" /> Duplicate
+              </DropdownMenuItem>
+            )}
+            <DropdownMenuSeparator />
+            <DropdownMenuItem className={ITEM_CLASS} disabled={index === 0} onClick={() => onMove(block.id, -1)}>
+              <ArrowUp className="h-4 w-4" /> Move up
+            </DropdownMenuItem>
+            <DropdownMenuItem className={ITEM_CLASS} disabled={index === total - 1} onClick={() => onMove(block.id, 1)}>
+              <ArrowDown className="h-4 w-4" /> Move down
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem className={ITEM_CLASS} variant="destructive" onClick={() => onDelete(block)}>
+              <Trash2 className="h-4 w-4" /> Delete block
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
-      {/* AI Assist Expandable Form Panel */}
       {showAiAssist && (
-        <div className="border-b border-blue-100 bg-blue-50/20 p-4 sm:p-5 animate-in slide-in-from-top-2 duration-200">
-          <div className="flex flex-col gap-3">
-            <div className="flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-blue-600 animate-pulse" />
-              <span className="text-[10px] font-black uppercase tracking-wider text-blue-800">AI Block Assistant</span>
-            </div>
-            
-            <p className="text-xs text-blue-900/60 leading-relaxed">
-              Type custom instructions (e.g., "rewrite with simpler language", "make it look like a checklist", "add 3 more steps") and the AI will update this block's content for you.
-            </p>
-
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={aiPrompt}
-                onChange={(e) => setAiPrompt(e.target.value)}
-                placeholder="What changes should the AI make to this block?"
+        <div className="mx-2 mb-2 rounded-xl border border-[#fd5523]/20 bg-[#fffaf6] p-3 sm:mx-3">
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={aiPrompt}
+              onChange={(e) => setAiPrompt(e.target.value)}
+              placeholder="How should AI change this block?"
+              disabled={aiGenerating}
+              autoFocus
+              className="h-10 min-w-0 flex-1 rounded-lg border border-slate-200 bg-white px-3 text-sm text-[#062e39] outline-none focus:border-[#fd5523]/50 disabled:opacity-50"
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  void handleAiEdit();
+                }
+              }}
+            />
+            <button
+              type="button"
+              onClick={handleAiEdit}
+              disabled={aiGenerating || !aiPrompt.trim()}
+              className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-lg bg-[#fd5523] px-3.5 text-xs font-semibold text-white hover:bg-[#ef4a16] disabled:opacity-50"
+            >
+              {aiGenerating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+              Apply
+            </button>
+          </div>
+          <div className="no-scrollbar mt-2 flex gap-1.5 overflow-x-auto">
+            {["Simplify the language", "Make it more detailed", "Add a real-world example", "Shorten it"].map((s) => (
+              <button
+                key={s}
+                type="button"
+                onClick={() => setAiPrompt(s)}
                 disabled={aiGenerating}
-                className="flex-1 rounded-xl border border-blue-200 bg-white px-3.5 py-2 text-xs text-slate-800 focus:border-blue-500 focus:outline-none disabled:opacity-50"
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    handleAiEdit();
-                  }
-                }}
-              />
-              <Button
-                onClick={handleAiEdit}
-                disabled={aiGenerating || !aiPrompt.trim()}
-                className="rounded-xl bg-blue-600 px-4 text-xs font-bold text-white hover:bg-blue-500 disabled:opacity-50"
+                className="shrink-0 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-600 hover:border-[#fd5523]/40 hover:text-[#fd5523]"
               >
-                {aiGenerating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Apply"}
-              </Button>
-            </div>
-            
-            {/* Quick Suggestions for Teachers */}
-            <div className="flex flex-wrap gap-1.5 pt-1">
-              {[
-                "✍️ Simplify the text",
-                "📈 Add advanced details",
-                "💡 Turn into a friendly tip",
-                "🎯 Focus on target objectives",
-              ].map((s) => (
-                <button
-                  key={s}
-                  onClick={() => setAiPrompt(s.slice(3))}
-                  disabled={aiGenerating}
-                  className="rounded-full bg-white border border-blue-100 px-2.5 py-1 text-[10px] text-blue-700 hover:bg-blue-50 hover:border-blue-300 transition-colors"
-                >
-                  {s}
-                </button>
-              ))}
-            </div>
+                {s}
+              </button>
+            ))}
           </div>
         </div>
       )}
 
       {!collapsed && (
-        <div className="p-4 sm:p-6">
+        <div className={cn("border-t border-slate-100 p-3 sm:p-5", isTemp && "pointer-events-none")}>
           <BlockEditor
-            block={{ ...block, content: content as Json }}
+            key={revision}
+            block={{ ...block, content }}
             lessonId={lessonId}
             courseId={courseId}
             courseTitle={courseTitle}
             moduleTitle={moduleTitle}
             quiz={quiz}
-            onChange={(c) => setContent(c as Record<string, unknown>)}
+            onChange={handleChange}
           />
         </div>
       )}
@@ -569,53 +572,109 @@ function SortableBlock({
   );
 }
 
-// --- Simple Onboarding Tour (localStorage based) ---
-function LessonEditorTour({ onClose }: { onClose: () => void }) {
-  const [step, setStep] = useState(0);
-  const steps = [
-    { title: "Welcome to the Lesson Studio!", content: "Here you can craft engaging lessons using flexible content blocks. Let's walk you through the key features." },
-    { title: "Lesson Title & Settings", content: "Edit your lesson title and toggle free preview mode. Don't forget to save your changes with the Commit button." },
-    { title: "Content Blocks", content: "Each block (video, text, quiz, etc.) is a building block. You can drag to reorder, save individually, or collapse them." },
-    { title: "Adding New Blocks (Mobile)", content: "On mobile, tap the floating orange + button to open the block library. Choose any block type to add it to your lesson." },
-    { title: "Adding New Blocks (Desktop)", content: "On larger screens, the block library stays on the right sidebar – just click any block to insert it instantly." },
-    { title: "AI Lesson Generator", content: "Need inspiration? Use the AI panel to auto‑generate entire lessons or individual blocks based on your topic." },
-  ];
-
-  const next = () => {
-    if (step + 1 < steps.length) setStep(step + 1);
-    else onClose();
-  };
+// ─── Block picker ────────────────────────────────────────────────────────────
+function BlockPicker({
+  open,
+  onOpenChange,
+  hasQuiz,
+  onPick,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  hasQuiz: boolean;
+  onPick: (type: ContentBlockType) => void;
+}) {
+  const [search, setSearch] = useState("");
+  const q = search.trim().toLowerCase();
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 p-4 backdrop-blur-sm sm:items-center">
-      <div className="max-w-md rounded-2xl bg-white shadow-2xl sm:rounded-3xl">
-        <div className="border-b border-slate-100 p-5">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-bold text-[#062e39]">{steps[step].title}</h3>
-            <button onClick={onClose} className="rounded-full p-1 hover:bg-slate-100">
-              <X className="h-5 w-5 text-slate-400" />
-            </button>
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        onOpenChange(next);
+        if (!next) setSearch("");
+      }}
+    >
+      <DialogContent className="flex max-h-[85vh] w-[calc(100vw-1rem)] max-w-[calc(100vw-1rem)] flex-col gap-0 overflow-hidden rounded-2xl p-0 sm:max-w-2xl">
+        <DialogHeader className="shrink-0 space-y-3 border-b border-slate-100 p-4 sm:p-5">
+          <div className="pr-8 text-left">
+            <DialogTitle className="text-lg font-bold text-[#062e39]">Add a block</DialogTitle>
+            <DialogDescription className="text-sm text-slate-500">
+              Lessons are built from blocks. Pick one — you can reorder later.
+            </DialogDescription>
           </div>
-        </div>
-        <div className="p-5">
-          <p className="text-sm text-slate-600 leading-relaxed">{steps[step].content}</p>
-          <div className="mt-6 flex items-center justify-between">
-            <div className="flex gap-1">
-              {steps.map((_, i) => (
-                <div key={i} className={`h-1.5 w-6 rounded-full ${i === step ? "bg-[#fd5523]" : "bg-slate-200"}`} />
-              ))}
-            </div>
-            <Button onClick={next} className="rounded-full bg-[#fd5523] px-6 text-white hover:bg-[#ef4a16]">
-              {step + 1 === steps.length ? "Get Started" : "Next"}
-            </Button>
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search blocks…"
+              className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 pl-9 pr-3 text-sm outline-none focus:border-[#fd5523]/40 focus:bg-white"
+            />
           </div>
+        </DialogHeader>
+        <div className="flex-1 space-y-5 overflow-y-auto p-4 sm:p-5">
+          {TOOLBAR_GROUPS.map((group) => {
+            const types = group.types
+              .filter((t) => t !== "quiz" || !hasQuiz)
+              .filter((t) => {
+                if (!q) return true;
+                const m = BLOCK_META[t];
+                return m.label.toLowerCase().includes(q) || m.description.toLowerCase().includes(q) || t.includes(q);
+              });
+            if (types.length === 0) return null;
+            return (
+              <div key={group.heading}>
+                <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-slate-400">{group.heading}</p>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {types.map((type) => {
+                    const meta = BLOCK_META[type];
+                    const Icon = meta.icon;
+                    return (
+                      <button
+                        key={type}
+                        type="button"
+                        onClick={() => onPick(type)}
+                        className="flex items-center gap-3 rounded-xl border border-slate-200/80 bg-white p-3 text-left transition-colors hover:border-[#fd5523]/40 hover:bg-[#fffaf6] active:scale-[0.99]"
+                      >
+                        <span className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-lg", meta.bgColor, meta.color)}>
+                          <Icon className="h-4 w-4" />
+                        </span>
+                        <span className="min-w-0">
+                          <span className="block text-sm font-semibold text-[#062e39]">{meta.label}</span>
+                          <span className="block truncate text-xs text-slate-500">{meta.description}</span>
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
-// --- Main LessonEditorClient (Mobile‑First) ---
+function SaveIndicator({ state }: { state: SaveState }) {
+  const map = {
+    saved: { icon: <Check className="h-3.5 w-3.5" />, label: "Saved", cls: "text-emerald-600" },
+    dirty: { icon: <PencilLine className="h-3.5 w-3.5" />, label: "Editing…", cls: "text-slate-500" },
+    saving: { icon: <Loader2 className="h-3.5 w-3.5 animate-spin" />, label: "Saving…", cls: "text-slate-500" },
+    error: { icon: <AlertCircle className="h-3.5 w-3.5" />, label: "Not saved", cls: "text-red-600" },
+  }[state];
+  return (
+    <span className={cn("inline-flex items-center gap-1 text-xs font-medium", map.cls)} aria-live="polite">
+      {state === "saved" ? <Cloud className="h-3.5 w-3.5" /> : map.icon}
+      <span className="hidden sm:inline">{map.label}</span>
+    </span>
+  );
+}
+
+type NavLesson = { id: string; title: string; href: string } | null;
+
+// ─── Lesson studio ───────────────────────────────────────────────────────────
 export function LessonEditorClient({
   lesson,
   courseId,
@@ -624,6 +683,11 @@ export function LessonEditorClient({
   initialBlocks,
   quiz,
   tenantSlug,
+  backHref,
+  learnerHref,
+  position,
+  prevLesson,
+  nextLesson,
 }: {
   lesson: { id: string; title: string; is_preview: boolean };
   courseId: string;
@@ -632,33 +696,134 @@ export function LessonEditorClient({
   initialBlocks: Block[];
   quiz?: Quiz | null;
   tenantSlug?: string;
+  backHref: string;
+  learnerHref: string | null;
+  position: { index: number; total: number };
+  prevLesson: NavLesson;
+  nextLesson: NavLesson;
 }) {
   const [blocks, setBlocks] = useState(initialBlocks);
   const [title, setTitle] = useState(lesson.title);
   const [isPreview, setIsPreview] = useState(lesson.is_preview);
-  const [activeTab, setActiveTab] = useState<"editor" | "preview">("editor");
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [insertAt, setInsertAt] = useState<number | null>(null);
+  const [mobileView, setMobileView] = useState<"edit" | "preview" | "ai">("edit");
   const [asideTab, setAsideTab] = useState<"preview" | "ai">("preview");
-  const [savingMeta, startSaveMeta] = useTransition();
-  const [adding, startAdd] = useTransition();
-  const [, startReorder] = useTransition();
-  const [showBlockPicker, setShowBlockPicker] = useState(false);
-  const [blockSearch, setBlockSearch] = useState("");
-  const [blockCategory, setBlockCategory] = useState<string>("All");
-  const [showTour, setShowTour] = useState(() => {
-    if (typeof window === "undefined") return false;
-    return !window.localStorage.getItem("lesson_editor_tour_seen");
-  });
+  const [statuses, setStatuses] = useState<Record<string, SaveState>>({});
+  const flushers = useRef(new Map<string, () => Promise<void>>());
+  const titleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const savedTitle = useRef(lesson.title);
 
   const sensors = useSensors(
-    useSensor(PointerSensor),
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 6 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
-  function handleSaveMeta() {
-    startSaveMeta(async () => {
-      await updateLesson(lesson.id, courseId, { title, is_preview: isPreview }, tenantSlug);
-      toast.success("Lesson saved");
+  const setStatus = useCallback((id: string, state: SaveState | null) => {
+    setStatuses((prev) => {
+      if (state === null) {
+        if (!(id in prev)) return prev;
+        const next = { ...prev };
+        delete next[id];
+        return next;
+      }
+      return prev[id] === state ? prev : { ...prev, [id]: state };
     });
+  }, []);
+
+  const registerFlush = useCallback((id: string, fn: (() => Promise<void>) | null) => {
+    if (fn) flushers.current.set(id, fn);
+    else flushers.current.delete(id);
+  }, []);
+
+  const overall: SaveState = useMemo(() => {
+    const values = Object.values(statuses);
+    if (values.includes("error")) return "error";
+    if (values.includes("saving")) return "saving";
+    if (values.includes("dirty")) return "dirty";
+    return "saved";
+  }, [statuses]);
+
+  // ── Lesson title autosave ──
+  const saveTitle = useCallback(async (value: string) => {
+    if (titleTimer.current) {
+      clearTimeout(titleTimer.current);
+      titleTimer.current = null;
+    }
+    const clean = value.trim();
+    if (!clean || clean === savedTitle.current) {
+      setStatus("__title", null);
+      return;
+    }
+    setStatus("__title", "saving");
+    try {
+      await updateLesson(lesson.id, courseId, { title: clean }, tenantSlug);
+      savedTitle.current = clean;
+      setStatus("__title", null);
+    } catch (err) {
+      setStatus("__title", "error");
+      toast.error(err instanceof Error ? err.message : "Couldn't save the title.");
+    }
+  }, [courseId, lesson.id, setStatus, tenantSlug]);
+
+  function handleTitleChange(value: string) {
+    setTitle(value);
+    setStatus("__title", "dirty");
+    if (titleTimer.current) clearTimeout(titleTimer.current);
+    titleTimer.current = setTimeout(() => void saveTitle(value), 1000);
+  }
+
+  const flushAll = useCallback(async () => {
+    await Promise.all([...flushers.current.values()].map((fn) => fn()));
+    if (titleTimer.current) await saveTitle(title);
+  }, [saveTitle, title]);
+
+  // Cmd/Ctrl+S saves immediately; warn before leaving with unsaved edits.
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "s") {
+        e.preventDefault();
+        void flushAll().then(() => toast.success("All changes saved"));
+      }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [flushAll]);
+
+  useEffect(() => {
+    if (overall === "saved") return;
+    function onBeforeUnload(e: BeforeUnloadEvent) {
+      e.preventDefault();
+    }
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => window.removeEventListener("beforeunload", onBeforeUnload);
+  }, [overall]);
+
+  function togglePreview() {
+    const next = !isPreview;
+    setIsPreview(next);
+    setStatus("__preview", "saving");
+    updateLesson(lesson.id, courseId, { is_preview: next }, tenantSlug)
+      .then(() => {
+        setStatus("__preview", null);
+        toast.success(next ? "Free preview on — anyone can open this lesson" : "Enrolled learners only");
+      })
+      .catch((err) => {
+        setIsPreview(!next);
+        setStatus("__preview", "error");
+        toast.error(err instanceof Error ? err.message : "Couldn't update preview setting.");
+      });
+  }
+
+  // ── Block operations ──
+  async function persistOrder(next: Block[]) {
+    const real = next.filter((b) => !b.id.startsWith("temp-"));
+    try {
+      await reorderContentBlocks(lesson.id, courseId, real.map((b) => b.id));
+    } catch {
+      toast.error("Couldn't save the new order.");
+    }
   }
 
   function handleDragEnd(event: DragEndEvent) {
@@ -666,444 +831,391 @@ export function LessonEditorClient({
     if (!over || active.id === over.id) return;
     const oldIndex = blocks.findIndex((b) => b.id === active.id);
     const newIndex = blocks.findIndex((b) => b.id === over.id);
-    const reordered = arrayMove(blocks, oldIndex, newIndex);
-    setBlocks(reordered);
-    startReorder(async () => {
-      await reorderContentBlocks(lesson.id, courseId, reordered.map((b) => b.id));
-    });
+    const next = arrayMove(blocks, oldIndex, newIndex);
+    setBlocks(next);
+    void persistOrder(next);
   }
 
-  function addBlock(type: ContentBlockType) {
+  function moveBlock(id: string, dir: -1 | 1) {
+    const from = blocks.findIndex((b) => b.id === id);
+    const to = from + dir;
+    if (from < 0 || to < 0 || to >= blocks.length) return;
+    const next = arrayMove(blocks, from, to);
+    setBlocks(next);
+    void persistOrder(next);
+  }
+
+  async function insertBlock(type: ContentBlockType, content: Json, at: number | null) {
     const tempId = `temp-${Date.now()}`;
-    const newBlock: Block = {
-      id: tempId,
-      type,
-      position: blocks.length + 1,
-      content: DEFAULT_CONTENT[type],
-    };
-
-    // Optimistically update UI and auto-dismiss block picker modal/sheet
-    setBlocks((prev) => [...prev, newBlock]);
-    setShowBlockPicker(false);
-    setBlockSearch("");
-    toast.success(`${BLOCK_META[type]?.label ?? type} block added`);
-
-    startAdd(async () => {
-      try {
-        const created = await createContentBlock(lesson.id, courseId, type, DEFAULT_CONTENT[type]);
-        setBlocks((prev) =>
-          prev.map((b) =>
-            b.id === tempId
-              ? {
-                  id: created.id,
-                  type: created.type as ContentBlockType,
-                  position: created.position,
-                  content: created.content as Json,
-                }
-              : b
-          )
-        );
-      } catch (error) {
-        console.error("Failed to create block:", error);
-        toast.error("Failed to save new block. Please try again.");
-        setBlocks((prev) => prev.filter((b) => b.id !== tempId));
-      }
+    const index = at === null ? blocks.length : Math.min(at, blocks.length);
+    const temp: Block = { id: tempId, type, position: index + 1, content };
+    let ordered: Block[] = [];
+    setBlocks((prev) => {
+      ordered = [...prev.slice(0, index), temp, ...prev.slice(index)];
+      return ordered;
     });
+    setMobileView("edit");
+
+    try {
+      const created = await createContentBlock(lesson.id, courseId, type, content);
+      const real: Block = {
+        id: created.id,
+        type: created.type as ContentBlockType,
+        position: created.position,
+        content: created.content as Json,
+      };
+      let finalOrder: Block[] = [];
+      setBlocks((prev) => {
+        finalOrder = prev.map((b) => (b.id === tempId ? real : b));
+        return finalOrder;
+      });
+      // Server appends at the end; reorder if we inserted mid-lesson.
+      if (index < ordered.length - 1) void persistOrder(finalOrder.length ? finalOrder : ordered.map((b) => (b.id === tempId ? real : b)));
+      requestAnimationFrame(() =>
+        document.getElementById(`block-${real.id}`)?.scrollIntoView({ behavior: "smooth", block: "center" })
+      );
+    } catch {
+      toast.error("Couldn't add that block. Please try again.");
+      setBlocks((prev) => prev.filter((b) => b.id !== tempId));
+    }
+  }
+
+  function pickBlock(type: ContentBlockType) {
+    setPickerOpen(false);
+    void insertBlock(type, DEFAULT_CONTENT[type], insertAt);
+    setInsertAt(null);
+  }
+
+  function openPicker(at: number | null = null) {
+    setInsertAt(at);
+    setPickerOpen(true);
+  }
+
+  async function deleteBlock(block: Block) {
+    const label = BLOCK_META[block.type]?.label ?? "block";
+    const extra = block.type === "quiz" ? " Its questions and learners' attempts will be removed." : "";
+    if (!window.confirm(`Delete this ${label.toLowerCase()} block?${extra}`)) return;
+    const before = blocks;
+    setBlocks((prev) => prev.filter((b) => b.id !== block.id));
+    setStatus(block.id, null);
+    if (block.id.startsWith("temp-")) return;
+    try {
+      await deleteContentBlock(block.id, lesson.id, courseId);
+      toast.success("Block deleted");
+    } catch (err) {
+      setBlocks(before);
+      toast.error(err instanceof Error ? err.message : "Couldn't delete block.");
+    }
   }
 
   const hasQuiz = blocks.some((b) => b.type === "quiz");
+  const lessonNumber = position.index >= 0 ? position.index + 1 : null;
+
+  const previewPanel = (
+    <LessonPreviewPane title={title} moduleTitle={moduleTitle} blocks={blocks} quiz={quiz} isLiveSync />
+  );
+  const aiPanel = (
+    <AILessonGenerator
+      lessonId={lesson.id}
+      courseId={courseId}
+      lessonTitle={title}
+      existingBlockTypes={blocks.map((b) => b.type)}
+      onBlocksGenerated={(newBlocks) => {
+        setBlocks((prev) => [...prev, ...newBlocks]);
+        setMobileView("edit");
+        setAsideTab("preview");
+        toast.success(`${newBlocks.length} block${newBlocks.length === 1 ? "" : "s"} added`);
+      }}
+    />
+  );
 
   return (
     <>
-      {showTour && (
-        <LessonEditorTour onClose={() => {
-          localStorage.setItem("lesson_editor_tour_seen", "true");
-          setShowTour(false);
-        }} />
-      )}
+      <BlockPicker open={pickerOpen} onOpenChange={setPickerOpen} hasQuiz={hasQuiz} onPick={pickBlock} />
 
-      <div className="space-y-6 pb-24 sm:space-y-8 sm:pb-0">
-        {/* Mobile FAB (only visible on small screens) */}
-        <div className="fixed bottom-6 right-6 z-40 block lg:hidden">
-          <button
-            type="button"
-            aria-label="Add content block"
-            onClick={() => setShowBlockPicker(true)}
-            className="flex h-14 w-14 items-center justify-center rounded-full bg-[#fd5523] text-white shadow-xl transition-all hover:scale-105 hover:bg-[#ef4a16] active:scale-95"
+      {/* ── Top bar ─────────────────────────────────────────────── */}
+      <div className="sticky top-16 z-30 border-b border-slate-200/80 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/85">
+        <div className="flex h-12 items-center gap-1 px-2 sm:gap-2 sm:px-4">
+          <Link
+            href={backHref}
+            onClick={() => void flushAll()}
+            className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg px-2 text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-[#062e39]"
+            aria-label={`Back to ${courseTitle}`}
           >
-            <Plus className="h-6 w-6" />
-          </button>
+            <ArrowLeft className="h-4 w-4" />
+            <span className="hidden max-w-[220px] truncate md:inline">{courseTitle}</span>
+          </Link>
+          <span className="truncate text-xs text-slate-400">
+            {lessonNumber ? `Lesson ${lessonNumber} of ${position.total}` : "Lesson"}
+          </span>
+          <div className="ml-auto flex shrink-0 items-center gap-1">
+            <SaveIndicator state={overall} />
+            <div className="mx-1 h-5 w-px bg-slate-200" />
+            {prevLesson ? (
+              <Link
+                href={prevLesson.href}
+                onClick={() => void flushAll()}
+                title={`Previous: ${prevLesson.title}`}
+                className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 hover:text-[#062e39]"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Link>
+            ) : (
+              <span className="flex h-9 w-9 items-center justify-center text-slate-200"><ChevronLeft className="h-4 w-4" /></span>
+            )}
+            {nextLesson ? (
+              <Link
+                href={nextLesson.href}
+                onClick={() => void flushAll()}
+                title={`Next: ${nextLesson.title}`}
+                className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 hover:text-[#062e39]"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Link>
+            ) : (
+              <span className="flex h-9 w-9 items-center justify-center text-slate-200"><ChevronRight className="h-4 w-4" /></span>
+            )}
+            {learnerHref && (
+              <Link
+                href={learnerHref}
+                target="_blank"
+                className="ml-1 hidden h-9 items-center gap-1.5 rounded-lg border border-slate-200 px-3 text-xs font-semibold text-[#062e39] hover:bg-slate-50 sm:inline-flex"
+              >
+                <ExternalLink className="h-3.5 w-3.5" />
+                View as learner
+              </Link>
+            )}
+          </div>
         </div>
+      </div>
 
-        {/* Searchable Block Library Modal (Desktop & Mobile, auto-dismisses on add) */}
-        <Dialog open={showBlockPicker} onOpenChange={setShowBlockPicker}>
-          <DialogContent className="w-[calc(100vw-1.5rem)] max-w-[calc(100vw-1.5rem)] sm:max-w-[92vw] lg:max-w-[88vw] xl:max-w-6xl max-h-[90vh] flex flex-col gap-0 p-0 overflow-hidden rounded-2xl sm:rounded-3xl border border-slate-200 shadow-2xl">
-            <DialogHeader className="p-5 sm:p-6 border-b border-slate-100 bg-white shrink-0">
-              <div className="flex items-center gap-3 pr-8">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#fff6ee] text-[#fd5523]">
-                  <Plus className="h-5 w-5" />
-                </div>
-                <div className="text-left">
-                  <DialogTitle className="text-lg sm:text-xl font-bold text-[#062e39]">
-                    Add Content Block
-                  </DialogTitle>
-                  <DialogDescription className="text-xs sm:text-sm text-slate-500">
-                    Click any block below to insert it into your lesson.
-                  </DialogDescription>
-                </div>
-              </div>
-
-              <div className="mt-4 flex flex-col md:flex-row md:items-center gap-3">
-                <div className="relative flex-1 min-w-0 md:max-w-md">
-                  <Search className="h-4 w-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                  <Input
-                    value={blockSearch}
-                    onChange={(e) => setBlockSearch(e.target.value)}
-                    placeholder="Search blocks (e.g. Video, Quiz, Steps)..."
-                    className="h-10 w-full pl-10 rounded-xl border-slate-200 bg-slate-50 text-sm focus:bg-white"
-                  />
-                </div>
-                <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0">
-                  {["All", ...TOOLBAR_GROUPS.map((g) => g.heading)].map((cat) => (
-                    <button
-                      key={cat}
-                      type="button"
-                      onClick={() => setBlockCategory(cat)}
-                      className={cn(
-                        "px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-colors",
-                        blockCategory === cat
-                          ? "bg-[#062e39] text-white"
-                          : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                      )}
-                    >
-                      {cat === "All" ? "All" : cat.split(" ")[0]}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </DialogHeader>
-
-            <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6 bg-slate-50/50">
-              {TOOLBAR_GROUPS.filter(
-                (group) => blockCategory === "All" || group.heading === blockCategory
-              ).map((group) => {
-                const matchingTypes = group.types
-                  .filter((type) => type !== "quiz" || !hasQuiz)
-                  .filter((type) => {
-                    if (!blockSearch.trim()) return true;
-                    const label = BLOCK_META[type]?.label ?? type;
-                    return (
-                      label.toLowerCase().includes(blockSearch.toLowerCase()) ||
-                      type.toLowerCase().includes(blockSearch.toLowerCase())
-                    );
-                  });
-
-                if (matchingTypes.length === 0) return null;
-
-                return (
-                  <div key={group.heading} className="space-y-3">
-                    <p className="text-[11px] font-black uppercase tracking-widest text-slate-400">
-                      {group.heading}
-                    </p>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                      {matchingTypes.map((type) => {
-                        const meta = BLOCK_META[type];
-                        const Icon = meta.icon;
-                        return (
-                          <button
-                            key={type}
-                            type="button"
-                            onClick={() => addBlock(type)}
-                            disabled={adding}
-                            className="group flex items-center gap-3 rounded-xl border border-slate-200/80 bg-white p-3.5 text-left transition-all hover:border-[#fd5523]/50 hover:bg-[#fff6ee]/40 hover:shadow-sm active:scale-[0.98]"
-                          >
-                            <div
-                              className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${meta.bgColor} ${meta.color}`}
-                            >
-                              <Icon className="h-5 w-5" />
-                            </div>
-                            <span className="text-sm font-bold text-[#062e39] truncate">
-                              {meta.label}
-                            </span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </DialogContent>
-        </Dialog>
-
-        {/* Header / Meta Section */}
-        <section className="rounded-2xl sm:rounded-3xl bg-gradient-to-r from-[#062e39] to-[#0a4055] p-5 sm:p-7 shadow-lg">
-          <div className="space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-[#fd5523] shadow-sm">
-                <Pencil className="h-5 w-5" />
-              </div>
-              <div className="min-w-0">
-                <p className="text-[11px] font-bold uppercase tracking-wider text-white/60">Lesson Studio</p>
-                <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight truncate">
-                  {title || "Untitled Lesson"}
-                </h1>
-              </div>
-            </div>
-
-            <div className="flex flex-col gap-3 md:flex-row md:items-center">
-              <Input
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="Lesson title..."
-                className="h-11 sm:h-12 flex-1 rounded-xl border-white/15 bg-white/10 text-base font-semibold text-white placeholder:text-white/40 focus:border-[#fd8d69] focus:ring-[#fd8d69]/20"
-              />
-
+      <div className="grid items-start gap-6 px-4 pb-28 pt-5 sm:pt-6 lg:grid-cols-[minmax(0,1fr)_400px] lg:pb-12 xl:grid-cols-[minmax(0,1fr)_440px]">
+        {/* ── Editor column ──────────────────────────────────────── */}
+        <div className={cn("min-w-0 space-y-4", mobileView !== "edit" && "hidden lg:block")}>
+          <div>
+            <p className="mb-1 truncate text-xs font-medium text-slate-500">{moduleTitle}</p>
+            <textarea
+              value={title}
+              onChange={(e) => handleTitleChange(e.target.value.replace(/\n/g, " "))}
+              onBlur={() => void saveTitle(title)}
+              rows={1}
+              maxLength={200}
+              placeholder="Lesson title"
+              aria-label="Lesson title"
+              className="field-sizing-content w-full resize-none bg-transparent text-2xl font-bold leading-tight tracking-tight text-[#062e39] outline-none placeholder:text-slate-300 sm:text-3xl"
+            />
+            <div className="mt-3 flex flex-wrap items-center gap-2">
               <button
                 type="button"
                 role="switch"
                 aria-checked={isPreview}
-                onClick={() => setIsPreview((prev) => !prev)}
-                className="flex h-11 sm:h-12 w-full md:w-auto shrink-0 items-center justify-between gap-4 cursor-pointer select-none rounded-xl border border-white/15 bg-white/5 px-4 transition-all hover:bg-white/10 text-left"
+                onClick={togglePreview}
+                className={cn(
+                  "inline-flex h-8 items-center gap-2 rounded-full border px-3 text-xs font-semibold transition-colors",
+                  isPreview
+                    ? "border-[#fd5523]/30 bg-[#fff6ee] text-[#fd5523]"
+                    : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                )}
               >
-                <div className="flex flex-col leading-tight min-w-0">
-                  <span
-                    className={cn(
-                      "text-[10px] font-black uppercase tracking-wider",
-                      isPreview ? "text-[#fd8d69]" : "text-white/60"
-                    )}
-                  >
-                    {isPreview ? "Public Preview" : "Private Lesson"}
-                  </span>
-                  <span className="text-xs font-bold text-white whitespace-nowrap">
-                    {isPreview ? "Free for anyone" : "Enrolled only"}
-                  </span>
-                </div>
-
-                <div
+                <span
                   className={cn(
-                    "relative h-6 w-11 shrink-0 rounded-full border transition-all",
-                    isPreview
-                      ? "bg-[#fd5523] border-[#fd5523]"
-                      : "bg-black/40 border-white/15"
+                    "relative h-4 w-7 rounded-full transition-colors",
+                    isPreview ? "bg-[#fd5523]" : "bg-slate-300"
                   )}
                 >
-                  <div
+                  <span
                     className={cn(
-                      "absolute top-[2px] left-[2px] flex h-4.5 w-4.5 items-center justify-center rounded-full bg-white shadow-sm transition-transform duration-200",
-                      isPreview ? "translate-x-5" : "translate-x-0"
+                      "absolute top-0.5 h-3 w-3 rounded-full bg-white shadow transition-transform",
+                      isPreview ? "translate-x-3.5" : "translate-x-0.5"
                     )}
-                  >
-                    {isPreview ? (
-                      <Eye className="h-2.5 w-2.5 text-[#fd5523]" />
-                    ) : (
-                      <div className="h-1.5 w-1.5 rounded-full bg-slate-400" />
-                    )}
-                  </div>
-                </div>
+                  />
+                </span>
+                Free preview
               </button>
-
-              <Button
-                onClick={handleSaveMeta}
-                disabled={savingMeta}
-                className="h-11 sm:h-12 w-full md:w-auto shrink-0 rounded-xl bg-white px-6 text-sm font-bold text-[#062e39] shadow-md transition-all hover:bg-slate-100"
-              >
-                {savingMeta ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                <span>Commit Changes</span>
-              </Button>
+              <span className="text-xs text-slate-400">
+                {blocks.length} block{blocks.length === 1 ? "" : "s"}
+              </span>
             </div>
           </div>
-        </section>
 
-        {/* Responsive Studio View Switcher (Tabs on Mobile/Tablet) */}
-        <div className="flex lg:hidden items-center justify-center p-1.5 rounded-2xl bg-slate-100/90 border border-slate-200/80 shadow-inner mx-auto max-w-sm">
-          <button
-            type="button"
-            onClick={() => setActiveTab("editor")}
-            className={cn(
-              "flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-bold transition-all",
-              activeTab === "editor"
-                ? "bg-[#062e39] text-white shadow-md"
-                : "text-slate-600 hover:text-[#062e39]"
-            )}
-          >
-            <Pencil className="h-3.5 w-3.5" />
-            <span>Studio Canvas</span>
-            <span className="text-[10px] opacity-75 font-normal">({blocks.length})</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab("preview")}
-            className={cn(
-              "flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-bold transition-all",
-              activeTab === "preview"
-                ? "bg-[#fd5523] text-white shadow-md"
-                : "text-slate-600 hover:text-[#062e39]"
-            )}
-          >
-            <Smartphone className="h-3.5 w-3.5" />
-            <span>Preview & AI</span>
-            <span className="flex h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse ml-0.5" />
-          </button>
-        </div>
-
-        {/* Main Grid: Content Stack + Sticky Preview/AI */}
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px] xl:grid-cols-[minmax(0,1fr)_440px] 2xl:grid-cols-[minmax(0,1fr)_480px] w-full items-start">
-          {/* Content Blocks */}
-          <div
-            className={cn(
-              "space-y-4 sm:space-y-5 w-full min-w-0",
-              activeTab === "preview" && "hidden lg:block"
-            )}
-          >
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <h2 className="text-lg font-bold text-[#062e39] sm:text-xl">Content Stack</h2>
-                <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                  {blocks.length} {blocks.length === 1 ? "Block" : "Blocks"}
-                </span>
+          {blocks.length === 0 ? (
+            <div className="rounded-2xl border-2 border-dashed border-slate-200 bg-white px-5 py-10 text-center">
+              <p className="text-base font-semibold text-[#062e39]">This lesson is empty</p>
+              <p className="mx-auto mt-1 max-w-sm text-sm text-slate-500">
+                Start with a block, or let the AI co-author draft the whole lesson for you to edit.
+              </p>
+              <div className="mt-5 grid grid-cols-2 gap-2 sm:mx-auto sm:max-w-md sm:grid-cols-4">
+                {QUICK_ADD.map((type) => {
+                  const meta = BLOCK_META[type];
+                  const Icon = meta.icon;
+                  return (
+                    <button
+                      key={type}
+                      type="button"
+                      onClick={() => void insertBlock(type, DEFAULT_CONTENT[type], null)}
+                      className="flex flex-col items-center gap-1.5 rounded-xl border border-slate-200 bg-white p-3 text-xs font-semibold text-[#062e39] hover:border-[#fd5523]/40 hover:bg-[#fffaf6]"
+                    >
+                      <span className={cn("flex h-9 w-9 items-center justify-center rounded-lg", meta.bgColor, meta.color)}>
+                        <Icon className="h-4 w-4" />
+                      </span>
+                      {meta.label}
+                    </button>
+                  );
+                })}
               </div>
-
-              {/* Quick-add bar + Browse All Blocks */}
-              <div className="flex flex-wrap items-center gap-1.5">
-                {(["text", "video", "image", "quiz"] as ContentBlockType[])
-                  .filter((t) => t !== "quiz" || !hasQuiz)
-                  .map((type) => {
-                    const meta = BLOCK_META[type];
-                    const Icon = meta.icon;
-                    return (
-                      <button
-                        key={type}
-                        type="button"
-                        onClick={() => addBlock(type)}
-                        disabled={adding}
-                        className="hidden sm:inline-flex items-center gap-1.5 h-9 px-3 rounded-xl border border-slate-200 bg-white text-xs font-bold text-[#062e39] hover:border-[#fd5523]/40 hover:bg-[#fff6ee]/60 transition-all"
-                      >
-                        <Icon className={cn("h-3.5 w-3.5", meta.color)} />
-                        <span>{meta.label}</span>
-                      </button>
-                    );
-                  })}
-                <Button
+              <div className="mt-3 flex flex-col items-center justify-center gap-2 sm:flex-row">
+                <button
                   type="button"
-                  onClick={() => setShowBlockPicker(true)}
-                  className="h-9 rounded-xl bg-[#fd5523] px-3.5 text-xs font-bold text-white hover:bg-[#ef4a16] shadow-xs"
+                  onClick={() => openPicker(null)}
+                  className="h-10 rounded-xl px-4 text-sm font-semibold text-slate-600 hover:bg-slate-100"
                 >
-                  <Plus className="mr-1.5 h-3.5 w-3.5" />
-                  Add Block
-                </Button>
+                  All block types
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAsideTab("ai");
+                    setMobileView("ai");
+                  }}
+                  className="inline-flex h-10 items-center gap-2 rounded-xl bg-[#062e39] px-4 text-sm font-semibold text-white hover:bg-[#0a4055]"
+                >
+                  <Sparkles className="h-4 w-4 text-[#fd8d69]" />
+                  Draft with AI
+                </button>
               </div>
             </div>
-
+          ) : (
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-              <div className="space-y-3 sm:space-y-4">
-                <SortableContext items={blocks.map((b) => b.id)} strategy={verticalListSortingStrategy}>
-                  {blocks.map((block) => (
-                    <SortableBlock
-                      key={block.id}
-                      block={block}
-                      lessonId={lesson.id}
-                      courseId={courseId}
-                      courseTitle={courseTitle}
-                      moduleTitle={moduleTitle}
-                      quiz={block.type === "quiz" ? quiz : null}
-                      onDelete={(id) => setBlocks((prev) => prev.filter((b) => b.id !== id))}
-                      onSave={(id, content) => setBlocks((prev) => prev.map((b) => (b.id === id ? { ...b, content } : b)))}
-                    />
+              <SortableContext items={blocks.map((b) => b.id)} strategy={verticalListSortingStrategy}>
+                <div className="space-y-3">
+                  {blocks.map((block, i) => (
+                    <div key={block.id} id={`block-${block.id}`} className="scroll-mt-32">
+                      <SortableBlock
+                        block={block}
+                        index={i}
+                        total={blocks.length}
+                        lessonId={lesson.id}
+                        courseId={courseId}
+                        courseTitle={courseTitle}
+                        moduleTitle={moduleTitle}
+                        quiz={block.type === "quiz" ? quiz : null}
+                        onContentChange={(id, content) =>
+                          setBlocks((prev) => prev.map((b) => (b.id === id ? { ...b, content } : b)))
+                        }
+                        onStatus={setStatus}
+                        registerFlush={registerFlush}
+                        onDelete={deleteBlock}
+                        onMove={moveBlock}
+                        onDuplicate={(b) => void insertBlock(b.type, b.content, i + 1)}
+                        onInsertBelow={(at) => openPicker(at)}
+                      />
+                    </div>
                   ))}
-                </SortableContext>
-              </div>
+                </div>
+              </SortableContext>
             </DndContext>
+          )}
 
-            {blocks.length > 0 ? (
+          {blocks.length > 0 && (
+            <div className="hidden items-center gap-2 lg:flex">
               <button
                 type="button"
-                onClick={() => setShowBlockPicker(true)}
-                className="w-full py-3.5 rounded-2xl border-2 border-dashed border-slate-200 bg-white/60 text-xs font-bold uppercase tracking-wider text-slate-500 hover:border-[#fd5523]/50 hover:text-[#fd5523] hover:bg-[#fff6ee]/40 transition-all flex items-center justify-center gap-2"
+                onClick={() => openPicker(null)}
+                className="flex h-11 flex-1 items-center justify-center gap-2 rounded-xl border-2 border-dashed border-slate-200 text-sm font-semibold text-slate-500 transition-colors hover:border-[#fd5523]/40 hover:bg-[#fffaf6] hover:text-[#fd5523]"
               >
                 <Plus className="h-4 w-4" />
-                Add Another Block
+                Add block
               </button>
-            ) : (
-              <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 bg-white/70 py-14 text-center sm:rounded-3xl sm:py-20 px-4">
-                <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#fff6ee] text-[#fd5523] sm:h-16 sm:w-16">
-                  <Sparkles className="h-7 w-7 sm:h-8 sm:w-8" />
-                </div>
-                <h3 className="text-lg font-bold text-[#062e39] sm:text-xl">Empty Lesson Canvas</h3>
-                <p className="mx-auto mt-1.5 max-w-sm text-sm text-slate-500">
-                  Add a content block manually or let AI Co-Author draft your lesson blocks.
-                </p>
-                <Button
-                  type="button"
-                  onClick={() => setShowBlockPicker(true)}
-                  className="mt-5 h-10 rounded-xl bg-[#fd5523] px-5 text-xs sm:text-sm font-bold text-white hover:bg-[#ef4a16]"
-                >
-                  <Plus className="mr-1.5 h-4 w-4" />
-                  Add Your First Block
-                </Button>
-              </div>
-            )}
-          </div>
-
-          <aside
-            className={cn(
-              "space-y-4 w-full min-w-0 lg:sticky lg:top-20",
-              activeTab === "editor" && "hidden lg:block"
-            )}
-          >
-            {/* Clean Right-Column Mode Switcher: Device Preview vs AI Co-Author */}
-            <div className="grid grid-cols-2 gap-1.5 p-1 rounded-2xl bg-white border border-slate-200/80 shadow-xs">
-              <button
-                type="button"
-                onClick={() => setAsideTab("preview")}
-                className={cn(
-                  "flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs font-bold transition-all",
-                  asideTab === "preview"
-                    ? "bg-[#062e39] text-white shadow-xs"
-                    : "text-slate-600 hover:text-[#062e39]"
-                )}
-              >
-                <Smartphone className="h-3.5 w-3.5" />
-                <span>Device Preview</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setAsideTab("ai")}
-                className={cn(
-                  "flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs font-bold transition-all",
-                  asideTab === "ai"
-                    ? "bg-[#fd5523] text-white shadow-xs"
-                    : "text-slate-600 hover:text-[#062e39]"
-                )}
-              >
-                <Sparkles className="h-3.5 w-3.5" />
-                <span>AI Co-Author</span>
-              </button>
+              {QUICK_ADD.filter((t) => t !== "quiz" || !hasQuiz).map((type) => {
+                const meta = BLOCK_META[type];
+                const Icon = meta.icon;
+                return (
+                  <button
+                    key={type}
+                    type="button"
+                    title={`Add ${meta.label}`}
+                    onClick={() => void insertBlock(type, DEFAULT_CONTENT[type], null)}
+                    className={cn("flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white hover:border-[#fd5523]/40", meta.color)}
+                  >
+                    <Icon className="h-4 w-4" />
+                  </button>
+                );
+              })}
             </div>
+          )}
 
-            {asideTab === "preview" ? (
-              <LessonPreviewPane
-                title={title}
-                moduleTitle={moduleTitle}
-                blocks={blocks}
-                quiz={quiz}
-              />
-            ) : (
-              <AILessonGenerator
-                lessonId={lesson.id}
-                courseId={courseId}
-                lessonTitle={title}
-                existingBlockTypes={blocks.map((b) => b.type)}
-                onBlocksGenerated={(newBlocks) => {
-                  setBlocks((prev) => [...prev, ...newBlocks]);
-                  setAsideTab("preview");
-                  setActiveTab("editor");
-                }}
-              />
-            )}
-          </aside>
+          {nextLesson && blocks.length > 0 && (
+            <Link
+              href={nextLesson.href}
+              onClick={() => void flushAll()}
+              className="mt-2 flex items-center justify-between gap-3 rounded-2xl border border-slate-200/80 bg-white p-4 transition-colors hover:border-[#fd5523]/40"
+            >
+              <span className="min-w-0">
+                <span className="block text-xs text-slate-500">Next lesson</span>
+                <span className="block truncate text-sm font-semibold text-[#062e39]">{nextLesson.title}</span>
+              </span>
+              <ChevronRight className="h-5 w-5 shrink-0 text-[#fd5523]" />
+            </Link>
+          )}
         </div>
+
+        {/* ── Side panel (desktop) / full view (mobile) ─────────── */}
+        <aside className={cn("min-w-0 space-y-3 lg:sticky lg:top-32", mobileView === "edit" && "hidden lg:block")}>
+          <div className="hidden grid-cols-2 gap-1 rounded-xl bg-slate-100 p-1 lg:grid">
+            {(["preview", "ai"] as const).map((tab) => (
+              <button
+                key={tab}
+                type="button"
+                onClick={() => setAsideTab(tab)}
+                className={cn(
+                  "flex h-9 items-center justify-center gap-1.5 rounded-lg text-xs font-semibold transition-colors",
+                  asideTab === tab ? "bg-white text-[#062e39] shadow-sm" : "text-slate-500 hover:text-[#062e39]"
+                )}
+              >
+                {tab === "preview" ? <Eye className="h-3.5 w-3.5" /> : <Sparkles className="h-3.5 w-3.5 text-[#fd5523]" />}
+                {tab === "preview" ? "Live preview" : "AI co-author"}
+              </button>
+            ))}
+          </div>
+          <div className="lg:hidden">
+            {mobileView === "preview" ? previewPanel : mobileView === "ai" ? aiPanel : null}
+          </div>
+          <div className="hidden lg:block">{asideTab === "preview" ? previewPanel : aiPanel}</div>
+        </aside>
       </div>
+
+      {/* ── Mobile action bar ─────────────────────────────────────── */}
+      <nav className="pb-safe fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/95 px-3 pt-2 backdrop-blur lg:hidden">
+        <div className="mx-auto grid max-w-md grid-cols-4 gap-1">
+          {[
+            { id: "edit" as const, label: "Edit", icon: PencilLine },
+            { id: "preview" as const, label: "Preview", icon: Eye },
+            { id: "ai" as const, label: "AI", icon: Sparkles },
+          ].map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => setMobileView(item.id)}
+              className={cn(
+                "flex h-12 flex-col items-center justify-center gap-0.5 rounded-xl text-[11px] font-semibold",
+                mobileView === item.id ? "bg-slate-100 text-[#062e39]" : "text-slate-500"
+              )}
+            >
+              <item.icon className="h-4 w-4" />
+              {item.label}
+            </button>
+          ))}
+          <button
+            type="button"
+            onClick={() => openPicker(null)}
+            className="flex h-12 flex-col items-center justify-center gap-0.5 rounded-xl bg-[#fd5523] text-[11px] font-semibold text-white"
+          >
+            <Plus className="h-4 w-4" />
+            Add
+          </button>
+        </div>
+      </nav>
     </>
   );
 }
+

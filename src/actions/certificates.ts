@@ -7,6 +7,7 @@ import { randomUUID } from "crypto";
 import { sendCertificateIssued } from "@/lib/email/emailjs";
 import { pendingRequiredTutorScenarios } from "@/lib/tutor/server/required-tutor-blocks";
 import { REQUIRED_TUTOR_HINT } from "@/lib/tutor/tutor-session-block";
+import { getLessonAccess } from "@/lib/courses/course-auth-server";
 
 type LessonRow = { id: string };
 type ProgressRow = { lesson_id: string; completed: boolean };
@@ -26,32 +27,17 @@ export async function generateCertificate(courseId: string) {
 
   if (existing) return existing;
 
+  // Certificates are only for learners with a fully paid, active enrollment.
+  // (Never create an enrollment here — that would let anyone unlock a paid course.)
   const { data: enrollment } = await supabase
     .from("enrollments")
-    .select("id")
+    .select("id, status")
     .eq("user_id", userId)
     .eq("course_id", courseId)
     .maybeSingle();
 
-  if (!enrollment) {
-    // Check if user has administrative or company rights to the course, or auto-enroll
-    const { data: courseRow } = await supabase
-      .from("courses")
-      .select("instructor_id, company_id")
-      .eq("id", courseId)
-      .single();
-
-    if (courseRow) {
-      await supabase.from("enrollments").insert({
-        user_id: userId,
-        course_id: courseId,
-        company_id: courseRow.company_id,
-        source: "manual_admin",
-        status: "active",
-      });
-    } else {
-      throw new Error("Course not found");
-    }
+  if (!enrollment || enrollment.status !== "active") {
+    throw new Error("An active enrollment is required to receive a certificate.");
   }
 
   const { data: modulesData } = await supabase
@@ -152,7 +138,7 @@ export async function generateCertificate(courseId: string) {
   }
 
   revalidatePath("/dashboard");
-  revalidatePath(`/courses/${courseId}/learn`);
+  if (courseResult.data?.slug) revalidatePath(`/courses/${courseResult.data.slug}/learn`);
 
   return cert;
 }
@@ -162,6 +148,9 @@ export async function markLessonComplete(lessonId: string, courseSlug: string) {
   if (!userId) throw new Error("Unauthorized");
 
   const supabase = createClient();
+  const access = await getLessonAccess(supabase, lessonId, userId);
+  if (!access.allowed) throw new Error("Enrol in this course to track your progress.");
+
   if ((await pendingRequiredTutorScenarios(supabase, lessonId, userId)).length > 0) {
     throw new Error(REQUIRED_TUTOR_HINT);
   }
@@ -171,7 +160,7 @@ export async function markLessonComplete(lessonId: string, courseSlug: string) {
     .select("id, completed")
     .eq("user_id", userId)
     .eq("lesson_id", lessonId)
-    .single();
+    .maybeSingle();
 
   if (existing) {
     await supabase

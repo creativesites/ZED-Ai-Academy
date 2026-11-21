@@ -30,10 +30,13 @@ function normalizePrice(
 async function assertPublishReadiness(supabase: Awaited<ReturnType<typeof createClient>>, courseId: string) {
   const { data: course, error: courseError } = await supabase
     .from("courses")
-    .select("title, description, category, level")
+    .select("title, description, category, level, price_type, price_amount")
     .eq("id", courseId)
     .single();
   if (courseError || !course) throw new Error("Course not found.");
+  if ((course.price_type === "one_time" || course.price_type === "both") && !(Number(course.price_amount) > 0)) {
+    throw new Error("Set a price for this paid course before publishing.");
+  }
 
   if (!course.title?.trim()) throw new Error("Add a course title before publishing.");
   if (!course.description?.trim()) throw new Error("Add a course description before publishing.");
@@ -52,7 +55,7 @@ async function assertPublishReadiness(supabase: Awaited<ReturnType<typeof create
   const moduleIds = moduleRows.map((m) => m.id);
   const { data: lessonRows, error: lessonErr } = await supabase
     .from("lessons")
-    .select("id")
+    .select("id, title")
     .in("module_id", moduleIds);
   if (lessonErr) throw new Error("Unable to validate lessons.");
   if (!lessonRows || lessonRows.length === 0) {
@@ -62,11 +65,16 @@ async function assertPublishReadiness(supabase: Awaited<ReturnType<typeof create
   const lessonIds = lessonRows.map((l) => l.id);
   const { data: blockRows, error: blockErr } = await supabase
     .from("content_blocks")
-    .select("id")
+    .select("lesson_id")
     .in("lesson_id", lessonIds);
   if (blockErr) throw new Error("Unable to validate lesson content.");
-  if (!blockRows || blockRows.length === 0) {
-    throw new Error("Add at least one lesson content block before publishing.");
+  const lessonsWithContent = new Set((blockRows ?? []).map((b) => b.lesson_id));
+  const empty = lessonRows.filter((l) => !lessonsWithContent.has(l.id));
+  if (empty.length > 0) {
+    const names = empty.slice(0, 3).map((l) => `“${l.title}”`).join(", ");
+    throw new Error(
+      `${empty.length} lesson${empty.length === 1 ? " has" : "s have"} no content yet: ${names}${empty.length > 3 ? "…" : ""}`
+    );
   }
 }
 
@@ -161,6 +169,23 @@ export async function createCourse(formData: FormData) {
     .single();
 
   if (error) throw new Error(error.message);
+
+  // Seed the outline drafted by the AI course assistant so creators land on a real curriculum.
+  const rawOutline = formData.get("module_outline");
+  if (typeof rawOutline === "string" && rawOutline) {
+    try {
+      const outline = (JSON.parse(rawOutline) as unknown[])
+        .filter((t): t is string => typeof t === "string" && t.trim().length > 0)
+        .slice(0, 12);
+      if (outline.length > 0) {
+        await supabase
+          .from("modules")
+          .insert(outline.map((t, i) => ({ course_id: course.id, title: t.trim().slice(0, 200), position: i + 1 })));
+      }
+    } catch {
+      // Outline is a convenience; never block course creation on it.
+    }
+  }
 
   if (returnTo) {
     revalidatePath(returnTo);
