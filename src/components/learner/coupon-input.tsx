@@ -37,7 +37,14 @@ export function CouponInput({
           <Tag style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", width: "14px", height: "14px", color: "rgba(255,255,255,0.4)" }} />
           <input
             value={code}
-            onChange={(e) => { setCode(e.target.value.toUpperCase()); setResult(null); }}
+            onChange={(e) => {
+              const next = e.target.value.toUpperCase();
+              setCode(next);
+              setResult(null);
+              if (!next.trim()) {
+                onApply(originalPrice, "");
+              }
+            }}
             placeholder="Coupon code"
             style={{
               width: "100%", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)",
@@ -47,6 +54,7 @@ export function CouponInput({
           />
         </div>
         <button
+          type="button"
           onClick={handleApply}
           disabled={pending || !code.trim()}
           style={{

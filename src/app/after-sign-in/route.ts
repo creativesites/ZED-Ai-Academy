@@ -21,13 +21,22 @@ export async function GET(req: NextRequest) {
 
   const rawRedirect = req.nextUrl.searchParams.get("redirect_url");
 
-  // If a safe redirect URL was requested (e.g. from a specific academy or course)
+  // If a safe same-origin redirect URL was requested (e.g. from a specific academy or course)
   if (rawRedirect) {
-    let safePath = rawRedirect;
-    if (rawRedirect.startsWith("http://") || rawRedirect.startsWith("https://")) {
+    let safePath = "";
+    if (rawRedirect.startsWith("/") && !rawRedirect.startsWith("//")) {
+      safePath = rawRedirect;
+    } else if (rawRedirect.startsWith("http://") || rawRedirect.startsWith("https://")) {
       try {
         const parsed = new URL(rawRedirect);
-        safePath = parsed.pathname + parsed.search;
+        const reqHost = req.headers.get("host") || req.nextUrl.host;
+        const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || "";
+        const isSameOrigin =
+          parsed.host === reqHost ||
+          (rootDomain && (parsed.host === rootDomain || parsed.host.endsWith(`.${rootDomain}`)));
+        if (isSameOrigin) {
+          safePath = parsed.pathname + parsed.search;
+        }
       } catch {
         safePath = "";
       }
@@ -46,7 +55,7 @@ export async function GET(req: NextRequest) {
           .eq("slug", tenantSlug)
           .maybeSingle();
 
-        if (tenant && tenant.status !== "suspended") {
+        if (tenant && tenant.status === "active") {
           // Check existing membership
           const { data: existingMember } = await supabase
             .from("company_members")
@@ -55,7 +64,7 @@ export async function GET(req: NextRequest) {
             .eq("profile_id", userId)
             .maybeSingle();
 
-          // Auto-join as learner if they don't have a membership in this academy yet
+          // Auto-join as learner only for active public academies (never enrol in courses — S1)
           if (!existingMember) {
             try {
               await ensureTenantMembership(userId, tenant.id, "learner");
@@ -79,8 +88,8 @@ export async function GET(req: NextRequest) {
     return NextResponse.redirect(new URL("/onboarding", req.url));
   }
 
-  // Platform super admins go straight to the Super Admin Control Plane
-  if (home.platformRole === "super_admin") {
+  // Platform super admins with no academy memberships go straight to /superadmin
+  if (home.platformRole === "super_admin" && home.memberships.length === 0) {
     return NextResponse.redirect(new URL("/superadmin", req.url));
   }
 

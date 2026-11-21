@@ -460,6 +460,8 @@ export interface Database {
           status: OrderStatus;
           payment_reference: string | null;
           payment_method: string | null;
+          coupon_code?: string | null;
+          discount_amount?: number;
           created_at: string;
           paid_at: string | null;
         };
@@ -472,6 +474,9 @@ export interface Database {
           status?: OrderStatus;
           payment_reference?: string | null;
           payment_method?: string | null;
+          coupon_code?: string | null;
+          discount_amount?: number;
+          paid_at?: string | null;
         };
         Update: {
           status?: OrderStatus;
@@ -593,6 +598,8 @@ export interface Database {
           max_uses: number | null;
           uses_count: number;
           course_id: string | null;
+          company_id?: string | null;
+          starts_at?: string | null;
           expires_at: string | null;
           active: boolean;
           created_at: string;
@@ -603,6 +610,8 @@ export interface Database {
           discount_value: number;
           max_uses?: number | null;
           course_id?: string | null;
+          company_id?: string | null;
+          starts_at?: string | null;
           expires_at?: string | null;
           active?: boolean;
         };

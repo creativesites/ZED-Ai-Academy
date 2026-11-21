@@ -2,6 +2,10 @@ import { auth, currentUser } from "@clerk/nextjs/server";
 import { redirect, notFound } from "next/navigation";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { initiatePayment } from "@/lib/payments/paychangu";
+import { isFreeAfterDiscount } from "@/lib/payments/pricing";
+import { insertOrder, incrementCouponUsage } from "@/lib/payments/orders";
+import { resolveCouponForCourse } from "@/actions/coupons";
+import { ensureTenantMembership } from "@/actions/tenants";
 import { randomUUID } from "crypto";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -12,7 +16,10 @@ import { ArrowLeft, BookOpen, CheckCircle, Lock, Shield } from "lucide-react";
 import type { Metadata } from "next";
 import { CheckoutPanel } from "@/components/learner/checkout-panel";
 
-type Props = { params: Promise<{ slug: string }> };
+type Props = {
+  params: Promise<{ slug: string }>;
+  searchParams: Promise<{ error?: string }>;
+};
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
@@ -25,11 +32,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return { title: data ? `Checkout — ${data.title}` : "Checkout" };
 }
 
-async function startCheckout(slug: string, courseId: string, userId: string) {
+async function startCheckout(slug: string, courseId: string, formData: FormData) {
   "use server";
 
+  const { userId } = await auth();
+  if (!userId) redirect(`/sign-in?redirect_url=/courses/${slug}/checkout`);
+
   const clerkUser = await currentUser();
-  if (!clerkUser) redirect("/sign-in");
+  if (!clerkUser) redirect(`/sign-in?redirect_url=/courses/${slug}/checkout`);
 
   const primaryEmail = clerkUser.emailAddresses.find(
     (e) => e.id === clerkUser.primaryEmailAddressId
@@ -39,53 +49,131 @@ async function startCheckout(slug: string, courseId: string, userId: string) {
 
   const supabase = createClient();
 
-  // Get the course
+  // Re-fetch authoritative course details from DB (never trust client price/slug)
   const { data: course } = await supabase
     .from("courses")
-    .select("id, title, price_amount, slug")
+    .select("id, title, price_amount, price_type, slug, company_id, status")
     .eq("id", courseId)
+    .eq("status", "published")
     .single();
 
-  if (!course || !course.price_amount) throw new Error("Course not found");
+  if (!course || course.price_type === "free" || !course.price_amount) {
+    throw new Error("Course not found");
+  }
 
-  // Check not already enrolled
+  // Check not already enrolled (active)
   const { data: existing } = await supabase
     .from("enrollments")
-    .select("id")
+    .select("id, status")
     .eq("user_id", userId)
-    .eq("course_id", courseId)
+    .eq("course_id", course.id)
+    .eq("status", "active")
     .maybeSingle();
 
-  if (existing) redirect(`/courses/${slug}/learn`);
+  if (existing) redirect(`/courses/${course.slug}/learn`);
 
-  // Create pending order
-  const txRef = `zaa-${courseId.slice(0, 8)}-${randomUUID().slice(0, 8)}`;
+  // Re-validate coupon server-side if provided
+  const rawCouponCode = (formData.get("couponCode") as string | null)?.trim().toUpperCase() || null;
+  let finalAmount = course.price_amount;
+  let discountAmount = 0;
+  let validatedCouponCode: string | null = null;
 
-  const serviceClient = createServiceClient();
-  const { error: orderError } = await serviceClient
-    .from("orders")
-    .insert({
-      user_id: userId,
-      course_id: courseId,
-      amount: course.price_amount,
+  if (rawCouponCode) {
+    const couponRes = await resolveCouponForCourse(rawCouponCode, course.id, course.price_amount);
+    if (!couponRes.valid) {
+      redirect(`/courses/${course.slug}/checkout?error=${encodeURIComponent(couponRes.error)}`);
+    }
+    finalAmount = couponRes.finalPrice;
+    discountAmount = couponRes.discountAmount;
+    validatedCouponCode = couponRes.code;
+  }
+
+  const txRef = `zaa-${course.id.slice(0, 8)}-${randomUUID().slice(0, 8)}`;
+
+  // 100% coupon → active enrollment without calling the payment provider
+  if (isFreeAfterDiscount(finalAmount)) {
+    const { error: orderError } = await insertOrder({
+      userId,
+      courseId: course.id,
+      companyId: course.company_id,
+      amount: 0,
       currency: "ZMW",
-      status: "pending",
-      payment_reference: txRef,
+      status: "paid",
+      paymentReference: txRef,
+      paymentMethod: "coupon",
+      couponCode: validatedCouponCode,
+      discountAmount,
+      paidAt: new Date().toISOString(),
     });
 
+    if (orderError) throw new Error(orderError.message);
+
+    const serviceClient = createServiceClient();
+    const { error: enrollError } = await serviceClient.from("enrollments").upsert(
+      {
+        user_id: userId,
+        course_id: course.id,
+        company_id: course.company_id,
+        status: "active",
+        source: "individual_purchase",
+      },
+      { onConflict: "user_id,course_id" }
+    );
+
+    if (enrollError) throw new Error(enrollError.message);
+
+    if (course.company_id) {
+      try {
+        await ensureTenantMembership(userId, course.company_id, "learner");
+      } catch (err) {
+        console.error("[checkout] Failed to ensure tenant membership:", err);
+      }
+    }
+
+    if (validatedCouponCode) {
+      await incrementCouponUsage(validatedCouponCode);
+    }
+
+    redirect(`/courses/${course.slug}/learn?enrolled=1`);
+  }
+
+  // Create pending order with server-computed discounted amount
+  const { error: orderError } = await insertOrder({
+    userId,
+    courseId: course.id,
+    companyId: course.company_id,
+    amount: finalAmount,
+    currency: "ZMW",
+    status: "pending",
+    paymentReference: txRef,
+    couponCode: validatedCouponCode,
+    discountAmount,
+  });
+
   if (orderError) throw new Error(orderError.message);
+
+  if (process.env.NODE_ENV !== "production") {
+    console.info("[checkout] Initiating PayChangu payment", {
+      txRef,
+      courseId: course.id,
+      originalPrice: course.price_amount,
+      finalAmount,
+      discountAmount,
+      couponCode: validatedCouponCode,
+    });
+  }
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://academy.zedai.org";
 
   const result = await initiatePayment({
     txRef,
-    amount: course.price_amount,
+    amount: finalAmount,
     currency: "ZMW",
     email: primaryEmail,
     firstName: clerkUser.firstName ?? "",
     lastName: clerkUser.lastName ?? "",
     courseTitle: course.title,
-    returnUrl: `${appUrl}/courses/${slug}/learn?enrolled=1`,
+    returnUrl: `${appUrl}/courses/${course.slug}/learn?enrolled=1`,
     callbackUrl: `${appUrl}/api/webhooks/paychangu`,
   });
 
@@ -96,8 +184,9 @@ async function startCheckout(slug: string, courseId: string, userId: string) {
   redirect(result.checkoutUrl);
 }
 
-export default async function CheckoutPage({ params }: Props) {
+export default async function CheckoutPage({ params, searchParams }: Props) {
   const { slug } = await params;
+  const { error: checkoutError } = await searchParams;
   const { userId } = await auth();
   if (!userId) redirect(`/sign-in?redirect_url=/courses/${slug}/checkout`);
 
@@ -110,7 +199,19 @@ export default async function CheckoutPage({ params }: Props) {
     .eq("status", "published")
     .single();
 
-  const course = courseRaw as any;
+  const course = courseRaw as {
+    id: string;
+    title: string;
+    description: string | null;
+    thumbnail_url: string | null;
+    category: string | null;
+    level: string | null;
+    price_type: string | null;
+    price_amount: number | null;
+    slug: string;
+    company_id: string | null;
+    companies: { slug: string } | { slug: string }[] | null;
+  } | null;
 
   if (!course) notFound();
   if (course.price_type === "free") redirect(`/courses/${slug}`);
@@ -121,17 +222,18 @@ export default async function CheckoutPage({ params }: Props) {
     : course.companies;
   const tenantSlug = comp?.slug || "zedai";
 
-  // Already enrolled?
+  // Already enrolled (active)?
   const { data: existing } = await supabase
     .from("enrollments")
     .select("id")
     .eq("user_id", userId)
     .eq("course_id", course.id)
+    .eq("status", "active")
     .maybeSingle();
 
   if (existing) redirect(`/courses/${slug}/learn`);
 
-  const startCheckoutForCourse = startCheckout.bind(null, slug, course.id, userId);
+  const startCheckoutForCourse = startCheckout.bind(null, slug, course.id);
 
   return (
     <div className="container" style={{ paddingTop: "60px", paddingBottom: "80px" }}>
@@ -242,14 +344,21 @@ export default async function CheckoutPage({ params }: Props) {
             </div>
           </div>
 
+          {checkoutError && (
+            <div className="mb-4 rounded-xl bg-red-500/15 border border-red-400/30 px-3 py-2 text-xs font-medium text-red-200">
+              {checkoutError}
+            </div>
+          )}
+
           <CheckoutPanel courseId={course.id} originalPrice={course.price_amount}>
-            {(_finalPrice, _couponCode) => (
+            {(finalPrice, couponCode) => (
               <form action={startCheckoutForCourse}>
+                <input type="hidden" name="couponCode" value={couponCode ?? ""} />
                 <Button
                   type="submit"
                   className="w-full rounded-full bg-[#fd5523] py-7 text-base font-bold text-white hover:bg-[#ef4a16] transition-all hover:scale-[1.02] active:scale-95 shadow-xl"
                 >
-                  Pay with PayChangu
+                  {finalPrice <= 0 ? "Enrol now — Free with coupon" : "Pay with PayChangu"}
                 </Button>
               </form>
             )}

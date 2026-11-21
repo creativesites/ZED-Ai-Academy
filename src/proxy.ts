@@ -48,6 +48,24 @@ const RESERVED_SUBDOMAINS = new Set([
   'www', 'api', 'admin', 'app', 'auth', 'mail', 'test', 'dev', 'staging', 'dashboard', 'creator', 'superadmin', 'academy'
 ]);
 
+/**
+ * Platform-level routes that must not be rewritten under `/academy/[domain]` when
+ * requested on a tenant subdomain; instead they redirect to the apex domain.
+ */
+function isPlatformOnlyPath(pathname: string): boolean {
+  if (/^\/courses\/[^/]+\/(learn|checkout)(\/|$)/.test(pathname)) return true;
+  if (/^\/(live-sessions|certificates|dashboard|practice)(\/|$)/.test(pathname)) return true;
+  return false;
+}
+
+const LAST_TENANT_COOKIE = 'last_visited_tenant';
+const LAST_TENANT_MAX_AGE = 60 * 60 * 24 * 30;
+
+function extractAcademySlug(pathname: string): string | null {
+  const match = pathname.match(/^\/academy\/([^/?#]+)/);
+  return match?.[1] ?? null;
+}
+
 export default clerkMiddleware(async (auth, req: NextRequest) => {
   const { userId, orgId, redirectToSignIn } = await auth();
 
@@ -80,14 +98,26 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
 
   const isTenantSubdomain = Boolean(subdomain && !RESERVED_SUBDOMAINS.has(subdomain));
 
+  // Redirect platform-only routes on tenant subdomains to the apex domain with the same path
+  if (isTenantSubdomain && subdomain && isPlatformOnlyPath(pathname)) {
+    return NextResponse.redirect(
+      new URL(`${pathname}${url.search}`, `${protocol}://${rootDomain}`)
+    );
+  }
+
   // Redirect apex /courses to the platform academy (Zed AI Academy)
   if (!isTenantSubdomain && (pathname === '/courses' || pathname === '/courses/')) {
     return NextResponse.redirect(new URL('/academy/zedai', `${protocol}://${hostname}`));
   }
 
-  // Tenant-first: signed-in users on apex auth / home pages are immediately redirected to their tenant or portal
-  if (userId && !isTenantSubdomain && (pathname === '/' || pathname.startsWith('/sign-in') || pathname.startsWith('/sign-up'))) {
-    return NextResponse.redirect(new URL('/after-sign-in', req.url));
+  // Signed-in users on auth pages are redirected to resolve their landing destination (F6: allow /)
+  if (userId && !isTenantSubdomain && (pathname.startsWith('/sign-in') || pathname.startsWith('/sign-up'))) {
+    const afterSignInUrl = new URL('/after-sign-in', req.url);
+    const redirectParam = url.searchParams.get('redirect_url');
+    if (redirectParam) {
+      afterSignInUrl.searchParams.set('redirect_url', redirectParam);
+    }
+    return NextResponse.redirect(afterSignInUrl);
   }
 
   // Allow onboarding routes without redirection
@@ -200,15 +230,30 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
     const requestHeaders = new Headers(req.headers);
     requestHeaders.set('x-tenant-slug', subdomain);
 
-    return NextResponse.rewrite(
+    const res = NextResponse.rewrite(
       new URL(`/academy/${subdomain}${pathname}${url.search}`, req.url),
       {
         request: { headers: requestHeaders },
       }
     );
+    res.cookies.set(LAST_TENANT_COOKIE, subdomain, {
+      path: '/',
+      sameSite: 'lax',
+      maxAge: LAST_TENANT_MAX_AGE,
+    });
+    return res;
   }
 
-  return NextResponse.next();
+  const res = NextResponse.next();
+  const academySlug = extractAcademySlug(pathname);
+  if (academySlug) {
+    res.cookies.set(LAST_TENANT_COOKIE, academySlug, {
+      path: '/',
+      sameSite: 'lax',
+      maxAge: LAST_TENANT_MAX_AGE,
+    });
+  }
+  return res;
 });
 
 export const config = {

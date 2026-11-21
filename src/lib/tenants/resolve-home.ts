@@ -93,5 +93,7 @@ export async function resolveHome(userId: string, hintSlug?: string | null): Pro
  * Path-based today; Phase 2 swaps this for `https://{slug}.{root}` in ONE place.
  */
 export function tenantLandingPath(m: Pick<HomeMembership, "slug" | "role">): string {
-  return m.role === "company_admin" ? `/academy/${m.slug}/admin` : `/academy/${m.slug}/classroom`;
+  const isStaff =
+    m.role === "company_admin" || m.role === "teacher" || m.role === "instructor";
+  return isStaff ? `/academy/${m.slug}/admin` : `/academy/${m.slug}/classroom`;
 }

@@ -1,13 +1,46 @@
 import { SignIn } from "@clerk/nextjs";
 import { getSiteAsset } from "@/lib/site-assets";
+import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import { ArrowLeft, CheckCircle2 } from "lucide-react";
 
 export const metadata = { title: "Sign In — Zed AI Academy" };
 
-export default async function SignInPage() {
+function extractAcademySlugFromRedirect(redirectUrl?: string): string | null {
+  if (!redirectUrl) return null;
+  let path = redirectUrl;
+  if (redirectUrl.startsWith("http://") || redirectUrl.startsWith("https://")) {
+    try {
+      path = new URL(redirectUrl).pathname;
+    } catch {
+      return null;
+    }
+  }
+  const match = path.match(/^\/academy\/([^/?#]+)/);
+  return match?.[1] ?? null;
+}
+
+export default async function SignInPage(props: {
+  searchParams: Promise<{ redirect_url?: string }>;
+}) {
+  const { redirect_url } = await props.searchParams;
   const bgImage = await getSiteAsset("auth_bg", "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200&q=80&auto=format&fit=crop");
-  const logoUrl = await getSiteAsset("site_logo", "/images/zed-ai-logo2.png");
+  const defaultLogoUrl = await getSiteAsset("site_logo", "/images/logo-dark.png");
+
+  const academySlug = extractAcademySlugFromRedirect(redirect_url);
+  let tenant: { name: string; logo_url: string | null } | null = null;
+  if (academySlug) {
+    const supabase = createClient();
+    const { data } = await supabase
+      .from("companies")
+      .select("name, logo_url")
+      .eq("slug", academySlug)
+      .maybeSingle();
+    tenant = data;
+  }
+
+  const displayLogo = tenant?.logo_url || defaultLogoUrl || "/images/logo-dark.png";
+  const displayAlt = tenant?.name || "Zed AI Academy";
 
   return (
     <div className="flex min-h-screen bg-white overflow-hidden">
@@ -62,9 +95,9 @@ export default async function SignInPage() {
           {/* Logo — visible on mobile (left panel is hidden on small screens) */}
           <div className="mb-4 lg:mb-6 flex items-center justify-center flex-col">
             <img
-              src='images/logo-dark.png'
-              alt="Zed AI Academy"
-              className="h-20 w-auto"
+              src={displayLogo}
+              alt={displayAlt}
+              className="h-20 w-auto object-contain"
             />
             <h2 className="mt-6 text-3xl font-extrabold text-[#062e39] tracking-tight">Welcome back</h2>
             <p className="mt-2 text-sm text-slate-500">
@@ -89,11 +122,7 @@ export default async function SignInPage() {
                   identityPreviewTextPrimary: "text-[#062e39] font-bold",
                   rootBox: "w-full",
                 },
-                layout: {
-                  socialButtonsPlacement: "bottom",
-                  showOptionalFields: false,
-                },
-              } as any}
+              }}
             />
           </div>
         </div>

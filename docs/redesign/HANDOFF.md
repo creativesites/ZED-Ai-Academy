@@ -26,10 +26,12 @@ agent letter and phase, e.g. `2026-11-24 · A · A0.1`.
 ## Decisions
 
 <!-- Anything you decided that the other agent must follow (e.g. proxy redirect vs passthrough, template preset names). -->
+- `2026-11-21 · B · B0` · On tenant subdomains, platform-only routes (`/courses/*/learn`, `/courses/*/checkout`, `/live-sessions/**`, `/certificates/**`, `/dashboard/**`, `/practice/**`) redirect to the apex domain with the same path and query string instead of rewriting under `/academy/[domain]`.
 
 ## Migrations to apply (the user applies these in Supabase)
 
 <!-- `file · what it does · what breaks / degrades until applied` -->
+- `supabase/migrations/20261121000001_orders_coupon_fields.sql` · Adds `coupon_code` and `discount_amount` to `orders`, and `company_id` and `starts_at` to `coupons` · Checkout and PayChangu webhook degrade gracefully without those columns (coupon discount is still charged accurately via PayChangu, but `coupon_code`/`discount_amount` are not persisted on `orders` until applied).
 
 ## Done
 
