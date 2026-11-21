@@ -6,6 +6,7 @@ import "server-only";
 export type AiTask =
   | "tutor" | "practiceStudio" | "editBlock" | "siteIntelligence" | "brandingAssistant" // interactive, latency-sensitive
   | "lessonContent" | "curriculum" | "courseBlueprint" | "quiz" | "practiceExercise" | "practiceScoring" // quality-sensitive generation
+  | "teacherAuthoring" // ZAI Teacher Phase 1 objective extraction, flow drafting & revision
   | "tutorTurn" | "tutorReport" // ZAI Tutor text reasoning
   | "tutorLive" | "tutorTts" | "tutorTranscribe" // ZAI Tutor audio models (not text models)
   | "image";
@@ -22,6 +23,7 @@ export const DEFAULT_MODELS: Record<AiTask, string> = {
   quiz: "gemini-3.8-flash",
   practiceExercise: "gemini-3.8-flash",
   practiceScoring: "gemini-3.8-flash",
+  teacherAuthoring: "gemini-3.8-flash",
   tutorTurn: "gemini-3.8-flash",
   tutorReport: "gemini-3.8-flash",
   tutorLive: "gemini-3.8-live",

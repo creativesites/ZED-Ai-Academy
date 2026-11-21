@@ -5,6 +5,7 @@ import { canManageCourse } from "@/lib/courses/course-auth-server";
 import { blocksToText } from "@/lib/course-blocks/block-to-text";
 import { gemini } from "@/lib/ai/gemini";
 import { modelFor } from "@/lib/ai/models";
+import { getAuthoringTemplate } from "@/lib/tutor/authoring/templates";
 import { SCENE_ARTBOARDS } from "@/lib/tutor/rive-driver";
 
 export async function POST(req: NextRequest) {
@@ -19,6 +20,7 @@ export async function POST(req: NextRequest) {
     skillPack?: string;
     style?: string;
     level?: string;
+    templateId?: string;
     instructions?: string;
   } | null;
 
@@ -59,7 +61,8 @@ export async function POST(req: NextRequest) {
   }
 
   const skillPack = body.skillPack || "general-tutor";
-  const style = body.style || "scene";
+  const template = body.templateId ? getAuthoringTemplate(body.templateId) : null;
+  const style = body.style || template?.style || "scene";
   const level = body.level || course?.level || "A1";
 
   const systemInstruction = `You are an expert language and interactive tutor curriculum designer for Zed AI Academy.
@@ -74,6 +77,7 @@ Context:
 ${lessonTitle ? `- Lesson: ${lessonTitle}` : ""}
 - Skill Pack: ${skillPack}
 - Session Style: ${style} (scene = role-play, guided_lesson = step-by-step teaching + mini role-play, oral_check = exam-style speaking check)
+${template ? `- Template: ${template.label} — ${template.promptHints}` : ""}
 - Level: ${level}
 ${body.instructions ? `- Teacher instructions: ${body.instructions}` : ""}
 ${lessonContent ? `\nLesson material:\n${lessonContent}` : ""}
@@ -83,12 +87,10 @@ Return ONLY a valid JSON object with this exact shape:
   "title": "Short engaging scenario title (max 80 chars)",
   "goal": "Clear 1-2 sentence learner goal describing what they will achieve out loud",
   "level": "${level}",
-  "max_minutes": 6,
-  "scene": "${SCENE_ARTBOARDS[0]}",
+  "max_minutes": ${template?.maxMinutes ?? 6},
+  "scene": "${template?.defaultScene ?? SCENE_ARTBOARDS[0]}",
   "beats": [
-    { "id": "beat-1", "goal": "Warm greeting and setting the scene", "targetItems": ["phrase 1"] },
-    { "id": "beat-2", "goal": "Core interaction or practice step", "targetItems": ["phrase 2", "phrase 3"] },
-    { "id": "beat-3", "goal": "Wrap-up and polite closing", "targetItems": ["phrase 4"] }
+    { "id": "beat-1", "goal": "Warm greeting and setting the scene", "boardContent": "Key points on board", "checkQuestion": "Quick check question", "targetItems": ["phrase 1"] }
   ],
   "target_items": [
     { "text": "Target word or phrase", "pron": "pronunciation / pinyin (optional)", "meaning": "English meaning" }

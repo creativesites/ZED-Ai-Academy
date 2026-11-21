@@ -1,8 +1,17 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import {
+  listAvailablePersonasForCourse,
+  listTeacherMomentsForLesson,
+  type PersonaRecord,
+  type TeacherMomentRecord,
+} from "@/actions/tutor-authoring";
+import { listTutorScenariosForCourse, type TutorScenarioOption } from "@/actions/tutor-scenarios";
 import { LessonEditorClient } from "@/components/creator/lesson-editor-client";
 import { Toaster } from "@/components/ui/sonner";
 import { getCourseEditorPath, getLessonEditorPath } from "@/lib/courses/course-routes";
+import { ZEDAI_TENANT_ID } from "@/lib/tenants/constants";
+import { DEFAULT_TEACHER_NAME } from "@/lib/tutor/course-teacher";
 import type { ContentBlock, ContentBlockType, Json } from "@/types/database";
 
 export async function LessonStudioView({
@@ -66,15 +75,36 @@ export async function LessonStudioView({
     error: unknown;
   };
 
-  // Course outline for prev/next navigation and the "lesson x of y" context.
-  const [{ data: courseRow }, { data: outlineRaw }] = await Promise.all([
-    supabase.from("courses").select("slug").eq("id", courseId).single(),
+  // Course outline, AI Teacher personas, scenarios, and moments.
+  const [{ data: courseRow }, { data: outlineRaw }, personaCtx, availableScenarios, momentsRes] = await Promise.all([
+    supabase.from("courses").select("slug, status, company_id").eq("id", courseId).single(),
     supabase
       .from("modules")
       .select("id, title, position, lessons(id, title, position)")
       .eq("course_id", courseId)
       .order("position", { ascending: true }),
+    listAvailablePersonasForCourse(courseId).catch(() => ({ companyId: ZEDAI_TENANT_ID, personas: [] as PersonaRecord[] })),
+    listTutorScenariosForCourse(courseId).catch(() => [] as TutorScenarioOption[]),
+    listTeacherMomentsForLesson(lessonId, courseId).catch(() => ({ available: false, moments: [] as TeacherMomentRecord[] })),
   ]);
+
+  const companyId = courseRow?.company_id ?? personaCtx.companyId ?? ZEDAI_TENANT_ID;
+  const personas = personaCtx.personas;
+  const firstCourseScenario = availableScenarios.find((s) => s.visibility === "course" && s.persona);
+  const preferredPersona =
+    (firstCourseScenario?.persona
+      ? personas.find(
+          (p) =>
+            p.name === firstCourseScenario.persona?.name ||
+            p.display_name === firstCourseScenario.persona?.displayName,
+        )
+      : undefined) ??
+    personas.find(
+      (p) =>
+        p.name.toLowerCase() === DEFAULT_TEACHER_NAME.toLowerCase() ||
+        p.display_name?.toLowerCase() === DEFAULT_TEACHER_NAME.toLowerCase(),
+    ) ??
+    personas[0];
   const ordered = ((outlineRaw ?? []) as { id: string; title: string; lessons: { id: string; title: string; position: number }[] }[])
     .flatMap((m) => [...(m.lessons ?? [])].sort((a, b) => a.position - b.position).map((l) => ({ ...l, moduleTitle: m.title })));
   const idx = ordered.findIndex((l) => l.id === lessonId);
@@ -98,6 +128,8 @@ export async function LessonStudioView({
           }}
           courseId={courseId}
           courseTitle={courseTitle}
+          courseStatus={courseRow?.status ?? "draft"}
+          companyId={companyId}
           moduleTitle={mod.title}
           initialBlocks={typedBlocks.map((b) => ({
             id: b.id,
@@ -107,6 +139,11 @@ export async function LessonStudioView({
           }))}
           quiz={quizData}
           tenantSlug={tenantSlug}
+          personas={personas}
+          defaultPersonaId={preferredPersona?.id ?? null}
+          availableScenarios={availableScenarios}
+          momentsAvailable={momentsRes.available}
+          initialMoments={momentsRes.moments}
         />
       </div>
     </>

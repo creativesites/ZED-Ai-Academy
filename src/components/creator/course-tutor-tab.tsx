@@ -128,7 +128,7 @@ export function CourseTutorTab({
           </div>
           <h2 className="text-xl font-black text-[#062e39]">AI Teacher Flows</h2>
           <p className="max-w-2xl text-xs text-slate-500 sm:text-sm">
-            Create interactive role-plays, guided speaking lessons, or oral checks for this course. Published scenarios appear in your Lesson Studio &quot;Speaking&quot; blocks.
+            Create interactive role-plays, guided lessons, or oral checks for this course. Published flows appear in your Lesson Studio &quot;AI Teacher&quot; blocks.
           </p>
         </div>
 
