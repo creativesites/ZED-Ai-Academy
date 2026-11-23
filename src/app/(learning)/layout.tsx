@@ -3,10 +3,6 @@ import { redirect } from "next/navigation";
 import { ensureProfile } from "@/lib/supabase/ensure-profile";
 import { requireOnboarding } from "@/lib/require-onboarding";
 import { NotificationBellServer } from "@/components/shared/notification-bell-server";
-import "../../../public/assets/css/style.css"
-import 'swiper/css'
-import "swiper/css/pagination"
-import 'swiper/css/free-mode';
 
 export default async function LearningLayout({ children }: { children: React.ReactNode }) {
   const { userId } = await auth();

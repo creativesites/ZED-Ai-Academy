@@ -7,10 +7,6 @@ import { syncActiveOrganization } from "@/actions/company";
 import { companyAdminNeedsAcademySetup } from "@/lib/company-admin-setup";
 import { CreatorNavbar } from "@/components/creator/CreatorNavbar";
 import { NotificationBellServer } from "@/components/shared/notification-bell-server";
-import "../../../public/assets/css/style.css";
-import "swiper/css";
-import "swiper/css/pagination";
-import "swiper/css/free-mode";
 
 export default async function CreatorLayout({ children }: { children: React.ReactNode }) {
   const { userId, orgId } = await auth();

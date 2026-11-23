@@ -95,7 +95,7 @@ export function StudentProgressTab({
 
           {progress.nextLesson && (
             <Link
-              href={`/academy/${companySlug}/course/${progress.nextLesson.course_slug}`}
+              href={`/courses/${progress.nextLesson.course_slug}/learn`}
               className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 h-9 rounded-xl bg-[#fd5523] hover:bg-[#e0481d] text-white text-xs font-semibold shadow-xs transition-all shrink-0 max-w-full"
             >
               <BookOpen className="h-3.5 w-3.5 shrink-0" />

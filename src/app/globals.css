@@ -7,6 +7,19 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-surface-muted: var(--surface-muted);
+  --color-ink: var(--ink);
+  --color-ink-foreground: var(--ink-foreground);
+  --color-primary-soft: var(--primary-soft);
+  --color-primary-hover: var(--primary-hover);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-destructive-soft: var(--destructive-soft);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
   --font-sans: var(--font-inter), "Inter", system-ui, -apple-system, sans-serif;
   --font-mono: var(--font-jetbrains-mono), "JetBrains Mono", ui-monospace, monospace;
   --font-heading: var(--font-plus-jakarta), "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
@@ -53,30 +66,43 @@
   --font-jetbrains-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   --logistiq-font: var(--font-inter);
   --logistiq-font-two: var(--font-plus-jakarta);
-  --background: oklch(0.975 0.01 65);
-  --foreground: oklch(0.28 0.04 220);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.28 0.04 220);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.28 0.04 220);
-  --primary: oklch(0.67 0.2 41);
-  --primary-foreground: oklch(0.99 0.01 85);
-  --secondary: oklch(0.95 0.012 60);
-  --secondary-foreground: oklch(0.34 0.035 220);
-  --muted: oklch(0.955 0.008 60);
-  --muted-foreground: oklch(0.52 0.02 235);
-  --accent: oklch(0.95 0.03 48);
-  --accent-foreground: oklch(0.31 0.05 220);
-  --destructive: oklch(0.62 0.22 27);
-  --border: oklch(0.9 0.015 65);
-  --input: oklch(0.93 0.012 65);
-  --ring: oklch(0.67 0.2 41);
-  --chart-1: oklch(0.67 0.2 41);
-  --chart-2: oklch(0.54 0.11 220);
-  --chart-3: oklch(0.72 0.13 72);
-  --chart-4: oklch(0.63 0.13 160);
-  --chart-5: oklch(0.59 0.16 18);
-  --radius: 1rem;
+  --background: #f7f8fa;
+  --surface: #ffffff;
+  --surface-muted: #f1f3f6;
+  --foreground: #0b1f26;
+  --card: #ffffff;
+  --card-foreground: #0b1f26;
+  --popover: #ffffff;
+  --popover-foreground: #0b1f26;
+  --primary: #fd5523;
+  --primary-foreground: #ffffff;
+  --primary-soft: color-mix(in oklab, var(--primary) 12%, white);
+  --primary-hover: color-mix(in oklab, var(--primary) 88%, black);
+  --ink: #062e39;
+  --ink-foreground: #ffffff;
+  --secondary: #f1f3f6;
+  --secondary-foreground: #0b1f26;
+  --muted: #f1f3f6;
+  --muted-foreground: #5b6b73;
+  --accent: color-mix(in oklab, var(--primary) 12%, white);
+  --accent-foreground: #0b1f26;
+  --success: #16a34a;
+  --success-soft: #dcfce7;
+  --warning: #d97706;
+  --warning-soft: #fef3c7;
+  --destructive: #dc2626;
+  --destructive-soft: #fee2e2;
+  --info: #2563eb;
+  --info-soft: #dbeafe;
+  --border: #e3e7ec;
+  --input: #e3e7ec;
+  --ring: var(--primary);
+  --chart-1: #fd5523;
+  --chart-2: #062e39;
+  --chart-3: #d97706;
+  --chart-4: #16a34a;
+  --chart-5: #2563eb;
+  --radius: 0.75rem;
   --sidebar: oklch(0.992 0.004 70);
   --sidebar-foreground: oklch(0.28 0.04 220);
   --sidebar-primary: oklch(0.67 0.2 41);
@@ -95,6 +121,8 @@
 
 .dark {
   --background: oklch(0.22 0.028 220);
+  --surface: oklch(0.25 0.03 220);
+  --surface-muted: oklch(0.3 0.02 220);
   --foreground: oklch(0.96 0.01 70);
   --card: oklch(0.25 0.03 220);
   --card-foreground: oklch(0.96 0.01 70);
@@ -102,16 +130,27 @@
   --popover-foreground: oklch(0.96 0.01 70);
   --primary: oklch(0.72 0.18 42);
   --primary-foreground: oklch(0.24 0.03 220);
+  --primary-soft: color-mix(in oklab, var(--primary) 18%, black);
+  --primary-hover: color-mix(in oklab, var(--primary) 88%, white);
+  --ink: #062e39;
+  --ink-foreground: #ffffff;
   --secondary: oklch(0.3 0.02 220);
   --secondary-foreground: oklch(0.96 0.01 70);
   --muted: oklch(0.3 0.02 220);
   --muted-foreground: oklch(0.77 0.015 70);
   --accent: oklch(0.33 0.035 42);
   --accent-foreground: oklch(0.96 0.01 70);
+  --success: #22c55e;
+  --success-soft: rgba(34, 197, 94, 0.16);
+  --warning: #f59e0b;
+  --warning-soft: rgba(245, 158, 11, 0.16);
   --destructive: oklch(0.7 0.18 24);
+  --destructive-soft: rgba(239, 68, 68, 0.16);
+  --info: #60a5fa;
+  --info-soft: rgba(96, 165, 250, 0.16);
   --border: oklch(1 0 0 / 0.1);
   --input: oklch(1 0 0 / 0.14);
-  --ring: oklch(0.72 0.18 42);
+  --ring: var(--primary);
   --sidebar: oklch(0.24 0.03 220);
   --sidebar-foreground: oklch(0.96 0.01 70);
   --sidebar-primary: oklch(0.72 0.18 42);
@@ -137,16 +176,12 @@
   }
 
   body {
-    @apply bg-background text-foreground font-sans text-[15px] leading-relaxed;
-    background-image:
-      radial-gradient(circle at top left, rgba(253, 85, 35, 0.12), transparent 28%),
-      radial-gradient(circle at top right, rgba(6, 46, 57, 0.08), transparent 24%),
-      linear-gradient(180deg, #fffaf6 0%, #fff 34%, #fff8f2 100%);
+    @apply bg-background text-foreground font-sans text-sm leading-relaxed;
   }
 
   ::selection {
-    background: rgba(253, 85, 35, 0.2);
-    color: var(--marketing-ink);
+    background: color-mix(in oklab, var(--primary) 20%, transparent);
+    color: var(--ink);
   }
 
   h1,
@@ -157,23 +192,11 @@
   h6 {
     font-family: var(--font-heading), var(--font-sans), sans-serif;
     letter-spacing: -0.02em;
-    line-height: 1.18;
-  }
-
-  h1 {
-    font-size: clamp(1.5rem, 2.5vw, 2.25rem);
-  }
-
-  h2 {
-    font-size: clamp(1.25rem, 2vw, 1.75rem);
-  }
-
-  h3 {
-    font-size: clamp(1.05rem, 1.4vw, 1.35rem);
+    line-height: 1.2;
   }
 
   a {
-    transition: color 200ms ease, opacity 200ms ease, border-color 200ms ease;
+    transition: color 150ms ease, opacity 150ms ease, border-color 150ms ease;
   }
 }
 
@@ -195,6 +218,22 @@
   .marketing-shell {
     position: relative;
     isolation: isolate;
+    background-image:
+      radial-gradient(circle at top left, rgba(253, 85, 35, 0.12), transparent 28%),
+      radial-gradient(circle at top right, rgba(6, 46, 57, 0.08), transparent 24%),
+      linear-gradient(180deg, #fffaf6 0%, #fff 34%, #fff8f2 100%);
+  }
+
+  .marketing-shell h1 {
+    font-size: clamp(1.5rem, 2.5vw, 2.25rem);
+  }
+
+  .marketing-shell h2 {
+    font-size: clamp(1.25rem, 2vw, 1.75rem);
+  }
+
+  .marketing-shell h3 {
+    font-size: clamp(1.05rem, 1.4vw, 1.35rem);
   }
 
   .marketing-shell::before {

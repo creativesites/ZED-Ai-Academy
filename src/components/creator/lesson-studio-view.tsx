@@ -8,7 +8,6 @@ import {
 } from "@/actions/tutor-authoring";
 import { listTutorScenariosForCourse, type TutorScenarioOption } from "@/actions/tutor-scenarios";
 import { LessonEditorClient } from "@/components/creator/lesson-editor-client";
-import { Toaster } from "@/components/ui/sonner";
 import { getCourseEditorPath, getLessonEditorPath } from "@/lib/courses/course-routes";
 import { ZEDAI_TENANT_ID } from "@/lib/tenants/constants";
 import { DEFAULT_TEACHER_NAME } from "@/lib/tutor/course-teacher";
@@ -112,9 +111,7 @@ export async function LessonStudioView({
     l ? { id: l.id, title: l.title, href: getLessonEditorPath(courseId, l.id, tenantSlug) } : null;
 
   return (
-    <>
-      <Toaster position="top-center" />
-      <div className="app-surface mx-auto w-full max-w-7xl">
+    <div className="app-surface mx-auto w-full max-w-7xl">
         <LessonEditorClient
           backHref={getCourseEditorPath(courseId, tenantSlug)}
           learnerHref={courseRow?.slug ? `/courses/${courseRow.slug}/learn?lesson=${lessonId}` : null}
@@ -146,6 +143,5 @@ export async function LessonStudioView({
           initialMoments={momentsRes.moments}
         />
       </div>
-    </>
   );
 }

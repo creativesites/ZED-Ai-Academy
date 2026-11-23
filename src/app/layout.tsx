@@ -4,6 +4,7 @@ import { Inter, Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
 import NextTopLoader from "nextjs-toploader";
 import { NetworkStatusProvider } from "@/components/providers/NetworkStatusProvider";
 import { SWRProvider } from "@/components/providers/SWRProvider";
+import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 import "./app-surface-reset.css";
 
@@ -73,6 +74,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <NetworkStatusProvider>
             <SWRProvider>{children}</SWRProvider>
           </NetworkStatusProvider>
+          <Toaster position="top-center" richColors closeButton />
         </body>
       </html>
     </ClerkProvider>

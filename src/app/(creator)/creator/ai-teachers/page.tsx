@@ -1,4 +1,3 @@
-import { Toaster } from "@/components/ui/sonner";
 import { TutorStudioHub } from "@/components/tutor/studio/TutorStudioHub";
 import {
   getTutorSettings,
@@ -28,19 +27,16 @@ export default async function CreatorAiTeachersPage() {
   ]);
 
   return (
-    <>
-      <Toaster />
-      <div className="container mx-auto max-w-7xl px-4 py-8 pb-20">
-        <TutorStudioHub
-          companyId={ctx.companyId}
-          companyName={ctx.companyName}
-          companySlug={ctx.companySlug}
-          initialPersonas={personas}
-          initialScenarios={scenarios}
-          initialSettings={settings}
-          initialSessions={sessions}
-        />
-      </div>
-    </>
+    <div className="container mx-auto max-w-7xl px-4 py-8 pb-20">
+      <TutorStudioHub
+        companyId={ctx.companyId}
+        companyName={ctx.companyName}
+        companySlug={ctx.companySlug}
+        initialPersonas={personas}
+        initialScenarios={scenarios}
+        initialSettings={settings}
+        initialSessions={sessions}
+      />
+    </div>
   );
 }

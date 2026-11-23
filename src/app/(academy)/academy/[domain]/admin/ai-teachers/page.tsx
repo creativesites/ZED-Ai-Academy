@@ -1,4 +1,3 @@
-import { Toaster } from "@/components/ui/sonner";
 import { requireTenantAdminPage } from "@/lib/tenants/admin-guard";
 import { TutorStudioHub } from "@/components/tutor/studio/TutorStudioHub";
 import {
@@ -33,10 +32,8 @@ export default async function TenantAdminAiTeachersPage({
   ]);
 
   return (
-    <>
-      <Toaster />
-      <div className="container mx-auto max-w-7xl px-4 py-8 pb-24">
-        <TutorStudioHub
+    <div className="container mx-auto max-w-7xl px-4 py-8 pb-24">
+      <TutorStudioHub
           companyId={company.id}
           companyName={company.name}
           companySlug={company.slug}
@@ -46,6 +43,5 @@ export default async function TenantAdminAiTeachersPage({
           initialSessions={sessions}
         />
       </div>
-    </>
   );
 }

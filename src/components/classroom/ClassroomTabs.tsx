@@ -68,7 +68,32 @@ interface ClassroomTabsProps {
   companyId: string;
   isAdminOrInstructor: boolean;
   companySlug: string;
-  initialTab?: TabType;
+  initialTab?: string;
+}
+
+const VALID_CLASSROOM_TABS = new Set<TabType>([
+  "overview",
+  "session",
+  "timetable",
+  "materials",
+  "assignments",
+  "noticeboard",
+  "discussions",
+  "progress",
+  "students",
+  "gradebook",
+  "groups",
+  "history",
+]);
+
+function normalizeClassroomTab(raw?: string): TabType {
+  if (!raw) return "overview";
+  const lower = raw.toLowerCase();
+  if (lower === "announcements" || lower === "notices") return "noticeboard";
+  if (lower === "schedule") return "timetable";
+  if (lower === "documents") return "materials";
+  if (lower === "live") return "session";
+  return VALID_CLASSROOM_TABS.has(lower as TabType) ? (lower as TabType) : "overview";
 }
 
 export function ClassroomTabs({
@@ -77,7 +102,7 @@ export function ClassroomTabs({
   companySlug,
   initialTab = "overview",
 }: ClassroomTabsProps) {
-  const [activeTab, setActiveTab] = useState<TabType>(initialTab);
+  const [activeTab, setActiveTab] = useState<TabType>(() => normalizeClassroomTab(initialTab));
   const [cohorts, setCohorts] = useState<any[]>([]);
   const [courses, setCourses] = useState<any[]>([]);
   const [activeCohortId, setActiveCohortId] = useState<string>("all");
@@ -93,7 +118,7 @@ export function ClassroomTabs({
 
   useEffect(() => {
     if (initialTab) {
-      setActiveTab(initialTab);
+      setActiveTab(normalizeClassroomTab(initialTab));
     }
   }, [initialTab]);
 

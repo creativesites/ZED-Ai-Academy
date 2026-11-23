@@ -26,7 +26,6 @@ import {
   Star,
   Users,
 } from "lucide-react";
-import { Toaster } from "@/components/ui/sonner";
 import { cn } from "@/lib/utils";
 import type { Course, Lesson, Module } from "@/types/database";
 
@@ -411,9 +410,7 @@ export async function CourseStudioView({
   );
 
   return (
-    <>
-      <Toaster position="top-center" />
-      <div className="app-surface mx-auto w-full max-w-6xl px-4 pb-24 pt-4 sm:pt-6">
+    <div className="app-surface mx-auto w-full max-w-6xl px-4 pb-24 pt-4 sm:pt-6">
         {/* ── Studio header ─────────────────────────────────────────── */}
         <header className="mb-1">
           <Link
@@ -553,6 +550,5 @@ export async function CourseStudioView({
           ]}
         />
       </div>
-    </>
   );
 }
