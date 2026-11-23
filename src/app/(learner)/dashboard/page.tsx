@@ -20,7 +20,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import type { CompanyMemberRole, UserRole } from "@/types/database";
 import { getUpcomingUserClasses } from "@/actions/classroom";
+import { DailyPlanCard } from "@/components/tutor/DailyPlanCard";
 import { TutorSpotlightBanner } from "@/components/tutor/TutorSpotlightBanner";
+import { loadDashboardDailyPlan } from "@/lib/tutor/mastery/server";
 
 export const metadata = { title: "Your Academies — Zed AI Academy" };
 export const dynamic = "force-dynamic";
@@ -228,6 +230,9 @@ export default async function DashboardPage() {
           <TutorSpotlightBanner />
         </div>
 
+        {/* Today with <teacher> daily plan */}
+        <DailyPlanSection userId={userId} />
+
         {/* Academies Section */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
@@ -387,6 +392,16 @@ export default async function DashboardPage() {
         </div>
 
       </div>
+    </div>
+  );
+}
+
+async function DailyPlanSection({ userId }: { userId: string }) {
+  const plan = await loadDashboardDailyPlan({ userId });
+  if (plan.items.length === 0) return null;
+  return (
+    <div className="mb-8">
+      <DailyPlanCard teacherName={plan.teacherName} items={plan.items} />
     </div>
   );
 }

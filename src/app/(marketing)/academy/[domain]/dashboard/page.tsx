@@ -18,6 +18,8 @@ type EnrollmentWithCourse = Enrollment & {
 };
 
 import { TenantNavbar } from "@/components/tenant/TenantNavbar";
+import { DailyPlanCard } from "@/components/tutor/DailyPlanCard";
+import { loadDashboardDailyPlan } from "@/lib/tutor/mastery/server";
 
 export default async function TenantStudentDashboardPage({
   params,
@@ -56,14 +58,21 @@ export default async function TenantStudentDashboardPage({
 
   const firstName = profile?.full_name?.split(" ")[0] ?? "there";
 
-  // 3. Fetch Enrollments for THIS company
-  const { data: enrollmentsData } = await supabase
-    .from("enrollments")
-    .select("*, courses(id, slug, title, thumbnail_url, category)")
-    .eq("user_id", userId)
-    .eq("company_id", company.id)
-    .in("status", ["active", "pending_payment"])
-    .order("enrolled_at", { ascending: false });
+  // 3. Fetch Enrollments & Daily Plan for THIS company
+  const [{ data: enrollmentsData }, dailyPlan] = await Promise.all([
+    supabase
+      .from("enrollments")
+      .select("*, courses(id, slug, title, thumbnail_url, category)")
+      .eq("user_id", userId)
+      .eq("company_id", company.id)
+      .in("status", ["active", "pending_payment"])
+      .order("enrolled_at", { ascending: false }),
+    loadDashboardDailyPlan({
+      userId,
+      companyId: company.id,
+      basePath: `/academy/${company.slug}`,
+    }),
+  ]);
 
   const enrollments = (enrollmentsData ?? []) as EnrollmentWithCourse[];
 
@@ -118,6 +127,9 @@ export default async function TenantStudentDashboardPage({
             </div>
           </div>
         </section>
+
+        {/* Today with <teacher> Daily Plan */}
+        <DailyPlanCard teacherName={dailyPlan.teacherName} items={dailyPlan.items} />
 
         {/* Stats Grid */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
