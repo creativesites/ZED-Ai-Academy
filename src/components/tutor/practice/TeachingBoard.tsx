@@ -2,6 +2,7 @@
 
 import type { ClipEvent, LessonRefEvent } from "@/components/tutor/EventPlayer";
 import { CONFIDENCE_LEVELS, type BoardState, type ConfidenceLevel } from "@/lib/tutor/board";
+import { dispatchLessonSeek } from "@/lib/tutor/lesson-seek";
 import styles from "./practice.module.css";
 
 // The teaching surface beside the teacher (event contract v2): board content revealed step by step,
@@ -24,6 +25,7 @@ type TeachingBoardProps = {
   onChoose: (option: string) => void;
   onConfidence: (level: ConfidenceLevel) => void;
   onDismissAward: () => void;
+  onLessonRefClick?: (ref: LessonRefEvent) => void;
 };
 
 export function TeachingBoard({
@@ -38,6 +40,7 @@ export function TeachingBoard({
   onChoose,
   onConfidence,
   onDismissAward,
+  onLessonRefClick,
 }: TeachingBoardProps) {
   const empty = !board && !choice && !confidence && lessonRefs.length === 0 && !clip && !award;
   if (empty) return null;
@@ -116,13 +119,21 @@ export function TeachingBoard({
       {lessonRefs.length > 0 && (
         <div className="flex flex-wrap gap-2">
           {lessonRefs.map((ref, i) => (
-            <span
+            <button
               key={`${ref.label}-${i}`}
-              className="rounded-lg bg-[#eff6ff] px-3 py-2 text-[13px] font-bold text-[#1d4ed8]"
+              type="button"
+              onClick={() => {
+                if (onLessonRefClick) {
+                  onLessonRefClick(ref);
+                } else {
+                  dispatchLessonSeek(ref);
+                }
+              }}
+              className="rounded-lg bg-[#eff6ff] px-3 py-2 text-[13px] font-bold text-[#1d4ed8] transition hover:bg-[#dbeafe] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus)]"
             >
               ↗ {ref.label}
               {ref.seconds !== undefined ? ` · ${formatSeconds(ref.seconds)}` : ""}
-            </span>
+            </button>
           ))}
         </div>
       )}

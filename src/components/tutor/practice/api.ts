@@ -89,15 +89,7 @@ export async function detectMicPermission(): Promise<MicPermission> {
 
 export type SessionOriginInput = "lesson" | "assignment" | "practice";
 
-export function startTutorSession(input: {
-  origin: SessionOriginInput;
-  scenarioId?: string;
-  lessonId?: string;
-  assignmentId?: string;
-  micPermission: MicPermission;
-  rttMs?: number;
-  preferMode?: "voice" | "text";
-}): Promise<Result<StartResponse>> {
+export function startTutorSession(input: TutorStartRequest): Promise<Result<StartResponse>> {
   return call<StartResponse>("/api/tutor/sessions", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -106,6 +98,10 @@ export function startTutorSession(input: {
       ...(input.scenarioId ? { scenarioId: input.scenarioId } : {}),
       ...(input.lessonId ? { lessonId: input.lessonId } : {}),
       ...(input.assignmentId ? { assignmentId: input.assignmentId } : {}),
+      ...(input.sprint ? { sprint: true } : {}),
+      ...(input.sprintCourseId ? { courseId: input.sprintCourseId } : {}),
+      ...(input.focusObjective ? { focusObjective: input.focusObjective } : {}),
+      ...(input.companyId ? { companyId: input.companyId } : {}),
       micPermission: input.micPermission,
       ...(input.rttMs !== undefined ? { rttMs: input.rttMs } : {}),
       ...(input.preferMode ? { preferMode: input.preferMode } : {}),
@@ -147,6 +143,10 @@ export type TutorStartRequest = {
   scenarioId?: string;
   lessonId?: string;
   assignmentId?: string;
+  sprint?: boolean;
+  sprintCourseId?: string;
+  focusObjective?: string;
+  companyId?: string;
   micPermission: MicPermission;
   rttMs?: number;
   preferMode?: "voice" | "text";

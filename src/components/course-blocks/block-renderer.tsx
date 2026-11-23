@@ -76,7 +76,7 @@ export function BlockRenderer({
 
   switch (type) {
     case "video":
-      return <VideoBlock content={content} />;
+      return <VideoBlock content={content} blockId={id} />;
     case "text":
       return <TextBlock content={content} />;
     case "image":

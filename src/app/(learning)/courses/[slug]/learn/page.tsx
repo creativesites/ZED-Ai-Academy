@@ -11,6 +11,7 @@ import {
   type TutorScenarioRow,
   type TutorScenarioView,
 } from "@/lib/tutor/tutor-session-block";
+import { isSchemaUnavailableError } from "@/lib/tutor/mastery/server";
 
 type PageProps = {
   params: Promise<{ slug: string }>;
@@ -205,16 +206,50 @@ export default async function LearnPage({ params, searchParams }: PageProps) {
     }));
   }
 
-  // Speaking practice placed in this lesson: the published scenarios it points at, and the ones this
-  // learner has already completed in this lesson (tutor_sessions rows are written by /complete).
+  // Placed teacher moments (Phase 1 table; safe if not migrated yet)
+  const momentsRes = await (supabase as unknown as {
+    from: (t: string) => {
+      select: (c: string) => {
+        eq: (k: string, v: unknown) => {
+          eq: (k2: string, v2: unknown) => {
+            order: (col: string, opts?: { ascending?: boolean }) => Promise<{
+              data: Array<{
+                id: string;
+                scenario_id: string;
+                after_block_id: string | null;
+                position: number;
+                title: string | null;
+                prompt: string | null;
+                required: boolean;
+              }> | null;
+              error: { code?: string; message?: string } | null;
+            }>;
+          };
+        };
+      };
+    };
+  })
+    .from("teacher_moments")
+    .select("id, scenario_id, after_block_id, position, title, prompt, required")
+    .eq("lesson_id", activeLessonId)
+    .eq("status", "published")
+    .order("position", { ascending: true });
+
+  const teacherMoments =
+    momentsRes.error && isSchemaUnavailableError(momentsRes.error)
+      ? []
+      : (momentsRes.data ?? []);
+
+  // Speaking practice & placed moments in this lesson: published scenarios and completion status.
   const tutorScenarioIds = [
-    ...new Set(
-      (blocks ?? []).flatMap((b) => {
+    ...new Set([
+      ...(blocks ?? []).flatMap((b) => {
         if (b.type !== "tutor_session") return [];
         const parsed = parseTutorSessionBlock(b.content);
         return parsed ? [parsed.scenarioId] : [];
-      })
-    ),
+      }),
+      ...teacherMoments.map((m) => m.scenario_id),
+    ]),
   ];
   const [tutorScenarioRows, tutorDoneRows] = tutorScenarioIds.length > 0
     ? await Promise.all([
@@ -295,6 +330,7 @@ export default async function LearnPage({ params, searchParams }: PageProps) {
       isPartialEnrollment={isPartialEnrollment}
       tutorScenarios={tutorScenarios}
       tutorCompletedScenarioIds={tutorCompletedScenarioIds}
+      teacherMoments={teacherMoments}
     />
   );
 }

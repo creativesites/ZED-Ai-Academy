@@ -1,13 +1,15 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Copy, History, Loader2, Send, X } from "lucide-react";
 import { MessageContent } from "./chat-components/MessageContent";
 import { Teacher } from "@/components/tutor/avatar/Teacher";
 import { PERSONA_PRESETS } from "@/components/tutor/avatar/persona-presets";
 import type { AvatarDriver, PersonaLook } from "@/components/tutor/avatar/types";
+import { TeachingBoard } from "@/components/tutor/practice/TeachingBoard";
 import { useLiteMode } from "@/components/tutor/practice/use-lite-mode";
 import { DEFAULT_TEACHER_NAME } from "@/lib/tutor/course-teacher";
+import { dispatchLessonSeek, extractDockBoardFromText } from "@/lib/tutor/lesson-seek";
 import type { VisemeValue } from "@/lib/tutor/contract.generated";
 
 type Message = { role: "user" | "assistant"; content: string };
@@ -19,34 +21,6 @@ const STARTER_PROMPTS = [
   { label: "Quiz me", body: "Ask me one question at a time to check I understood this lesson. Wait for my answer before the next one." },
   { label: "Summarise", body: "Summarise this lesson in five short bullet points I can review later." },
 ] as const;
-
-function renderContent(text: string) {
-  // Split on double newlines → paragraphs; single newlines → <br>
-  const paragraphs = text.split(/\n{2,}/);
-  return paragraphs.map((para, pi) => {
-    const lines = para.split("\n");
-    return (
-      <p key={pi} className={pi > 0 ? "mt-3" : ""}>
-        {lines.map((line, li) => {
-          // Inline: **bold** and `code`
-          const parts = line.split(/(\*\*[^*]+\*\*|`[^`]+`)/g);
-          return (
-            <span key={li}>
-              {parts.map((part, ti) => {
-                if (part.startsWith("**") && part.endsWith("**"))
-                  return <strong key={ti} className="font-semibold">{part.slice(2, -2)}</strong>;
-                if (part.startsWith("`") && part.endsWith("`"))
-                  return <code key={ti} className="rounded bg-black/10 px-1 font-mono text-[0.82em]">{part.slice(1, -1)}</code>;
-                return part;
-              })}
-              {li < lines.length - 1 ? <br /> : null}
-            </span>
-          );
-        })}
-      </p>
-    );
-  });
-}
 
 export function AiTutor({
   courseId,
@@ -80,6 +54,19 @@ export function AiTutor({
   const hasUserMessages = messages.some((m) => m.role === "user");
   const defaultLook = (PERSONA_PRESETS.find((p) => p.key === "tinashe") ?? PERSONA_PRESETS[0]).look;
   const look = teacher?.look ?? defaultLook;
+
+  // Latest board & video/lesson references emitted by the teacher across the thread.
+  const dockBoard = useMemo(() => {
+    let latestBoard: ReturnType<typeof extractDockBoardFromText>["board"] = null;
+    let latestRefs: ReturnType<typeof extractDockBoardFromText>["lessonRefs"] = [];
+    for (const msg of messages) {
+      if (msg.role !== "assistant") continue;
+      const extracted = extractDockBoardFromText(msg.content);
+      if (extracted.board) latestBoard = extracted.board;
+      if (extracted.lessonRefs.length > 0) latestRefs = extracted.lessonRefs;
+    }
+    return { board: latestBoard, lessonRefs: latestRefs };
+  }, [messages]);
 
   const storageKey = `zed-ai-coach-history-${lessonId}-${sectionTitle || "default"}`;
 
@@ -249,6 +236,26 @@ export function AiTutor({
         {/* Message thread */}
         <div className="flex-1 overflow-y-auto bg-[#f7f8fb] px-4 py-4 space-y-4">
 
+          {/* Pinned Teaching Board & lesson references (v2 contract unified into the dock) */}
+          {(dockBoard.board || dockBoard.lessonRefs.length > 0) && (
+            <div className="rounded-2xl border border-slate-200/80 bg-white/90 p-3 shadow-sm">
+              <TeachingBoard
+                board={dockBoard.board}
+                choice={null}
+                confidence={null}
+                lessonRefs={dockBoard.lessonRefs}
+                clip={null}
+                award={null}
+                lite={lite}
+                disabled={isStreaming}
+                onChoose={() => {}}
+                onConfidence={() => {}}
+                onDismissAward={() => {}}
+                onLessonRefClick={(ref) => dispatchLessonSeek(ref)}
+              />
+            </div>
+          )}
+
           {/* Starter prompt cards — visible until first user message */}
           {!hasUserMessages && (
             <div className="grid grid-cols-2 gap-2 pb-2">
@@ -366,3 +373,5 @@ export function AiTutor({
     </>
   );
 }
+
+export const TeacherDock = AiTutor;

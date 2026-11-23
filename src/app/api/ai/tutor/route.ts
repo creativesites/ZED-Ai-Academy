@@ -4,6 +4,8 @@ import { gemini } from "@/lib/ai/gemini";
 import { modelFor } from "@/lib/ai/models";
 import { blocksToText } from "@/lib/course-blocks/block-to-text";
 import { DEFAULT_TEACHER_NAME, safeTeacherName } from "@/lib/tutor/course-teacher";
+import { loadWeakMasteryRows } from "@/lib/tutor/mastery/server";
+import { formatMasteryMemoryNotes } from "@/lib/tutor/mastery/evidence";
 import { NextRequest } from "next/server";
 
 export async function POST(req: NextRequest) {
@@ -22,12 +24,13 @@ export async function POST(req: NextRequest) {
     return new Response("Missing message", { status: 400 });
   }
 
-  // Fetch lesson content blocks for context
+  // Fetch lesson content blocks (with block ids so the dock can jump to video/sections)
   let lessonContext = "";
+  let blockReferenceList = "";
   if (lessonId) {
     const { data: blocks } = await supabase
       .from("content_blocks")
-      .select("type, content")
+      .select("id, type, content")
       .eq("lesson_id", lessonId)
       .order("position", { ascending: true });
 
@@ -36,21 +39,46 @@ export async function POST(req: NextRequest) {
       if (lessonText) {
         lessonContext = `\n\n=== LESSON CONTENT ===\n${lessonText}\n========================`;
       }
+      const refs = blocks
+        .filter((b) => b.type === "video" || b.type === "text" || b.type === "quiz")
+        .map((b) => {
+          const content = (b.content ?? {}) as Record<string, unknown>;
+          const title = typeof content.title === "string" && content.title ? ` (${content.title})` : "";
+          return `- blockId="${b.id}" type=${b.type}${title}`;
+        });
+      if (refs.length > 0) {
+        blockReferenceList = `\n\nLesson blocks (for :::lesson_ref::: jumps):\n${refs.join("\n")}`;
+      }
     }
   }
 
-  // Fetch course metadata for context
+  // Fetch course metadata + learner memory notes for cross-session continuity
   let courseContext = "";
+  let companyId: string | null = null;
   if (courseId) {
     const { data: course } = await supabase
       .from("courses")
-      .select("title, description")
+      .select("title, description, company_id")
       .eq("id", courseId)
       .single();
     if (course) {
+      companyId = course.company_id;
       courseContext = `Course: ${course.title}\nDescription: ${course.description}`;
     }
   }
+
+  const weakRows = await loadWeakMasteryRows({
+    supabase,
+    userId,
+    companyId,
+    courseId: typeof courseId === "string" ? courseId : null,
+    limit: 5,
+  });
+  const masteryNotes = formatMasteryMemoryNotes(weakRows, 5);
+  const memorySection =
+    masteryNotes.length > 0
+      ? `\n\nLearner mastery notes from earlier sessions:\n${masteryNotes.map((n) => `- ${n}`).join("\n")}`
+      : "";
 
   const locationContext = [
     moduleTitle && `Module: ${moduleTitle}`,
@@ -60,7 +88,7 @@ export async function POST(req: NextRequest) {
   const systemPrompt = `You are ${teacherName}, the AI teacher for this course on Zed AI Academy. You sit beside the lesson and help the learner understand and apply the specific material in it. Speak as ${teacherName}, warmly and briefly, in the first person.
 
 ${courseContext}
-${locationContext}
+${locationContext}${memorySection}${blockReferenceList}
 ${lessonContext}
 
 Your Role & Personality:
@@ -84,6 +112,8 @@ Component Syntax:
 Use EXACTLY this syntax: :::component_name { "prop": "value" } :::
 
 Available Components:
+- :::board { "title": "...", "kind": "bullets|steps|note|equation|code|table", "items": ["...", "..."], "text": "..." } ::: (pins key notes onto the teacher's board beside the conversation)
+- :::lesson_ref { "label": "...", "blockId": "...", "seconds": 45 } ::: (renders a button that jumps the lesson video or block to that spot)
 - :::prompt_template { "title": "...", "prompt": "...", "description": "..." } :::
 - :::workflow_steps { "steps": [{ "title": "...", "description": "..." }] } :::
 - :::tool_spotlight { "name": "...", "description": "...", "url": "...", "category": "..." } :::
