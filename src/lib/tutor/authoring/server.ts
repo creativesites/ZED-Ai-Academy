@@ -6,6 +6,7 @@ import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { assertCanManageCourse } from "@/lib/courses/course-auth-server";
 import { ZEDAI_TENANT_ID } from "@/lib/tenants/constants";
 import { describeGeminiError, worthTryingAnotherModel } from "@/lib/tutor/gemini-errors";
+import { isSchemaUnavailableError } from "@/lib/tutor/mastery/server";
 import { recordUsage } from "@/lib/tutor/server/usage";
 import {
   DEFAULT_TEACHER_NAME,
@@ -173,9 +174,10 @@ export async function loadLessonAuthoringContext(input: {
     }
   }
 
-  // Pick default course teacher using courseTeacher() from existing course scenarios, else Tinashe.
+  // Pick default course teacher using courseTeacher() from existing course scenarios,
+  // else academy default persona (`tutor_settings.default_persona_id`), else Tinashe.
   const companyIds = companyId === ZEDAI_TENANT_ID ? [ZEDAI_TENANT_ID] : [companyId, ZEDAI_TENANT_ID];
-  const [{ data: courseScenarios }, { data: personas }] = await Promise.all([
+  const [{ data: courseScenarios }, { data: personas }, settingsDefaultRes] = await Promise.all([
     db
       .from("practice_scenarios")
       .select("id, title, goal, style, scene, max_minutes, allowed_modes, persona_id, ai_personas(name, display_name, rive_variant)")
@@ -188,7 +190,28 @@ export async function loadLessonAuthoringContext(input: {
       .in("company_id", companyIds)
       .eq("is_active", true)
       .order("created_at", { ascending: true }),
+    (db as unknown as {
+      from: (t: string) => {
+        select: (c: string) => {
+          eq: (k: string, v: unknown) => {
+            maybeSingle: () => Promise<{
+              data: { default_persona_id?: string | null } | null;
+              error: { code?: string; message?: string } | null;
+            }>;
+          };
+        };
+      };
+    })
+      .from("tutor_settings")
+      .select("default_persona_id")
+      .eq("company_id", companyId)
+      .maybeSingle(),
   ]);
+
+  const tenantDefaultPersonaId =
+    !settingsDefaultRes.error || !isSchemaUnavailableError(settingsDefaultRes.error)
+      ? settingsDefaultRes.data?.default_persona_id ?? null
+      : null;
 
   const scenarioRows = (courseScenarios ?? []) as unknown as (TutorScenarioRow & { persona_id: string | null })[];
   const resolvedTeacher = courseTeacher(scenarioRows.map(scenarioViewFromRow));
@@ -197,6 +220,7 @@ export async function loadLessonAuthoringContext(input: {
   const personaList = personas ?? [];
   const preferredPersona =
     (firstPersonaId ? personaList.find((p) => p.id === firstPersonaId) : undefined) ??
+    (tenantDefaultPersonaId ? personaList.find((p) => p.id === tenantDefaultPersonaId) : undefined) ??
     personaList.find(
       (p) =>
         p.company_id === companyId &&

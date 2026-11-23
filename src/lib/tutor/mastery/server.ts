@@ -461,7 +461,34 @@ export async function loadDashboardDailyPlan(input: {
     });
   }
 
-  const teacherName = safeTeacherName(resolvedTeacherName) ?? DEFAULT_TEACHER_NAME;
+  let configuredTeacherName: string | null = null;
+  if (input.companyId) {
+    const loose = supabase as unknown as LooseSupabase;
+    const settingsRes = (await loose
+      .from("tutor_settings")
+      .select("default_persona_id")
+      .eq("company_id", input.companyId)
+      .limit(1)) as {
+      data: Array<{ default_persona_id?: string | null }> | null;
+      error: { code?: string; message?: string } | null;
+    };
+    const defaultPersonaId =
+      !settingsRes.error && settingsRes.data?.[0]?.default_persona_id
+        ? settingsRes.data[0].default_persona_id
+        : null;
+    if (defaultPersonaId) {
+      const { data: defaultPersona } = await supabase
+        .from("ai_personas")
+        .select("name, display_name")
+        .eq("id", defaultPersonaId)
+        .maybeSingle();
+      configuredTeacherName =
+        safeTeacherName(defaultPersona?.display_name) ?? safeTeacherName(defaultPersona?.name);
+    }
+  }
+
+  const teacherName =
+    configuredTeacherName ?? safeTeacherName(resolvedTeacherName) ?? DEFAULT_TEACHER_NAME;
 
   const items = buildDailyPlan({
     teacherName,

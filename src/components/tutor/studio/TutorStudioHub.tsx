@@ -20,6 +20,7 @@ import {
   CheckCircle2,
   Mic,
   ExternalLink,
+  BarChart3,
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -28,6 +29,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { PersonaStudio } from "./PersonaStudio";
 import { ScenarioEditorModal } from "./ScenarioEditorModal";
+import { TeacherInsightsPanel } from "./TeacherInsightsPanel";
 import { Teacher } from "@/components/tutor/avatar/Teacher";
 import { DEFAULT_PERSONA_LOOK } from "@/components/tutor/avatar/types";
 import { TutorSession } from "@/components/tutor/practice/TutorSession";
@@ -138,6 +140,7 @@ export function TutorStudioHub({
           freePracticeMinutesPerMonth: settings.free_practice_minutes_per_month,
           allowedModes: settings.allowed_modes.length > 0 ? settings.allowed_modes : ["voice", "text"],
           enabledPersonaIds: settings.enabled_persona_ids,
+          defaultPersonaId: settings.default_persona_id ?? null,
         });
         setSettings(saved);
         toast.success("Academy AI Tutor settings saved");
@@ -203,6 +206,13 @@ export function TutorStudioHub({
           >
             <BookOpen className="mr-1.5 h-4 w-4 text-[#fd5523]" />
             Scenario Library ({scenarios.length})
+          </TabsTrigger>
+          <TabsTrigger
+            value="insights"
+            className="h-10 rounded-xl px-4 text-xs font-bold data-[state=active]:bg-white data-[state=active]:text-[#062e39] data-[state=active]:shadow-sm"
+          >
+            <BarChart3 className="mr-1.5 h-4 w-4 text-[#fd5523]" />
+            Insights &amp; Misconceptions
           </TabsTrigger>
           <TabsTrigger
             value="settings"
@@ -369,7 +379,12 @@ export function TutorStudioHub({
           )}
         </TabsContent>
 
-        {/* TAB 3: Settings & Activity */}
+        {/* TAB 3: Insights & Misconceptions */}
+        <TabsContent value="insights" className="mt-0">
+          <TeacherInsightsPanel companyId={companyId} />
+        </TabsContent>
+
+        {/* TAB 4: Settings & Activity */}
         <TabsContent value="settings" className="mt-0 grid gap-6 lg:grid-cols-2">
           {/* Tutor Settings */}
           <div className="space-y-5 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
@@ -415,6 +430,32 @@ export function TutorStudioHub({
               />
               <p className="text-[11px] text-slate-400">
                 Lesson-embedded speaking blocks are always available to enrolled learners and do not count against this cap.
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-xs font-semibold text-slate-700">
+                Academy Default AI Teacher
+              </Label>
+              <select
+                value={settings.default_persona_id ?? ""}
+                onChange={(e) =>
+                  setSettings((prev) => ({
+                    ...prev,
+                    default_persona_id: e.target.value || null,
+                  }))
+                }
+                className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-[#062e39]"
+              >
+                <option value="">Platform default (Tinashe)</option>
+                {personas.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.display_name || p.name} ({p.languages.join(", ") || "en"})
+                  </option>
+                ))}
+              </select>
+              <p className="text-[11px] text-slate-400">
+                Used across dashboards (&quot;Today with ...&quot;), Revision Sprints, and new course flows unless overridden.
               </p>
             </div>
 

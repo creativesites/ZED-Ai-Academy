@@ -97,6 +97,34 @@ export async function resolveDefaultPersona(
     if (data) return data;
   }
 
+  // Check academy-branded default teacher on tutor_settings when configured.
+  const settingsRes = await (supabase as unknown as {
+    from: (t: string) => {
+      select: (c: string) => {
+        eq: (k: string, v: unknown) => {
+          maybeSingle: () => Promise<{
+            data: { default_persona_id?: string | null } | null;
+            error: { code?: string; message?: string } | null;
+          }>;
+        };
+      };
+    };
+  })
+    .from("tutor_settings")
+    .select("default_persona_id")
+    .eq("company_id", companyId)
+    .maybeSingle();
+
+  const defaultPersonaId = settingsRes.error ? null : settingsRes.data?.default_persona_id ?? null;
+  if (defaultPersonaId) {
+    const { data: configured } = await supabase
+      .from("ai_personas")
+      .select("*")
+      .eq("id", defaultPersonaId)
+      .maybeSingle();
+    if (configured) return configured;
+  }
+
   const { data: tinasheCompany } = await supabase
     .from("ai_personas")
     .select("*")

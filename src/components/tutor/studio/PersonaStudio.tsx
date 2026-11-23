@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
 import {
   Sparkles,
@@ -15,8 +15,12 @@ import {
   Palette,
 } from "lucide-react";
 import { TeacherStage, type TeacherStageHandle } from "@/components/tutor/avatar/TeacherStage";
-import { PERSONA_PRESETS, type PersonaPresetKey } from "@/components/tutor/avatar/persona-presets";
+import {
+  ALL_PERSONA_PRESETS,
+  type AnyPersonaPresetKey,
+} from "@/components/tutor/avatar/persona-presets";
 import { DEFAULT_PERSONA_LOOK, type PersonaLook } from "@/components/tutor/avatar/types";
+import { applyBrandColorsToLook } from "@/lib/tutor/branding";
 import {
   FACE_STYLES,
   HAIR_STYLES,
@@ -28,6 +32,7 @@ import {
 import { SCENE_ARTBOARDS, type SceneArtboard } from "@/lib/tutor/rive-driver";
 import {
   deletePersona,
+  getTenantBrandColor,
   seedStarterPersonas,
   upsertPersona,
   type PersonaRecord,
@@ -66,10 +71,13 @@ const COLOR_FIELDS: Array<{ key: keyof PersonaLook; label: string }> = [
 ];
 
 const LANGUAGE_OPTIONS = [
+  { code: "en", label: "English (en)" },
+  { code: "bem", label: "Bemba (bem)" },
+  { code: "ny", label: "Nyanja (ny)" },
+  { code: "tog", label: "Tonga (tog)" },
   { code: "zh", label: "Mandarin (zh)" },
   { code: "es", label: "Spanish (es)" },
   { code: "fr", label: "French (fr)" },
-  { code: "en", label: "English (en)" },
 ];
 
 const QUICK_GESTURES: Array<{ gesture: Gesture; label: string }> = [
@@ -141,6 +149,32 @@ export function PersonaStudio({
   );
   const [isSaving, startSaving] = useTransition();
   const [isSeeding, startSeeding] = useTransition();
+  const [brandColor, setBrandColor] = useState<string | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    getTenantBrandColor(companyId)
+      .then((color) => {
+        if (active && color) setBrandColor(color);
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [companyId]);
+
+  function applyAcademyBranding() {
+    if (!brandColor) {
+      toast.error("Set an academy primary brand color in Settings first.");
+      return;
+    }
+    setDraft((prev) => ({
+      ...prev,
+      look: applyBrandColorsToLook(prev.look, { primaryColor: brandColor }),
+    }));
+    stageRef.current?.playGesture("nod");
+    toast.success(`Applied academy color (${brandColor}) to teacher outfit`);
+  }
 
   function updateList(next: PersonaRecord[]) {
     setPersonas(next);
@@ -157,8 +191,8 @@ export function PersonaStudio({
     setDraft(emptyDraft());
   }
 
-  function applyPreset(key: PersonaPresetKey) {
-    const preset = PERSONA_PRESETS.find((p) => p.key === key);
+  function applyPreset(key: AnyPersonaPresetKey) {
+    const preset = ALL_PERSONA_PRESETS.find((p) => p.key === key);
     if (!preset) return;
     setDraft((prev) => ({
       ...prev,
@@ -389,13 +423,25 @@ export function PersonaStudio({
 
         {/* Customization Form */}
         <div className="space-y-5 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-          {/* Quick Character Base Presets */}
+          {/* Quick Character Base Presets & Academy Branding */}
           <div>
-            <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">
-              Start from Character Base
-            </Label>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                Start from Character Base
+              </Label>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={applyAcademyBranding}
+                className="h-7 rounded-lg text-[11px] font-bold text-[#062e39]"
+              >
+                <Palette className="mr-1 h-3 w-3 text-[#fd5523]" />
+                {brandColor ? `Apply Academy Brand (${brandColor})` : "Apply Academy Brand Colors"}
+              </Button>
+            </div>
             <div className="mt-2 flex flex-wrap gap-2">
-              {PERSONA_PRESETS.map((preset) => (
+              {ALL_PERSONA_PRESETS.map((preset) => (
                 <button
                   key={preset.key}
                   type="button"
