@@ -1,3 +1,10 @@
+import {
+  collectNoteEvidence,
+  summarizeSessionObjectives,
+  type CollectedEvidence,
+  type MasteryState,
+  type SessionObjectiveSummary,
+} from "./mastery/evidence.ts";
 import { parseMemory } from "./memory.ts";
 import { nextStreak } from "./progress.ts";
 import {
@@ -41,6 +48,8 @@ export type ReportPayload = {
   strengths: unknown;
   mistakes: LearnerMistake[];
   tone_stats: Record<string, number>;
+  objectives: SessionObjectiveSummary[];
+  next_step: string;
 };
 
 export type FinalizeCoreInput = {
@@ -52,6 +61,8 @@ export type FinalizeCoreInput = {
   turns: StoredTurn[];
   scenarioTitle: string;
   scenarioGoal: string;
+  courseId?: string | null;
+  scenarioId?: string | null;
   /** Language pack code (zh, es, fr) or null for non-language packs. */
   skillLanguage: string | null;
   /** learner_language_profiles.language key. */
@@ -94,6 +105,8 @@ export type FinalizeCoreDeps<R> = {
     total_speaking_ms: number;
   }): Promise<void>;
   addMistakeVocabulary(mistakes: LearnerMistake[]): Promise<void>;
+  /** Optional Phase 2 persistence of `note_evidence` -> `learner_evidence` + `learner_mastery`. */
+  persistMastery?(evidence: CollectedEvidence[]): Promise<MasteryState[]>;
 };
 
 export type FinalizeCoreResult<R> = { report: R; created: boolean };
@@ -115,6 +128,12 @@ export async function finalizeSessionCore<R>(
   await deps.updateSession({ status, learnerSpeakingMs: learnerMs, teacherSpeakingMs: teacherMs });
 
   const noteMistakes = collectNoteMistakes(input.turns);
+  const noteEvidence = collectNoteEvidence(
+    input.turns.map((t) => ({ eventsJson: t.events })),
+    { courseId: input.courseId, scenarioId: input.scenarioId },
+  );
+  const preliminaryObjectives = summarizeSessionObjectives(noteEvidence, []);
+
   let content: TutorReportContent;
   let llm: { model: string; totalTokens: number } | null = null;
   if (hasLearnerSpeech(input.turns)) {
@@ -143,6 +162,8 @@ export async function finalizeSessionCore<R>(
     strengths: content.strengths,
     mistakes,
     tone_stats: toneStats(input.skillLanguage, mistakes),
+    objectives: preliminaryObjectives,
+    next_step: content.nextStep,
   });
   if (!claim.created) return { report: claim.report, created: false };
 
@@ -187,6 +208,10 @@ export async function finalizeSessionCore<R>(
 
   // Vocabulary review (SRS) is a Language pack feature: other subjects' mistakes are not words to drill.
   if (input.skillLanguage) await deps.addMistakeVocabulary(mistakes);
+
+  if (deps.persistMastery && noteEvidence.length > 0) {
+    await deps.persistMastery(noteEvidence);
+  }
 
   return { report: claim.report, created: true };
 }

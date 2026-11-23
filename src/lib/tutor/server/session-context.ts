@@ -2,6 +2,9 @@ import "server-only";
 import { createServiceClient } from "@/lib/supabase/server";
 import { blocksToText } from "@/lib/course-blocks/block-to-text";
 import type { Database } from "@/types/database";
+import { DEFAULT_TEACHER_NAME } from "../course-teacher.ts";
+import { loadSessionMemoryNotes, loadWeakMasteryRows } from "../mastery/server.ts";
+import { buildRevisionSprintScenario } from "../mastery/sprint.ts";
 import { parseMemory } from "../memory.ts";
 import { profileLanguage } from "../progress.ts";
 import { skillPackLanguage } from "../skill-packs.ts";
@@ -61,6 +64,7 @@ export type SessionContext = {
   session: TutorSessionRow;
   scenario: ScenarioRow;
   persona: PersonaRow;
+  courseId: string | null;
   skillLanguage: "zh" | "es" | "fr" | null;
   profileLanguage: string;
   learnerProfile: PromptLearnerProfile;
@@ -68,21 +72,186 @@ export type SessionContext = {
   history: HistoryTurn[];
 };
 
-export async function loadSessionContext(session: TutorSessionRow): Promise<SessionContext> {
-  const supabase = createServiceClient();
-  if (!session.scenario_id) throw new Error("session has no scenario");
+type SprintContextSnapshot = {
+  kind?: string;
+  courseId?: string | null;
+  courseTitle?: string | null;
+  focusObjective?: string | null;
+  personaId?: string | null;
+  teacherName?: string | null;
+  scenario?: {
+    title?: string;
+    goal?: string;
+    beats?: unknown;
+    target_items?: unknown;
+  };
+};
 
-  const { data: scenario, error: scenarioError } = await supabase
-    .from("practice_scenarios")
+export async function resolveDefaultPersona(
+  supabase: ReturnType<typeof createServiceClient>,
+  companyId: string,
+  preferredPersonaId?: string | null,
+): Promise<PersonaRow> {
+  if (preferredPersonaId) {
+    const { data } = await supabase.from("ai_personas").select("*").eq("id", preferredPersonaId).maybeSingle();
+    if (data) return data;
+  }
+
+  const { data: tinasheCompany } = await supabase
+    .from("ai_personas")
     .select("*")
-    .eq("id", session.scenario_id)
-    .single();
-  if (scenarioError || !scenario) throw new Error("scenario not found for session");
+    .eq("company_id", companyId)
+    .ilike("name", DEFAULT_TEACHER_NAME)
+    .limit(1)
+    .maybeSingle();
+  if (tinasheCompany) return tinasheCompany;
 
-  const { data: persona, error: personaError } = scenario.persona_id
-    ? await supabase.from("ai_personas").select("*").eq("id", scenario.persona_id).single()
-    : { data: null, error: new Error("scenario has no persona") };
-  if (personaError || !persona) throw new Error("persona not found for scenario");
+  const { data: anyCompany } = await supabase
+    .from("ai_personas")
+    .select("*")
+    .eq("company_id", companyId)
+    .order("created_at", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+  if (anyCompany) return anyCompany;
+
+  const { data: tinasheAny } = await supabase
+    .from("ai_personas")
+    .select("*")
+    .ilike("name", DEFAULT_TEACHER_NAME)
+    .limit(1)
+    .maybeSingle();
+  if (tinasheAny) return tinasheAny;
+
+  const { data: anyPersona } = await supabase.from("ai_personas").select("*").limit(1).maybeSingle();
+  if (anyPersona) return anyPersona;
+
+  const now = new Date().toISOString();
+  return {
+    id: "00000000-0000-4000-8000-000000000001",
+    company_id: companyId,
+    name: DEFAULT_TEACHER_NAME,
+    display_name: DEFAULT_TEACHER_NAME,
+    languages: ["en"],
+    rive_variant: {},
+    voice: { voiceName: "Kore" },
+    personality_prompt: "Warm, patient Zambian AI teacher who teaches through short examples and quick checks.",
+    default_scene: "Scene_Classroom",
+    is_active: true,
+    created_at: now,
+    updated_at: now,
+  };
+}
+
+export async function loadSessionContext(
+  session: TutorSessionRow,
+  sprintFallback?: SprintContextSnapshot | null,
+): Promise<SessionContext> {
+  const supabase = createServiceClient();
+  let scenario: ScenarioRow;
+  let persona: PersonaRow;
+  let courseId: string | null = null;
+
+  if (session.scenario_id) {
+    const { data: scenarioRow, error: scenarioError } = await supabase
+      .from("practice_scenarios")
+      .select("*")
+      .eq("id", session.scenario_id)
+      .single();
+    if (scenarioError || !scenarioRow) throw new Error("scenario not found for session");
+    scenario = scenarioRow;
+    courseId = scenario.course_id ?? null;
+
+    const { data: personaRow, error: personaError } = scenario.persona_id
+      ? await supabase.from("ai_personas").select("*").eq("id", scenario.persona_id).single()
+      : { data: null, error: new Error("scenario has no persona") };
+    if (personaError || !personaRow) throw new Error("persona not found for scenario");
+    persona = personaRow;
+  } else {
+    // Synthetic Revision Sprint session (scenario_id = null).
+    const rawSprint =
+      (session as unknown as { sprint_context?: SprintContextSnapshot | null }).sprint_context ??
+      sprintFallback ??
+      null;
+    courseId = rawSprint?.courseId ?? null;
+    persona = await resolveDefaultPersona(supabase, session.company_id, rawSprint?.personaId ?? null);
+    const teacherName = rawSprint?.teacherName ?? persona.display_name ?? persona.name ?? DEFAULT_TEACHER_NAME;
+
+    let synthetic =
+      rawSprint?.scenario?.title && rawSprint?.scenario?.goal
+        ? {
+            title: rawSprint.scenario.title,
+            goal: rawSprint.scenario.goal,
+            beats: rawSprint.scenario.beats ?? [],
+            target_items: rawSprint.scenario.target_items ?? [],
+          }
+        : null;
+
+    if (!synthetic) {
+      const weak = await loadWeakMasteryRows({
+        supabase,
+        userId: session.user_id,
+        companyId: session.company_id,
+        courseId,
+        limit: 6,
+      });
+      const built = buildRevisionSprintScenario({
+        personaId: persona.id,
+        teacherName,
+        weakObjectives: weak,
+        courseTitle: rawSprint?.courseTitle ?? null,
+        focusObjective: rawSprint?.focusObjective ?? null,
+      });
+      synthetic = {
+        title: built.title,
+        goal: built.goal,
+        beats: built.beats,
+        target_items: built.target_items,
+      };
+    }
+
+    const now = new Date().toISOString();
+    scenario = {
+      id: `sprint-${session.id}`,
+      company_id: session.company_id,
+      course_id: courseId,
+      lesson_id: session.lesson_id,
+      persona_id: persona.id,
+      skill_pack: "general-tutor",
+      title: synthetic.title,
+      goal: synthetic.goal,
+      beats: synthetic.beats as ScenarioRow["beats"],
+      target_items: synthetic.target_items as ScenarioRow["target_items"],
+      level: null,
+      exam_task: null,
+      max_minutes: 5,
+      allowed_modes: ["voice", "text"],
+      scene: "Scene_Classroom",
+      visibility: "platform",
+      style: "guided_lesson",
+      status: "published",
+      created_by: session.user_id,
+      created_at: now,
+      updated_at: now,
+    };
+  }
+
+  if (!courseId && (session.lesson_id ?? scenario.lesson_id)) {
+    const targetLessonId = (session.lesson_id ?? scenario.lesson_id) as string;
+    const { data: lessonRow } = await supabase
+      .from("lessons")
+      .select("module_id")
+      .eq("id", targetLessonId)
+      .maybeSingle();
+    if (lessonRow?.module_id) {
+      const { data: moduleRow } = await supabase
+        .from("modules")
+        .select("course_id")
+        .eq("id", lessonRow.module_id)
+        .maybeSingle();
+      if (moduleRow?.course_id) courseId = moduleRow.course_id;
+    }
+  }
 
   const skillLanguage = skillPackLanguage(scenario.skill_pack);
   const language = profileLanguage(skillLanguage, persona.languages);
@@ -110,17 +279,25 @@ export async function loadSessionContext(session: TutorSessionRow): Promise<Sess
   ]);
 
   const memory = parseMemory(profile?.memory);
+  const memoryNotes = await loadSessionMemoryNotes({
+    supabase,
+    userId: session.user_id,
+    companyId: session.company_id,
+    courseId,
+    existingNotes: memory.notes,
+  });
 
   return {
     session,
     scenario,
     persona,
+    courseId,
     skillLanguage,
     profileLanguage: language,
     learnerProfile: {
       levelEstimate: profile?.level_estimate ?? scenario.level ?? null,
       recentMistakes: memory.recentMistakes,
-      memoryNotes: memory.notes,
+      memoryNotes,
     },
     lessonText: blocksToText(blocks ?? [], { maxChars: LESSON_CONTEXT_MAX_CHARS }),
     history: (turns ?? []).map((t) => ({ idx: t.idx, learner_text: t.learner_text, events: t.events })),

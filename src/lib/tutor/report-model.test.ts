@@ -4,6 +4,7 @@ import {
   buildTranscript,
   collectNoteMistakes,
   hasLearnerSpeech,
+  normalizeStoredReportContent,
   parseTutorReport,
   toneStats,
   type StoredTurn,
@@ -113,4 +114,26 @@ test("collectNoteMistakes includes v2 misconceptions and partials, not correct e
     { said: "said the tone check catches prices", correct: "Apply the three checks", category: "misconception" },
     { said: "share the name only", correct: "share nothing personal", category: "partial" },
   ]);
+});
+
+test("normalizeStoredReportContent converts pre-migration and v2 DB rows safely", () => {
+  const legacy = normalizeStoredReportContent(
+    { scores: { task: 80 }, strengths: ["Clear answer"], mistakes: [] },
+    {
+      nextStep: "Try a 5-min revision sprint.",
+      objectives: [
+        {
+          objectiveKey: "course:c1:fractions",
+          objectiveText: "Compare fractions",
+          status: "review",
+          lastResult: "misconception",
+          evidence: "Picked 1/5 > 1/3",
+          masteryLevel: 0,
+        },
+      ],
+    },
+  );
+  assert.equal(legacy.nextStep, "Try a 5-min revision sprint.");
+  assert.equal(legacy.objectives?.length, 1);
+  assert.equal(legacy.objectives?.[0].status, "review");
 });

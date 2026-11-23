@@ -11,6 +11,18 @@ export const MAX_REPORT_MISTAKES = 20;
 
 const scoreSchema = z.number().min(0).max(100).transform((n) => Math.round(n));
 
+export const objectiveOutcomeSchema = z.object({
+  objectiveKey: z.string().min(1),
+  objectiveText: z.string().min(1),
+  status: z.enum(["met", "partial", "review"]),
+  lastResult: z.enum(["correct", "partial", "misconception"]),
+  evidence: z.string().min(1),
+  nextStep: z.string().optional(),
+  masteryLevel: z.number().int().min(0).max(3).optional(),
+});
+
+export type ReportObjectiveOutcome = z.infer<typeof objectiveOutcomeSchema>;
+
 export const tutorReportSchema = z.object({
   scores: z.object({
     fluency: scoreSchema.optional(),
@@ -31,6 +43,7 @@ export const tutorReportSchema = z.object({
     )
     .max(MAX_REPORT_MISTAKES),
   nextStep: z.string().min(1).max(500),
+  objectives: z.array(objectiveOutcomeSchema).optional(),
 });
 
 export type TutorReportContent = z.infer<typeof tutorReportSchema>;
@@ -159,4 +172,46 @@ export function toneStats(language: string | null, mistakes: LearnerMistake[]): 
   if (language !== "zh") return {};
   const toneMistakes = mistakes.filter((m) => m.category.toLowerCase().includes("tone")).length;
   return { toneMistakes, totalMistakes: mistakes.length };
+}
+
+/**
+ * Normalizes a stored `tutor_reports` database row (plus optional fallback fields) into
+ * the `TutorReportContent` shape expected by ReportCard v2.
+ */
+export function normalizeStoredReportContent(
+  row: Record<string, unknown>,
+  fallback?: { nextStep?: string; objectives?: ReportObjectiveOutcome[] },
+): TutorReportContent {
+  const rawObjectives = Array.isArray(row.objectives)
+    ? row.objectives
+    : (fallback?.objectives ?? []);
+  const objectives = rawObjectives
+    .map((item) => objectiveOutcomeSchema.safeParse(item))
+    .filter((res): res is { success: true; data: ReportObjectiveOutcome } => res.success)
+    .map((res) => res.data);
+
+  const rawScores =
+    row.scores && typeof row.scores === "object" && !Array.isArray(row.scores)
+      ? (row.scores as TutorReportContent["scores"])
+      : {};
+  const rawStrengths = Array.isArray(row.strengths)
+    ? row.strengths.filter((s): s is string => typeof s === "string" && s.length > 0)
+    : [];
+  const rawMistakes = Array.isArray(row.mistakes)
+    ? (row.mistakes as TutorReportContent["mistakes"])
+    : [];
+  const rawNextStep =
+    typeof row.next_step === "string" && row.next_step.trim()
+      ? row.next_step.trim()
+      : typeof row.nextStep === "string" && row.nextStep.trim()
+        ? row.nextStep.trim()
+        : fallback?.nextStep ?? "Keep practising a little every day.";
+
+  return {
+    scores: rawScores,
+    strengths: rawStrengths,
+    mistakes: rawMistakes,
+    nextStep: rawNextStep,
+    ...(objectives.length > 0 ? { objectives } : {}),
+  };
 }

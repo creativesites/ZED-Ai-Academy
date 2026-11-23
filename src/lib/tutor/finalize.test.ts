@@ -245,3 +245,43 @@ test("non-language sessions do not add their mistakes to vocabulary review", asy
   assert.equal(state.vocabCalls.length, 0);
   assert.equal(state.profileSaves, 1, "memory is still updated");
 });
+
+test("collects note_evidence into objectives and runs persistMastery only on winning claim", async () => {
+  const { deps } = makeStore();
+  const persistedBatches: number[] = [];
+  deps.persistMastery = async (evidence) => {
+    persistedBatches.push(evidence.length);
+    return [];
+  };
+
+  const turnsWithEvidence: StoredTurn[] = [
+    {
+      learner_text: "I used 1/2 = 2/4",
+      events: [
+        {
+          type: "note_evidence",
+          objective: "Find equivalent fractions",
+          result: "correct",
+          detail: "Verified 1/2 = 2/4 correctly.",
+        },
+      ],
+    },
+  ];
+
+  const first = await finalizeSessionCore(
+    input({ skillLanguage: null, profileLanguage: "general", courseId: "course-1", turns: turnsWithEvidence }),
+    deps,
+  );
+  assert.equal(first.created, true);
+  assert.equal(persistedBatches.length, 1);
+  assert.equal(first.report.objectives.length, 1);
+  assert.equal(first.report.objectives[0].status, "met");
+
+  // Duplicate call skips persistMastery
+  const second = await finalizeSessionCore(
+    input({ skillLanguage: null, profileLanguage: "general", courseId: "course-1", turns: turnsWithEvidence }),
+    deps,
+  );
+  assert.equal(second.created, false);
+  assert.equal(persistedBatches.length, 1);
+});

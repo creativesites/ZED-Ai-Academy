@@ -3,7 +3,14 @@ import { createServiceClient } from "@/lib/supabase/server";
 import { modelFor } from "@/lib/ai/models";
 import type { Database, Json } from "@/types/database";
 import { finalizeSessionCore, type FinalizeCoreDeps, type ReportPayload, type ProfileState } from "../finalize.ts";
-import type { LearnerMistake } from "../report-model.ts";
+import { summarizeSessionObjectives, type CollectedEvidence } from "../mastery/evidence.ts";
+import { isSchemaUnavailableError, persistSessionMastery } from "../mastery/server.ts";
+import {
+  normalizeStoredReportContent,
+  type LearnerMistake,
+  type ReportObjectiveOutcome,
+  type TutorReportContent,
+} from "../report-model.ts";
 import { generateReportJson } from "./gemini-calls.ts";
 import { loadSessionContext, type TutorSessionRow } from "./session-context.ts";
 import { recordUsage } from "./usage.ts";
@@ -14,6 +21,10 @@ import { utcDateString } from "../progress.ts";
 
 type Tables = Database["public"]["Tables"];
 export type TutorReportRow = Tables["tutor_reports"]["Row"];
+export type FinalizedReportPayload = TutorReportContent & {
+  id?: string;
+  session_id?: string;
+};
 
 export type FinalizeInput = {
   session: TutorSessionRow;
@@ -22,18 +33,24 @@ export type FinalizeInput = {
   status: "completed" | "abandoned";
 };
 
-export type FinalizeResult = { report: TutorReportRow; created: boolean };
+export type FinalizeResult = { report: FinalizedReportPayload; created: boolean };
 
 export async function finalizeTutorSession(input: FinalizeInput): Promise<FinalizeResult> {
   const supabase = createServiceClient();
   const { session } = input;
   const ctx = await loadSessionContext(session);
   const sessionId = session.id;
+  let lastPayloadFallback: { nextStep: string; objectives: ReportObjectiveOutcome[] } | undefined;
+  let refinedObjectives: ReportObjectiveOutcome[] | undefined;
 
-  const deps: FinalizeCoreDeps<TutorReportRow> = {
+  const deps: FinalizeCoreDeps<FinalizedReportPayload> = {
     getReport: async () => {
       const { data } = await supabase.from("tutor_reports").select("*").eq("session_id", sessionId).maybeSingle();
-      return data ?? null;
+      if (!data) return null;
+      return {
+        ...normalizeStoredReportContent(data as unknown as Record<string, unknown>),
+        session_id: data.session_id,
+      };
     },
 
     updateSession: async (update) => {
@@ -55,29 +72,68 @@ export async function finalizeTutorSession(input: FinalizeInput): Promise<Finali
     },
 
     claimReport: async (payload: ReportPayload) => {
-      const { data, error } = await supabase
+      lastPayloadFallback = {
+        nextStep: payload.next_step,
+        objectives: payload.objectives,
+      };
+
+      const baseInsert = {
+        session_id: sessionId,
+        scores: payload.scores as Json,
+        strengths: payload.strengths as Json,
+        mistakes: payload.mistakes as unknown as Json,
+        tone_stats: payload.tone_stats as Json,
+        next_scenario_id: null,
+      };
+
+      let insertRes = await supabase
         .from("tutor_reports")
         .insert({
-          session_id: sessionId,
-          scores: payload.scores as Json,
-          strengths: payload.strengths as Json,
-          mistakes: payload.mistakes as unknown as Json,
-          tone_stats: payload.tone_stats as Json,
-          next_scenario_id: null,
-        })
+          ...baseInsert,
+          objectives: payload.objectives as unknown as Json,
+          next_step: payload.next_step,
+        } as typeof baseInsert)
         .select("*")
         .single();
-      if (!error && data) return { created: true, report: data };
-      if (error?.code === "23505") {
+
+      // Pre-migration compatibility: retry without new columns if 20261123000000 isn't applied yet.
+      if (insertRes.error && isSchemaUnavailableError(insertRes.error)) {
+        insertRes = await supabase.from("tutor_reports").insert(baseInsert).select("*").single();
+      }
+
+      if (!insertRes.error && insertRes.data) {
+        return {
+          created: true,
+          report: {
+            ...normalizeStoredReportContent(
+              insertRes.data as unknown as Record<string, unknown>,
+              lastPayloadFallback,
+            ),
+            session_id: insertRes.data.session_id,
+          },
+        };
+      }
+      if (insertRes.error?.code === "23505") {
         // Another request stored the report first. Return that one.
         const { data: winner } = await supabase
           .from("tutor_reports")
           .select("*")
           .eq("session_id", sessionId)
           .single();
-        if (winner) return { created: false, report: winner };
+        if (winner) {
+          return {
+            created: false,
+            report: {
+              ...normalizeStoredReportContent(
+                winner as unknown as Record<string, unknown>,
+                lastPayloadFallback,
+              ),
+              session_id: winner.session_id,
+            },
+          };
+        }
       }
-      throw new Error(`could not store report: ${error?.message ?? "unknown error"}`);
+      throw new Error(`could not store report: ${insertRes.error?.message ?? "unknown error"}`);
     },
 
     recordUsage: async (usage) => {
@@ -125,9 +181,23 @@ export async function finalizeTutorSession(input: FinalizeInput): Promise<Finali
     addMistakeVocabulary: async (mistakes: LearnerMistake[]) => {
       await addMistakeVocabulary(session.company_id, session.user_id, ctx.profileLanguage, mistakes);
     },
+
+    persistMastery: async (evidence: CollectedEvidence[]) => {
+      const updated = await persistSessionMastery({
+        supabase,
+        companyId: session.company_id,
+        userId: session.user_id,
+        courseId: ctx.courseId,
+        scenarioId: session.scenario_id,
+        sessionId,
+        evidence,
+      });
+      refinedObjectives = summarizeSessionObjectives(evidence, updated);
+      return updated;
+    },
   };
 
-  return finalizeSessionCore(
+  const result = await finalizeSessionCore(
     {
       mode: session.mode,
       currentStatus: session.status,
@@ -137,6 +207,8 @@ export async function finalizeTutorSession(input: FinalizeInput): Promise<Finali
       turns: ctx.history,
       scenarioTitle: ctx.scenario.title,
       scenarioGoal: ctx.scenario.goal,
+      courseId: ctx.courseId,
+      scenarioId: session.scenario_id,
       skillLanguage: ctx.skillLanguage,
       profileLanguage: ctx.profileLanguage,
       liveModel: modelFor("tutorLive"),
@@ -144,6 +216,12 @@ export async function finalizeTutorSession(input: FinalizeInput): Promise<Finali
     },
     deps,
   );
+
+  if (result.created && refinedObjectives && refinedObjectives.length > 0) {
+    result.report = { ...result.report, objectives: refinedObjectives };
+  }
+
+  return result;
 }
 
 async function addMistakeVocabulary(
