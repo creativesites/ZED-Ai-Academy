@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { DEFAULT_TEACHER_NAME } from "@/lib/tutor/course-teacher";
 import { loadWeakMasteryRows } from "@/lib/tutor/mastery/server";
 import { buildRevisionSprintScenario } from "@/lib/tutor/mastery/sprint";
+import { personaLookFromVariant } from "@/lib/tutor/tutor-session-block";
 
 export const dynamic = "force-dynamic";
 
@@ -25,7 +26,7 @@ export default async function TenantRevisionSprintPage({
   const { data: company } = await supabase.from("companies").select("id, slug").eq("slug", domain).maybeSingle();
   if (!company) notFound();
 
-  const [weak, courseRes, personaRes] = await Promise.all([
+  const [weak, courseRes, settingsRes, personaRes] = await Promise.all([
     loadWeakMasteryRows({
       supabase,
       userId,
@@ -36,17 +37,46 @@ export default async function TenantRevisionSprintPage({
     courseId
       ? supabase.from("courses").select("title").eq("id", courseId).maybeSingle()
       : Promise.resolve({ data: null as { title: string } | null }),
+    (supabase as unknown as {
+      from: (t: string) => {
+        select: (c: string) => {
+          eq: (k: string, v: unknown) => {
+            maybeSingle: () => Promise<{
+              data: { default_persona_id?: string | null } | null;
+              error: { code?: string; message?: string } | null;
+            }>;
+          };
+        };
+      };
+    })
+      .from("tutor_settings")
+      .select("default_persona_id")
+      .eq("company_id", company.id)
+      .maybeSingle(),
     supabase
       .from("ai_personas")
-      .select("name, display_name")
+      .select("name, display_name, rive_variant")
       .eq("company_id", company.id)
       .ilike("name", DEFAULT_TEACHER_NAME)
       .limit(1)
       .maybeSingle(),
   ]);
 
+  const defaultPersonaId = settingsRes.error ? null : settingsRes.data?.default_persona_id ?? null;
+  const configuredPersona = defaultPersonaId
+    ? (
+        await supabase
+          .from("ai_personas")
+          .select("name, display_name, rive_variant")
+          .eq("id", defaultPersonaId)
+          .maybeSingle()
+      ).data
+    : null;
+
+  const chosenPersona = configuredPersona ?? personaRes.data;
   const teacherName =
-    personaRes.data?.display_name ?? personaRes.data?.name ?? DEFAULT_TEACHER_NAME;
+    chosenPersona?.display_name ?? chosenPersona?.name ?? DEFAULT_TEACHER_NAME;
+  const previewLook = personaLookFromVariant(chosenPersona?.rive_variant);
   const built = buildRevisionSprintScenario({
     personaId: "preview",
     teacherName,
@@ -63,6 +93,8 @@ export default async function TenantRevisionSprintPage({
       sprintCourseId={courseId}
       focusObjective={focus}
       scene="Scene_Classroom"
+      look={previewLook}
+      doneHref={`/academy/${domain}/dashboard`}
       preview={{
         teacherName,
         title: built.title,

@@ -13,8 +13,8 @@ import type { PreviewFlowPayload } from "@/lib/tutor/authoring/preview";
 import { AUTHORING_TEMPLATES, type AuthoringTemplateId } from "@/lib/tutor/authoring/templates";
 import { SCENE_ARTBOARDS, type SceneArtboard } from "@/lib/tutor/rive-driver";
 import {
+  ALL_SKILL_PACKS,
   SCENARIO_STYLES,
-  SKILL_PACKS,
   type ScenarioStyle,
   type SkillPack,
 } from "@/lib/tutor/scenario";
@@ -40,6 +40,9 @@ const SKILL_PACK_LABELS: Record<SkillPack, string> = {
   "language-zh": "Mandarin Chinese (tones & pinyin)",
   "language-es": "Spanish (register & pronunciation)",
   "language-fr": "French (liaison & vowels)",
+  "language-bem": "Bemba — Ichibemba (local Zambian)",
+  "language-ny": "Nyanja — Chinyanja (local Zambian)",
+  "language-tog": "Tonga — Chitonga (local Zambian)",
   "health-sim": "Healthcare / Clinical Role-Play",
   "general-tutor": "General Course Tutor",
 };
@@ -476,7 +479,7 @@ export function ScenarioEditorModal({
                   onChange={(e) => setSkillPack(e.target.value as SkillPack)}
                   className="h-9 w-full rounded-md border border-slate-200 bg-white px-2.5 text-sm"
                 >
-                  {SKILL_PACKS.map((sp) => (
+                  {ALL_SKILL_PACKS.map((sp) => (
                     <option key={sp} value={sp}>
                       {SKILL_PACK_LABELS[sp]}
                     </option>

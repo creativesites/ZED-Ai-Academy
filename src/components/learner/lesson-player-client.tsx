@@ -78,6 +78,7 @@ export function LessonPlayerClient({
   tutorScenarios = {},
   tutorCompletedScenarioIds = [],
   teacherMoments = [],
+  vivaStatus = null,
 }: {
   course: {
     id: string;
@@ -116,6 +117,13 @@ export function LessonPlayerClient({
   tutorScenarios?: Record<string, TutorScenarioView>;
   tutorCompletedScenarioIds?: string[];
   teacherMoments?: PlacedTeacherMoment[];
+  vivaStatus?: {
+    required: boolean;
+    passed: boolean;
+    scenarioId: string | null;
+    scenario: TutorScenarioView | null;
+    reason: string | null;
+  } | null;
 }) {
   const router = useRouter();
   const [completed, setCompleted] = useState(new Set(completedLessonIds));
@@ -775,10 +783,14 @@ export function LessonPlayerClient({
                       <div className="min-w-0 flex-1">
                         <p className="text-lg font-bold">You finished the course!</p>
                         <p className="text-sm text-white/70">
-                          {certificate ? "Your certificate is ready to share." : "Claim your verified certificate to share your achievement."}
+                          {certificate
+                            ? "Your certificate is ready to share."
+                            : vivaStatus?.required && !vivaStatus.passed
+                              ? vivaStatus.reason ?? `Complete your oral Certificate Viva with ${teacher.name} to unlock your certificate.`
+                              : "Claim your verified certificate to share your achievement."}
                         </p>
                       </div>
-                      {renderPrimary()}
+                      {(!vivaStatus?.required || vivaStatus.passed || certificate) && renderPrimary()}
                     </div>
                   ) : isPreview ? (
                     <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center">
@@ -804,6 +816,26 @@ export function LessonPlayerClient({
                     </div>
                   )}
                 </section>
+
+                {courseComplete && !certificate && vivaStatus?.required && !vivaStatus.passed && vivaStatus.scenarioId && vivaStatus.scenario && (
+                  <div className="mt-4">
+                    <TutorSessionBlock
+                      origin="practice"
+                      content={{
+                        scenarioId: vivaStatus.scenarioId,
+                        title: `Certificate Viva with ${vivaStatus.scenario.persona?.displayName ?? vivaStatus.scenario.persona?.name ?? teacher.name}`,
+                        intro: vivaStatus.reason ?? "Demonstrate what you learned in a short oral check to unlock your certificate.",
+                        required: true,
+                      }}
+                      scenario={vivaStatus.scenario}
+                      done={false}
+                      onComplete={() => {
+                        toast.success("Certificate Viva completed — checking certificate eligibility");
+                        router.refresh();
+                      }}
+                    />
+                  </div>
+                )}
 
                 {/* Prev / next */}
                 <div className="mt-6 grid grid-cols-2 gap-3">

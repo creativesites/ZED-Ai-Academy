@@ -21,6 +21,7 @@ export default async function PracticeSessionPage({ params }: { params: Promise<
       scenarioId={item.id}
       scene={item.scene}
       look={item.personaLook}
+      doneHref="/practice"
       preview={{
         teacherName: item.personaName ?? undefined,
         title: item.title,

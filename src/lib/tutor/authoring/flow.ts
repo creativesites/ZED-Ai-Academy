@@ -1,6 +1,11 @@
 import { z } from "zod";
 import { SCENE_ARTBOARDS, type SceneArtboard } from "../rive-driver.ts";
-import { SCENARIO_STYLES, SKILL_PACKS, type ScenarioStyle, type SkillPack } from "../scenario.ts";
+import {
+  ALL_SKILL_PACKS,
+  SCENARIO_STYLES,
+  type ScenarioStyle,
+  type SkillPack,
+} from "../scenario.ts";
 import type { LessonObjective } from "./objectives.ts";
 import { getAuthoringTemplate, type AuthoringTemplateId } from "./templates.ts";
 
@@ -27,7 +32,7 @@ export const draftedFlowSchema = z.object({
   style: z.enum(SCENARIO_STYLES),
   scene: z.enum(SCENE_ARTBOARDS),
   maxMinutes: z.number().int().min(1).max(30),
-  skillPack: z.enum(SKILL_PACKS),
+  skillPack: z.enum(ALL_SKILL_PACKS),
   steps: z.array(flowStepSchema).min(MIN_FLOW_STEPS).max(MAX_FLOW_STEPS),
   targetItems: z.array(flowTargetItemSchema).max(12),
 });
@@ -48,7 +53,7 @@ export const FLOW_DRAFT_JSON_SCHEMA = {
     style: { type: "string", enum: [...SCENARIO_STYLES] },
     scene: { type: "string", enum: [...SCENE_ARTBOARDS] },
     maxMinutes: { type: "integer" },
-    skillPack: { type: "string", enum: [...SKILL_PACKS] },
+    skillPack: { type: "string", enum: [...ALL_SKILL_PACKS] },
     steps: {
       type: "array",
       description: "3 to 5 sequential teaching/check steps.",
@@ -93,6 +98,9 @@ const LANGUAGE_PATTERNS: { pack: SkillPack; pattern: RegExp }[] = [
   { pack: "language-zh", pattern: /\b(mandarin|chinese|pinyin|hanzi|hsk)\b/i },
   { pack: "language-es", pattern: /\b(spanish|español|espanol|dele)\b/i },
   { pack: "language-fr", pattern: /\b(french|français|francais|delf|dalf)\b/i },
+  { pack: "language-bem", pattern: /\b(bemba|ichibemba|icibemba)\b/i },
+  { pack: "language-ny", pattern: /\b(nyanja|chinyanja|chewa|chichewa)\b/i },
+  { pack: "language-tog", pattern: /\b(tonga|chitonga)\b/i },
   { pack: "health-sim", pattern: /\b(clinical intake|patient intake|triage|nursing intake)\b/i },
 ];
 
@@ -102,7 +110,7 @@ export function pickSkillPackForLesson(input: {
   lessonTitle?: string | null;
   explicit?: string | null;
 }): SkillPack {
-  if (input.explicit && (SKILL_PACKS as readonly string[]).includes(input.explicit)) {
+  if (input.explicit && (ALL_SKILL_PACKS as readonly string[]).includes(input.explicit)) {
     return input.explicit as SkillPack;
   }
   const haystack = [input.courseTitle, input.category, input.lessonTitle].filter(Boolean).join(" ");
@@ -316,7 +324,7 @@ export function parseDraftedFlow(
       : defaults.scene ?? "Scene_Classroom";
 
   const skillPack =
-    typeof obj.skillPack === "string" && (SKILL_PACKS as readonly string[]).includes(obj.skillPack)
+    typeof obj.skillPack === "string" && (ALL_SKILL_PACKS as readonly string[]).includes(obj.skillPack)
       ? (obj.skillPack as SkillPack)
       : defaults.skillPack ?? "general-tutor";
 
@@ -404,4 +412,15 @@ export function computeFlowDiff(before: DraftedFlow, after: DraftedFlow): FlowDi
   }
 
   return changes;
+}
+
+/** Converts authoring steps into DB `practice_scenarios.beats` payloads. */
+export function toScenarioBeatsPayload(steps: ReadonlyArray<FlowStep>) {
+  return steps.map((s) => ({
+    id: s.id,
+    goal: s.goal,
+    ...(s.targetItems?.length ? { targetItems: s.targetItems } : {}),
+    ...(s.boardContent ? { boardContent: s.boardContent } : {}),
+    ...(s.checkQuestion ? { checkQuestion: s.checkQuestion } : {}),
+  }));
 }

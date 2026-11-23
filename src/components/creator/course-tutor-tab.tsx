@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
 import {
@@ -14,15 +14,23 @@ import {
   Wand2,
   Loader2,
   ExternalLink,
+  Award,
+  Zap,
+  CheckCircle2,
 } from "lucide-react";
 import { Teacher } from "@/components/tutor/avatar/Teacher";
 import { DEFAULT_PERSONA_LOOK } from "@/components/tutor/avatar/types";
 import { TutorSession } from "@/components/tutor/practice/TutorSession";
 import { ScenarioEditorModal } from "@/components/tutor/studio/ScenarioEditorModal";
+import { TeacherInsightsPanel } from "@/components/tutor/studio/TeacherInsightsPanel";
+import { AUTHORING_TEMPLATES, type AuthoringTemplateId } from "@/lib/tutor/authoring/templates";
 import { TUTOR_STYLE_LABELS, overlayModes } from "@/lib/tutor/tutor-session-block";
 import {
   deleteScenario,
+  getCourseVivaConfig,
+  listScenariosForCourseStudio,
   seedStarterPersonas,
+  updateCourseVivaConfig,
   updateScenarioQuick,
   type PersonaRecord,
   type ScenarioRecord,
@@ -49,6 +57,120 @@ export function CourseTutorTab({
   const [editingScenario, setEditingScenario] = useState<ScenarioRecord | null>(null);
   const [previewScenario, setPreviewScenario] = useState<ScenarioRecord | null>(null);
   const [isBusy, startBusy] = useTransition();
+
+  // Course Autopilot state
+  const [autopilotTemplate, setAutopilotTemplate] = useState<AuthoringTemplateId | "auto">("auto");
+  const [autopilotPersonaId, setAutopilotPersonaId] = useState<string>(initialPersonas[0]?.id ?? "");
+  const [autopilotResults, setAutopilotResults] = useState<
+    Array<{ lessonId: string; lessonTitle: string; scenarioTitle?: string; status: string; error?: string }>
+  >([]);
+  const [autopilotRunning, setAutopilotRunning] = useState(false);
+
+  // Certificate Viva state (optional per course)
+  const [vivaAvailable, setVivaAvailable] = useState(true);
+  const [requireViva, setRequireViva] = useState(false);
+  const [vivaScenarioId, setVivaScenarioId] = useState<string>("");
+  const [vivaWorking, setVivaWorking] = useState(false);
+  const [showInsights, setShowInsights] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    getCourseVivaConfig(courseId)
+      .then((cfg) => {
+        if (!active) return;
+        setVivaAvailable(cfg.available);
+        setRequireViva(cfg.requireCertificateViva);
+        setVivaScenarioId(cfg.vivaScenarioId ?? "");
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [courseId]);
+
+  async function handleRunAutopilot() {
+    setAutopilotRunning(true);
+    setAutopilotResults([]);
+    try {
+      const res = await fetch("/api/ai/teacher/autopilot", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          courseId,
+          templateId: autopilotTemplate,
+          personaId: autopilotPersonaId || null,
+          attachBlock: true,
+        }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(data?.error ?? "Autopilot failed");
+
+      const list = Array.isArray(data.results) ? data.results : [];
+      setAutopilotResults(list);
+      const createdCount = list.filter((r: { status: string }) => r.status === "created").length;
+      if (createdCount > 0) {
+        const refreshed = await listScenariosForCourseStudio(courseId);
+        setScenarios(refreshed);
+        toast.success(`Autopilot built AI Teacher flows for ${createdCount} lesson(s)!`);
+      } else {
+        toast.info("All teachable lessons already have AI Teacher flows.");
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not run Course Autopilot");
+    } finally {
+      setAutopilotRunning(false);
+    }
+  }
+
+  async function handleSaveVivaConfig(nextRequired: boolean, nextScenarioId: string) {
+    setVivaWorking(true);
+    try {
+      const res = await updateCourseVivaConfig({
+        courseId,
+        requireCertificateViva: nextRequired,
+        vivaScenarioId: nextScenarioId || null,
+      });
+      setVivaAvailable(res.available);
+      setRequireViva(res.requireCertificateViva);
+      setVivaScenarioId(res.vivaScenarioId ?? "");
+      if (res.available) {
+        toast.success(nextRequired ? "Certificate Viva enabled" : "Certificate Viva disabled");
+      } else {
+        toast.info("Apply the Phase 3 migration to persist Certificate Viva settings.");
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not save Certificate Viva setting");
+    } finally {
+      setVivaWorking(false);
+    }
+  }
+
+  async function handleGenerateVivaFlow() {
+    setVivaWorking(true);
+    try {
+      const res = await fetch("/api/ai/teacher/viva-draft", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          courseId,
+          personaId: autopilotPersonaId || null,
+          enableVivaGate: true,
+        }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(data?.error ?? "Could not generate Certificate Viva");
+
+      const refreshed = await listScenariosForCourseStudio(courseId);
+      setScenarios(refreshed);
+      setVivaScenarioId(data.scenarioId);
+      setRequireViva(Boolean(data.vivaLinked));
+      toast.success(`Certificate Viva "${data.title}" drafted!`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not draft Certificate Viva");
+    } finally {
+      setVivaWorking(false);
+    }
+  }
 
   const manageTeachersHref = tenantSlug
     ? `/academy/${tenantSlug}/admin/ai-teachers`
@@ -152,6 +274,182 @@ export function CourseTutorTab({
             New AI Teacher Flow
           </Button>
         </div>
+      </div>
+
+      {/* Phase 3 Scale Tools: Course Autopilot & Optional Certificate Viva */}
+      <div className="grid gap-4 lg:grid-cols-2">
+        {/* Course Autopilot */}
+        <div className="space-y-3 rounded-3xl border border-slate-200/80 bg-white p-5 shadow-sm">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-[#fd5523]">
+                <Zap className="h-3.5 w-3.5" /> Course Autopilot
+              </span>
+              <h3 className="mt-1 text-base font-bold text-[#062e39]">
+                Auto-add AI Teachers to lessons
+              </h3>
+              <p className="text-xs text-slate-500">
+                Scans lessons without an AI Teacher block (up to 6 per batch), extracts objectives, and attaches a flow.
+              </p>
+            </div>
+          </div>
+
+          <div className="grid gap-2 sm:grid-cols-2">
+            <select
+              value={autopilotTemplate}
+              onChange={(e) => setAutopilotTemplate(e.target.value as AuthoringTemplateId | "auto")}
+              className="h-9 rounded-xl border border-slate-200 bg-white px-2.5 text-xs font-semibold text-[#062e39]"
+            >
+              <option value="auto">Auto template per lesson</option>
+              {AUTHORING_TEMPLATES.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.label}
+                </option>
+              ))}
+            </select>
+            <select
+              value={autopilotPersonaId}
+              onChange={(e) => setAutopilotPersonaId(e.target.value)}
+              className="h-9 rounded-xl border border-slate-200 bg-white px-2.5 text-xs font-semibold text-[#062e39]"
+            >
+              <option value="">Default course teacher</option>
+              {personas.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.display_name || p.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <Button
+            type="button"
+            disabled={autopilotRunning}
+            onClick={() => void handleRunAutopilot()}
+            className="h-9 w-full rounded-xl bg-[#062e39] text-xs font-bold text-white hover:bg-[#0a4352]"
+          >
+            {autopilotRunning ? (
+              <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Wand2 className="mr-1.5 h-3.5 w-3.5" />
+            )}
+            {autopilotRunning ? "Drafting lesson flows..." : "Run Course Autopilot"}
+          </Button>
+
+          {autopilotResults.length > 0 && (
+            <ul className="space-y-1.5 rounded-2xl bg-slate-50 p-3 text-xs">
+              {autopilotResults.map((r) => (
+                <li key={r.lessonId} className="flex items-center justify-between gap-2">
+                  <span className="truncate font-medium text-[#062e39]">{r.lessonTitle}</span>
+                  {r.status === "created" ? (
+                    <span className="inline-flex shrink-0 items-center gap-1 font-semibold text-emerald-700">
+                      <CheckCircle2 className="h-3.5 w-3.5" /> Added
+                    </span>
+                  ) : (
+                    <span className="shrink-0 text-rose-600">{r.error || "Failed"}</span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
+        {/* Certificate Viva (Optional per course) */}
+        <div className="space-y-3 rounded-3xl border border-slate-200/80 bg-white p-5 shadow-sm">
+          <div>
+            <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-emerald-700">
+              <Award className="h-3.5 w-3.5" /> Certificate Viva (Optional)
+            </span>
+            <h3 className="mt-1 text-base font-bold text-[#062e39]">
+              End-of-course Oral Check Gate
+            </h3>
+            <p className="text-xs text-slate-500">
+              Optionally require learners to pass an AI Teacher oral viva before claiming their course certificate.
+            </p>
+          </div>
+
+          {!vivaAvailable && (
+            <p className="rounded-xl bg-amber-50 px-3 py-2 text-[11px] text-amber-800">
+              Phase 3 DB migration needed before course viva gating can be saved. You can still generate the oral check flow now.
+            </p>
+          )}
+
+          <label className="flex items-center gap-2.5 text-xs font-semibold text-[#062e39]">
+            <input
+              type="checkbox"
+              checked={requireViva}
+              disabled={!vivaAvailable || vivaWorking}
+              onChange={(e) => {
+                const next = e.target.checked;
+                setRequireViva(next);
+                void handleSaveVivaConfig(next, vivaScenarioId);
+              }}
+              className="h-4 w-4 accent-[#fd5523]"
+            />
+            Require learners to pass oral viva to claim certificate
+          </label>
+
+          <div className="flex flex-wrap gap-2">
+            <select
+              value={vivaScenarioId}
+              disabled={!vivaAvailable || vivaWorking}
+              onChange={(e) => {
+                const nextId = e.target.value;
+                setVivaScenarioId(nextId);
+                void handleSaveVivaConfig(requireViva, nextId);
+              }}
+              className="h-9 min-w-0 flex-1 rounded-xl border border-slate-200 bg-white px-2.5 text-xs text-[#062e39]"
+            >
+              <option value="">Select oral viva flow...</option>
+              {scenarios.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.title} ({s.style})
+                </option>
+              ))}
+            </select>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={vivaWorking}
+              onClick={() => void handleGenerateVivaFlow()}
+              className="h-9 shrink-0 rounded-xl text-xs font-bold text-[#062e39]"
+            >
+              {vivaWorking ? (
+                <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Sparkles className="mr-1.5 h-3.5 w-3.5 text-[#fd5523]" />
+              )}
+              Auto-draft Viva
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {/* Course-level Insights & Misconceptions */}
+      <div className="rounded-3xl border border-slate-200/80 bg-white p-5 shadow-sm">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h3 className="text-base font-bold text-[#062e39]">
+              Course Learner Insights &amp; Misconceptions
+            </h3>
+            <p className="text-xs text-slate-500">
+              See where enrolled learners stumble on this course&apos;s objectives and inspect objective mastery.
+            </p>
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setShowInsights((prev) => !prev)}
+            className="h-9 rounded-xl text-xs font-bold text-[#062e39]"
+          >
+            {showInsights ? "Hide Course Insights" : "View Course Insights"}
+          </Button>
+        </div>
+        {showInsights && (
+          <div className="mt-5 border-t border-slate-100 pt-5">
+            <TeacherInsightsPanel companyId={companyId} courseId={courseId} />
+          </div>
+        )}
       </div>
 
       {/* Starter cast notice if no personas exist yet */}

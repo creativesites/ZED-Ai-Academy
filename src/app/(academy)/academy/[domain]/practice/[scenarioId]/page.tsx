@@ -30,6 +30,7 @@ export default async function TenantPracticeSessionPage({
       scenarioId={item.id}
       scene={item.scene}
       look={item.personaLook}
+      doneHref={`/academy/${domain}/practice`}
       preview={{
         teacherName: item.personaName ?? undefined,
         title: item.title,

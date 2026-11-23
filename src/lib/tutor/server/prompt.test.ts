@@ -90,6 +90,12 @@ test("unknown skill packs fall back to the general teacher fragment", () => {
   assert.match(prompt, /Skill pack: general teacher/);
 });
 
+test("local Zambian language packs (Bemba, Nyanja, Tonga) include their prompt fragments", () => {
+  assert.match(buildSystemPrompt(input({ skillPack: "language-bem" })), /Ichibemba/);
+  assert.match(buildSystemPrompt(input({ skillPack: "language-ny" })), /Chinyanja/);
+  assert.match(buildSystemPrompt(input({ skillPack: "language-tog" })), /Chitonga/);
+});
+
 test("non-language packs get no language policy and no language-only events", () => {
   const prompt = buildSystemPrompt(input({ skillPack: "general-tutor", mode: "text" }));
   assert.doesNotMatch(prompt, /Language policy/);

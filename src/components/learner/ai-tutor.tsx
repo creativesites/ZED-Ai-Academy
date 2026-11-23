@@ -44,7 +44,21 @@ export function AiTutor({
 }) {
   const teacherName = teacher?.name ?? DEFAULT_TEACHER_NAME;
   const greeting = `Hi, I'm ${teacherName}, your teacher for this course. Ask me anything about this lesson, or pick one below.`;
-  const [messages, setMessages] = useState<Message[]>([{ role: "assistant", content: greeting }]);
+  const storageKey = `zed-ai-coach-history-${lessonId}-${sectionTitle || "default"}`;
+  const [messages, setMessages] = useState<Message[]>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const saved = localStorage.getItem(storageKey);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) return parsed as Message[];
+        }
+      } catch (e) {
+        console.error("Failed to parse saved chat history", e);
+      }
+    }
+    return [{ role: "assistant", content: greeting }];
+  });
   const [lite, setLite] = useLiteMode();
   const [input, setInput] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
@@ -67,20 +81,6 @@ export function AiTutor({
     }
     return { board: latestBoard, lessonRefs: latestRefs };
   }, [messages]);
-
-  const storageKey = `zed-ai-coach-history-${lessonId}-${sectionTitle || "default"}`;
-
-  // Load history on mount
-  useEffect(() => {
-    const saved = localStorage.getItem(storageKey);
-    if (saved) {
-      try {
-        setMessages(JSON.parse(saved));
-      } catch (e) {
-        console.error("Failed to parse saved chat history", e);
-      }
-    }
-  }, [storageKey]);
 
   // Save history when messages change
   useEffect(() => {

@@ -14,10 +14,10 @@ import {
 } from "@/lib/tutor/contract.generated";
 import { SCENE_ARTBOARDS, type SceneArtboard } from "@/lib/tutor/rive-driver";
 import {
+  ALL_SKILL_PACKS,
   MODES,
   SCENARIO_STYLES,
   SCENARIO_VISIBILITIES,
-  SKILL_PACKS,
   scenarioBeatSchema,
   scenarioTargetItemSchema,
 } from "@/lib/tutor/scenario";
@@ -26,7 +26,8 @@ import {
   sceneFromValue,
   type TutorPersonaLook,
 } from "@/lib/tutor/tutor-session-block";
-import { PERSONA_PRESETS } from "@/components/tutor/avatar/persona-presets";
+import { ALL_PERSONA_PRESETS } from "@/components/tutor/avatar/persona-presets";
+import { isSchemaUnavailableError } from "@/lib/tutor/mastery/server";
 import type { Json } from "@/types/database";
 
 // ─── Shared Auth Helpers ──────────────────────────────────────────────────────
@@ -171,6 +172,8 @@ export type TutorSettingsRecord = {
   free_practice_minutes_per_month: number;
   allowed_modes: ("live" | "voice" | "text")[];
   enabled_persona_ids: string[] | null;
+  default_persona_id?: string | null;
+  brand_look?: Partial<TutorPersonaLook> | null;
 };
 
 export type StaffTutorSessionSummary = {
@@ -229,7 +232,7 @@ const scenarioInputSchema = z.object({
   companyId: z.string().min(1),
   courseId: z.string().uuid().optional().nullable(),
   lessonId: z.string().uuid().optional().nullable(),
-  skillPack: z.enum(SKILL_PACKS),
+  skillPack: z.enum(ALL_SKILL_PACKS),
   personaId: z.string().uuid().optional().nullable(),
   title: z.string().trim().min(2, "Title is required").max(140),
   goal: z.string().trim().min(5, "Goal is required").max(600),
@@ -253,6 +256,8 @@ const tutorSettingsSchema = z.object({
   freePracticeMinutesPerMonth: z.number().int().min(0).max(10000),
   allowedModes: z.array(z.enum(MODES)).min(1),
   enabledPersonaIds: z.array(z.string().uuid()).nullable(),
+  defaultPersonaId: z.string().uuid().nullable().optional(),
+  brandLook: z.record(z.string(), z.unknown()).nullable().optional(),
 });
 
 export type UpsertTutorSettingsInput = z.infer<typeof tutorSettingsSchema>;
@@ -372,6 +377,38 @@ const STARTER_PERSONA_META: Record<
     defaultScene: "Scene_Classroom",
     personalityPrompt:
       "You are Tinashe, an insightful study coach and tutor who helps learners explain concepts out loud, verify understanding, and apply lessons to real-world work.",
+  },
+  mwila: {
+    displayName: "Mwila",
+    languages: ["en", "bem"],
+    voiceName: "Kore",
+    defaultScene: "Scene_Studio",
+    personalityPrompt:
+      "You are Mwila, a sharp practical AI workflow coach from Lusaka. Guide learners with real Zambian SME, farming, and office examples, short prompt challenges, and crisp feedback.",
+  },
+  banda: {
+    displayName: "Banda",
+    languages: ["en", "ny"],
+    voiceName: "Charon",
+    defaultScene: "Scene_Classroom",
+    personalityPrompt:
+      "You are Banda, a steady, encouraging mentor who checks foundational concepts step by step using everyday commerce, finance, and workplace analogies.",
+  },
+  amina: {
+    displayName: "Amina",
+    languages: ["en", "fr"],
+    voiceName: "Aoede",
+    defaultScene: "Scene_Studio",
+    personalityPrompt:
+      "You are Amina, an articulate communication and entrepreneurship coach who helps learners defend ideas clearly, structure persuasive answers, and shine in oral checks.",
+  },
+  chanda: {
+    displayName: "Chanda",
+    languages: ["en", "bem", "tog"],
+    voiceName: "Fenrir",
+    defaultScene: "Scene_Classroom",
+    personalityPrompt:
+      "You are Chanda, a hands-on technical and numeracy coach who breaks tricky problems into simple steps and celebrates clear reasoning.",
   },
 };
 
@@ -501,7 +538,7 @@ export async function seedStarterPersonas(companyId: string): Promise<PersonaRec
 
   const existingNames = new Set((existing ?? []).map((p) => p.name.toLowerCase()));
 
-  const toInsert = PERSONA_PRESETS.filter((preset) => {
+  const toInsert = ALL_PERSONA_PRESETS.filter((preset) => {
     const meta = STARTER_PERSONA_META[preset.key];
     return meta && !existingNames.has(meta.displayName.toLowerCase()) && !existingNames.has(preset.label.toLowerCase());
   }).map((preset) => {
@@ -717,15 +754,20 @@ export async function getTutorSettings(companyId: string): Promise<TutorSettings
       free_practice_minutes_per_month: 60,
       allowed_modes: ["voice", "text"],
       enabled_persona_ids: null,
+      default_persona_id: null,
+      brand_look: null,
     };
   }
 
+  const rawRow = data as unknown as Record<string, unknown>;
   return {
     company_id: data.company_id,
     practice_room_enabled: data.practice_room_enabled,
     free_practice_minutes_per_month: data.free_practice_minutes_per_month,
     allowed_modes: (data.allowed_modes as ("live" | "voice" | "text")[]) ?? ["voice", "text"],
     enabled_persona_ids: data.enabled_persona_ids ?? null,
+    default_persona_id: (rawRow.default_persona_id as string | null) ?? null,
+    brand_look: personaLookFromVariant(rawRow.brand_look) ?? null,
   };
 }
 
@@ -737,29 +779,167 @@ export async function upsertTutorSettings(input: UpsertTutorSettingsInput): Prom
   await assertTenantStaff(parsed.companyId, userId);
 
   const db = createServiceClient();
-  const { data, error } = await db
+  const basePayload = {
+    company_id: parsed.companyId,
+    practice_room_enabled: parsed.practiceRoomEnabled,
+    free_practice_minutes_per_month: parsed.freePracticeMinutesPerMonth,
+    allowed_modes: parsed.allowedModes,
+    enabled_persona_ids: parsed.enabledPersonaIds,
+  };
+
+  let res = await db
     .from("tutor_settings")
     .upsert(
       {
-        company_id: parsed.companyId,
-        practice_room_enabled: parsed.practiceRoomEnabled,
-        free_practice_minutes_per_month: parsed.freePracticeMinutesPerMonth,
-        allowed_modes: parsed.allowedModes,
-        enabled_persona_ids: parsed.enabledPersonaIds,
-      },
+        ...basePayload,
+        ...(parsed.defaultPersonaId !== undefined ? { default_persona_id: parsed.defaultPersonaId } : {}),
+        ...(parsed.brandLook !== undefined ? { brand_look: (parsed.brandLook ?? {}) as Json } : {}),
+      } as typeof basePayload,
       { onConflict: "company_id" }
     )
     .select("*")
     .single();
 
-  if (error || !data) throw new Error(error?.message ?? "Failed to save tutor settings");
+  if (res.error && isSchemaUnavailableError(res.error)) {
+    res = await db
+      .from("tutor_settings")
+      .upsert(basePayload, { onConflict: "company_id" })
+      .select("*")
+      .single();
+  }
+
+  if (res.error || !res.data) throw new Error(res.error?.message ?? "Failed to save tutor settings");
+  const rawRow = res.data as unknown as Record<string, unknown>;
   revalidatePath("/practice");
   return {
-    company_id: data.company_id,
-    practice_room_enabled: data.practice_room_enabled,
-    free_practice_minutes_per_month: data.free_practice_minutes_per_month,
-    allowed_modes: (data.allowed_modes as ("live" | "voice" | "text")[]) ?? ["voice", "text"],
-    enabled_persona_ids: data.enabled_persona_ids ?? null,
+    company_id: res.data.company_id,
+    practice_room_enabled: res.data.practice_room_enabled,
+    free_practice_minutes_per_month: res.data.free_practice_minutes_per_month,
+    allowed_modes: (res.data.allowed_modes as ("live" | "voice" | "text")[]) ?? ["voice", "text"],
+    enabled_persona_ids: res.data.enabled_persona_ids ?? null,
+    default_persona_id: (rawRow.default_persona_id as string | null) ?? null,
+    brand_look: personaLookFromVariant(rawRow.brand_look) ?? null,
+  };
+}
+
+/** Fetches the academy primary brand color for 1-click teacher outfit branding. */
+export async function getTenantBrandColor(companyId: string): Promise<string | null> {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+  await assertTenantStaff(companyId, userId);
+
+  const db = createServiceClient();
+  const { data } = await db
+    .from("companies")
+    .select("primary_color")
+    .eq("id", companyId)
+    .maybeSingle();
+  return data?.primary_color ?? null;
+}
+
+/** Reads and updates Certificate Viva gating configuration on a course (graceful if un-migrated). */
+export async function getCourseVivaConfig(courseId: string): Promise<{
+  available: boolean;
+  requireCertificateViva: boolean;
+  vivaScenarioId: string | null;
+}> {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+  await assertCanManageCourse(createClient(), courseId, userId);
+
+  const db = createServiceClient();
+  const loose = db as unknown as {
+    from: (t: string) => {
+      select: (c: string) => {
+        eq: (k: string, v: unknown) => {
+          maybeSingle: () => Promise<{
+            data: { require_certificate_viva?: boolean | null; viva_scenario_id?: string | null } | null;
+            error: { code?: string; message?: string } | null;
+          }>;
+        };
+      };
+    };
+  };
+
+  const { data, error } = await loose
+    .from("courses")
+    .select("require_certificate_viva, viva_scenario_id")
+    .eq("id", courseId)
+    .maybeSingle();
+
+  if (error) {
+    if (isSchemaUnavailableError(error)) {
+      return { available: false, requireCertificateViva: false, vivaScenarioId: null };
+    }
+    throw new Error(error.message);
+  }
+
+  return {
+    available: true,
+    requireCertificateViva: Boolean(data?.require_certificate_viva),
+    vivaScenarioId: data?.viva_scenario_id ?? null,
+  };
+}
+
+export async function updateCourseVivaConfig(input: {
+  courseId: string;
+  requireCertificateViva: boolean;
+  vivaScenarioId?: string | null;
+}): Promise<{ available: boolean; requireCertificateViva: boolean; vivaScenarioId: string | null }> {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+  const parsed = z
+    .object({
+      courseId: z.string().uuid(),
+      requireCertificateViva: z.boolean(),
+      vivaScenarioId: z.string().uuid().nullable().optional(),
+    })
+    .parse(input);
+
+  await assertCanManageCourse(createClient(), parsed.courseId, userId);
+
+  const db = createServiceClient();
+  const loose = db as unknown as {
+    from: (t: string) => {
+      update: (vals: Record<string, unknown>) => {
+        eq: (k: string, v: unknown) => {
+          select: (c: string) => {
+            single: () => Promise<{
+              data: { require_certificate_viva?: boolean | null; viva_scenario_id?: string | null } | null;
+              error: { code?: string; message?: string } | null;
+            }>;
+          };
+        };
+      };
+    };
+  };
+
+  const payload: Record<string, unknown> = {
+    require_certificate_viva: parsed.requireCertificateViva,
+  };
+  if (parsed.vivaScenarioId !== undefined) {
+    payload.viva_scenario_id = parsed.vivaScenarioId;
+  }
+
+  const { data, error } = await loose
+    .from("courses")
+    .update(payload)
+    .eq("id", parsed.courseId)
+    .select("require_certificate_viva, viva_scenario_id")
+    .single();
+
+  if (error) {
+    if (isSchemaUnavailableError(error)) {
+      return { available: false, requireCertificateViva: false, vivaScenarioId: null };
+    }
+    throw new Error(error.message);
+  }
+
+  revalidatePath(`/creator/courses/${parsed.courseId}`);
+  return {
+    available: true,
+    requireCertificateViva: Boolean(data?.require_certificate_viva),
+    vivaScenarioId: data?.viva_scenario_id ?? null,
   };
 }
 

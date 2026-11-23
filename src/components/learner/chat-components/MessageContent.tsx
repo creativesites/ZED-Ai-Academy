@@ -113,7 +113,11 @@ export function MessageContent({ content }: MessageContentProps) {
                   {children}
                 </blockquote>
               ),
-              code: ({ node, inline, className, children, ...props }: any) => {
+              code: ({
+                inline,
+                children,
+                ...props
+              }: React.HTMLAttributes<HTMLElement> & { inline?: boolean }) => {
                 if (inline) {
                   return (
                     <code className="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-[0.9em] text-blue-700" {...props}>

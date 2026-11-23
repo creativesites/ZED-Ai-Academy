@@ -15,6 +15,7 @@ import { generateReportJson } from "./gemini-calls.ts";
 import { loadSessionContext, type TutorSessionRow } from "./session-context.ts";
 import { recordUsage } from "./usage.ts";
 import { utcDateString } from "../progress.ts";
+import { evaluateVivaOutcome } from "../viva.ts";
 
 // Database and model wiring for finalizeSessionCore. The sequencing and the idempotency rules
 // live in ../finalize.ts, where they are tested. This file only connects them to Supabase and Gemini.
@@ -86,12 +87,21 @@ export async function finalizeTutorSession(input: FinalizeInput): Promise<Finali
         next_scenario_id: null,
       };
 
+      const isViva = ctx.scenario.exam_task === "certificate_viva";
+      const vivaEval = isViva
+        ? evaluateVivaOutcome({
+            objectives: payload.objectives,
+            scores: (payload.scores ?? {}) as Record<string, number>,
+          })
+        : null;
+
       let insertRes = await supabase
         .from("tutor_reports")
         .insert({
           ...baseInsert,
           objectives: payload.objectives as unknown as Json,
           next_step: payload.next_step,
+          ...(vivaEval !== null ? { viva_passed: vivaEval.passed } : {}),
         } as typeof baseInsert)
         .select("*")
         .single();

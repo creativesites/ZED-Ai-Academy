@@ -3,10 +3,13 @@ import { createClient } from "@/lib/supabase/server";
 import { gemini } from "@/lib/ai/gemini";
 import { modelFor } from "@/lib/ai/models";
 import { blocksToText } from "@/lib/course-blocks/block-to-text";
+import { getLessonAccess } from "@/lib/courses/course-auth-server";
 import { DEFAULT_TEACHER_NAME, safeTeacherName } from "@/lib/tutor/course-teacher";
 import { loadWeakMasteryRows } from "@/lib/tutor/mastery/server";
 import { formatMasteryMemoryNotes } from "@/lib/tutor/mastery/evidence";
 import { NextRequest } from "next/server";
+
+const MAX_TUTOR_MESSAGE_CHARS = 2000;
 
 export async function POST(req: NextRequest) {
   const { userId } = await auth();
@@ -16,18 +19,38 @@ export async function POST(req: NextRequest) {
 
   const supabase = createClient();
 
-  const { message, courseId, lessonId, moduleTitle, sectionTitle, teacherName: rawTeacherName } = await req.json();
+  const payload = await req.json().catch(() => null);
+  if (!payload || typeof payload !== "object") {
+    return new Response("Invalid request body", { status: 400 });
+  }
+
+  const {
+    message,
+    courseId,
+    lessonId,
+    moduleTitle,
+    sectionTitle,
+    teacherName: rawTeacherName,
+  } = payload as Record<string, unknown>;
   // Display name only; checked so it cannot carry instructions into the prompt.
   const teacherName = safeTeacherName(rawTeacherName) ?? DEFAULT_TEACHER_NAME;
 
-  if (!message || typeof message !== "string") {
-    return new Response("Missing message", { status: 400 });
+  if (typeof message !== "string" || !message.trim() || message.length > MAX_TUTOR_MESSAGE_CHARS) {
+    return new Response("Message is required and must be at most 2000 characters", { status: 400 });
+  }
+
+  // Enforce enrollment / preview / staff access when targeting a specific lesson
+  if (typeof lessonId === "string" && lessonId.trim()) {
+    const access = await getLessonAccess(supabase, lessonId, userId);
+    if (!access.allowed) {
+      return new Response("Forbidden", { status: 403 });
+    }
   }
 
   // Fetch lesson content blocks (with block ids so the dock can jump to video/sections)
   let lessonContext = "";
   let blockReferenceList = "";
-  if (lessonId) {
+  if (typeof lessonId === "string" && lessonId.trim()) {
     const { data: blocks } = await supabase
       .from("content_blocks")
       .select("id, type, content")
@@ -55,7 +78,7 @@ export async function POST(req: NextRequest) {
   // Fetch course metadata + learner memory notes for cross-session continuity
   let courseContext = "";
   let companyId: string | null = null;
-  if (courseId) {
+  if (typeof courseId === "string" && courseId.trim()) {
     const { data: course } = await supabase
       .from("courses")
       .select("title, description, company_id")
@@ -81,8 +104,8 @@ export async function POST(req: NextRequest) {
       : "";
 
   const locationContext = [
-    moduleTitle && `Module: ${moduleTitle}`,
-    sectionTitle && `Section: ${sectionTitle}`
+    typeof moduleTitle === "string" && moduleTitle && `Module: ${moduleTitle}`,
+    typeof sectionTitle === "string" && sectionTitle && `Section: ${sectionTitle}`
   ].filter(Boolean).join("\n");
 
   const systemPrompt = `You are ${teacherName}, the AI teacher for this course on Zed AI Academy. You sit beside the lesson and help the learner understand and apply the specific material in it. Speak as ${teacherName}, warmly and briefly, in the first person.
@@ -145,12 +168,18 @@ Guidelines:
 
   const readable = new ReadableStream({
     async start(controller) {
-      for await (const chunk of stream) {
-        if (chunk.text) {
-          controller.enqueue(encoder.encode(chunk.text));
+      try {
+        for await (const chunk of stream) {
+          if (chunk.text) {
+            controller.enqueue(encoder.encode(chunk.text));
+          }
         }
+      } catch (err) {
+        console.error("[ai-tutor] stream error:", err);
+        controller.enqueue(encoder.encode("\n\nSorry, I lost my connection mid-reply. Please try asking again."));
+      } finally {
+        controller.close();
       }
-      controller.close();
     },
   });
 
