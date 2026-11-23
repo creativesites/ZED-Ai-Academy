@@ -1,3 +1,4 @@
+import "../../../../../public/assets/css/style.css";
 import { createClient } from "@/lib/supabase/server";
 import { auth } from "@clerk/nextjs/server";
 import Link from "next/link";

@@ -27,16 +27,16 @@ export default async function TenantAdminStaffPage({
   const members = (membersRaw ?? []) as any[];
 
   return (
-    <div className="container max-w-7xl px-4 py-6 sm:py-10">
-      <div className="mb-8 sm:mb-10">
-        <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#fd5523]/10 text-[#fd5523] text-xs font-black uppercase tracking-wider mb-3">
-          <Sparkles className="h-3.5 w-3.5" />
+    <div className="container max-w-7xl px-4 py-6 sm:py-8">
+      <div className="mb-6 sm:mb-8">
+        <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-[#fd5523]/10 text-[#fd5523] text-[10px] font-bold uppercase tracking-wider mb-2">
+          <Sparkles className="h-3 w-3" />
           <span>Team Management</span>
         </div>
-        <h1 className="text-2xl sm:text-4xl md:text-5xl font-black text-[#062e39] tracking-tight leading-none uppercase">
+        <h1 className="text-xl sm:text-2xl font-bold text-[#062e39] tracking-tight">
           {company.name} <span className="text-[#fd5523]">Staff</span>
         </h1>
-        <p className="mt-2 text-slate-500 text-sm sm:text-base font-medium">
+        <p className="mt-1 text-slate-500 text-xs sm:text-sm">
           Manage teacher invitations, staff permissions, and student self-join links.
         </p>
       </div>
