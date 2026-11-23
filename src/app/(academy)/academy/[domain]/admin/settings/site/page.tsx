@@ -35,12 +35,12 @@ export default async function SettingsPage({
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#fff6ee] to-white">
-      <div className="px-4 py-8 sm:px-6 lg:px-8 max-w-6xl mx-auto space-y-6">
+      <div className="px-4 py-6 sm:px-6 lg:px-8 max-w-6xl mx-auto space-y-5">
         <div>
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-[#062e39]">
-            Branding & Design
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[#062e39]">
+            Branding &amp; Design
           </h1>
-          <p className="text-sm sm:text-base text-slate-500 font-medium mt-1">
+          <p className="text-xs sm:text-sm text-slate-500 mt-1">
             Customize your visual identity, landing page templates, and student experience.
           </p>
         </div>

@@ -49,18 +49,18 @@ export default async function TenantAdminCoursesPage({
   const draftCount = courses.filter((c) => c.status === "draft").length;
 
   return (
-    <div className="container max-w-7xl px-4 py-6 sm:py-10">
+    <div className="container max-w-7xl px-4 py-6 sm:py-8">
       {/* Top Header */}
-      <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-center justify-between">
+      <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center justify-between">
         <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#fd5523]/10 text-[#fd5523] text-[11px] font-black uppercase tracking-wider mb-2">
-            <Sparkles className="h-3.5 w-3.5" />
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#fd5523]/10 text-[#fd5523] text-[10px] font-bold uppercase tracking-wider mb-1.5">
+            <Sparkles className="h-3 w-3" />
             <span>Curriculum Studio</span>
           </div>
-          <h1 className="text-2xl sm:text-4xl font-black text-[#062e39] tracking-tight leading-none uppercase">
+          <h1 className="text-xl sm:text-2xl font-bold text-[#062e39] tracking-tight">
             {company.name} <span className="text-[#fd5523]">Courses</span>
           </h1>
-          <p className="mt-1.5 text-slate-500 text-sm font-medium">
+          <p className="mt-1 text-slate-500 text-xs sm:text-sm">
             Manage courses, modular lessons, and monetization for this academy.
           </p>
         </div>
@@ -68,7 +68,7 @@ export default async function TenantAdminCoursesPage({
         <div className="flex items-center">
           <Link
             href={`/academy/${company.slug}/admin/courses/new`}
-            className="w-full sm:w-auto justify-center flex items-center gap-2 h-11 px-6 rounded-xl bg-[#fd5523] text-white text-xs font-black uppercase tracking-wider hover:bg-[#ef4a16] transition-all shadow-md shadow-[#fd5523]/20"
+            className="w-full sm:w-auto justify-center flex items-center gap-1.5 h-10 px-4 rounded-xl bg-[#fd5523] text-white text-xs font-semibold hover:bg-[#ef4a16] transition-all shadow-xs"
           >
             <Plus className="h-4 w-4" />
             <span>Create Course</span>

@@ -142,7 +142,7 @@ export default async function AdminTenantHubPage({
              <div className="grid grid-cols-2 gap-2.5">
                 {[
                   { label: "New Course", icon: PlusCircle, href: `${base}/courses/new` },
-                  { label: "Broadcast", icon: Megaphone, href: `${base}/classroom?tab=announcements` },
+                  { label: "Broadcast", icon: Megaphone, href: `${base}/classroom?tab=noticeboard` },
                   { label: "Enrollments", icon: UserCheck, href: `${base}/enrollments` },
                   { label: "Staff", icon: GraduationCap, href: `${base}/staff` },
                 ].map((action) => (

@@ -224,7 +224,11 @@ export function OverviewTab({
 
             {courses.length > 0 && (
               <Link
-                href={`/academy/${companySlug}/course/${courses[0]?.slug || ""}`}
+                href={
+                  courses[0]?.slug
+                    ? `/academy/${companySlug}/courses/${courses[0].slug}`
+                    : `/academy/${companySlug}`
+                }
                 className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 h-9 px-3.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-semibold transition-all border border-white/15"
               >
                 <BookOpen className="h-3.5 w-3.5 text-[#fd5523] shrink-0" />
@@ -423,30 +427,30 @@ export function OverviewTab({
 
       {/* 3. Student Resume Learning Banner (Direct Course Player Link) */}
       {!isAdminOrInstructor && studentProgress?.nextLesson && (
-        <div className="p-4 sm:p-6 rounded-2xl sm:rounded-3xl bg-gradient-to-r from-orange-500/10 via-amber-500/5 to-white border border-orange-200/70 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3.5 sm:gap-4">
-          <div className="flex items-center gap-3.5">
-            <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-xl sm:rounded-2xl bg-[#fd5523] text-white flex items-center justify-center shrink-0 shadow-lg shadow-[#fd5523]/30">
-              <BookOpen className="h-5 w-5 sm:h-6 sm:w-6" />
+        <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-orange-500/10 via-amber-500/5 to-white border border-orange-200/70 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3.5">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="h-10 w-10 rounded-xl bg-[#fd5523] text-white flex items-center justify-center shrink-0 shadow-xs">
+              <BookOpen className="h-5 w-5" />
             </div>
             <div className="min-w-0">
-              <span className="text-[10px] font-black uppercase tracking-wider text-[#fd5523] block leading-tight">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-[#fd5523] block leading-tight">
                 Up Next In Your Curriculum
               </span>
-              <h3 className="text-sm sm:text-base font-black text-[#062e39] mt-0.5 truncate">
+              <h3 className="text-sm sm:text-base font-bold text-[#062e39] mt-0.5 truncate">
                 {studentProgress.nextLesson.title}
               </h3>
-              <p className="text-[11px] sm:text-xs text-slate-500 font-medium truncate">
+              <p className="text-xs text-slate-500 truncate">
                 Course: {studentProgress.nextLesson.course_title}
               </p>
             </div>
           </div>
 
           <Link
-            href={`/academy/${companySlug}/course/${studentProgress.nextLesson.course_slug}`}
-            className="inline-flex items-center justify-center gap-2 px-5 py-3 sm:px-6 sm:py-3.5 rounded-xl sm:rounded-2xl bg-[#fd5523] hover:bg-[#e0481d] text-white text-xs font-black shadow-lg shadow-[#fd5523]/30 transition-all w-full sm:w-auto shrink-0 min-h-[44px]"
+            href={`/courses/${studentProgress.nextLesson.course_slug}/learn`}
+            className="inline-flex items-center justify-center gap-1.5 px-4 h-9 rounded-xl bg-[#fd5523] hover:bg-[#e0481d] text-white text-xs font-semibold shadow-xs transition-all w-full sm:w-auto shrink-0"
           >
             Resume Lesson
-            <ArrowRight className="h-4 w-4" />
+            <ArrowRight className="h-3.5 w-3.5" />
           </Link>
         </div>
       )}
