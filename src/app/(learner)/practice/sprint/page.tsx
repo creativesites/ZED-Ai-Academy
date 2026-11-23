@@ -42,6 +42,7 @@ export default async function RevisionSprintPage({
       sprintCourseId={courseId}
       focusObjective={focus}
       scene="Scene_Classroom"
+      doneHref="/dashboard"
       preview={{
         teacherName: DEFAULT_TEACHER_NAME,
         title: built.title,

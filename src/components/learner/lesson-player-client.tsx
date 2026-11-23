@@ -820,6 +820,7 @@ export function LessonPlayerClient({
                 {courseComplete && !certificate && vivaStatus?.required && !vivaStatus.passed && vivaStatus.scenarioId && vivaStatus.scenario && (
                   <div className="mt-4">
                     <TutorSessionBlock
+                      origin="practice"
                       content={{
                         scenarioId: vivaStatus.scenarioId,
                         title: `Certificate Viva with ${vivaStatus.scenario.persona?.displayName ?? vivaStatus.scenario.persona?.name ?? teacher.name}`,

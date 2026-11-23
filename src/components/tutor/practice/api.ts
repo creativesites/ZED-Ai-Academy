@@ -9,7 +9,13 @@ import { uploadMimeType } from "@/lib/tutor/recording";
 
 export type Result<T> = { ok: true; data: T } | { ok: false; failure: TutorFailure };
 
-export type TutorPersona = { id: string; name: string; displayName: string | null; languages: string[] };
+export type TutorPersona = {
+  id: string;
+  name: string;
+  displayName: string | null;
+  languages: string[];
+  riveVariant?: unknown;
+};
 export type TutorScenario = { id: string; title: string; goal: string; maxMinutes: number };
 
 export type StartResponse = {

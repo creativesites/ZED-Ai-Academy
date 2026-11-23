@@ -13,6 +13,7 @@ import { tutorErrorMessage } from "@/lib/tutor/client-errors";
 import type { TutorReportContent } from "@/lib/tutor/report-model";
 import { shouldSendRecording } from "@/lib/tutor/recording";
 import { MAX_SPEAKING_MS, SpeakingTimeAccumulator } from "@/lib/tutor/speaking-time";
+import { personaLookFromVariant } from "@/lib/tutor/tutor-session-block";
 import {
   detectMicPermission,
   httpTutorClient,
@@ -48,6 +49,8 @@ export type TutorSessionProps = {
   companyId?: string;
   /** Called with the report when the learner taps Done on the report card. */
   onExit?: (report: TutorReportContent) => void;
+  /** Optional fallback navigation href for Back / Done when no onExit callback is passed. */
+  doneHref?: string;
   /** Teacher renderer. The Rive teacher is the default; "placeholder" is the SVG fallback. */
   engine?: TeacherEngine;
   /** Backdrop scene for the Rive teacher. Defaults to the tea house. */
@@ -83,6 +86,7 @@ export function TutorSession({
   focusObjective,
   companyId,
   onExit,
+  doneHref,
   preview,
   engine,
   scene,
@@ -94,7 +98,9 @@ export function TutorSession({
   const [lite, setLite] = useLiteMode();
   // switch_scene (v2) can change the backdrop mid-session; it starts at the page's scene.
   const [sceneOverride, setSceneOverride] = useState<SceneArtboard | null>(null);
+  const [lookOverride, setLookOverride] = useState<Partial<PersonaLook> | undefined>(undefined);
   const activeScene = sceneOverride ?? scene;
+  const activeLook = lookOverride ?? look;
 
   const [phase, setPhase] = useState<Phase>("intro");
   const [error, setError] = useState<string | null>(null);
@@ -446,6 +452,7 @@ export function TutorSession({
     modeRef.current = data.mode === "text" ? "text" : "voice";
     setMode(modeRef.current);
     setTeacherName(data.persona.displayName ?? data.persona.name);
+    setLookOverride(personaLookFromVariant(data.persona.riveVariant));
     setSceneTitle(data.scenario.title);
     setGoal(data.scenario.goal);
     setMaxMinutes(data.scenario.maxMinutes);
@@ -570,7 +577,15 @@ export function TutorSession({
     return (
       <div className={`${styles.room} flex min-h-[100dvh] flex-col justify-center px-4 py-8`}>
         {!lite && <SceneBackdrop scene={activeScene} className="absolute inset-0 h-full w-full" />}
-        <div className="relative z-10">
+        <div className="relative z-10 mx-auto w-full max-w-[540px] space-y-3">
+          {doneHref && (
+            <a
+              href={doneHref}
+              className="inline-flex items-center gap-1.5 rounded-full border border-[var(--line)] bg-white/80 px-3.5 py-1.5 text-xs font-semibold text-[var(--ink)] backdrop-blur hover:bg-white"
+            >
+              ← Back
+            </a>
+          )}
           <StartPanel
             info={info}
             micPermission={micPermission}
@@ -584,6 +599,11 @@ export function TutorSession({
   }
 
   if (phase === "report" && report) {
+    const handleDone = onExit
+      ? () => onExit(report)
+      : doneHref
+        ? () => window.location.assign(doneHref)
+        : undefined;
     return (
       <div className={`${styles.room} flex min-h-[100dvh] flex-col justify-center px-4 py-8`}>
         {!lite && <SceneBackdrop scene={activeScene} className="absolute inset-0 h-full w-full" />}
@@ -595,7 +615,7 @@ export function TutorSession({
             onPractiseAgain={practiseAgain}
             onPractiseObjective={client ? undefined : (obj) => navigateToSprint(obj)}
             onStartSprint={client ? undefined : () => navigateToSprint()}
-            onDone={onExit ? () => onExit(report) : undefined}
+            onDone={handleDone}
           />
         </div>
       </div>
@@ -625,7 +645,7 @@ export function TutorSession({
             reducedMotion={reducedMotion}
             engine={lite ? "placeholder" : engine}
             scene={activeScene}
-            look={look}
+            look={activeLook}
             teacherName={teacherName}
             sceneTitle={sceneTitle}
             modeLabel={`${mode === "voice" ? "Voice" : "Text"}${lite ? " · Lite" : ""}`}

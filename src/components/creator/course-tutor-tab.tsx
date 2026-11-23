@@ -22,6 +22,7 @@ import { Teacher } from "@/components/tutor/avatar/Teacher";
 import { DEFAULT_PERSONA_LOOK } from "@/components/tutor/avatar/types";
 import { TutorSession } from "@/components/tutor/practice/TutorSession";
 import { ScenarioEditorModal } from "@/components/tutor/studio/ScenarioEditorModal";
+import { TeacherInsightsPanel } from "@/components/tutor/studio/TeacherInsightsPanel";
 import { AUTHORING_TEMPLATES, type AuthoringTemplateId } from "@/lib/tutor/authoring/templates";
 import { TUTOR_STYLE_LABELS, overlayModes } from "@/lib/tutor/tutor-session-block";
 import {
@@ -70,6 +71,7 @@ export function CourseTutorTab({
   const [requireViva, setRequireViva] = useState(false);
   const [vivaScenarioId, setVivaScenarioId] = useState<string>("");
   const [vivaWorking, setVivaWorking] = useState(false);
+  const [showInsights, setShowInsights] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -420,6 +422,34 @@ export function CourseTutorTab({
             </Button>
           </div>
         </div>
+      </div>
+
+      {/* Course-level Insights & Misconceptions */}
+      <div className="rounded-3xl border border-slate-200/80 bg-white p-5 shadow-sm">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h3 className="text-base font-bold text-[#062e39]">
+              Course Learner Insights &amp; Misconceptions
+            </h3>
+            <p className="text-xs text-slate-500">
+              See where enrolled learners stumble on this course&apos;s objectives and inspect objective mastery.
+            </p>
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setShowInsights((prev) => !prev)}
+            className="h-9 rounded-xl text-xs font-bold text-[#062e39]"
+          >
+            {showInsights ? "Hide Course Insights" : "View Course Insights"}
+          </Button>
+        </div>
+        {showInsights && (
+          <div className="mt-5 border-t border-slate-100 pt-5">
+            <TeacherInsightsPanel companyId={companyId} courseId={courseId} />
+          </div>
+        )}
       </div>
 
       {/* Starter cast notice if no personas exist yet */}

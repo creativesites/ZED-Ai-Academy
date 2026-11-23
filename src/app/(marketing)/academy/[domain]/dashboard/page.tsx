@@ -226,7 +226,7 @@ export default async function TenantStudentDashboardPage({
              <div className="py-24 text-center bg-white rounded-[4rem] border-2 border-dashed border-slate-100">
                 <BookOpen className="h-20 w-20 text-slate-50 mx-auto mb-6" />
                 <h3 className="text-2xl font-black text-[#062e39]">No active courses</h3>
-                <p className="text-slate-400 font-medium mt-2 max-w-xs mx-auto">Explore {company.name}'s curriculum to start learning.</p>
+                <p className="text-slate-400 font-medium mt-2 max-w-xs mx-auto">Explore {company.name}&apos;s curriculum to start learning.</p>
                 <Link href={`/academy/${company.slug}#courses`} className="mt-8 inline-flex h-14 px-8 rounded-2xl bg-[#062e39] text-white text-[10px] font-black uppercase tracking-widest hover:bg-[#fd5523] transition-all">
                    Browse Courses
                 </Link>

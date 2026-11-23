@@ -20,12 +20,14 @@ import {
 export function TutorSessionBlock({
   content,
   lessonId,
+  origin,
   scenario,
   done,
   onComplete,
 }: {
   content: Record<string, unknown>;
   lessonId?: string;
+  origin?: "lesson" | "practice";
   /** Undefined when the scenario is missing or not published. */
   scenario: TutorScenarioView | undefined;
   done: boolean;
@@ -37,13 +39,14 @@ export function TutorSessionBlock({
   if (!block) {
     return (
       <div className="rounded-2xl border border-dashed border-slate-200 p-4 text-sm text-slate-400">
-        This speaking practice is not set up yet.
+        This AI Teacher activity is not set up yet.
       </div>
     );
   }
 
-  const title = block.title || scenario?.title || "Speaking practice";
-  const canStart = !!scenario && !!lessonId;
+  const resolvedOrigin = origin ?? (lessonId ? "lesson" : "practice");
+  const title = block.title || scenario?.title || "AI Teacher";
+  const canStart = !!scenario && (resolvedOrigin === "practice" || !!lessonId);
   const persona = scenario?.persona;
   const personaName = persona ? persona.displayName ?? persona.name : null;
 
@@ -61,7 +64,7 @@ export function TutorSessionBlock({
           </div>
           <div className="min-w-0 flex-1">
             <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-cyan-700">
-              {personaName ? `Speaking practice · ${personaName}` : "Speaking practice"}
+              {personaName ? `AI Teacher · ${personaName}` : "AI Teacher"}
             </p>
             <h3 className="text-xl font-bold leading-snug text-[#062e39]">{title}</h3>
           </div>
@@ -99,7 +102,7 @@ export function TutorSessionBlock({
             className="h-12 rounded-2xl bg-[#fd5523] px-6 text-base font-bold text-white hover:bg-[#ef4a16]"
           >
             <Mic className="mr-2 h-5 w-5" />
-            {done ? "Practice again" : "Start speaking practice"}
+            {done ? "Practice again" : "Start AI Teacher"}
           </Button>
           {done && (
             <span className="flex items-center gap-2 text-sm font-semibold text-emerald-700">
@@ -109,7 +112,7 @@ export function TutorSessionBlock({
         </div>
       </div>
 
-      {open && scenario && lessonId && typeof document !== "undefined" &&
+      {open && scenario && (resolvedOrigin === "practice" || lessonId) && typeof document !== "undefined" &&
         createPortal(
           <div className="fixed inset-0 z-[80] flex flex-col bg-[#062e39]" role="dialog" aria-modal="true" aria-label={title}>
             <div className="flex items-center justify-between gap-3 px-4 py-3 text-white">
@@ -118,15 +121,15 @@ export function TutorSessionBlock({
                 type="button"
                 onClick={() => setOpen(false)}
                 className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/10 hover:bg-white/20"
-                aria-label="Close speaking practice"
+                aria-label="Close AI teacher session"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
             <div className="min-h-0 flex-1 overflow-y-auto">
               <TutorSession
-                origin="lesson"
-                lessonId={lessonId}
+                origin={resolvedOrigin}
+                lessonId={resolvedOrigin === "lesson" ? lessonId : undefined}
                 scenarioId={scenario.id}
                 scene={scenario.scene}
                 look={persona?.look}
