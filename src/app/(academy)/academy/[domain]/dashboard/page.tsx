@@ -3,13 +3,14 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
 import { 
-  ArrowRight, Award, BookOpen, Clock3, GraduationCap, 
-  Play, Sparkles, Trophy, Users, Layout, Building2, Mic
+  ArrowRight, Award, BookMarked, BookOpen, Clock3, Flame, GraduationCap, 
+  History, Play, Sparkles, Trophy, Users, Layout, Building2, Mic
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import type { Enrollment, Course } from "@/types/database";
 import { getCurrentTenantAccess } from "@/lib/tenants/access";
+import { loadLearnerTutorOverview } from "@/lib/tutor/server/learner-overview";
 
 export const metadata = { title: "Student Dashboard" };
 
@@ -66,9 +67,56 @@ export default async function TenantStudentDashboardPage({
     .order("enrolled_at", { ascending: false });
 
   const enrollments = (enrollmentsData ?? []) as EnrollmentWithCourse[];
+  const enrolledCourseIds = enrollments
+    .map((e) => e.courses?.id)
+    .filter((id): id is string => Boolean(id));
+
+  // 4. Fetch real lesson progress, certificates, and AI teacher overview in parallel
+  const [modulesRes, certsRes, tutorOverview] = await Promise.all([
+    enrolledCourseIds.length > 0
+      ? supabase
+          .from("modules")
+          .select("course_id, lessons(id)")
+          .in("course_id", enrolledCourseIds)
+      : Promise.resolve({ data: [] }),
+    enrolledCourseIds.length > 0
+      ? supabase
+          .from("certificates")
+          .select("course_id, public_id")
+          .eq("user_id", userId)
+          .in("course_id", enrolledCourseIds)
+      : Promise.resolve({ data: [] }),
+    loadLearnerTutorOverview(userId, { kind: "tenant", companyId: company.id }).catch(() => null),
+  ]);
+
+  const lessonsByCourse = new Map<string, string[]>();
+  for (const mod of (modulesRes.data ?? []) as Array<{
+    course_id: string;
+    lessons: Array<{ id: string }> | null;
+  }>) {
+    const existing = lessonsByCourse.get(mod.course_id) ?? [];
+    for (const l of mod.lessons ?? []) existing.push(l.id);
+    lessonsByCourse.set(mod.course_id, existing);
+  }
+
+  const allLessonIds = [...lessonsByCourse.values()].flat();
+  const { data: progressRows } = allLessonIds.length
+    ? await supabase
+        .from("lesson_progress")
+        .select("lesson_id")
+        .eq("user_id", userId)
+        .eq("completed", true)
+        .in("lesson_id", allLessonIds)
+    : { data: [] };
+
+  const completedLessonSet = new Set((progressRows ?? []).map((p) => p.lesson_id));
+  const certByCourse = new Map(
+    (certsRes.data ?? []).map((c) => [c.course_id, c.public_id]),
+  );
 
   const completedCount = enrollments.filter((e) => e.completed_at).length;
   const inProgressCount = enrollments.length - completedCount;
+  const certificatesCount = certByCourse.size;
 
   return (
     <div className="bg-slate-50 min-h-screen">
@@ -124,8 +172,16 @@ export default async function TenantStudentDashboardPage({
           {[
             { label: "Active Courses", value: inProgressCount, icon: Clock3, accent: "bg-[#fff6ee] text-[#fd5523]" },
             { label: "Completed", value: completedCount, icon: Award, accent: "bg-emerald-50 text-emerald-600" },
-            { label: "Certificates", value: 0, icon: Trophy, accent: "bg-amber-50 text-amber-600" },
-            { label: "Total Library", value: enrollments.length, icon: BookOpen, accent: "bg-blue-50 text-blue-600" },
+            { label: "Certificates", value: certificatesCount, icon: Trophy, accent: "bg-amber-50 text-amber-600" },
+            {
+              label: tutorOverview && tutorOverview.streakDays > 0 ? "Speaking Streak" : "Total Library",
+              value:
+                tutorOverview && tutorOverview.streakDays > 0
+                  ? `${tutorOverview.streakDays}d`
+                  : enrollments.length,
+              icon: tutorOverview && tutorOverview.streakDays > 0 ? Flame : BookOpen,
+              accent: "bg-blue-50 text-blue-600",
+            },
           ].map((stat) => (
             <div key={stat.label} className="bg-white rounded-[2.5rem] p-6 border border-slate-100 shadow-sm">
               <div className={cn("h-10 w-10 rounded-2xl flex items-center justify-center mb-4 shadow-inner", stat.accent)}>
@@ -135,6 +191,69 @@ export default async function TenantStudentDashboardPage({
               <div className="text-[10px] font-black uppercase tracking-widest text-slate-400 mt-1">{stat.label}</div>
             </div>
           ))}
+        </div>
+
+        {/* AI Teacher Quick Links Strip */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <Link
+            href={`/academy/${company.slug}/practice`}
+            className="group flex items-center justify-between gap-3 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-[#fd5523]/40 hover:shadow-md"
+          >
+            <div className="flex items-center gap-3.5">
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#fff6ee] text-[#fd5523]">
+                <Mic className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Teacher&apos;s Room</p>
+                <p className="text-sm font-black text-[#062e39]">
+                  {tutorOverview && tutorOverview.assignments.filter((a) => !a.completed).length > 0
+                    ? `${tutorOverview.assignments.filter((a) => !a.completed).length} assigned scene(s)`
+                    : "Start speaking practice"}
+                </p>
+              </div>
+            </div>
+            <ArrowRight className="h-4 w-4 text-slate-400 transition-transform group-hover:translate-x-0.5 group-hover:text-[#fd5523]" />
+          </Link>
+
+          <Link
+            href={`/academy/${company.slug}/practice/deck`}
+            className="group flex items-center justify-between gap-3 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-amber-300 hover:shadow-md"
+          >
+            <div className="flex items-center gap-3.5">
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-50 text-amber-600">
+                <BookMarked className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Vocabulary Deck</p>
+                <p className="text-sm font-black text-[#062e39]">
+                  {tutorOverview && tutorOverview.deck.dueNow > 0
+                    ? `${tutorOverview.deck.dueNow} flashcards due`
+                    : "Review flashcards"}
+                </p>
+              </div>
+            </div>
+            <ArrowRight className="h-4 w-4 text-slate-400 transition-transform group-hover:translate-x-0.5 group-hover:text-amber-600" />
+          </Link>
+
+          <Link
+            href={`/academy/${company.slug}/practice/history`}
+            className="group flex items-center justify-between gap-3 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-blue-300 hover:shadow-md"
+          >
+            <div className="flex items-center gap-3.5">
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
+                <History className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Speaking Reports</p>
+                <p className="text-sm font-black text-[#062e39]">
+                  {tutorOverview && tutorOverview.completedSessionsCount > 0
+                    ? `${tutorOverview.completedSessionsCount} past report${tutorOverview.completedSessionsCount === 1 ? "" : "s"}`
+                    : "View past feedback"}
+                </p>
+              </div>
+            </div>
+            <ArrowRight className="h-4 w-4 text-slate-400 transition-transform group-hover:translate-x-0.5 group-hover:text-blue-600" />
+          </Link>
         </div>
 
         {/* Course List */}
@@ -155,6 +274,11 @@ export default async function TenantStudentDashboardPage({
                   const course = enrollment.courses;
                   if (!course) return null;
                   const isPending = enrollment.status === "pending_payment";
+                  const courseLessonIds = lessonsByCourse.get(course.id) ?? [];
+                  const doneLessons = courseLessonIds.filter((id) => completedLessonSet.has(id)).length;
+                  const totalLessons = courseLessonIds.length;
+                  const pct = totalLessons > 0 ? Math.round((doneLessons / totalLessons) * 100) : 0;
+                  const certPublicId = certByCourse.get(course.id);
 
                   return (
                     <Card key={enrollment.id} className="group bg-white rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-2xl hover:border-[#fd5523]/20 transition-all overflow-hidden flex flex-col h-full">
@@ -173,9 +297,27 @@ export default async function TenantStudentDashboardPage({
                         </div>
                       </div>
                       <CardContent className="p-8 flex flex-col flex-1">
-                        <h3 className="text-2xl font-black text-[#062e39] leading-tight group-hover:text-[#fd5523] transition-colors mb-6">{course.title}</h3>
+                        <h3 className="text-2xl font-black text-[#062e39] leading-tight group-hover:text-[#fd5523] transition-colors mb-4">{course.title}</h3>
+
+                        {!isPending && totalLessons > 0 && (
+                          <div className="mb-6 space-y-2">
+                            <div className="flex items-center justify-between text-[11px] font-bold text-slate-500">
+                              <span>{doneLessons} of {totalLessons} lessons</span>
+                              <span className="text-[#062e39]">{pct}%</span>
+                            </div>
+                            <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
+                              <div
+                                className={cn(
+                                  "h-full rounded-full transition-all",
+                                  pct === 100 ? "bg-emerald-500" : "bg-[#fd5523]"
+                                )}
+                                style={{ width: `${pct}%` }}
+                              />
+                            </div>
+                          </div>
+                        )}
                         
-                        <div className="mt-auto space-y-6">
+                        <div className="mt-auto space-y-4">
                            {isPending ? (
                              <div className="p-6 rounded-[2rem] bg-amber-50 border border-amber-100 flex flex-col gap-4">
                                 <div className="flex items-center gap-2">
@@ -191,16 +333,28 @@ export default async function TenantStudentDashboardPage({
                                 </a>
                              </div>
                            ) : (
-                             <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-3">
-                                   <div className="h-2.5 w-2.5 rounded-full bg-[#fd5523] animate-pulse shadow-[0_0_8px_rgba(253,85,35,0.5)]" />
-                                   <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">In Progress</span>
-                                </div>
+                             <div className="flex flex-wrap items-center justify-between gap-2">
+                                {certPublicId ? (
+                                  <Link
+                                    href={`/certificates/${certPublicId}`}
+                                    className="inline-flex items-center gap-1.5 rounded-xl bg-amber-50 px-3 py-2 text-[10px] font-black uppercase tracking-wider text-amber-700 hover:bg-amber-100"
+                                  >
+                                    <Trophy className="h-3.5 w-3.5" />
+                                    Certificate
+                                  </Link>
+                                ) : (
+                                  <div className="flex items-center gap-2.5">
+                                    <div className={cn("h-2.5 w-2.5 rounded-full", pct === 100 ? "bg-emerald-500" : "bg-[#fd5523] animate-pulse")} />
+                                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
+                                      {pct === 100 ? "Completed" : pct > 0 ? "In Progress" : "Not Started"}
+                                    </span>
+                                  </div>
+                                )}
                                 <Link 
                                   href={`/courses/${course.slug}/learn`}
-                                  className="h-12 px-8 rounded-xl bg-[#062e39] text-white text-[10px] font-black uppercase tracking-[0.2em] hover:bg-[#fd5523] transition-all flex items-center gap-3 shadow-xl shadow-[#062e39]/10"
+                                  className="h-12 px-6 rounded-xl bg-[#062e39] text-white text-[10px] font-black uppercase tracking-[0.2em] hover:bg-[#fd5523] transition-all flex items-center gap-2.5 shadow-xl shadow-[#062e39]/10"
                                 >
-                                  Continue <ArrowRight className="h-4 w-4" />
+                                  {pct === 0 ? "Start" : pct === 100 ? "Review" : "Continue"} <ArrowRight className="h-4 w-4" />
                                 </Link>
                              </div>
                            )}

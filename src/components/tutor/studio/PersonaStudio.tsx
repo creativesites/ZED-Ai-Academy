@@ -326,7 +326,7 @@ export function PersonaStudio({
           <div className="relative h-[440px] overflow-hidden rounded-3xl border border-slate-200 bg-gradient-to-b from-[#160f36] via-[#2a1745] to-[#40204d] shadow-xl">
             <TeacherStage
               ref={stageRef}
-              engine="rive"
+              engine={draft.look.engine ?? "rive"}
               scene={draft.defaultScene}
               persona={draft.look}
               ambience
@@ -336,7 +336,7 @@ export function PersonaStudio({
             />
             <div className="absolute left-4 top-4 flex items-center gap-2">
               <span className="rounded-full bg-black/40 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-amber-200 backdrop-blur-sm">
-                Live Animated Model
+                {draft.look.engine === "three" ? "3D WebGL Avatar" : "Live Animated Model"}
               </span>
             </div>
             <div className="absolute inset-x-4 bottom-4 rounded-2xl bg-black/45 px-4 py-2.5 text-center backdrop-blur-md">
@@ -476,10 +476,55 @@ export function PersonaStudio({
 
           {/* Appearance Controls */}
           <div className="space-y-3 rounded-2xl border border-slate-100 bg-slate-50/70 p-4">
-            <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-500">
-              <Palette className="h-3.5 w-3.5 text-[#fd5523]" />
-              3D / Rive Model Styling
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-500">
+                <Palette className="h-3.5 w-3.5 text-[#fd5523]" />
+                3D / Rive Model Styling
+              </div>
+              <div className="inline-flex rounded-lg border border-slate-200 bg-white p-0.5 text-[11px] font-bold">
+                {(
+                  [
+                    { id: "rive", label: "Rive 2.5D" },
+                    { id: "three", label: "3D WebGL" },
+                  ] as const
+                ).map((opt) => {
+                  const active = (draft.look.engine ?? "rive") === opt.id;
+                  return (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      onClick={() =>
+                        setDraft((d) => ({ ...d, look: { ...d.look, engine: opt.id } }))
+                      }
+                      className={`rounded-md px-2.5 py-1 transition-colors ${
+                        active ? "bg-[#062e39] text-white" : "text-slate-600 hover:bg-slate-50"
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
+
+            {draft.look.engine === "three" && (
+              <div className="space-y-1">
+                <Label className="text-[11px] font-semibold text-slate-600">
+                  Custom 3D .glb Model URL (optional — Ready Player Me, Avaturn, or Blender)
+                </Label>
+                <Input
+                  value={draft.look.glbUrl ?? ""}
+                  onChange={(e) =>
+                    setDraft((d) => ({
+                      ...d,
+                      look: { ...d.look, glbUrl: e.target.value || undefined },
+                    }))
+                  }
+                  placeholder="Leave blank to use the built-in stylized 3D teacher"
+                  className="bg-white text-xs"
+                />
+              </div>
+            )}
 
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
               <label className="space-y-1 text-xs font-medium text-slate-600">

@@ -209,6 +209,8 @@ const personaInputSchema = z.object({
     outfitStyle: z.enum(OUTFIT_STYLES),
     prop: z.enum(PROPS),
     faceStyle: z.enum(FACE_STYLES),
+    engine: z.enum(["rive", "three", "placeholder"]).optional(),
+    glbUrl: z.string().trim().max(500).optional(),
   }),
   voiceName: z.string().trim().min(1).max(60).default("Kore"),
   speakingRate: z.number().min(0.6).max(1.4).default(1.0),

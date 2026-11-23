@@ -351,8 +351,9 @@ export function AvatarLab() {
                     setFps(null);
                   }}
                 >
-                  <option value="rive">rive</option>
-                  <option value="placeholder">placeholder</option>
+                  <option value="rive">rive (2.5D)</option>
+                  <option value="three">three (3D WebGL)</option>
+                  <option value="placeholder">placeholder (SVG)</option>
                 </select>
               </label>
               <label className="flex items-center gap-2">

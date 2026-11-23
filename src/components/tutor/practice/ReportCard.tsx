@@ -1,9 +1,11 @@
 "use client";
 
 import { useRef, useState } from "react";
+import Link from "next/link";
 import type { CardItem } from "@/components/tutor/EventPlayer";
 import { REPORT_SCORE_KEYS, type ReportScoreKey, type TutorReportContent } from "@/lib/tutor/report-model";
 import { toneSegments } from "@/lib/tutor/romanization";
+import { saveSessionWordsToDeck } from "@/actions/tutor-learner";
 import styles from "./practice.module.css";
 import { hasHan, toneClass } from "./SpeakingStage";
 
@@ -29,6 +31,22 @@ type ReportCardProps = {
 
 export function ReportCard({ report, title, words, onPractiseAgain, onDone }: ReportCardProps) {
   const scores = REPORT_SCORE_KEYS.filter((key) => typeof report.scores[key] === "number");
+  const [deckState, setDeckState] = useState<"idle" | "saving" | "saved" | "error">("idle");
+
+  async function handleSaveToDeck() {
+    if (words.length === 0 || deckState === "saving" || deckState === "saved") return;
+    setDeckState("saving");
+    try {
+      const lang = words.some((w) => hasHan(w.text)) ? "zh" : "en";
+      await saveSessionWordsToDeck(
+        words.map((w) => ({ text: w.text, pron: w.pron, meaning: w.meaning })),
+        lang,
+      );
+      setDeckState("saved");
+    } catch {
+      setDeckState("error");
+    }
+  }
 
   return (
     <article aria-labelledby="report-title" className={`${styles.glass} mx-auto grid w-full max-w-[640px] gap-5 rounded-[28px] p-5 sm:p-7`}>
@@ -123,6 +141,30 @@ export function ReportCard({ report, title, words, onPractiseAgain, onDone }: Re
               </li>
             ))}
           </ul>
+          <div className="flex flex-wrap items-center gap-3 pt-1">
+            <button
+              type="button"
+              onClick={handleSaveToDeck}
+              disabled={deckState === "saving" || deckState === "saved"}
+              className="rounded-xl border border-[var(--line-strong)] bg-[var(--soft)] px-3.5 py-2 text-xs font-semibold text-[var(--ink)] hover:bg-[var(--soft-hover)] disabled:opacity-60"
+            >
+              {deckState === "saving"
+                ? "Saving to deck..."
+                : deckState === "saved"
+                  ? "Saved to your vocabulary deck"
+                  : deckState === "error"
+                    ? "Sign in to save to deck"
+                    : `Save ${words.length} ${words.length === 1 ? "word" : "words"} to deck`}
+            </button>
+            {deckState === "saved" && (
+              <Link
+                href="/practice/deck"
+                className="text-xs font-semibold text-[var(--accent)] underline underline-offset-4"
+              >
+                Review deck →
+              </Link>
+            )}
+          </div>
         </section>
       )}
 

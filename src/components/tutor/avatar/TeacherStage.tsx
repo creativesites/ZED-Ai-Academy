@@ -78,7 +78,7 @@ export const TeacherStage = forwardRef<TeacherStageHandle, TeacherStageProps>(fu
 
   return (
     <>
-      {engine === "rive" && scene && (
+      {engine !== "placeholder" && scene && (
         <RiveScene
           ref={sceneRef}
           scene={scene}

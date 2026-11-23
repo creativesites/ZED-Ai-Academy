@@ -4,27 +4,46 @@ import { forwardRef, useCallback, useState } from "react";
 import { PlaceholderTeacher } from "./PlaceholderTeacher";
 import { RiveTeacher } from "./RiveTeacher";
 import type { RiveTeacherProps } from "./RiveTeacher";
+import { ThreeTeacher } from "./ThreeTeacher";
 import type { AvatarDriver } from "./types";
 
-// One component for both renderers. It defaults to Rive and falls back to the placeholder if the .riv
-// fails to load, logging the failure once. Callers hold a ref of type AvatarDriver either way.
+// One component for all renderers (Rive 2.5D, Three.js 3D WebGL, SVG placeholder).
+// Defaults to persona.engine if set, otherwise "rive", and falls back to the placeholder on load error.
 
-export type TeacherEngine = "rive" | "placeholder";
+export type TeacherEngine = "rive" | "three" | "placeholder";
 
-export type TeacherProps = RiveTeacherProps & { engine?: TeacherEngine };
+export type TeacherProps = RiveTeacherProps & {
+  engine?: TeacherEngine;
+  glbUrl?: string | null;
+};
 
 let warnedFallback = false;
 
 export const Teacher = forwardRef<AvatarDriver, TeacherProps>(function Teacher(props, ref) {
-  const { engine = "rive", variant, onReady, onLowPerformance, onFps, onLoadError, label, persona, reducedMotion, onEvent, className } =
-    props;
+  const {
+    engine,
+    glbUrl,
+    variant,
+    onReady,
+    onLowPerformance,
+    onFps,
+    onLoadError,
+    label,
+    persona,
+    reducedMotion,
+    onEvent,
+    className,
+  } = props;
   const [failed, setFailed] = useState(false);
+
+  const resolvedEngine: TeacherEngine = engine ?? persona?.engine ?? "rive";
+  const resolvedGlbUrl = glbUrl ?? persona?.glbUrl ?? null;
 
   const handleLoadError = useCallback(
     (error: Error) => {
       if (!warnedFallback) {
         warnedFallback = true;
-        console.warn("[tutor] Rive teacher failed to load, using the placeholder.", error);
+        console.warn("[tutor] Teacher renderer failed to load, using the placeholder.", error);
       }
       setFailed(true);
       onLoadError?.(error);
@@ -32,7 +51,24 @@ export const Teacher = forwardRef<AvatarDriver, TeacherProps>(function Teacher(p
     [onLoadError],
   );
 
-  if (engine === "rive" && !failed) {
+  if (resolvedEngine === "three" && !failed) {
+    return (
+      <ThreeTeacher
+        ref={ref}
+        variant={variant}
+        glbUrl={resolvedGlbUrl}
+        persona={persona}
+        reducedMotion={reducedMotion}
+        onEvent={onEvent}
+        className={className}
+        label={label}
+        onReady={onReady}
+        onLoadError={handleLoadError}
+      />
+    );
+  }
+
+  if (resolvedEngine === "rive" && !failed) {
     return (
       <RiveTeacher
         ref={ref}
