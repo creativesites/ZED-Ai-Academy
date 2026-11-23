@@ -1,17 +1,38 @@
+"use client";
+
+import { useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowRight, Clock3, Library, Mic, MessageSquareText } from "lucide-react";
-import type { LanguageGroup } from "@/lib/tutor/practice-library";
+import {
+  ArrowRight,
+  BookMarked,
+  CalendarClock,
+  CheckCircle2,
+  Clock3,
+  Flame,
+  History,
+  Library,
+  MessageSquareText,
+  Mic,
+  Search,
+  Sparkles,
+  Trophy,
+} from "lucide-react";
+import type { LanguageGroup, PracticeLibraryItem } from "@/lib/tutor/practice-library";
 import { startableModes } from "@/lib/tutor/practice-library";
-import type { PracticeLibraryItem } from "@/lib/tutor/practice-library";
+import type { LearnerTutorOverview } from "@/lib/tutor/server/learner-overview";
 import { Teacher } from "@/components/tutor/avatar/Teacher";
 import { DEFAULT_PERSONA_LOOK } from "@/components/tutor/avatar/types";
-
-// Server-rendered library of scenarios, grouped by language and level. Each card opens a session.
 
 type PracticeLibraryProps = {
   groups: LanguageGroup[];
   /** Path of the session route for one scenario, for example /practice/<id>. */
   sessionHref: (scenarioId: string) => string;
+  /** Optional path to the learner's spaced-repetition vocabulary deck. */
+  deckHref?: string;
+  /** Optional path to the learner's speaking session history & reports. */
+  historyHref?: string;
+  /** Optional learner stats, due deck count, and assigned speaking scenarios. */
+  overview?: LearnerTutorOverview;
   /** Where the empty state sends the learner. */
   browseHref: string;
   browseLabel: string;
@@ -19,23 +40,299 @@ type PracticeLibraryProps = {
   subheading: string;
 };
 
-export function PracticeLibrary({ groups, sessionHref, browseHref, browseLabel, heading, subheading }: PracticeLibraryProps) {
+export function PracticeLibrary({
+  groups,
+  sessionHref,
+  deckHref,
+  historyHref,
+  overview,
+  browseHref,
+  browseLabel,
+  heading,
+  subheading,
+}: PracticeLibraryProps) {
+  const [activeGroup, setActiveGroup] = useState<string>("all");
+  const [query, setQuery] = useState("");
+
   const total = groups.reduce((n, g) => n + g.items.length, 0);
+
+  const visibleGroups = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return groups
+      .filter((g) => activeGroup === "all" || g.key === activeGroup)
+      .map((g) => ({
+        ...g,
+        items: q
+          ? g.items.filter(
+              (item) =>
+                item.title.toLowerCase().includes(q) ||
+                item.goal.toLowerCase().includes(q) ||
+                (item.personaName?.toLowerCase().includes(q) ?? false) ||
+                (item.level?.toLowerCase().includes(q) ?? false),
+            )
+          : g.items,
+      }))
+      .filter((g) => g.items.length > 0);
+  }, [groups, activeGroup, query]);
 
   return (
     <div className="bg-slate-50 min-h-screen">
-      <div className="container mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-14">
-        <header className="mb-8 max-w-2xl space-y-2">
-          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-blue-600">Teacher&apos;s Room</p>
-          <h1 className="font-heading text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">{heading}</h1>
-          <p className="text-base text-slate-600">{subheading}</p>
+      <div className="container mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-14 space-y-10">
+        {/* Header */}
+        <header className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
+          <div className="max-w-2xl space-y-2">
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#fd5523]">
+              Teacher&apos;s Room
+            </p>
+            <h1 className="font-heading text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
+              {heading}
+            </h1>
+            <p className="text-base text-slate-600">{subheading}</p>
+          </div>
+
+          {(deckHref || historyHref) && (
+            <div className="flex flex-wrap items-center gap-2.5">
+              {deckHref && (
+                <Link
+                  href={deckHref}
+                  className="group inline-flex shrink-0 items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm transition hover:border-[#fd5523]/40 hover:shadow-md"
+                >
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#fff6ee] text-[#fd5523]">
+                    <BookMarked className="h-5 w-5" />
+                  </div>
+                  <div className="text-left">
+                    <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">
+                      Vocabulary Deck
+                    </p>
+                    <p className="text-sm font-bold text-[#062e39]">
+                      {overview && overview.deck.dueNow > 0
+                        ? `${overview.deck.dueNow} due now`
+                        : overview && overview.deck.total > 0
+                          ? `${overview.deck.total} cards`
+                          : "Flashcards"}
+                    </p>
+                  </div>
+                  <ArrowRight className="h-4 w-4 text-slate-400 transition-transform group-hover:translate-x-0.5 group-hover:text-[#fd5523]" />
+                </Link>
+              )}
+
+              {historyHref && (
+                <Link
+                  href={historyHref}
+                  className="group inline-flex shrink-0 items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm transition hover:border-blue-300 hover:shadow-md"
+                >
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+                    <History className="h-5 w-5" />
+                  </div>
+                  <div className="text-left">
+                    <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">
+                      Past Reports
+                    </p>
+                    <p className="text-sm font-bold text-[#062e39]">
+                      {overview && overview.completedSessionsCount > 0
+                        ? `${overview.completedSessionsCount} session${overview.completedSessionsCount === 1 ? "" : "s"}`
+                        : "History"}
+                    </p>
+                  </div>
+                  <ArrowRight className="h-4 w-4 text-slate-400 transition-transform group-hover:translate-x-0.5 group-hover:text-blue-600" />
+                </Link>
+              )}
+            </div>
+          )}
         </header>
 
+        {/* Learner Progress Strip */}
+        {overview && (
+          <section aria-label="Your speaking progress" className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+              <div className="flex items-center gap-2 text-[#fd5523]">
+                <Flame className="h-4 w-4" />
+                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                  Streak
+                </span>
+              </div>
+              <p className="mt-1.5 text-2xl font-black text-[#062e39]">
+                {overview.streakDays} {overview.streakDays === 1 ? "day" : "days"}
+              </p>
+            </div>
+
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+              <div className="flex items-center gap-2 text-blue-600">
+                <Clock3 className="h-4 w-4" />
+                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                  Speaking Time
+                </span>
+              </div>
+              <p className="mt-1.5 text-2xl font-black text-[#062e39]">
+                {overview.totalSpeakingMinutes} min
+              </p>
+            </div>
+
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+              <div className="flex items-center gap-2 text-emerald-600">
+                <Trophy className="h-4 w-4" />
+                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                  Scenes Done
+                </span>
+              </div>
+              <p className="mt-1.5 text-2xl font-black text-[#062e39]">
+                {overview.completedSessionsCount}
+              </p>
+            </div>
+
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+              <div className="flex items-center gap-2 text-violet-600">
+                <Sparkles className="h-4 w-4" />
+                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                  Words Mastered
+                </span>
+              </div>
+              <p className="mt-1.5 text-2xl font-black text-[#062e39]">
+                {overview.deck.mastered}
+                {overview.deck.total > 0 && (
+                  <span className="ml-1 text-sm font-semibold text-slate-400">
+                    / {overview.deck.total}
+                  </span>
+                )}
+              </p>
+            </div>
+          </section>
+        )}
+
+        {/* Assigned by Teacher Shelf */}
+        {overview && overview.assignments.length > 0 && (
+          <section aria-labelledby="assigned-heading" className="space-y-4">
+            <div className="flex items-baseline justify-between gap-4">
+              <h2
+                id="assigned-heading"
+                className="flex items-center gap-2 font-heading text-xl font-bold text-slate-900"
+              >
+                <CalendarClock className="h-5 w-5 text-[#fd5523]" />
+                Assigned by Your Teacher
+              </h2>
+              <span className="text-xs font-semibold text-slate-500">
+                {overview.assignments.filter((a) => !a.completed).length} pending
+              </span>
+            </div>
+            <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {overview.assignments.map((a) => (
+                <li key={a.assignmentId}>
+                  <Link
+                    href={sessionHref(a.scenarioId)}
+                    className="group flex h-full flex-col justify-between gap-4 rounded-2xl border-2 border-[#fd5523]/25 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-[#fd5523]/60 hover:shadow-md"
+                  >
+                    <div className="space-y-3">
+                      <div className="flex items-start gap-3">
+                        <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-gradient-to-b from-[#1a1338] to-[#321b4e]">
+                          <Teacher
+                            variant="bust"
+                            persona={a.personaLook ?? DEFAULT_PERSONA_LOOK}
+                            className="h-12 w-12"
+                            label={a.personaName ?? "Animated AI teacher"}
+                          />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            {a.completed ? (
+                              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-bold text-emerald-700">
+                                <CheckCircle2 className="h-3 w-3" /> Completed
+                              </span>
+                            ) : (
+                              <span className="rounded-full bg-[#fff6ee] px-2 py-0.5 text-[11px] font-bold text-[#fd5523]">
+                                Assigned
+                              </span>
+                            )}
+                            {a.dueAt && (
+                              <span className="text-[11px] font-medium text-slate-500">
+                                Due {new Date(a.dueAt).toLocaleDateString()}
+                              </span>
+                            )}
+                          </div>
+                          <h3 className="mt-1 font-heading text-base font-bold text-slate-900">
+                            {a.title}
+                          </h3>
+                        </div>
+                      </div>
+                      <p className="line-clamp-2 text-xs leading-relaxed text-slate-600">{a.goal}</p>
+                    </div>
+                    <div className="flex items-center justify-between border-t border-slate-100 pt-3 text-xs font-semibold text-[#fd5523]">
+                      <span>{a.personaName ? `With ${a.personaName}` : `Up to ${a.maxMinutes} min`}</span>
+                      <span className="inline-flex items-center gap-1">
+                        {a.completed ? "Practise again" : "Start now"}
+                        <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+                      </span>
+                    </div>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+
+        {/* Filter & Search Bar */}
+        {total > 0 && (
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setActiveGroup("all")}
+                className={`rounded-full px-3.5 py-1.5 text-xs font-bold transition-colors ${
+                  activeGroup === "all"
+                    ? "bg-[#062e39] text-white"
+                    : "border border-slate-200 bg-white text-slate-600 hover:bg-slate-100"
+                }`}
+              >
+                All ({total})
+              </button>
+              {groups.map((g) => (
+                <button
+                  key={g.key}
+                  type="button"
+                  onClick={() => setActiveGroup(g.key)}
+                  className={`rounded-full px-3.5 py-1.5 text-xs font-bold transition-colors ${
+                    activeGroup === g.key
+                      ? "bg-[#fd5523] text-white"
+                      : "border border-slate-200 bg-white text-slate-600 hover:bg-slate-100"
+                  }`}
+                >
+                  {g.label} ({g.items.length})
+                </button>
+              ))}
+            </div>
+
+            <div className="relative w-full sm:w-64">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <input
+                type="search"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search scenes or teachers..."
+                className="h-10 w-full rounded-xl border border-slate-200 bg-white pl-9 pr-3 text-sm text-slate-800 placeholder:text-slate-400 focus:border-[#fd5523] focus:outline-none focus:ring-2 focus:ring-[#fd5523]/20"
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Scenario Groups */}
         {total === 0 ? (
           <EmptyState browseHref={browseHref} browseLabel={browseLabel} />
+        ) : visibleGroups.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center">
+            <p className="text-sm font-semibold text-slate-700">No scenarios match &ldquo;{query}&rdquo;.</p>
+            <button
+              type="button"
+              onClick={() => {
+                setQuery("");
+                setActiveGroup("all");
+              }}
+              className="mt-2 text-xs font-bold text-[#fd5523] hover:underline"
+            >
+              Clear filters
+            </button>
+          </div>
         ) : (
           <div className="space-y-12">
-            {groups.map((group) => (
+            {visibleGroups.map((group) => (
               <section key={group.key} aria-labelledby={`lang-${group.key}`} className="space-y-4">
                 <div className="flex items-baseline justify-between gap-4">
                   <h2 id={`lang-${group.key}`} className="font-heading text-xl font-semibold text-slate-900">

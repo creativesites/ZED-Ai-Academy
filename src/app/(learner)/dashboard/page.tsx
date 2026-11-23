@@ -23,6 +23,7 @@ import { getUpcomingUserClasses } from "@/actions/classroom";
 import { DailyPlanCard } from "@/components/tutor/DailyPlanCard";
 import { TutorSpotlightBanner } from "@/components/tutor/TutorSpotlightBanner";
 import { loadDashboardDailyPlan } from "@/lib/tutor/mastery/server";
+import { loadLearnerTutorOverview } from "@/lib/tutor/server/learner-overview";
 
 export const metadata = { title: "Your Academies — Zed AI Academy" };
 export const dynamic = "force-dynamic";
@@ -85,21 +86,58 @@ export default async function DashboardPage() {
     .map((m: any) => m.company_id)
     .filter(Boolean);
 
-  const [coursesRes, enrollmentsRes, upcomingClasses] = await Promise.all([
+  const [coursesRes, enrollmentsRes, activeLiveSessions, tutorOverview] = await Promise.all([
     companyIds.length > 0
       ? supabase.from("courses").select("id, company_id").in("company_id", companyIds)
       : Promise.resolve({ data: [] }),
-    companyIds.length > 0
-      ? supabase
-          .from("enrollments")
-          .select("id, company_id")
-          .eq("user_id", userId)
-          .in("company_id", companyIds)
-      : Promise.resolve({ data: [] }),
-    getUpcomingUserClasses(),
+    supabase
+      .from("enrollments")
+      .select("id, company_id, course_id, status, completed_at, courses(id, slug, title, thumbnail_url, category)")
+      .eq("user_id", userId)
+      .eq("status", "active")
+      .order("enrolled_at", { ascending: false }),
+    getActiveUserLiveSessions(),
+    loadLearnerTutorOverview(userId, { kind: "platform" }).catch(() => null),
   ]);
 
-  const activeLiveClass = (upcomingClasses as any[])?.find((c: any) => c.companies?.is_session_active);
+  type ActiveEnrollmentRow = {
+    id: string;
+    company_id: string | null;
+    course_id: string;
+    completed_at: string | null;
+    courses: { id: string; slug: string; title: string; thumbnail_url: string | null; category: string | null } | null;
+  };
+  const activeEnrollments = ((enrollmentsRes.data ?? []) as unknown as ActiveEnrollmentRow[]).filter(
+    (e) => Boolean(e.courses),
+  );
+  const resumeCourses = activeEnrollments.slice(0, 4);
+  const resumeCourseIds = resumeCourses.map((e) => e.course_id);
+
+  const lessonsByCourse = new Map<string, string[]>();
+  const completedLessonSet = new Set<string>();
+  if (resumeCourseIds.length > 0) {
+    const { data: modRows } = await supabase
+      .from("modules")
+      .select("course_id, lessons(id)")
+      .in("course_id", resumeCourseIds);
+    for (const mod of (modRows ?? []) as Array<{ course_id: string; lessons: Array<{ id: string }> | null }>) {
+      const arr = lessonsByCourse.get(mod.course_id) ?? [];
+      for (const l of mod.lessons ?? []) arr.push(l.id);
+      lessonsByCourse.set(mod.course_id, arr);
+    }
+    const allLessonIds = [...lessonsByCourse.values()].flat();
+    if (allLessonIds.length > 0) {
+      const { data: progRows } = await supabase
+        .from("lesson_progress")
+        .select("lesson_id")
+        .eq("user_id", userId)
+        .eq("completed", true)
+        .in("lesson_id", allLessonIds);
+      for (const p of progRows ?? []) completedLessonSet.add(p.lesson_id);
+    }
+  }
+
+  const activeLiveClass = activeLiveSessions[0] ?? null;
 
   const courseCountMap = new Map<string, number>();
   (coursesRes.data ?? []).forEach((c: any) => {
@@ -173,7 +211,7 @@ export default async function DashboardPage() {
           </div>
         </div>
 
-        {/* Active Live Session Banner */}
+        {/* Active Live Session Banner (Cohort & Academy-Aware) */}
         {activeLiveClass && (
           <div className="mb-8 p-4 sm:p-5 rounded-2xl sm:rounded-3xl bg-gradient-to-r from-red-600 via-[#fd5523] to-orange-500 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xl shadow-red-500/20">
             <div className="flex items-center gap-3">
@@ -183,15 +221,21 @@ export default async function DashboardPage() {
               <div>
                 <div className="flex items-center gap-2">
                   <span className="h-2 w-2 rounded-full bg-white animate-ping" />
-                  <span className="text-[10px] font-black uppercase tracking-widest text-white/90">Live Class in Session</span>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-white/90">
+                    {activeLiveClass.cohortName
+                      ? `Live Class · ${activeLiveClass.cohortName}`
+                      : "Live Class in Session"}
+                  </span>
                 </div>
                 <h3 className="font-bold text-base sm:text-lg text-white">
-                  {activeLiveClass.title} · {activeLiveClass.companies?.name}
+                  {activeLiveClass.title} · {activeLiveClass.companyName}
                 </h3>
               </div>
             </div>
             <Link
-              href={`/academy/${activeLiveClass.companies?.slug}/classroom?tab=session&scheduleId=${activeLiveClass.id}`}
+              href={`/academy/${activeLiveClass.companySlug}/classroom?tab=session${
+                activeLiveClass.cohortId ? `&cohort=${activeLiveClass.cohortId}` : ""
+              }${activeLiveClass.scheduleId ? `&scheduleId=${activeLiveClass.scheduleId}` : ""}`}
               className="shrink-0 bg-white hover:bg-slate-100 text-red-600 font-black text-xs uppercase tracking-wider px-5 py-3 rounded-xl transition-all shadow-md flex items-center justify-center gap-1.5"
             >
               <Video className="h-4 w-4 text-red-600" />
@@ -227,11 +271,80 @@ export default async function DashboardPage() {
 
         {/* AI Teacher Spotlight */}
         <div className="mb-8">
-          <TutorSpotlightBanner />
+          <TutorSpotlightBanner
+            streakDays={tutorOverview?.streakDays}
+            dueCardsCount={tutorOverview?.deck.dueNow}
+            completedSessionsCount={tutorOverview?.completedSessionsCount}
+          />
         </div>
 
         {/* Today with <teacher> daily plan */}
         <DailyPlanSection userId={userId} />
+
+        {/* Continue Learning Section */}
+        {resumeCourses.length > 0 && (
+          <div className="mb-10">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-base font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                <BookOpen className="h-4 w-4 text-[#fd5523]" />
+                <span>Continue Learning</span>
+              </h2>
+              <Link
+                href="/courses"
+                className="text-xs font-bold text-[#fd5523] hover:underline"
+              >
+                Explore courses
+              </Link>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {resumeCourses.map((enr) => {
+                const course = enr.courses!;
+                const ids = lessonsByCourse.get(course.id) ?? [];
+                const done = ids.filter((id) => completedLessonSet.has(id)).length;
+                const total = ids.length;
+                const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+
+                return (
+                  <Link
+                    key={enr.id}
+                    href={`/courses/${course.slug}/learn`}
+                    className="group flex flex-col justify-between rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-[#fd5523]/40 hover:shadow-md"
+                  >
+                    <div>
+                      <span className="inline-block rounded-full bg-slate-100 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-slate-600">
+                        {course.category || "Course"}
+                      </span>
+                      <h3 className="mt-2 line-clamp-2 text-sm font-black text-slate-900 group-hover:text-[#fd5523] transition-colors">
+                        {course.title}
+                      </h3>
+                    </div>
+
+                    <div className="mt-4 space-y-2">
+                      {total > 0 && (
+                        <>
+                          <div className="flex items-center justify-between text-[11px] font-semibold text-slate-500">
+                            <span>{done}/{total} lessons</span>
+                            <span className="font-bold text-[#062e39]">{pct}%</span>
+                          </div>
+                          <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
+                            <div
+                              className={`h-full rounded-full ${pct === 100 ? "bg-emerald-500" : "bg-[#fd5523]"}`}
+                              style={{ width: `${pct}%` }}
+                            />
+                          </div>
+                        </>
+                      )}
+                      <div className="flex items-center justify-between pt-1 text-xs font-bold text-[#fd5523]">
+                        <span>{pct === 0 ? "Start course" : pct === 100 ? "Review course" : "Resume lesson"}</span>
+                        <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+                      </div>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Academies Section */}
         <div className="mb-8">

@@ -133,6 +133,9 @@ export function TutorSession({
   const [elapsedMs, setElapsedMs] = useState(0);
   const [soundBlocked, setSoundBlocked] = useState(false);
   const [muted, setMuted] = useState(false);
+  const [avatarMode, setAvatarMode] = useState<"rive" | "three">(
+    engine === "three" || look?.engine === "three" ? "three" : "rive",
+  );
 
   const [report, setReport] = useState<TutorReportContent | null>(null);
   const [words, setWords] = useState<CardItem[]>([]);
@@ -643,12 +646,12 @@ export function TutorSession({
             avatarRef={avatarRef}
             onAvatarEvent={avatarEvent}
             reducedMotion={reducedMotion}
-            engine={lite ? "placeholder" : engine}
+            engine={lite ? "placeholder" : engine === "placeholder" ? "placeholder" : avatarMode}
             scene={activeScene}
             look={activeLook}
             teacherName={teacherName}
             sceneTitle={sceneTitle}
-            modeLabel={`${mode === "voice" ? "Voice" : "Text"}${lite ? " · Lite" : ""}`}
+            modeLabel={`${mode === "voice" ? "Voice" : "Tap / Type"}${avatarMode === "three" && !lite ? " · 3D" : ""}${lite ? " · Lite" : ""}`}
             caption={caption}
             card={card}
             onDismissCard={() => setCard(null)}
@@ -699,6 +702,10 @@ export function TutorSession({
             muted={muted}
             onToggleMute={toggleMute}
             teacherName={teacherName}
+            avatarMode={lite ? undefined : avatarMode}
+            onToggleAvatarMode={
+              lite ? undefined : () => setAvatarMode((m) => (m === "three" ? "rive" : "three"))
+            }
           />
           {ending && error && (
             <button

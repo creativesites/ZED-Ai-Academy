@@ -49,6 +49,8 @@ export type TutorPersonaLook = {
   outfitStyle: OutfitStyle;
   prop: Prop;
   faceStyle: FaceStyle;
+  engine?: "rive" | "three" | "placeholder";
+  glbUrl?: string;
 };
 
 const HEX = /^#[0-9a-fA-F]{6}$/;
@@ -86,6 +88,14 @@ export function personaLookFromVariant(value: unknown): Partial<TutorPersonaLook
   if (outfitStyle) look.outfitStyle = outfitStyle;
   if (prop) look.prop = prop;
   if (faceStyle) look.faceStyle = faceStyle;
+  const engine = oneOf(v.engine, ["rive", "three", "placeholder"] as const);
+  if (engine) look.engine = engine;
+  if (typeof v.glbUrl === "string") {
+    const trimmed = v.glbUrl.trim();
+    if (trimmed.startsWith("https://") || trimmed.startsWith("http://") || trimmed.startsWith("/")) {
+      look.glbUrl = trimmed;
+    }
+  }
   return Object.keys(look).length > 0 ? look : undefined;
 }
 

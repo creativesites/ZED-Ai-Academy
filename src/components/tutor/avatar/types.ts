@@ -43,6 +43,10 @@ export type PersonaLook = {
   prop: Prop;
   /** Contract 1.1.0. The placeholder ignores it; the Rive teacher uses it. */
   faceStyle: FaceStyle;
+  /** Optional renderer preference stored in ai_personas.rive_variant. Defaults to "rive". */
+  engine?: "rive" | "three" | "placeholder";
+  /** Optional custom 3D .glb/.gltf model URL when engine is "three". */
+  glbUrl?: string;
 };
 
 export const DEFAULT_PERSONA_LOOK: PersonaLook = {

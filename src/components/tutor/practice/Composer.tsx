@@ -34,9 +34,20 @@ type ComposerProps = {
   muted: boolean;
   onToggleMute: () => void;
   teacherName: string;
+  /** Optional 3D / 2D avatar toggle for learners. */
+  avatarMode?: "rive" | "three";
+  onToggleAvatarMode?: () => void;
 };
 
-const MODE_LABEL: Record<InputMode, string> = { voice: "Voice", text: "Text" };
+const QUICK_PROMPTS = [
+  { label: "Next step →", text: "Continue to the next step." },
+  { label: "Explain simpler", text: "Can you explain that in simpler words?" },
+  { label: "Give an example", text: "Can you give me a practical example?" },
+  { label: "Quiz me", text: "Ask me a quick multiple-choice question to check my understanding." },
+  { label: "Got it!", text: "Got it, I understand!" },
+] as const;
+
+const MODE_LABEL: Record<InputMode, string> = { voice: "Voice", text: "Tap / Type" };
 
 export function Composer(props: ComposerProps) {
   const {
@@ -63,6 +74,8 @@ export function Composer(props: ComposerProps) {
     muted,
     onToggleMute,
     teacherName,
+    avatarMode,
+    onToggleAvatarMode,
   } = props;
 
   const holdRef = useRef<HTMLButtonElement>(null);
@@ -145,6 +158,16 @@ export function Composer(props: ComposerProps) {
           ))}
         </div>
         <div className="flex items-center gap-2">
+          {onToggleAvatarMode && avatarMode && (
+            <button
+              type="button"
+              onClick={onToggleAvatarMode}
+              title="Switch between 3D WebGL and 2D Rive teacher"
+              className="rounded-full border border-[var(--line-strong)] bg-[var(--soft)] px-3 py-1.5 text-[12px] font-bold text-[var(--ink)] hover:bg-[var(--soft-hover)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus)]"
+            >
+              {avatarMode === "three" ? "3D On" : "Try 3D"}
+            </button>
+          )}
           <button
             type="button"
             onClick={onToggleMute}
@@ -193,6 +216,21 @@ export function Composer(props: ComposerProps) {
           Sound is blocked. Tap to hear {teacherName}.
         </button>
       )}
+
+      {/* Dynamic one-tap walkthrough & coaching chips — no microphone required */}
+      <div className="flex flex-wrap items-center gap-1.5" aria-label="Quick teacher actions">
+        {QUICK_PROMPTS.map((q) => (
+          <button
+            key={q.label}
+            type="button"
+            disabled={!canType}
+            onClick={() => onSendText(q.text)}
+            className="rounded-full border border-[var(--line-strong)] bg-white/90 px-3 py-1.5 text-xs font-semibold text-[var(--ink)] shadow-xs transition hover:border-[#fd5523]/50 hover:bg-[#fff6ee] hover:text-[#fd5523] disabled:opacity-45"
+          >
+            {q.label}
+          </button>
+        ))}
+      </div>
 
       {mode === "voice" ? (
         <div className="grid justify-items-center gap-2">

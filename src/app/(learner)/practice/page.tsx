@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { PracticeLibrary } from "@/components/tutor/practice/PracticeLibrary";
 import { groupByLanguage } from "@/lib/tutor/practice-library";
 import { loadPracticeLibrary } from "@/lib/tutor/server/practice-library";
+import { loadLearnerTutorOverview } from "@/lib/tutor/server/learner-overview";
 
 export const metadata = { title: "Teacher's Room — Zed AI Academy" };
 export const dynamic = "force-dynamic";
@@ -13,13 +14,19 @@ export default async function PracticeRoomPage() {
   const { userId } = await auth();
   if (!userId) redirect("/sign-in?redirect_url=/practice");
 
-  const result = await loadPracticeLibrary(userId, { kind: "platform" });
+  const [result, overview] = await Promise.all([
+    loadPracticeLibrary(userId, { kind: "platform" }),
+    loadLearnerTutorOverview(userId, { kind: "platform" }).catch(() => undefined),
+  ]);
   const items = result.ok ? result.items : [];
 
   return (
     <PracticeLibrary
       groups={groupByLanguage(items)}
       sessionHref={(id) => `/practice/${id}`}
+      deckHref="/practice/deck"
+      historyHref="/practice/history"
+      overview={overview}
       browseHref="/courses"
       browseLabel="Browse courses"
       heading="Practise speaking with your AI teacher"
