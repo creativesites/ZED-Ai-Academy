@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { randomUUID } from "crypto";
 import { sendCertificateIssued } from "@/lib/email/emailjs";
 import { pendingRequiredTutorScenarios } from "@/lib/tutor/server/required-tutor-blocks";
+import { getCourseVivaStatus } from "@/lib/tutor/server/viva";
 import { REQUIRED_TUTOR_HINT } from "@/lib/tutor/tutor-session-block";
 import { getLessonAccess } from "@/lib/courses/course-auth-server";
 
@@ -94,6 +95,14 @@ export async function generateCertificate(courseId: string) {
       const titles = unpassed.map((q) => q.title || "Knowledge Check").join(", ");
       throw new Error(`You must pass all quizzes before receiving your certificate: ${titles}`);
     }
+  }
+
+  // Optional per-course Certificate Viva gate (Phase 3)
+  const vivaStatus = await getCourseVivaStatus(courseId, userId);
+  if (vivaStatus.required && !vivaStatus.passed) {
+    throw new Error(
+      vivaStatus.reason ?? "You must pass the oral Certificate Viva before receiving your certificate.",
+    );
   }
 
   const publicId = randomUUID();

@@ -12,6 +12,7 @@ import {
   type TutorScenarioView,
 } from "@/lib/tutor/tutor-session-block";
 import { isSchemaUnavailableError } from "@/lib/tutor/mastery/server";
+import { getCourseVivaStatus } from "@/lib/tutor/server/viva";
 
 type PageProps = {
   params: Promise<{ slug: string }>;
@@ -284,6 +285,7 @@ export default async function LearnPage({ params, searchParams }: PageProps) {
   );
 
   const allDone = allLessonIds.length > 0 && allLessonIds.every((id) => completedSet.has(id));
+  const vivaStatus = allDone ? await getCourseVivaStatus(course.id, userId) : null;
 
   // Filter visibility in JS — avoids failing if is_public/status columns don't yet exist
   const discussionsData = (isInstructor
@@ -331,6 +333,7 @@ export default async function LearnPage({ params, searchParams }: PageProps) {
       tutorScenarios={tutorScenarios}
       tutorCompletedScenarioIds={tutorCompletedScenarioIds}
       teacherMoments={teacherMoments}
+      vivaStatus={vivaStatus}
     />
   );
 }
