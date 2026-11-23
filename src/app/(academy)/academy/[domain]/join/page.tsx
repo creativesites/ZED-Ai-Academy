@@ -1,8 +1,9 @@
-import { auth, currentUser } from "@clerk/nextjs/server";
+import { auth, clerkClient, currentUser } from "@clerk/nextjs/server";
 import { notFound, redirect } from "next/navigation";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { JoinClient } from "./join-client";
 import { ensureTenantMembership, validateAndJoinStaff } from "@/actions/tenants";
+import { resolveJoinAssignments, type InvitedMetadata } from "@/lib/tenants/join-decision";
 
 export const metadata = {
   title: "Join Academy",
@@ -10,7 +11,23 @@ export const metadata = {
 
 interface JoinPageProps {
   params: Promise<{ domain: string }>;
-  searchParams: Promise<{ code?: string; role?: string; courseId?: string; cohortId?: string }>;
+  searchParams: Promise<{ code?: string; role?: string }>;
+}
+
+async function clearInviteMetadata(userId: string, currentMetadata: Record<string, unknown>) {
+  try {
+    const client = await clerkClient();
+    await client.users.updateUserMetadata(userId, {
+      publicMetadata: {
+        ...currentMetadata,
+        invitedCompanyId: null,
+        invitedCourseId: null,
+        invitedCohortId: null,
+      },
+    });
+  } catch (err) {
+    console.error("[join] Failed to clear invite metadata:", err);
+  }
 }
 
 async function applyPendingLearnerAssignments({
@@ -91,7 +108,7 @@ export default async function TenantJoinPage({
   searchParams,
 }: JoinPageProps) {
   const { domain } = await params;
-  const { code, role: rawRole, courseId: queryCourseId, cohortId: queryCohortId } = await searchParams;
+  const { code, role: rawRole } = await searchParams;
   const { userId } = await auth();
 
   const supabase = createClient();
@@ -113,15 +130,8 @@ export default async function TenantJoinPage({
 
   if (userId) {
     const user = await currentUser();
-    const meta = (user?.publicMetadata ?? {}) as {
-      invitedCompanyId?: string;
-      invitedCourseId?: string | null;
-      invitedCohortId?: string | null;
-    };
-    const effectiveCourseId =
-      queryCourseId || (meta.invitedCompanyId === company.id ? meta.invitedCourseId : null);
-    const effectiveCohortId =
-      queryCohortId || (meta.invitedCompanyId === company.id ? meta.invitedCohortId : null);
+    const rawMeta = (user?.publicMetadata ?? {}) as Record<string, unknown>;
+    const decision = resolveJoinAssignments(company.id, rawMeta as InvitedMetadata);
 
     const { data: member } = await supabase
       .from("company_members")
@@ -134,12 +144,17 @@ export default async function TenantJoinPage({
       isAlreadyMember = true;
       memberRole = member.role;
 
-      await applyPendingLearnerAssignments({
-        userId,
-        companyId: company.id,
-        courseId: effectiveCourseId,
-        cohortId: effectiveCohortId,
-      });
+      if (decision.courseId || decision.cohortId) {
+        await applyPendingLearnerAssignments({
+          userId,
+          companyId: company.id,
+          courseId: decision.courseId,
+          cohortId: decision.cohortId,
+        });
+      }
+      if (decision.shouldClearInviteMetadata) {
+        await clearInviteMetadata(userId, rawMeta);
+      }
 
       // If already a member with sufficient role, send them directly
       if (role === "teacher" && (member.role === "teacher" || member.role === "company_admin")) {
@@ -158,12 +173,17 @@ export default async function TenantJoinPage({
 
     if (role === "learner" && !isAlreadyMember) {
       await ensureTenantMembership(userId, company.id, "learner");
-      await applyPendingLearnerAssignments({
-        userId,
-        companyId: company.id,
-        courseId: effectiveCourseId,
-        cohortId: effectiveCohortId,
-      });
+      if (decision.courseId || decision.cohortId) {
+        await applyPendingLearnerAssignments({
+          userId,
+          companyId: company.id,
+          courseId: decision.courseId,
+          cohortId: decision.cohortId,
+        });
+      }
+      if (decision.shouldClearInviteMetadata) {
+        await clearInviteMetadata(userId, rawMeta);
+      }
       redirect(`/academy/${company.slug}/classroom`);
     }
   }

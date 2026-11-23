@@ -9,7 +9,7 @@ agent letter and phase, e.g. `2026-11-24 · A · A0.1`.
 |---|---|
 | A0.1 academy tree moved to `(academy)` | ✅ merged to `main` |
 | A0 foundations merged | ⬜ |
-| B0 security & routing merged | ⬜ |
+| B0 security & routing merged | ✅ ready on `redesign/b0-security-routing` |
 | B1 classroom split commit | ⬜ |
 | B1 student shell merged | ⬜ |
 | A1 staff shell merged | ⬜ |
@@ -37,3 +37,4 @@ agent letter and phase, e.g. `2026-11-24 · A · A0.1`.
 
 <!-- `date · agent · phase · branch/PR · summary · what the other agent should know` -->
 - `2026-11-23 · A · A0.1 · main (PR #21) · A0.1 merged — academy tree is now under (academy) · Moved src/app/(marketing)/academy/** to src/app/(academy)/academy/** with a clean (academy)/layout.tsx (no legacy CSS, no marketing-shell, no MobileBottomNav) and a temporary legacy CSS bridge in academy/[domain]/page.tsx until B3.`
+- `2026-11-23 · B · B0 · redesign/b0-security-routing · Completed B0 security, payments, and routing fixes (S1, S2, S6, F5, F6, F12, F17) · Added pure coupon pricing (src/lib/payments/pricing.ts), order/webhook confirmation (src/lib/payments/orders.ts), invite-only join decision (src/lib/tenants/join-decision.ts), proxy platform-route apex redirects + last_visited_tenant cookie, after-sign-in + resolve-home teacher landing, onboarding guard, tenant-filtered course metadata, and ?action=enroll CTA focus.`

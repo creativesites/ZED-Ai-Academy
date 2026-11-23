@@ -1,25 +1,25 @@
-import { auth, currentUser } from "@clerk/nextjs/server";
+import { auth } from "@clerk/nextjs/server";
 import { createClient } from "@/lib/supabase/server";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import Link from "next/link";
 import { enrollFree } from "@/actions/enrollments";
 import { formatLevelLabel, formatPrice } from "@/lib/course-experience";
+import type { PriceType } from "@/types/database";
 import {
   Award,
   BookOpen,
   CheckCircle,
-  Clock,
   Layers,
   Lock,
   Play,
   ArrowLeft,
   GraduationCap,
   Sparkles,
-  Users,
 } from "lucide-react";
 import type { Metadata } from "next";
 import TenantHomeNavBar from "@/components/tenant/TenantHomeNavBar";
 import { getCurrentTenantAccess, isTeachingRole } from "@/lib/tenants/access";
+import { EnrollActionFocus } from "@/components/learner/enroll-action-focus";
 
 type PageProps = {
   params: Promise<{ domain: string; slug: string }>;
@@ -38,14 +38,23 @@ type ModuleRow = { id: string; title: string; position: number; lessons: LessonR
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { domain, slug } = await params;
   const supabase = createClient();
+  const { data: tenant } = await supabase
+    .from("companies")
+    .select("id, name")
+    .eq("slug", domain)
+    .maybeSingle();
+
+  if (!tenant) return { title: "Course Not Found" };
+
   const { data: course } = await supabase
     .from("courses")
     .select("title, description")
     .eq("slug", slug)
-    .single();
+    .eq("company_id", tenant.id)
+    .maybeSingle();
 
   if (!course) return { title: "Course Not Found" };
-  return { title: `${course.title} — ${domain}` };
+  return { title: `${course.title} — ${tenant.name}` };
 }
 
 export default async function TenantCourseDetailPage({ params, searchParams }: PageProps) {
@@ -76,7 +85,20 @@ export default async function TenantCourseDetailPage({ params, searchParams }: P
     .eq("company_id", tenant.id)
     .single();
 
-  const course = courseRaw as any;
+  const course = courseRaw as {
+    id: string;
+    title: string;
+    description: string | null;
+    thumbnail_url: string | null;
+    category: string | null;
+    level: string | null;
+    price_type: PriceType;
+    price_amount: number | null;
+    slug: string;
+    status: string;
+    instructor_id: string | null;
+    profiles: { full_name: string | null; avatar_url: string | null; bio: string | null } | null;
+  } | null;
 
   if (!course) notFound();
   const canPreviewDraft =
@@ -96,7 +118,7 @@ export default async function TenantCourseDetailPage({ params, searchParams }: P
     .eq("course_id", course.id)
     .order("position", { ascending: true });
 
-  const modules: ModuleRow[] = (modulesRaw ?? []).map((m: any) => ({
+  const modules: ModuleRow[] = ((modulesRaw ?? []) as unknown as ModuleRow[]).map((m) => ({
     ...m,
     lessons: [...(m.lessons ?? [])].sort((a, b) => a.position - b.position),
   }));
@@ -249,6 +271,7 @@ export default async function TenantCourseDetailPage({ params, searchParams }: P
                 </div>
               </div>
 
+              <EnrollActionFocus active={action === "enroll"} />
               <div>
                 {isEnrolled ? (
                   <div className="space-y-3">
@@ -286,8 +309,9 @@ export default async function TenantCourseDetailPage({ params, searchParams }: P
                   </div>
                 ) : !userId ? (
                   <Link
-                    href={`/sign-in?redirect_url=/academy/${tenant.slug}/courses/${course.slug}`}
-                    className="w-full flex items-center justify-center gap-2 text-white font-bold text-xs uppercase tracking-wider py-4 rounded-2xl shadow-lg transition-all hover:scale-105 active:scale-95"
+                    id="enroll-cta"
+                    href={`/sign-in?redirect_url=/academy/${tenant.slug}/courses/${course.slug}?action=enroll`}
+                    className="w-full flex items-center justify-center gap-2 text-white font-bold text-xs uppercase tracking-wider py-4 rounded-2xl shadow-lg transition-all hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-offset-2"
                     style={{ backgroundColor: brandColor }}
                   >
                     <span>Sign In to Enrol</span>
@@ -295,8 +319,9 @@ export default async function TenantCourseDetailPage({ params, searchParams }: P
                 ) : isFree ? (
                   <form action={enrollFree.bind(null, course.id, course.slug)}>
                     <button
+                      id="enroll-cta"
                       type="submit"
-                      className="w-full flex items-center justify-center gap-2 text-white font-bold text-xs uppercase tracking-wider py-4 rounded-2xl shadow-lg transition-all hover:scale-105 active:scale-95"
+                      className="w-full flex items-center justify-center gap-2 text-white font-bold text-xs uppercase tracking-wider py-4 rounded-2xl shadow-lg transition-all hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-offset-2"
                       style={{ backgroundColor: brandColor }}
                     >
                       <Sparkles className="h-4 w-4" />
@@ -305,8 +330,9 @@ export default async function TenantCourseDetailPage({ params, searchParams }: P
                   </form>
                 ) : (
                   <Link
+                    id="enroll-cta"
                     href={`/courses/${course.slug}/checkout`}
-                    className="w-full flex items-center justify-center gap-2 text-white font-bold text-xs uppercase tracking-wider py-4 rounded-2xl shadow-lg transition-all hover:scale-105 active:scale-95"
+                    className="w-full flex items-center justify-center gap-2 text-white font-bold text-xs uppercase tracking-wider py-4 rounded-2xl shadow-lg transition-all hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-offset-2"
                     style={{ backgroundColor: brandColor }}
                   >
                     <span>Enrol — {priceDisplay}</span>
