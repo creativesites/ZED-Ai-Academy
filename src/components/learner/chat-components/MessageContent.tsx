@@ -13,6 +13,7 @@ import { ActionCard } from "./ActionCard";
 import { KnowledgeCheck } from "./KnowledgeCheck";
 import { CodeSnippet } from "./CodeSnippet";
 import { CourseCard } from "./CourseCard";
+import { dispatchLessonSeek, formatSeekTime } from "@/lib/tutor/lesson-seek";
 
 interface MessageContentProps {
   content: string;
@@ -64,6 +65,23 @@ export function MessageContent({ content }: MessageContentProps) {
                 return <CodeSnippet key={i} {...props} />;
               case "course_card":
                 return <CourseCard key={i} {...props} />;
+              case "board":
+                return null;
+              case "lesson_ref": {
+                const label = typeof props.label === "string" && props.label.trim() ? props.label : "Jump to lesson";
+                const blockId = typeof props.blockId === "string" ? props.blockId : undefined;
+                const seconds = typeof props.seconds === "number" ? props.seconds : undefined;
+                return (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => dispatchLessonSeek({ label, blockId, seconds })}
+                    className="my-1 inline-flex items-center gap-1.5 rounded-xl bg-[#eff6ff] px-3 py-1.5 text-xs font-bold text-[#1d4ed8] transition hover:bg-[#dbeafe]"
+                  >
+                    <span>↗ {label}{seconds !== undefined ? ` · ${formatSeekTime(seconds)}` : ""}</span>
+                  </button>
+                );
+              }
               default:
                 return <pre key={i} className="text-xs text-red-500">Unknown component: {name}</pre>;
             }

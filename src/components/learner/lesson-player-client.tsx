@@ -4,7 +4,8 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { QuizPlayer } from "@/components/learner/quiz-player";
-import { AiTutor } from "@/components/learner/ai-tutor";
+import { TeacherDock } from "@/components/learner/ai-tutor";
+import { TutorSessionBlock } from "@/components/learner/content-blocks/tutor-session-block";
 import { PracticeStudio } from "@/components/learner/practice-studio";
 import { LessonDiscussions } from "@/components/learner/lesson-discussions";
 import type { Discussion } from "@/types/database";
@@ -45,6 +46,16 @@ type DiscussionWithProfile = Discussion & {
   profiles: { full_name: string | null; avatar_url: string | null } | null;
 };
 
+export type PlacedTeacherMoment = {
+  id: string;
+  scenario_id: string;
+  after_block_id: string | null;
+  position: number;
+  title: string | null;
+  prompt: string | null;
+  required: boolean;
+};
+
 export function LessonPlayerClient({
   course,
   modules,
@@ -66,6 +77,7 @@ export function LessonPlayerClient({
   coursePublished = true,
   tutorScenarios = {},
   tutorCompletedScenarioIds = [],
+  teacherMoments = [],
 }: {
   course: {
     id: string;
@@ -103,6 +115,7 @@ export function LessonPlayerClient({
   coursePublished?: boolean;
   tutorScenarios?: Record<string, TutorScenarioView>;
   tutorCompletedScenarioIds?: string[];
+  teacherMoments?: PlacedTeacherMoment[];
 }) {
   const router = useRouter();
   const [completed, setCompleted] = useState(new Set(completedLessonIds));
@@ -168,13 +181,32 @@ export function LessonPlayerClient({
   const hasQuiz = Boolean(quiz && quiz.quiz_questions?.length > 0);
   const quizPassed = Boolean(initialQuizAttempt?.passed) || (hasQuiz && isDone);
 
-  // Required speaking practice still to do (the server enforces the same rule).
-  const pendingRequiredTutor = blocks.flatMap((b) => {
-    if (b.type !== "tutor_session") return [];
-    const parsed = parseTutorSessionBlock(b.content);
-    if (!parsed?.required || !tutorScenarios[parsed.scenarioId]) return [];
-    return tutorDone.has(parsed.scenarioId) ? [] : [parsed.scenarioId];
-  });
+  // Required speaking practice & teacher moments still to do (the server enforces the same rule).
+  const pendingRequiredTutor = [
+    ...blocks.flatMap((b) => {
+      if (b.type !== "tutor_session") return [];
+      const parsed = parseTutorSessionBlock(b.content);
+      if (!parsed?.required || !tutorScenarios[parsed.scenarioId]) return [];
+      return tutorDone.has(parsed.scenarioId) ? [] : [parsed.scenarioId];
+    }),
+    ...teacherMoments.flatMap((m) => {
+      if (!m.required || !tutorScenarios[m.scenario_id]) return [];
+      return tutorDone.has(m.scenario_id) ? [] : [m.scenario_id];
+    }),
+  ];
+
+  const blockIdSet = new Set(blocks.map((b) => b.id));
+  const momentsByAfterBlock = new Map<string, PlacedTeacherMoment[]>();
+  const trailingMoments: PlacedTeacherMoment[] = [];
+  for (const moment of teacherMoments) {
+    if (moment.after_block_id && blockIdSet.has(moment.after_block_id)) {
+      const list = momentsByAfterBlock.get(moment.after_block_id) ?? [];
+      list.push(moment);
+      momentsByAfterBlock.set(moment.after_block_id, list);
+    } else {
+      trailingMoments.push(moment);
+    }
+  }
 
   function handleOpenStudio(blockId?: string, initialTool?: string, context?: { brief?: string; instructions?: string[] }) {
     setStudioTargetBlockId(blockId || null);
@@ -616,28 +648,52 @@ export function LessonPlayerClient({
 
                 <div className="space-y-8 sm:space-y-10">
                   {blocks.map((block) => {
+                    const placedAfter = momentsByAfterBlock.get(block.id) ?? [];
+                    const renderedMoments = placedAfter.map((moment) => (
+                      <div key={`moment-${moment.id}`} className="pt-2">
+                        <TutorSessionBlock
+                          content={{
+                            scenarioId: moment.scenario_id,
+                            title: moment.title ?? undefined,
+                            intro: moment.prompt ?? undefined,
+                            required: moment.required,
+                          }}
+                          lessonId={activeLessonId}
+                          scenario={tutorScenarios[moment.scenario_id]}
+                          done={tutorDone.has(moment.scenario_id)}
+                          onComplete={(scenarioId: string) => {
+                            setTutorDone((prev) => new Set([...prev, scenarioId]));
+                            toast.success("AI Teacher check-in complete");
+                          }}
+                        />
+                      </div>
+                    ));
+
                     if (block.type === "quiz") {
-                      if (!hasQuiz) return null;
+                      if (!hasQuiz) return renderedMoments.length > 0 ? <div key={block.id}>{renderedMoments}</div> : null;
                       return (
-                        <section key={block.id} id="knowledge-check" className="scroll-mt-6">
-                          <QuizPlayer
-                            quiz={quiz!}
-                            questions={[...quiz!.quiz_questions].sort((a, b) => a.position - b.position)}
-                            initialAttempt={initialQuizAttempt}
-                            attemptsUsed={quizAttemptsUsed}
-                            disabled={isPreview}
-                            lessonId={activeLessonId}
-                            courseSlug={course.slug}
-                            onPassed={() => {
-                              setCompleted((prev) => new Set([...prev, activeLessonId]));
-                              toast.success("Quiz passed — lesson complete");
-                            }}
-                          />
-                        </section>
+                        <div key={block.id} data-lesson-block-id={block.id} className="space-y-8 sm:space-y-10">
+                          <section id="knowledge-check" className="scroll-mt-6">
+                            <QuizPlayer
+                              quiz={quiz!}
+                              questions={[...quiz!.quiz_questions].sort((a, b) => a.position - b.position)}
+                              initialAttempt={initialQuizAttempt}
+                              attemptsUsed={quizAttemptsUsed}
+                              disabled={isPreview}
+                              lessonId={activeLessonId}
+                              courseSlug={course.slug}
+                              onPassed={() => {
+                                setCompleted((prev) => new Set([...prev, activeLessonId]));
+                                toast.success("Quiz passed — lesson complete");
+                              }}
+                            />
+                          </section>
+                          {renderedMoments}
+                        </div>
                       );
                     }
                     return (
-                      <div key={block.id}>
+                      <div key={block.id} data-lesson-block-id={block.id} className="space-y-8 sm:space-y-10">
                         <BlockRenderer
                           block={block}
                           bookings={bookings}
@@ -649,7 +705,7 @@ export function LessonPlayerClient({
                             completedScenarioIds: [...tutorDone],
                             onComplete: (scenarioId: string) => {
                               setTutorDone((prev) => new Set([...prev, scenarioId]));
-                              toast.success("Speaking practice complete");
+                              toast.success("AI Teacher check-in complete");
                             },
                           }}
                           onLaunchStudio={(initialTool) =>
@@ -659,9 +715,30 @@ export function LessonPlayerClient({
                             })
                           }
                         />
+                        {renderedMoments}
                       </div>
                     );
                   })}
+
+                  {trailingMoments.map((moment) => (
+                    <div key={`moment-${moment.id}`}>
+                      <TutorSessionBlock
+                        content={{
+                          scenarioId: moment.scenario_id,
+                          title: moment.title ?? undefined,
+                          intro: moment.prompt ?? undefined,
+                          required: moment.required,
+                        }}
+                        lessonId={activeLessonId}
+                        scenario={tutorScenarios[moment.scenario_id]}
+                        done={tutorDone.has(moment.scenario_id)}
+                        onComplete={(scenarioId: string) => {
+                          setTutorDone((prev) => new Set([...prev, scenarioId]));
+                          toast.success("AI Teacher check-in complete");
+                        }}
+                      />
+                    </div>
+                  ))}
 
                   {/* Quiz without an explicit block */}
                   {!blocks.some((b) => b.type === "quiz") && hasQuiz && (
@@ -798,7 +875,7 @@ export function LessonPlayerClient({
 
       {/* ── Overlays ────────────────────────────────────────────────── */}
       {tutorOpen && (
-        <AiTutor
+        <TeacherDock
           courseId={course.id}
           lessonId={activeLessonId}
           lessonTitle={currentLesson?.title ?? "Lesson"}
