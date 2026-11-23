@@ -2,6 +2,7 @@ import { auth } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { createServiceClient } from "@/lib/supabase/server";
+import { isSchemaUnavailableError } from "@/lib/tutor/mastery/server";
 import { applyModePreference, chooseStartMode } from "@/lib/tutor/mode-policy";
 import { resolveTutorAccess } from "@/lib/tutor/server/access";
 import { mintLiveToken } from "@/lib/tutor/server/gemini-calls";
@@ -29,6 +30,10 @@ const startSchema = z
     scenarioId: z.string().uuid().optional(),
     lessonId: z.string().uuid().optional(),
     assignmentId: z.string().uuid().optional(),
+    sprint: z.boolean().optional(),
+    courseId: z.string().uuid().optional(),
+    focusObjective: z.string().trim().min(1).max(240).optional(),
+    companyId: z.string().trim().min(1).max(120).optional(),
     micPermission: z.enum(["granted", "denied", "prompt"]),
     rttMs: z.number().min(0).max(60_000).optional(),
     // Optional client hint. Honoured only when the scenario allows that mode.
@@ -67,6 +72,10 @@ export async function POST(req: NextRequest) {
     origin: body.origin,
     lessonId: body.lessonId,
     assignmentId: body.assignmentId,
+    sprint: body.sprint,
+    courseId: body.courseId,
+    focusObjective: body.focusObjective,
+    companyId: body.companyId,
   });
   if (!access.ok) {
     return NextResponse.json({ error: "Access denied", reason: access.reason }, { status: access.status });
@@ -83,27 +92,40 @@ export async function POST(req: NextRequest) {
     preferMode: body.preferMode,
   });
 
-  const { data: row, error: insertError } = await createServiceClient()
+  const serviceClient = createServiceClient();
+  const baseInsert = {
+    company_id: access.companyId,
+    user_id: userId,
+    scenario_id: access.sprint ? null : access.scenario.id,
+    origin: body.origin,
+    lesson_id: access.lessonId,
+    assignment_id: access.assignmentId,
+    mode,
+    status: "active" as const,
+  };
+
+  let insertRes = await serviceClient
     .from("tutor_sessions")
-    .insert({
-      company_id: access.companyId,
-      user_id: userId,
-      scenario_id: access.scenario.id,
-      origin: body.origin,
-      lesson_id: access.lessonId,
-      assignment_id: access.assignmentId,
-      mode,
-      status: "active",
-    })
+    .insert(
+      access.sprintContext
+        ? ({ ...baseInsert, sprint_context: access.sprintContext } as typeof baseInsert)
+        : baseInsert,
+    )
     .select("*")
     .single();
+
+  if (insertRes.error && access.sprintContext && isSchemaUnavailableError(insertRes.error)) {
+    insertRes = await serviceClient.from("tutor_sessions").insert(baseInsert).select("*").single();
+  }
+
+  const { data: row, error: insertError } = insertRes;
   if (insertError || !row) {
     console.error("[tutor] could not create session:", insertError?.message);
     return NextResponse.json({ error: "Could not start the session" }, { status: 500 });
   }
 
   const session: TutorSessionRow = row;
-  const sessionContext = await loadSessionContext(session).catch(async (err: unknown) => {
+  const sessionContext = await loadSessionContext(session, access.sprintContext ?? null).catch(async (err: unknown) => {
     console.error("[tutor] could not load session context:", err);
     await abandonSession(session.id);
     return null;

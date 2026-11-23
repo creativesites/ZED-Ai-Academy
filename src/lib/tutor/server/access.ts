@@ -1,6 +1,7 @@
 import "server-only";
 import { createServiceClient } from "@/lib/supabase/server";
 import type { Database } from "@/types/database";
+import { DEFAULT_TEACHER_NAME } from "../course-teacher.ts";
 import {
   decideTutorAccess,
   NOT_FOUND_REASONS,
@@ -8,7 +9,10 @@ import {
   type AccessDenyReason,
   type TutorAccessFacts,
 } from "../entitlements.ts";
+import { loadWeakMasteryRows } from "../mastery/server.ts";
+import { buildRevisionSprintScenario } from "../mastery/sprint.ts";
 import type { Mode, SessionOrigin } from "../scenario.ts";
+import { resolveDefaultPersona } from "./session-context.ts";
 
 // Loads the facts for entitlements.ts and applies them. All DB reads use the service client;
 // the authorization decision is made here, from the verified Clerk user id.
@@ -28,6 +32,21 @@ export type ResolvedTutorAccess =
       liveMinutesLeft?: number;
       lessonId: string | null;
       assignmentId: string | null;
+      sprint?: boolean;
+      sprintContext?: {
+        kind: "revision_sprint";
+        courseId: string | null;
+        courseTitle: string | null;
+        focusObjective: string | null;
+        personaId: string;
+        teacherName: string;
+        scenario: {
+          title: string;
+          goal: string;
+          beats: unknown;
+          target_items: unknown;
+        };
+      };
     }
   | { ok: false; reason: AccessDenyReason; status: 403 | 404 };
 
@@ -37,6 +56,10 @@ export type ResolveTutorAccessInput = {
   origin: SessionOrigin;
   lessonId?: string;
   assignmentId?: string;
+  sprint?: boolean;
+  courseId?: string;
+  focusObjective?: string;
+  companyId?: string;
 };
 
 const STAFF_ROLES = ["company_admin", "teacher", "instructor"];
@@ -97,6 +120,152 @@ export async function resolveTutorAccess(input: ResolveTutorAccessInput): Promis
 
   // 2. Scenario: explicit, else the assignment's, else the newest published one for the lesson.
   let scenarioId = input.scenarioId ?? assignment?.scenario_id ?? null;
+  if (input.origin === "practice" && input.sprint && !scenarioId) {
+    const [{ data: profile }, { data: memberships }, { data: platform }, { data: courseRow }] = await Promise.all([
+      supabase.from("profiles").select("company_id").eq("id", input.userId).maybeSingle(),
+      supabase.from("company_members").select("company_id, role").eq("profile_id", input.userId).eq("status", "active"),
+      supabase.from("companies").select("id").eq("slug", "zedai").maybeSingle(),
+      input.courseId
+        ? supabase.from("courses").select("id, title, company_id").eq("id", input.courseId).maybeSingle()
+        : Promise.resolve({ data: null as { id: string; title: string; company_id: string } | null }),
+    ]);
+
+    const platformId = platform?.id ?? null;
+    const activeRoles = new Map((memberships ?? []).map((m) => [m.company_id, m.role as string]));
+
+    let companyId: string | null = null;
+    let fallback = false;
+    if (input.companyId && activeRoles.has(input.companyId)) {
+      companyId = input.companyId;
+    } else if (courseRow?.company_id && activeRoles.has(courseRow.company_id)) {
+      companyId = courseRow.company_id;
+    } else if (profile?.company_id && activeRoles.has(profile.company_id)) {
+      companyId = profile.company_id;
+    } else if (memberships && memberships.length > 0) {
+      companyId = memberships[0].company_id;
+    } else if (platformId) {
+      companyId = platformId;
+      fallback = true;
+    }
+    if (!companyId) return deny("not_tenant_member");
+
+    const member = fallback || activeRoles.has(companyId);
+    const staff = STAFF_ROLES.includes(activeRoles.get(companyId) ?? "");
+    const [{ data: company }, { data: settingsRow }, { data: sessions }] = await Promise.all([
+      supabase.from("companies").select("status").eq("id", companyId).maybeSingle(),
+      supabase.from("tutor_settings").select("*").eq("company_id", companyId).maybeSingle(),
+      supabase
+        .from("tutor_sessions")
+        .select("learner_speaking_ms, teacher_speaking_ms")
+        .eq("company_id", companyId)
+        .eq("user_id", input.userId)
+        .eq("origin", "practice")
+        .gte("started_at", startOfMonthUtc(new Date())),
+    ]);
+    const settings = resolveSettings(settingsRow);
+    const practiceUsedMs = (sessions ?? []).reduce(
+      (sum, s) => sum + s.learner_speaking_ms + s.teacher_speaking_ms,
+      0,
+    );
+
+    const persona = await resolveDefaultPersona(supabase, companyId);
+    const teacherName = persona.display_name ?? persona.name ?? DEFAULT_TEACHER_NAME;
+    const weak = await loadWeakMasteryRows({
+      supabase,
+      userId: input.userId,
+      companyId,
+      courseId: courseRow?.id ?? input.courseId ?? null,
+      limit: 6,
+    });
+    const built = buildRevisionSprintScenario({
+      personaId: persona.id,
+      teacherName,
+      weakObjectives: weak,
+      courseTitle: courseRow?.title ?? null,
+      focusObjective: input.focusObjective ?? null,
+    });
+
+    const now = new Date().toISOString();
+    const syntheticScenario: ScenarioRow = {
+      id: "00000000-0000-4000-8000-000000000000",
+      company_id: companyId,
+      course_id: courseRow?.id ?? input.courseId ?? null,
+      lesson_id: null,
+      skill_pack: built.skill_pack,
+      persona_id: persona.id,
+      title: built.title,
+      goal: built.goal,
+      beats: built.beats as ScenarioRow["beats"],
+      target_items: built.target_items as ScenarioRow["target_items"],
+      level: null,
+      exam_task: null,
+      max_minutes: built.max_minutes,
+      allowed_modes: built.allowed_modes,
+      scene: built.scene ?? "Scene_Classroom",
+      visibility: "platform",
+      style: built.style,
+      status: "published",
+      created_by: input.userId,
+      created_at: now,
+      updated_at: now,
+    };
+
+    const facts: TutorAccessFacts = {
+      origin: "practice",
+      scenario: {
+        id: syntheticScenario.id,
+        exists: true,
+        status: "published",
+        visibility: "platform",
+        courseId: syntheticScenario.course_id,
+        companyId,
+        allowedModes: syntheticScenario.allowed_modes,
+      },
+      tenant: {
+        member,
+        active: company?.status === "active",
+        staff,
+        fallback,
+      },
+      enrolledInCourse: null,
+      lesson: null,
+      assignment: null,
+      persona: { exists: true, active: persona.is_active, id: persona.id },
+      settings,
+      practiceUsedMs,
+      companyId,
+    };
+
+    const decision = decideTutorAccess(facts);
+    if (!decision.ok) return deny(decision.reason);
+
+    return {
+      ok: true,
+      companyId,
+      scenario: syntheticScenario,
+      persona,
+      allowedModes: decision.allowedModes,
+      liveMinutesLeft: decision.liveMinutesLeft,
+      lessonId: null,
+      assignmentId: null,
+      sprint: true,
+      sprintContext: {
+        kind: "revision_sprint",
+        courseId: courseRow?.id ?? input.courseId ?? null,
+        courseTitle: courseRow?.title ?? null,
+        focusObjective: input.focusObjective ?? null,
+        personaId: persona.id,
+        teacherName,
+        scenario: {
+          title: built.title,
+          goal: built.goal,
+          beats: built.beats,
+          target_items: built.target_items,
+        },
+      },
+    };
+  }
+
   if (!scenarioId && input.lessonId) {
     const { data: latest } = await supabase
       .from("practice_scenarios")

@@ -42,6 +42,10 @@ export type TutorSessionProps = {
   scenarioId?: string;
   lessonId?: string;
   assignmentId?: string;
+  sprint?: boolean;
+  sprintCourseId?: string;
+  focusObjective?: string;
+  companyId?: string;
   /** Called with the report when the learner taps Done on the report card. */
   onExit?: (report: TutorReportContent) => void;
   /** Teacher renderer. The Rive teacher is the default; "placeholder" is the SVG fallback. */
@@ -74,6 +78,10 @@ export function TutorSession({
   scenarioId,
   lessonId,
   assignmentId,
+  sprint,
+  sprintCourseId,
+  focusObjective,
+  companyId,
   onExit,
   preview,
   engine,
@@ -407,6 +415,10 @@ export function TutorSession({
       scenarioId,
       lessonId,
       assignmentId,
+      sprint,
+      sprintCourseId,
+      focusObjective,
+      companyId,
       micPermission: permission,
       rttMs,
       // Live is not wired in the web client yet. Ask for Voice, or Text when the mic is blocked.
@@ -463,7 +475,7 @@ export function TutorSession({
     setPhaseBoth("live");
     await speakEvents(data.openingEvents ?? []);
     if (pendingEndRef.current) void finalize("completed");
-  }, [api, client, origin, scenarioId, lessonId, assignmentId, setPhaseBoth, speakEvents, finalize]);
+  }, [api, client, origin, scenarioId, lessonId, assignmentId, sprint, sprintCourseId, focusObjective, companyId, setPhaseBoth, speakEvents, finalize]);
 
   const changeMode = (next: InputMode) => {
     if (next === modeRef.current) return;
@@ -525,6 +537,20 @@ export function TutorSession({
     playerRef.current?.notify(e);
   }, []);
 
+  const navigateToSprint = useCallback(
+    (objectiveText?: string) => {
+      if (typeof window === "undefined") return;
+      const match = /^\/academy\/([^/]+)/.exec(window.location.pathname);
+      const base = match ? `/academy/${match[1]}` : "";
+      const params = new URLSearchParams();
+      if (objectiveText) params.set("focus", objectiveText);
+      if (sprintCourseId) params.set("courseId", sprintCourseId);
+      const qs = params.toString();
+      window.location.assign(`${base}/practice/sprint${qs ? `?${qs}` : ""}`);
+    },
+    [sprintCourseId],
+  );
+
   const info: StartInfo = { teacherName, title: sceneTitle, goal, maxMinutes, modes };
   const statusText = thinking
     ? `${teacherName} is thinking...`
@@ -567,6 +593,8 @@ export function TutorSession({
             title={sceneTitle}
             words={words}
             onPractiseAgain={practiseAgain}
+            onPractiseObjective={client ? undefined : (obj) => navigateToSprint(obj)}
+            onStartSprint={client ? undefined : () => navigateToSprint()}
             onDone={onExit ? () => onExit(report) : undefined}
           />
         </div>
