@@ -15,6 +15,7 @@ import {
   ListFilter,
   Loader2,
   Mail,
+  Mic,
   RotateCcw,
   Search,
   Sparkles,
@@ -35,6 +36,10 @@ import {
   type StudentGradebookRecord,
   type GradebookQuizAttempt,
 } from "@/actions/classroom";
+import {
+  getTenantStudentSpeakingMetrics,
+  type StudentSpeakingMetric,
+} from "@/actions/tutor-authoring";
 
 export function GradebookTab({
   companyId,
@@ -46,6 +51,7 @@ export function GradebookTab({
   initialSelectedStudentId?: string;
 }) {
   const [data, setData] = useState<AcademyGradebookData | null>(null);
+  const [speakingByStudent, setSpeakingByStudent] = useState<Record<string, StudentSpeakingMetric>>({});
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "completed" | "inactive">("all");
@@ -55,8 +61,12 @@ export function GradebookTab({
   async function loadGradebook() {
     setLoading(true);
     try {
-      const result = await getAcademyGradebook(companyId);
+      const [result, speaking] = await Promise.all([
+        getAcademyGradebook(companyId),
+        getTenantStudentSpeakingMetrics(companyId).catch(() => ({} as Record<string, StudentSpeakingMetric>)),
+      ]);
       setData(result);
+      setSpeakingByStudent(speaking);
       if (initialSelectedStudentId) {
         const found = result.students.find((s) => s.id === initialSelectedStudentId);
         if (found) setSelectedStudent(found);
@@ -330,6 +340,7 @@ export function GradebookTab({
                     <th className="py-3.5 px-4">Enrolled Course</th>
                     <th className="py-3.5 px-4 min-w-[160px]">Lesson Progress</th>
                     <th className="py-3.5 px-4 text-center">Quiz Score</th>
+                    <th className="py-3.5 px-4 text-center">AI Speaking</th>
                     <th className="py-3.5 px-4 text-center">Assignments</th>
                     <th className="py-3.5 px-4 text-center">Certificates</th>
                     <th className="py-3.5 px-4 text-right">Actions</th>
@@ -411,6 +422,29 @@ export function GradebookTab({
                         ) : (
                           <span className="text-slate-400 text-[11px] font-bold">No Quizzes</span>
                         )}
+                      </td>
+
+                      {/* AI Speaking Metrics */}
+                      <td className="py-3.5 px-4 text-center">
+                        {(() => {
+                          const m = speakingByStudent[student.id];
+                          if (!m || m.sessionsCompleted === 0) {
+                            return <span className="text-slate-400 text-[11px] font-bold">—</span>;
+                          }
+                          return (
+                            <div className="inline-flex flex-col items-center gap-0.5">
+                              <span className="inline-flex items-center gap-1 rounded-lg bg-[#fff6ee] px-2 py-0.5 text-[11px] font-black text-[#fd5523]">
+                                <Mic className="h-3 w-3" />
+                                {m.sessionsCompleted} · {m.speakingMinutes}m
+                              </span>
+                              {m.avgScore !== null && (
+                                <span className="text-[10px] font-bold text-slate-500">
+                                  Avg {m.avgScore}%
+                                </span>
+                              )}
+                            </div>
+                          );
+                        })()}
                       </td>
 
                       {/* Coursework & Assignments */}
