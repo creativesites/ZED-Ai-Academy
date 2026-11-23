@@ -76,7 +76,7 @@ function getPriorityBadge(priority: string) {
   }
 }
 
-export function NoticeBoardTab({
+export function StudentNoticeBoardTab({
   companyId,
   isAdminOrInstructor,
   companySlug,

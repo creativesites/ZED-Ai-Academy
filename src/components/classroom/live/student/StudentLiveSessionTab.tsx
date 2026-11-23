@@ -30,7 +30,7 @@ interface LiveSessionTabProps {
   cohorts?: any[];
 }
 
-export function LiveSessionTab({
+export function StudentLiveSessionTab({
   companyId,
   isAdminOrInstructor,
   companySlug,

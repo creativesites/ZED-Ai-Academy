@@ -31,7 +31,7 @@ import { Progress } from "@/components/ui/progress";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
-import { StudyPacksModal } from "./StudyPacksModal";
+import { StudyPacksModal } from "../shared/StudyPacksModal";
 import {
   getGoogleCalendarUrl,
   downloadIcsFile,
@@ -76,7 +76,7 @@ interface OverviewTabProps {
   }>;
 }
 
-export function OverviewTab({
+export function StaffOverviewTab({
   companyId,
   companySlug,
   isAdminOrInstructor,

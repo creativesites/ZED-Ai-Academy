@@ -71,7 +71,7 @@ interface AssignmentsTabProps {
   courses?: { id: string; title: string }[];
 }
 
-export function AssignmentsTab({
+export function StaffAssignmentsTab({
   companyId,
   companySlug,
   isAdminOrInstructor,

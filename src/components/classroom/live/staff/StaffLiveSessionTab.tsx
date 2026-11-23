@@ -1,0 +1,539 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { 
+  Video, Play, Power, ShieldCheck, Loader2, Sparkles, Copy,
+  CheckCircle2, AlertCircle, Calendar, X, ChevronUp, UserCheck, Users
+} from "lucide-react";
+import { JaaSMeeting } from '@jitsi/react-sdk';
+import { generateJitsiToken } from "@/actions/jitsi";
+import { 
+  toggleClassroomSession, 
+  getCompanySessionState, 
+  getClassSchedules, 
+  getCompanyStudents, 
+  markAttendance, 
+  getSessionAttendance,
+  markAutoAttendance
+} from "@/actions/classroom";
+import { toast } from "sonner";
+import { createClient } from "@/lib/supabase/client";
+import { cn } from "@/lib/utils";
+import { DeviceTestModal } from "@/components/live-sessions/device-test-modal";
+
+interface LiveSessionTabProps {
+  companyId: string;
+  isAdminOrInstructor: boolean;
+  companySlug: string;
+  activeCohortId?: string | null;
+  cohorts?: any[];
+}
+
+export function StaffLiveSessionTab({
+  companyId,
+  isAdminOrInstructor,
+  companySlug,
+  activeCohortId = null,
+  cohorts = [],
+}: LiveSessionTabProps) {
+  // --- State Management ---
+  const [isSessionActive, setIsSessionActive] = useState(false);
+  const [hasJoined, setHasJoined] = useState(false);
+  const [isInitializing, setIsInitializing] = useState(false);
+  const [roomName, setRoomName] = useState<string | null>(null);
+  const [appId, setAppId] = useState<string | null>(null);
+  const [activeScheduleId, setActiveScheduleId] = useState<string | null>(null);
+  const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
+  const [jwt, setJwt] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [schedules, setSchedules] = useState<any[]>([]);
+  const [students, setStudents] = useState<any[]>([]);
+  const [attendance, setAttendance] = useState<any[]>([]);
+  const [selectedScheduleId, setSelectedScheduleId] = useState<string | null>(null);
+  const [showAttendance, setShowAttendance] = useState(false);
+  const [showDeviceModal, setShowDeviceModal] = useState(false);
+
+  // --- Effect: Sync Session State & Data ---
+  useEffect(() => {
+    async function loadInitialData() {
+      try {
+        const state = await getCompanySessionState(companyId, activeCohortId);
+        setIsSessionActive(state.is_session_active);
+        setRoomName(state.active_room_name);
+        setActiveScheduleId(state.active_schedule_id);
+        setActiveSessionId(state.active_session_id);
+
+        if (isAdminOrInstructor) {
+          const [schs, stus] = await Promise.all([
+            getClassSchedules(companyId),
+            getCompanyStudents(companyId)
+          ]);
+          setSchedules(schs);
+          setStudents(stus);
+          
+          if (state.active_schedule_id) {
+             const att = await getSessionAttendance(companyId, state.active_schedule_id);
+             setAttendance(att);
+          }
+        }
+      } catch (err) {
+        console.error("Error loading classroom data:", err);
+      }
+    }
+    
+    loadInitialData();
+
+    // Real-time Supabase Subscription
+    const supabase = createClient();
+    const isCohortScoped = Boolean(activeCohortId && activeCohortId !== "all");
+    const targetTable = isCohortScoped ? "classroom_groups" : "companies";
+    const targetFilter = isCohortScoped ? `id=eq.${activeCohortId}` : `id=eq.${companyId}`;
+
+    const channel = supabase
+      .channel(`classroom-session-${activeCohortId || companyId}`)
+      .on('postgres_changes', { 
+        event: 'UPDATE', 
+        schema: 'public', 
+        table: targetTable,
+        filter: targetFilter
+      }, (payload) => {
+        setIsSessionActive(payload.new.is_session_active);
+        setRoomName(payload.new.active_room_name);
+        setActiveScheduleId(payload.new.active_schedule_id);
+        setActiveSessionId(payload.new.active_session_id);
+        
+        // Auto-kick if session is ended by instructor
+        if (!payload.new.is_session_active) {
+          setHasJoined(false);
+          setJwt(null);
+        }
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [companyId, isAdminOrInstructor, activeCohortId]);
+
+  // --- Effect: Auto Attendance ---
+  useEffect(() => {
+    if (hasJoined && !isAdminOrInstructor && activeSessionId) {
+      markAutoAttendance(companyId, activeSessionId, activeScheduleId).catch(console.error);
+    }
+  }, [hasJoined, isAdminOrInstructor, activeSessionId, companyId, activeScheduleId]);
+
+  // --- Handlers ---
+  async function handleStartSession() {
+    setIsInitializing(true);
+    setError(null);
+    try {
+      const generatedRoom = `classroom-${companySlug}-${Math.random().toString(36).slice(2, 7)}`;
+      
+      // 1. Persist state to Database
+      const toggleRes = await toggleClassroomSession(
+        companyId,
+        companySlug,
+        true,
+        generatedRoom,
+        selectedScheduleId,
+        activeCohortId
+      );
+      
+      // 2. Generate Server-Authorized Security Token
+      const result = await generateJitsiToken({
+        scope: "classroom",
+        companyId,
+        cohortId: activeCohortId,
+      });
+      
+      if (result.success) {
+        setJwt(result.token);
+        setAppId(result.appId);
+        setRoomName(result.roomName);
+        setActiveScheduleId(selectedScheduleId);
+        if (toggleRes?.activeSessionId) {
+          setActiveSessionId(toggleRes.activeSessionId);
+        }
+        setIsSessionActive(true);
+        setHasJoined(true);
+        toast.success("Live Classroom Started!");
+      } else {
+        throw new Error(result.error || "Failed to generate security token");
+      }
+    } catch (err: any) {
+      console.error(err);
+      setError(err.message || "Failed to initialize studio");
+      toast.error("Failed to start live session");
+      await toggleClassroomSession(companyId, companySlug, false, null, null, activeCohortId).catch(() => null);
+    } finally {
+      setIsInitializing(false);
+    }
+  }
+
+  async function handleJoinSession() {
+    if (!roomName) {
+       toast.error("No active room found");
+       return;
+    }
+    setIsInitializing(true);
+    setError(null);
+    try {
+      const result = await generateJitsiToken({
+        scope: "classroom",
+        companyId,
+        cohortId: activeCohortId,
+      });
+      if (result.success) {
+        setJwt(result.token);
+        setAppId(result.appId);
+        setRoomName(result.roomName);
+        setHasJoined(true);
+      } else {
+        throw new Error(result.error || "Failed to join studio");
+      }
+    } catch (err: any) {
+      setError(err.message || "Failed to connect to studio");
+      toast.error("Failed to join session");
+    } finally {
+      setIsInitializing(false);
+    }
+  }
+
+  async function handleEndSession() {
+    try {
+      await toggleClassroomSession(companyId, companySlug, false, null, null, activeCohortId);
+      setHasJoined(false);
+      setIsSessionActive(false);
+      setJwt(null);
+      setAppId(null);
+      setRoomName(null);
+      toast.success("Session Ended");
+    } catch (e) {
+      toast.error("Failed to end session properly");
+    }
+  }
+
+  const handleMarkAttendance = async (studentId: string, status: "present" | "late" | "absent") => {
+    if (!activeScheduleId) return;
+    try {
+      await markAttendance(companyId, activeScheduleId, studentId, status, companySlug);
+      const updatedAttendance = await getSessionAttendance(companyId, activeScheduleId);
+      setAttendance(updatedAttendance);
+    } catch (error) {
+      toast.error("Failed to update attendance");
+    }
+  };
+
+  // --- Conditional Renders: Error State ---
+  if (error) {
+    return (
+      <div className="flex h-full min-h-[400px] flex-col items-center justify-center p-8 text-center bg-slate-50">
+        <div className="h-20 w-20 rounded-full bg-red-50 text-red-500 flex items-center justify-center mb-6">
+          <AlertCircle className="h-10 w-10" />
+        </div>
+        <h2 className="text-2xl font-black text-[#062e39]">Connection Error</h2>
+        <p className="mt-2 text-slate-500 max-w-xs">{error}</p>
+        <Button 
+          variant="outline" 
+          className="mt-6 rounded-xl border-[#fd5523] text-[#fd5523] hover:bg-[#fd5523]/5"
+          onClick={() => setError(null)}
+        >
+          Try Again
+        </Button>
+      </div>
+    );
+  }
+
+  // --- Conditional Renders: Inactive State (Student View) ---
+  if (!isSessionActive && !isAdminOrInstructor) {
+    return (
+      <div className="flex h-full min-h-[420px] flex-col items-center justify-center p-6 text-center bg-slate-50">
+        <div className="relative mb-5">
+           <div className="absolute -inset-3 bg-[#fd5523]/10 rounded-full blur-xl animate-pulse" />
+           <div className="relative h-16 w-16 rounded-2xl bg-white shadow-sm border border-slate-200/80 flex items-center justify-center">
+             <Video className="h-7 w-7 text-slate-400" />
+           </div>
+        </div>
+        <h2 className="text-xl sm:text-2xl font-bold text-[#062e39] tracking-tight">Classroom is Closed</h2>
+        <p className="mt-2 text-xs sm:text-sm text-slate-500 max-w-sm leading-relaxed">
+          The instructor has not started the live session yet. You will be able to join as soon as they go live.
+        </p>
+      </div>
+    );
+  }
+
+  // --- Conditional Renders: Join/Start Screen ---
+  if (!hasJoined) {
+    return (
+      <div className="flex h-full min-h-[500px] flex-col items-center justify-center p-4 lg:p-8 bg-slate-50">
+        <div className="max-w-md w-full bg-white rounded-2xl p-6 sm:p-8 shadow-sm border border-slate-200/80 text-center relative overflow-hidden">
+          <div className="mb-5 flex h-14 w-14 mx-auto items-center justify-center rounded-2xl bg-[#fd5523]/10 text-[#fd5523]">
+            <Video className="h-7 w-7" />
+          </div>
+          <h2 className="text-xl sm:text-2xl font-bold text-[#062e39] mb-2 tracking-tight">
+            {isAdminOrInstructor && !isSessionActive ? "Start Live Session" : "Virtual Classroom"}
+          </h2>
+          
+          {isAdminOrInstructor && !isSessionActive && (
+            <div className="mb-5 text-left">
+              <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5 block">
+                Attach to Schedule
+              </label>
+              <select 
+                className="w-full h-10 px-3 rounded-xl border border-slate-200 bg-slate-50 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-[#fd5523]/20 transition-all"
+                value={selectedScheduleId || ""}
+                onChange={(e) => setSelectedScheduleId(e.target.value || null)}
+              >
+                <option value="">Unscheduled Session</option>
+                {schedules.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.title} {s.is_recurring ? `(Every ${s.day_of_week})` : ""}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          <div className="flex flex-col gap-2.5">
+            <Button 
+              onClick={isAdminOrInstructor && !isSessionActive ? handleStartSession : handleJoinSession}
+              disabled={isInitializing}
+              className="w-full h-11 rounded-xl bg-[#fd5523] text-white font-semibold text-sm hover:bg-[#ef4a16] shadow-sm transition-all"
+            >
+              {isInitializing ? (
+                <Loader2 className="h-5 w-5 animate-spin" />
+              ) : (
+                isAdminOrInstructor && !isSessionActive ? "Start Class Now" : "Join Room"
+              )}
+            </Button>
+
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setShowDeviceModal(true)}
+              className="w-full h-10 rounded-xl border-slate-200 text-slate-700 hover:border-[#fd5523] text-xs font-semibold"
+            >
+              Test Camera & Microphone
+            </Button>
+          </div>
+
+          <DeviceTestModal
+            open={showDeviceModal}
+            onOpenChange={setShowDeviceModal}
+            onConfirmJoin={() => {
+              setShowDeviceModal(false);
+              if (isAdminOrInstructor && !isSessionActive) {
+                handleStartSession();
+              } else {
+                handleJoinSession();
+              }
+            }}
+            sessionTitle="Virtual Classroom Studio"
+          />
+        </div>
+      </div>
+    );
+  }
+
+  // --- Main Render: Active Session Studio ---
+  const activeSchedule = schedules.find(s => s.id === activeScheduleId);
+
+  return (
+    <div className="flex h-full w-full flex-col bg-[#062e39] text-white relative overflow-hidden">
+      {/* Header Section */}
+      <div className="sticky top-0 z-40 w-full flex flex-col bg-[#062e39]/80 backdrop-blur-md border-b border-white/10">
+        <div className="flex items-center justify-between px-4 lg:px-6 h-16 lg:h-20">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-red-500/10 border border-red-500/20 shadow-[0_0_15px_rgba(239,68,68,0.1)]">
+              <span className="h-1.5 w-1.5 rounded-full bg-red-500 animate-pulse" />
+              <span className="text-[10px] font-black uppercase tracking-[0.15em] text-red-500">Live</span>
+            </div>
+            
+            <div className="flex flex-col min-w-0">
+              <p className="text-xs lg:text-sm font-black text-white uppercase tracking-wider truncate">
+                {companySlug} <span className="text-white/40 font-medium">Studio</span>
+              </p>
+              {activeSchedule && (
+                <div className="lg:hidden flex items-center gap-1 text-[9px] font-bold text-white/40 uppercase tracking-tighter truncate">
+                  <span className="text-[#fd5523] opacity-100">●</span> {activeSchedule.title}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            {isAdminOrInstructor && (
+              <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-9 w-9 sm:w-auto sm:px-4 rounded-xl bg-white/5 hover:bg-white/10 border-white/10 text-white transition-all active:scale-95"
+                  onClick={() => setShowAttendance(true)}
+                >
+                  <UserCheck className="h-4 w-4 sm:mr-2" />
+                  <span className="hidden sm:inline text-[10px] font-black uppercase tracking-widest">Attendance</span>
+                </Button>
+
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  className="h-9 w-9 sm:w-auto sm:px-4 rounded-xl bg-red-500/10 hover:bg-red-500 border-red-500/20 text-red-500 hover:text-white transition-all active:scale-95"
+                  onClick={handleEndSession}
+                >
+                  <Power className="h-4 w-4 sm:mr-2" />
+                  <span className="hidden sm:inline text-[10px] font-black uppercase tracking-widest">End Session</span>
+                </Button>
+              </>
+            )}
+          </div>
+        </div>
+
+        {activeSchedule && (
+          <div className="hidden lg:flex items-center px-6 py-2 bg-black/20 border-t border-white/5">
+            <div className="flex items-center gap-2 text-[10px] font-bold text-white/50 uppercase tracking-[0.2em]">
+              <Calendar className="h-3 w-3 text-[#fd5523]" />
+              <span>Currently Scheduled:</span>
+              <span className="text-white">{activeSchedule.title}</span>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Video Content */}
+      <div className="flex-1 relative flex min-h-0">
+        <div className="flex-1 relative bg-black min-h-[500px]">
+          {roomName && jwt && appId && (
+            <JaaSMeeting
+              appId={appId}
+              roomName={roomName}
+              jwt={jwt}
+              configOverwrite={{
+                startWithAudioMuted: true,
+                disableInviteFunctions: true,
+                enableWelcomePage: false,
+                prejoinPageEnabled: false,
+                backgroundColor: '#062e39',
+              }}
+              onReadyToClose={() => setHasJoined(false)}
+              getIFrameRef={(iframeRef) => {
+                iframeRef.style.height = '100%';
+                iframeRef.style.width = '100%';
+              }}
+              spinner={() => (
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 text-white/50 bg-[#062e39]">
+                  <Loader2 className="h-10 w-10 animate-spin text-[#fd5523]" />
+                  <p className="text-xs font-black uppercase tracking-widest">Configuring Studio...</p>
+                </div>
+              )}
+            />
+          )}
+        </div>
+
+        {/* Attendance Panel Drawer */}
+        <div className={cn(
+          "fixed inset-0 lg:static z-[100] lg:z-10 w-full bg-[#062e39]/95 lg:bg-[#062e39] backdrop-blur-xl lg:backdrop-blur-none flex flex-col transition-all duration-500 ease-in-out border-l border-white/10 shadow-2xl lg:shadow-none shrink-0 overflow-hidden",
+          showAttendance 
+            ? "translate-y-0 opacity-100 lg:w-96 lg:translate-y-0" 
+            : "translate-y-full opacity-0 lg:w-0 lg:border-none lg:translate-y-0"
+        )}>
+          <div className="relative p-6 border-b border-white/5 bg-black/40 lg:bg-transparent shrink-0">
+            <div className="lg:hidden absolute top-3 left-1/2 -translate-x-1/2 w-12 h-1.5 bg-white/10 rounded-full" />
+            
+            <div className="flex items-center justify-between mt-2 lg:mt-0">
+              <div>
+                <div className="flex items-center gap-2">
+                  <div className="h-2 w-2 rounded-full bg-[#fd5523] animate-pulse" />
+                  <h3 className="font-black text-sm uppercase tracking-[0.2em] text-white">Attendance</h3>
+                </div>
+                <p className="text-[10px] text-white/40 mt-1 uppercase font-bold tracking-widest flex items-center gap-2">
+                  <Users className="h-3 w-3" />
+                  {students.length} Students Enrolled
+                </p>
+              </div>
+              
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="h-10 w-10 rounded-2xl bg-white/5 text-white/40 hover:text-white hover:bg-white/10 transition-all" 
+                onClick={() => setShowAttendance(false)}
+              >
+                <X className="h-5 w-5" />
+              </Button>
+            </div>
+          </div>
+
+          <div className="flex-1 overflow-y-auto p-4 lg:p-6 space-y-4 scrollbar-hide">
+            {students.map((student) => {
+                const record = attendance.find(a => a.profile_id === student.id);
+                const status = record?.status || "present";
+                
+                return (
+                  <div 
+                    key={student.id} 
+                    className="group relative bg-gradient-to-b from-white/[0.08] to-transparent p-4 rounded-[2rem] border border-white/10 transition-all hover:border-[#fd5523]/30"
+                  >
+                    <div className="flex items-center gap-4 mb-4">
+                      <div className="relative">
+                        <div className="h-12 w-12 rounded-[1.25rem] bg-gradient-to-br from-white/20 to-white/5 overflow-hidden ring-2 ring-white/10 shrink-0 shadow-xl">
+                          {student.avatar_url ? (
+                            <img src={student.avatar_url} className="h-full w-full object-cover" alt={student.full_name} />
+                          ) : (
+                            <div className="h-full w-full flex items-center justify-center text-xs font-black text-white/50">
+                              {student.full_name?.split(' ').map((n:any) => n[0]).join('')}
+                            </div>
+                          )}
+                        </div>
+                        <div className={cn(
+                          "absolute -bottom-1 -right-1 h-4 w-4 rounded-full border-2 border-[#062e39] shadow-lg",
+                          status === 'present' ? "bg-emerald-500" : status === 'late' ? "bg-amber-500" : "bg-red-500"
+                        )} />
+                      </div>
+
+                      <div className="flex flex-col min-w-0">
+                        <span className="text-sm font-black text-white tracking-tight truncate">{student.full_name}</span>
+                        <span className="text-[10px] font-bold text-white/30 uppercase tracking-widest flex items-center gap-1">
+                          <ShieldCheck className="h-3 w-3" />
+                          Verified Student
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-2">
+                        {(['present', 'late', 'absent'] as const).map((s) => (
+                          <button 
+                            key={s}
+                            onClick={() => handleMarkAttendance(student.id, s)}
+                            className={cn(
+                              "h-10 text-[10px] font-black uppercase tracking-widest rounded-2xl transition-all duration-300 border flex flex-col items-center justify-center gap-0.5",
+                              status === s 
+                                ? s === 'present' 
+                                  ? "bg-emerald-500 border-emerald-400 text-white shadow-lg shadow-emerald-500/20" 
+                                  : s === 'late'
+                                    ? "bg-amber-500 border-amber-400 text-white shadow-lg shadow-amber-500/20"
+                                    : "bg-red-500 border-red-400 text-white shadow-lg shadow-red-500/20"
+                                : "bg-white/5 border-white/5 text-white/30 hover:bg-white/10 hover:border-white/10"
+                            )}
+                          >
+                            {s}
+                          </button>
+                        ))}
+                    </div>
+                  </div>
+                );
+            })}
+
+            {students.length === 0 && (
+              <div className="py-20 flex flex-col items-center justify-center opacity-20">
+                <Users className="h-12 w-12 text-white mb-4" />
+                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white">No data found</p>
+              </div>
+            )}
+          </div>
+
+          <div className="h-20 lg:hidden shrink-0" />
+        </div>
+      </div>
+    </div>
+  );
+}

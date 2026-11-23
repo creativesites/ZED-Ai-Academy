@@ -1,18 +1,25 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { OverviewTab } from "./OverviewTab";
-import { LiveSessionTab } from "./LiveSessionTab";
-import { NoticeBoardTab } from "./NoticeBoardTab";
-import { TimetableTab } from "./TimetableTab";
-import { MaterialsTab } from "./MaterialsTab";
-import { AssignmentsTab } from "./AssignmentsTab";
-import { DiscussionsTab } from "./DiscussionsTab";
-import { StudentsTab } from "./StudentsTab";
-import { GradebookTab } from "./GradebookTab";
-import { GroupsTab } from "./GroupsTab";
-import { SessionHistoryTab } from "./SessionHistoryTab";
-import { StudentProgressTab } from "./StudentProgressTab";
+import { StaffOverviewTab } from "./overview/staff/StaffOverviewTab";
+import { StudentOverviewTab } from "./overview/student/StudentOverviewTab";
+import { StaffLiveSessionTab } from "./live/staff/StaffLiveSessionTab";
+import { StudentLiveSessionTab } from "./live/student/StudentLiveSessionTab";
+import { StaffNoticeBoardTab } from "./notices/staff/StaffNoticeBoardTab";
+import { StudentNoticeBoardTab } from "./notices/student/StudentNoticeBoardTab";
+import { StaffTimetableTab } from "./timetable/staff/StaffTimetableTab";
+import { StudentTimetableTab } from "./timetable/student/StudentTimetableTab";
+import { StaffMaterialsTab } from "./materials/staff/StaffMaterialsTab";
+import { StudentMaterialsTab } from "./materials/student/StudentMaterialsTab";
+import { StaffAssignmentsTab } from "./assignments/staff/StaffAssignmentsTab";
+import { StudentAssignmentsTab } from "./assignments/student/StudentAssignmentsTab";
+import { StaffDiscussionsTab } from "./discussions/staff/StaffDiscussionsTab";
+import { StudentDiscussionsTab } from "./discussions/student/StudentDiscussionsTab";
+import { StudentsTab } from "./students/staff/StudentsTab";
+import { GradebookTab } from "./gradebook/staff/GradebookTab";
+import { GroupsTab } from "./groups/staff/GroupsTab";
+import { SessionHistoryTab } from "./history/staff/SessionHistoryTab";
+import { StudentProgressTab } from "./progress/student/StudentProgressTab";
 import {
   LayoutDashboard,
   MessageSquare,
@@ -451,22 +458,41 @@ export function ClassroomTabs({
         <div className="flex-1 flex flex-col relative min-h-0 min-w-0">
           {activeTab === "overview" && (
             <div className="p-4 md:p-6">
-              <OverviewTab
-                companyId={companyId}
-                companySlug={companySlug}
-                isAdminOrInstructor={isAdminOrInstructor}
-                selectedCohort={selectedCohort}
-                sessionState={sessionState}
-                onNavigateTab={(tab) => setActiveTab(tab as TabType)}
-                courses={courses}
-                announcements={announcements}
-                assignments={assignments}
-                materials={materials}
-                schedules={schedules}
-                studentProgress={studentProgress}
-                instructorStats={instructorStats}
-                instructors={instructors}
-              />
+              {isAdminOrInstructor ? (
+                <StaffOverviewTab
+                  companyId={companyId}
+                  companySlug={companySlug}
+                  isAdminOrInstructor={isAdminOrInstructor}
+                  selectedCohort={selectedCohort}
+                  sessionState={sessionState}
+                  onNavigateTab={(tab) => setActiveTab(tab as TabType)}
+                  courses={courses}
+                  announcements={announcements}
+                  assignments={assignments}
+                  materials={materials}
+                  schedules={schedules}
+                  studentProgress={studentProgress}
+                  instructorStats={instructorStats}
+                  instructors={instructors}
+                />
+              ) : (
+                <StudentOverviewTab
+                  companyId={companyId}
+                  companySlug={companySlug}
+                  isAdminOrInstructor={isAdminOrInstructor}
+                  selectedCohort={selectedCohort}
+                  sessionState={sessionState}
+                  onNavigateTab={(tab) => setActiveTab(tab as TabType)}
+                  courses={courses}
+                  announcements={announcements}
+                  assignments={assignments}
+                  materials={materials}
+                  schedules={schedules}
+                  studentProgress={studentProgress}
+                  instructorStats={instructorStats}
+                  instructors={instructors}
+                />
+              )}
             </div>
           )}
           {activeTab === "progress" && !isAdminOrInstructor && (
@@ -478,56 +504,114 @@ export function ClassroomTabs({
             />
           )}
           {activeTab === "session" && (
-            <LiveSessionTab
-              companyId={companyId}
-              isAdminOrInstructor={isAdminOrInstructor}
-              companySlug={companySlug}
-              activeCohortId={activeCohortId === "all" ? null : activeCohortId}
-              cohorts={cohorts}
-            />
+            isAdminOrInstructor ? (
+              <StaffLiveSessionTab
+                companyId={companyId}
+                isAdminOrInstructor={isAdminOrInstructor}
+                companySlug={companySlug}
+                activeCohortId={activeCohortId === "all" ? null : activeCohortId}
+                cohorts={cohorts}
+              />
+            ) : (
+              <StudentLiveSessionTab
+                companyId={companyId}
+                isAdminOrInstructor={isAdminOrInstructor}
+                companySlug={companySlug}
+                activeCohortId={activeCohortId === "all" ? null : activeCohortId}
+                cohorts={cohorts}
+              />
+            )
           )}
           {activeTab === "timetable" && (
-            <TimetableTab
-              companyId={companyId}
-              isAdminOrInstructor={isAdminOrInstructor}
-              companySlug={companySlug}
-            />
+            isAdminOrInstructor ? (
+              <StaffTimetableTab
+                companyId={companyId}
+                isAdminOrInstructor={isAdminOrInstructor}
+                companySlug={companySlug}
+              />
+            ) : (
+              <StudentTimetableTab
+                companyId={companyId}
+                isAdminOrInstructor={isAdminOrInstructor}
+                companySlug={companySlug}
+              />
+            )
           )}
           {activeTab === "materials" && (
-            <MaterialsTab
-              companyId={companyId}
-              companySlug={companySlug}
-              isAdminOrInstructor={isAdminOrInstructor}
-              cohorts={cohorts}
-              courses={courses}
-              activeCohortId={activeCohortId === "all" ? null : activeCohortId}
-            />
+            isAdminOrInstructor ? (
+              <StaffMaterialsTab
+                companyId={companyId}
+                companySlug={companySlug}
+                isAdminOrInstructor={isAdminOrInstructor}
+                cohorts={cohorts}
+                courses={courses}
+                activeCohortId={activeCohortId === "all" ? null : activeCohortId}
+              />
+            ) : (
+              <StudentMaterialsTab
+                companyId={companyId}
+                companySlug={companySlug}
+                isAdminOrInstructor={isAdminOrInstructor}
+                cohorts={cohorts}
+                courses={courses}
+                activeCohortId={activeCohortId === "all" ? null : activeCohortId}
+              />
+            )
           )}
           {activeTab === "assignments" && (
-            <AssignmentsTab
-              companyId={companyId}
-              companySlug={companySlug}
-              isAdminOrInstructor={isAdminOrInstructor}
-              selectedCohortId={activeCohortId}
-              cohorts={cohorts}
-              courses={courses}
-            />
+            isAdminOrInstructor ? (
+              <StaffAssignmentsTab
+                companyId={companyId}
+                companySlug={companySlug}
+                isAdminOrInstructor={isAdminOrInstructor}
+                selectedCohortId={activeCohortId}
+                cohorts={cohorts}
+                courses={courses}
+              />
+            ) : (
+              <StudentAssignmentsTab
+                companyId={companyId}
+                companySlug={companySlug}
+                isAdminOrInstructor={isAdminOrInstructor}
+                selectedCohortId={activeCohortId}
+                cohorts={cohorts}
+                courses={courses}
+              />
+            )
           )}
           {activeTab === "noticeboard" && (
-            <NoticeBoardTab
-              companyId={companyId}
-              isAdminOrInstructor={isAdminOrInstructor}
-              companySlug={companySlug}
-            />
+            isAdminOrInstructor ? (
+              <StaffNoticeBoardTab
+                companyId={companyId}
+                isAdminOrInstructor={isAdminOrInstructor}
+                companySlug={companySlug}
+              />
+            ) : (
+              <StudentNoticeBoardTab
+                companyId={companyId}
+                isAdminOrInstructor={isAdminOrInstructor}
+                companySlug={companySlug}
+              />
+            )
           )}
           {activeTab === "discussions" && (
-            <DiscussionsTab
-              companyId={companyId}
-              companySlug={companySlug}
-              isAdminOrInstructor={isAdminOrInstructor}
-              selectedCohortId={activeCohortId}
-              cohorts={cohorts}
-            />
+            isAdminOrInstructor ? (
+              <StaffDiscussionsTab
+                companyId={companyId}
+                companySlug={companySlug}
+                isAdminOrInstructor={isAdminOrInstructor}
+                selectedCohortId={activeCohortId}
+                cohorts={cohorts}
+              />
+            ) : (
+              <StudentDiscussionsTab
+                companyId={companyId}
+                companySlug={companySlug}
+                isAdminOrInstructor={isAdminOrInstructor}
+                selectedCohortId={activeCohortId}
+                cohorts={cohorts}
+              />
+            )
           )}
           {activeTab === "students" && isAdminOrInstructor && (
             <StudentsTab

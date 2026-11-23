@@ -102,7 +102,7 @@ function downloadIcsFile(lesson: any, companySlug: string) {
   toast.success("Calendar event (.ics) downloaded!");
 }
 
-export function TimetableTab({ companyId, isAdminOrInstructor, companySlug }: { companyId: string, isAdminOrInstructor: boolean, companySlug: string }) {
+export function StaffTimetableTab({ companyId, isAdminOrInstructor, companySlug }: { companyId: string, isAdminOrInstructor: boolean, companySlug: string }) {
   const [schedules, setSchedules] = useState<any[]>([]);
   const [groups, setGroups] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);

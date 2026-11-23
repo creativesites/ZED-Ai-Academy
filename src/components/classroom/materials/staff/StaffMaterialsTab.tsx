@@ -148,7 +148,7 @@ function getTypeMeta(type: string) {
   }
 }
 
-export function MaterialsTab({
+export function StaffMaterialsTab({
   companyId,
   companySlug,
   isAdminOrInstructor,

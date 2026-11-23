@@ -52,7 +52,7 @@ interface DiscussionsTabProps {
   cohorts?: { id: string; name: string }[];
 }
 
-export function DiscussionsTab({
+export function StaffDiscussionsTab({
   companyId,
   companySlug,
   isAdminOrInstructor,
