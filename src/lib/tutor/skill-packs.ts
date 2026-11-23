@@ -4,7 +4,14 @@ import type { SkillPack } from "./scenario.ts";
 // placed after the platform rules and before the persona. Keep them short and practical:
 // the model needs method and examples, not essays.
 
-export type SkillPackId = "language-zh" | "language-es" | "language-fr" | "general-tutor";
+export type SkillPackId =
+  | "language-zh"
+  | "language-es"
+  | "language-fr"
+  | "language-bem"
+  | "language-ny"
+  | "language-tog"
+  | "general-tutor";
 
 const LANGUAGE_POLICY = `Language policy (how much target language to use, by learner level):
 - Beginner (A1 / HSK1-2): mostly the learner's language for instructions; short target-language phrases with translation; repeat key phrases slowly.
@@ -46,6 +53,22 @@ Method:
 - Gender and agreement: correct the article with the noun in every recast (une table, un livre) rather than as a separate lesson.
 - Use daily, practical vocabulary and the scenario's target items.`,
 
+  "language-bem": `Skill pack: Ichibemba / Bemba (bem).
+- Teach natural everyday Zambian Bemba greetings, politeness markers (mwapoleni, shani, natotela sana, ba), and practical market, workplace, and family dialogue.
+- Contrast noun classes and subject concords gently through recasting rather than heavy grammar labels.
+- Keep Bemba phrases phonetically clear with English support when the learner is A1/A2; ask them to reply aloud with one full polite expression per turn.
+- Use show_card for new Bemba words/phrases with plain phonetic guidance and English meaning.`,
+
+  "language-ny": `Skill pack: Chinyanja / Nyanja (ny).
+- Teach everyday Lusaka and Eastern Zambian Chinyanja (muli bwanji, zikomo, chabwino, ndi-, ku-) across greetings, shops, clinics, and work situations.
+- Reinforce polite plural forms (a-, mu-, -ni) for elders, customers, and colleagues.
+- Keep turns short, warm, and conversational; show key Nyanja words with show_card and practical examples.`,
+
+  "language-tog": `Skill pack: Chitonga / Tonga (tog).
+- Teach everyday Southern Zambian Chitonga greetings (mwabuka buti, twalumba, kabotu), numbers, and practical community/workplace exchanges.
+- Model respectful forms for elders and customers, and contrast common verb prefixes gently through natural recasts.
+- Keep phrases concise with clear English glosses for beginners and use show_card for vocabulary review.`,
+
   "general-tutor": `Skill pack: general teacher (any subject).
 - Teach one idea per turn. Explain with a concrete, local, everyday example before any abstraction (small businesses, markets, farming, offices, phones and mobile money in Zambia work well).
 - Use show_board to make the idea visible: bullets or steps for a process, equation for a worked calculation, code for code, a table for a comparison. Reveal items as you talk about them.
@@ -69,7 +92,9 @@ const GENERAL_FEEDBACK_STYLE = `Feedback style:
 /** Maps a scenario's skill pack to its prompt fragment. Unknown or unmapped packs use the general teacher. */
 export function skillPackPrompt(pack: SkillPack | string): string {
   const id = toSkillPackId(pack);
-  if (id === "general-tutor") return `${SKILL_PACK_PROMPTS[id]}\n\n${GENERAL_FEEDBACK_STYLE}`;
+  if (id === "general-tutor") {
+    return `${SKILL_PACK_PROMPTS[id]}\n\n${GENERAL_FEEDBACK_STYLE}`;
+  }
   return `${SKILL_PACK_PROMPTS[id]}\n\n${LANGUAGE_POLICY}\n\n${CORRECTION_STYLE}`;
 }
 
@@ -88,6 +113,15 @@ export function skillPackLanguage(pack: SkillPack | string): "zh" | "es" | "fr" 
 }
 
 export function toSkillPackId(pack: string): SkillPackId {
-  if (pack === "language-zh" || pack === "language-es" || pack === "language-fr") return pack;
+  if (
+    pack === "language-zh" ||
+    pack === "language-es" ||
+    pack === "language-fr" ||
+    pack === "language-bem" ||
+    pack === "language-ny" ||
+    pack === "language-tog"
+  ) {
+    return pack;
+  }
   return "general-tutor";
 }

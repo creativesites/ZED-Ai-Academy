@@ -7,7 +7,9 @@ export const SESSION_ORIGINS = ["lesson", "assignment", "practice", "ask", "plac
 export type SessionOrigin = (typeof SESSION_ORIGINS)[number];
 
 export const SKILL_PACKS = ["language-zh", "language-es", "language-fr", "health-sim", "general-tutor"] as const;
-export type SkillPack = (typeof SKILL_PACKS)[number];
+export const LOCAL_LANGUAGE_PACKS = ["language-bem", "language-ny", "language-tog"] as const;
+export const ALL_SKILL_PACKS = [...SKILL_PACKS, ...LOCAL_LANGUAGE_PACKS] as const;
+export type SkillPack = (typeof ALL_SKILL_PACKS)[number];
 
 export const MODES = ["live", "voice", "text"] as const;
 export type Mode = (typeof MODES)[number];
@@ -33,7 +35,7 @@ export const scenarioTargetItemSchema = z.object({
 });
 
 export const scenarioSchema = z.object({
-  skill_pack: z.enum(SKILL_PACKS),
+  skill_pack: z.enum(ALL_SKILL_PACKS),
   persona_id: nonEmpty,
   title: nonEmpty,
   goal: nonEmpty,

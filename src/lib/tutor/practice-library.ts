@@ -28,6 +28,9 @@ const SKILL_PACK_LABEL: Record<SkillPack, string> = {
   "language-zh": "Mandarin Chinese",
   "language-es": "Spanish",
   "language-fr": "French",
+  "language-bem": "Bemba (Ichibemba)",
+  "language-ny": "Nyanja (Chinyanja)",
+  "language-tog": "Tonga (Chitonga)",
   "health-sim": "Health conversations",
   "general-tutor": "General",
 };

@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { SCENE_ARTBOARDS } from "../rive-driver.ts";
-import { SCENARIO_STYLES, SKILL_PACKS } from "../scenario.ts";
+import { ALL_SKILL_PACKS, SCENARIO_STYLES } from "../scenario.ts";
 import type { PromptScenario } from "../server/prompt.ts";
 import type { HistoryTurn } from "../server/turn-pipeline.ts";
 
@@ -34,7 +34,7 @@ export const previewFlowPayloadSchema = z.object({
   style: z.enum(SCENARIO_STYLES).default("guided_lesson"),
   scene: z.enum(SCENE_ARTBOARDS).optional().nullable(),
   maxMinutes: z.number().int().min(1).max(30).default(7),
-  skillPack: z.enum(SKILL_PACKS).default("general-tutor"),
+  skillPack: z.enum(ALL_SKILL_PACKS).default("general-tutor"),
   level: z.string().trim().max(40).optional().nullable(),
   steps: z.array(previewStepSchema).max(10).default([]),
   targetItems: z.array(previewTargetItemSchema).max(12).default([]),
