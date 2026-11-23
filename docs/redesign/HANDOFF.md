@@ -10,7 +10,7 @@ agent letter and phase, e.g. `2026-11-24 · A · A0.1`.
 | A0.1 academy tree moved to `(academy)` | ✅ merged to `main` |
 | A0 foundations merged | ⬜ |
 | B0 security & routing merged | ⬜ |
-| B1 classroom split commit | ⬜ |
+| B1 classroom split commit | ✅ landed in `080dc77` (`redesign/b1-student-shell`) |
 | B1 student shell merged | ⬜ |
 | A1 staff shell merged | ⬜ |
 | `MobileBottomNav` deleted | ⬜ |
@@ -37,3 +37,4 @@ agent letter and phase, e.g. `2026-11-24 · A · A0.1`.
 
 <!-- `date · agent · phase · branch/PR · summary · what the other agent should know` -->
 - `2026-11-23 · A · A0.1 · main (PR #21) · A0.1 merged — academy tree is now under (academy) · Moved src/app/(marketing)/academy/** to src/app/(academy)/academy/** with a clean (academy)/layout.tsx (no legacy CSS, no marketing-shell, no MobileBottomNav) and a temporary legacy CSS bridge in academy/[domain]/page.tsx until B3.`
+- `2026-11-23 · B · B1 · redesign/b1-student-shell (080dc77) · Classroom split landed in 080dc77 — A may now own **/staff/** · Mechanical split of src/components/classroom/ into <feature>/{student,staff,shared}/** with zero behaviour or style changes.`
