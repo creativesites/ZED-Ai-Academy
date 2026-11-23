@@ -2,8 +2,14 @@
 
 import { revalidatePath } from "next/cache";
 import { auth } from "@clerk/nextjs/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { requireTenantMember, requireTenantTeacher } from "@/lib/tenants/access";
+import {
+  aggregateSpeakingMetricsByUser,
+  emptyUserSpeakingMetrics,
+  extractReportAverageScore,
+  speakingMsToMinutes,
+} from "@/lib/classroom/speaking-metrics";
 
 type ClassScheduleInsert = {
   company_id: string;
@@ -933,6 +939,10 @@ export type StudentGradebookRecord = {
   assignments?: GradebookAssignmentRecord[];
   avgAssignmentScore?: number;
   submittedAssignmentsCount?: number;
+  speakingMinutes: number;
+  scenariosCompleted: number;
+  avgSpeakingScore: number | null;
+  flaggedSessionsCount: number;
   status: "active" | "completed" | "inactive";
   lastActive: string | null;
 };
@@ -946,6 +956,9 @@ export type AcademyGradebookData = {
     avgQuizScore: number;
     avgAssignmentScore?: number;
     certificatesIssued: number;
+    totalSpeakingMinutes: number;
+    totalScenariosCompleted: number;
+    avgSpeakingScore: number | null;
   };
 };
 
@@ -971,7 +984,15 @@ export async function getAcademyGradebook(companyId: string): Promise<AcademyGra
     return {
       courses: [],
       students: [],
-      metrics: { totalStudents: 0, avgCompletionRate: 0, avgQuizScore: 0, certificatesIssued: 0 },
+      metrics: {
+        totalStudents: 0,
+        avgCompletionRate: 0,
+        avgQuizScore: 0,
+        certificatesIssued: 0,
+        totalSpeakingMinutes: 0,
+        totalScenariosCompleted: 0,
+        avgSpeakingScore: null,
+      },
     };
   }
 
@@ -1047,7 +1068,15 @@ export async function getAcademyGradebook(companyId: string): Promise<AcademyGra
     return {
       courses,
       students: [],
-      metrics: { totalStudents: 0, avgCompletionRate: 0, avgQuizScore: 0, certificatesIssued: 0 },
+      metrics: {
+        totalStudents: 0,
+        avgCompletionRate: 0,
+        avgQuizScore: 0,
+        certificatesIssued: 0,
+        totalSpeakingMinutes: 0,
+        totalScenariosCompleted: 0,
+        avgSpeakingScore: null,
+      },
     };
   }
 
@@ -1105,6 +1134,34 @@ export async function getAcademyGradebook(companyId: string): Promise<AcademyGra
   const attemptRows = attemptsData ?? [];
   const certRows = certsData ?? [];
   const submissionRows = assignmentSubmissionsData ?? [];
+
+  // 5b. Fetch AI speaking practice sessions & reports for enrolled students (resilient fallback)
+  let speakingMetrics = aggregateSpeakingMetricsByUser([], []);
+  try {
+    const db = createServiceClient();
+    const { data: tutorSessionsData } = await db
+      .from("tutor_sessions")
+      .select("id, user_id, learner_speaking_ms, status, started_at, scenario_id, shared_with_teacher")
+      .eq("company_id", companyId)
+      .in("user_id", studentIds);
+
+    const sessionRows = tutorSessionsData ?? [];
+    let reportRows: { session_id: string; scores: unknown }[] = [];
+    if (sessionRows.length > 0) {
+      const { data: tutorReportsData } = await db
+        .from("tutor_reports")
+        .select("session_id, scores")
+        .in(
+          "session_id",
+          sessionRows.map((s) => s.id),
+        );
+      reportRows = tutorReportsData ?? [];
+    }
+
+    speakingMetrics = aggregateSpeakingMetricsByUser(sessionRows, reportRows);
+  } catch (speakingErr) {
+    console.warn("Unable to aggregate tutor speaking metrics for gradebook:", speakingErr);
+  }
 
   // Group assignment submissions by student
   const assignmentsByUser = new Map<string, GradebookAssignmentRecord[]>();
@@ -1224,13 +1281,24 @@ export async function getAcademyGradebook(companyId: string): Promise<AcademyGra
     const lastAttemptDate = userAttempts[0]?.created_at;
     const lastCertDate = userCerts[0]?.issued_at;
     const lastSubDate = userAssignments[0]?.submitted_at;
-    const dates = [lastAttemptDate, lastCertDate, lastSubDate].filter(Boolean) as string[];
+    const userSpeaking = speakingMetrics.byUser.get(p.id) ?? emptyUserSpeakingMetrics();
+    const dates = [
+      lastAttemptDate,
+      lastCertDate,
+      lastSubDate,
+      userSpeaking.lastSpeakingAt,
+    ].filter(Boolean) as string[];
     const lastActive = dates.length > 0 ? dates.sort().reverse()[0] : null;
 
     let status: "active" | "completed" | "inactive" = "active";
     if (completionPercent >= 100 || userCerts.length > 0) {
       status = "completed";
-    } else if (completionPercent === 0 && userAttempts.length === 0 && userAssignments.length === 0) {
+    } else if (
+      completionPercent === 0 &&
+      userAttempts.length === 0 &&
+      userAssignments.length === 0 &&
+      userSpeaking.totalSessions === 0
+    ) {
       status = "inactive";
     }
 
@@ -1250,6 +1318,10 @@ export async function getAcademyGradebook(companyId: string): Promise<AcademyGra
       assignments: userAssignments,
       avgAssignmentScore,
       submittedAssignmentsCount: userAssignments.length,
+      speakingMinutes: userSpeaking.speakingMinutes,
+      scenariosCompleted: userSpeaking.scenariosCompleted,
+      avgSpeakingScore: userSpeaking.avgSpeakingScore,
+      flaggedSessionsCount: userSpeaking.flaggedSessionsCount,
       status,
       lastActive,
     };
@@ -1273,6 +1345,9 @@ export async function getAcademyGradebook(companyId: string): Promise<AcademyGra
       avgQuizScore,
       avgAssignmentScore,
       certificatesIssued: certRows.length,
+      totalSpeakingMinutes: speakingMetrics.summary.totalSpeakingMinutes,
+      totalScenariosCompleted: speakingMetrics.summary.totalScenariosCompleted,
+      avgSpeakingScore: speakingMetrics.summary.avgSpeakingScore,
     },
   };
 }
@@ -1286,6 +1361,20 @@ export interface MyClassroomProgress {
   attendancePercent: number;
   totalClassesAttended: number;
   totalClassSessions: number;
+  speakingMinutes: number;
+  scenariosCompleted: number;
+  avgSpeakingScore: number | null;
+  speakingSessions: Array<{
+    id: string;
+    scenario_title: string;
+    origin: string;
+    mode: string;
+    status: string;
+    started_at: string;
+    speaking_minutes: number;
+    score: number | null;
+    teacher_feedback: string | null;
+  }>;
   nextLesson?: {
     id: string;
     title: string;
@@ -1518,6 +1607,81 @@ export async function getMyClassroomProgress(
     file_url: c.file_url,
   }));
 
+  // 10. Fetch AI speaking practice sessions & scores
+  let speakingMetrics = emptyUserSpeakingMetrics();
+  let speakingSessions: MyClassroomProgress["speakingSessions"] = [];
+  try {
+    const db = createServiceClient();
+    const { data: mySessions } = await db
+      .from("tutor_sessions")
+      .select(
+        "id, user_id, origin, mode, status, started_at, learner_speaking_ms, scenario_id, shared_with_teacher"
+      )
+      .eq("company_id", companyId)
+      .eq("user_id", userId)
+      .order("started_at", { ascending: false })
+      .limit(25);
+
+    const sessionList = mySessions ?? [];
+    const scenarioIds = Array.from(
+      new Set(sessionList.map((s) => s.scenario_id).filter((id): id is string => Boolean(id))),
+    );
+    let reportRows: { session_id: string; scores: unknown; tone_stats: unknown }[] = [];
+    const scenarioTitleById = new Map<string, string>();
+    if (sessionList.length > 0) {
+      const [{ data: reps }, { data: scens }] = await Promise.all([
+        db
+          .from("tutor_reports")
+          .select("session_id, scores, tone_stats")
+          .in(
+            "session_id",
+            sessionList.map((s) => s.id),
+          ),
+        scenarioIds.length > 0
+          ? db.from("practice_scenarios").select("id, title").in("id", scenarioIds)
+          : Promise.resolve({ data: [] as { id: string; title: string }[] }),
+      ]);
+      reportRows = reps ?? [];
+      for (const sc of scens ?? []) {
+        scenarioTitleById.set(sc.id, sc.title);
+      }
+    }
+
+    const aggregated = aggregateSpeakingMetricsByUser(sessionList, reportRows);
+    speakingMetrics = aggregated.byUser.get(userId) ?? emptyUserSpeakingMetrics();
+
+    const reportBySession = new Map(reportRows.map((r) => [r.session_id, r]));
+    speakingSessions = sessionList.map((s) => {
+      const rep = reportBySession.get(s.id);
+      const toneStats =
+        rep?.tone_stats && typeof rep.tone_stats === "object" && !Array.isArray(rep.tone_stats)
+          ? (rep.tone_stats as Record<string, unknown>)
+          : null;
+      const reviewObj =
+        toneStats?.teacher_review && typeof toneStats.teacher_review === "object" && !Array.isArray(toneStats.teacher_review)
+          ? (toneStats.teacher_review as Record<string, unknown>)
+          : null;
+      const feedbackNote =
+        typeof reviewObj?.notes === "string" && reviewObj.notes.trim().length > 0
+          ? reviewObj.notes
+          : null;
+
+      return {
+        id: s.id,
+        scenario_title: (s.scenario_id && scenarioTitleById.get(s.scenario_id)) || "AI Teacher Practice",
+        origin: s.origin,
+        mode: s.mode,
+        status: s.status,
+        started_at: s.started_at,
+        speaking_minutes: speakingMsToMinutes(s.learner_speaking_ms),
+        score: rep ? extractReportAverageScore(rep.scores) : null,
+        teacher_feedback: feedbackNote,
+      };
+    });
+  } catch (speakErr) {
+    console.warn("Unable to load learner speaking metrics:", speakErr);
+  }
+
   return {
     completionPercent,
     completedLessons,
@@ -1527,6 +1691,10 @@ export async function getMyClassroomProgress(
     attendancePercent,
     totalClassesAttended,
     totalClassSessions,
+    speakingMinutes: speakingMetrics.speakingMinutes,
+    scenariosCompleted: speakingMetrics.scenariosCompleted,
+    avgSpeakingScore: speakingMetrics.avgSpeakingScore,
+    speakingSessions,
     nextLesson,
     quizzes: quizList,
     assignments: assignmentList,

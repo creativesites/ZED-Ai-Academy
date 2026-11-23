@@ -18,6 +18,7 @@ import {
   CheckCheck,
   XCircle,
   HelpCircle,
+  Mic,
   UserCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -42,7 +43,9 @@ export function StudentProgressTab({
 }: StudentProgressTabProps) {
   const [progress, setProgress] = useState<MyClassroomProgress | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeSubTab, setActiveSubTab] = useState<"assignments" | "quizzes" | "attendance" | "certificates">("assignments");
+  const [activeSubTab, setActiveSubTab] = useState<
+    "assignments" | "quizzes" | "speaking" | "attendance" | "certificates"
+  >("assignments");
 
   useEffect(() => {
     async function load() {
@@ -105,8 +108,8 @@ export function StudentProgressTab({
           )}
         </div>
 
-        {/* 4 Performance Metric Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3 mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-white/10">
+        {/* 5 Performance Metric Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5 sm:gap-3 mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-white/10">
           <div className="p-3.5 sm:p-4 rounded-xl sm:rounded-2xl bg-white/5 backdrop-blur-sm border border-white/10">
             <span className="text-[10px] font-black uppercase tracking-wider text-slate-300 block">
               Curriculum Progress
@@ -143,6 +146,23 @@ export function StudentProgressTab({
             </div>
             <span className="text-[10px] text-sky-300 font-bold block mt-2">
               {progress.assignments.length} Submissions
+            </span>
+          </div>
+
+          <div className="p-3.5 sm:p-4 rounded-xl sm:rounded-2xl bg-white/5 backdrop-blur-sm border border-white/10">
+            <span className="text-[10px] font-black uppercase tracking-wider text-slate-300 block">
+              AI Speaking Practice
+            </span>
+            <div className="flex items-baseline gap-1.5 mt-1">
+              <span className="text-xl sm:text-2xl font-black text-white">{progress.speakingMinutes}m</span>
+              <span className="text-[10px] text-slate-300">
+                ({progress.scenariosCompleted} completed)
+              </span>
+            </div>
+            <span className="text-[10px] text-teal-300 font-bold block mt-2">
+              {progress.avgSpeakingScore !== null
+                ? `${progress.avgSpeakingScore}% Avg Score`
+                : "Practice with AI Teacher"}
             </span>
           </div>
 
@@ -189,6 +209,19 @@ export function StudentProgressTab({
         >
           <TrendingUp className="h-3.5 w-3.5" />
           Quiz Results ({progress.quizzes.length})
+        </button>
+
+        <button
+          onClick={() => setActiveSubTab("speaking")}
+          className={cn(
+            "min-h-[44px] shrink-0 whitespace-nowrap px-3.5 sm:px-4 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-2",
+            activeSubTab === "speaking"
+              ? "bg-[#062e39] text-white shadow-sm"
+              : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
+          )}
+        >
+          <Mic className="h-3.5 w-3.5" />
+          Speaking Practice ({progress.speakingSessions.length})
         </button>
 
         <button
@@ -321,6 +354,80 @@ export function StudentProgressTab({
                       {quiz.passed ? "Passed" : "Needs Review"}
                     </span>
                   </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* B2. AI Speaking Practice */}
+      {activeSubTab === "speaking" && (
+        <div className="space-y-3">
+          {progress.speakingSessions.length === 0 ? (
+            <div className="p-6 sm:p-8 text-center text-slate-400 bg-white rounded-2xl sm:rounded-3xl border border-slate-100">
+              <Mic className="h-8 w-8 text-slate-300 mx-auto mb-2" />
+              <p className="text-xs font-bold text-slate-600">No AI speaking sessions recorded yet</p>
+              <p className="text-[11px] text-slate-400 mt-1">
+                Complete lesson speaking activities or visit the Teacher&apos;s Room to practise with your AI Teacher.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
+              {progress.speakingSessions.map((sess) => (
+                <div
+                  key={sess.id}
+                  className="p-4 sm:p-5 rounded-2xl sm:rounded-3xl bg-white border border-slate-100 shadow-sm space-y-3 hover:border-slate-200 transition-all"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">
+                        {sess.origin} · {sess.mode}
+                      </span>
+                      <h4 className="text-sm font-black text-[#062e39] mt-0.5 break-words">
+                        {sess.scenario_title}
+                      </h4>
+                    </div>
+                    <div className="shrink-0 text-right">
+                      {sess.score !== null ? (
+                        <span className="text-lg font-black text-teal-600">{sess.score}%</span>
+                      ) : (
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
+                          {sess.speaking_minutes}m
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-400 font-medium">
+                    <span className="flex items-center gap-1">
+                      <Clock className="h-3 w-3" />
+                      {new Date(sess.started_at).toLocaleDateString()} · ~{sess.speaking_minutes}m spoken
+                    </span>
+                    <span
+                      className={cn(
+                        "capitalize px-2 py-0.5 rounded-md text-[10px] font-bold",
+                        sess.status === "completed"
+                          ? "bg-emerald-50 text-emerald-700"
+                          : sess.status === "flagged"
+                            ? "bg-amber-50 text-amber-700"
+                            : "bg-slate-50 text-slate-600",
+                      )}
+                    >
+                      {sess.status}
+                    </span>
+                  </div>
+
+                  {sess.teacher_feedback && (
+                    <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-100 space-y-1">
+                      <span className="text-[10px] font-black uppercase tracking-wider text-slate-500 block">
+                        Instructor Review Note:
+                      </span>
+                      <p className="text-xs text-slate-700 font-medium leading-relaxed">
+                        {sess.teacher_feedback}
+                      </p>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

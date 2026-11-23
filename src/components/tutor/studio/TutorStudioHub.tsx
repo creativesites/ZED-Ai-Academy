@@ -21,6 +21,9 @@ import {
   Mic,
   ExternalLink,
   BarChart3,
+  Flag,
+  Share2,
+  MessageSquare,
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -30,10 +33,12 @@ import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/compone
 import { PersonaStudio } from "./PersonaStudio";
 import { ScenarioEditorModal } from "./ScenarioEditorModal";
 import { TeacherInsightsPanel } from "./TeacherInsightsPanel";
+import { SessionReviewDrawerModal } from "./SessionReviewDrawerModal";
 import { Teacher } from "@/components/tutor/avatar/Teacher";
 import { DEFAULT_PERSONA_LOOK } from "@/components/tutor/avatar/types";
 import { TutorSession } from "@/components/tutor/practice/TutorSession";
 import { TUTOR_STYLE_LABELS, overlayModes } from "@/lib/tutor/tutor-session-block";
+import { extractReportAverageScore, speakingMsToMinutes } from "@/lib/classroom/speaking-metrics";
 import {
   deleteScenario,
   updateScenarioQuick,
@@ -41,6 +46,7 @@ import {
   type PersonaRecord,
   type ScenarioRecord,
   type StaffTutorSessionSummary,
+  type TeacherSessionReview,
   type TutorSettingsRecord,
 } from "@/actions/tutor-authoring";
 
@@ -64,11 +70,41 @@ export function TutorStudioHub({
   const [personas, setPersonas] = useState<PersonaRecord[]>(initialPersonas);
   const [scenarios, setScenarios] = useState<ScenarioRecord[]>(initialScenarios);
   const [settings, setSettings] = useState<TutorSettingsRecord>(initialSettings);
+  const [sessions, setSessions] = useState<StaffTutorSessionSummary[]>(initialSessions);
+  const [sessionFilter, setSessionFilter] = useState<"all" | "flagged" | "shared" | "reviewed">("all");
+  const [reviewingSessionId, setReviewingSessionId] = useState<string | null>(null);
 
   const [editorOpen, setEditorOpen] = useState(false);
   const [editingScenario, setEditingScenario] = useState<ScenarioRecord | null>(null);
   const [previewScenario, setPreviewScenario] = useState<ScenarioRecord | null>(null);
   const [isBusy, startBusy] = useTransition();
+
+  const flaggedSessionsCount = sessions.filter((s) => s.status === "flagged").length;
+  const filteredSessions = sessions.filter((sess) => {
+    if (sessionFilter === "flagged") return sess.status === "flagged";
+    if (sessionFilter === "shared") return sess.shared_with_teacher;
+    if (sessionFilter === "reviewed") return Boolean(sess.has_teacher_review);
+    return true;
+  });
+
+  function handleSessionReviewed(
+    sessionId: string,
+    updates: { status: string; teacher_review: TeacherSessionReview | null },
+  ) {
+    setSessions((prev) =>
+      prev.map((s) =>
+        s.id === sessionId
+          ? {
+              ...s,
+              status: updates.status,
+              has_teacher_review: Boolean(updates.teacher_review),
+              teacher_review_notes: updates.teacher_review?.notes ?? null,
+              teacher_reviewed_at: updates.teacher_review?.reviewed_at ?? null,
+            }
+          : s,
+      ),
+    );
+  }
 
   function openNewScenario() {
     setEditingScenario(null);
@@ -219,7 +255,12 @@ export function TutorStudioHub({
             className="h-10 rounded-xl px-4 text-xs font-bold data-[state=active]:bg-white data-[state=active]:text-[#062e39] data-[state=active]:shadow-sm"
           >
             <Settings className="mr-1.5 h-4 w-4 text-[#fd5523]" />
-            Settings &amp; Activity ({initialSessions.length})
+            Settings &amp; Review Queue ({sessions.length})
+            {flaggedSessionsCount > 0 && (
+              <span className="ml-1.5 rounded-full bg-red-100 px-1.5 py-0.5 text-[10px] font-black text-red-700">
+                {flaggedSessionsCount}
+              </span>
+            )}
           </TabsTrigger>
         </TabsList>
 
@@ -490,30 +531,88 @@ export function TutorStudioHub({
             </Button>
           </div>
 
-          {/* Staff-Visible Speaking Activity */}
+          {/* Staff-Visible Speaking Activity & Teacher Review Queue */}
           <div className="space-y-4 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-            <div>
-              <h2 className="text-base font-bold text-[#062e39]">Recent Speaking Sessions</h2>
-              <p className="text-xs text-slate-500">
-                Shows lesson practice, assigned scenarios, learner-shared sessions, and flagged sessions.
-              </p>
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <h2 className="text-base font-bold text-[#062e39]">
+                  Teacher Review Queue &amp; Speaking Activity
+                </h2>
+                <p className="text-xs text-slate-500">
+                  Click any lesson, shared, or flagged speaking session to inspect transcript turns, rubric scores, and leave feedback.
+                </p>
+              </div>
+              {flaggedSessionsCount > 0 && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2.5 py-1 text-[11px] font-bold text-red-700 border border-red-200">
+                  <Flag className="h-3 w-3" />
+                  {flaggedSessionsCount} flagged
+                </span>
+              )}
             </div>
 
-            {initialSessions.length === 0 ? (
+            <div className="flex flex-wrap items-center gap-1.5">
+              {(
+                [
+                  { id: "all", label: `All (${sessions.length})` },
+                  { id: "flagged", label: `Flagged (${flaggedSessionsCount})` },
+                  {
+                    id: "shared",
+                    label: `Shared (${sessions.filter((s) => s.shared_with_teacher).length})`,
+                  },
+                  {
+                    id: "reviewed",
+                    label: `Reviewed (${sessions.filter((s) => s.has_teacher_review).length})`,
+                  },
+                ] as const
+              ).map((pill) => (
+                <button
+                  key={pill.id}
+                  type="button"
+                  onClick={() => setSessionFilter(pill.id)}
+                  className={`rounded-lg px-2.5 py-1 text-[11px] font-bold transition-colors ${
+                    sessionFilter === pill.id
+                      ? "bg-[#062e39] text-white"
+                      : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                  }`}
+                >
+                  {pill.label}
+                </button>
+              ))}
+            </div>
+
+            {filteredSessions.length === 0 ? (
               <div className="rounded-2xl border border-dashed border-slate-200 p-8 text-center text-xs text-slate-400">
-                No completed lesson or shared speaking sessions yet.
+                {sessions.length === 0
+                  ? "No completed lesson or shared speaking sessions yet."
+                  : `No sessions matching "${sessionFilter}" filter.`}
               </div>
             ) : (
               <div className="max-h-[420px] space-y-2.5 overflow-y-auto pr-1">
-                {initialSessions.map((sess) => {
-                  const mins = Math.max(1, Math.round(sess.learner_speaking_ms / 60000));
+                {filteredSessions.map((sess) => {
+                  const mins = speakingMsToMinutes(sess.learner_speaking_ms);
+                  const avgScore = extractReportAverageScore(sess.scores);
                   return (
-                    <div
+                    <button
+                      type="button"
                       key={sess.id}
-                      className="flex items-center justify-between gap-3 rounded-2xl border border-slate-100 bg-slate-50/70 p-3.5"
+                      onClick={() => setReviewingSessionId(sess.id)}
+                      className="flex w-full items-center justify-between gap-3 rounded-2xl border border-slate-100 bg-slate-50/70 p-3.5 text-left transition-colors hover:border-[#062e39]/30 hover:bg-white"
                     >
                       <div className="min-w-0">
-                        <p className="truncate text-sm font-bold text-[#062e39]">{sess.learner_name}</p>
+                        <div className="flex items-center gap-2">
+                          <p className="truncate text-sm font-bold text-[#062e39]">{sess.learner_name}</p>
+                          {sess.shared_with_teacher && (
+                            <span title="Shared with teacher" className="inline-flex shrink-0">
+                              <Share2 className="h-3 w-3 text-indigo-500" />
+                            </span>
+                          )}
+                          {sess.has_teacher_review && (
+                            <span className="inline-flex items-center gap-1 rounded-md bg-emerald-50 px-1.5 py-0.5 text-[10px] font-bold text-emerald-700">
+                              <MessageSquare className="h-2.5 w-2.5" />
+                              Reviewed
+                            </span>
+                          )}
+                        </div>
                         <p className="truncate text-xs text-slate-500">{sess.scenario_title}</p>
                         <div className="mt-1 flex flex-wrap items-center gap-2 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
                           <span>{sess.origin}</span>
@@ -523,6 +622,12 @@ export function TutorStudioHub({
                           <span className="inline-flex items-center gap-0.5">
                             <Clock className="h-3 w-3" /> ~{mins}m
                           </span>
+                          {avgScore !== null && (
+                            <>
+                              <span>·</span>
+                              <span className="text-teal-700">{avgScore}% score</span>
+                            </>
+                          )}
                         </div>
                       </div>
                       <span
@@ -535,9 +640,10 @@ export function TutorStudioHub({
                         }`}
                       >
                         {sess.status === "completed" && <CheckCircle2 className="h-3 w-3" />}
+                        {sess.status === "flagged" && <Flag className="h-3 w-3" />}
                         {sess.status}
                       </span>
-                    </div>
+                    </button>
                   );
                 })}
               </div>
@@ -557,6 +663,15 @@ export function TutorStudioHub({
           onSaved={handleScenarioSaved}
         />
       )}
+
+      {/* Session Transcript & Teacher Review Modal */}
+      <SessionReviewDrawerModal
+        open={Boolean(reviewingSessionId)}
+        onOpenChange={(o) => !o && setReviewingSessionId(null)}
+        companyId={companyId}
+        sessionId={reviewingSessionId}
+        onReviewed={handleSessionReviewed}
+      />
 
       {/* Live Preview Dialog */}
       <Dialog open={Boolean(previewScenario)} onOpenChange={(o) => !o && setPreviewScenario(null)}>

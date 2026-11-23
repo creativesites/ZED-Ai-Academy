@@ -176,6 +176,13 @@ export type TutorSettingsRecord = {
   brand_look?: Partial<TutorPersonaLook> | null;
 };
 
+export type TeacherSessionReview = {
+  notes: string;
+  reviewed_by: string;
+  reviewed_by_name: string | null;
+  reviewed_at: string;
+};
+
 export type StaffTutorSessionSummary = {
   id: string;
   origin: string;
@@ -189,6 +196,66 @@ export type StaffTutorSessionSummary = {
   learner_name: string;
   scenario_title: string;
   scores: Record<string, number> | null;
+  has_teacher_review?: boolean;
+  teacher_review_notes?: string | null;
+  teacher_reviewed_at?: string | null;
+};
+
+export type TutorTurnTranscriptItem = {
+  id: string;
+  idx: number;
+  learner_text: string | null;
+  learner_audio_ms: number | null;
+  latency_ms: number | null;
+  created_at: string;
+  teacher_says: Array<{
+    text: string;
+    romanization?: string;
+    translation?: string;
+  }>;
+  mistakes_noted: Array<{
+    said: string;
+    correct: string;
+    category: string;
+  }>;
+  other_events: Array<{
+    type: string;
+    summary: string;
+  }>;
+};
+
+export type StaffTutorSessionDetail = {
+  id: string;
+  company_id: string;
+  user_id: string;
+  origin: string;
+  mode: string;
+  status: string;
+  started_at: string;
+  ended_at: string | null;
+  learner_speaking_ms: number;
+  teacher_speaking_ms: number;
+  shared_with_teacher: boolean;
+  learner: {
+    id: string;
+    full_name: string;
+    email: string | null;
+    avatar_url: string | null;
+  };
+  scenario: {
+    id: string | null;
+    title: string;
+    goal: string | null;
+    skill_pack: string | null;
+    style: string | null;
+  };
+  turns: TutorTurnTranscriptItem[];
+  report: {
+    scores: Record<string, number>;
+    strengths: string[];
+    mistakes: Array<{ said: string; correct: string; category: string; note?: string }>;
+    teacher_review: TeacherSessionReview | null;
+  } | null;
 };
 
 // ─── Validation Schemas ───────────────────────────────────────────────────────
@@ -945,9 +1012,49 @@ export async function updateCourseVivaConfig(input: {
 
 // ─── Staff-Visible Tutor Sessions ─────────────────────────────────────────────
 
+function parseTeacherReview(toneStats: unknown): TeacherSessionReview | null {
+  if (!toneStats || typeof toneStats !== "object" || Array.isArray(toneStats)) return null;
+  const raw = (toneStats as Record<string, unknown>).teacher_review;
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
+  const obj = raw as Record<string, unknown>;
+  const notes = typeof obj.notes === "string" ? obj.notes.trim() : "";
+  if (!notes) return null;
+  return {
+    notes,
+    reviewed_by: typeof obj.reviewed_by === "string" ? obj.reviewed_by : "",
+    reviewed_by_name: typeof obj.reviewed_by_name === "string" ? obj.reviewed_by_name : null,
+    reviewed_at: typeof obj.reviewed_at === "string" ? obj.reviewed_at : "",
+  };
+}
+
+function summarizeTurnEvent(ev: Record<string, unknown>): { type: string; summary: string } | null {
+  const type = typeof ev.type === "string" ? ev.type : "";
+  if (!type || type === "say" || type === "note_mistake") return null;
+  if (type === "show_card" && ev.item && typeof ev.item === "object") {
+    const item = ev.item as Record<string, unknown>;
+    return { type, summary: `Flashcard: ${String(item.text ?? "")}` };
+  }
+  if (type === "show_text" && typeof ev.text === "string") {
+    return { type, summary: `Prompt text: ${ev.text}` };
+  }
+  if (type === "advance_scene" && typeof ev.beat === "string") {
+    return { type, summary: `Beat advanced: ${ev.beat}` };
+  }
+  if (type === "board" && typeof ev.title === "string") {
+    return { type, summary: `Board: ${ev.title}` };
+  }
+  if (type === "note_evidence" && typeof ev.concept === "string") {
+    return { type, summary: `Evidence (${String(ev.result ?? "checked")}): ${ev.concept}` };
+  }
+  if (type === "end_session") {
+    return { type, summary: typeof ev.summary === "string" && ev.summary ? ev.summary : "Session ended" };
+  }
+  return null;
+}
+
 export async function listStaffVisibleTutorSessions(
   companyId: string,
-  limit = 25
+  limit = 40
 ): Promise<StaffTutorSessionSummary[]> {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
@@ -958,7 +1065,7 @@ export async function listStaffVisibleTutorSessions(
   const { data, error } = await db
     .from("tutor_sessions")
     .select(
-      "id, origin, mode, status, started_at, ended_at, learner_speaking_ms, teacher_speaking_ms, shared_with_teacher, profiles(full_name, email), practice_scenarios(title), tutor_reports(scores)"
+      "id, origin, mode, status, started_at, ended_at, learner_speaking_ms, teacher_speaking_ms, shared_with_teacher, profiles(full_name, email), practice_scenarios(title), tutor_reports(scores, tone_stats)"
     )
     .eq("company_id", companyId)
     .or("origin.in.(lesson,assignment),shared_with_teacher.eq.true,status.eq.flagged")
@@ -978,9 +1085,10 @@ export async function listStaffVisibleTutorSessions(
       | null
       | undefined;
     const rep = (Array.isArray(r.tutor_reports) ? r.tutor_reports[0] : r.tutor_reports) as
-      | { scores?: Record<string, number> | null }
+      | { scores?: Record<string, number> | null; tone_stats?: unknown }
       | null
       | undefined;
+    const review = parseTeacherReview(rep?.tone_stats);
 
     return {
       id: String(r.id),
@@ -995,8 +1103,295 @@ export async function listStaffVisibleTutorSessions(
       learner_name: prof?.full_name || prof?.email || "Learner",
       scenario_title: scen?.title || "Free practice",
       scores: rep?.scores ?? null,
+      has_teacher_review: Boolean(review),
+      teacher_review_notes: review?.notes ?? null,
+      teacher_reviewed_at: review?.reviewed_at ?? null,
     };
   });
+}
+
+export async function getStaffTutorSessionDetail(
+  companyId: string,
+  sessionId: string
+): Promise<StaffTutorSessionDetail> {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+  await assertTenantStaff(companyId, userId);
+
+  const db = createServiceClient();
+  const { data: sessionRow, error: sessError } = await db
+    .from("tutor_sessions")
+    .select(
+      "id, company_id, user_id, origin, mode, status, started_at, ended_at, learner_speaking_ms, teacher_speaking_ms, shared_with_teacher, profiles(id, full_name, email, avatar_url), practice_scenarios(id, title, goal, skill_pack, style)"
+    )
+    .eq("id", sessionId)
+    .eq("company_id", companyId)
+    .single();
+
+  if (sessError || !sessionRow) {
+    throw new Error(sessError?.message ?? "Speaking session not found");
+  }
+
+  const [{ data: turnRows, error: turnsError }, { data: reportRow }] = await Promise.all([
+    db
+      .from("tutor_turns")
+      .select("id, idx, learner_text, learner_audio_ms, latency_ms, events, created_at")
+      .eq("session_id", sessionId)
+      .order("idx", { ascending: true }),
+    db
+      .from("tutor_reports")
+      .select("session_id, scores, strengths, mistakes, tone_stats")
+      .eq("session_id", sessionId)
+      .maybeSingle(),
+  ]);
+
+  if (turnsError) throw new Error(turnsError.message);
+
+  const r = sessionRow as unknown as Record<string, unknown>;
+  const prof = (Array.isArray(r.profiles) ? r.profiles[0] : r.profiles) as
+    | { id?: string; full_name?: string | null; email?: string | null; avatar_url?: string | null }
+    | null
+    | undefined;
+  const scen = (Array.isArray(r.practice_scenarios) ? r.practice_scenarios[0] : r.practice_scenarios) as
+    | { id?: string; title?: string | null; goal?: string | null; skill_pack?: string | null; style?: string | null }
+    | null
+    | undefined;
+
+  const turns: TutorTurnTranscriptItem[] = (turnRows ?? []).map((t) => {
+    const evList = Array.isArray(t.events) ? (t.events as Array<Record<string, unknown>>) : [];
+    const teacher_says: TutorTurnTranscriptItem["teacher_says"] = [];
+    const mistakes_noted: TutorTurnTranscriptItem["mistakes_noted"] = [];
+    const other_events: TutorTurnTranscriptItem["other_events"] = [];
+
+    for (const ev of evList) {
+      if (!ev || typeof ev !== "object") continue;
+      if (ev.type === "say" && typeof ev.text === "string") {
+        teacher_says.push({
+          text: ev.text,
+          romanization: typeof ev.romanization === "string" ? ev.romanization : undefined,
+          translation: typeof ev.translation === "string" ? ev.translation : undefined,
+        });
+      } else if (ev.type === "note_mistake" && typeof ev.correct === "string") {
+        mistakes_noted.push({
+          said: typeof ev.said === "string" ? ev.said : "",
+          correct: ev.correct,
+          category: typeof ev.category === "string" ? ev.category : "note",
+        });
+      } else {
+        const extra = summarizeTurnEvent(ev);
+        if (extra) other_events.push(extra);
+      }
+    }
+
+    return {
+      id: String(t.id),
+      idx: t.idx,
+      learner_text: t.learner_text,
+      learner_audio_ms: t.learner_audio_ms,
+      latency_ms: t.latency_ms,
+      created_at: t.created_at,
+      teacher_says,
+      mistakes_noted,
+      other_events,
+    };
+  });
+
+  let parsedReport: StaffTutorSessionDetail["report"] = null;
+  if (reportRow) {
+    const rawScores =
+      reportRow.scores && typeof reportRow.scores === "object" && !Array.isArray(reportRow.scores)
+        ? (reportRow.scores as Record<string, unknown>)
+        : {};
+    const cleanScores: Record<string, number> = {};
+    for (const [k, v] of Object.entries(rawScores)) {
+      if (typeof v === "number" && Number.isFinite(v)) cleanScores[k] = v;
+    }
+
+    const strengths = Array.isArray(reportRow.strengths)
+      ? reportRow.strengths.filter((s): s is string => typeof s === "string")
+      : [];
+
+    const mistakes = Array.isArray(reportRow.mistakes)
+      ? (reportRow.mistakes as Array<Record<string, unknown>>)
+          .filter((m) => m && typeof m === "object" && typeof m.correct === "string")
+          .map((m) => ({
+            said: typeof m.said === "string" ? m.said : "",
+            correct: String(m.correct),
+            category: typeof m.category === "string" ? m.category : "general",
+            note: typeof m.note === "string" ? m.note : undefined,
+          }))
+      : [];
+
+    parsedReport = {
+      scores: cleanScores,
+      strengths,
+      mistakes,
+      teacher_review: parseTeacherReview(reportRow.tone_stats),
+    };
+  }
+
+  return {
+    id: String(r.id),
+    company_id: String(r.company_id),
+    user_id: String(r.user_id),
+    origin: String(r.origin),
+    mode: String(r.mode),
+    status: String(r.status),
+    started_at: String(r.started_at),
+    ended_at: (r.ended_at as string | null) ?? null,
+    learner_speaking_ms: Number(r.learner_speaking_ms ?? 0),
+    teacher_speaking_ms: Number(r.teacher_speaking_ms ?? 0),
+    shared_with_teacher: Boolean(r.shared_with_teacher),
+    learner: {
+      id: prof?.id || String(r.user_id),
+      full_name: prof?.full_name || prof?.email || "Learner",
+      email: prof?.email ?? null,
+      avatar_url: prof?.avatar_url ?? null,
+    },
+    scenario: {
+      id: scen?.id ?? null,
+      title: scen?.title || "Free practice",
+      goal: scen?.goal ?? null,
+      skill_pack: scen?.skill_pack ?? null,
+      style: scen?.style ?? null,
+    },
+    turns,
+    report: parsedReport,
+  };
+}
+
+const saveSessionReviewSchema = z.object({
+  companyId: z.string().min(1),
+  sessionId: z.string().uuid(),
+  status: z.enum(["completed", "flagged"]).optional(),
+  feedbackNotes: z.string().trim().max(2000).default(""),
+  notifyStudent: z.boolean().default(true),
+});
+
+export async function saveStaffSessionReview(
+  input: z.infer<typeof saveSessionReviewSchema>
+): Promise<{
+  status: string;
+  teacher_review: TeacherSessionReview | null;
+}> {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
+  const parsed = saveSessionReviewSchema.parse(input);
+  await assertTenantStaff(parsed.companyId, userId);
+
+  const db = createServiceClient();
+  const [{ data: sessionRow, error: sessError }, { data: reviewerProfile }, { data: existingReport }, { data: company }] =
+    await Promise.all([
+      db
+        .from("tutor_sessions")
+        .select("id, user_id, status, scenario_id")
+        .eq("id", parsed.sessionId)
+        .eq("company_id", parsed.companyId)
+        .single(),
+      db.from("profiles").select("full_name, email").eq("id", userId).maybeSingle(),
+      db
+        .from("tutor_reports")
+        .select("session_id, tone_stats")
+        .eq("session_id", parsed.sessionId)
+        .maybeSingle(),
+      db.from("companies").select("slug").eq("id", parsed.companyId).maybeSingle(),
+    ]);
+
+  if (sessError || !sessionRow) {
+    throw new Error(sessError?.message ?? "Session not found");
+  }
+
+  let nextStatus = sessionRow.status;
+  if (parsed.status && parsed.status !== sessionRow.status) {
+    const { error: statusError } = await db
+      .from("tutor_sessions")
+      .update({ status: parsed.status, updated_at: new Date().toISOString() })
+      .eq("id", parsed.sessionId)
+      .eq("company_id", parsed.companyId);
+
+    if (statusError) throw new Error(statusError.message);
+    nextStatus = parsed.status;
+  }
+
+  let savedReview: TeacherSessionReview | null = null;
+  const trimmedNotes = parsed.feedbackNotes.trim();
+  const existingToneStats =
+    existingReport?.tone_stats &&
+    typeof existingReport.tone_stats === "object" &&
+    !Array.isArray(existingReport.tone_stats)
+      ? { ...(existingReport.tone_stats as Record<string, unknown>) }
+      : {};
+
+  if (trimmedNotes.length > 0) {
+    savedReview = {
+      notes: trimmedNotes,
+      reviewed_by: userId,
+      reviewed_by_name: reviewerProfile?.full_name || reviewerProfile?.email || "Instructor",
+      reviewed_at: new Date().toISOString(),
+    };
+    existingToneStats.teacher_review = savedReview;
+
+    if (existingReport) {
+      const { error: repErr } = await db
+        .from("tutor_reports")
+        .update({ tone_stats: existingToneStats as unknown as Json })
+        .eq("session_id", parsed.sessionId);
+      if (repErr) throw new Error(repErr.message);
+    } else {
+      const { error: repInsertErr } = await db.from("tutor_reports").insert({
+        session_id: parsed.sessionId,
+        scores: {} as unknown as Json,
+        strengths: [] as unknown as Json,
+        mistakes: [] as unknown as Json,
+        tone_stats: existingToneStats as unknown as Json,
+      });
+      if (repInsertErr) throw new Error(repInsertErr.message);
+    }
+  } else if (existingReport && "teacher_review" in existingToneStats) {
+    delete existingToneStats.teacher_review;
+    await db
+      .from("tutor_reports")
+      .update({ tone_stats: existingToneStats as unknown as Json })
+      .eq("session_id", parsed.sessionId);
+  }
+
+  if (parsed.notifyStudent && trimmedNotes.length > 0 && sessionRow.user_id) {
+    try {
+      let scenarioTitle = "AI Speaking Practice";
+      if (sessionRow.scenario_id) {
+        const { data: scenRow } = await db
+          .from("practice_scenarios")
+          .select("title")
+          .eq("id", sessionRow.scenario_id)
+          .maybeSingle();
+        if (scenRow?.title) scenarioTitle = scenRow.title;
+      }
+      const slug = company?.slug || "";
+      await db.from("notifications").insert({
+        user_id: sessionRow.user_id,
+        type: "tutor_review",
+        title: `Instructor Feedback: ${scenarioTitle}`,
+        body: trimmedNotes.slice(0, 180),
+        data: {
+          session_id: parsed.sessionId,
+          company_id: parsed.companyId,
+          company_slug: slug,
+          url: slug ? `/academy/${slug}/classroom?tab=progress` : "/dashboard",
+        } as unknown as Json,
+      } as any);
+    } catch (notifErr) {
+      console.warn("Unable to notify learner of tutor review:", notifErr);
+    }
+  }
+
+  revalidatePath("/creator/ai-teachers");
+  if (company?.slug) {
+    revalidatePath(`/academy/${company.slug}/tutor`);
+    revalidatePath(`/academy/${company.slug}/classroom`);
+  }
+
+  return { status: nextStatus, teacher_review: savedReview };
 }
 
 // ─── Course Publish Sync & Teacher Moments ────────────────────────────────────

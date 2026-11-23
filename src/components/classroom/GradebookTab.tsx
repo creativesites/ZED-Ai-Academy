@@ -15,6 +15,7 @@ import {
   ListFilter,
   Loader2,
   Mail,
+  Mic,
   RotateCcw,
   Search,
   Sparkles,
@@ -109,6 +110,9 @@ export function GradebookTab({
       "Completion Rate (%)",
       "Average Quiz Score (%)",
       "Passed Quizzes",
+      "Speaking Minutes",
+      "Scenarios Completed",
+      "Avg Speaking Score (%)",
       "Certificates Count",
       "Status",
     ];
@@ -122,6 +126,9 @@ export function GradebookTab({
       s.completionPercent,
       s.avgQuizScore,
       s.passedQuizzesCount,
+      s.speakingMinutes ?? 0,
+      s.scenariosCompleted ?? 0,
+      s.avgSpeakingScore ?? "",
       s.certificates.length,
       s.status,
     ]);
@@ -189,8 +196,8 @@ export function GradebookTab({
           </div>
         </div>
 
-        {/* 4 Summary Stat Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
+        {/* 5 Summary Stat Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5 sm:gap-4">
           {/* Stat 1 */}
           <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-xs flex items-center gap-4">
             <div className="h-11 w-11 rounded-xl bg-orange-50 text-[#fd5523] flex items-center justify-center shrink-0 border border-orange-100">
@@ -237,6 +244,27 @@ export function GradebookTab({
           </div>
 
           {/* Stat 4 */}
+          <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-xs flex items-center gap-4">
+            <div className="h-11 w-11 rounded-xl bg-teal-50 text-teal-600 flex items-center justify-center shrink-0 border border-teal-100">
+              <Mic className="h-5 w-5" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-[11px] font-black uppercase tracking-wider text-slate-400">
+                Speaking Practice
+              </p>
+              <p className="text-xl sm:text-2xl font-black text-[#062e39] tracking-tight">
+                {data?.metrics.totalSpeakingMinutes ?? 0}m
+              </p>
+              <p className="text-[10px] font-semibold text-slate-400 truncate">
+                {data?.metrics.totalScenariosCompleted ?? 0} scenarios
+                {data?.metrics.avgSpeakingScore !== null && data?.metrics.avgSpeakingScore !== undefined
+                  ? ` · ${data.metrics.avgSpeakingScore}% avg`
+                  : ""}
+              </p>
+            </div>
+          </div>
+
+          {/* Stat 5 */}
           <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-xs flex items-center gap-4">
             <div className="h-11 w-11 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0 border border-purple-100">
               <Sparkles className="h-5 w-5" />
@@ -331,6 +359,7 @@ export function GradebookTab({
                     <th className="py-3.5 px-4 min-w-[160px]">Lesson Progress</th>
                     <th className="py-3.5 px-4 text-center">Quiz Score</th>
                     <th className="py-3.5 px-4 text-center">Assignments</th>
+                    <th className="py-3.5 px-4 text-center">Speaking</th>
                     <th className="py-3.5 px-4 text-center">Certificates</th>
                     <th className="py-3.5 px-4 text-right">Actions</th>
                   </tr>
@@ -425,6 +454,31 @@ export function GradebookTab({
                         )}
                       </td>
 
+                      {/* Speaking Metrics */}
+                      <td className="py-3.5 px-4 text-center">
+                        {student.speakingMinutes > 0 || student.scenariosCompleted > 0 || student.avgSpeakingScore !== null ? (
+                          <div className="inline-flex flex-col items-center gap-0.5">
+                            <span
+                              className={cn(
+                                "inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-black border",
+                                student.avgSpeakingScore !== null
+                                  ? getScoreColor(student.avgSpeakingScore)
+                                  : "bg-teal-50 text-teal-700 border-teal-200",
+                              )}
+                            >
+                              <Mic className="h-3 w-3" />
+                              {student.avgSpeakingScore !== null ? `${student.avgSpeakingScore}%` : `${student.speakingMinutes}m`}
+                            </span>
+                            <span className="text-[10px] font-semibold text-slate-400">
+                              {student.speakingMinutes}m · {student.scenariosCompleted} done
+                              {student.flaggedSessionsCount > 0 ? ` · ${student.flaggedSessionsCount} flagged` : ""}
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="text-slate-300 text-xs">—</span>
+                        )}
+                      </td>
+
                       {/* Certificates */}
                       <td className="py-3.5 px-4 text-center">
                         {student.certificates.length > 0 ? (
@@ -495,7 +549,7 @@ export function GradebookTab({
             </div>
 
             {/* Quick Metrics */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-3">
               <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-100">
                 <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">
                   Lesson Progress
@@ -529,6 +583,19 @@ export function GradebookTab({
                 </p>
                 <p className="text-[10px] text-slate-500 font-medium">
                   {selectedStudent.submittedAssignmentsCount || 0} tasks submitted
+                </p>
+              </div>
+
+              <div className="p-3.5 rounded-2xl bg-teal-50/70 border border-teal-100">
+                <p className="text-[10px] font-black uppercase tracking-wider text-teal-700">
+                  AI Speaking
+                </p>
+                <p className="text-lg font-black text-slate-900 mt-0.5">
+                  {selectedStudent.speakingMinutes}m
+                </p>
+                <p className="text-[10px] text-slate-600 font-medium">
+                  {selectedStudent.scenariosCompleted} done
+                  {selectedStudent.avgSpeakingScore !== null ? ` · ${selectedStudent.avgSpeakingScore}% avg` : ""}
                 </p>
               </div>
 
