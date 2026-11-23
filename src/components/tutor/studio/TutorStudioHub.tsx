@@ -21,6 +21,7 @@ import {
   Mic,
   ExternalLink,
   BarChart3,
+  CalendarPlus,
   Flag,
   Share2,
   MessageSquare,
@@ -29,7 +30,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { PersonaStudio } from "./PersonaStudio";
 import { ScenarioEditorModal } from "./ScenarioEditorModal";
 import { TeacherInsightsPanel } from "./TeacherInsightsPanel";
@@ -40,13 +47,17 @@ import { TutorSession } from "@/components/tutor/practice/TutorSession";
 import { TUTOR_STYLE_LABELS, overlayModes } from "@/lib/tutor/tutor-session-block";
 import { extractReportAverageScore, speakingMsToMinutes } from "@/lib/classroom/speaking-metrics";
 import {
+  createTutorAssignment,
   deleteScenario,
+  deleteTutorAssignment,
   updateScenarioQuick,
   upsertTutorSettings,
   type PersonaRecord,
   type ScenarioRecord,
   type StaffTutorSessionSummary,
   type TeacherSessionReview,
+  type TenantAiUsageSummary,
+  type TutorAssignmentSummary,
   type TutorSettingsRecord,
 } from "@/actions/tutor-authoring";
 
@@ -58,6 +69,9 @@ export function TutorStudioHub({
   initialScenarios,
   initialSettings,
   initialSessions,
+  initialAssignments = [],
+  classroomGroups = [],
+  aiUsage = null,
 }: {
   companyId: string;
   companyName: string;
@@ -66,6 +80,9 @@ export function TutorStudioHub({
   initialScenarios: ScenarioRecord[];
   initialSettings: TutorSettingsRecord;
   initialSessions: StaffTutorSessionSummary[];
+  initialAssignments?: TutorAssignmentSummary[];
+  classroomGroups?: Array<{ id: string; name: string }>;
+  aiUsage?: TenantAiUsageSummary | null;
 }) {
   const [personas, setPersonas] = useState<PersonaRecord[]>(initialPersonas);
   const [scenarios, setScenarios] = useState<ScenarioRecord[]>(initialScenarios);
@@ -73,10 +90,15 @@ export function TutorStudioHub({
   const [sessions, setSessions] = useState<StaffTutorSessionSummary[]>(initialSessions);
   const [sessionFilter, setSessionFilter] = useState<"all" | "flagged" | "shared" | "reviewed">("all");
   const [reviewingSessionId, setReviewingSessionId] = useState<string | null>(null);
+  const [assignments, setAssignments] = useState<TutorAssignmentSummary[]>(initialAssignments);
 
   const [editorOpen, setEditorOpen] = useState(false);
   const [editingScenario, setEditingScenario] = useState<ScenarioRecord | null>(null);
   const [previewScenario, setPreviewScenario] = useState<ScenarioRecord | null>(null);
+  const [assignScenario, setAssignScenario] = useState<ScenarioRecord | null>(null);
+  const [assignGroupId, setAssignGroupId] = useState<string>("");
+  const [assignDueAt, setAssignDueAt] = useState<string>("");
+
   const [isBusy, startBusy] = useTransition();
 
   const flaggedSessionsCount = sessions.filter((s) => s.status === "flagged").length;
@@ -104,6 +126,39 @@ export function TutorStudioHub({
           : s,
       ),
     );
+  }
+
+  function handleAssignSubmit() {
+    if (!assignScenario) return;
+    startBusy(async () => {
+      try {
+        const created = await createTutorAssignment({
+          companyId,
+          scenarioId: assignScenario.id,
+          groupId: assignGroupId || null,
+          dueAt: assignDueAt || null,
+        });
+        setAssignments((prev) => [created, ...prev]);
+        setAssignScenario(null);
+        setAssignGroupId("");
+        setAssignDueAt("");
+        toast.success(`Assigned "${created.scenario_title}" to ${created.group_name ?? "whole academy"}`);
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Could not assign scenario");
+      }
+    });
+  }
+
+  function handleDeleteAssignment(assignmentId: string) {
+    startBusy(async () => {
+      try {
+        await deleteTutorAssignment(companyId, assignmentId);
+        setAssignments((prev) => prev.filter((a) => a.id !== assignmentId));
+        toast.success("Assignment removed");
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Could not remove assignment");
+      }
+    });
   }
 
   function openNewScenario() {
@@ -383,6 +438,18 @@ export function TutorStudioHub({
                     </div>
 
                     <div className="flex items-center gap-1.5">
+                      {s.status === "published" && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setAssignScenario(s)}
+                          className="h-8 rounded-lg px-2.5 text-xs font-bold text-[#062e39]"
+                        >
+                          <CalendarPlus className="mr-1 h-3 w-3 text-[#fd5523]" />
+                          Assign
+                        </Button>
+                      )}
                       <Button
                         type="button"
                         variant="outline"
@@ -416,6 +483,45 @@ export function TutorStudioHub({
                   </div>
                 </div>
               ))}
+            </div>
+          )}
+
+          {/* Active Speaking Assignments */}
+          {assignments.length > 0 && (
+            <div className="space-y-3 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+              <div className="flex items-center justify-between">
+                <h3 className="flex items-center gap-2 text-sm font-black uppercase tracking-wider text-[#062e39]">
+                  <CalendarPlus className="h-4 w-4 text-[#fd5523]" />
+                  Active Speaking Assignments ({assignments.length})
+                </h3>
+              </div>
+              <div className="grid gap-2.5 sm:grid-cols-2">
+                {assignments.map((a) => (
+                  <div
+                    key={a.id}
+                    className="flex items-center justify-between gap-3 rounded-2xl border border-slate-100 bg-slate-50/70 px-4 py-3"
+                  >
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-bold text-[#062e39]">{a.scenario_title}</p>
+                      <p className="text-xs text-slate-500">
+                        {a.group_name ? `Cohort: ${a.group_name}` : "Whole academy"}
+                        {a.due_at ? ` · Due ${new Date(a.due_at).toLocaleDateString()}` : ""}
+                      </p>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      disabled={isBusy}
+                      onClick={() => handleDeleteAssignment(a.id)}
+                      className="h-8 w-8 shrink-0 text-slate-400 hover:bg-red-50 hover:text-red-500"
+                      aria-label="Remove assignment"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </TabsContent>
@@ -531,123 +637,166 @@ export function TutorStudioHub({
             </Button>
           </div>
 
-          {/* Staff-Visible Speaking Activity & Teacher Review Queue */}
-          <div className="space-y-4 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div>
-                <h2 className="text-base font-bold text-[#062e39]">
-                  Teacher Review Queue &amp; Speaking Activity
-                </h2>
-                <p className="text-xs text-slate-500">
-                  Click any lesson, shared, or flagged speaking session to inspect transcript turns, rubric scores, and leave feedback.
-                </p>
-              </div>
-              {flaggedSessionsCount > 0 && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2.5 py-1 text-[11px] font-bold text-red-700 border border-red-200">
-                  <Flag className="h-3 w-3" />
-                  {flaggedSessionsCount} flagged
-                </span>
-              )}
-            </div>
-
-            <div className="flex flex-wrap items-center gap-1.5">
-              {(
-                [
-                  { id: "all", label: `All (${sessions.length})` },
-                  { id: "flagged", label: `Flagged (${flaggedSessionsCount})` },
-                  {
-                    id: "shared",
-                    label: `Shared (${sessions.filter((s) => s.shared_with_teacher).length})`,
-                  },
-                  {
-                    id: "reviewed",
-                    label: `Reviewed (${sessions.filter((s) => s.has_teacher_review).length})`,
-                  },
-                ] as const
-              ).map((pill) => (
-                <button
-                  key={pill.id}
-                  type="button"
-                  onClick={() => setSessionFilter(pill.id)}
-                  className={`rounded-lg px-2.5 py-1 text-[11px] font-bold transition-colors ${
-                    sessionFilter === pill.id
-                      ? "bg-[#062e39] text-white"
-                      : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                  }`}
-                >
-                  {pill.label}
-                </button>
-              ))}
-            </div>
-
-            {filteredSessions.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-slate-200 p-8 text-center text-xs text-slate-400">
-                {sessions.length === 0
-                  ? "No completed lesson or shared speaking sessions yet."
-                  : `No sessions matching "${sessionFilter}" filter.`}
-              </div>
-            ) : (
-              <div className="max-h-[420px] space-y-2.5 overflow-y-auto pr-1">
-                {filteredSessions.map((sess) => {
-                  const mins = speakingMsToMinutes(sess.learner_speaking_ms);
-                  const avgScore = extractReportAverageScore(sess.scores);
-                  return (
-                    <button
-                      type="button"
-                      key={sess.id}
-                      onClick={() => setReviewingSessionId(sess.id)}
-                      className="flex w-full items-center justify-between gap-3 rounded-2xl border border-slate-100 bg-slate-50/70 p-3.5 text-left transition-colors hover:border-[#062e39]/30 hover:bg-white"
-                    >
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2">
-                          <p className="truncate text-sm font-bold text-[#062e39]">{sess.learner_name}</p>
-                          {sess.shared_with_teacher && (
-                            <span title="Shared with teacher" className="inline-flex shrink-0">
-                              <Share2 className="h-3 w-3 text-indigo-500" />
-                            </span>
-                          )}
-                          {sess.has_teacher_review && (
-                            <span className="inline-flex items-center gap-1 rounded-md bg-emerald-50 px-1.5 py-0.5 text-[10px] font-bold text-emerald-700">
-                              <MessageSquare className="h-2.5 w-2.5" />
-                              Reviewed
-                            </span>
-                          )}
-                        </div>
-                        <p className="truncate text-xs text-slate-500">{sess.scenario_title}</p>
-                        <div className="mt-1 flex flex-wrap items-center gap-2 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
-                          <span>{sess.origin}</span>
-                          <span>·</span>
-                          <span>{sess.mode}</span>
-                          <span>·</span>
-                          <span className="inline-flex items-center gap-0.5">
-                            <Clock className="h-3 w-3" /> ~{mins}m
-                          </span>
-                          {avgScore !== null && (
-                            <>
-                              <span>·</span>
-                              <span className="text-teal-700">{avgScore}% score</span>
-                            </>
-                          )}
-                        </div>
+          {/* Staff-Visible Speaking Activity, AI Usage & Teacher Review Queue */}
+          <div className="space-y-6">
+            {/* AI Usage & Cost Card */}
+            {aiUsage && (
+              <div className="space-y-4 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="flex items-center gap-2 text-base font-bold text-[#062e39]">
+                      <BarChart3 className="h-4 w-4 text-[#fd5523]" />
+                      AI Usage &amp; Estimated Cost (Last {aiUsage.periodDays}d)
+                    </h2>
+                    <p className="text-xs text-slate-500">
+                      Metered from your academy&apos;s AI usage ledger across LLM, TTS, and transcription.
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-2xl font-black text-[#062e39]">
+                      ${aiUsage.totalCostUsd.toFixed(2)}
+                    </p>
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                      {aiUsage.totalEvents} API calls
+                    </p>
+                  </div>
+                </div>
+                {aiUsage.byKind.length > 0 && (
+                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                    {aiUsage.byKind.map((row) => (
+                      <div key={row.kind} className="rounded-xl border border-slate-100 bg-slate-50/70 p-3">
+                        <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">
+                          {row.kind.replace(/_/g, " ")}
+                        </p>
+                        <p className="mt-0.5 text-sm font-black text-[#062e39]">
+                          ${row.costUsd.toFixed(3)}
+                        </p>
+                        <p className="text-[11px] text-slate-500">{row.events} calls</p>
                       </div>
-                      <span
-                        className={`inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase ${
-                          sess.status === "completed"
-                            ? "bg-emerald-50 text-emerald-700"
-                            : sess.status === "flagged"
-                              ? "bg-red-50 text-red-700"
-                              : "bg-slate-200 text-slate-600"
-                        }`}
-                      >
-                        {sess.status === "completed" && <CheckCircle2 className="h-3 w-3" />}
-                        {sess.status === "flagged" && <Flag className="h-3 w-3" />}
-                        {sess.status}
-                      </span>
-                    </button>
-                  );
-                })}
+                    ))}
+                  </div>
+                )}
               </div>
             )}
+
+            {/* Staff-Visible Speaking Activity & Teacher Review Queue */}
+            <div className="space-y-4 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <h2 className="text-base font-bold text-[#062e39]">
+                    Teacher Review Queue &amp; Speaking Activity
+                  </h2>
+                  <p className="text-xs text-slate-500">
+                    Click any lesson, shared, or flagged speaking session to inspect transcript turns, rubric scores, and leave feedback.
+                  </p>
+                </div>
+                {flaggedSessionsCount > 0 && (
+                  <span className="inline-flex items-center gap-1 rounded-full border border-red-200 bg-red-50 px-2.5 py-1 text-[11px] font-bold text-red-700">
+                    <Flag className="h-3 w-3" />
+                    {flaggedSessionsCount} flagged
+                  </span>
+                )}
+              </div>
+
+              <div className="flex flex-wrap items-center gap-1.5">
+                {(
+                  [
+                    { id: "all", label: `All (${sessions.length})` },
+                    { id: "flagged", label: `Flagged (${flaggedSessionsCount})` },
+                    {
+                      id: "shared",
+                      label: `Shared (${sessions.filter((s) => s.shared_with_teacher).length})`,
+                    },
+                    {
+                      id: "reviewed",
+                      label: `Reviewed (${sessions.filter((s) => s.has_teacher_review).length})`,
+                    },
+                  ] as const
+                ).map((pill) => (
+                  <button
+                    key={pill.id}
+                    type="button"
+                    onClick={() => setSessionFilter(pill.id)}
+                    className={`rounded-lg px-2.5 py-1 text-[11px] font-bold transition-colors ${
+                      sessionFilter === pill.id
+                        ? "bg-[#062e39] text-white"
+                        : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                    }`}
+                  >
+                    {pill.label}
+                  </button>
+                ))}
+              </div>
+
+              {filteredSessions.length === 0 ? (
+                <div className="rounded-2xl border border-dashed border-slate-200 p-8 text-center text-xs text-slate-400">
+                  {sessions.length === 0
+                    ? "No completed lesson or shared speaking sessions yet."
+                    : `No sessions matching "${sessionFilter}" filter.`}
+                </div>
+              ) : (
+                <div className="max-h-[420px] space-y-2.5 overflow-y-auto pr-1">
+                  {filteredSessions.map((sess) => {
+                    const mins = speakingMsToMinutes(sess.learner_speaking_ms);
+                    const avgScore = extractReportAverageScore(sess.scores);
+                    return (
+                      <button
+                        type="button"
+                        key={sess.id}
+                        onClick={() => setReviewingSessionId(sess.id)}
+                        className="flex w-full items-center justify-between gap-3 rounded-2xl border border-slate-100 bg-slate-50/70 p-3.5 text-left transition-colors hover:border-[#062e39]/30 hover:bg-white"
+                      >
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2">
+                            <p className="truncate text-sm font-bold text-[#062e39]">{sess.learner_name}</p>
+                            {sess.shared_with_teacher && (
+                              <span title="Shared with teacher" className="inline-flex shrink-0">
+                                <Share2 className="h-3 w-3 text-indigo-500" />
+                              </span>
+                            )}
+                            {sess.has_teacher_review && (
+                              <span className="inline-flex items-center gap-1 rounded-md bg-emerald-50 px-1.5 py-0.5 text-[10px] font-bold text-emerald-700">
+                                <MessageSquare className="h-2.5 w-2.5" />
+                                Reviewed
+                              </span>
+                            )}
+                          </div>
+                          <p className="truncate text-xs text-slate-500">{sess.scenario_title}</p>
+                          <div className="mt-1 flex flex-wrap items-center gap-2 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                            <span>{sess.origin}</span>
+                            <span>·</span>
+                            <span>{sess.mode}</span>
+                            <span>·</span>
+                            <span className="inline-flex items-center gap-0.5">
+                              <Clock className="h-3 w-3" /> ~{mins}m
+                            </span>
+                            {avgScore !== null && (
+                              <>
+                                <span>·</span>
+                                <span className="text-teal-700">{avgScore}% score</span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                        <span
+                          className={`inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase ${
+                            sess.status === "completed"
+                              ? "bg-emerald-50 text-emerald-700"
+                              : sess.status === "flagged"
+                                ? "bg-red-50 text-red-700"
+                                : "bg-slate-200 text-slate-600"
+                          }`}
+                        >
+                          {sess.status === "completed" && <CheckCircle2 className="h-3 w-3" />}
+                          {sess.status === "flagged" && <Flag className="h-3 w-3" />}
+                          {sess.status}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           </div>
         </TabsContent>
       </Tabs>
@@ -695,6 +844,69 @@ export function TutorStudioHub({
               }}
               onExit={() => setPreviewScenario(null)}
             />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Assign Speaking Scenario Modal */}
+      <Dialog open={Boolean(assignScenario)} onOpenChange={(o) => !o && setAssignScenario(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 font-black text-[#062e39]">
+              <CalendarPlus className="h-5 w-5 text-[#fd5523]" />
+              Assign Speaking Scenario
+            </DialogTitle>
+            <DialogDescription>
+              Assigned scenarios appear in your students&apos; Teacher&apos;s Room under &ldquo;Assigned by Your Teacher&rdquo;.
+            </DialogDescription>
+          </DialogHeader>
+          {assignScenario && (
+            <div className="space-y-4 pt-2">
+              <div className="rounded-xl bg-slate-50 p-3">
+                <p className="text-xs font-bold text-[#062e39]">{assignScenario.title}</p>
+                <p className="mt-0.5 text-[11px] text-slate-500">{assignScenario.goal}</p>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold text-slate-700">Assign to</Label>
+                <select
+                  value={assignGroupId}
+                  onChange={(e) => setAssignGroupId(e.target.value)}
+                  className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm"
+                >
+                  <option value="">Whole academy (all learners)</option>
+                  {classroomGroups.map((g) => (
+                    <option key={g.id} value={g.id}>
+                      Cohort: {g.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold text-slate-700">Due date (optional)</Label>
+                <Input
+                  type="datetime-local"
+                  value={assignDueAt}
+                  onChange={(e) => setAssignDueAt(e.target.value)}
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2">
+                <Button type="button" variant="outline" onClick={() => setAssignScenario(null)}>
+                  Cancel
+                </Button>
+                <Button
+                  type="button"
+                  disabled={isBusy}
+                  onClick={handleAssignSubmit}
+                  className="rounded-xl bg-[#fd5523] font-bold text-white hover:bg-[#ea4817]"
+                >
+                  {isBusy && <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />}
+                  Assign Scenario
+                </Button>
+              </div>
+            </div>
           )}
         </DialogContent>
       </Dialog>

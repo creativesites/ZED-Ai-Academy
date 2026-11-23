@@ -56,6 +56,94 @@ const SCENE_LABELS: Record<SceneArtboard, string> = {
   Scene_Studio: "Studio",
 };
 
+const EXAM_TEMPLATES: Array<{
+  label: string;
+  title: string;
+  goal: string;
+  skillPack: SkillPack;
+  style: ScenarioStyle;
+  scene: SceneArtboard;
+  level: string;
+  maxMinutes: number;
+  beats: Array<{ id: string; goal: string }>;
+  targetItems: Array<{ text: string; pron?: string; meaning?: string }>;
+}> = [
+  {
+    label: "HSKK Beginner (Mandarin)",
+    title: "HSKK Beginner Oral Check: Self-Introduction & Daily Routine",
+    goal: "Answer short personal questions clearly with accurate tones and complete HSK1-2 sentences.",
+    skillPack: "language-zh",
+    style: "oral_check",
+    scene: "Scene_TeaHouse",
+    level: "HSK1",
+    maxMinutes: 6,
+    beats: [
+      { id: "beat-1", goal: "Greet the learner and ask their name and where they are from." },
+      { id: "beat-2", goal: "Ask two short questions about their daily routine or favourite food." },
+      { id: "beat-3", goal: "Give brief encouraging tone feedback and close the oral check." },
+    ],
+    targetItems: [
+      { text: "你好，我叫…", pron: "nǐ hǎo, wǒ jiào...", meaning: "Hello, my name is..." },
+      { text: "我每天…", pron: "wǒ měitiān...", meaning: "Every day I..." },
+      { text: "谢谢老师", pron: "xièxie lǎoshī", meaning: "Thank you, teacher" },
+    ],
+  },
+  {
+    label: "DELE A1 Oral (Spanish)",
+    title: "DELE A1 Role-Play: Ordering at a Café",
+    goal: "Greet the server politely, order a drink and snack, and ask for the bill using A1 Spanish.",
+    skillPack: "language-es",
+    style: "oral_check",
+    scene: "Scene_Cafe",
+    level: "A1",
+    maxMinutes: 6,
+    beats: [
+      { id: "beat-1", goal: "Welcome the learner to the café and ask what they would like." },
+      { id: "beat-2", goal: "Confirm their order and offer a small follow-up choice." },
+      { id: "beat-3", goal: "Handle the bill and polite goodbye." },
+    ],
+    targetItems: [
+      { text: "Quisiera un café, por favor", pron: "kee-SYEH-rah oon kah-FEH", meaning: "I would like a coffee, please" },
+      { text: "La cuenta, por favor", pron: "lah KWEHN-tah", meaning: "The bill, please" },
+    ],
+  },
+  {
+    label: "DELF A1 Oral (French)",
+    title: "DELF A1 Dialogue: At the Bakery",
+    goal: "Use polite French (vous), request items at a bakery, and understand the price.",
+    skillPack: "language-fr",
+    style: "oral_check",
+    scene: "Scene_Rooftop",
+    level: "A1",
+    maxMinutes: 6,
+    beats: [
+      { id: "beat-1", goal: "Greet with Bonjour and ask what the customer wants." },
+      { id: "beat-2", goal: "Respond to their request and state the total price." },
+      { id: "beat-3", goal: "Complete the purchase and say Au revoir." },
+    ],
+    targetItems: [
+      { text: "Je voudrais un croissant", pron: "zhuh voo-DREH uhn krwah-SAHN", meaning: "I would like a croissant" },
+      { text: "C'est combien ?", pron: "seh kohm-BYEN", meaning: "How much is it?" },
+    ],
+  },
+  {
+    label: "Course Concept Walkthrough",
+    title: "Guided Concept Check & Interactive Q&A",
+    goal: "Walk through the lesson's key concept step by step using quick-tap checkpoints and examples.",
+    skillPack: "general-tutor",
+    style: "guided_lesson",
+    scene: "Scene_Classroom",
+    level: "All levels",
+    maxMinutes: 8,
+    beats: [
+      { id: "beat-1", goal: "Introduce the main idea clearly in 2 short sentences." },
+      { id: "beat-2", goal: "Check understanding with a multiple-choice question on the board." },
+      { id: "beat-3", goal: "Share a real-world example and summarize the takeaway." },
+    ],
+    targetItems: [],
+  },
+];
+
 type TargetItemRow = { text: string; pron?: string; meaning?: string };
 
 export function ScenarioEditorModal({
@@ -386,6 +474,44 @@ export function ScenarioEditorModal({
         </DialogHeader>
 
         <div className="space-y-5 pt-2">
+          {/* One-click Exam & Subject Starter Templates */}
+          {!initialScenario && (
+            <div className="space-y-1.5">
+              <Label className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                Quick-Start Exam &amp; Lesson Templates
+              </Label>
+              <div className="flex flex-wrap gap-1.5">
+                {EXAM_TEMPLATES.map((tpl) => (
+                  <button
+                    key={tpl.label}
+                    type="button"
+                    onClick={() => {
+                      setTitle(tpl.title);
+                      setGoal(tpl.goal);
+                      setSkillPack(tpl.skillPack);
+                      setStyle(tpl.style);
+                      setScene(tpl.scene);
+                      setLevel(tpl.level);
+                      setMaxMinutes(tpl.maxMinutes);
+                      setBeats(
+                        tpl.beats.map((b) => ({
+                          ...b,
+                          boardContent: "",
+                          checkQuestion: "",
+                        })),
+                      );
+                      setTargetItems(tpl.targetItems);
+                      toast.success(`Loaded "${tpl.label}" template`);
+                    }}
+                    className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[11px] font-semibold text-slate-700 hover:border-[#fd5523]/50 hover:bg-[#fff6ee] hover:text-[#fd5523]"
+                  >
+                    {tpl.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* AI Quick Draft Bar (when inside a course/lesson) */}
           {courseId && (
             <div className="space-y-2 rounded-2xl border border-[#fd5523]/25 bg-[#fff6ee] p-3.5">

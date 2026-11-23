@@ -2,10 +2,13 @@ import { Toaster } from "@/components/ui/sonner";
 import { requireTenantAdminPage } from "@/lib/tenants/admin-guard";
 import { TutorStudioHub } from "@/components/tutor/studio/TutorStudioHub";
 import {
+  getTenantAiUsageSummary,
   getTutorSettings,
+  listClassroomGroupsForTenant,
   listPersonasForTenant,
   listScenariosForTenant,
   listStaffVisibleTutorSessions,
+  listTutorAssignmentsForTenant,
 } from "@/actions/tutor-authoring";
 
 export const metadata = { title: "AI Teachers & Speaking Studio" };
@@ -19,7 +22,7 @@ export default async function TenantAdminAiTeachersPage({
   const { domain } = await params;
   const { company } = await requireTenantAdminPage(domain);
 
-  const [personas, scenarios, settings, sessions] = await Promise.all([
+  const [personas, scenarios, settings, sessions, assignments, groups, usage] = await Promise.all([
     listPersonasForTenant(company.id).catch(() => []),
     listScenariosForTenant(company.id).catch(() => []),
     getTutorSettings(company.id).catch(() => ({
@@ -30,6 +33,9 @@ export default async function TenantAdminAiTeachersPage({
       enabled_persona_ids: null,
     })),
     listStaffVisibleTutorSessions(company.id).catch(() => []),
+    listTutorAssignmentsForTenant(company.id).catch(() => []),
+    listClassroomGroupsForTenant(company.id).catch(() => []),
+    getTenantAiUsageSummary(company.id).catch(() => null),
   ]);
 
   return (
@@ -44,6 +50,9 @@ export default async function TenantAdminAiTeachersPage({
           initialScenarios={scenarios}
           initialSettings={settings}
           initialSessions={sessions}
+          initialAssignments={assignments}
+          classroomGroups={groups}
+          aiUsage={usage}
         />
       </div>
     </>

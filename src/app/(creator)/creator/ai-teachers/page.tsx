@@ -1,10 +1,13 @@
 import { Toaster } from "@/components/ui/sonner";
 import { TutorStudioHub } from "@/components/tutor/studio/TutorStudioHub";
 import {
+  getTenantAiUsageSummary,
   getTutorSettings,
+  listClassroomGroupsForTenant,
   listPersonasForTenant,
   listScenariosForTenant,
   listStaffVisibleTutorSessions,
+  listTutorAssignmentsForTenant,
   resolveCreatorCompanyContext,
 } from "@/actions/tutor-authoring";
 
@@ -14,7 +17,7 @@ export const dynamic = "force-dynamic";
 export default async function CreatorAiTeachersPage() {
   const ctx = await resolveCreatorCompanyContext();
 
-  const [personas, scenarios, settings, sessions] = await Promise.all([
+  const [personas, scenarios, settings, sessions, assignments, groups, usage] = await Promise.all([
     listPersonasForTenant(ctx.companyId).catch(() => []),
     listScenariosForTenant(ctx.companyId).catch(() => []),
     getTutorSettings(ctx.companyId).catch(() => ({
@@ -25,6 +28,9 @@ export default async function CreatorAiTeachersPage() {
       enabled_persona_ids: null,
     })),
     listStaffVisibleTutorSessions(ctx.companyId).catch(() => []),
+    listTutorAssignmentsForTenant(ctx.companyId).catch(() => []),
+    listClassroomGroupsForTenant(ctx.companyId).catch(() => []),
+    getTenantAiUsageSummary(ctx.companyId).catch(() => null),
   ]);
 
   return (
@@ -39,6 +45,9 @@ export default async function CreatorAiTeachersPage() {
           initialScenarios={scenarios}
           initialSettings={settings}
           initialSessions={sessions}
+          initialAssignments={assignments}
+          classroomGroups={groups}
+          aiUsage={usage}
         />
       </div>
     </>

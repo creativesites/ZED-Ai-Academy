@@ -258,6 +258,29 @@ export type StaffTutorSessionDetail = {
   } | null;
 };
 
+export type TutorAssignmentSummary = {
+  id: string;
+  scenario_id: string;
+  scenario_title: string;
+  group_id: string | null;
+  group_name: string | null;
+  due_at: string | null;
+  created_at: string;
+};
+
+export type TenantAiUsageSummary = {
+  periodDays: number;
+  totalCostUsd: number;
+  totalEvents: number;
+  byKind: Array<{ kind: string; events: number; units: number; costUsd: number }>;
+};
+
+export type StudentSpeakingMetric = {
+  sessionsCompleted: number;
+  speakingMinutes: number;
+  avgScore: number | null;
+};
+
 // ─── Validation Schemas ───────────────────────────────────────────────────────
 
 const hexColor = z.string().regex(/^#[0-9a-fA-F]{6}$/, "Must be a 6-digit hex color");
@@ -1394,6 +1417,242 @@ export async function saveStaffSessionReview(
   }
 
   return { status: nextStatus, teacher_review: savedReview };
+}
+
+// ─── Tutor Assignments (Teacher -> Class/Academy) ─────────────────────────────
+
+export async function listClassroomGroupsForTenant(
+  companyId: string,
+): Promise<Array<{ id: string; name: string }>> {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+  await assertTenantStaff(companyId, userId);
+
+  const db = createServiceClient();
+  const { data } = await db
+    .from("classroom_groups")
+    .select("id, name")
+    .eq("company_id", companyId)
+    .order("name", { ascending: true });
+
+  return (data ?? []).map((g) => ({ id: g.id, name: g.name }));
+}
+
+export async function listTutorAssignmentsForTenant(
+  companyId: string,
+): Promise<TutorAssignmentSummary[]> {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+  await assertTenantStaff(companyId, userId);
+
+  const db = createServiceClient();
+  const { data: rows, error } = await db
+    .from("tutor_assignments")
+    .select("id, scenario_id, group_id, due_at, created_at")
+    .eq("company_id", companyId)
+    .order("created_at", { ascending: false })
+    .limit(50);
+
+  if (error) throw new Error(error.message);
+  const list = rows ?? [];
+  if (list.length === 0) return [];
+
+  const scenarioIds = [...new Set(list.map((r) => r.scenario_id))];
+  const groupIds = [...new Set(list.map((r) => r.group_id).filter((id): id is string => Boolean(id)))];
+
+  const [{ data: scenarios }, { data: groups }] = await Promise.all([
+    db.from("practice_scenarios").select("id, title").in("id", scenarioIds),
+    groupIds.length
+      ? db.from("classroom_groups").select("id, name").in("id", groupIds)
+      : Promise.resolve({ data: [] }),
+  ]);
+
+  const scMap = new Map((scenarios ?? []).map((s) => [s.id, s.title]));
+  const grMap = new Map((groups ?? []).map((g) => [g.id, g.name]));
+
+  return list.map((r) => ({
+    id: r.id,
+    scenario_id: r.scenario_id,
+    scenario_title: scMap.get(r.scenario_id) ?? "Speaking Scenario",
+    group_id: r.group_id,
+    group_name: r.group_id ? (grMap.get(r.group_id) ?? "Cohort") : null,
+    due_at: r.due_at,
+    created_at: r.created_at,
+  }));
+}
+
+export async function createTutorAssignment(input: {
+  companyId: string;
+  scenarioId: string;
+  groupId?: string | null;
+  dueAt?: string | null;
+}): Promise<TutorAssignmentSummary> {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+  await assertTenantStaff(input.companyId, userId);
+
+  const db = createServiceClient();
+  const { data, error } = await db
+    .from("tutor_assignments")
+    .insert({
+      company_id: input.companyId,
+      scenario_id: input.scenarioId,
+      group_id: input.groupId || null,
+      due_at: input.dueAt ? new Date(input.dueAt).toISOString() : null,
+      assigned_by: userId,
+    })
+    .select("id, scenario_id, group_id, due_at, created_at")
+    .single();
+
+  if (error || !data) throw new Error(error?.message ?? "Could not create speaking assignment");
+
+  const [{ data: sc }, { data: gr }] = await Promise.all([
+    db.from("practice_scenarios").select("title").eq("id", data.scenario_id).maybeSingle(),
+    data.group_id
+      ? db.from("classroom_groups").select("name").eq("id", data.group_id).maybeSingle()
+      : Promise.resolve({ data: null }),
+  ]);
+
+  revalidatePath("/practice");
+  revalidatePath("/creator/ai-teachers");
+  return {
+    id: data.id,
+    scenario_id: data.scenario_id,
+    scenario_title: sc?.title ?? "Speaking Scenario",
+    group_id: data.group_id,
+    group_name: gr?.name ?? null,
+    due_at: data.due_at,
+    created_at: data.created_at,
+  };
+}
+
+export async function deleteTutorAssignment(companyId: string, assignmentId: string): Promise<void> {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+  await assertTenantStaff(companyId, userId);
+
+  const db = createServiceClient();
+  const { error } = await db
+    .from("tutor_assignments")
+    .delete()
+    .eq("id", assignmentId)
+    .eq("company_id", companyId);
+  if (error) throw new Error(error.message);
+
+  revalidatePath("/practice");
+  revalidatePath("/creator/ai-teachers");
+}
+
+// ─── AI Usage & Cost Dashboard (Last 30 Days) ─────────────────────────────────
+
+export async function getTenantAiUsageSummary(
+  companyId: string,
+  periodDays = 30,
+): Promise<TenantAiUsageSummary> {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+  await assertTenantStaff(companyId, userId);
+
+  const since = new Date(Date.now() - periodDays * 24 * 60 * 60 * 1000).toISOString();
+  const db = createServiceClient();
+  const { data } = await db
+    .from("ai_usage_ledger")
+    .select("kind, units, est_cost_usd")
+    .eq("company_id", companyId)
+    .gte("created_at", since)
+    .limit(5000);
+
+  const byKindMap = new Map<string, { events: number; units: number; costUsd: number }>();
+  let totalCostUsd = 0;
+  let totalEvents = 0;
+
+  for (const row of data ?? []) {
+    const cost = Number(row.est_cost_usd ?? 0);
+    const units = Number(row.units ?? 0);
+    totalCostUsd += cost;
+    totalEvents += 1;
+    const prev = byKindMap.get(row.kind) ?? { events: 0, units: 0, costUsd: 0 };
+    byKindMap.set(row.kind, {
+      events: prev.events + 1,
+      units: prev.units + units,
+      costUsd: prev.costUsd + cost,
+    });
+  }
+
+  return {
+    periodDays,
+    totalCostUsd: Math.round(totalCostUsd * 10000) / 10000,
+    totalEvents,
+    byKind: [...byKindMap.entries()]
+      .map(([kind, v]) => ({
+        kind,
+        events: v.events,
+        units: v.units,
+        costUsd: Math.round(v.costUsd * 10000) / 10000,
+      }))
+      .sort((a, b) => b.costUsd - a.costUsd),
+  };
+}
+
+// ─── Gradebook Speaking Metrics per Student ───────────────────────────────────
+
+export async function getTenantStudentSpeakingMetrics(
+  companyId: string,
+): Promise<Record<string, StudentSpeakingMetric>> {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+  await assertTenantStaff(companyId, userId);
+
+  const db = createServiceClient();
+  const { data: sessions } = await db
+    .from("tutor_sessions")
+    .select("id, user_id, learner_speaking_ms, status")
+    .eq("company_id", companyId)
+    .eq("status", "completed")
+    .limit(2000);
+
+  const rows = sessions ?? [];
+  if (rows.length === 0) return {};
+
+  const sessionIds = rows.map((r) => r.id);
+  const { data: reports } = await db
+    .from("tutor_reports")
+    .select("session_id, scores")
+    .in("session_id", sessionIds);
+
+  const scoreBySession = new Map<string, number>();
+  for (const rep of reports ?? []) {
+    if (rep.scores && typeof rep.scores === "object" && !Array.isArray(rep.scores)) {
+      const vals = Object.values(rep.scores as Record<string, unknown>).filter(
+        (v): v is number => typeof v === "number",
+      );
+      if (vals.length > 0) {
+        scoreBySession.set(rep.session_id, vals.reduce((a, b) => a + b, 0) / vals.length);
+      }
+    }
+  }
+
+  const acc = new Map<string, { count: number; ms: number; scoreSum: number; scoreCount: number }>();
+  for (const s of rows) {
+    const prev = acc.get(s.user_id) ?? { count: 0, ms: 0, scoreSum: 0, scoreCount: 0 };
+    const sc = scoreBySession.get(s.id);
+    acc.set(s.user_id, {
+      count: prev.count + 1,
+      ms: prev.ms + (s.learner_speaking_ms ?? 0),
+      scoreSum: prev.scoreSum + (sc ?? 0),
+      scoreCount: prev.scoreCount + (sc !== undefined ? 1 : 0),
+    });
+  }
+
+  const out: Record<string, StudentSpeakingMetric> = {};
+  for (const [uid, v] of acc.entries()) {
+    out[uid] = {
+      sessionsCompleted: v.count,
+      speakingMinutes: Math.round(v.ms / 60000),
+      avgScore: v.scoreCount > 0 ? Math.round(v.scoreSum / v.scoreCount) : null,
+    };
+  }
+  return out;
 }
 
 // ─── Course Publish Sync & Teacher Moments ────────────────────────────────────
