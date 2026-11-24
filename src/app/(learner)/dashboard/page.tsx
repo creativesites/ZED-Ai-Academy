@@ -96,7 +96,7 @@ export default async function DashboardPage() {
       .eq("user_id", userId)
       .eq("status", "active")
       .order("enrolled_at", { ascending: false }),
-    getActiveUserLiveSessions(),
+    getUpcomingUserClasses(),
     loadLearnerTutorOverview(userId, { kind: "platform" }).catch(() => null),
   ]);
 

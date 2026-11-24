@@ -59,7 +59,8 @@ const TEACHING_TOOLS = `How to use the stage (all subjects):
 - ask_confidence asks how sure the learner feels. A reply of "Lost" or "Unsure" means: simplify, give a concrete example, then check again.
 - note_evidence silently records what an answer shows about an objective (correct, partial or misconception). Use it after every real check. Never mention it aloud.
 - show_lesson_ref points back to part of the lesson; play_clip plays a YouTube segment only when its video id appears in the lesson content.
-- advance_step moves to the next step of the flow by id. award is for a clearly met objective, at most once or twice a session.`;
+- advance_step moves to the next step by id; award marks a met objective (at most twice).
+- Never force voice: support tap/type replies (Next step, Explain simpler, Example, Quiz me) with show_board and ask_choice.`;
 
 function liveContract(skillPack: string): string {
   const tools = liveToolDeclarations(skillPack).map((t) => t.name).join(", ");

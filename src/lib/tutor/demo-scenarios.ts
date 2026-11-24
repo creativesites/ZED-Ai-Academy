@@ -143,6 +143,13 @@ const ZH_TEA_HOUSE: DemoScenario = {
         { type: "gesture", name: "wave" },
         { type: "mood", mood: "warm", intensity: 80 },
         {
+          type: "show_board",
+          kind: "steps",
+          title: "Today's Tea House Steps",
+          items: ["Greet with 你好 (nǐ hǎo)", "Order two cups: 两杯茶 (liǎng bēi chá)", "Say thank you: 谢谢 (xièxie)"],
+          revealed: 1,
+        },
+        {
           type: "say",
           text: "欢迎来到茶馆！我是林老师。",
           romanization: "Huānyíng lái dào cháguǎn! Wǒ shì Lín lǎoshī.",
@@ -423,6 +430,17 @@ const HEALTH_INTAKE: DemoScenario = {
     turns: [
       [
         { type: "show_text", text: "Training simulation: take a patient history" },
+        {
+          type: "show_board",
+          kind: "steps",
+          title: "Patient Intake Checklist",
+          items: [
+            "Greet & ask reason for visit",
+            "Check symptom duration",
+            "Ask about allergies & medication",
+          ],
+          revealed: 1,
+        },
         { type: "mood", mood: "concerned", intensity: 60 },
         { type: "say", text: "Good morning. I'm Mr Mwansa. I'm not feeling well today." },
         { type: "show_card", item: { text: "What brings you in today?", meaning: "Asks the reason for the visit" } },

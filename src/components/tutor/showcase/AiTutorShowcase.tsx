@@ -26,21 +26,21 @@ const CAST: Record<DemoScenario["key"], { label: string; place: string }> = {
 const MODE_CARDS = [
   {
     icon: MessageSquareText,
-    title: "Text",
-    body: "Type your reply. Good for quiet places, or when the microphone is blocked.",
-    badge: null,
+    title: "Tap, Type & Teaching Board",
+    body: "No microphone needed. Follow step-by-step explanations on the Teaching Board, answer multiple-choice checkpoints, or tap quick chips like 'Explain simpler' and 'Quiz me'.",
+    badge: "All subjects",
   },
   {
     icon: Mic,
-    title: "Voice",
-    body: "Hold to talk. Your speech is transcribed, and the teacher answers out loud.",
-    badge: null,
+    title: "Voice & Spoken Recall",
+    body: "Hold to talk for language role-plays and oral checks. Your speech is transcribed, lip-synced, and answered out loud with gentle corrections.",
+    badge: "Languages",
   },
   {
     icon: Radio,
-    title: "Live",
-    body: "Real-time conversation with interruptions. Built and in testing.",
-    badge: "Coming soon",
+    title: "2D Rive + 3D WebGL Avatars",
+    body: "Switch seamlessly between lightweight Rive 2.5D teachers, interactive Three.js 3D WebGL avatars (including custom .glb models), and Data-Saver Lite mode.",
+    badge: "New",
   },
 ] as const;
 
