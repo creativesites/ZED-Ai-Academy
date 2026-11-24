@@ -50,6 +50,46 @@ describe("tutor/turn-interaction", () => {
     assert.equal(res.activeChoice?.options.length, 2);
   });
 
+  it("activates tap-to-order challenge when the teacher asks to arrange board steps", () => {
+    const res = deriveTurnInteraction({
+      choice: null,
+      confidence: null,
+      board: {
+        type: "show_board",
+        kind: "steps",
+        title: "Customer discovery flow",
+        items: ["Propose solution", "Ask open questions", "Summarize pain points"],
+        shown: 3,
+      },
+      caption: { native: "Put these steps in the right order." },
+      listenHint: null,
+      turnCount: 2,
+    });
+    assert.equal(res.activeChoice, null);
+    assert.equal(res.activeOrderChallenge?.items.length, 3);
+    assert.equal(res.activeOrderChallenge?.prompt, "Customer discovery flow");
+  });
+
+  it("activates fill-in-the-blank challenge when a blank marker is shown", () => {
+    const res = deriveTurnInteraction({
+      choice: null,
+      confidence: null,
+      board: {
+        type: "show_board",
+        kind: "bullets",
+        items: ["revenue", "margin", "churn"],
+        shown: 3,
+      },
+      whiteboard: "Gross profit divided by total sales gives you gross ___.",
+      caption: { native: "Fill in the blank using one of the metrics." },
+      listenHint: null,
+      turnCount: 3,
+    });
+    assert.ok(res.activeFillBlank);
+    assert.equal(res.activeFillBlank?.wordBank.length, 3);
+    assert.equal(res.preferTextInput, true);
+  });
+
   it("sets preferTextInput when the teacher asks the learner to write or type a message", () => {
     const res = deriveTurnInteraction({
       choice: null,

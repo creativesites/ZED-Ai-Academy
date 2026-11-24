@@ -1,14 +1,21 @@
 "use client";
 
 import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent, type PointerEvent } from "react";
-import { Check, Keyboard, Mic, Send, Sparkles } from "lucide-react";
+import { Check, Keyboard, ListOrdered, Mic, Pause, Radio, RotateCcw, Send, Sparkles } from "lucide-react";
 import { CONFIDENCE_LEVELS, type ConfidenceLevel } from "@/lib/tutor/board";
 import { MAX_RECORDING_MS } from "@/lib/tutor/recording";
-import type { ActiveChoice, DynamicQuickAction } from "@/lib/tutor/turn-interaction";
+import type { ResponseMatchResult } from "@/lib/tutor/response-match";
+import type {
+  ActiveChoice,
+  ActiveFillBlank,
+  ActiveOrderChallenge,
+  DynamicQuickAction,
+} from "@/lib/tutor/turn-interaction";
 import styles from "./practice.module.css";
 
 // Sticky bottom dynamic action dock: adapts automatically to the current scene state
-// (multiple-choice cards, confidence check, contextual quick chips, and instant voice/text input)
+// (multiple-choice cards, tap-to-order sequence builder, fill-in-the-blank, confidence check,
+// target-vs-response match feedback, contextual quick chips, Hold-to-Talk, Hands-Free VAD, and instant text)
 // so learners never need to scroll to respond.
 
 export type InputMode = "voice" | "text";
@@ -26,6 +33,7 @@ type ComposerProps = {
   elapsedMs: number;
   listenHint: { expect?: string; hint?: string } | null;
   lastSaid: string | null;
+  responseMatch?: ResponseMatchResult | null;
   onHoldStart: () => void;
   onHoldEnd: () => void;
   onSendText: (text: string) => void;
@@ -33,8 +41,16 @@ type ComposerProps = {
   soundBlocked: boolean;
   onEnableSound: () => void;
   teacherName: string;
+  /** Hands-Free auto-VAD voice mode */
+  handsFree?: boolean;
+  handsFreeListening?: boolean;
+  handsFreeSpeechDetected?: boolean;
+  onToggleHandsFree?: () => void;
+  onCommitHandsFreeNow?: () => void;
   /** Dynamic turn interaction state */
   activeChoice: ActiveChoice | null;
+  activeOrderChallenge: ActiveOrderChallenge | null;
+  activeFillBlank: ActiveFillBlank | null;
   showConfidence: boolean;
   confidencePrompt?: string;
   preferTextInput: boolean;
@@ -65,6 +81,7 @@ export function Composer(props: ComposerProps) {
     elapsedMs,
     listenHint,
     lastSaid,
+    responseMatch,
     onHoldStart,
     onHoldEnd,
     onSendText,
@@ -72,7 +89,14 @@ export function Composer(props: ComposerProps) {
     soundBlocked,
     onEnableSound,
     teacherName,
+    handsFree = false,
+    handsFreeListening = false,
+    handsFreeSpeechDetected = false,
+    onToggleHandsFree,
+    onCommitHandsFreeNow,
     activeChoice,
+    activeOrderChallenge,
+    activeFillBlank,
     showConfidence,
     confidencePrompt,
     preferTextInput,
@@ -85,23 +109,30 @@ export function Composer(props: ComposerProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const spaceDown = useRef(false);
   const [draft, setDraft] = useState("");
-  const [showCustomInputForChoice, setShowCustomInputForChoice] = useState(false);
+  const [showCustomInputForChallenge, setShowCustomInputForChallenge] = useState(false);
 
-  // Reset custom input toggle whenever a new choice arrives
+  // Tap-to-order tile builder state
+  const [orderedIndices, setOrderedIndices] = useState<number[]>([]);
+  const orderKey = activeOrderChallenge?.items.join("|") ?? "";
   useEffect(() => {
-    setShowCustomInputForChoice(false);
-  }, [activeChoice?.question]);
+    setOrderedIndices([]);
+  }, [orderKey]);
+
+  // Reset custom input toggle whenever a new structured challenge arrives
+  useEffect(() => {
+    setShowCustomInputForChallenge(false);
+  }, [activeChoice?.question, orderKey, activeFillBlank?.template]);
 
   // If the teacher specifically asks the learner to type/write a message, switch to text automatically.
   useEffect(() => {
-    if (preferTextInput && mode === "voice") {
+    if (preferTextInput && mode === "voice" && !handsFree) {
       onModeChange("text");
     }
-  }, [preferTextInput, mode, onModeChange]);
+  }, [preferTextInput, mode, handsFree, onModeChange]);
 
   // Space holds to talk when no text field has focus, so keyboard users are not trapped.
   useEffect(() => {
-    if (mode !== "voice") return;
+    if (mode !== "voice" || handsFree) return;
     const isEditable = (el: Element | null) =>
       !!el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || (el as HTMLElement).isContentEditable);
     const down = (e: globalThis.KeyboardEvent) => {
@@ -128,7 +159,7 @@ export function Composer(props: ComposerProps) {
         onHoldEnd();
       }
     };
-  }, [mode, onHoldStart, onHoldEnd]);
+  }, [mode, handsFree, onHoldStart, onHoldEnd]);
 
   const onPointerDown = (e: PointerEvent<HTMLButtonElement>) => {
     if (!canTalk) return;
@@ -153,13 +184,30 @@ export function Composer(props: ComposerProps) {
     if (e.key === "Escape") setDraft("");
   };
 
+  const toggleOrderTile = (idx: number) => {
+    if (!canType) return;
+    setOrderedIndices((prev) =>
+      prev.includes(idx) ? prev.filter((i) => i !== idx) : [...prev, idx],
+    );
+  };
+
+  const submitOrder = () => {
+    if (!activeOrderChallenge || !canType || orderedIndices.length === 0) return;
+    const sequence = orderedIndices
+      .map((idx, pos) => `${pos + 1}. ${activeOrderChallenge.items[idx]}`)
+      .join(" → ");
+    onSendText(`My order: ${sequence}`);
+    setOrderedIndices([]);
+  };
+
   const voiceAllowed = modes.includes("voice") && !micBlocked;
   const textAllowed = modes.includes("text");
   const effectiveMode: InputMode = mode === "voice" && voiceAllowed ? "voice" : "text";
   const seconds = Math.max(0, Math.ceil((MAX_RECORDING_MS - elapsedMs) / 1000));
   const bars = [0.35, 0.65, 1, 0.65, 0.35];
 
-  const showPrimaryInputBar = (!activeChoice && !showConfidence) || showCustomInputForChoice;
+  const hasStructuredChallenge = Boolean(activeChoice || activeOrderChallenge || showConfidence);
+  const showPrimaryInputBar = !hasStructuredChallenge || showCustomInputForChallenge;
 
   return (
     <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-2">
@@ -167,21 +215,51 @@ export function Composer(props: ComposerProps) {
       <div className="flex items-center justify-between gap-2 text-xs leading-snug">
         <div aria-live="polite" className="min-w-0 flex-1 truncate text-[var(--ink)]">
           <span className="font-semibold">{status}</span>
-          {listenHint?.expect && !activeChoice && (
+          {listenHint?.expect && !activeChoice && !activeOrderChallenge && (
             <span className="ml-1.5 font-medium text-[var(--accent)]">
-              Try “{listenHint.expect}”
+              Target: “{listenHint.expect}”
             </span>
           )}
-          {!listenHint?.expect && listenHint?.hint && !activeChoice && (
+          {!listenHint?.expect && listenHint?.hint && !activeChoice && !activeOrderChallenge && (
             <span className="ml-1.5 text-[var(--ink-dim)]">· {listenHint.hint}</span>
           )}
         </div>
-        {lastSaid && (
+        {lastSaid && !responseMatch && (
           <span className="hidden max-w-[40%] shrink-0 truncate text-[11px] text-[var(--ink-dim)] sm:inline">
             You: “{lastSaid}”
           </span>
         )}
       </div>
+
+      {/* Universal Target-vs-Response visual match feedback (works for key terms, formulas, & languages) */}
+      {responseMatch && responseMatch.tokens.length > 0 && (
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-slate-200/80 bg-slate-50/90 px-2.5 py-1.5 text-[11px]">
+          <div className="flex flex-wrap items-center gap-1">
+            <span className="font-bold text-slate-500">Match:</span>
+            {responseMatch.tokens.map((tok, i) => (
+              <span
+                key={`${tok.text}-${i}`}
+                className={`rounded px-1.5 py-0.5 font-semibold ${
+                  tok.matched
+                    ? "bg-emerald-100 text-emerald-800"
+                    : "bg-amber-100 text-amber-800 underline decoration-amber-400 decoration-dotted"
+                }`}
+              >
+                {tok.text}
+              </span>
+            ))}
+          </div>
+          <span
+            className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-extrabold ${
+              responseMatch.score >= 80
+                ? "bg-emerald-100 text-emerald-800"
+                : "bg-amber-100 text-amber-800"
+            }`}
+          >
+            {responseMatch.score}%
+          </span>
+        </div>
+      )}
 
       {error && (
         <p role="alert" className="rounded-xl border border-red-200 bg-red-50 px-3 py-1.5 text-xs text-red-700">
@@ -209,10 +287,10 @@ export function Composer(props: ComposerProps) {
             </p>
             <button
               type="button"
-              onClick={() => setShowCustomInputForChoice((v) => !v)}
+              onClick={() => setShowCustomInputForChallenge((v) => !v)}
               className="text-[11px] font-semibold text-[var(--ink-dim)] underline-offset-2 hover:text-[var(--ink)] hover:underline"
             >
-              {showCustomInputForChoice ? "Hide reply box" : "Type or speak instead"}
+              {showCustomInputForChallenge ? "Hide reply box" : "Type or speak instead"}
             </button>
           </div>
           <div
@@ -253,7 +331,104 @@ export function Composer(props: ComposerProps) {
         </div>
       )}
 
-      {/* 2. Dynamic Confidence Check */}
+      {/* 2. Interactive Tap-to-Order Sequence Challenge (works for workflows, steps, algorithms, & sentences) */}
+      {activeOrderChallenge && (
+        <div className="grid gap-1.5">
+          <div className="flex items-center justify-between gap-2">
+            <p className="inline-flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider text-[#fd5523]">
+              <ListOrdered className="h-3.5 w-3.5" aria-hidden="true" />
+              {activeOrderChallenge.prompt}
+            </p>
+            <div className="flex items-center gap-2">
+              {orderedIndices.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setOrderedIndices([])}
+                  className="inline-flex items-center gap-0.5 text-[11px] font-semibold text-[var(--ink-dim)] hover:text-[var(--ink)]"
+                >
+                  <RotateCcw className="h-3 w-3" /> Reset
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => setShowCustomInputForChallenge((v) => !v)}
+                className="text-[11px] font-semibold text-[var(--ink-dim)] hover:text-[var(--ink)] hover:underline"
+              >
+                {showCustomInputForChallenge ? "Hide reply box" : "Type instead"}
+              </button>
+            </div>
+          </div>
+          <div className="grid max-h-[26dvh] gap-1.5 overflow-y-auto sm:grid-cols-2">
+            {activeOrderChallenge.items.map((item, idx) => {
+              const orderPos = orderedIndices.indexOf(idx);
+              const selected = orderPos !== -1;
+              return (
+                <button
+                  key={`${idx}-${item}`}
+                  type="button"
+                  disabled={!canType}
+                  onClick={() => toggleOrderTile(idx)}
+                  className={`flex min-h-9 items-center gap-2 rounded-xl border px-3 py-1.5 text-left text-xs font-semibold transition ${
+                    selected
+                      ? "border-[#0f766e] bg-[#ecfdf5] text-[#064e3b]"
+                      : "border-[var(--line-strong)] bg-white text-[var(--ink)] hover:border-[#fd5523]/50 hover:bg-[#fff6ee]"
+                  }`}
+                >
+                  <span
+                    className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-extrabold ${
+                      selected
+                        ? "bg-[#0f766e] text-white"
+                        : "bg-slate-100 text-slate-500"
+                    }`}
+                  >
+                    {selected ? orderPos + 1 : "•"}
+                  </span>
+                  <span className="line-clamp-2 leading-snug">{item}</span>
+                </button>
+              );
+            })}
+          </div>
+          <button
+            type="button"
+            disabled={!canType || orderedIndices.length < activeOrderChallenge.items.length}
+            onClick={submitOrder}
+            className={`${styles.primaryButton} h-9 rounded-xl px-4 text-xs font-bold transition disabled:opacity-45`}
+          >
+            {orderedIndices.length < activeOrderChallenge.items.length
+              ? `Tap ${activeOrderChallenge.items.length - orderedIndices.length} more in order`
+              : "Submit sequence →"}
+          </button>
+        </div>
+      )}
+
+      {/* 3. Interactive Fill-in-the-Blank Prompt + Optional Word Bank */}
+      {activeFillBlank && (
+        <div className="grid gap-1.5 rounded-xl border border-amber-200/80 bg-amber-50/70 px-3 py-2">
+          <p className="text-[11px] font-bold uppercase tracking-wider text-amber-800">
+            Fill in the blank
+          </p>
+          <p className="text-xs font-medium leading-snug text-[#062e39] sm:text-[13px]">
+            {activeFillBlank.template}
+          </p>
+          {activeFillBlank.wordBank.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 pt-0.5">
+              {activeFillBlank.wordBank.map((word) => (
+                <button
+                  key={word}
+                  type="button"
+                  disabled={!canType}
+                  onClick={() => onSendText(word)}
+                  className="rounded-full border border-amber-300 bg-white px-2.5 py-1 text-xs font-bold text-[#062e39] shadow-xs transition hover:border-[#fd5523] hover:bg-[#fff2e9] hover:text-[#fd5523] disabled:opacity-45"
+                >
+                  {word}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* 4. Dynamic Confidence Check */}
       {showConfidence && (
         <div className="grid gap-1.5">
           <div className="flex items-center justify-between gap-2">
@@ -262,10 +437,10 @@ export function Composer(props: ComposerProps) {
             </p>
             <button
               type="button"
-              onClick={() => setShowCustomInputForChoice((v) => !v)}
+              onClick={() => setShowCustomInputForChallenge((v) => !v)}
               className="text-[11px] font-semibold text-[var(--ink-dim)] hover:text-[var(--ink)] hover:underline"
             >
-              {showCustomInputForChoice ? "Hide reply box" : "Type instead"}
+              {showCustomInputForChallenge ? "Hide reply box" : "Type instead"}
             </button>
           </div>
           <div role="group" aria-label="How sure do you feel?" className="grid grid-cols-3 gap-1.5">
@@ -277,7 +452,7 @@ export function Composer(props: ComposerProps) {
                   type="button"
                   disabled={!canType}
                   onClick={() => onConfidence(lvl)}
-                  className="flex flex-col items-center justify-center rounded-xl border border-[var(--line-strong)] bg-white px-2 py-2 text-center transition hover:border-[#fd5523]/60 hover:bg-[#fff6ee] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--focus)] disabled:opacity-55"
+                  className="flex flex-col items-center justify-center rounded-xl border border-[var(--line-strong)] bg-white px-2 py-2 text-center transition hover:border-[#fd5523]/60 hover:bg-[#fff6ee] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus)] disabled:opacity-55"
                 >
                   <span className="text-base leading-none" aria-hidden="true">
                     {meta.emoji}
@@ -291,8 +466,8 @@ export function Composer(props: ComposerProps) {
         </div>
       )}
 
-      {/* 3. Dynamic Contextual Quick Actions (single-row scroll on mobile, never needs page scroll) */}
-      {!activeChoice && !showConfidence && (
+      {/* 5. Dynamic Contextual Quick Actions (single-row scroll on mobile, never needs page scroll) */}
+      {!hasStructuredChallenge && !activeFillBlank && (
         <div
           className="flex flex-nowrap items-center gap-1.5 overflow-x-auto pb-0.5 [scrollbar-width:none] sm:flex-wrap sm:overflow-visible"
           aria-label="Quick teacher actions"
@@ -315,10 +490,55 @@ export function Composer(props: ComposerProps) {
         </div>
       )}
 
-      {/* 4. Unified Primary Input Bar (Hold-to-Talk + 1-tap Keyboard, or Text Input + 1-tap Mic) */}
+      {/* 6. Unified Primary Input Bar (Hold-to-Talk + Hands-Free Auto-VAD + 1-tap Keyboard/Mic) */}
       {showPrimaryInputBar && (
-        effectiveMode === "voice" ? (
+        handsFree && voiceAllowed ? (
           <div className="flex items-center gap-2">
+            <div className="flex h-11 min-w-0 flex-1 items-center justify-between gap-2 rounded-full border border-emerald-300 bg-emerald-50/90 px-4 text-xs font-bold text-emerald-900 sm:h-12 sm:text-sm">
+              <div className="flex min-w-0 items-center gap-2">
+                <span
+                  className={`inline-block h-2.5 w-2.5 shrink-0 rounded-full ${
+                    handsFreeListening
+                      ? handsFreeSpeechDetected
+                        ? "animate-ping bg-[#fd5523]"
+                        : "animate-pulse bg-emerald-600"
+                      : "bg-slate-400"
+                  }`}
+                  aria-hidden="true"
+                />
+                <span className="truncate">
+                  {handsFreeListening
+                    ? handsFreeSpeechDetected
+                      ? `Capturing speech (${seconds}s)… pause to send`
+                      : "Hands-free listening… speak naturally"
+                    : "Hands-free ready — waiting for teacher"}
+                </span>
+              </div>
+              {handsFreeListening && handsFreeSpeechDetected && onCommitHandsFreeNow && (
+                <button
+                  type="button"
+                  onClick={onCommitHandsFreeNow}
+                  className="shrink-0 rounded-full bg-emerald-700 px-2.5 py-1 text-[11px] font-bold text-white hover:bg-emerald-800"
+                >
+                  Send now
+                </button>
+              )}
+            </div>
+            {onToggleHandsFree && (
+              <button
+                type="button"
+                onClick={onToggleHandsFree}
+                title="Turn off hands-free mode"
+                aria-label="Turn off hands-free mode"
+                className="flex h-11 shrink-0 items-center gap-1 rounded-full border border-rose-200 bg-rose-50 px-3 text-xs font-bold text-rose-700 transition hover:bg-rose-100 sm:h-12"
+              >
+                <Pause className="h-3.5 w-3.5" aria-hidden="true" />
+                <span className="hidden sm:inline">Stop</span>
+              </button>
+            )}
+          </div>
+        ) : effectiveMode === "voice" ? (
+          <div className="flex items-center gap-1.5 sm:gap-2">
             <button
               ref={holdRef}
               type="button"
@@ -331,7 +551,7 @@ export function Composer(props: ComposerProps) {
               onPointerCancel={onPointerUp}
               onLostPointerCapture={() => recording && onHoldEnd()}
               onContextMenu={(e) => e.preventDefault()}
-              className={`${styles.holdButton} ${styles.primaryButton} flex h-11 min-w-0 flex-1 items-center justify-center gap-2.5 rounded-full px-4 text-sm font-bold shadow-[0_10px_24px_rgba(253,85,35,0.26)] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus)] disabled:opacity-50 data-[active=true]:bg-[#ff7a8a] data-[active=true]:text-[#2a0b10] sm:h-12 sm:text-[15px]`}
+              className={`${styles.holdButton} ${styles.primaryButton} flex h-11 min-w-0 flex-1 items-center justify-center gap-2 rounded-full px-3.5 text-sm font-bold shadow-[0_10px_24px_rgba(253,85,35,0.26)] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus)] disabled:opacity-50 data-[active=true]:bg-[#ff7a8a] data-[active=true]:text-[#2a0b10] sm:h-12 sm:gap-2.5 sm:px-4 sm:text-[15px]`}
             >
               <span className={`${styles.micDot} inline-block h-5 w-5 flex-none rounded-full sm:h-6 sm:w-6`} aria-hidden="true" />
               <span className="flex h-5 items-center gap-0.5 sm:gap-1" aria-hidden="true">
@@ -345,12 +565,24 @@ export function Composer(props: ComposerProps) {
               </span>
               <span className="truncate">
                 {recording
-                  ? `Release to send (${seconds}s)`
+                  ? `Release (${seconds}s)`
                   : canTalk
                     ? "Hold to talk"
-                    : "Wait for your turn"}
+                    : "Wait for turn"}
               </span>
             </button>
+            {onToggleHandsFree && (
+              <button
+                type="button"
+                onClick={onToggleHandsFree}
+                title="Hands-free auto-listening mode"
+                aria-label="Enable hands-free auto-listening mode"
+                className="flex h-11 shrink-0 items-center gap-1 rounded-full border border-[var(--line-strong)] bg-white px-3 text-xs font-bold text-[var(--ink)] shadow-xs transition hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-800 sm:h-12"
+              >
+                <Radio className="h-4 w-4 text-emerald-600" aria-hidden="true" />
+                <span className="hidden sm:inline">Auto</span>
+              </button>
+            )}
             {textAllowed && (
               <button
                 type="button"
@@ -360,7 +592,7 @@ export function Composer(props: ComposerProps) {
                 }}
                 title="Switch to typing"
                 aria-label="Switch to typing"
-                className="flex h-11 shrink-0 items-center gap-1.5 rounded-full border border-[var(--line-strong)] bg-white px-3.5 text-xs font-bold text-[var(--ink)] shadow-xs transition hover:bg-[var(--soft-hover)] sm:h-12"
+                className="flex h-11 shrink-0 items-center gap-1 rounded-full border border-[var(--line-strong)] bg-white px-3 text-xs font-bold text-[var(--ink)] shadow-xs transition hover:bg-[var(--soft-hover)] sm:h-12 sm:px-3.5"
               >
                 <Keyboard className="h-4 w-4 text-[#fd5523]" aria-hidden="true" />
                 <span className="hidden sm:inline">Type</span>
@@ -393,7 +625,13 @@ export function Composer(props: ComposerProps) {
               maxLength={1000}
               disabled={!canType}
               autoComplete="off"
-              placeholder={canType ? "Type your reply..." : "Wait for the teacher..."}
+              placeholder={
+                activeFillBlank
+                  ? "Type the missing word or phrase..."
+                  : canType
+                    ? "Type your reply..."
+                    : "Wait for the teacher..."
+              }
               className="h-11 w-full min-w-0 flex-1 rounded-full border border-[var(--line-strong)] bg-white px-4 text-sm text-[var(--ink)] placeholder:text-[var(--ink-faint)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus)] disabled:opacity-50"
             />
             <button

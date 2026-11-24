@@ -9,6 +9,8 @@ import {
   Eye,
   Flame,
   Loader2,
+  Mic,
+  MicOff,
   Plus,
   RotateCcw,
   Sparkles,
@@ -18,6 +20,7 @@ import {
 import { Teacher } from "@/components/tutor/avatar/Teacher";
 import { PERSONA_PRESETS } from "@/components/tutor/avatar/persona-presets";
 import type { AvatarDriver } from "@/components/tutor/avatar/types";
+import { compareResponseToTarget, type ResponseMatchResult } from "@/lib/tutor/response-match";
 import {
   formatInterval,
   isCardDue,
@@ -26,12 +29,14 @@ import {
   type ReviewQuality,
 } from "@/lib/tutor/srs";
 import { speechLangFor } from "@/lib/tutor/speech-lang";
+import { visemeTimelineFromText } from "@/lib/tutor/visemes";
 import {
   addManualVocabCard,
   deleteLearnerVocabCard,
   submitVocabReview,
 } from "@/actions/tutor-learner";
 import type { LearnerDeckCard } from "@/lib/tutor/server/learner-overview";
+import { playChoiceChime, playStepTick } from "./sound-fx";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -44,18 +49,47 @@ import {
 } from "@/components/ui/dialog";
 
 const LANG_LABELS: Record<string, string> = {
+  en: "General / English",
   zh: "Mandarin",
   es: "Spanish",
   fr: "French",
-  en: "English",
+  bem: "Bemba",
+  ny: "Nyanja",
+  tog: "Tonga",
 };
 
 const LANG_PRESET_MAP: Record<string, (typeof PERSONA_PRESETS)[number]> = {
+  en: PERSONA_PRESETS[4], // Tinashe
   zh: PERSONA_PRESETS[0], // Lin
   es: PERSONA_PRESETS[1], // Sofia
   fr: PERSONA_PRESETS[2], // Camille
-  en: PERSONA_PRESETS[4], // Tinashe
 };
+
+type BrowserSpeechRecognition = {
+  lang: string;
+  interimResults: boolean;
+  maxAlternatives: number;
+  onresult: ((e: { results: ArrayLike<ArrayLike<{ transcript: string }>> }) => void) | null;
+  onerror: (() => void) | null;
+  onend: (() => void) | null;
+  start: () => void;
+  stop: () => void;
+};
+
+function createSpeechRecognition(): BrowserSpeechRecognition | null {
+  if (typeof window === "undefined") return null;
+  const w = window as unknown as {
+    SpeechRecognition?: new () => BrowserSpeechRecognition;
+    webkitSpeechRecognition?: new () => BrowserSpeechRecognition;
+  };
+  const Ctor = w.SpeechRecognition ?? w.webkitSpeechRecognition;
+  if (!Ctor) return null;
+  try {
+    return new Ctor();
+  } catch {
+    return null;
+  }
+}
 
 function speakTerm(
   text: string,
@@ -70,18 +104,36 @@ function speakTerm(
     const targetLang = speechLangFor(text, language);
     utter.lang = targetLang;
     utter.rate = rate;
+
+    const timeline = visemeTimelineFromText(text);
+    let intervalId: ReturnType<typeof setInterval> | undefined;
+    let startedAt = 0;
+
+    const cleanup = () => {
+      if (intervalId !== undefined) clearInterval(intervalId);
+      avatar?.setSpeaking(false);
+      avatar?.setViseme(0);
+    };
+
     utter.onstart = () => {
+      startedAt = performance.now();
       avatar?.setSpeaking(true);
-      avatar?.setViseme(3);
+      intervalId = setInterval(() => {
+        const elapsed = (performance.now() - startedAt) * rate;
+        let cursor = 0;
+        let v: 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 = 0;
+        for (const seg of timeline) {
+          cursor += seg.ms;
+          if (elapsed < cursor) {
+            v = seg.viseme;
+            break;
+          }
+        }
+        avatar?.setViseme(v);
+      }, 30);
     };
-    utter.onend = () => {
-      avatar?.setSpeaking(false);
-      avatar?.setViseme(0);
-    };
-    utter.onerror = () => {
-      avatar?.setSpeaking(false);
-      avatar?.setViseme(0);
-    };
+    utter.onend = cleanup;
+    utter.onerror = cleanup;
     window.speechSynthesis.speak(utter);
   } catch {
     // Browser TTS unavailable
@@ -104,12 +156,16 @@ export function VocabDeckReview({
   const [langFilter, setLangFilter] = useState<string>("all");
   const [revealed, setRevealed] = useState(false);
   const [reviewedCount, setReviewedCount] = useState(0);
-  const [coachLine, setCoachLine] = useState("Tap the speaker to hear it, try saying it out loud, then reveal the answer.");
+  const [coachLine, setCoachLine] = useState("Recall the answer out loud or type it, then reveal to check and rate yourself.");
   const [addOpen, setAddOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const [recallDraft, setRecallDraft] = useState("");
+  const [recallMatch, setRecallMatch] = useState<ResponseMatchResult | null>(null);
+  const [listeningVoice, setListeningVoice] = useState(false);
+  const recognitionRef = useRef<BrowserSpeechRecognition | null>(null);
 
   // Add-card form state
-  const [newLang, setNewLang] = useState("zh");
+  const [newLang, setNewLang] = useState("en");
   const [newTerm, setNewTerm] = useState("");
   const [newPron, setNewPron] = useState("");
   const [newMeaning, setNewMeaning] = useState("");
@@ -164,6 +220,9 @@ export function VocabDeckReview({
 
       const cardId = activeCard.vocabId;
       setRevealed(false);
+      setRecallDraft("");
+      setRecallMatch(null);
+      playStepTick({ muted: false, volume: 0.7 });
 
       startTransition(async () => {
         try {
@@ -211,6 +270,70 @@ export function VocabDeckReview({
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [activeCard, addOpen, revealed, handleRate]);
+
+  const checkRecallAttempt = useCallback(
+    (attempt: string) => {
+      if (!activeCard || !attempt.trim()) return;
+      // Compare against meaning (concepts/definitions) or term (spoken phrases) — pick whichever fits better!
+      const vsMeaning = activeCard.meaning
+        ? compareResponseToTarget(attempt, activeCard.meaning)
+        : null;
+      const vsTerm = compareResponseToTarget(attempt, activeCard.term);
+      const best = vsMeaning && vsMeaning.score >= vsTerm.score ? vsMeaning : vsTerm;
+      setRecallMatch(best);
+      setRevealed(true);
+      playChoiceChime({ muted: false, volume: 0.7 });
+      if (best.score >= 85) {
+        avatarRef.current?.setMood("proud", 85);
+        avatarRef.current?.playGesture("thumbs_up");
+        setCoachLine(`Spot on (${best.score}% match)! Rate how easy that felt.`);
+      } else if (best.score >= 55) {
+        avatarRef.current?.setMood("warm", 75);
+        avatarRef.current?.playGesture("nod");
+        setCoachLine(`Close (${best.score}% match)! Check the highlighted words below.`);
+      } else {
+        avatarRef.current?.setMood("concerned", 65);
+        setCoachLine("Take a look at the answer, listen once, and try it again soon.");
+      }
+    },
+    [activeCard],
+  );
+
+  const toggleVoiceRecall = () => {
+    if (!activeCard) return;
+    if (listeningVoice) {
+      recognitionRef.current?.stop();
+      setListeningVoice(false);
+      return;
+    }
+    const rec = createSpeechRecognition();
+    if (!rec) {
+      toast.error("Voice recall isn't supported in this browser — type your answer below instead.");
+      return;
+    }
+    recognitionRef.current = rec;
+    rec.lang = speechLangFor(activeCard.term, activeCard.language);
+    rec.interimResults = false;
+    rec.maxAlternatives = 1;
+    rec.onresult = (e) => {
+      const spoken = e.results[0]?.[0]?.transcript ?? "";
+      setListeningVoice(false);
+      if (spoken.trim()) {
+        setRecallDraft(spoken);
+        checkRecallAttempt(spoken);
+      }
+    };
+    rec.onerror = () => {
+      setListeningVoice(false);
+      toast.error("Could not hear speech — try again or type your answer.");
+    };
+    rec.onend = () => {
+      setListeningVoice(false);
+    };
+    setListeningVoice(true);
+    avatarRef.current?.setListening(true, 0.5);
+    rec.start();
+  };
 
   function handleAddCard(e: React.FormEvent) {
     e.preventDefault();
@@ -266,8 +389,11 @@ export function VocabDeckReview({
               {backLabel}
             </Link>
             <h1 className="mt-1.5 font-heading text-2xl font-black tracking-tight text-[#062e39] sm:text-3xl">
-              Vocabulary Deck &amp; Spoken Recall
+              Study Deck &amp; Active Recall
             </h1>
+            <p className="mt-0.5 text-xs text-slate-500">
+              Review saved concepts, key takeaways, formulas, and phrases with spaced repetition.
+            </p>
           </div>
 
           <Button
@@ -276,7 +402,7 @@ export function VocabDeckReview({
             className="h-10 rounded-xl bg-[#fd5523] px-4 text-xs font-bold text-white hover:bg-[#ea4817]"
           >
             <Plus className="mr-1.5 h-4 w-4" />
-            Add Word
+            Add Study Card
           </Button>
         </div>
 
@@ -363,12 +489,12 @@ export function VocabDeckReview({
                   <CheckCircle2 className="h-7 w-7" />
                 </div>
                 <h2 className="text-xl font-black text-[#062e39]">
-                  {summary.total === 0 ? "Your vocabulary deck is empty" : "All caught up for now!"}
+                  {summary.total === 0 ? "Your study deck is empty" : "All caught up for now!"}
                 </h2>
                 <p className="mx-auto max-w-md text-sm text-slate-500">
                   {summary.total === 0
-                    ? "Words from your AI Teacher speaking sessions appear here automatically, or you can add your own cards right now."
-                    : "Great work! Come back later when your next spaced-repetition cards are due, or start a live speaking scene."}
+                    ? "Bookmark key concepts, board takeaways, or phrases during any AI Teacher session and they appear here for spaced-repetition review."
+                    : "Great work! Come back later when your next cards are due, or start a live AI Teacher session."}
                 </p>
                 <div className="flex flex-wrap justify-center gap-3 pt-2">
                   <Button
@@ -377,14 +503,14 @@ export function VocabDeckReview({
                     className="rounded-xl bg-[#fd5523] font-bold text-white hover:bg-[#ea4817]"
                   >
                     <Plus className="mr-1.5 h-4 w-4" />
-                    Add Vocabulary Card
+                    Add Study Card
                   </Button>
                   <Link
                     href={backHref}
                     className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-xs font-bold text-[#062e39] hover:bg-slate-50"
                   >
                     <Sparkles className="h-3.5 w-3.5 text-[#fd5523]" />
-                    Practise a Speaking Scene
+                    Open AI Teacher Room
                   </Link>
                 </div>
               </div>
@@ -406,7 +532,13 @@ export function VocabDeckReview({
 
                 {/* Front: Term + Audio */}
                 <div className="space-y-3 py-2">
-                  <h2 className="font-serif text-4xl font-bold tracking-tight text-[#062e39] sm:text-5xl">
+                  <h2
+                    className={`font-bold tracking-tight text-[#062e39] ${
+                      activeCard.term.length > 32
+                        ? "mx-auto max-w-xl font-heading text-xl leading-snug sm:text-2xl"
+                        : "font-serif text-3xl sm:text-5xl"
+                    }`}
+                  >
                     {activeCard.term}
                   </h2>
 
@@ -437,27 +569,93 @@ export function VocabDeckReview({
                   </div>
                 </div>
 
-                {/* Back: Pronunciation + Meaning + SM-2 Buttons */}
+                {/* Back: Active Recall (Voice or Type) + Answer + SM-2 Buttons */}
                 {!revealed ? (
-                  <div className="pt-2">
+                  <div className="mx-auto max-w-md space-y-3 pt-2">
+                    <form
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        checkRecallAttempt(recallDraft);
+                      }}
+                      className="flex items-center gap-2"
+                    >
+                      <button
+                        type="button"
+                        onClick={toggleVoiceRecall}
+                        title={listeningVoice ? "Stop listening" : "Speak your recall out loud"}
+                        className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border transition ${
+                          listeningVoice
+                            ? "animate-pulse border-[#fd5523] bg-[#fd5523] text-white"
+                            : "border-slate-200 bg-white text-[#062e39] hover:border-[#fd5523]/50 hover:bg-[#fff2e9]"
+                        }`}
+                        aria-label={listeningVoice ? "Stop voice recall" : "Speak your recall"}
+                      >
+                        {listeningVoice ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+                      </button>
+                      <Input
+                        value={recallDraft}
+                        onChange={(e) => setRecallDraft(e.target.value)}
+                        placeholder={listeningVoice ? "Listening… speak now" : "Type or speak your answer…"}
+                        className="h-11 rounded-xl"
+                      />
+                      <Button
+                        type="submit"
+                        disabled={!recallDraft.trim()}
+                        className="h-11 shrink-0 rounded-xl bg-[#fd5523] px-4 text-xs font-bold text-white hover:bg-[#ea4817]"
+                      >
+                        Check
+                      </Button>
+                    </form>
                     <Button
                       type="button"
+                      variant="outline"
                       onClick={() => setRevealed(true)}
-                      className="h-12 rounded-2xl bg-[#062e39] px-8 text-sm font-bold text-white hover:bg-[#0a4352]"
+                      className="h-10 rounded-xl border-slate-200 px-6 text-xs font-bold text-[#062e39]"
                     >
-                      <Eye className="mr-2 h-4 w-4" />
-                      Show Pronunciation &amp; Meaning (Space)
+                      <Eye className="mr-1.5 h-3.5 w-3.5" />
+                      Reveal Answer (Space)
                     </Button>
                   </div>
                 ) : (
-                  <div className="space-y-6 border-t border-slate-100 pt-6">
+                  <div className="space-y-5 border-t border-slate-100 pt-5">
+                    {recallMatch && (
+                      <div className="mx-auto max-w-lg rounded-2xl border border-slate-200 bg-slate-50 p-3 text-left text-xs">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="font-bold text-slate-500">Your recall check</span>
+                          <span
+                            className={`rounded-full px-2 py-0.5 text-[10px] font-extrabold ${
+                              recallMatch.score >= 75
+                                ? "bg-emerald-100 text-emerald-800"
+                                : "bg-amber-100 text-amber-800"
+                            }`}
+                          >
+                            {recallMatch.score}% match · Suggested: {recallMatch.suggestedQuality}
+                          </span>
+                        </div>
+                        <div className="mt-2 flex flex-wrap gap-1">
+                          {recallMatch.tokens.map((tok, i) => (
+                            <span
+                              key={`${tok.text}-${i}`}
+                              className={`rounded px-1.5 py-0.5 font-semibold ${
+                                tok.matched
+                                  ? "bg-emerald-100 text-emerald-800"
+                                  : "bg-amber-100 text-amber-800"
+                              }`}
+                            >
+                              {tok.text}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
                     <div className="space-y-1">
                       {activeCard.pron && (
-                        <p className="font-mono text-lg font-semibold text-[#fd5523]">
+                        <p className="font-mono text-base font-semibold text-[#fd5523]">
                           {activeCard.pron}
                         </p>
                       )}
-                      <p className="text-xl font-bold text-slate-800">
+                      <p className="text-lg font-bold text-slate-800 sm:text-xl">
                         {activeCard.meaning || "—"}
                       </p>
                     </div>
@@ -472,15 +670,21 @@ export function VocabDeckReview({
                         ] as const
                       ).map((opt) => {
                         const preview = reviewCard(activeCard, opt.q);
+                        const isSuggested = recallMatch?.suggestedQuality === opt.q;
                         return (
                           <button
                             key={opt.q}
                             type="button"
                             disabled={isPending}
                             onClick={() => handleRate(opt.q)}
-                            className={`flex flex-col items-center justify-center rounded-2xl border px-3 py-3 text-center transition-all ${opt.cls}`}
+                            className={`flex flex-col items-center justify-center rounded-2xl border px-3 py-3 text-center transition-all ${opt.cls} ${
+                              isSuggested ? "ring-2 ring-[#fd5523] ring-offset-2" : ""
+                            }`}
                           >
-                            <span className="text-sm font-black">{opt.label}</span>
+                            <span className="text-sm font-black">
+                              {opt.label}
+                              {isSuggested ? " ★" : ""}
+                            </span>
                             <span className="mt-0.5 text-[11px] font-semibold opacity-75">
                               {preview.nextLabel} · [{opt.keyHint}]
                             </span>
@@ -569,49 +773,52 @@ export function VocabDeckReview({
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 font-black text-[#062e39]">
               <Flame className="h-5 w-5 text-[#fd5523]" />
-              Add Vocabulary Card
+              Add Study Card
             </DialogTitle>
             <DialogDescription>
-              Save a word or phrase to practise with spaced repetition and spoken recall.
+              Save a key concept, formula, definition, or phrase to review with spaced repetition and active recall.
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleAddCard} className="space-y-4 pt-2">
             <div className="space-y-1">
-              <Label className="text-xs font-semibold text-slate-700">Language</Label>
+              <Label className="text-xs font-semibold text-slate-700">Subject / Language</Label>
               <select
                 value={newLang}
                 onChange={(e) => setNewLang(e.target.value)}
                 className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm"
               >
+                <option value="en">General / English</option>
                 <option value="zh">Mandarin Chinese (zh)</option>
                 <option value="es">Spanish (es)</option>
                 <option value="fr">French (fr)</option>
-                <option value="en">English (en)</option>
+                <option value="bem">Bemba (bem)</option>
+                <option value="ny">Nyanja (ny)</option>
+                <option value="tog">Tonga (tog)</option>
               </select>
             </div>
             <div className="space-y-1">
-              <Label className="text-xs font-semibold text-slate-700">Word or Phrase *</Label>
+              <Label className="text-xs font-semibold text-slate-700">Concept, Question, or Phrase *</Label>
               <Input
                 value={newTerm}
                 onChange={(e) => setNewTerm(e.target.value)}
-                placeholder="e.g. 谢谢 or Buenos días"
+                placeholder="e.g. Gross Margin Formula, Big-O O(log n), or 谢谢"
                 required
               />
             </div>
             <div className="space-y-1">
-              <Label className="text-xs font-semibold text-slate-700">Pronunciation / Pinyin (optional)</Label>
+              <Label className="text-xs font-semibold text-slate-700">Hint / Pronunciation (optional)</Label>
               <Input
                 value={newPron}
                 onChange={(e) => setNewPron(e.target.value)}
-                placeholder="e.g. xièxie"
+                placeholder="e.g. Finance metric, Binary search, or xièxie"
               />
             </div>
             <div className="space-y-1">
-              <Label className="text-xs font-semibold text-slate-700">Meaning *</Label>
+              <Label className="text-xs font-semibold text-slate-700">Answer / Key Takeaway *</Label>
               <Input
                 value={newMeaning}
                 onChange={(e) => setNewMeaning(e.target.value)}
-                placeholder="e.g. Thank you"
+                placeholder="e.g. (Revenue - COGS) / Revenue × 100"
                 required
               />
             </div>

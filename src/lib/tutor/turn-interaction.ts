@@ -7,6 +7,16 @@ export type ActiveChoice = {
   source: "event" | "inferred";
 };
 
+export type ActiveOrderChallenge = {
+  prompt: string;
+  items: string[];
+};
+
+export type ActiveFillBlank = {
+  template: string;
+  wordBank: string[];
+};
+
 export type DynamicQuickAction = {
   label: string;
   text: string;
@@ -17,6 +27,7 @@ export type TurnInteractionInput = {
   choice: { question: string; options: string[]; picked?: string } | null;
   confidence: { prompt?: string } | null;
   board: BoardState | null;
+  whiteboard?: string | null;
   caption: { native: string; roman?: string; translation?: string } | null;
   listenHint: { expect?: string; hint?: string } | null;
   turnCount: number;
@@ -24,6 +35,8 @@ export type TurnInteractionInput = {
 
 export type TurnInteractionState = {
   activeChoice: ActiveChoice | null;
+  activeOrderChallenge: ActiveOrderChallenge | null;
+  activeFillBlank: ActiveFillBlank | null;
   showConfidence: boolean;
   preferTextInput: boolean;
   quickActions: DynamicQuickAction[];
@@ -32,8 +45,13 @@ export type TurnInteractionState = {
 const PICK_PROMPT_RE =
   /\b(pick|choose|select|decide which|which (one|message|option|answer|reply|sentence|phrase|approach|response)|tap (one|an option))\b/i;
 
+const ORDER_PROMPT_RE =
+  /\b(put .* in (?:the )?(?:right |correct )?order|arrange|sequence|order these|rank these|sort these)\b/i;
+
+const FILL_BLANK_RE = /(?:_{3,}|\[blank\]|\[\s*\]|\(blank\))/i;
+
 const TYPE_PROMPT_RE =
-  /\b(type|write|draft|compose|reply with a message|send a message)\b/i;
+  /\b(type|write|draft|compose|reply with a message|send a message|fill in the blank)\b/i;
 
 function extractInlineOptions(text: string): string[] {
   // Matches patterns like "A) ... B) ..." or "1) ... 2) ..."
@@ -54,6 +72,37 @@ function extractInlineOptions(text: string): string[] {
   }
 
   return [];
+}
+
+function inferOrderChallenge(
+  board: BoardState | null,
+  spokenText: string,
+): ActiveOrderChallenge | null {
+  if (!spokenText || !ORDER_PROMPT_RE.test(spokenText)) return null;
+  if (!board?.items || board.items.length < 2) return null;
+  const visible = board.items.slice(0, Math.max(board.shown, 2)).slice(0, 6);
+  if (visible.length < 2) return null;
+  return {
+    prompt: board.title || "Tap items in the right order",
+    items: visible,
+  };
+}
+
+function inferFillBlank(
+  board: BoardState | null,
+  whiteboard: string | null | undefined,
+  caption: { native: string; roman?: string; translation?: string } | null,
+): ActiveFillBlank | null {
+  const candidates = [whiteboard, board?.text, caption?.native].filter(
+    (s): s is string => typeof s === "string" && FILL_BLANK_RE.test(s),
+  );
+  if (candidates.length === 0) return null;
+  const template = candidates[0].trim();
+  const wordBank =
+    board?.items && board.items.length >= 2
+      ? board.items.slice(0, Math.max(board.shown, 2)).slice(0, 6)
+      : [];
+  return { template, wordBank };
 }
 
 function inferChoiceFromContext(
@@ -115,16 +164,27 @@ function hasUnrevealedBoard(board: BoardState | null): boolean {
  * always sees appropriate, thumb-friendly controls without scrolling or getting stuck.
  */
 export function deriveTurnInteraction(input: TurnInteractionInput): TurnInteractionState {
-  const { choice, confidence, board, caption, listenHint, turnCount } = input;
+  const { choice, confidence, board, whiteboard, caption, listenHint, turnCount } = input;
+
+  const spokenText = [caption?.native, caption?.translation].filter(Boolean).join(" ").trim();
 
   const activeChoice: ActiveChoice | null = choice
     ? { ...choice, source: "event" }
     : inferChoiceFromContext(board, caption);
 
-  const showConfidence = !activeChoice && Boolean(confidence);
+  const activeOrderChallenge: ActiveOrderChallenge | null =
+    !activeChoice ? inferOrderChallenge(board, spokenText) : null;
 
-  const spokenText = [caption?.native, caption?.translation].filter(Boolean).join(" ");
-  const preferTextInput = !activeChoice && !showConfidence && TYPE_PROMPT_RE.test(spokenText);
+  const activeFillBlank: ActiveFillBlank | null =
+    !activeChoice && !activeOrderChallenge ? inferFillBlank(board, whiteboard, caption) : null;
+
+  const showConfidence = !activeChoice && !activeOrderChallenge && !activeFillBlank && Boolean(confidence);
+
+  const preferTextInput =
+    !activeChoice &&
+    !activeOrderChallenge &&
+    !showConfidence &&
+    (Boolean(activeFillBlank) || TYPE_PROMPT_RE.test(spokenText));
 
   let quickActions: DynamicQuickAction[];
   if (hasUnrevealedBoard(board)) {
@@ -163,6 +223,8 @@ export function deriveTurnInteraction(input: TurnInteractionInput): TurnInteract
 
   return {
     activeChoice,
+    activeOrderChallenge,
+    activeFillBlank,
     showConfidence,
     preferTextInput,
     quickActions,

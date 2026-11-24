@@ -1,5 +1,6 @@
 "use client";
 
+import { BookmarkCheck, BookmarkPlus } from "lucide-react";
 import type { ClipEvent, LessonRefEvent } from "@/components/tutor/EventPlayer";
 import { CONFIDENCE_LEVELS, type BoardState, type ConfidenceLevel } from "@/lib/tutor/board";
 import { dispatchLessonSeek } from "@/lib/tutor/lesson-seek";
@@ -26,6 +27,9 @@ type TeachingBoardProps = {
   onConfidence: (level: ConfidenceLevel) => void;
   onDismissAward: () => void;
   onLessonRefClick?: (ref: LessonRefEvent) => void;
+  /** Optional universal Study Deck bookmarking for board takeaways/concepts. */
+  savedKeys?: ReadonlySet<string>;
+  onSaveTakeaway?: (item: { key: string; term: string; meaning: string }) => void;
 };
 
 export function TeachingBoard({
@@ -41,6 +45,8 @@ export function TeachingBoard({
   onConfidence,
   onDismissAward,
   onLessonRefClick,
+  savedKeys,
+  onSaveTakeaway,
 }: TeachingBoardProps) {
   const empty = !board && !choice && !confidence && lessonRefs.length === 0 && !clip && !award;
   if (empty) return null;
@@ -66,7 +72,13 @@ export function TeachingBoard({
         </div>
       )}
 
-      {board && <BoardContent board={board} />}
+      {board && (
+        <BoardContent
+          board={board}
+          savedKeys={savedKeys}
+          onSaveTakeaway={onSaveTakeaway}
+        />
+      )}
 
       {clip && <Clip clip={clip} lite={lite} />}
 
@@ -141,15 +153,68 @@ export function TeachingBoard({
   );
 }
 
-function BoardContent({ board }: { board: BoardState }) {
+function BoardContent({
+  board,
+  savedKeys,
+  onSaveTakeaway,
+}: {
+  board: BoardState;
+  savedKeys?: ReadonlySet<string>;
+  onSaveTakeaway?: (item: { key: string; term: string; meaning: string }) => void;
+}) {
+  const boardSummary =
+    board.text?.trim() ||
+    board.items?.slice(0, Math.max(board.shown, 1)).join(" · ") ||
+    board.rows?.slice(0, Math.max(board.shown, 2)).map((r) => r.join(": ")).join(" | ") ||
+    "";
+  const saveKey = `board:${board.title ?? board.kind}:${boardSummary.slice(0, 60)}`;
+  const isSaved = Boolean(savedKeys?.has(saveKey));
+
   return (
     <div
       aria-live="polite"
       className="grid gap-1.5 rounded-2xl border border-[var(--line)] bg-white/95 p-3 shadow-[0_8px_24px_rgba(15,23,42,0.06)] sm:gap-2 sm:rounded-[20px] sm:p-4"
     >
-      {board.title && (
-        <h3 className="font-heading text-sm font-semibold leading-snug text-[var(--ink)] sm:text-base">{board.title}</h3>
-      )}
+      <div className="flex items-start justify-between gap-2">
+        {board.title ? (
+          <h3 className="font-heading text-sm font-semibold leading-snug text-[var(--ink)] sm:text-base">{board.title}</h3>
+        ) : (
+          <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--ink-faint)]">
+            Teaching Board
+          </span>
+        )}
+        {onSaveTakeaway && boardSummary && (
+          <button
+            type="button"
+            disabled={isSaved}
+            onClick={() =>
+              onSaveTakeaway({
+                key: saveKey,
+                term: (board.title || boardSummary).slice(0, 150),
+                meaning: boardSummary.slice(0, 230),
+              })
+            }
+            title={isSaved ? "Saved to Study Deck" : "Save board note to Study Deck"}
+            className={`inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-bold transition ${
+              isSaved
+                ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                : "border-[var(--line-strong)] bg-[var(--soft)] text-[var(--ink-dim)] hover:border-[#fd5523]/40 hover:bg-[#fff2e9] hover:text-[#fd5523]"
+            }`}
+          >
+            {isSaved ? (
+              <>
+                <BookmarkCheck className="h-3 w-3" aria-hidden="true" />
+                Saved
+              </>
+            ) : (
+              <>
+                <BookmarkPlus className="h-3 w-3" aria-hidden="true" />
+                Save note
+              </>
+            )}
+          </button>
+        )}
+      </div>
 
       {(board.kind === "bullets" || board.kind === "steps") && board.items && (
         <ListItems items={board.items} shown={board.shown} ordered={board.kind === "steps"} />

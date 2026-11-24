@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type Ref } from "react";
-import { Eye, EyeOff, RotateCcw } from "lucide-react";
+import { Eye, EyeOff, RotateCcw, Snail, Sparkles } from "lucide-react";
 import { TeacherStage } from "@/components/tutor/avatar/TeacherStage";
 import type { TeacherStageHandle } from "@/components/tutor/avatar/TeacherStage";
 import type { TeacherEngine } from "@/components/tutor/avatar/Teacher";
@@ -11,9 +11,8 @@ import { DAYLIGHT_TIME_OF_DAY, type SceneArtboard } from "@/lib/tutor/rive-drive
 import { toneSegments } from "@/lib/tutor/romanization";
 import styles from "./practice.module.css";
 
-// The stage: teacher on top, persona tags, flashcard, whiteboard and captions. Captions are
-// always on screen. Native text is clear and well-scaled for mobile. Romanization is tone-coloured
-// when the native line has Han characters.
+// The stage: teacher on top, persona tags, flashcard, whiteboard, celebration sparkles, and captions.
+// Captions are always on screen with 1-tap Replay, Slow Replay (0.75x), and Translation toggle.
 
 export type Caption = { native: string; roman?: string; translation?: string };
 
@@ -57,7 +56,19 @@ type SpeakingStageProps = {
   whiteboard: string | null;
   canReplay?: boolean;
   onReplay?: () => void;
+  onReplaySlow?: () => void;
+  /** Incrementing counter that triggers a brief sparkle celebration burst on awards. */
+  celebratePulse?: number;
 };
+
+const SPARKLES = [
+  { top: "14%", left: "18%", color: "#fd5523", delay: "0ms" },
+  { top: "20%", left: "78%", color: "#15805f", delay: "70ms" },
+  { top: "36%", left: "12%", color: "#f59e0b", delay: "130ms" },
+  { top: "32%", left: "86%", color: "#3b82f6", delay: "90ms" },
+  { top: "10%", left: "50%", color: "#ec4899", delay: "40ms" },
+  { top: "46%", left: "76%", color: "#fd5523", delay: "160ms" },
+] as const;
 
 export function SpeakingStage({
   avatarRef,
@@ -75,6 +86,8 @@ export function SpeakingStage({
   whiteboard,
   canReplay = false,
   onReplay,
+  onReplaySlow,
+  celebratePulse = 0,
 }: SpeakingStageProps) {
   return (
     <section
@@ -90,6 +103,30 @@ export function SpeakingStage({
         reducedMotion={reducedMotion}
         onEvent={onAvatarEvent}
       />
+
+      {/* Lightweight sparkle celebration burst on awards */}
+      {celebratePulse > 0 && !reducedMotion && (
+        <div
+          key={celebratePulse}
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 z-20 overflow-hidden"
+        >
+          {SPARKLES.map((sp, i) => (
+            <span
+              key={i}
+              style={{
+                top: sp.top,
+                left: sp.left,
+                color: sp.color,
+                animationDelay: sp.delay,
+              }}
+              className="absolute animate-ping"
+            >
+              <Sparkles className="h-5 w-5" />
+            </span>
+          ))}
+        </div>
+      )}
 
       <div className="pointer-events-none absolute inset-x-2 top-2 flex items-start justify-between gap-1.5 sm:inset-x-3 sm:top-3 sm:gap-2">
         <div className={`${styles.glass} grid max-w-[62%] gap-0 rounded-xl px-2.5 py-1 sm:rounded-2xl sm:px-3 sm:py-1.5`}>
@@ -115,7 +152,12 @@ export function SpeakingStage({
 
       <FlashCard card={card} onDismiss={onDismissCard} />
 
-      <Captions caption={caption} canReplay={canReplay} onReplay={onReplay} />
+      <Captions
+        caption={caption}
+        canReplay={canReplay}
+        onReplay={onReplay}
+        onReplaySlow={onReplaySlow}
+      />
     </section>
   );
 }
@@ -159,10 +201,12 @@ function Captions({
   caption,
   canReplay,
   onReplay,
+  onReplaySlow,
 }: {
   caption: Caption | null;
   canReplay: boolean;
   onReplay?: () => void;
+  onReplaySlow?: () => void;
 }) {
   const [showTranslation, setShowTranslation] = useState(true);
 
@@ -221,6 +265,17 @@ function Captions({
               className="flex h-7 w-7 items-center justify-center rounded-full border border-[var(--line-strong)] bg-white/90 text-[var(--ink-dim)] transition hover:bg-[var(--soft-hover)] hover:text-[var(--ink)]"
             >
               <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
+            </button>
+          )}
+          {canReplay && onReplaySlow && (
+            <button
+              type="button"
+              onClick={onReplaySlow}
+              title="Replay slowly (0.75×)"
+              aria-label="Replay slowly at 0.75x speed"
+              className="flex h-7 w-7 items-center justify-center rounded-full border border-[var(--line-strong)] bg-white/90 text-[var(--ink-dim)] transition hover:bg-[#fff2e9] hover:text-[#fd5523]"
+            >
+              <Snail className="h-3.5 w-3.5" aria-hidden="true" />
             </button>
           )}
           {caption.translation && (
