@@ -74,7 +74,7 @@ export function SpeakingStage({
   return (
     <section
       aria-label={`Scene: ${sceneTitle}`}
-      className={`${styles.stage} relative mx-auto aspect-[4/5] w-full max-w-[560px] min-h-[300px] sm:aspect-[5/5.4]`}
+      className={`${styles.stage} relative mx-auto aspect-[4/3.8] w-full max-w-[560px] min-h-[260px] sm:aspect-[5/5.2]`}
     >
       <TeacherStage
         ref={avatarRef}
@@ -86,23 +86,23 @@ export function SpeakingStage({
         onEvent={onAvatarEvent}
       />
 
-      <div className="pointer-events-none absolute inset-x-3 top-3 flex items-start justify-between gap-2">
-        <div className={`${styles.glass} grid gap-0 rounded-2xl px-3 py-2`}>
-          <div className="font-heading text-base font-semibold leading-tight text-[var(--ink)]">{teacherName}</div>
-          <div className="text-xs text-[var(--ink-dim)]">{sceneTitle}</div>
+      <div className="pointer-events-none absolute inset-x-2 top-2 flex items-start justify-between gap-1.5 sm:inset-x-3 sm:top-3 sm:gap-2">
+        <div className={`${styles.glass} grid max-w-[58%] gap-0 rounded-xl px-2.5 py-1.5 sm:rounded-2xl sm:px-3 sm:py-2`}>
+          <div className="truncate font-heading text-xs font-semibold leading-tight text-[var(--ink)] sm:text-base">{teacherName}</div>
+          <div className="truncate text-[10px] text-[var(--ink-dim)] sm:text-xs">{sceneTitle}</div>
         </div>
-        <div className="flex flex-wrap justify-end gap-1.5">
-          <span className="rounded-full border border-[var(--line)] bg-white/85 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider text-[var(--ink-dim)]">
+        <div className="flex flex-wrap justify-end gap-1 sm:gap-1.5">
+          <span className="hidden rounded-full border border-[var(--line)] bg-white/85 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-[var(--ink-dim)] sm:inline-flex">
             AI teacher
           </span>
-          <span className={`${styles.accent} rounded-full border border-[var(--line)] bg-white/85 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider`}>
+          <span className={`${styles.accent} rounded-full border border-[var(--line)] bg-white/90 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider sm:px-2.5 sm:py-1 sm:text-[11px]`}>
             {modeLabel}
           </span>
         </div>
       </div>
 
       {whiteboard && (
-        <div className="absolute right-3 top-[18%] max-w-[46%] rounded-xl bg-[#fbf3e6]/90 px-3 py-2 text-sm font-semibold text-[var(--ink)] shadow-lg">
+        <div className="absolute right-2 top-[16%] max-w-[48%] rounded-xl bg-[#fbf3e6]/92 px-2.5 py-1.5 text-xs font-semibold text-[var(--ink)] shadow-md sm:right-3 sm:top-[18%] sm:px-3 sm:py-2 sm:text-sm">
           {whiteboard}
         </div>
       )}
@@ -120,24 +120,24 @@ function FlashCard({ card, onDismiss }: { card: CardItem | null; onDismiss: () =
   return (
     <div
       aria-live="polite"
-      className={`${styles.card} ${visible ? "" : styles.cardHidden} absolute left-3 top-[24%] w-[36%] max-w-[210px] min-w-[112px] rounded-[22px] px-3 pb-3 pt-3.5 text-center backdrop-blur-md`}
+      className={`${styles.card} ${visible ? "" : styles.cardHidden} absolute left-2 top-[22%] w-[40%] max-w-[190px] min-w-[104px] rounded-2xl px-2.5 pb-2.5 pt-3 text-center backdrop-blur-md sm:left-3 sm:top-[24%] sm:w-[36%] sm:rounded-[22px] sm:px-3 sm:pb-3 sm:pt-3.5`}
     >
       {card && (
         <>
-          <div className={`${tone ? styles.han : "font-heading font-semibold"} text-[clamp(28px,6vw,44px)] leading-[1.1] text-[var(--ink)]`}>
+          <div className={`${tone ? styles.han : "font-heading font-semibold"} text-[clamp(20px,5vw,38px)] leading-[1.1] text-[var(--ink)]`}>
             {card.text}
           </div>
-          {card.pron && <div className="mt-1 text-base text-[var(--ink)]">{card.pron}</div>}
+          {card.pron && <div className="mt-1 text-xs text-[var(--ink)] sm:text-sm">{card.pron}</div>}
           {card.meaning && (
-            <div className="mt-1 text-[11px] uppercase tracking-[0.1em] text-[var(--ink-dim)]">{card.meaning}</div>
+            <div className="mt-0.5 text-[10px] uppercase tracking-[0.08em] text-[var(--ink-dim)] sm:text-[11px]">{card.meaning}</div>
           )}
-          <div className={`${styles.accent} mt-2 text-[11px] font-semibold`}>+ added to your deck</div>
+          <div className={`${styles.accent} mt-1.5 text-[10px] font-semibold sm:text-[11px]`}>+ added to deck</div>
           <button
             type="button"
             onClick={onDismiss}
-            className="mt-2 rounded-full border border-[var(--line-strong)] px-2.5 py-0.5 text-[11px] text-[var(--ink-dim)] hover:bg-[var(--soft-hover)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus)]"
+            className="mt-1.5 rounded-full border border-[var(--line-strong)] px-2 py-0.5 text-[10px] text-[var(--ink-dim)] hover:bg-[var(--soft-hover)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus)] sm:px-2.5 sm:text-[11px]"
           >
-            Close card
+            Close
           </button>
         </>
       )}
@@ -148,7 +148,7 @@ function FlashCard({ card, onDismiss }: { card: CardItem | null; onDismiss: () =
 function Captions({ caption }: { caption: Caption | null }) {
   if (!caption) {
     return (
-      <div className={`${styles.glass} absolute inset-x-3 bottom-3 rounded-[20px] px-4 py-3 text-center text-sm text-[var(--ink-dim)]`}>
+      <div className={`${styles.glass} absolute inset-x-2 bottom-2 rounded-2xl px-3 py-2 text-center text-xs text-[var(--ink-dim)] sm:inset-x-3 sm:bottom-3 sm:rounded-[20px] sm:px-4 sm:py-3 sm:text-sm`}>
         Captions appear here.
       </div>
     );
@@ -159,16 +159,16 @@ function Captions({ caption }: { caption: Caption | null }) {
       role="region"
       aria-label="Captions"
       aria-live="polite"
-      className={`${styles.glass} absolute inset-x-3 bottom-3 grid gap-0.5 rounded-[20px] px-4 py-3 text-center`}
+      className={`${styles.glass} absolute inset-x-2 bottom-2 grid gap-0.5 rounded-2xl px-3 py-2 text-center sm:inset-x-3 sm:bottom-3 sm:rounded-[20px] sm:px-4 sm:py-3`}
     >
       <p
         lang={han ? "zh" : undefined}
-        className={`${han ? styles.han : "font-heading font-semibold"} text-[clamp(18px,2.6vw,26px)] leading-snug text-balance text-[var(--ink)]`}
+        className={`${han ? styles.han : "font-heading font-semibold"} text-[clamp(14px,3.6vw,22px)] leading-snug text-balance text-[var(--ink)]`}
       >
         {caption.native}
       </p>
       {caption.roman && (
-        <p className="text-[15px] leading-snug text-[var(--ink)]">
+        <p className="text-xs leading-snug text-[var(--ink)] sm:text-sm">
           {han
             ? toneSegments(caption.roman).map((seg, i) =>
                 seg.tone > 0 ? (
@@ -182,7 +182,7 @@ function Captions({ caption }: { caption: Caption | null }) {
             : caption.roman}
         </p>
       )}
-      {caption.translation && <p className="text-[13px] text-[var(--ink-dim)]">{caption.translation}</p>}
+      {caption.translation && <p className="text-[11px] text-[var(--ink-dim)] sm:text-xs">{caption.translation}</p>}
     </div>
   );
 }

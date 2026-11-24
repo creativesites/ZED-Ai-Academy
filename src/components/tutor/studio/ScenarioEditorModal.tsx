@@ -1,15 +1,13 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
+import Link from "next/link";
 import { toast } from "sonner";
-import { Loader2, Play, Plus, Sparkles, Trash2, Wand2 } from "lucide-react";
+import { ExternalLink, Loader2, Plus, Sparkles, Trash2, Wand2 } from "lucide-react";
 import { Teacher } from "@/components/tutor/avatar/Teacher";
 import { DEFAULT_PERSONA_LOOK } from "@/components/tutor/avatar/types";
-import { TutorSession } from "@/components/tutor/practice/TutorSession";
 import { FlowStoryboard } from "@/components/tutor/studio/FlowStoryboard";
-import { createTeacherPreviewClient } from "@/components/tutor/studio/previewClient";
 import type { DraftedFlow, FlowDiffEntry, FlowStep } from "@/lib/tutor/authoring/flow";
-import type { PreviewFlowPayload } from "@/lib/tutor/authoring/preview";
 import { AUTHORING_TEMPLATES, type AuthoringTemplateId } from "@/lib/tutor/authoring/templates";
 import { SCENE_ARTBOARDS, type SceneArtboard } from "@/lib/tutor/rive-driver";
 import {
@@ -228,52 +226,9 @@ export function ScenarioEditorModal({
   const [isRevising, setIsRevising] = useState(false);
   const [undoSnapshot, setUndoSnapshot] = useState<DraftedFlow | null>(null);
   const [diff, setDiff] = useState<FlowDiffEntry[] | null>(null);
-  const [previewOpen, setPreviewOpen] = useState(false);
   const [isSaving, startSaving] = useTransition();
 
   const selectedPersona = personas.find((p) => p.id === personaId) ?? null;
-
-  const previewFlow = useMemo<PreviewFlowPayload>(
-    () => ({
-      scenarioId: initialScenario?.id ?? null,
-      courseId: courseId ?? initialScenario?.course_id ?? null,
-      lessonId: lessonId ?? initialScenario?.lesson_id ?? null,
-      companyId,
-      personaId: personaId || null,
-      title: title.trim() || "Draft AI Teacher flow",
-      goal: goal.trim() || "Practise this lesson interactively.",
-      style,
-      scene,
-      maxMinutes,
-      skillPack,
-      level: level.trim() || null,
-      steps: beats,
-      targetItems,
-    }),
-    [
-      initialScenario?.id,
-      initialScenario?.course_id,
-      initialScenario?.lesson_id,
-      courseId,
-      lessonId,
-      companyId,
-      personaId,
-      title,
-      goal,
-      style,
-      scene,
-      maxMinutes,
-      skillPack,
-      level,
-      beats,
-      targetItems,
-    ],
-  );
-
-  const previewClient = useMemo(
-    () => createTeacherPreviewClient(() => previewFlow),
-    [previewFlow],
-  );
 
   function currentAsDraftedFlow(): DraftedFlow {
     return {
@@ -830,15 +785,21 @@ export function ScenarioEditorModal({
 
           {/* Footer actions */}
           <div className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setPreviewOpen(true)}
-              className="rounded-xl text-xs font-bold text-[#062e39]"
-            >
-              <Play className="mr-1.5 h-3.5 w-3.5 text-[#fd5523]" />
-              Test as student
-            </Button>
+            {initialScenario?.id ? (
+              <Link
+                href={`/practice/${initialScenario.id}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-input bg-background px-3 text-xs font-bold text-[#062e39] shadow-xs transition hover:bg-accent hover:text-accent-foreground"
+              >
+                <ExternalLink className="h-3.5 w-3.5 text-[#fd5523]" />
+                Open full practice
+              </Link>
+            ) : (
+              <span className="text-[11px] text-slate-400">
+                Save scenario to test in full-page Practice Room
+              </span>
+            )}
             <div className="flex items-center gap-2">
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 Cancel
@@ -856,45 +817,6 @@ export function ScenarioEditorModal({
           </div>
         </div>
       </DialogContent>
-
-      <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
-        <DialogContent className="flex h-[88vh] max-w-5xl flex-col gap-0 overflow-hidden p-0">
-          <DialogTitle className="sr-only">Test AI Teacher as student</DialogTitle>
-          <DialogDescription className="sr-only">
-            Preview session. No learner progress or report is saved.
-          </DialogDescription>
-          <div className="flex items-center justify-between border-b border-amber-200 bg-amber-50 px-4 py-2 text-xs font-semibold text-amber-950">
-            <span>Student preview — no learner progress or report is saved</span>
-            <button
-              type="button"
-              onClick={() => setPreviewOpen(false)}
-              className="rounded px-2 py-0.5 text-amber-800 hover:bg-amber-100"
-            >
-              Close preview
-            </button>
-          </div>
-          <div className="min-h-0 flex-1 overflow-hidden">
-            {previewOpen && (
-              <TutorSession
-                origin={courseId && lessonId ? "lesson" : "practice"}
-                lessonId={lessonId ?? undefined}
-                scenarioId={initialScenario?.id}
-                scene={scene}
-                look={selectedPersona?.rive_variant}
-                client={previewClient}
-                preview={{
-                  teacherName: selectedPersona?.display_name ?? selectedPersona?.name ?? "AI Teacher",
-                  title: title.trim() || "Draft AI Teacher flow",
-                  goal: goal.trim() || "Practise this flow interactively.",
-                  maxMinutes,
-                  modes: ["voice", "text"],
-                }}
-                onExit={() => setPreviewOpen(false)}
-              />
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
     </Dialog>
   );
 }

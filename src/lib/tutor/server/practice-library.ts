@@ -115,15 +115,95 @@ export async function loadPracticeLibrary(userId: string, scope: PracticeLibrary
   return { ok: true, items };
 }
 
-/** One scenario from the learner's library, or null when they may not see it. */
+/**
+ * One scenario from the learner's library, or (when `allowLessonOrStaff` is enabled) a published
+ * course_only scenario for a member/enrolled learner or any draft/published scenario owned by an
+ * academy where the user is staff. Returns null when the user may not see it.
+ */
 export async function findPracticeScenario(
   userId: string,
   scenarioId: string,
   scope: PracticeLibraryScope,
+  options?: { allowLessonOrStaff?: boolean },
 ): Promise<PracticeLibraryItem | null> {
   const result = await loadPracticeLibrary(userId, scope);
-  if (!result.ok) return null;
-  return result.items.find((item) => item.id === scenarioId) ?? null;
+  if (result.ok) {
+    const found = result.items.find((item) => item.id === scenarioId);
+    if (found) return found;
+  }
+
+  if (!options?.allowLessonOrStaff) return null;
+
+  const supabase = createServiceClient();
+  const { data: row } = await supabase
+    .from("practice_scenarios")
+    .select(`${SCENARIO_COLUMNS}, status`)
+    .eq("id", scenarioId)
+    .maybeSingle();
+
+  if (!row) return null;
+  if (scope.kind === "tenant" && row.company_id && row.company_id !== scope.companyId && row.visibility !== "platform") {
+    return null;
+  }
+
+  const [{ data: profile }, { data: membership }, { data: owned }] = await Promise.all([
+    supabase.from("profiles").select("role").eq("id", userId).maybeSingle(),
+    row.company_id
+      ? supabase
+          .from("company_members")
+          .select("role, status")
+          .eq("company_id", row.company_id)
+          .eq("profile_id", userId)
+          .eq("status", "active")
+          .maybeSingle()
+      : Promise.resolve({ data: null }),
+    row.company_id
+      ? supabase
+          .from("companies")
+          .select("id")
+          .eq("id", row.company_id)
+          .eq("admin_id", userId)
+          .maybeSingle()
+      : Promise.resolve({ data: null }),
+  ]);
+
+  const isSuperAdmin = profile?.role === "super_admin";
+  const isStaff =
+    isSuperAdmin ||
+    Boolean(owned) ||
+    (membership != null && ["company_admin", "teacher", "instructor"].includes(membership.role));
+  const isMember = isStaff || Boolean(membership);
+
+  // Staff can preview any status/visibility in their academy.
+  // Learners can open published course scenarios when launching from a lesson.
+  const canOpen =
+    isStaff ||
+    (row.status === "published" && (row.visibility === "platform" || (row.visibility === "course" && isMember)));
+
+  if (!canOpen) return null;
+
+  const { data: persona } = row.persona_id
+    ? await supabase
+        .from("ai_personas")
+        .select("id, name, display_name, rive_variant")
+        .eq("id", row.persona_id)
+        .maybeSingle()
+    : { data: null };
+
+  const modes = startableModes(row.allowed_modes as Mode[]);
+  return {
+    id: row.id,
+    title: row.title,
+    goal: row.goal,
+    skillPack: row.skill_pack as SkillPack,
+    level: row.level,
+    maxMinutes: row.max_minutes,
+    allowedModes: modes.length > 0 ? (row.allowed_modes as Mode[]) : ["voice", "text"],
+    visibility: row.visibility === "platform" ? "platform" : "tenant_library",
+    personaName: persona ? (persona.display_name ?? persona.name) : null,
+    personaLook: persona ? personaLookFromVariant(persona.rive_variant) : undefined,
+    scene: sceneFromValue(row.scene),
+  };
 }
 
 type ScenarioRow = {

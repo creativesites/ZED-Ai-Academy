@@ -43,8 +43,7 @@ import { TeacherInsightsPanel } from "./TeacherInsightsPanel";
 import { SessionReviewDrawerModal } from "./SessionReviewDrawerModal";
 import { Teacher } from "@/components/tutor/avatar/Teacher";
 import { DEFAULT_PERSONA_LOOK } from "@/components/tutor/avatar/types";
-import { TutorSession } from "@/components/tutor/practice/TutorSession";
-import { TUTOR_STYLE_LABELS, overlayModes } from "@/lib/tutor/tutor-session-block";
+import { TUTOR_STYLE_LABELS } from "@/lib/tutor/tutor-session-block";
 import { extractReportAverageScore, speakingMsToMinutes } from "@/lib/classroom/speaking-metrics";
 import {
   createTutorAssignment,
@@ -94,7 +93,6 @@ export function TutorStudioHub({
 
   const [editorOpen, setEditorOpen] = useState(false);
   const [editingScenario, setEditingScenario] = useState<ScenarioRecord | null>(null);
-  const [previewScenario, setPreviewScenario] = useState<ScenarioRecord | null>(null);
   const [assignScenario, setAssignScenario] = useState<ScenarioRecord | null>(null);
   const [assignGroupId, setAssignGroupId] = useState<string>("");
   const [assignDueAt, setAssignDueAt] = useState<string>("");
@@ -450,16 +448,17 @@ export function TutorStudioHub({
                           Assign
                         </Button>
                       )}
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setPreviewScenario(s)}
-                        className="h-8 rounded-lg px-2.5 text-xs font-bold"
+                      <Link
+                        href={
+                          companySlug
+                            ? `/academy/${companySlug}/practice/${s.id}?back=${encodeURIComponent(`/academy/${companySlug}/admin/ai-teachers`)}`
+                            : `/practice/${s.id}?back=${encodeURIComponent("/creator/ai-teachers")}`
+                        }
+                        className="inline-flex h-8 items-center justify-center rounded-lg border border-input bg-background px-2.5 text-xs font-bold shadow-xs transition hover:bg-accent hover:text-accent-foreground"
                       >
                         <Play className="mr-1 h-3 w-3 text-[#fd5523]" />
                         Test
-                      </Button>
+                      </Link>
                       <Button
                         type="button"
                         variant="outline"
@@ -821,32 +820,6 @@ export function TutorStudioHub({
         sessionId={reviewingSessionId}
         onReviewed={handleSessionReviewed}
       />
-
-      {/* Live Preview Dialog */}
-      <Dialog open={Boolean(previewScenario)} onOpenChange={(o) => !o && setPreviewScenario(null)}>
-        <DialogContent className="h-[85vh] max-w-5xl overflow-hidden p-0">
-          <DialogTitle className="sr-only">Test AI Teacher Scenario</DialogTitle>
-          <DialogDescription className="sr-only">
-            Interactive preview with the animated AI teacher.
-          </DialogDescription>
-          {previewScenario && (
-            <TutorSession
-              origin="practice"
-              scenarioId={previewScenario.id}
-              scene={previewScenario.scene ?? undefined}
-              look={previewScenario.persona?.look}
-              preview={{
-                teacherName: previewScenario.persona?.display_name ?? previewScenario.persona?.name,
-                title: previewScenario.title,
-                goal: previewScenario.goal,
-                maxMinutes: previewScenario.max_minutes,
-                modes: overlayModes(previewScenario.allowed_modes),
-              }}
-              onExit={() => setPreviewScenario(null)}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
 
       {/* Assign Speaking Scenario Modal */}
       <Dialog open={Boolean(assignScenario)} onOpenChange={(o) => !o && setAssignScenario(null)}>

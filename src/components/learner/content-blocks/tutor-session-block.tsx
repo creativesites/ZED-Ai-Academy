@@ -1,21 +1,19 @@
 "use client";
 
-import { useState } from "react";
-import { createPortal } from "react-dom";
-import { CheckCircle, Mic, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { ArrowRight, CheckCircle, Mic } from "lucide-react";
 import { Teacher } from "@/components/tutor/avatar/Teacher";
 import { DEFAULT_PERSONA_LOOK } from "@/components/tutor/avatar/types";
-import { TutorSession } from "@/components/tutor/practice/TutorSession";
 import {
   TUTOR_STYLE_LABELS,
   parseTutorSessionBlock,
   type TutorScenarioView,
 } from "@/lib/tutor/tutor-session-block";
 
-// A tutor_session block in the lesson player. The card shows the scenario; "Start speaking practice"
-// opens TutorSession full-screen with origin "lesson". The session row is linked to this lesson and
-// scenario, so the player's done state survives a reload (see learn/page.tsx and markLessonComplete).
+// A tutor_session block in the lesson player. Navigates directly to the dedicated full-page
+// Practice Room route (no cramped modal overlay), passing lessonId and a back URL so the learner
+// returns straight to this lesson when finished.
 
 export function TutorSessionBlock({
   content,
@@ -23,7 +21,6 @@ export function TutorSessionBlock({
   origin,
   scenario,
   done,
-  onComplete,
 }: {
   content: Record<string, unknown>;
   lessonId?: string;
@@ -33,7 +30,7 @@ export function TutorSessionBlock({
   done: boolean;
   onComplete?: (scenarioId: string) => void;
 }) {
-  const [open, setOpen] = useState(false);
+  const pathname = usePathname();
   const block = parseTutorSessionBlock(content);
 
   if (!block) {
@@ -50,105 +47,91 @@ export function TutorSessionBlock({
   const persona = scenario?.persona;
   const personaName = persona ? persona.displayName ?? persona.name : null;
 
+  const tenantMatch = /^\/academy\/([^/]+)/.exec(pathname ?? "");
+  const basePath = tenantMatch ? `/academy/${tenantMatch[1]}` : "";
+  const qs = new URLSearchParams();
+  if (resolvedOrigin === "lesson" && lessonId) qs.set("lessonId", lessonId);
+  if (pathname) qs.set("back", pathname);
+  const practiceHref = scenario
+    ? `${basePath}/practice/${scenario.id}${qs.toString() ? `?${qs.toString()}` : ""}`
+    : "#";
+
   return (
-    <section className="overflow-hidden rounded-[2rem] border border-slate-100 bg-white shadow-xl">
-      <div className="flex flex-col gap-6 p-6 md:p-10">
-        <div className="flex items-start gap-4">
-          <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-b from-[#1a1338] to-[#321b4e] shadow-md">
+    <section className="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-lg sm:rounded-[2rem] sm:shadow-xl">
+      <div className="flex flex-col gap-4 p-4 sm:gap-5 sm:p-6 md:p-8">
+        <div className="flex items-start gap-3 sm:gap-4">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-gradient-to-b from-[#1a1338] to-[#321b4e] shadow-md sm:h-16 sm:w-16 sm:rounded-2xl">
             <Teacher
               variant="bust"
               persona={persona?.look ?? DEFAULT_PERSONA_LOOK}
-              className="h-16 w-16"
+              className="h-12 w-12 sm:h-16 sm:w-16"
               label={personaName ?? "Animated AI teacher"}
             />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-cyan-700">
+            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-cyan-700 sm:text-[11px]">
               {personaName ? `AI Teacher · ${personaName}` : "AI Teacher"}
             </p>
-            <h3 className="text-xl font-bold leading-snug text-[#062e39]">{title}</h3>
+            <h3 className="text-base font-bold leading-snug text-[#062e39] sm:text-xl">{title}</h3>
           </div>
         </div>
-        <div className="-mt-2 flex flex-wrap gap-2">
-            <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
-              {TUTOR_STYLE_LABELS[block.style]}
+
+        <div className="-mt-1 flex flex-wrap gap-1.5">
+          <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-semibold text-slate-600 sm:text-xs">
+            {TUTOR_STYLE_LABELS[block.style]}
+          </span>
+          {block.required && (
+            <span className="rounded-full bg-[#fff6ee] px-2.5 py-0.5 text-[11px] font-semibold text-[#fd5523] sm:text-xs">
+              Required
             </span>
-            {block.required && (
-              <span className="rounded-full bg-[#fff6ee] px-3 py-1 text-xs font-semibold text-[#fd5523]">Required</span>
-            )}
+          )}
         </div>
 
-        {block.intro && <p className="text-sm leading-relaxed text-slate-600">{block.intro}</p>}
+        {block.intro && (
+          <p className="text-xs leading-relaxed text-slate-600 sm:text-sm">{block.intro}</p>
+        )}
 
         {scenario ? (
-          <div className="rounded-2xl bg-slate-50 p-4 text-sm text-slate-700">
+          <div className="rounded-xl bg-slate-50 p-3 text-xs text-slate-700 sm:rounded-2xl sm:p-4 sm:text-sm">
             <p className="font-semibold text-slate-800">Your goal</p>
-            <p className="mt-1">{scenario.goal}</p>
-            <p className="mt-3 text-xs text-slate-500">
+            <p className="mt-1 leading-relaxed">{scenario.goal}</p>
+            <p className="mt-2 text-[11px] text-slate-500 sm:text-xs">
               {personaName ? `With ${personaName} · ` : ""}up to {scenario.maxMinutes} minutes
             </p>
           </div>
         ) : (
-          <p className="rounded-2xl bg-slate-50 p-4 text-sm text-slate-500">
+          <p className="rounded-xl bg-slate-50 p-3 text-xs text-slate-500 sm:rounded-2xl sm:p-4 sm:text-sm">
             This practice is not available right now. Your teacher may need to publish the scenario.
           </p>
         )}
 
-        <div className="flex flex-wrap items-center gap-4">
-          <Button
-            type="button"
-            disabled={!canStart}
-            onClick={() => setOpen(true)}
-            className="h-12 rounded-2xl bg-[#fd5523] px-6 text-base font-bold text-white hover:bg-[#ef4a16]"
-          >
-            <Mic className="mr-2 h-5 w-5" />
-            {done ? "Practice again" : "Start AI Teacher"}
-          </Button>
+        <div className="flex flex-wrap items-center gap-3">
+          {canStart ? (
+            <Link
+              href={practiceHref}
+              className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-[#fd5523] px-5 text-sm font-bold text-white shadow-sm transition hover:bg-[#ef4a16] sm:h-12 sm:rounded-2xl sm:px-6 sm:text-base"
+            >
+              <Mic className="h-4 w-4 sm:h-5 sm:w-5" />
+              {done ? "Practice again" : "Start AI Teacher"}
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          ) : (
+            <button
+              type="button"
+              disabled
+              className="inline-flex h-11 cursor-not-allowed items-center justify-center gap-2 rounded-xl bg-[#fd5523]/50 px-5 text-sm font-bold text-white sm:h-12 sm:rounded-2xl sm:px-6 sm:text-base"
+            >
+              <Mic className="h-4 w-4 sm:h-5 sm:w-5" />
+              Start AI Teacher
+            </button>
+          )}
           {done && (
-            <span className="flex items-center gap-2 text-sm font-semibold text-emerald-700">
+            <span className="flex items-center gap-1.5 text-xs font-semibold text-emerald-700 sm:text-sm">
               <CheckCircle className="h-4 w-4" /> Done
             </span>
           )}
         </div>
       </div>
-
-      {open && scenario && (resolvedOrigin === "practice" || lessonId) && typeof document !== "undefined" &&
-        createPortal(
-          <div className="fixed inset-0 z-[80] flex flex-col bg-[#062e39]" role="dialog" aria-modal="true" aria-label={title}>
-            <div className="flex items-center justify-between gap-3 px-4 py-3 text-white">
-              <p className="truncate text-sm font-semibold">{title}</p>
-              <button
-                type="button"
-                onClick={() => setOpen(false)}
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/10 hover:bg-white/20"
-                aria-label="Close AI teacher session"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-            <div className="min-h-0 flex-1 overflow-y-auto">
-              <TutorSession
-                origin={resolvedOrigin}
-                lessonId={resolvedOrigin === "lesson" ? lessonId : undefined}
-                scenarioId={scenario.id}
-                scene={scenario.scene}
-                look={persona?.look}
-                preview={{
-                  teacherName: personaName ?? undefined,
-                  title,
-                  goal: scenario.goal,
-                  maxMinutes: scenario.maxMinutes,
-                  modes: scenario.modes,
-                }}
-                onExit={() => {
-                  onComplete?.(scenario.id);
-                  setOpen(false);
-                }}
-              />
-            </div>
-          </div>,
-          document.body,
-        )}
     </section>
   );
 }

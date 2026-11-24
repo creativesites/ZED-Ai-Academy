@@ -138,7 +138,7 @@ export function SessionReviewDrawerModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex max-h-[90dvh] max-w-4xl flex-col overflow-hidden rounded-3xl border-slate-200 p-0">
+      <DialogContent className="flex max-h-[92dvh] w-[calc(100%-1.5rem)] max-w-4xl flex-col overflow-hidden rounded-2xl border-slate-200 p-0 sm:max-w-4xl sm:rounded-3xl">
         <DialogTitle className="sr-only">Speaking Session Review &amp; Transcript</DialogTitle>
         <DialogDescription className="sr-only">
           Inspect learner speaking turns, rubric scores, and submit teacher review feedback.

@@ -6,22 +6,35 @@ import { findPracticeScenario } from "@/lib/tutor/server/practice-library";
 
 export const dynamic = "force-dynamic";
 
-// /practice/[scenarioId]: one practice session. Only scenarios in the learner's library can be opened.
-export default async function PracticeSessionPage({ params }: { params: Promise<{ scenarioId: string }> }) {
-  const { scenarioId } = await params;
+// /practice/[scenarioId]: full-page AI Teacher practice session.
+export default async function PracticeSessionPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ scenarioId: string }>;
+  searchParams: Promise<{ lessonId?: string; back?: string }>;
+}) {
+  const [{ scenarioId }, sp] = await Promise.all([params, searchParams]);
   const { userId } = await auth();
   if (!userId) redirect(`/sign-in?redirect_url=/practice/${scenarioId}`);
 
-  const item = await findPracticeScenario(userId, scenarioId, { kind: "platform" });
+  const item = await findPracticeScenario(userId, scenarioId, { kind: "platform" }, { allowLessonOrStaff: true });
   if (!item) notFound();
+
+  const lessonId = typeof sp.lessonId === "string" && sp.lessonId.length > 0 ? sp.lessonId : undefined;
+  const safeBack =
+    typeof sp.back === "string" && sp.back.startsWith("/") && !sp.back.startsWith("//")
+      ? sp.back
+      : "/practice";
 
   return (
     <TutorSession
-      origin="practice"
+      origin={lessonId ? "lesson" : "practice"}
+      lessonId={lessonId}
       scenarioId={item.id}
       scene={item.scene}
       look={item.personaLook}
-      doneHref="/practice"
+      doneHref={safeBack}
       preview={{
         teacherName: item.personaName ?? undefined,
         title: item.title,

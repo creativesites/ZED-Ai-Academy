@@ -71,9 +71,9 @@ export function TeachingBoard({
       {clip && <Clip clip={clip} lite={lite} />}
 
       {choice && (
-        <div className={`${styles.glass} grid gap-2 rounded-[20px] p-4`}>
-          <p className="font-heading text-base font-semibold leading-snug text-[var(--ink)]">{choice.question}</p>
-          <div role="group" aria-label={choice.question} className="grid gap-2">
+        <div className={`${styles.glass} grid gap-2 rounded-2xl p-3 sm:rounded-[20px] sm:p-4`}>
+          <p className="font-heading text-sm font-semibold leading-snug text-[var(--ink)] sm:text-base">{choice.question}</p>
+          <div role="group" aria-label={choice.question} className="grid gap-1.5 sm:gap-2">
             {choice.options.map((option) => {
               const picked = choice.picked === option;
               return (
@@ -83,7 +83,7 @@ export function TeachingBoard({
                   disabled={disabled || choice.picked !== undefined}
                   aria-pressed={picked}
                   onClick={() => onChoose(option)}
-                  className={`min-h-11 rounded-xl border px-3.5 py-2.5 text-left text-[15px] font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus)] disabled:cursor-not-allowed ${
+                  className={`min-h-10 rounded-xl border px-3 py-2 text-left text-xs font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus)] disabled:cursor-not-allowed sm:min-h-11 sm:px-3.5 sm:py-2.5 sm:text-sm ${
                     picked
                       ? "border-[#0f766e] bg-[#ecfdf5] text-[#064e3b]"
                       : "border-[var(--line-strong)] bg-white text-[var(--ink)] hover:bg-[var(--soft-hover)] disabled:opacity-60"
@@ -145,10 +145,10 @@ function BoardContent({ board }: { board: BoardState }) {
   return (
     <div
       aria-live="polite"
-      className="grid gap-2 rounded-[20px] border border-[var(--line)] bg-white/95 p-4 shadow-[0_8px_24px_rgba(15,23,42,0.06)]"
+      className="grid gap-1.5 rounded-2xl border border-[var(--line)] bg-white/95 p-3 shadow-[0_8px_24px_rgba(15,23,42,0.06)] sm:gap-2 sm:rounded-[20px] sm:p-4"
     >
       {board.title && (
-        <h3 className="font-heading text-[17px] font-semibold leading-snug text-[var(--ink)]">{board.title}</h3>
+        <h3 className="font-heading text-sm font-semibold leading-snug text-[var(--ink)] sm:text-base">{board.title}</h3>
       )}
 
       {(board.kind === "bullets" || board.kind === "steps") && board.items && (
@@ -156,20 +156,20 @@ function BoardContent({ board }: { board: BoardState }) {
       )}
 
       {board.kind === "equation" && board.text && (
-        <p className="whitespace-pre-wrap font-mono text-[17px] leading-relaxed text-[var(--ink)]">{board.text}</p>
+        <p className="whitespace-pre-wrap font-mono text-sm leading-relaxed text-[var(--ink)] sm:text-base">{board.text}</p>
       )}
 
       {board.kind === "code" && board.text && (
         <pre
           aria-label={board.language ? `${board.language} code` : "Code"}
-          className="overflow-x-auto rounded-xl bg-[#0f172a] p-3 font-mono text-[13px] leading-relaxed text-slate-100"
+          className="overflow-x-auto rounded-xl bg-[#0f172a] p-2.5 font-mono text-xs leading-relaxed text-slate-100 sm:p-3 sm:text-[13px]"
         >
           <code>{board.text}</code>
         </pre>
       )}
 
       {board.kind === "note" && board.text && (
-        <p className="whitespace-pre-wrap text-[15px] leading-relaxed text-[var(--ink)]">{board.text}</p>
+        <p className="whitespace-pre-wrap text-xs leading-relaxed text-[var(--ink)] sm:text-sm">{board.text}</p>
       )}
 
       {board.kind === "table" && board.rows && <BoardTable rows={board.rows} shown={board.shown} />}
@@ -185,7 +185,7 @@ function BoardContent({ board }: { board: BoardState }) {
 function ListItems({ items, shown, ordered }: { items: string[]; shown: number; ordered: boolean }) {
   const List = ordered ? "ol" : "ul";
   return (
-    <List className={`grid gap-1.5 pl-5 text-[15px] leading-relaxed text-[var(--ink)] ${ordered ? "list-decimal" : "list-disc"}`}>
+    <List className={`grid gap-1 pl-4 text-xs leading-relaxed text-[var(--ink)] sm:gap-1.5 sm:pl-5 sm:text-sm ${ordered ? "list-decimal" : "list-disc"}`}>
       {items.slice(0, Math.max(shown, 0)).map((item, i) => (
         <li key={i}>{item}</li>
       ))}

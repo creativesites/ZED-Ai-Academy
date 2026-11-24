@@ -32,6 +32,10 @@
   color-scheme: light;
 }
 
+.roomEmbedded {
+  min-height: 100%;
+}
+
 .room::before {
   /* Soft warm light behind the teacher. */
   content: "";

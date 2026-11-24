@@ -578,13 +578,13 @@ export function TutorSession({
 
   if (phase === "intro" || phase === "starting") {
     return (
-      <div className={`${styles.room} flex min-h-[100dvh] flex-col justify-center px-4 py-8`}>
+      <div className={`${styles.room} flex min-h-[100dvh] flex-col justify-center px-3 py-5 sm:px-4 sm:py-8`}>
         {!lite && <SceneBackdrop scene={activeScene} className="absolute inset-0 h-full w-full" />}
-        <div className="relative z-10 mx-auto w-full max-w-[540px] space-y-3">
+        <div className="relative z-10 mx-auto w-full max-w-[500px] space-y-2.5 sm:space-y-3">
           {doneHref && (
             <a
               href={doneHref}
-              className="inline-flex items-center gap-1.5 rounded-full border border-[var(--line)] bg-white/80 px-3.5 py-1.5 text-xs font-semibold text-[var(--ink)] backdrop-blur hover:bg-white"
+              className="inline-flex items-center gap-1.5 rounded-full border border-[var(--line)] bg-white/85 px-3 py-1 text-xs font-semibold text-[var(--ink)] backdrop-blur hover:bg-white"
             >
               ← Back
             </a>
@@ -677,7 +677,7 @@ export function TutorSession({
           </div>
         )}
 
-        <div className={`${styles.glass} rounded-[24px] p-4 lg:col-start-1 lg:row-start-2`}>
+        <div className={`${styles.glass} rounded-2xl p-3 sm:rounded-[24px] sm:p-4 lg:col-start-1 lg:row-start-2`}>
           <Composer
             mode={mode}
             modes={modes}
