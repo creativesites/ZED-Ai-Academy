@@ -93,7 +93,20 @@ export async function POST(
     elapsedMs = Number.isFinite(elapsedVal) && elapsedVal > 0 ? elapsedVal : 0;
   }
 
+  // Every model call (turns and reports) spends the same anonymous per-IP budget. Reports used to return
+  // before the budget check, which allowed unlimited anonymous report generations.
+  const overBudget = () => {
+    const budget = publicTryRateLimiter.take(`try:${ip}`);
+    if (budget.ok) return null;
+    return NextResponse.json(
+      { error: "You've reached the preview limit for now. Sign up to continue with unlimited sessions!" },
+      { status: 429, headers: { "Retry-After": String(budget.retryAfterSec) } },
+    );
+  };
+
   if (action === "report") {
+    const limited = overBudget();
+    if (limited) return limited;
     try {
       const report = await runDemoReport(loaded.scenario, history);
       return NextResponse.json({ report, created: true });
@@ -126,13 +139,8 @@ export async function POST(
     });
   }
 
-  const budget = publicTryRateLimiter.take(`try:${ip}`);
-  if (!budget.ok) {
-    return NextResponse.json(
-      { error: "You've reached the preview limit for now. Sign up to continue with unlimited sessions!" },
-      { status: 429, headers: { "Retry-After": String(budget.retryAfterSec) } },
-    );
-  }
+  const limited = overBudget();
+  if (limited) return limited;
 
   if (audio) {
     try {

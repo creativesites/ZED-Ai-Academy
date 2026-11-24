@@ -5,6 +5,7 @@ import { synthesizeCachedSpeech } from "@/lib/tutor/server/gemini-calls";
 import { recordUsage } from "@/lib/tutor/server/usage";
 import { normalizeTtsVoice, TtsRateLimiter } from "@/lib/tutor/tts-guard";
 import { ZEDAI_TENANT_ID } from "@/lib/tenants/constants";
+import { createServiceClient } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
@@ -17,6 +18,37 @@ const ttsSchema = z.object({
   sessionId: z.string().uuid().optional(),
   companyId: z.string().trim().min(1).max(120).optional(),
 });
+
+/**
+ * Who pays for a synthesis. The body's sessionId/companyId are hints from the client: a session is only used
+ * when it belongs to the caller (then its tenant is billed); otherwise the caller's home tenant is billed.
+ * The client-supplied companyId is never trusted, so usage cannot be charged to another academy.
+ */
+async function resolveTtsAttribution(
+  userId: string,
+  sessionId: string | null,
+): Promise<{ companyId: string; sessionId: string | null }> {
+  const db = createServiceClient();
+  if (sessionId) {
+    const { data: session } = await db
+      .from("tutor_sessions")
+      .select("id, company_id, user_id")
+      .eq("id", sessionId)
+      .maybeSingle();
+    if (session && session.user_id === userId) {
+      return { companyId: session.company_id, sessionId: session.id };
+    }
+  }
+  const { data: membership } = await db
+    .from("company_members")
+    .select("company_id")
+    .eq("profile_id", userId)
+    .eq("status", "active")
+    .order("joined_at", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+  return { companyId: membership?.company_id ?? ZEDAI_TENANT_ID, sessionId: null };
+}
 
 /**
  * POST /api/tutor/tts
@@ -46,10 +78,11 @@ export async function POST(req: NextRequest) {
   try {
     const speech = await synthesizeCachedSpeech(parsed.data.text, voice);
     if (!speech.cached) {
+      const attribution = await resolveTtsAttribution(userId, parsed.data.sessionId ?? null);
       void recordUsage({
-        companyId: parsed.data.companyId ?? ZEDAI_TENANT_ID,
+        companyId: attribution.companyId,
         userId,
-        sessionId: parsed.data.sessionId ?? null,
+        sessionId: attribution.sessionId,
         model: speech.model,
         kind: "tts",
         units: speech.totalTokens ?? parsed.data.text.length,

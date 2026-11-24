@@ -1,3 +1,4 @@
+import { requireContentAuthor } from "@/lib/tenants/content-author-server";
 import { auth } from "@clerk/nextjs/server";
 import { gemini } from "@/lib/ai/gemini";
 import { modelFor } from "@/lib/ai/models";
@@ -6,6 +7,8 @@ import { NextRequest } from "next/server";
 export async function POST(req: NextRequest) {
   const { userId } = await auth();
   if (!userId) return Response.json({ error: "Unauthorized" }, { status: 401 });
+  const notAuthor = await requireContentAuthor(userId);
+  if (notAuthor) return notAuthor;
 
   try {
     const { blockType, currentContent, instruction } = await req.json();

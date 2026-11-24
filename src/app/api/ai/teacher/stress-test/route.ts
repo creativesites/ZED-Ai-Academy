@@ -1,3 +1,4 @@
+import { requireContentAuthor } from "@/lib/tenants/content-author-server";
 import { auth } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
@@ -52,6 +53,8 @@ const stressTestSchema = z.object({
 export async function POST(req: NextRequest) {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const notAuthor = await requireContentAuthor(userId);
+  if (notAuthor) return notAuthor;
 
   const body = await req.json().catch(() => null);
   const parsed = stressTestSchema.safeParse(body);
