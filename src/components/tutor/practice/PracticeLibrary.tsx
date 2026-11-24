@@ -103,14 +103,14 @@ export function PracticeLibrary({
                   </div>
                   <div className="text-left">
                     <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">
-                      Vocabulary Deck
+                      Study Deck
                     </p>
                     <p className="text-sm font-bold text-[#062e39]">
                       {overview && overview.deck.dueNow > 0
                         ? `${overview.deck.dueNow} due now`
                         : overview && overview.deck.total > 0
                           ? `${overview.deck.total} cards`
-                          : "Flashcards"}
+                          : "Active Recall"}
                     </p>
                   </div>
                   <ArrowRight className="h-4 w-4 text-slate-400 transition-transform group-hover:translate-x-0.5 group-hover:text-[#fd5523]" />
@@ -142,60 +142,125 @@ export function PracticeLibrary({
           )}
         </header>
 
-        {/* Learner Progress Strip */}
+        {/* Weekly Practice Goal Ring, Streak, XP Tier & Stats */}
         {overview && (
-          <section aria-label="Your speaking progress" className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-              <div className="flex items-center gap-2 text-[#fd5523]">
-                <Flame className="h-4 w-4" />
-                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                  Streak
-                </span>
-              </div>
-              <p className="mt-1.5 text-2xl font-black text-[#062e39]">
-                {overview.streakDays} {overview.streakDays === 1 ? "day" : "days"}
-              </p>
-            </div>
-
-            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-              <div className="flex items-center gap-2 text-blue-600">
-                <Clock3 className="h-4 w-4" />
-                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                  Speaking Time
-                </span>
-              </div>
-              <p className="mt-1.5 text-2xl font-black text-[#062e39]">
-                {overview.totalSpeakingMinutes} min
-              </p>
-            </div>
-
-            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-              <div className="flex items-center gap-2 text-emerald-600">
-                <Trophy className="h-4 w-4" />
-                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                  Scenes Done
-                </span>
-              </div>
-              <p className="mt-1.5 text-2xl font-black text-[#062e39]">
-                {overview.completedSessionsCount}
-              </p>
-            </div>
-
-            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-              <div className="flex items-center gap-2 text-violet-600">
-                <Sparkles className="h-4 w-4" />
-                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                  Words Mastered
-                </span>
-              </div>
-              <p className="mt-1.5 text-2xl font-black text-[#062e39]">
-                {overview.deck.mastered}
-                {overview.deck.total > 0 && (
-                  <span className="ml-1 text-sm font-semibold text-slate-400">
-                    / {overview.deck.total}
+          <section aria-label="Your practice progress" className="grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1.8fr)]">
+            {/* Weekly Goal Ring + XP Tier Card */}
+            <div className="flex items-center gap-4 rounded-3xl border border-slate-200 bg-gradient-to-br from-[#062e39] via-[#0b3c49] to-[#1a2240] p-5 text-white shadow-md">
+              <div className="relative flex h-20 w-20 shrink-0 items-center justify-center">
+                <svg className="h-20 w-20 -rotate-90" viewBox="0 0 80 80" aria-hidden="true">
+                  <circle
+                    cx="40"
+                    cy="40"
+                    r="33"
+                    fill="none"
+                    stroke="rgba(255,255,255,0.16)"
+                    strokeWidth="7"
+                  />
+                  <circle
+                    cx="40"
+                    cy="40"
+                    r="33"
+                    fill="none"
+                    stroke={overview.habits.weeklyGoalMet ? "#34d399" : "#fd5523"}
+                    strokeWidth="7"
+                    strokeLinecap="round"
+                    strokeDasharray={2 * Math.PI * 33}
+                    strokeDashoffset={
+                      2 * Math.PI * 33 * (1 - overview.habits.weeklyGoalPct / 100)
+                    }
+                  />
+                </svg>
+                <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+                  <span className="text-base font-black leading-none">
+                    {overview.habits.weeklyMinutes}m
                   </span>
+                  <span className="mt-0.5 text-[9px] font-bold uppercase tracking-wider text-white/70">
+                    / {overview.habits.weeklyGoalMinutes}m
+                  </span>
+                </div>
+              </div>
+
+              <div className="min-w-0 flex-1 space-y-1.5">
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <span className="rounded-full bg-white/15 px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-amber-300">
+                    Lv.{overview.habits.tier.level} · {overview.habits.tier.title}
+                  </span>
+                  <span className="text-[11px] font-bold text-white/80">
+                    {overview.habits.tier.xp} XP
+                  </span>
+                </div>
+                <p className="text-sm font-bold leading-snug text-white">
+                  {overview.habits.nextBestAction.label}
+                </p>
+                <p className="text-xs leading-snug text-white/75">
+                  {overview.habits.nextBestAction.detail}
+                </p>
+                {overview.habits.nextBestAction.kind === "deck" && deckHref && (
+                  <Link
+                    href={deckHref}
+                    className="mt-1 inline-flex items-center gap-1 text-xs font-bold text-amber-300 hover:underline"
+                  >
+                    Open Study Deck <ArrowRight className="h-3 w-3" />
+                  </Link>
                 )}
-              </p>
+              </div>
+            </div>
+
+            {/* 4 Compact Stat Tiles */}
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-2 xl:grid-cols-4">
+              <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                <div className="flex items-center gap-2 text-[#fd5523]">
+                  <Flame className="h-4 w-4" />
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                    Streak
+                  </span>
+                </div>
+                <p className="mt-1.5 text-2xl font-black text-[#062e39]">
+                  {overview.streakDays} {overview.streakDays === 1 ? "day" : "days"}
+                </p>
+              </div>
+
+              <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                <div className="flex items-center gap-2 text-blue-600">
+                  <Clock3 className="h-4 w-4" />
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                    Practice Time
+                  </span>
+                </div>
+                <p className="mt-1.5 text-2xl font-black text-[#062e39]">
+                  {overview.totalSpeakingMinutes} min
+                </p>
+              </div>
+
+              <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                <div className="flex items-center gap-2 text-emerald-600">
+                  <Trophy className="h-4 w-4" />
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                    Sessions
+                  </span>
+                </div>
+                <p className="mt-1.5 text-2xl font-black text-[#062e39]">
+                  {overview.completedSessionsCount}
+                </p>
+              </div>
+
+              <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                <div className="flex items-center gap-2 text-violet-600">
+                  <Sparkles className="h-4 w-4" />
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                    Cards Mastered
+                  </span>
+                </div>
+                <p className="mt-1.5 text-2xl font-black text-[#062e39]">
+                  {overview.deck.mastered}
+                  {overview.deck.total > 0 && (
+                    <span className="ml-1 text-sm font-semibold text-slate-400">
+                      / {overview.deck.total}
+                    </span>
+                  )}
+                </p>
+              </div>
             </div>
           </section>
         )}

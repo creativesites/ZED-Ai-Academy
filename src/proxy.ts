@@ -26,6 +26,8 @@ const isPublicRoute = createRouteMatcher([
   '/blog(.*)',
   '/academy(.*)',
   '/ai-tutor(.*)',
+  '/try(.*)',
+  '/api/tutor/try/(.*)',
   '/api/tutor/demo/voice',
   '/api/webhooks/(.*)',
   '/sign-in(.*)',

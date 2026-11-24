@@ -17,14 +17,15 @@ import {
   Award,
   Zap,
   CheckCircle2,
+  Eye,
+  Share2,
 } from "lucide-react";
 import { Teacher } from "@/components/tutor/avatar/Teacher";
 import { DEFAULT_PERSONA_LOOK } from "@/components/tutor/avatar/types";
-import { TutorSession } from "@/components/tutor/practice/TutorSession";
 import { ScenarioEditorModal } from "@/components/tutor/studio/ScenarioEditorModal";
 import { TeacherInsightsPanel } from "@/components/tutor/studio/TeacherInsightsPanel";
 import { AUTHORING_TEMPLATES, type AuthoringTemplateId } from "@/lib/tutor/authoring/templates";
-import { TUTOR_STYLE_LABELS, overlayModes } from "@/lib/tutor/tutor-session-block";
+import { TUTOR_STYLE_LABELS } from "@/lib/tutor/tutor-session-block";
 import {
   deleteScenario,
   getCourseVivaConfig,
@@ -36,7 +37,6 @@ import {
   type ScenarioRecord,
 } from "@/actions/tutor-authoring";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 
 export function CourseTutorTab({
   courseId,
@@ -55,12 +55,23 @@ export function CourseTutorTab({
   const [scenarios, setScenarios] = useState<ScenarioRecord[]>(initialScenarios);
   const [editorOpen, setEditorOpen] = useState(false);
   const [editingScenario, setEditingScenario] = useState<ScenarioRecord | null>(null);
-  const [previewScenario, setPreviewScenario] = useState<ScenarioRecord | null>(null);
   const [isBusy, startBusy] = useTransition();
 
   // Course Autopilot state
   const [autopilotTemplate, setAutopilotTemplate] = useState<AuthoringTemplateId | "auto">("auto");
   const [autopilotPersonaId, setAutopilotPersonaId] = useState<string>(initialPersonas[0]?.id ?? "");
+  const [autopilotAutoPublish, setAutopilotAutoPublish] = useState<boolean>(true);
+  const [autopilotPreview, setAutopilotPreview] = useState<
+    Array<{
+      lessonId: string;
+      lessonTitle: string;
+      moduleTitle: string;
+      hasExistingTutorBlock: boolean;
+      willGenerate: boolean;
+      templateLabel: string;
+    }> | null
+  >(null);
+  const [autopilotPreviewLoading, setAutopilotPreviewLoading] = useState(false);
   const [autopilotResults, setAutopilotResults] = useState<
     Array<{ lessonId: string; lessonTitle: string; scenarioTitle?: string; status: string; error?: string }>
   >([]);
@@ -88,6 +99,22 @@ export function CourseTutorTab({
     };
   }, [courseId]);
 
+  async function handlePreviewAutopilot() {
+    setAutopilotPreviewLoading(true);
+    try {
+      const res = await fetch(
+        `/api/ai/teacher/autopilot?courseId=${encodeURIComponent(courseId)}&templateId=${encodeURIComponent(autopilotTemplate)}`,
+      );
+      const data = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(data?.error ?? "Could not load plan");
+      setAutopilotPreview(Array.isArray(data.lessons) ? data.lessons : []);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not preview plan");
+    } finally {
+      setAutopilotPreviewLoading(false);
+    }
+  }
+
   async function handleRunAutopilot() {
     setAutopilotRunning(true);
     setAutopilotResults([]);
@@ -99,6 +126,7 @@ export function CourseTutorTab({
           courseId,
           templateId: autopilotTemplate,
           personaId: autopilotPersonaId || null,
+          publish: autopilotAutoPublish,
           attachBlock: true,
         }),
       });
@@ -107,11 +135,14 @@ export function CourseTutorTab({
 
       const list = Array.isArray(data.results) ? data.results : [];
       setAutopilotResults(list);
+      setAutopilotPreview(null);
       const createdCount = list.filter((r: { status: string }) => r.status === "created").length;
       if (createdCount > 0) {
         const refreshed = await listScenariosForCourseStudio(courseId);
         setScenarios(refreshed);
-        toast.success(`Autopilot built AI Teacher flows for ${createdCount} lesson(s)!`);
+        toast.success(
+          `Autopilot built ${autopilotAutoPublish ? "& published " : ""}AI Teacher flows for ${createdCount} lesson(s)!`,
+        );
       } else {
         toast.info("All teachable lessons already have AI Teacher flows.");
       }
@@ -120,6 +151,29 @@ export function CourseTutorTab({
     } finally {
       setAutopilotRunning(false);
     }
+  }
+
+  function handlePublishAllDrafts() {
+    const drafts = scenarios.filter((s) => s.status !== "published");
+    if (drafts.length === 0) return;
+    startBusy(async () => {
+      try {
+        await Promise.all(
+          drafts.map((s) => updateScenarioQuick(companyId, s.id, { status: "published" })),
+        );
+        setScenarios((prev) => prev.map((s) => ({ ...s, status: "published" })));
+        toast.success(`Published ${drafts.length} AI Teacher flow(s)!`);
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Could not publish all drafts");
+      }
+    });
+  }
+
+  function handleCopyPublicTryLink(scenarioId: string) {
+    if (typeof window === "undefined") return;
+    const url = `${window.location.origin}/try/${scenarioId}`;
+    void navigator.clipboard?.writeText(url);
+    toast.success("Public mini-lesson link copied! Share it anywhere to attract new learners.");
   }
 
   async function handleSaveVivaConfig(nextRequired: boolean, nextScenarioId: string) {
@@ -255,6 +309,18 @@ export function CourseTutorTab({
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
+          {scenarios.some((s) => s.status !== "published") && (
+            <Button
+              type="button"
+              variant="outline"
+              disabled={isBusy}
+              onClick={handlePublishAllDrafts}
+              className="h-10 rounded-xl border-emerald-200 bg-emerald-50 px-3.5 text-xs font-bold text-emerald-800 hover:bg-emerald-100"
+            >
+              <CheckCircle2 className="mr-1.5 h-3.5 w-3.5" />
+              Publish All Drafts ({scenarios.filter((s) => s.status !== "published").length})
+            </Button>
+          )}
           <Link
             href={manageTeachersHref}
             className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 px-3.5 text-xs font-bold text-[#062e39] hover:bg-slate-100"
@@ -321,19 +387,74 @@ export function CourseTutorTab({
             </select>
           </div>
 
-          <Button
-            type="button"
-            disabled={autopilotRunning}
-            onClick={() => void handleRunAutopilot()}
-            className="h-9 w-full rounded-xl bg-[#062e39] text-xs font-bold text-white hover:bg-[#0a4352]"
-          >
-            {autopilotRunning ? (
-              <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
-            ) : (
-              <Wand2 className="mr-1.5 h-3.5 w-3.5" />
-            )}
-            {autopilotRunning ? "Drafting lesson flows..." : "Run Course Autopilot"}
-          </Button>
+          <label className="flex items-center gap-2 text-xs font-semibold text-slate-600">
+            <input
+              type="checkbox"
+              checked={autopilotAutoPublish}
+              onChange={(e) => setAutopilotAutoPublish(e.target.checked)}
+              className="h-3.5 w-3.5 accent-[#fd5523]"
+            />
+            Auto-publish generated flows immediately
+          </label>
+
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              disabled={autopilotPreviewLoading || autopilotRunning}
+              onClick={() => void handlePreviewAutopilot()}
+              className="h-9 shrink-0 rounded-xl px-3 text-xs font-bold text-[#062e39]"
+            >
+              {autopilotPreviewLoading ? (
+                <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Eye className="mr-1.5 h-3.5 w-3.5 text-[#fd5523]" />
+              )}
+              Preview Plan
+            </Button>
+            <Button
+              type="button"
+              disabled={autopilotRunning}
+              onClick={() => void handleRunAutopilot()}
+              className="h-9 flex-1 rounded-xl bg-[#062e39] text-xs font-bold text-white hover:bg-[#0a4352]"
+            >
+              {autopilotRunning ? (
+                <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Wand2 className="mr-1.5 h-3.5 w-3.5" />
+              )}
+              {autopilotRunning ? "Drafting lesson flows..." : "Run Course Autopilot"}
+            </Button>
+          </div>
+
+          {autopilotPreview && (
+            <div className="space-y-1.5 rounded-2xl border border-slate-200 bg-slate-50/90 p-3 text-xs">
+              <div className="flex items-center justify-between text-[11px] font-bold text-slate-500">
+                <span>Autopilot lesson plan</span>
+                <span>
+                  {autopilotPreview.filter((l) => l.willGenerate).length} ready to generate
+                </span>
+              </div>
+              <ul className="max-h-40 space-y-1 overflow-y-auto">
+                {autopilotPreview.map((l) => (
+                  <li key={l.lessonId} className="flex items-center justify-between gap-2">
+                    <span className="truncate text-[#062e39]">{l.lessonTitle}</span>
+                    {l.hasExistingTutorBlock ? (
+                      <span className="shrink-0 rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-bold text-slate-600">
+                        Already has teacher
+                      </span>
+                    ) : l.willGenerate ? (
+                      <span className="shrink-0 rounded-full bg-[#fff2e9] px-2 py-0.5 text-[10px] font-bold text-[#c83a10]">
+                        {l.templateLabel}
+                      </span>
+                    ) : (
+                      <span className="shrink-0 text-[10px] text-slate-400">Next batch / empty</span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
 
           {autopilotResults.length > 0 && (
             <ul className="space-y-1.5 rounded-2xl bg-slate-50 p-3 text-xs">
@@ -575,16 +696,30 @@ export function CourseTutorTab({
                 </div>
 
                 <div className="flex items-center gap-1.5">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setPreviewScenario(s)}
-                    className="h-8 rounded-lg px-2.5 text-xs font-bold"
+                  {s.status === "published" && (s.visibility === "tenant_library" || s.visibility === "platform") && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleCopyPublicTryLink(s.id)}
+                      title="Copy shareable public mini-lesson link (/try/...)"
+                      className="h-8 rounded-lg px-2.5 text-xs font-bold text-[#062e39]"
+                    >
+                      <Share2 className="mr-1 h-3 w-3 text-[#fd5523]" />
+                      Share
+                    </Button>
+                  )}
+                  <Link
+                    href={
+                      tenantSlug
+                        ? `/academy/${tenantSlug}/practice/${s.id}`
+                        : `/practice/${s.id}`
+                    }
+                    className="inline-flex h-8 items-center justify-center rounded-lg border border-input bg-background px-2.5 text-xs font-bold shadow-xs transition hover:bg-accent hover:text-accent-foreground"
                   >
                     <Play className="mr-1 h-3 w-3 text-[#fd5523]" />
-                    Preview
-                  </Button>
+                    Test
+                  </Link>
                   <Button
                     type="button"
                     variant="outline"
@@ -625,31 +760,6 @@ export function CourseTutorTab({
           onSaved={handleSaved}
         />
       )}
-
-      <Dialog open={Boolean(previewScenario)} onOpenChange={(o) => !o && setPreviewScenario(null)}>
-        <DialogContent className="h-[85vh] max-w-5xl overflow-hidden p-0">
-          <DialogTitle className="sr-only">Preview AI Teacher Flow</DialogTitle>
-          <DialogDescription className="sr-only">
-            Run this flow with the animated AI teacher.
-          </DialogDescription>
-          {previewScenario && (
-            <TutorSession
-              origin="practice"
-              scenarioId={previewScenario.id}
-              scene={previewScenario.scene ?? undefined}
-              look={previewScenario.persona?.look}
-              preview={{
-                teacherName: previewScenario.persona?.display_name ?? previewScenario.persona?.name,
-                title: previewScenario.title,
-                goal: previewScenario.goal,
-                maxMinutes: previewScenario.max_minutes,
-                modes: overlayModes(previewScenario.allowed_modes),
-              }}
-              onExit={() => setPreviewScenario(null)}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

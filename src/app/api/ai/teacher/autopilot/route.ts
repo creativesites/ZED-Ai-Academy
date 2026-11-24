@@ -40,6 +40,106 @@ const bodySchema = z.object({
   maxBatch: z.number().int().min(1).max(AUTOPILOT_MAX_BATCH).default(AUTOPILOT_MAX_BATCH),
 });
 
+/** Dry-run preview: returns every lesson in the course and which Autopilot template it will receive. */
+export async function GET(req: NextRequest) {
+  const { userId } = await auth();
+  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const courseId = req.nextUrl.searchParams.get("courseId") ?? "";
+  const templateParam = req.nextUrl.searchParams.get("templateId") ?? "auto";
+  if (!/^[0-9a-f-]{36}$/i.test(courseId)) {
+    return NextResponse.json({ error: "Invalid courseId" }, { status: 400 });
+  }
+  const templateChoice =
+    templateParam === "auto" || (AUTHORING_TEMPLATE_IDS as readonly string[]).includes(templateParam)
+      ? (templateParam as "auto" | (typeof AUTHORING_TEMPLATE_IDS)[number])
+      : "auto";
+
+  try {
+    await assertCanManageCourse(createClient(), courseId, userId);
+    const db = createServiceClient();
+
+    const { data: modulesData } = await db
+      .from("modules")
+      .select("id, title, position")
+      .eq("course_id", courseId)
+      .order("position", { ascending: true });
+    const modules = modulesData ?? [];
+    const moduleIds = modules.map((m) => m.id);
+    const moduleTitleById = new Map(modules.map((m) => [m.id, m.title]));
+
+    const { data: lessonsData } =
+      moduleIds.length > 0
+        ? await db
+            .from("lessons")
+            .select("id, title, module_id, position")
+            .in("module_id", moduleIds)
+            .order("position", { ascending: true })
+        : { data: [] as Array<{ id: string; title: string; module_id: string; position: number }> };
+
+    const orderedLessons = [...(lessonsData ?? [])].sort((a, b) => {
+      const mA = modules.findIndex((m) => m.id === a.module_id);
+      const mB = modules.findIndex((m) => m.id === b.module_id);
+      return mA !== mB ? mA - mB : a.position - b.position;
+    });
+
+    const allLessonIds = orderedLessons.map((l) => l.id);
+    const { data: blockRows } =
+      allLessonIds.length > 0
+        ? await db
+            .from("content_blocks")
+            .select("lesson_id, type, content")
+            .in("lesson_id", allLessonIds)
+        : { data: [] as Array<{ lesson_id: string; type: string; content: unknown }> };
+
+    const blockCountByLesson = new Map<string, number>();
+    const hasTutorByLesson = new Set<string>();
+    for (const b of blockRows ?? []) {
+      if (b.type === "tutor_session" && parseTutorSessionBlock(b.content)) {
+        hasTutorByLesson.add(b.lesson_id);
+      } else if (b.type !== "tutor_session") {
+        blockCountByLesson.set(b.lesson_id, (blockCountByLesson.get(b.lesson_id) ?? 0) + 1);
+      }
+    }
+
+    const candidates = orderedLessons.map((l) => ({
+      lessonId: l.id,
+      lessonTitle: l.title,
+      moduleTitle: moduleTitleById.get(l.module_id) ?? "Module",
+      hasExistingTutorBlock: hasTutorByLesson.has(l.id),
+      materialBlockCount: blockCountByLesson.get(l.id) ?? 0,
+    }));
+
+    const plan = selectAutopilotLessons(candidates, { maxBatch: AUTOPILOT_MAX_BATCH });
+    const selectedIds = new Set(plan.selected.map((s) => s.lessonId));
+
+    const lessons = candidates.map((c) => {
+      const resolved = resolveAutopilotTemplate(templateChoice, c.lessonTitle);
+      const tmpl = getAuthoringTemplate(resolved);
+      return {
+        lessonId: c.lessonId,
+        lessonTitle: c.lessonTitle,
+        moduleTitle: c.moduleTitle,
+        hasExistingTutorBlock: c.hasExistingTutorBlock,
+        materialBlockCount: c.materialBlockCount,
+        willGenerate: selectedIds.has(c.lessonId),
+        templateId: resolved,
+        templateLabel: tmpl.label,
+      };
+    });
+
+    return NextResponse.json({
+      totalLessons: lessons.length,
+      willGenerateCount: plan.selected.length,
+      alreadyCoveredCount: candidates.filter((c) => c.hasExistingTutorBlock).length,
+      lessons,
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Could not preview autopilot plan";
+    return NextResponse.json({ error: message }, { status: 400 });
+  }
+}
+
 export async function POST(req: NextRequest) {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

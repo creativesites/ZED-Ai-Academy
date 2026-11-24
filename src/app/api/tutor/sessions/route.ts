@@ -15,6 +15,7 @@ import {
 } from "@/lib/tutor/server/session-store";
 import { recordUsage } from "@/lib/tutor/server/usage";
 import { runSessionTurn, sessionSystemPrompt } from "@/lib/tutor/server/turn-runner";
+import { buildOpeningWithWarmup } from "@/lib/tutor/warmup";
 
 // POST /api/tutor/sessions: start a ZAI Tutor session.
 // Live mode returns a single-use ephemeral token. Voice and Text mode runs the opening turn server-side.
@@ -174,7 +175,7 @@ export async function POST(req: NextRequest) {
       ctx: sessionContext,
       idx: 0,
       learnerText: null,
-      openingInstruction: OPENING_INSTRUCTION,
+      openingInstruction: buildOpeningWithWarmup(OPENING_INSTRUCTION, sessionContext.learnerProfile),
     });
     return NextResponse.json({
       sessionId: session.id,

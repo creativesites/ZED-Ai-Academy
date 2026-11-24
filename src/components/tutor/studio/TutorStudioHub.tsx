@@ -448,6 +448,24 @@ export function TutorStudioHub({
                           Assign
                         </Button>
                       )}
+                      {s.status === "published" && (s.visibility === "tenant_library" || s.visibility === "platform") && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            if (typeof window !== "undefined") {
+                              void navigator.clipboard?.writeText(`${window.location.origin}/try/${s.id}`);
+                              toast.success("Public mini-lesson link copied (/try/...)!");
+                            }
+                          }}
+                          title="Copy shareable public mini-lesson link"
+                          className="h-8 rounded-lg px-2.5 text-xs font-bold text-[#062e39]"
+                        >
+                          <Share2 className="mr-1 h-3 w-3 text-[#fd5523]" />
+                          Share
+                        </Button>
+                      )}
                       <Link
                         href={
                           companySlug

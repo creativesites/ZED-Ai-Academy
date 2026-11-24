@@ -1,5 +1,6 @@
 import "server-only";
 import { createServiceClient } from "@/lib/supabase/server";
+import { computeLearnerHabits, type LearnerHabitSummary } from "../habits.ts";
 import { summarizeDeck, type DeckSummary } from "../srs.ts";
 import { personaLookFromVariant, type TutorPersonaLook } from "../tutor-session-block.ts";
 
@@ -29,7 +30,9 @@ export type LearnerAssignedScenario = {
 export type LearnerTutorOverview = {
   streakDays: number;
   totalSpeakingMinutes: number;
+  weeklyMinutes: number;
   completedSessionsCount: number;
+  habits: LearnerHabitSummary;
   languages: LearnerLanguageStat[];
   deck: DeckSummary;
   assignments: LearnerAssignedScenario[];
@@ -95,7 +98,8 @@ export async function loadLearnerTutorOverview(
     .eq("user_id", userId);
   if (companyFilter) vocabQuery = vocabQuery.eq("company_id", companyFilter);
 
-  // 3. Completed sessions count
+  // 3. Completed sessions count + weekly practice minutes (last 7 days)
+  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
   let sessionsQuery = supabase
     .from("tutor_sessions")
     .select("id", { count: "exact", head: true })
@@ -103,11 +107,20 @@ export async function loadLearnerTutorOverview(
     .eq("status", "completed");
   if (companyFilter) sessionsQuery = sessionsQuery.eq("company_id", companyFilter);
 
+  let weeklySessionsQuery = supabase
+    .from("tutor_sessions")
+    .select("started_at, ended_at, learner_speaking_ms, teacher_speaking_ms")
+    .eq("user_id", userId)
+    .eq("status", "completed")
+    .gte("started_at", sevenDaysAgo);
+  if (companyFilter) weeklySessionsQuery = weeklySessionsQuery.eq("company_id", companyFilter);
+
   // 4. Memberships & classroom groups for assignments
-  const [profilesRes, vocabRes, sessionsRes, membershipsRes, groupMembersRes] = await Promise.all([
+  const [profilesRes, vocabRes, sessionsRes, weeklyRes, membershipsRes, groupMembersRes] = await Promise.all([
     profileQuery,
     vocabQuery,
     sessionsQuery,
+    weeklySessionsQuery,
     supabase
       .from("company_members")
       .select("company_id")
@@ -118,6 +131,16 @@ export async function loadLearnerTutorOverview(
       .select("group_id")
       .eq("profile_id", userId),
   ]);
+
+  const weeklyMs = (weeklyRes.data ?? []).reduce((sum, row) => {
+    const spokenMs = (row.learner_speaking_ms ?? 0) + (row.teacher_speaking_ms ?? 0);
+    const wallMs =
+      row.ended_at && row.started_at
+        ? Math.max(0, Math.min(30 * 60_000, Date.parse(row.ended_at) - Date.parse(row.started_at)))
+        : 0;
+    return sum + Math.max(spokenMs, wallMs, 60_000);
+  }, 0);
+  const weeklyMinutes = Math.round(weeklyMs / 60_000);
 
   const langRows = profilesRes.data ?? [];
   const languages: LearnerLanguageStat[] = langRows.map((r) => ({
@@ -230,10 +253,23 @@ export async function loadLearnerTutorOverview(
       .filter((x): x is LearnerAssignedScenario => x !== null);
   }
 
+  const completedSessionsCount = sessionsRes.count ?? 0;
+  const effectiveTotalMinutes = Math.max(totalSpeakingMinutes, weeklyMinutes);
+  const habits = computeLearnerHabits({
+    streakDays,
+    completedSessionsCount,
+    totalPracticeMinutes: effectiveTotalMinutes,
+    weeklyMinutes,
+    deckDueCount: deck.dueNow,
+    deckMasteredCount: deck.mastered,
+  });
+
   return {
     streakDays,
-    totalSpeakingMinutes,
-    completedSessionsCount: sessionsRes.count ?? 0,
+    totalSpeakingMinutes: effectiveTotalMinutes,
+    weeklyMinutes,
+    completedSessionsCount,
+    habits,
     languages,
     deck,
     assignments,
