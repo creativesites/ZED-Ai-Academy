@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { buildSystemPrompt, type BuildSystemPromptInput } from "./prompt.ts";
+import { skillPackLanguage } from "../skill-packs.ts";
 
 function input(overrides: Partial<BuildSystemPromptInput> = {}): BuildSystemPromptInput {
   return {
@@ -90,10 +91,14 @@ test("unknown skill packs fall back to the general teacher fragment", () => {
   assert.match(prompt, /Skill pack: general teacher/);
 });
 
-test("local Zambian language packs (Bemba, Nyanja, Tonga) include their prompt fragments", () => {
+test("local Zambian language packs (Bemba, Nyanja, Tonga) include their prompt fragments and language codes", () => {
   assert.match(buildSystemPrompt(input({ skillPack: "language-bem" })), /Ichibemba/);
   assert.match(buildSystemPrompt(input({ skillPack: "language-ny" })), /Chinyanja/);
   assert.match(buildSystemPrompt(input({ skillPack: "language-tog" })), /Chitonga/);
+  assert.equal(skillPackLanguage("language-bem"), "bem");
+  assert.equal(skillPackLanguage("language-ny"), "ny");
+  assert.equal(skillPackLanguage("language-tog"), "tog");
+  assert.equal(skillPackLanguage("general-tutor"), null);
 });
 
 test("non-language packs get no language policy and no language-only events", () => {

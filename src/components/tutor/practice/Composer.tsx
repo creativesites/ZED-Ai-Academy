@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent, type PointerEvent } from "react";
-import { Check, Keyboard, ListOrdered, Mic, Pause, Radio, RotateCcw, Send, Sparkles } from "lucide-react";
+import { Check, ClipboardPaste, Keyboard, ListOrdered, Mic, MicOff, Pause, Play, Radio, RotateCcw, Send, Sparkles, Volume2, X } from "lucide-react";
 import { CONFIDENCE_LEVELS, type ConfidenceLevel } from "@/lib/tutor/board";
 import { MAX_RECORDING_MS } from "@/lib/tutor/recording";
 import type { ResponseMatchResult } from "@/lib/tutor/response-match";
@@ -47,6 +47,14 @@ type ComposerProps = {
   handsFreeSpeechDetected?: boolean;
   onToggleHandsFree?: () => void;
   onCommitHandsFreeNow?: () => void;
+  /** Bidirectional Gemini Live real-time audio mode */
+  liveActive?: boolean;
+  liveMicOn?: boolean;
+  onToggleLiveMic?: () => void;
+  /** Side-by-side learner recording playback ("Hear yourself vs. teacher") */
+  lastLearnerAudioUrl?: string | null;
+  canReplayTeacher?: boolean;
+  onReplayTeacher?: () => void;
   /** Dynamic turn interaction state */
   activeChoice: ActiveChoice | null;
   activeOrderChallenge: ActiveOrderChallenge | null;
@@ -94,6 +102,12 @@ export function Composer(props: ComposerProps) {
     handsFreeSpeechDetected = false,
     onToggleHandsFree,
     onCommitHandsFreeNow,
+    liveActive = false,
+    liveMicOn = false,
+    onToggleLiveMic,
+    lastLearnerAudioUrl = null,
+    canReplayTeacher = false,
+    onReplayTeacher,
     activeChoice,
     activeOrderChallenge,
     activeFillBlank,
@@ -107,9 +121,36 @@ export function Composer(props: ComposerProps) {
 
   const holdRef = useRef<HTMLButtonElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const learnerAudioRef = useRef<HTMLAudioElement | null>(null);
   const spaceDown = useRef(false);
   const [draft, setDraft] = useState("");
+  const [playingSelf, setPlayingSelf] = useState(false);
+  const [pasteWorkOpen, setPasteWorkOpen] = useState(false);
+  const [pasteDraft, setPasteDraft] = useState("");
   const [showCustomInputForChallenge, setShowCustomInputForChallenge] = useState(false);
+
+  useEffect(() => {
+    return () => {
+      learnerAudioRef.current?.pause();
+      learnerAudioRef.current = null;
+    };
+  }, []);
+
+  const playSelfRecording = () => {
+    if (!lastLearnerAudioUrl) return;
+    if (playingSelf && learnerAudioRef.current) {
+      learnerAudioRef.current.pause();
+      setPlayingSelf(false);
+      return;
+    }
+    if (!learnerAudioRef.current) learnerAudioRef.current = new Audio();
+    const el = learnerAudioRef.current;
+    el.src = lastLearnerAudioUrl;
+    el.onended = () => setPlayingSelf(false);
+    el.onerror = () => setPlayingSelf(false);
+    setPlayingSelf(true);
+    void el.play().catch(() => setPlayingSelf(false));
+  };
 
   // Tap-to-order tile builder state
   const [orderedIndices, setOrderedIndices] = useState<number[]>([]);
@@ -225,9 +266,22 @@ export function Composer(props: ComposerProps) {
           )}
         </div>
         {lastSaid && !responseMatch && (
-          <span className="hidden max-w-[40%] shrink-0 truncate text-[11px] text-[var(--ink-dim)] sm:inline">
-            You: “{lastSaid}”
-          </span>
+          <div className="flex shrink-0 items-center gap-1.5">
+            <span className="hidden max-w-[180px] truncate text-[11px] text-[var(--ink-dim)] sm:inline">
+              You: “{lastSaid}”
+            </span>
+            {lastLearnerAudioUrl && (
+              <button
+                type="button"
+                onClick={playSelfRecording}
+                title="Hear your own recording"
+                className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[10px] font-bold text-slate-600 transition hover:border-[#fd5523]/40 hover:text-[#fd5523]"
+              >
+                <Play className="h-2.5 w-2.5 fill-current" aria-hidden="true" />
+                {playingSelf ? "Stop" : "You"}
+              </button>
+            )}
+          </div>
         )}
       </div>
 
@@ -249,15 +303,39 @@ export function Composer(props: ComposerProps) {
               </span>
             ))}
           </div>
-          <span
-            className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-extrabold ${
-              responseMatch.score >= 80
-                ? "bg-emerald-100 text-emerald-800"
-                : "bg-amber-100 text-amber-800"
-            }`}
-          >
-            {responseMatch.score}%
-          </span>
+          <div className="flex shrink-0 items-center gap-1.5">
+            {lastLearnerAudioUrl && (
+              <button
+                type="button"
+                onClick={playSelfRecording}
+                title="Compare your recording"
+                className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[10px] font-bold text-slate-700 hover:border-[#fd5523]/40 hover:text-[#fd5523]"
+              >
+                <Play className="h-2.5 w-2.5 fill-current" aria-hidden="true" />
+                {playingSelf ? "Stop" : "Hear yourself"}
+              </button>
+            )}
+            {canReplayTeacher && onReplayTeacher && lastLearnerAudioUrl && (
+              <button
+                type="button"
+                onClick={onReplayTeacher}
+                title="Hear teacher's model"
+                className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-800 hover:bg-emerald-100"
+              >
+                <Volume2 className="h-2.5 w-2.5" aria-hidden="true" />
+                Model
+              </button>
+            )}
+            <span
+              className={`rounded-full px-2 py-0.5 text-[10px] font-extrabold ${
+                responseMatch.score >= 80
+                  ? "bg-emerald-100 text-emerald-800"
+                  : "bg-amber-100 text-amber-800"
+              }`}
+            >
+              {responseMatch.score}%
+            </span>
+          </div>
         </div>
       )}
 
@@ -466,6 +544,56 @@ export function Composer(props: ComposerProps) {
         </div>
       )}
 
+      {/* Paste / Share Your Own Work multi-line box (code, email draft, paragraph, math attempt) */}
+      {pasteWorkOpen && (
+        <div className="grid gap-1.5 rounded-2xl border border-slate-200 bg-slate-50/90 p-2.5">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-[11px] font-bold text-[#062e39]">
+              Paste your draft, code, or problem for {teacherName} to review
+            </span>
+            <button
+              type="button"
+              onClick={() => setPasteWorkOpen(false)}
+              aria-label="Close paste work box"
+              className="rounded-full p-1 text-slate-400 hover:bg-slate-200 hover:text-slate-700"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          </div>
+          <textarea
+            rows={3}
+            value={pasteDraft}
+            onChange={(e) => setPasteDraft(e.target.value)}
+            maxLength={950}
+            placeholder="Paste an email draft, code snippet, formula attempt, or notes..."
+            className="w-full resize-none rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-[#062e39] placeholder:text-slate-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#fd5523]"
+          />
+          <div className="flex justify-end gap-1.5">
+            <button
+              type="button"
+              onClick={() => setPasteWorkOpen(false)}
+              className="rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] font-semibold text-slate-600 hover:bg-slate-100"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              disabled={!canType || !pasteDraft.trim()}
+              onClick={() => {
+                const text = pasteDraft.trim();
+                if (!text) return;
+                setPasteDraft("");
+                setPasteWorkOpen(false);
+                onSendText(`Please review my work:\n${text}`);
+              }}
+              className={`${styles.primaryButton} rounded-full px-3.5 py-1 text-[11px] font-bold disabled:opacity-45`}
+            >
+              Send for review →
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* 5. Dynamic Contextual Quick Actions (single-row scroll on mobile, never needs page scroll) */}
       {!hasStructuredChallenge && !activeFillBlank && (
         <div
@@ -487,12 +615,76 @@ export function Composer(props: ComposerProps) {
               {q.label}
             </button>
           ))}
+          <button
+            type="button"
+            disabled={!canType}
+            onClick={() => setPasteWorkOpen((o) => !o)}
+            className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full border border-dashed border-slate-300 bg-white/90 px-2.5 py-1.5 text-xs font-semibold text-slate-600 transition hover:border-[#fd5523]/60 hover:bg-[#fff6ee] hover:text-[#fd5523] disabled:opacity-45"
+          >
+            <ClipboardPaste className="h-3 w-3" aria-hidden="true" />
+            Paste work
+          </button>
         </div>
       )}
 
-      {/* 6. Unified Primary Input Bar (Hold-to-Talk + Hands-Free Auto-VAD + 1-tap Keyboard/Mic) */}
+      {/* 6. Unified Primary Input Bar (Gemini Live + Hold-to-Talk + Hands-Free Auto-VAD + 1-tap Keyboard/Mic) */}
       {showPrimaryInputBar && (
-        handsFree && voiceAllowed ? (
+        liveActive && effectiveMode === "voice" ? (
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            <button
+              type="button"
+              onClick={onToggleLiveMic}
+              aria-pressed={liveMicOn}
+              className={`flex h-11 min-w-0 flex-1 items-center justify-between gap-2 rounded-full border px-4 text-xs font-bold transition sm:h-12 sm:text-sm ${
+                liveMicOn
+                  ? "border-emerald-300 bg-emerald-50/95 text-emerald-900 shadow-xs"
+                  : "border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
+              }`}
+            >
+              <div className="flex min-w-0 items-center gap-2">
+                <span
+                  className={`inline-block h-2.5 w-2.5 shrink-0 rounded-full ${
+                    liveMicOn ? "animate-pulse bg-emerald-600" : "bg-slate-400"
+                  }`}
+                  aria-hidden="true"
+                />
+                {liveMicOn ? (
+                  <Mic className="h-4 w-4 shrink-0 text-emerald-700" aria-hidden="true" />
+                ) : (
+                  <MicOff className="h-4 w-4 shrink-0 text-slate-500" aria-hidden="true" />
+                )}
+                <span className="truncate">
+                  {liveMicOn ? "Live mic open — speak or interrupt anytime" : "Live mic paused — tap to talk"}
+                </span>
+              </div>
+              {liveMicOn && (
+                <span className="flex h-4 items-center gap-0.5" aria-hidden="true">
+                  {bars.map((base, i) => (
+                    <i
+                      key={i}
+                      className="block w-1 rounded-full bg-emerald-600 transition-[height] duration-100"
+                      style={{ height: `${Math.max(4, Math.round(16 * base * Math.max(0.18, level)))}px` }}
+                    />
+                  ))}
+                </span>
+              )}
+            </button>
+            {textAllowed && (
+              <button
+                type="button"
+                onClick={() => {
+                  onModeChange("text");
+                  setTimeout(() => inputRef.current?.focus(), 40);
+                }}
+                title="Type a message in this live session"
+                aria-label="Switch to typing"
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[var(--line-strong)] bg-white text-[var(--ink)] shadow-xs transition hover:bg-[var(--soft-hover)] sm:h-12 sm:w-12"
+              >
+                <Keyboard className="h-4 w-4" aria-hidden="true" />
+              </button>
+            )}
+          </div>
+        ) : handsFree && voiceAllowed ? (
           <div className="flex items-center gap-2">
             <div className="flex h-11 min-w-0 flex-1 items-center justify-between gap-2 rounded-full border border-emerald-300 bg-emerald-50/90 px-4 text-xs font-bold text-emerald-900 sm:h-12 sm:text-sm">
               <div className="flex min-w-0 items-center gap-2">

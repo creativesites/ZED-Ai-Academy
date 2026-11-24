@@ -4,6 +4,8 @@ import {
   buildContents,
   DEBUG_RAW_OUTPUT_TYPE,
   eventsForHistory,
+  fallbackLanguageFor,
+  fallbackTurnEvents,
   MAX_TURNS,
   runTutorTurn,
   type HistoryTurn,
@@ -282,4 +284,15 @@ test("eventsForHistory drops the debug raw-output entry so the model never sees 
     { type: DEBUG_RAW_OUTPUT_TYPE, raw: "{not json" },
   ];
   assert.deepEqual(eventsForHistory(stored), [{ type: "say", text: "Sorry." }]);
+});
+
+test("Zambian local languages (bem, ny, tog) have localized fallback lines with English translation", () => {
+  for (const lang of ["bem", "ny", "tog"] as const) {
+    assert.equal(fallbackLanguageFor(lang), lang);
+    const events = fallbackTurnEvents(lang);
+    const say = events.find((e) => e.type === "say");
+    assert.ok(say && say.type === "say");
+    assert.ok(say.text.length > 0);
+    assert.ok(typeof say.translation === "string" && say.translation.length > 0);
+  }
 });

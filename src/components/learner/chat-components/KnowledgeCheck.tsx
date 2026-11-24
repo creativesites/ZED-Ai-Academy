@@ -4,18 +4,37 @@ import { useState } from "react";
 import { CheckCircle2, HelpCircle, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
+export interface KnowledgeCheckResult {
+  question: string;
+  selectedOption: string;
+  correctOption: string;
+  isCorrect: boolean;
+}
+
 interface KnowledgeCheckProps {
   question: string;
   options: string[];
   correctIndex: number;
   explanation?: string;
+  onResult?: (result: KnowledgeCheckResult) => void;
 }
 
-export function KnowledgeCheck({ question, options, correctIndex, explanation }: KnowledgeCheckProps) {
+export function KnowledgeCheck({ question, options, correctIndex, explanation, onResult }: KnowledgeCheckProps) {
   const [selected, setSelected] = useState<number | null>(null);
   const [submitted, setSubmitted] = useState(false);
 
   const isCorrect = selected === correctIndex;
+
+  function handleCheck() {
+    if (selected === null || submitted) return;
+    setSubmitted(true);
+    onResult?.({
+      question,
+      selectedOption: options[selected] ?? "",
+      correctOption: options[correctIndex] ?? "",
+      isCorrect: selected === correctIndex,
+    });
+  }
 
   return (
     <div className="my-4 rounded-2xl border border-amber-200 bg-white p-5 shadow-sm">
@@ -56,7 +75,7 @@ export function KnowledgeCheck({ question, options, correctIndex, explanation }:
       {!submitted ? (
         <Button 
           disabled={selected === null}
-          onClick={() => setSubmitted(true)}
+          onClick={handleCheck}
           className="mt-5 w-full rounded-xl bg-amber-500 text-black font-semibold hover:bg-amber-400"
         >
           Check Answer

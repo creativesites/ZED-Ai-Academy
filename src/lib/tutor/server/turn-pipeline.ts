@@ -10,7 +10,11 @@ export type HistoryTurn = { idx: number; learner_text: string | null; events: un
 
 export type GenContent = { role: "user" | "model"; parts: { text: string }[] };
 
-export type TurnGenerateRequest = { systemInstruction: string; contents: GenContent[] };
+export type TurnGenerateRequest = {
+  systemInstruction: string;
+  contents: GenContent[];
+  audio?: { bytes: Buffer; mimeType: string };
+};
 
 export type TurnGenerateResult = { text: string | undefined; totalTokens?: number };
 
@@ -37,6 +41,8 @@ export type TurnPipelineInput = {
   idx: number;
   /** Learner's words for this turn. null for the opening turn, which the learner did not speak. */
   learnerText: string | null;
+  /** Optional raw learner audio for single-pass multimodal transcription + teacher reply. */
+  learnerAudio?: { bytes: Buffer; mimeType: string };
   /** Used as the user message when there is no learner text (the opening turn). */
   openingInstruction: string;
   /** Language of the fallback apology when the model gives no valid event. */
@@ -49,6 +55,8 @@ export type TurnPipelineInput = {
 export type TurnPipelineResult = {
   idx: number;
   events: TutorEvent[];
+  /** Resolved learner transcript (echoed from input or extracted from multimodal audio JSON). */
+  learnerText?: string | null;
   ended: boolean;
   endReason?: "time_box" | "turn_limit" | "model_end";
   /** Model events dropped by validation. */
@@ -92,17 +100,36 @@ export async function runTutorTurn(input: TurnPipelineInput, deps: TurnPipelineD
     return { idx: input.idx, events, ended: true, endReason, dropped: 0, fallback: false, latencyMs: 0 };
   }
 
-  const contents = buildContents(input.history, input.learnerText, input.openingInstruction);
-  const response = await deps.generate({ systemInstruction: input.systemInstruction, contents });
+  const contents = buildContents(
+    input.history,
+    input.learnerText ?? (input.learnerAudio ? "[audio]" : null),
+    input.openingInstruction,
+  );
+  const response = await deps.generate({
+    systemInstruction: input.systemInstruction,
+    contents,
+    ...(input.learnerAudio ? { audio: input.learnerAudio } : {}),
+  });
   const latencyMs = Math.max(0, deps.now() - startedAt);
 
   let events: TutorEvent[] = [];
   let dropped = 0;
   let parseError: string | undefined;
+  let resolvedLearnerText: string | null = input.learnerText;
   const rawText = response.text !== undefined && response.text.trim() !== "" ? response.text : undefined;
   if (rawText === undefined) {
     parseError = "empty model response";
   } else {
+    if (resolvedLearnerText === null && input.learnerAudio) {
+      try {
+        const obj = JSON.parse(rawText) as { learnerText?: unknown };
+        if (typeof obj?.learnerText === "string" && obj.learnerText.trim()) {
+          resolvedLearnerText = obj.learnerText.trim().slice(0, 1000);
+        }
+      } catch {
+        // Ignore; parseTutorTurn handles JSON error below.
+      }
+    }
     const parsed = parseTutorTurn(rawText);
     if (parsed.ok) {
       events = parsed.events;
@@ -131,11 +158,12 @@ export async function runTutorTurn(input: TurnPipelineInput, deps: TurnPipelineD
   );
 
   const modelEnded = events.some((e) => e.type === "end_session");
-  await deps.saveTurn({ idx: input.idx, learnerText: input.learnerText, events, latencyMs, rawOutput });
+  await deps.saveTurn({ idx: input.idx, learnerText: resolvedLearnerText, events, latencyMs, rawOutput });
 
   return {
     idx: input.idx,
     events,
+    learnerText: resolvedLearnerText,
     ended: modelEnded,
     endReason: modelEnded ? "model_end" : undefined,
     dropped,
@@ -145,12 +173,15 @@ export async function runTutorTurn(input: TurnPipelineInput, deps: TurnPipelineD
   };
 }
 
-export type FallbackLanguage = "zh" | "es" | "fr" | "en";
+export type FallbackLanguage = "zh" | "es" | "fr" | "bem" | "ny" | "tog" | "en";
 
 const FALLBACK_LINES: Record<FallbackLanguage, { text: string; translation?: string }> = {
   zh: { text: "不好意思，请再说一遍。", translation: "Sorry, could you say that again?" },
   es: { text: "Perdona, ¿puedes repetirlo?", translation: "Sorry, can you repeat that?" },
   fr: { text: "Pardon, vous pouvez répéter ?", translation: "Sorry, could you repeat that?" },
+  bem: { text: "Nga mwaumfwa, bwekeshenipo mukwai.", translation: "Sorry, could you please repeat that?" },
+  ny: { text: "Pepani, bwerezaninso chonde.", translation: "Sorry, could you please say that again?" },
+  tog: { text: "Amundilekelele, amwiinduluke alimwi.", translation: "Sorry, could you please repeat that?" },
   en: { text: "Sorry, could you say that again?" },
 };
 
@@ -167,7 +198,17 @@ export function fallbackTurnEvents(language: FallbackLanguage): TutorEvent[] {
 
 /** Maps a session's language pack (or persona language) to a fallback language. Unknown languages use English. */
 export function fallbackLanguageFor(language: string | null | undefined): FallbackLanguage {
-  return language === "zh" || language === "es" || language === "fr" ? language : "en";
+  if (
+    language === "zh" ||
+    language === "es" ||
+    language === "fr" ||
+    language === "bem" ||
+    language === "ny" ||
+    language === "tog"
+  ) {
+    return language;
+  }
+  return "en";
 }
 
 /**

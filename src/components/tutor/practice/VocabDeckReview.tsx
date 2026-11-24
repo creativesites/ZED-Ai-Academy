@@ -18,8 +18,8 @@ import {
   Volume2,
 } from "lucide-react";
 import { Teacher } from "@/components/tutor/avatar/Teacher";
-import { PERSONA_PRESETS } from "@/components/tutor/avatar/persona-presets";
-import type { AvatarDriver } from "@/components/tutor/avatar/types";
+import { PERSONA_PRESETS, SCALE_PERSONA_PRESETS } from "@/components/tutor/avatar/persona-presets";
+import type { AvatarDriver, PersonaLook } from "@/components/tutor/avatar/types";
 import { compareResponseToTarget, type ResponseMatchResult } from "@/lib/tutor/response-match";
 import {
   formatInterval,
@@ -58,12 +58,45 @@ const LANG_LABELS: Record<string, string> = {
   tog: "Tonga",
 };
 
-const LANG_PRESET_MAP: Record<string, (typeof PERSONA_PRESETS)[number]> = {
+const LANG_PRESET_MAP: Record<string, { key: string; label: string; look: PersonaLook }> = {
   en: PERSONA_PRESETS[4], // Tinashe
   zh: PERSONA_PRESETS[0], // Lin
   es: PERSONA_PRESETS[1], // Sofia
   fr: PERSONA_PRESETS[2], // Camille
+  bem: SCALE_PERSONA_PRESETS[0] ?? PERSONA_PRESETS[4], // Mwila
+  ny: SCALE_PERSONA_PRESETS[1] ?? PERSONA_PRESETS[4], // Banda
+  tog: SCALE_PERSONA_PRESETS[3] ?? PERSONA_PRESETS[4], // Chanda
 };
+
+const LANG_TTS_VOICE: Record<string, string> = {
+  en: "Puck",
+  zh: "Kore",
+  es: "Aoede",
+  fr: "Leda",
+  bem: "Kore",
+  ny: "Charon",
+  tog: "Fenrir",
+};
+
+const deckTtsCache = new Map<string, string | null>();
+let activeDeckAudio: HTMLAudioElement | null = null;
+let activeDeckInterval: ReturnType<typeof setInterval> | undefined;
+
+function stopDeckAudio(avatar?: AvatarDriver | null) {
+  if (activeDeckInterval !== undefined) {
+    clearInterval(activeDeckInterval);
+    activeDeckInterval = undefined;
+  }
+  if (activeDeckAudio) {
+    activeDeckAudio.pause();
+    activeDeckAudio = null;
+  }
+  if (typeof window !== "undefined" && "speechSynthesis" in window) {
+    window.speechSynthesis.cancel();
+  }
+  avatar?.setSpeaking(false);
+  avatar?.setViseme(0);
+}
 
 type BrowserSpeechRecognition = {
   lang: string;
@@ -91,7 +124,7 @@ function createSpeechRecognition(): BrowserSpeechRecognition | null {
   }
 }
 
-function speakTerm(
+function speakTermWithBrowser(
   text: string,
   language: string,
   rate: number,
@@ -106,11 +139,13 @@ function speakTerm(
     utter.rate = rate;
 
     const timeline = visemeTimelineFromText(text);
-    let intervalId: ReturnType<typeof setInterval> | undefined;
     let startedAt = 0;
 
     const cleanup = () => {
-      if (intervalId !== undefined) clearInterval(intervalId);
+      if (activeDeckInterval !== undefined) {
+        clearInterval(activeDeckInterval);
+        activeDeckInterval = undefined;
+      }
       avatar?.setSpeaking(false);
       avatar?.setViseme(0);
     };
@@ -118,7 +153,7 @@ function speakTerm(
     utter.onstart = () => {
       startedAt = performance.now();
       avatar?.setSpeaking(true);
-      intervalId = setInterval(() => {
+      activeDeckInterval = setInterval(() => {
         const elapsed = (performance.now() - startedAt) * rate;
         let cursor = 0;
         let v: 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 = 0;
@@ -137,6 +172,93 @@ function speakTerm(
     window.speechSynthesis.speak(utter);
   } catch {
     // Browser TTS unavailable
+  }
+}
+
+async function speakTerm(
+  text: string,
+  language: string,
+  rate: number,
+  avatar: AvatarDriver | null,
+) {
+  if (typeof window === "undefined" || !text.trim()) return;
+  stopDeckAudio(avatar);
+
+  const voice = LANG_TTS_VOICE[language] ?? "Kore";
+  const cacheKey = `${voice}::${text}`;
+  let url = deckTtsCache.get(cacheKey);
+
+  if (url === undefined) {
+    try {
+      const res = await fetch("/api/tutor/tts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        body: JSON.stringify({ text, voice }),
+      });
+      if (res.ok) {
+        const data = (await res.json().catch(() => null)) as { url?: unknown } | null;
+        url = typeof data?.url === "string" && data.url ? data.url : null;
+      } else {
+        url = null;
+      }
+    } catch {
+      url = null;
+    }
+    if (deckTtsCache.size > 60) deckTtsCache.clear();
+    deckTtsCache.set(cacheKey, url);
+  }
+
+  if (!url) {
+    speakTermWithBrowser(text, language, rate, avatar);
+    return;
+  }
+
+  const timeline = visemeTimelineFromText(text);
+  const totalTimelineMs = timeline.reduce((acc, s) => acc + s.ms, 0);
+  const el = new Audio(url);
+  el.playbackRate = Math.max(0.65, Math.min(1.35, rate));
+  activeDeckAudio = el;
+
+  const cleanup = () => {
+    if (activeDeckInterval !== undefined) {
+      clearInterval(activeDeckInterval);
+      activeDeckInterval = undefined;
+    }
+    if (activeDeckAudio === el) activeDeckAudio = null;
+    avatar?.setSpeaking(false);
+    avatar?.setViseme(0);
+  };
+
+  el.onplaying = () => {
+    avatar?.setSpeaking(true);
+    activeDeckInterval = setInterval(() => {
+      const durationMs = Number.isFinite(el.duration) && el.duration > 0 ? el.duration * 1000 : totalTimelineMs;
+      const scale = durationMs > 0 && totalTimelineMs > 0 ? totalTimelineMs / durationMs : 1;
+      const elapsed = el.currentTime * 1000 * scale;
+      let cursor = 0;
+      let v: 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 = 0;
+      for (const seg of timeline) {
+        cursor += seg.ms;
+        if (elapsed < cursor) {
+          v = seg.viseme;
+          break;
+        }
+      }
+      avatar?.setViseme(v);
+    }, 28);
+  };
+  el.onended = cleanup;
+  el.onerror = () => {
+    cleanup();
+    speakTermWithBrowser(text, language, rate, avatar);
+  };
+
+  try {
+    await el.play();
+  } catch {
+    cleanup();
+    speakTermWithBrowser(text, language, rate, avatar);
   }
 }
 

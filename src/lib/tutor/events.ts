@@ -10,7 +10,7 @@ const gestureSchema = z.enum(GESTURES);
 const toneShapeSchema = z.enum(TONE_SHAPES);
 const moodSchema = z.enum(MOODS);
 
-export const BOARD_KINDS = ["bullets", "steps", "equation", "code", "table", "note"] as const;
+export const BOARD_KINDS = ["bullets", "steps", "equation", "code", "table", "note", "diagram", "chart", "compare"] as const;
 export type BoardKind = (typeof BOARD_KINDS)[number];
 export const EVIDENCE_RESULTS = ["correct", "partial", "misconception"] as const;
 export type EvidenceResult = (typeof EVIDENCE_RESULTS)[number];

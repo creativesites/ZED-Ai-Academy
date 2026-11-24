@@ -1,6 +1,11 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { visemeFromSpectrum, visemeTimelineFromText } from "./visemes.ts";
+import {
+  hybridVisemeFromAudio,
+  visemeAtCalibratedTime,
+  visemeFromSpectrum,
+  visemeTimelineFromText,
+} from "./visemes.ts";
 
 test("Chinese 你好 maps each ideograph to AA, EH, rest", () => {
   assert.deepEqual(visemeTimelineFromText("你好"), [
@@ -80,4 +85,57 @@ test("visemeFromSpectrum keeps the previous viseme when the scores are close", (
 
 test("visemeFromSpectrum rejects a non-positive sample rate", () => {
   assert.throws(() => visemeFromSpectrum([100], 0), RangeError);
+});
+
+test("visemeAtCalibratedTime scales phonetic timeline to actual audio duration", () => {
+  // "Hola": CONS(60), OH(100), CONS(60), AA(100) => total 320 ms
+  const timeline = visemeTimelineFromText("Hola");
+  // Suppose real TTS audio is 640 ms (2x slower). At 200 ms elapsed -> 100 ms in timeline -> OH (4).
+  assert.equal(visemeAtCalibratedTime(timeline, 200, 640), 4);
+  // At 560 ms elapsed -> 280 ms in timeline -> AA (1).
+  assert.equal(visemeAtCalibratedTime(timeline, 560, 640), 1);
+  // Past end -> rest (0).
+  assert.equal(visemeAtCalibratedTime(timeline, 700, 640), 0);
+});
+
+test("hybridVisemeFromAudio gates pauses to rest and prefers calibrated phonemes during active speech", () => {
+  // "fa": FV(60), AA(100) => total 160 ms. FV can only come from phonetic lookup, not FFT spectrum.
+  const timeline = visemeTimelineFromText("fa");
+  const silent = new Uint8Array(BINS);
+  assert.equal(
+    hybridVisemeFromAudio({
+      timeline,
+      elapsedMs: 20,
+      durationMs: 160,
+      bins: silent,
+      sampleRate: 48000,
+    }),
+    0,
+    "real audio silence forces mouth to rest even mid-phoneme",
+  );
+
+  const active = new Uint8Array(BINS);
+  active.fill(180);
+  assert.equal(
+    hybridVisemeFromAudio({
+      timeline,
+      elapsedMs: 20,
+      durationMs: 160,
+      bins: active,
+      sampleRate: 48000,
+    }),
+    7,
+    "active speech uses crisp phonetic FV viseme",
+  );
+  assert.equal(
+    hybridVisemeFromAudio({
+      timeline,
+      elapsedMs: 100,
+      durationMs: 160,
+      bins: active,
+      sampleRate: 48000,
+    }),
+    1,
+    "active speech advances to AA viseme",
+  );
 });

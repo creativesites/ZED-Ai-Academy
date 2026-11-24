@@ -42,7 +42,10 @@ export async function runSessionTurn(input: {
   ctx: SessionContext;
   idx: number;
   learnerText: string | null;
+  learnerAudio?: { bytes: Buffer; mimeType: string };
   openingInstruction: string;
+  /** When true, skips blocking server TTS so captions/board/choices return immediately (~1s) while the client fetches cached audio progressively via /api/tutor/tts. */
+  deferTts?: boolean;
 }): Promise<TurnPipelineResult> {
   const { ctx } = input;
   const session = ctx.session;
@@ -53,7 +56,8 @@ export async function runSessionTurn(input: {
     now: () => Date.now(),
     generate: async (req) => {
       const result = await generateTurnJson(req);
-      await recordUsage({
+      // Fire-and-forget usage metering so it never adds latency to the learner's turn.
+      void recordUsage({
         companyId: session.company_id,
         userId: session.user_id,
         sessionId: session.id,
@@ -61,13 +65,14 @@ export async function runSessionTurn(input: {
         kind: "llm",
         units: result.totalTokens ?? 0,
         unit: "tokens",
-      });
+      }).catch((err) => console.warn("[tutor] usage log failed:", err));
       return result;
     },
     synthesize: async (text, voice) => {
+      if (input.deferTts) return null;
       const speech = await synthesizeCachedSpeech(text, voice);
       if (!speech.cached) {
-        await recordUsage({
+        void recordUsage({
           companyId: session.company_id,
           userId: session.user_id,
           sessionId: session.id,
@@ -75,7 +80,7 @@ export async function runSessionTurn(input: {
           kind: "tts",
           units: speech.totalTokens ?? text.length,
           unit: speech.totalTokens ? "tokens" : "characters",
-        });
+        }).catch((err) => console.warn("[tutor] tts usage log failed:", err));
       }
       return speech.url;
     },
@@ -105,6 +110,7 @@ export async function runSessionTurn(input: {
       maxMinutes: ctx.scenario.max_minutes,
       idx: input.idx,
       learnerText: input.learnerText,
+      learnerAudio: input.learnerAudio,
       openingInstruction: input.openingInstruction,
       systemInstruction: sessionSystemPrompt(ctx, mode),
       voice: personaVoiceName(ctx.persona),

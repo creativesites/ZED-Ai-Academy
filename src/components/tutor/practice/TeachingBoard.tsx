@@ -1,8 +1,10 @@
 "use client";
 
-import { BookmarkCheck, BookmarkPlus } from "lucide-react";
+import { useState } from "react";
+import { ArrowDown, BarChart3, BookmarkCheck, BookmarkPlus, GitBranch, Scale, Terminal } from "lucide-react";
 import type { ClipEvent, LessonRefEvent } from "@/components/tutor/EventPlayer";
 import { CONFIDENCE_LEVELS, type BoardState, type ConfidenceLevel } from "@/lib/tutor/board";
+import { parseChartData, parseCompareData, parseDiagramNodes } from "@/lib/tutor/board-visuals";
 import { dispatchLessonSeek } from "@/lib/tutor/lesson-seek";
 import styles from "./practice.module.css";
 
@@ -30,6 +32,8 @@ type TeachingBoardProps = {
   /** Optional universal Study Deck bookmarking for board takeaways/concepts. */
   savedKeys?: ReadonlySet<string>;
   onSaveTakeaway?: (item: { key: string; term: string; meaning: string }) => void;
+  /** Called when the learner taps an interactive diagram node, chart bar, compare card, or code line. */
+  onInteract?: (prompt: string) => void;
 };
 
 export function TeachingBoard({
@@ -47,6 +51,7 @@ export function TeachingBoard({
   onLessonRefClick,
   savedKeys,
   onSaveTakeaway,
+  onInteract,
 }: TeachingBoardProps) {
   const empty = !board && !choice && !confidence && lessonRefs.length === 0 && !clip && !award;
   if (empty) return null;
@@ -75,8 +80,10 @@ export function TeachingBoard({
       {board && (
         <BoardContent
           board={board}
+          disabled={disabled}
           savedKeys={savedKeys}
           onSaveTakeaway={onSaveTakeaway}
+          onInteract={onInteract}
         />
       )}
 
@@ -155,13 +162,18 @@ export function TeachingBoard({
 
 function BoardContent({
   board,
+  disabled,
   savedKeys,
   onSaveTakeaway,
+  onInteract,
 }: {
   board: BoardState;
+  disabled: boolean;
   savedKeys?: ReadonlySet<string>;
   onSaveTakeaway?: (item: { key: string; term: string; meaning: string }) => void;
+  onInteract?: (prompt: string) => void;
 }) {
+  const [selectedCodeLine, setSelectedCodeLine] = useState<number | null>(null);
   const boardSummary =
     board.text?.trim() ||
     board.items?.slice(0, Math.max(board.shown, 1)).join(" · ") ||
@@ -170,14 +182,24 @@ function BoardContent({
   const saveKey = `board:${board.title ?? board.kind}:${boardSummary.slice(0, 60)}`;
   const isSaved = Boolean(savedKeys?.has(saveKey));
 
+  const chartData = board.kind === "chart" ? parseChartData(board) : [];
+  const diagramNodes = board.kind === "diagram" ? parseDiagramNodes(board) : [];
+  const compareData = board.kind === "compare" ? parseCompareData(board) : null;
+
   return (
     <div
       aria-live="polite"
-      className="grid gap-1.5 rounded-2xl border border-[var(--line)] bg-white/95 p-3 shadow-[0_8px_24px_rgba(15,23,42,0.06)] sm:gap-2 sm:rounded-[20px] sm:p-4"
+      className="grid gap-2 rounded-2xl border border-[var(--line)] bg-white/95 p-3 shadow-[0_8px_24px_rgba(15,23,42,0.06)] sm:rounded-[20px] sm:p-4"
     >
       <div className="flex items-start justify-between gap-2">
         {board.title ? (
-          <h3 className="font-heading text-sm font-semibold leading-snug text-[var(--ink)] sm:text-base">{board.title}</h3>
+          <h3 className="flex items-center gap-1.5 font-heading text-sm font-semibold leading-snug text-[var(--ink)] sm:text-base">
+            {board.kind === "chart" && <BarChart3 className="h-4 w-4 text-[#fd5523]" aria-hidden="true" />}
+            {board.kind === "diagram" && <GitBranch className="h-4 w-4 text-[#fd5523]" aria-hidden="true" />}
+            {board.kind === "compare" && <Scale className="h-4 w-4 text-[#fd5523]" aria-hidden="true" />}
+            {board.kind === "code" && <Terminal className="h-4 w-4 text-[#fd5523]" aria-hidden="true" />}
+            {board.title}
+          </h3>
         ) : (
           <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--ink-faint)]">
             Teaching Board
@@ -221,16 +243,159 @@ function BoardContent({
       )}
 
       {board.kind === "equation" && board.text && (
-        <p className="whitespace-pre-wrap font-mono text-sm leading-relaxed text-[var(--ink)] sm:text-base">{board.text}</p>
+        <div className="rounded-xl border border-amber-200/70 bg-[#fffaf4] px-3 py-2.5 text-center">
+          <p className="whitespace-pre-wrap font-mono text-sm font-bold leading-relaxed text-[var(--ink)] sm:text-base">
+            {board.text}
+          </p>
+          {onInteract && (
+            <button
+              type="button"
+              disabled={disabled}
+              onClick={() => onInteract("Walk me through this formula step by step with concrete numbers.")}
+              className="mt-2 rounded-full border border-amber-300 bg-white px-2.5 py-0.5 text-[11px] font-bold text-amber-900 transition hover:bg-amber-50 disabled:opacity-50"
+            >
+              Walk through with numbers →
+            </button>
+          )}
+        </div>
       )}
 
       {board.kind === "code" && board.text && (
-        <pre
-          aria-label={board.language ? `${board.language} code` : "Code"}
-          className="overflow-x-auto rounded-xl bg-[#0f172a] p-2.5 font-mono text-xs leading-relaxed text-slate-100 sm:p-3 sm:text-[13px]"
-        >
-          <code>{board.text}</code>
-        </pre>
+        <div className="space-y-1.5">
+          <div
+            aria-label={board.language ? `${board.language} code` : "Code"}
+            className="overflow-x-auto rounded-xl bg-[#0f172a] p-2 font-mono text-xs leading-relaxed text-slate-100 sm:p-3 sm:text-[13px]"
+          >
+            {board.text.split("\n").map((line, i) => {
+              const lineNum = i + 1;
+              const isSelected = selectedCodeLine === lineNum;
+              return (
+                <button
+                  key={lineNum}
+                  type="button"
+                  disabled={!onInteract || disabled}
+                  onClick={() => setSelectedCodeLine(isSelected ? null : lineNum)}
+                  className={`flex w-full items-start gap-2.5 rounded px-1.5 py-0.5 text-left transition ${
+                    isSelected
+                      ? "bg-[#fd5523]/25 text-white ring-1 ring-[#fd5523]/60"
+                      : onInteract
+                        ? "hover:bg-white/10"
+                        : ""
+                  }`}
+                >
+                  <span className="w-5 shrink-0 select-none text-right text-[10px] text-slate-500">
+                    {lineNum}
+                  </span>
+                  <code className="whitespace-pre">{line || " "}</code>
+                </button>
+              );
+            })}
+          </div>
+          {onInteract && (
+            <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-500">
+              <span>{selectedCodeLine ? `Line ${selectedCodeLine} selected` : "Tap any line to discuss or spot a bug"}</span>
+              {selectedCodeLine && (
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    disabled={disabled}
+                    onClick={() => {
+                      const lineText = board.text?.split("\n")[selectedCodeLine - 1]?.trim() ?? "";
+                      onInteract(`I'm looking at line ${selectedCodeLine}: "${lineText}"`);
+                      setSelectedCodeLine(null);
+                    }}
+                    className="rounded-full bg-[#fd5523] px-2.5 py-1 text-[11px] font-bold text-white hover:bg-[#ea4817] disabled:opacity-50"
+                  >
+                    Select line {selectedCodeLine}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={disabled}
+                    onClick={() => {
+                      onInteract(`Can you explain line ${selectedCodeLine}?`);
+                      setSelectedCodeLine(null);
+                    }}
+                    className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-bold text-[#062e39] hover:bg-slate-50 disabled:opacity-50"
+                  >
+                    Explain line
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {board.kind === "diagram" && diagramNodes.length > 0 && (
+        <div className="space-y-1">
+          {diagramNodes.map((node, i) => (
+            <div key={`${node.index}-${node.label}`} className="flex flex-col items-center">
+              <button
+                type="button"
+                disabled={!onInteract || disabled}
+                onClick={() => onInteract?.(`Can you explain this step: "${node.label}"?`)}
+                className="flex w-full items-center gap-2.5 rounded-xl border border-slate-200 bg-gradient-to-r from-[#fffaf6] to-white px-3 py-2 text-left text-xs font-semibold text-[#062e39] shadow-xs transition hover:border-[#fd5523]/60 hover:bg-[#fff2e9]/60 disabled:cursor-default sm:text-sm"
+              >
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#fd5523] text-[10px] font-extrabold text-white">
+                  {i + 1}
+                </span>
+                <span className="flex-1 leading-snug">{node.label}</span>
+              </button>
+              {i < diagramNodes.length - 1 && (
+                <ArrowDown className="my-0.5 h-3.5 w-3.5 text-slate-400" aria-hidden="true" />
+              )}
+            </div>
+          ))}
+          {onInteract && (
+            <p className="pt-0.5 text-center text-[10px] font-medium text-slate-400">
+              Tap any node to ask the teacher to zoom in on it
+            </p>
+          )}
+        </div>
+      )}
+
+      {board.kind === "chart" && chartData.length > 0 && (
+        <div className="space-y-2">
+          {chartData.map((bar, i) => (
+            <button
+              key={`${bar.label}-${i}`}
+              type="button"
+              disabled={!onInteract || disabled}
+              onClick={() => onInteract?.(`Explain "${bar.label}" (${bar.displayValue}) on this chart.`)}
+              className="group block w-full space-y-1 rounded-xl p-1.5 text-left transition hover:bg-slate-50 disabled:cursor-default"
+            >
+              <div className="flex items-center justify-between gap-2 text-xs">
+                <span className="font-semibold text-[#062e39] group-hover:text-[#fd5523]">{bar.label}</span>
+                <span className="font-mono font-bold text-slate-600">{bar.displayValue}</span>
+              </div>
+              <div className="h-2.5 w-full overflow-hidden rounded-full bg-slate-100">
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-[#fd5523] to-[#f59e0b] transition-[width] duration-500"
+                  style={{ width: `${bar.pct}%` }}
+                />
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
+
+      {board.kind === "compare" && compareData && (
+        <div className="grid gap-2">
+          <div className="grid grid-cols-2 gap-2 text-[10px] font-extrabold uppercase tracking-wider">
+            <span className="rounded-lg bg-slate-100 px-2.5 py-1 text-slate-600">{compareData.leftHeader}</span>
+            <span className="rounded-lg bg-emerald-50 px-2.5 py-1 text-emerald-800">{compareData.rightHeader}</span>
+          </div>
+          {compareData.rows.map((pair, i) => (
+            <div key={i} className="grid grid-cols-2 gap-2 text-xs leading-snug">
+              <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-2.5 text-slate-700">
+                {pair.left}
+              </div>
+              <div className="rounded-xl border border-emerald-200 bg-emerald-50/60 p-2.5 font-medium text-[#062e39]">
+                {pair.right}
+              </div>
+            </div>
+          ))}
+        </div>
       )}
 
       {board.kind === "note" && board.text && (
@@ -239,10 +404,15 @@ function BoardContent({
 
       {board.kind === "table" && board.rows && <BoardTable rows={board.rows} shown={board.shown} />}
 
-      {/* A board of another kind that only carries items still shows them. */}
-      {board.kind !== "bullets" && board.kind !== "steps" && !board.text && !board.rows && board.items && (
-        <ListItems items={board.items} shown={board.shown} ordered={false} />
-      )}
+      {/* Graceful fallback if a new board kind didn't parse into specialized visual data */}
+      {board.kind !== "bullets" &&
+        board.kind !== "steps" &&
+        !(board.kind === "diagram" && diagramNodes.length > 0) &&
+        !(board.kind === "chart" && chartData.length > 0) &&
+        !(board.kind === "compare" && compareData) &&
+        !board.text &&
+        !board.rows &&
+        board.items && <ListItems items={board.items} shown={board.shown} ordered={false} />}
     </div>
   );
 }

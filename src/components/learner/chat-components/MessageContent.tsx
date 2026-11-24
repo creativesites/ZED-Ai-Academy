@@ -10,16 +10,17 @@ import { Checklist } from "./Checklist";
 import { PromptIteration } from "./PromptIteration";
 import { ResourceLink } from "./ResourceLink";
 import { ActionCard } from "./ActionCard";
-import { KnowledgeCheck } from "./KnowledgeCheck";
+import { KnowledgeCheck, type KnowledgeCheckResult } from "./KnowledgeCheck";
 import { CodeSnippet } from "./CodeSnippet";
 import { CourseCard } from "./CourseCard";
 import { dispatchLessonSeek, formatSeekTime } from "@/lib/tutor/lesson-seek";
 
 interface MessageContentProps {
   content: string;
+  onKnowledgeCheckResult?: (result: KnowledgeCheckResult) => void;
 }
 
-export function MessageContent({ content }: MessageContentProps) {
+export function MessageContent({ content, onKnowledgeCheckResult }: MessageContentProps) {
   // Pattern to find our custom components: :::component_name {JSON_PROPS} :::
   // We use a more robust regex that handles potential whitespace and newlines better
   const parts = content.split(/(:::[a-z_]+[\s\S]*?:::)/g);
@@ -60,7 +61,7 @@ export function MessageContent({ content }: MessageContentProps) {
               case "action_card":
                 return <ActionCard key={i} {...props} />;
               case "knowledge_check":
-                return <KnowledgeCheck key={i} {...props} />;
+                return <KnowledgeCheck key={i} {...props} onResult={onKnowledgeCheckResult} />;
               case "code_snippet":
                 return <CodeSnippet key={i} {...props} />;
               case "course_card":

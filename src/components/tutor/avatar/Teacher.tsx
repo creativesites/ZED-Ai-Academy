@@ -1,6 +1,7 @@
 "use client";
 
 import { forwardRef, useCallback, useState } from "react";
+import type { SceneArtboard } from "@/lib/tutor/rive-driver";
 import { PlaceholderTeacher } from "./PlaceholderTeacher";
 import { RiveTeacher } from "./RiveTeacher";
 import type { RiveTeacherProps } from "./RiveTeacher";
@@ -15,6 +16,7 @@ export type TeacherEngine = "rive" | "three" | "placeholder";
 export type TeacherProps = RiveTeacherProps & {
   engine?: TeacherEngine;
   glbUrl?: string | null;
+  sceneName?: SceneArtboard | null;
 };
 
 let warnedFallback = false;
@@ -23,6 +25,7 @@ export const Teacher = forwardRef<AvatarDriver, TeacherProps>(function Teacher(p
   const {
     engine,
     glbUrl,
+    sceneName,
     variant,
     onReady,
     onLowPerformance,
@@ -57,6 +60,7 @@ export const Teacher = forwardRef<AvatarDriver, TeacherProps>(function Teacher(p
         ref={ref}
         variant={variant}
         glbUrl={resolvedGlbUrl}
+        sceneName={sceneName}
         persona={persona}
         reducedMotion={reducedMotion}
         onEvent={onEvent}

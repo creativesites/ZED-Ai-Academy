@@ -5,7 +5,7 @@ import { Alignment, Fit, Layout, Rive } from "@rive-app/canvas";
 import { ARTBOARDS } from "@/lib/tutor/contract.generated";
 import { SceneVmController } from "@/lib/tutor/rive-driver";
 import type { SceneArtboard } from "@/lib/tutor/rive-driver";
-import { cappedPixelRatio, openRiveFile, portFor, RIVE_SCENES_FILE } from "./rive-runtime";
+import { cappedPixelRatio, LOW_PERF_DEVICE_PIXEL_RATIO, openRiveFile, portFor, RIVE_SCENES_FILE } from "./rive-runtime";
 
 // The backdrop: one of the four scene artboards in zai_scenes.riv, drawn behind the teacher. Decorative,
 // so it is aria-hidden. Parallax follows the mouse on desktop and the device orientation when the browser
@@ -40,6 +40,8 @@ function clamp100(v: number): number {
 export const RiveScene = forwardRef<RiveSceneHandle, RiveSceneProps>(function RiveScene(props, ref) {
   const { scene, timeOfDay = 70, reducedMotion = false, ambience = true, lowPerformance = false, className } = props;
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const instanceRef = useRef<Rive | null>(null);
+  const lowPerfRef = useRef(lowPerformance);
   const [controller] = useState(() => new SceneVmController());
   const [loadedScene, setLoadedScene] = useState<string | null>(null);
   const ready = loadedScene === scene;
@@ -47,7 +49,13 @@ export const RiveScene = forwardRef<RiveSceneHandle, RiveSceneProps>(function Ri
   useImperativeHandle(ref, () => ({ celebrate: controller.celebrate }), [controller]);
 
   useEffect(() => {
+    lowPerfRef.current = lowPerformance;
     controller.setOptions({ timeOfDay, ambience, reducedMotion, lowPerformance });
+    if (instanceRef.current) {
+      instanceRef.current.resizeDrawingSurfaceToCanvas(
+        cappedPixelRatio(lowPerformance ? LOW_PERF_DEVICE_PIXEL_RATIO : undefined),
+      );
+    }
   }, [controller, timeOfDay, ambience, reducedMotion, lowPerformance]);
 
   // Parallax input. Off under reduced motion, and the scene is held still there.
@@ -100,7 +108,9 @@ export const RiveScene = forwardRef<RiveSceneHandle, RiveSceneProps>(function Ri
       typeof ResizeObserver === "undefined"
         ? null
         : new ResizeObserver(() => {
-            instance?.resizeDrawingSurfaceToCanvas(cappedPixelRatio());
+            instance?.resizeDrawingSurfaceToCanvas(
+              cappedPixelRatio(lowPerfRef.current ? LOW_PERF_DEVICE_PIXEL_RATIO : undefined),
+            );
           });
     resizeObserver?.observe(canvas);
 
@@ -132,7 +142,10 @@ export const RiveScene = forwardRef<RiveSceneHandle, RiveSceneProps>(function Ri
             }
             r.bindViewModelInstance(vmi);
             controller.attach(portFor(vmi));
-            r.resizeDrawingSurfaceToCanvas(cappedPixelRatio());
+            instanceRef.current = r;
+            r.resizeDrawingSurfaceToCanvas(
+              cappedPixelRatio(lowPerfRef.current ? LOW_PERF_DEVICE_PIXEL_RATIO : undefined),
+            );
             if (document.hidden) r.stopRendering();
             setLoadedScene(scene);
           },
@@ -156,6 +169,7 @@ export const RiveScene = forwardRef<RiveSceneHandle, RiveSceneProps>(function Ri
       document.removeEventListener("visibilitychange", onVisibility);
       resizeObserver?.disconnect();
       controller.detach();
+      instanceRef.current = null;
       if (instance) {
         instance.cleanup();
         instance = null;

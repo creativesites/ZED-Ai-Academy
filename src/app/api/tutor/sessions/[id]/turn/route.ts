@@ -1,12 +1,10 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { transcribeLearnerAudio } from "@/lib/tutor/server/gemini-calls";
 import { loadSessionContext } from "@/lib/tutor/server/session-context";
 import { loadOwnedSession, readJson, sessionIdSchema } from "@/lib/tutor/server/session-store";
 import { runSessionTurn, TurnConflictError } from "@/lib/tutor/server/turn-runner";
 import { sessionLimitReason } from "@/lib/tutor/server/turn-pipeline";
-import { recordUsage } from "@/lib/tutor/server/usage";
 import { LEARNER_AUDIO_TYPES } from "@/lib/tutor/recording";
 
 // POST /api/tutor/sessions/[id]/turn: one Voice or Text exchange.
@@ -56,38 +54,23 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
     nowMs: Date.now(),
   });
 
-  let learnerText: string | null = null;
-  if (!limit) {
-    if (input.audio) {
-      const transcript = await transcribeLearnerAudio(input.audio);
-      await recordUsage({
-        companyId: session.company_id,
-        userId,
-        sessionId: session.id,
-        model: transcript.model,
-        kind: "transcribe",
-        units: transcript.totalTokens ?? input.audio.bytes.length,
-        unit: transcript.totalTokens ? "tokens" : "bytes",
-      });
-      if (!transcript.text) {
-        return NextResponse.json({ error: "No speech was detected. Try again." }, { status: 422 });
-      }
-      learnerText = transcript.text;
-    } else {
-      learnerText = input.text ?? null;
-    }
-  }
+  // Single-pass multimodal audio turn: send learnerAudio directly into runSessionTurn so
+  // Gemini Flash transcribes + responds in ONE round-trip instead of two sequential calls (~1.5-2s faster!).
+  const learnerText: string | null = !limit && !input.audio ? (input.text ?? null) : null;
+  const learnerAudio = !limit ? input.audio : undefined;
 
   try {
     const result = await runSessionTurn({
       ctx: sessionContext,
       idx,
       learnerText,
+      learnerAudio,
       openingInstruction: "",
+      deferTts: true,
     });
     return NextResponse.json({
       turnIdx: idx,
-      learnerText,
+      learnerText: result.learnerText ?? learnerText,
       events: result.events,
       ended: result.ended,
       endReason: result.endReason ?? null,

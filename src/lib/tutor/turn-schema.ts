@@ -34,6 +34,10 @@ export const TUTOR_EVENT_TYPES = [
 export const TUTOR_TURN_JSON_SCHEMA = {
   type: "object",
   properties: {
+    learnerText: {
+      type: "string",
+      description: "When the learner spoke in audio, verbatim transcript of what they said.",
+    },
     events: {
       type: "array",
       items: {

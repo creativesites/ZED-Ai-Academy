@@ -76,9 +76,11 @@ export const TeacherStage = forwardRef<TeacherStageHandle, TeacherStageProps>(fu
   );
   useImperativeHandle(ref, () => handle, [handle]);
 
+  const isThree = engine === "three";
+
   return (
     <>
-      {engine !== "placeholder" && scene && (
+      {engine !== "placeholder" && !isThree && scene && (
         <RiveScene
           ref={sceneRef}
           scene={scene}
@@ -89,10 +91,11 @@ export const TeacherStage = forwardRef<TeacherStageHandle, TeacherStageProps>(fu
           className="absolute inset-0"
         />
       )}
-      <div className={wrapClassName}>
+      <div className={isThree ? "absolute inset-0" : wrapClassName}>
         <Teacher
           ref={teacherRef}
           engine={engine}
+          sceneName={scene}
           className={teacherClassName}
           persona={persona}
           reducedMotion={reducedMotion}

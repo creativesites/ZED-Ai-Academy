@@ -38,7 +38,7 @@ const startSchema = z
     micPermission: z.enum(["granted", "denied", "prompt"]),
     rttMs: z.number().min(0).max(60_000).optional(),
     // Optional client hint. Honoured only when the scenario allows that mode.
-    preferMode: z.enum(["voice", "text"]).optional(),
+    preferMode: z.enum(["live", "voice", "text"]).optional(),
   })
   .superRefine((body, ctx) => {
     if (body.origin === "lesson" && !body.lessonId) {
@@ -141,6 +141,7 @@ export async function POST(req: NextRequest) {
     displayName: sessionContext.persona.display_name,
     languages: sessionContext.persona.languages,
     riveVariant: sessionContext.persona.rive_variant,
+    voiceName: personaVoiceName(sessionContext.persona),
   };
   const scenario = publicScenario(sessionContext);
 
@@ -148,6 +149,7 @@ export async function POST(req: NextRequest) {
     const minted = await mintLiveToken({
       systemInstruction: sessionSystemPrompt(sessionContext, "live"),
       voiceName: personaVoiceName(sessionContext.persona),
+      skillPack: sessionContext.scenario.skill_pack,
     });
     // Metering records the mint only. Audio seconds are reported by the client on complete.
     await recordUsage({
@@ -176,6 +178,7 @@ export async function POST(req: NextRequest) {
       idx: 0,
       learnerText: null,
       openingInstruction: buildOpeningWithWarmup(OPENING_INSTRUCTION, sessionContext.learnerProfile),
+      deferTts: true,
     });
     return NextResponse.json({
       sessionId: session.id,

@@ -7,7 +7,7 @@ import { loadSessionMemoryNotes, loadWeakMasteryRows } from "../mastery/server.t
 import { buildRevisionSprintScenario } from "../mastery/sprint.ts";
 import { parseMemory } from "../memory.ts";
 import { profileLanguage } from "../progress.ts";
-import { skillPackLanguage } from "../skill-packs.ts";
+import { skillPackLanguage, type SkillPackLanguage } from "../skill-packs.ts";
 import type { PromptLearnerProfile, PromptPersona, PromptScenario } from "./prompt.ts";
 import type { HistoryTurn } from "./turn-pipeline.ts";
 
@@ -65,7 +65,7 @@ export type SessionContext = {
   scenario: ScenarioRow;
   persona: PersonaRow;
   courseId: string | null;
-  skillLanguage: "zh" | "es" | "fr" | null;
+  skillLanguage: SkillPackLanguage | null;
   profileLanguage: string;
   learnerProfile: PromptLearnerProfile;
   lessonText: string;

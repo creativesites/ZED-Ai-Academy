@@ -106,6 +106,7 @@ export class EventPlayer {
     this.avatar.setSpeaking(false);
     this.avatar.setListening(false);
     this.avatar.setViseme(0);
+    this.avatar.lookAt(0, 0);
   }
 
   /** Feed avatar lifecycle events in (wire this to AvatarProps.onEvent). */
@@ -163,6 +164,8 @@ export class EventPlayer {
         return true;
 
       case "show_card": {
+        // Glance toward the flashcard on the left as the finger reaches it.
+        this.avatar.lookAt(-0.52, -0.06);
         // Let the finger reach the card before it appears, but never wait longer than the cap.
         const maxWait = cardWaitMs({
           previousIsPointCard: this.prev?.type === "gesture" && this.prev.name === "point_card",
@@ -178,10 +181,12 @@ export class EventPlayer {
       }
 
       case "show_text":
+        this.avatar.lookAt(0.45, -0.15);
         this.ui.onText(ev.text, ev.highlight);
         return true;
 
       case "trace_tone": {
+        this.avatar.lookAt(0, 0);
         for (const tone of ev.tones) {
           if (!alive()) return false;
           this.avatar.playGesture("trace_tone", { toneShape: tone });
@@ -191,6 +196,7 @@ export class EventPlayer {
       }
 
       case "listen":
+        this.avatar.lookAt(0, 0);
         this.avatar.setListening(true);
         this.ui.onListen(ev.expect, ev.hint);
         return true;
@@ -208,19 +214,24 @@ export class EventPlayer {
         return true;
 
       case "show_board":
+        // Glance naturally toward the Teaching Board beside the stage.
+        this.avatar.lookAt(0.55, 0.08);
         this.ui.onBoard?.(ev);
         return true;
 
       case "reveal_step":
+        this.avatar.lookAt(0.55, 0.08);
         this.ui.onReveal?.(ev.index);
         return true;
 
       case "ask_choice":
+        this.avatar.lookAt(0, 0);
         this.avatar.setListening(true);
         this.ui.onChoice?.(ev.question, ev.options);
         return true;
 
       case "ask_confidence":
+        this.avatar.lookAt(0, 0);
         this.avatar.setListening(true);
         this.ui.onConfidence?.(ev.prompt);
         return true;
@@ -230,6 +241,7 @@ export class EventPlayer {
         return true;
 
       case "play_clip":
+        this.avatar.lookAt(0.48, 0.05);
         this.ui.onClip?.(ev);
         return true;
 
@@ -242,11 +254,13 @@ export class EventPlayer {
         return true;
 
       case "award":
+        this.avatar.lookAt(0, -0.08);
         this.avatar.playGesture("celebrate");
         this.ui.onAward?.(ev.title, ev.detail);
         return true;
 
       case "end_session":
+        this.avatar.lookAt(0, 0);
         this.ui.onEnd(ev.summary);
         return false;
     }
@@ -257,6 +271,7 @@ export class EventPlayer {
    * timeline; the event shape stays the same.
    */
   private async say(ev: Extract<TutorEvent, { type: "say" }>, alive: () => boolean): Promise<boolean> {
+    this.avatar.lookAt(0, 0);
     this.avatar.setListening(false);
     this.avatar.setSpeaking(true);
     this.ui.onCaption(ev.text, ev.romanization, ev.translation);

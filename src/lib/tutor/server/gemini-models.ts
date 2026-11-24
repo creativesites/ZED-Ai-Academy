@@ -36,29 +36,54 @@ async function withModelFallback<T>(primary: string, fallbacks: string[], run: (
   throw firstError;
 }
 
-/** Gemini 3.x thinks by default; older models do not take thinkingLevel. */
+/** Gemini 3.x uses minimal thinking for snappy conversational turns; 2.5 Flash disables thinking budget. */
 function thinkingFor(model: string) {
-  return /^gemini-3/.test(model) ? { thinkingConfig: { thinkingLevel: ThinkingLevel.LOW } } : {};
+  if (/^gemini-3/.test(model)) {
+    return { thinkingConfig: { thinkingLevel: ThinkingLevel.MINIMAL } };
+  }
+  if (/^gemini-2\.5-flash/.test(model)) {
+    return { thinkingConfig: { thinkingBudget: 0 } };
+  }
+  return {};
 }
 
-/** Voice and Text turn: structured JSON with the turn schema. */
+/** Voice and Text turn: structured JSON with the turn schema. Supports inline multimodal audio for 1-pass voice turns. */
 export async function generateTurnJson(input: {
   systemInstruction: string;
   contents: GenContent[];
+  audio?: { bytes: Buffer; mimeType: string };
 }): Promise<TurnGenerateResult & { model: string }> {
+  const contents = input.audio
+    ? [
+        ...input.contents.slice(0, -1),
+        {
+          role: "user" as const,
+          parts: [
+            {
+              inlineData: {
+                data: input.audio.bytes.toString("base64"),
+                mimeType: geminiAudioMimeType(input.audio.mimeType),
+              },
+            },
+            {
+              text: "Listen to the learner's spoken reply above. Put their verbatim transcript in `learnerText` and respond as the teacher in `events`. If no speech is audible, set `learnerText` to an empty string and gently ask them to repeat.",
+            },
+          ],
+        },
+      ]
+    : input.contents;
+
   return withModelFallback(modelFor("tutorTurn"), TEXT_FALLBACKS, async (model) => {
     const response = await gemini.models.generateContent({
       model,
-      contents: input.contents,
+      contents,
       config: {
         systemInstruction: input.systemInstruction,
         responseMimeType: "application/json",
         responseJsonSchema: TUTOR_TURN_JSON_SCHEMA,
         temperature: 0.8,
-        // Thinking tokens count against maxOutputTokens. A 2048 cap left too little room for the
-        // JSON, so turns fell back to "could you say that again". Low thinking and a higher cap.
         ...thinkingFor(model),
-        maxOutputTokens: 8192,
+        maxOutputTokens: 4096,
       },
     });
     return {

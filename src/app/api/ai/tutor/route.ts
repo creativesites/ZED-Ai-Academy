@@ -5,6 +5,7 @@ import { modelFor } from "@/lib/ai/models";
 import { blocksToText } from "@/lib/course-blocks/block-to-text";
 import { getLessonAccess } from "@/lib/courses/course-auth-server";
 import { DEFAULT_TEACHER_NAME, safeTeacherName } from "@/lib/tutor/course-teacher";
+import { buildDockContents } from "@/lib/tutor/dock-chat";
 import { loadWeakMasteryRows } from "@/lib/tutor/mastery/server";
 import { formatMasteryMemoryNotes } from "@/lib/tutor/mastery/evidence";
 import { NextRequest } from "next/server";
@@ -26,6 +27,7 @@ export async function POST(req: NextRequest) {
 
   const {
     message,
+    history,
     courseId,
     lessonId,
     moduleTitle,
@@ -155,9 +157,11 @@ Guidelines:
 4. If they ask for steps, use the :::workflow_steps::: component.
 5. Use practical examples relevant to the course topic.`;
 
+  const contents = buildDockContents(history, message);
+
   const stream = await gemini.models.generateContentStream({
     model: modelFor("tutor"),
-    contents: message,
+    contents,
     config: {
       systemInstruction: systemPrompt,
       maxOutputTokens: 1024,

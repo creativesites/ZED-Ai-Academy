@@ -7,6 +7,8 @@ import { createServiceClient } from "@/lib/supabase/server";
 import { ZEDAI_TENANT_ID } from "@/lib/tenants/constants";
 import { reviewCard, type ReviewQuality, type SrsReviewResult } from "@/lib/tutor/srs";
 import type { LearnerDeckCard } from "@/lib/tutor/server/learner-overview";
+import { normalizeObjectiveKey } from "@/lib/tutor/mastery/evidence";
+import { persistSessionMastery } from "@/lib/tutor/mastery/server";
 
 const qualitySchema = z.enum(["again", "hard", "good", "easy"]);
 
@@ -248,4 +250,65 @@ export async function toggleShareSessionWithTeacher(
 
   revalidatePath("/practice/history");
   return { shared };
+}
+
+const dockCheckSchema = z.object({
+  courseId: z.string().uuid().optional().nullable(),
+  lessonTitle: z.string().trim().min(1).max(160),
+  question: z.string().trim().min(1).max(240),
+  selectedOption: z.string().trim().min(1).max(200),
+  correctOption: z.string().trim().min(1).max(200),
+  isCorrect: z.boolean(),
+});
+
+/**
+ * Records evidence from an interactive :::knowledge_check::: answered inside the Lesson Dock
+ * so the learner's mastery state stays unified between the Lesson Dock and Practice Room.
+ */
+export async function recordDockKnowledgeCheck(
+  input: z.input<typeof dockCheckSchema>,
+): Promise<{ recorded: boolean; masteryLevel?: number }> {
+  const { userId } = await auth();
+  if (!userId) return { recorded: false };
+
+  const parsed = dockCheckSchema.parse(input);
+  const db = createServiceClient();
+
+  let companyId: string | null = null;
+  if (parsed.courseId) {
+    const { data: course } = await db
+      .from("courses")
+      .select("company_id")
+      .eq("id", parsed.courseId)
+      .maybeSingle();
+    companyId = course?.company_id ?? null;
+  }
+  const resolvedCompanyId = await resolveLearnerCompanyId(userId, companyId ?? undefined);
+
+  const objectiveText = `${parsed.lessonTitle}: ${parsed.question}`.slice(0, 200);
+  const objectiveKey = normalizeObjectiveKey(objectiveText, {
+    courseId: parsed.courseId ?? null,
+  });
+  const detail = parsed.isCorrect
+    ? `Answered "${parsed.selectedOption}" correctly in lesson check.`
+    : `Picked "${parsed.selectedOption}" instead of "${parsed.correctOption}" in lesson check.`;
+
+  const updated = await persistSessionMastery({
+    supabase: db,
+    companyId: resolvedCompanyId,
+    userId,
+    courseId: parsed.courseId ?? null,
+    scenarioId: null,
+    sessionId: null,
+    evidence: [
+      {
+        objectiveKey,
+        objectiveText,
+        result: parsed.isCorrect ? "correct" : "misconception",
+        detail,
+      },
+    ],
+  });
+
+  return { recorded: true, masteryLevel: updated[0]?.level };
 }

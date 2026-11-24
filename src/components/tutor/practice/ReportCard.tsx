@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { CheckCircle2, CircleDot, RotateCcw, Sparkles } from "lucide-react";
+import { CheckCircle2, CircleDot, Loader2, RotateCcw, Sparkles, Volume2 } from "lucide-react";
 import Link from "next/link";
 import type { CardItem } from "@/components/tutor/EventPlayer";
 import {
@@ -11,6 +11,7 @@ import {
   type TutorReportContent,
 } from "@/lib/tutor/report-model";
 import { toneSegments } from "@/lib/tutor/romanization";
+import { speechLangFor } from "@/lib/tutor/speech-lang";
 import { saveSessionWordsToDeck } from "@/actions/tutor-learner";
 import styles from "./practice.module.css";
 import { hasHan, toneClass } from "./SpeakingStage";
@@ -320,17 +321,66 @@ export function ReportCard({
 
 function MistakeRow({ mistake }: { mistake: Mistake }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const [playing, setPlaying] = useState(false);
+  const resolvedUrlRef = useRef<string | null>(mistake.audioUrl ?? null);
+  const [status, setStatus] = useState<"idle" | "loading" | "playing">("idle");
   const han = hasHan(mistake.correct);
 
-  const listen = () => {
-    if (!mistake.audioUrl) return;
-    if (!audioRef.current) audioRef.current = new Audio(mistake.audioUrl);
+  const playBrowserFallback = () => {
+    if (typeof window === "undefined" || !("speechSynthesis" in window)) {
+      setStatus("idle");
+      return;
+    }
+    try {
+      window.speechSynthesis.cancel();
+      const utter = new SpeechSynthesisUtterance(mistake.correct);
+      utter.lang = speechLangFor(mistake.correct, han ? "zh" : null);
+      utter.rate = 0.9;
+      utter.onend = () => setStatus("idle");
+      utter.onerror = () => setStatus("idle");
+      setStatus("playing");
+      window.speechSynthesis.speak(utter);
+    } catch {
+      setStatus("idle");
+    }
+  };
+
+  const listen = async () => {
+    if (status !== "idle" || !mistake.correct.trim()) return;
+    let url = resolvedUrlRef.current;
+
+    if (!url) {
+      setStatus("loading");
+      try {
+        const res = await fetch("/api/tutor/tts", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "same-origin",
+          body: JSON.stringify({ text: mistake.correct }),
+        });
+        if (res.ok) {
+          const data = (await res.json().catch(() => null)) as { url?: unknown } | null;
+          if (typeof data?.url === "string" && data.url) {
+            url = data.url;
+            resolvedUrlRef.current = url;
+          }
+        }
+      } catch {
+        url = null;
+      }
+    }
+
+    if (!url) {
+      playBrowserFallback();
+      return;
+    }
+
+    if (!audioRef.current) audioRef.current = new Audio();
     const el = audioRef.current;
-    el.onended = () => setPlaying(false);
-    el.onerror = () => setPlaying(false);
-    setPlaying(true);
-    void el.play().catch(() => setPlaying(false));
+    el.src = url;
+    el.onended = () => setStatus("idle");
+    el.onerror = () => playBrowserFallback();
+    setStatus("playing");
+    void el.play().catch(() => playBrowserFallback());
   };
 
   return (
@@ -352,15 +402,20 @@ function MistakeRow({ mistake }: { mistake: Mistake }) {
             : mistake.correct}
         </span>
         <span className="text-[11px] uppercase tracking-wider text-[var(--ink-faint)]">{mistake.category}</span>
-        {mistake.audioUrl && (
+        {mistake.correct.trim() && (
           <button
             type="button"
-            onClick={listen}
-            disabled={playing}
-            aria-label={`Hear ${mistake.correct}`}
-            className="ml-auto rounded-full border border-[var(--line-strong)] px-2.5 py-0.5 text-[12px] text-[var(--ink)] hover:bg-[var(--soft-hover)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus)] disabled:opacity-60"
+            onClick={() => void listen()}
+            disabled={status !== "idle"}
+            aria-label={`Hear correct form: ${mistake.correct}`}
+            className="ml-auto inline-flex items-center gap-1 rounded-full border border-[var(--line-strong)] bg-white/80 px-2.5 py-0.5 text-[12px] font-semibold text-[var(--ink)] transition hover:bg-[var(--soft-hover)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus)] disabled:opacity-60"
           >
-            {playing ? "Playing..." : "Hear it"}
+            {status === "loading" ? (
+              <Loader2 className="h-3 w-3 animate-spin" aria-hidden="true" />
+            ) : (
+              <Volume2 className="h-3 w-3" aria-hidden="true" />
+            )}
+            {status === "loading" ? "Loading..." : status === "playing" ? "Playing..." : "Hear it"}
           </button>
         )}
       </div>

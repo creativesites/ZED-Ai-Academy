@@ -197,3 +197,78 @@ export function visemeFromSpectrum(
   }
   return best[0];
 }
+
+/**
+ * Looks up the active phonetic viseme at `elapsedMs`, calibrating the timeline's total length
+ * to the audio clip's real `durationMs` when available so lip shapes stay aligned from start to end.
+ */
+export function visemeAtCalibratedTime(
+  timeline: ReadonlyArray<VisemeSegment>,
+  elapsedMs: number,
+  durationMs?: number,
+): VisemeValue {
+  if (timeline.length === 0) return V.rest;
+  let totalTimelineMs = 0;
+  for (let i = 0; i < timeline.length; i += 1) totalTimelineMs += timeline[i].ms;
+  if (totalTimelineMs <= 0) return V.rest;
+
+  const scale =
+    typeof durationMs === "number" && Number.isFinite(durationMs) && durationMs > 0
+      ? totalTimelineMs / durationMs
+      : 1;
+  const scaledMs = Math.max(0, elapsedMs * scale);
+
+  let cursor = 0;
+  for (let i = 0; i < timeline.length; i += 1) {
+    cursor += timeline[i].ms;
+    if (scaledMs < cursor) return timeline[i].viseme;
+  }
+  return V.rest;
+}
+
+/**
+ * Hybrid Phonetic + Amplitude Lip-Sync:
+ * - Gates silence directly from live FFT energy so breaths and pauses always close the mouth cleanly
+ *   (briefly passing through MBP when closing lips right after speech).
+ * - During active speech, uses the duration-calibrated phonetic viseme for crisp phoneme accuracy
+ *   (including FV/MBP/vowels), falling back to spectrum estimation if the text timeline hits a space
+ *   while the speaker is still holding a voiced syllable.
+ */
+export function hybridVisemeFromAudio(input: {
+  timeline: ReadonlyArray<VisemeSegment>;
+  elapsedMs: number;
+  durationMs?: number;
+  bins: ArrayLike<number>;
+  sampleRate: number;
+  prevViseme?: VisemeValue;
+}): VisemeValue {
+  const { timeline, elapsedMs, durationMs, bins, sampleRate, prevViseme } = input;
+  const n = bins.length;
+  if (n === 0) return visemeAtCalibratedTime(timeline, elapsedMs, durationMs);
+
+  let total = 0;
+  for (let k = 0; k < n; k += 1) {
+    const raw = Number(bins[k]);
+    total += Number.isFinite(raw) ? Math.min(1, Math.max(0, raw / 255)) : 0;
+  }
+  total /= n;
+
+  // Silence gate: real pauses always close the mouth immediately.
+  if (total < SPECTRUM_THRESHOLDS.silence) return V.rest;
+
+  // Gentle lip closure right as energy drops at the end of a phrase.
+  if (
+    prevViseme !== undefined &&
+    prevViseme !== V.rest &&
+    prevViseme !== V.MBP &&
+    total < SPECTRUM_THRESHOLDS.mbpCeiling
+  ) {
+    return V.MBP;
+  }
+
+  const phonetic = visemeAtCalibratedTime(timeline, elapsedMs, durationMs);
+  if (phonetic !== V.rest) return phonetic;
+
+  // Voice is still clearly sounding during a text-space boundary: keep mouth animated via spectrum.
+  return visemeFromSpectrum(bins, sampleRate, prevViseme);
+}

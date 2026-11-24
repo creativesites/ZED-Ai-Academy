@@ -32,10 +32,13 @@ export async function openRiveFile(name: string): Promise<RiveFile> {
   return file;
 }
 
+/** Device pixel ratio cap for low-performance scenes so mid/low-end phones maintain smooth FPS. */
+export const LOW_PERF_DEVICE_PIXEL_RATIO = 1;
+
 /** The device pixel ratio, capped. Safe to call on the client only. */
-export function cappedPixelRatio(): number {
+export function cappedPixelRatio(maxDpr = MAX_DEVICE_PIXEL_RATIO): number {
   const dpr = typeof window === "undefined" ? 1 : window.devicePixelRatio || 1;
-  return Math.min(dpr, MAX_DEVICE_PIXEL_RATIO);
+  return Math.min(dpr, maxDpr);
 }
 
 /** Adapts a runtime view model instance to the controller's port. Accessors are cached per property. */

@@ -15,6 +15,7 @@ export type TutorPersona = {
   displayName: string | null;
   languages: string[];
   riveVariant?: unknown;
+  voiceName?: string;
 };
 export type TutorScenario = { id: string; title: string; goal: string; maxMinutes: number };
 
@@ -24,7 +25,12 @@ export type StartResponse = {
   persona: TutorPersona;
   scenario: TutorScenario;
   openingEvents?: TutorEvent[];
+  liveToken?: string;
+  liveModel?: string;
+  liveTokenExpiresAt?: string;
 };
+
+export type SyncLiveEventsResponse = { saved: number; dropped: number };
 
 export type TurnResponse = {
   turnIdx: number;
@@ -130,6 +136,17 @@ export function sendTutorAudio(sessionId: string, blob: Blob, recorderMime: stri
   return call<TurnResponse>(`/api/tutor/sessions/${sessionId}/turn`, { method: "POST", body: form });
 }
 
+export function syncLiveEvents(
+  sessionId: string,
+  turns: Array<{ idx: number; learnerText?: string | null; events: TutorEvent[]; latencyMs?: number }>,
+): Promise<Result<SyncLiveEventsResponse>> {
+  return call<SyncLiveEventsResponse>(`/api/tutor/sessions/${sessionId}/events`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ turns }),
+  });
+}
+
 export function completeTutorSession(
   sessionId: string,
   totals: { learnerSpeakingMs: number; teacherSpeakingMs: number },
@@ -155,7 +172,7 @@ export type TutorStartRequest = {
   companyId?: string;
   micPermission: MicPermission;
   rttMs?: number;
-  preferMode?: "voice" | "text";
+  preferMode?: "live" | "voice" | "text";
 };
 
 export type TutorTurnRequest = { kind: "text"; text: string } | { kind: "audio"; blob: Blob; mimeType: string };

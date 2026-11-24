@@ -98,8 +98,19 @@ export function skillPackPrompt(pack: SkillPack | string): string {
   return `${SKILL_PACK_PROMPTS[id]}\n\n${LANGUAGE_POLICY}\n\n${CORRECTION_STYLE}`;
 }
 
+export type SkillPackLanguage = "zh" | "es" | "fr" | "bem" | "ny" | "tog";
+
+export const SKILL_PACK_LANGUAGE_LABELS: Record<SkillPackLanguage, string> = {
+  zh: "Mandarin Chinese",
+  es: "Spanish",
+  fr: "French",
+  bem: "Ichibemba (Bemba)",
+  ny: "Chinyanja (Nyanja)",
+  tog: "Chitonga (Tonga)",
+};
+
 /** The language a skill pack teaches, or null for packs that are not language packs. */
-export function skillPackLanguage(pack: SkillPack | string): "zh" | "es" | "fr" | null {
+export function skillPackLanguage(pack: SkillPack | string): SkillPackLanguage | null {
   switch (pack) {
     case "language-zh":
       return "zh";
@@ -107,6 +118,12 @@ export function skillPackLanguage(pack: SkillPack | string): "zh" | "es" | "fr" 
       return "es";
     case "language-fr":
       return "fr";
+    case "language-bem":
+      return "bem";
+    case "language-ny":
+      return "ny";
+    case "language-tog":
+      return "tog";
     default:
       return null;
   }

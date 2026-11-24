@@ -86,7 +86,7 @@ export async function persistSessionMastery(input: {
   userId: string;
   courseId: string | null;
   scenarioId: string | null;
-  sessionId: string;
+  sessionId: string | null;
   evidence: ReadonlyArray<CollectedEvidence>;
   timestampIso?: string;
 }): Promise<MasteryState[]> {

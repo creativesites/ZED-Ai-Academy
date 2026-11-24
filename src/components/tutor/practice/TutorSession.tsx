@@ -24,11 +24,13 @@ import {
   detectMicPermission,
   httpTutorClient,
   measureRttMs,
+  syncLiveEvents,
   type MicPermission,
   type SessionOriginInput,
   type TutorApiClient,
 } from "./api";
 import { Composer, type InputMode } from "./Composer";
+import { GeminiLiveClient } from "./live-client";
 import { LearnerRecorder, RecorderError, type RecordingResult } from "./learner-recorder";
 import { ReportCard } from "./ReportCard";
 import { SceneBackdrop } from "./SceneBackdrop";
@@ -156,6 +158,10 @@ export function TutorSession({
   const [handsFree, setHandsFree] = useState(false);
   const [handsFreeListening, setHandsFreeListening] = useState(false);
   const [handsFreeSpeechDetected, setHandsFreeSpeechDetected] = useState(false);
+  const [liveActive, setLiveActive] = useState(false);
+  const [liveMicOn, setLiveMicOn] = useState(false);
+  const [thinkingSlow, setThinkingSlow] = useState(false);
+  const [lastLearnerAudioUrl, setLastLearnerAudioUrl] = useState<string | null>(null);
   const [avatarMode, setAvatarMode] = useState<"rive" | "three">(
     engine === "three" || look?.engine === "three" ? "three" : "rive",
   );
@@ -167,7 +173,10 @@ export function TutorSession({
   const avatarRef = useRef<TeacherStageHandle | null>(null);
   const playerRef = useRef<EventPlayer | null>(null);
   const audioRef = useRef<TeacherAudio | null>(null);
+  const liveClientRef = useRef<GeminiLiveClient | null>(null);
   const recorderRef = useRef<LearnerRecorder | null>(null);
+  const learnerAudioUrlRef = useRef<string | null>(null);
+  const thinkingTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const lastSayEventRef = useRef<SaySpeechEvent | null>(null);
   const lastTargetRef = useRef<string | null>(null);
   const personaLangRef = useRef<string>("en");
@@ -242,6 +251,9 @@ export function TutorSession({
       onBoard: (b) => {
         setBoard(boardFromEvent(b));
         setWhiteboard(null);
+        // Teacher briefly glances toward the TeachingBoard when putting new content up.
+        avatarRef.current?.lookAt(38, -8);
+        setTimeout(() => avatarRef.current?.lookAt(0, 0), 1400);
         const summary =
           b.text?.trim() ||
           b.items?.join(" · ") ||
@@ -294,12 +306,19 @@ export function TutorSession({
 
     const unsubscribeBlocked = teacherAudio.onBlockedChange(setSoundBlocked);
     return () => {
+      void liveClientRef.current?.disconnect();
+      liveClientRef.current = null;
       playerRef.current?.stop();
       playerRef.current = null;
       recorder.cancel();
       teacherAudio.stopPlayback();
       unsubscribeBlocked();
       if (holdTimerRef.current !== undefined) clearInterval(holdTimerRef.current);
+      if (thinkingTimerRef.current !== undefined) clearTimeout(thinkingTimerRef.current);
+      if (learnerAudioUrlRef.current) {
+        URL.revokeObjectURL(learnerAudioUrlRef.current);
+        learnerAudioUrlRef.current = null;
+      }
     };
   }, []);
 
@@ -308,6 +327,11 @@ export function TutorSession({
     const player = playerRef.current;
     if (!player || events.length === 0) return;
     const sayEvents = events.filter((ev): ev is SaySpeechEvent => ev.type === "say");
+    if (sayEvents.length > 0) {
+      audioRef.current?.prefetch(
+        sayEvents.filter((ev) => !ev.audioUrl).map((ev) => ev.text),
+      );
+    }
     const lastSay = sayEvents[sayEvents.length - 1];
     if (lastSay) {
       lastSayEventRef.current = lastSay;
@@ -346,6 +370,11 @@ export function TutorSession({
 
       playerRef.current?.stop();
       audioRef.current?.stopPlayback();
+      if (thinkingTimerRef.current !== undefined) {
+        clearTimeout(thinkingTimerRef.current);
+        thinkingTimerRef.current = undefined;
+      }
+      setThinkingSlow(false);
       holdingRef.current = false;
       handsFreeRef.current = false;
       handsFreeActiveRef.current = false;
@@ -355,11 +384,25 @@ export function TutorSession({
       recorderRef.current?.cancel();
       setRecording(false);
 
+      let liveTotals: { learnerSpeakingMs: number; teacherSpeakingMs: number } | null = null;
+      if (liveClientRef.current) {
+        liveTotals = liveClientRef.current.getSpeakingTotals();
+        await liveClientRef.current.disconnect();
+        liveClientRef.current = null;
+        setLiveActive(false);
+        setLiveMicOn(false);
+      }
+
       const played = audioRef.current?.getPlayedMs() ?? 0;
-      const totals = {
-        learnerSpeakingMs: learnerTimeRef.current.totals().learnerSpeakingMs,
-        teacherSpeakingMs: Math.min(MAX_SPEAKING_MS, Math.max(0, Math.round(played - teacherBaseRef.current))),
-      };
+      const totals = liveTotals
+        ? {
+            learnerSpeakingMs: Math.min(MAX_SPEAKING_MS, Math.max(0, liveTotals.learnerSpeakingMs)),
+            teacherSpeakingMs: Math.min(MAX_SPEAKING_MS, Math.max(0, liveTotals.teacherSpeakingMs)),
+          }
+        : {
+            learnerSpeakingMs: learnerTimeRef.current.totals().learnerSpeakingMs,
+            teacherSpeakingMs: Math.min(MAX_SPEAKING_MS, Math.max(0, Math.round(played - teacherBaseRef.current))),
+          };
       const res = await api.complete(sessionId, totals, turnsRef.current > 0 ? status : "abandoned");
       if (!res.ok) {
         endingRef.current = false;
@@ -389,7 +432,15 @@ export function TutorSession({
       setConfidence(null);
       setError(null);
       setThinking(true);
+      setThinkingSlow(false);
       avatarRef.current?.setThinking(true);
+      avatarRef.current?.setMood("curious", 70);
+      avatarRef.current?.lookAt(0.24, 0.14);
+      if (thinkingTimerRef.current !== undefined) clearTimeout(thinkingTimerRef.current);
+      thinkingTimerRef.current = setTimeout(() => {
+        setThinkingSlow(true);
+        avatarRef.current?.playGesture("think");
+      }, 900);
       const expectedTarget = lastTargetRef.current;
       lastTargetRef.current = null;
       if (input.kind === "text") {
@@ -401,6 +452,12 @@ export function TutorSession({
       } else {
         setResponseMatch(null);
         learnerTimeRef.current.addLearnerMs(input.clip.durationMs);
+        if (learnerAudioUrlRef.current) {
+          URL.revokeObjectURL(learnerAudioUrlRef.current);
+        }
+        const nextUrl = URL.createObjectURL(input.clip.blob);
+        learnerAudioUrlRef.current = nextUrl;
+        setLastLearnerAudioUrl(nextUrl);
       }
 
       const res = await api.turn(
@@ -410,7 +467,13 @@ export function TutorSession({
           : { kind: "audio", blob: input.clip.blob, mimeType: input.clip.mimeType },
       );
 
+      if (thinkingTimerRef.current !== undefined) {
+        clearTimeout(thinkingTimerRef.current);
+        thinkingTimerRef.current = undefined;
+      }
+      setThinkingSlow(false);
       avatarRef.current?.setThinking(false);
+      avatarRef.current?.lookAt(0, 0);
       setThinking(false);
       busyRef.current = false;
 
@@ -531,7 +594,7 @@ export function TutorSession({
     // A custom client (the showcase) makes no network calls, so skip the round-trip probe.
     const rttMs = client ? undefined : await measureRttMs();
 
-    const res = await api.start({
+    const startRequest = {
       origin,
       scenarioId,
       lessonId,
@@ -542,74 +605,181 @@ export function TutorSession({
       companyId,
       micPermission: permission,
       rttMs,
-      // Live is not wired in the web client yet. Ask for Voice, or Text when the mic is blocked.
-      preferMode: permission === "denied" ? "text" : "voice",
-    });
+      // Let the server's mode policy pick Gemini Live when allowed (unless Lite mode, showcase client, or mic denied).
+      preferMode:
+        permission === "denied"
+          ? ("text" as const)
+          : lite || client
+            ? ("voice" as const)
+            : undefined,
+    };
+
+    let res = await api.start(startRequest);
 
     if (!res.ok) {
       setError(tutorErrorMessage(res.failure, "start"));
       setPhaseBoth("intro");
       return;
     }
-    const data = res.data;
-    if (data.mode === "live") {
-      setError("Live conversation is coming soon. This scenario needs Live, so it cannot start here yet.");
-      setPhaseBoth("intro");
-      return;
+    let data = res.data;
+
+    // Reset any prior Live client before starting a new session.
+    if (liveClientRef.current) {
+      await liveClientRef.current.disconnect();
+      liveClientRef.current = null;
+    }
+    setLiveActive(false);
+    setLiveMicOn(false);
+
+    if (learnerAudioUrlRef.current) {
+      URL.revokeObjectURL(learnerAudioUrlRef.current);
+      learnerAudioUrlRef.current = null;
+    }
+    setLastLearnerAudioUrl(null);
+
+    const setupSessionUi = (started: typeof data) => {
+      sessionIdRef.current = started.sessionId;
+      personaLangRef.current = started.persona.languages?.[0] ?? "en";
+      audioRef.current?.setLanguage(started.persona.languages?.[0]);
+      audioRef.current?.setTtsVoice(client ? null : started.persona.voiceName ?? null);
+      audioRef.current?.setMuted(false);
+      mutedRef.current = false;
+      setMuted(false);
+      modeRef.current = started.mode === "text" ? "text" : "voice";
+      setMode(modeRef.current);
+      setTeacherName(started.persona.displayName ?? started.persona.name);
+      setLookOverride(personaLookFromVariant(started.persona.riveVariant));
+      setSceneTitle(started.scenario.title);
+      setGoal(started.scenario.goal);
+      setMaxMinutes(started.scenario.maxMinutes);
+
+      learnerTimeRef.current = new SpeakingTimeAccumulator();
+      teacherBaseRef.current = audioRef.current?.getPlayedMs() ?? 0;
+      turnsRef.current = 0;
+      setTurnCount(0);
+      setStepsCompleted(0);
+      setCurrentStepLabel(null);
+      setCelebratePulse(0);
+      setTranscript([]);
+      setSavedDeckKeys(new Set());
+      setResponseMatch(null);
+      lastTargetRef.current = null;
+      lastSayEventRef.current = null;
+      setHasReplayLine(false);
+      wordsRef.current = [];
+      endingRef.current = false;
+      pendingEndRef.current = false;
+      busyRef.current = false;
+      setWords([]);
+      setReport(null);
+      setCaption(null);
+      setCard(null);
+      setWhiteboard(null);
+      setSceneOverride(null);
+      setBoard(null);
+      setChoice(null);
+      setConfidence(null);
+      setLessonRefs([]);
+      setClip(null);
+      setAward(null);
+      setListenHint(null);
+      setLastSaid(null);
+    };
+
+    if (data.mode === "live" && data.liveToken && data.liveModel) {
+      setupSessionUi(data);
+      const liveAvatar: AvatarDriver = {
+        playGesture: (name, opts) => avatarRef.current?.playGesture(name, opts),
+        setMood: (mood, intensity) => avatarRef.current?.setMood(mood, intensity),
+        setViseme: (v) => avatarRef.current?.setViseme(v),
+        setSpeaking: (on) => avatarRef.current?.setSpeaking(on),
+        setListening: (on, voiceLevel) => avatarRef.current?.setListening(on, voiceLevel),
+        setThinking: (on) => avatarRef.current?.setThinking(on),
+        lookAt: (x, y) => avatarRef.current?.lookAt(x, y),
+      };
+
+      const liveSessionId = data.sessionId;
+      const liveClient = new GeminiLiveClient(liveAvatar, {
+        onStatusChange: (status) => {
+          if (status === "connected") setLiveActive(true);
+          if (status === "closed") {
+            setLiveActive(false);
+            setLiveMicOn(false);
+          }
+        },
+        onTeacherSpeakingChange: (speaking) => setTeacherSpeaking(speaking),
+        onLearnerLevel: (val) => {
+          const now = performance.now();
+          if (now - lastLevelAtRef.current >= LEVEL_UPDATE_MS) {
+            lastLevelAtRef.current = now;
+            setLevel(val);
+          }
+        },
+        onLiveCaption: (text) => setCaption({ native: text }),
+        onLearnerTranscript: (text) => setLastSaid(text),
+        onToolEvent: (ev) => {
+          void playerRef.current?.play([ev]);
+        },
+        onTurnCommitted: (turn) => {
+          turnsRef.current += 1;
+          setTurnCount(turnsRef.current);
+          if (turn.learnerText) {
+            setTranscript((prev) => [
+              ...prev,
+              { id: `learner-${++entrySeqRef.current}`, role: "learner", text: turn.learnerText! },
+            ]);
+          }
+          const sayEv = turn.events.find((e): e is SaySpeechEvent => e.type === "say");
+          if (sayEv) {
+            lastSayEventRef.current = sayEv;
+            setHasReplayLine(true);
+            setTranscript((prev) => [
+              ...prev,
+              { id: `teacher-${++entrySeqRef.current}`, role: "teacher", text: sayEv.text, sayEvent: sayEv },
+            ]);
+          }
+        },
+        onEndRequested: () => {
+          pendingEndRef.current = true;
+          void finalize("completed");
+        },
+        onFlushTurns: async (batch) => {
+          const synced = await syncLiveEvents(liveSessionId, batch);
+          return synced.ok;
+        },
+        onError: (msg) => setError(msg),
+      });
+
+      try {
+        await liveClient.connect({
+          liveToken: data.liveToken,
+          liveModel: data.liveModel,
+          startMic: permission !== "denied",
+        });
+        liveClientRef.current = liveClient;
+        setLiveActive(true);
+        setLiveMicOn(permission !== "denied");
+        setPhaseBoth("live");
+        return;
+      } catch (liveErr) {
+        console.warn("[tutor] Live connection failed, falling back to turn-based Voice:", liveErr);
+        await liveClient.disconnect().catch(() => undefined);
+        // Cleanly retry starting in standard Voice mode so the learner never hits a dead end.
+        res = await api.start({ ...startRequest, preferMode: "voice" });
+        if (!res.ok || res.data.mode === "live") {
+          setError("Live audio could not connect. Please try again.");
+          setPhaseBoth("intro");
+          return;
+        }
+        data = res.data;
+      }
     }
 
-    sessionIdRef.current = data.sessionId;
-    personaLangRef.current = data.persona.languages?.[0] ?? "en";
-    audioRef.current?.setLanguage(data.persona.languages?.[0]);
-    // Sound starts on, in Lite too: the teacher's voice is the lesson. Lite saves data on the visuals,
-    // and the learner can still mute. (Lite used to start muted, which read as "sound is broken".)
-    audioRef.current?.setMuted(false);
-    mutedRef.current = false;
-    setMuted(false);
-    modeRef.current = data.mode === "text" ? "text" : "voice";
-    setMode(modeRef.current);
-    setTeacherName(data.persona.displayName ?? data.persona.name);
-    setLookOverride(personaLookFromVariant(data.persona.riveVariant));
-    setSceneTitle(data.scenario.title);
-    setGoal(data.scenario.goal);
-    setMaxMinutes(data.scenario.maxMinutes);
-
-    learnerTimeRef.current = new SpeakingTimeAccumulator();
-    teacherBaseRef.current = audioRef.current?.getPlayedMs() ?? 0;
-    turnsRef.current = 0;
-    setTurnCount(0);
-    setStepsCompleted(0);
-    setCurrentStepLabel(null);
-    setCelebratePulse(0);
-    setTranscript([]);
-    setSavedDeckKeys(new Set());
-    setResponseMatch(null);
-    lastTargetRef.current = null;
-    lastSayEventRef.current = null;
-    setHasReplayLine(false);
-    wordsRef.current = [];
-    endingRef.current = false;
-    pendingEndRef.current = false;
-    busyRef.current = false;
-    setWords([]);
-    setReport(null);
-    setCaption(null);
-    setCard(null);
-    setWhiteboard(null);
-    setSceneOverride(null);
-    setBoard(null);
-    setChoice(null);
-    setConfidence(null);
-    setLessonRefs([]);
-    setClip(null);
-    setAward(null);
-    setListenHint(null);
-    setLastSaid(null);
-
+    setupSessionUi(data);
     setPhaseBoth("live");
     await speakEvents(data.openingEvents ?? []);
     if (pendingEndRef.current) void finalize("completed");
-  }, [api, client, origin, scenarioId, lessonId, assignmentId, sprint, sprintCourseId, focusObjective, companyId, setPhaseBoth, speakEvents, finalize]);
+  }, [api, client, lite, origin, scenarioId, lessonId, assignmentId, sprint, sprintCourseId, focusObjective, companyId, setPhaseBoth, speakEvents, finalize]);
 
   const changeMode = (next: InputMode) => {
     if (next === modeRef.current) return;
@@ -636,6 +806,12 @@ export function TutorSession({
 
   const handleSendText = (text: string) => {
     audioRef.current?.unlock();
+    if (liveClientRef.current && liveActive) {
+      setChoice(null);
+      setConfidence(null);
+      liveClientRef.current.sendText(text);
+      return;
+    }
     if (handsFreeActiveRef.current) {
       handsFreeActiveRef.current = false;
       setHandsFreeListening(false);
@@ -648,6 +824,12 @@ export function TutorSession({
       setRecording(false);
     }
     void submitTurn({ kind: "text", text });
+  };
+
+  const toggleLiveMic = () => {
+    const live = liveClientRef.current;
+    if (!live) return;
+    void live.setMicEnabled(!liveMicOn).then((active) => setLiveMicOn(active));
   };
 
   const handleChoose = (option: string) => {
@@ -814,6 +996,7 @@ export function TutorSession({
     const next = !muted;
     audioRef.current?.unlock();
     audioRef.current?.setMuted(next);
+    liveClientRef.current?.setMuted(next);
     mutedRef.current = next;
     setMuted(next);
   };
@@ -823,12 +1006,15 @@ export function TutorSession({
     setVolume(clamped);
     volumeRef.current = clamped;
     audioRef.current?.setVolume(clamped);
+    liveClientRef.current?.setVolume(clamped);
     if (clamped === 0 && !muted) {
       audioRef.current?.setMuted(true);
+      liveClientRef.current?.setMuted(true);
       mutedRef.current = true;
       setMuted(true);
     } else if (clamped > 0 && muted) {
       audioRef.current?.setMuted(false);
+      liveClientRef.current?.setMuted(false);
       mutedRef.current = false;
       setMuted(false);
     }
@@ -903,19 +1089,30 @@ export function TutorSession({
   );
 
   const info: StartInfo = { teacherName, title: sceneTitle, goal, maxMinutes, modes };
+  const thinkingPhrases = [
+    `${teacherName} is listening closely...`,
+    `${teacherName} is preparing the next step...`,
+    `${teacherName} is updating the board...`,
+  ];
   const statusText = thinking
-    ? `${teacherName} is thinking...`
+    ? thinkingSlow
+      ? `${teacherName} is putting together your feedback...`
+      : thinkingPhrases[turnCount % thinkingPhrases.length]
     : teacherSpeaking
       ? `${teacherName} is speaking...`
-      : recording
-        ? "Listening..."
-        : phase === "ending"
-          ? "Saving your session..."
-          : listenHint
-            ? "Your turn."
-            : mode === "voice"
-              ? "Hold to talk when you are ready."
-              : "Type a reply when you are ready.";
+      : liveActive
+        ? liveMicOn
+          ? "Live — speak or interrupt anytime."
+          : "Live mic paused."
+        : recording
+          ? "Listening..."
+          : phase === "ending"
+            ? "Saving your session..."
+            : listenHint
+              ? "Your turn."
+              : mode === "voice"
+                ? "Hold to talk when you are ready."
+                : "Type a reply when you are ready.";
 
   if (phase === "intro" || phase === "starting") {
     return (
@@ -1099,8 +1296,8 @@ export function TutorSession({
               )}
             </div>
 
-            {/* 3D / 2D Avatar toggle */}
-            {!lite && (
+            {/* 3D / 2D Avatar toggle — shown only when this persona has a custom 3D model or 3D mode configured */}
+            {!lite && (Boolean(activeLook?.glbUrl) || engine === "three" || activeLook?.engine === "three") && (
               <button
                 type="button"
                 onClick={() => setAvatarMode((m) => (m === "three" ? "rive" : "three"))}
@@ -1170,7 +1367,7 @@ export function TutorSession({
               look={activeLook}
               teacherName={teacherName}
               sceneTitle={sceneTitle}
-              modeLabel={`${handsFree ? "Hands-Free" : mode === "voice" ? "Voice" : "Tap / Type"}${avatarMode === "three" && !lite ? " · 3D" : ""}${lite ? " · Lite" : ""}`}
+              modeLabel={`${liveActive ? "Live" : handsFree ? "Hands-Free" : mode === "voice" ? "Voice" : "Tap / Type"}${avatarMode === "three" && !lite ? " · 3D" : ""}${lite ? " · Lite" : ""}`}
               caption={caption}
               card={card}
               onDismissCard={() => setCard(null)}
@@ -1198,6 +1395,7 @@ export function TutorSession({
                 onDismissAward={() => setAward(null)}
                 savedKeys={savedDeckKeys}
                 onSaveTakeaway={handleSaveStudyItem}
+                onInteract={handleSendText}
               />
             </div>
           )}
@@ -1231,8 +1429,14 @@ export function TutorSession({
             handsFree={handsFree}
             handsFreeListening={handsFreeListening}
             handsFreeSpeechDetected={handsFreeSpeechDetected}
-            onToggleHandsFree={modes.includes("voice") && !micBlocked ? toggleHandsFree : undefined}
+            onToggleHandsFree={!liveActive && modes.includes("voice") && !micBlocked ? toggleHandsFree : undefined}
             onCommitHandsFreeNow={() => void commitHandsFree()}
+            liveActive={liveActive}
+            liveMicOn={liveMicOn}
+            onToggleLiveMic={toggleLiveMic}
+            lastLearnerAudioUrl={lastLearnerAudioUrl}
+            canReplayTeacher={hasReplayLine && !thinking && !recording}
+            onReplayTeacher={handleReplayLast}
             activeChoice={interaction.activeChoice}
             activeOrderChallenge={interaction.activeOrderChallenge}
             activeFillBlank={interaction.activeFillBlank}

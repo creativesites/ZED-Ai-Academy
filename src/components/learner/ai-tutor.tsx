@@ -1,18 +1,49 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import { Copy, History, Loader2, Send, X } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Copy, History, Loader2, Mic, MicOff, Send, Square, Volume2, VolumeX, X } from "lucide-react";
+import { toast } from "sonner";
+import { recordDockKnowledgeCheck } from "@/actions/tutor-learner";
 import { MessageContent } from "./chat-components/MessageContent";
+import type { KnowledgeCheckResult } from "./chat-components/KnowledgeCheck";
 import { Teacher } from "@/components/tutor/avatar/Teacher";
 import { PERSONA_PRESETS } from "@/components/tutor/avatar/persona-presets";
 import type { AvatarDriver, PersonaLook } from "@/components/tutor/avatar/types";
+import { TeacherAudio } from "@/components/tutor/practice/teacher-audio";
 import { TeachingBoard } from "@/components/tutor/practice/TeachingBoard";
 import { useLiteMode } from "@/components/tutor/practice/use-lite-mode";
 import { DEFAULT_TEACHER_NAME } from "@/lib/tutor/course-teacher";
+import { stripDockMarkupForSpeech } from "@/lib/tutor/dock-chat";
 import { dispatchLessonSeek, extractDockBoardFromText } from "@/lib/tutor/lesson-seek";
 import type { VisemeValue } from "@/lib/tutor/contract.generated";
 
 type Message = { role: "user" | "assistant"; content: string };
+
+type BrowserSpeechRecognition = {
+  lang: string;
+  interimResults: boolean;
+  maxAlternatives: number;
+  onresult: ((e: { results: ArrayLike<ArrayLike<{ transcript: string }>> }) => void) | null;
+  onerror: (() => void) | null;
+  onend: (() => void) | null;
+  start: () => void;
+  stop: () => void;
+};
+
+function createSpeechRecognition(): BrowserSpeechRecognition | null {
+  if (typeof window === "undefined") return null;
+  const w = window as unknown as {
+    SpeechRecognition?: new () => BrowserSpeechRecognition;
+    webkitSpeechRecognition?: new () => BrowserSpeechRecognition;
+  };
+  const Ctor = w.SpeechRecognition ?? w.webkitSpeechRecognition;
+  if (!Ctor) return null;
+  try {
+    return new Ctor();
+  } catch {
+    return null;
+  }
+}
 
 // Teaching moves the learner can ask for in one tap. Same for every subject.
 const STARTER_PROMPTS = [
@@ -62,12 +93,150 @@ export function AiTutor({
   const [lite, setLite] = useLiteMode();
   const [input, setInput] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
+  const [autoSpeak, setAutoSpeak] = useState(false);
+  const [speakingMsgIdx, setSpeakingMsgIdx] = useState<number | null>(null);
+  const [dictating, setDictating] = useState(false);
   const avatarRef = useRef<AvatarDriver | null>(null);
+  const audioRef = useRef<TeacherAudio | null>(null);
+  const speakAbortRef = useRef<AbortController | null>(null);
+  const recognitionRef = useRef<BrowserSpeechRecognition | null>(null);
+  const messagesRef = useRef<Message[]>(messages);
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const hasUserMessages = messages.some((m) => m.role === "user");
   const defaultLook = (PERSONA_PRESETS.find((p) => p.key === "tinashe") ?? PERSONA_PRESETS[0]).look;
   const look = teacher?.look ?? defaultLook;
+
+  useEffect(() => {
+    messagesRef.current = messages;
+  }, [messages]);
+
+  useEffect(() => {
+    const audio = new TeacherAudio();
+    audio.setLanguage("en");
+    audio.setTtsVoice("Kore");
+    audioRef.current = audio;
+    return () => {
+      speakAbortRef.current?.abort();
+      audio.stopPlayback();
+      recognitionRef.current?.stop();
+    };
+  }, []);
+
+  const stopSpeaking = useCallback(() => {
+    speakAbortRef.current?.abort();
+    speakAbortRef.current = null;
+    audioRef.current?.stopPlayback();
+    avatarRef.current?.setSpeaking(false);
+    avatarRef.current?.setViseme(0);
+    setSpeakingMsgIdx(null);
+  }, []);
+
+  const speakMessage = useCallback(
+    async (rawText: string, idx: number) => {
+      const audio = audioRef.current;
+      const avatar = avatarRef.current;
+      if (!audio) return;
+      if (speakingMsgIdx === idx) {
+        stopSpeaking();
+        return;
+      }
+      const clean = stripDockMarkupForSpeech(rawText);
+      if (!clean) return;
+
+      stopSpeaking();
+      audio.unlock();
+      const controller = new AbortController();
+      speakAbortRef.current = controller;
+      setSpeakingMsgIdx(idx);
+      avatar?.setSpeaking(true);
+      avatar?.setMood("warm", 80);
+
+      const fallbackDriver: AvatarDriver = avatar ?? {
+        playGesture: () => undefined,
+        setMood: () => undefined,
+        setViseme: () => undefined,
+        setSpeaking: () => undefined,
+        setListening: () => undefined,
+        setThinking: () => undefined,
+        lookAt: () => undefined,
+      };
+
+      try {
+        await audio.speak({ type: "say", text: clean }, fallbackDriver, controller.signal);
+      } finally {
+        if (speakAbortRef.current === controller) {
+          speakAbortRef.current = null;
+          setSpeakingMsgIdx(null);
+          avatar?.setSpeaking(false);
+          avatar?.setViseme(0);
+        }
+      }
+    },
+    [speakingMsgIdx, stopSpeaking],
+  );
+
+  const toggleDictation = useCallback(() => {
+    if (dictating) {
+      recognitionRef.current?.stop();
+      setDictating(false);
+      return;
+    }
+    const rec = createSpeechRecognition();
+    if (!rec) {
+      toast.error("Voice dictation is not supported in this browser.");
+      return;
+    }
+    recognitionRef.current = rec;
+    rec.lang = "en-GB";
+    rec.interimResults = false;
+    rec.maxAlternatives = 1;
+    rec.onresult = (e) => {
+      const heard = e.results?.[0]?.[0]?.transcript?.trim();
+      if (heard) {
+        setInput((prev) => (prev ? `${prev} ${heard}` : heard));
+      }
+    };
+    rec.onerror = () => setDictating(false);
+    rec.onend = () => setDictating(false);
+    try {
+      setDictating(true);
+      rec.start();
+    } catch {
+      setDictating(false);
+    }
+  }, [dictating]);
+
+  const handleKnowledgeCheckResult = useCallback(
+    (result: KnowledgeCheckResult) => {
+      if (result.isCorrect) {
+        avatarRef.current?.setMood("proud", 90);
+        avatarRef.current?.playGesture("thumbs_up");
+      } else {
+        avatarRef.current?.setMood("warm", 80);
+        avatarRef.current?.playGesture("nod");
+      }
+      void recordDockKnowledgeCheck({
+        courseId,
+        lessonTitle,
+        question: result.question,
+        selectedOption: result.selectedOption,
+        correctOption: result.correctOption,
+        isCorrect: result.isCorrect,
+      })
+        .then((res) => {
+          if (res.recorded) {
+            toast.success(
+              result.isCorrect
+                ? "Mastery updated — nice work!"
+                : "Noted for your review plan.",
+            );
+          }
+        })
+        .catch(() => undefined);
+    },
+    [courseId, lessonTitle],
+  );
 
   // Latest board & video/lesson references emitted by the teacher across the thread.
   const dockBoard = useMemo(() => {
@@ -93,23 +262,32 @@ export function AiTutor({
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  async function sendMessage(message: string) {
+  async function sendMessage(message: string, opts?: { replaceLastAssistant?: boolean }) {
     if (!message.trim() || isStreaming) return;
+    stopSpeaking();
     setInput("");
-    setMessages((prev) => [...prev, { role: "user", content: message }]);
+
+    const priorHistory = opts?.replaceLastAssistant
+      ? messagesRef.current.slice(0, Math.max(0, messagesRef.current.length - 2))
+      : messagesRef.current;
+
+    const assistantIndex = priorHistory.length + 1;
+    setMessages([...priorHistory, { role: "user", content: message }]);
     setIsStreaming(true);
     avatarRef.current?.setThinking(true);
     avatarRef.current?.setMood("curious", 75);
 
     let visemeStep = 0;
     const visemeCycle: VisemeValue[] = [1, 3, 4, 2, 6, 8, 5];
+    let fullReply = "";
 
     try {
       const res = await fetch("/api/ai/tutor", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
-          message, 
+          message,
+          history: priorHistory.slice(-12),
           courseId, 
           lessonId,
           moduleTitle,
@@ -131,6 +309,7 @@ export function AiTutor({
         const { done, value } = await reader.read();
         if (done) break;
         const chunk = decoder.decode(value, { stream: true });
+        fullReply += chunk;
         visemeStep = (visemeStep + 1) % visemeCycle.length;
         avatarRef.current?.setViseme(visemeCycle[visemeStep]);
         setMessages((prev) => {
@@ -142,6 +321,9 @@ export function AiTutor({
       }
       avatarRef.current?.setMood("happy", 75);
       avatarRef.current?.playGesture("nod");
+      if (autoSpeak && fullReply.trim()) {
+        void speakMessage(fullReply, assistantIndex);
+      }
     } catch {
       avatarRef.current?.setMood("concerned", 70);
       setMessages((prev) => [
@@ -222,14 +404,35 @@ export function AiTutor({
           </div>
           <div className="mt-2 flex items-center justify-between gap-2 text-[11px] text-slate-600">
             <span>Answers come from this course.</span>
-            <button
-              type="button"
-              onClick={() => setLite(!lite)}
-              aria-pressed={lite}
-              className="rounded-full border border-slate-300 bg-white/80 px-2.5 py-1 font-semibold hover:bg-white"
-            >
-              {lite ? "Data saver on" : "Data saver off"}
-            </button>
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => {
+                  const next = !autoSpeak;
+                  setAutoSpeak(next);
+                  if (!next) stopSpeaking();
+                  else audioRef.current?.unlock();
+                }}
+                aria-pressed={autoSpeak}
+                title={autoSpeak ? "Auto-read replies is on" : "Read replies aloud automatically"}
+                className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 font-semibold transition ${
+                  autoSpeak
+                    ? "border-[#0f766e]/40 bg-[#ecfdf5] text-[#0f766e]"
+                    : "border-slate-300 bg-white/80 hover:bg-white"
+                }`}
+              >
+                {autoSpeak ? <Volume2 className="h-3 w-3" /> : <VolumeX className="h-3 w-3" />}
+                {autoSpeak ? "Voice on" : "Voice"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setLite(!lite)}
+                aria-pressed={lite}
+                className="rounded-full border border-slate-300 bg-white/80 px-2.5 py-1 font-semibold hover:bg-white"
+              >
+                {lite ? "Data saver on" : "Data saver"}
+              </button>
+            </div>
           </div>
         </div>
 
@@ -301,23 +504,56 @@ export function AiTutor({
               `}>
                 {msg.content ? (
                   <>
-                    <MessageContent content={msg.content} />
+                    <MessageContent
+                      content={msg.content}
+                      onKnowledgeCheckResult={handleKnowledgeCheckResult}
+                    />
                     {msg.role === "assistant" && (
-                      <div className="mt-4 flex items-center gap-3 border-t border-slate-100 pt-3">
+                      <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-slate-100 pt-3">
+                        <button
+                          type="button"
+                          onClick={() => void speakMessage(msg.content, i)}
+                          className={`flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider transition-colors ${
+                            speakingMsgIdx === i
+                              ? "text-[#0f766e]"
+                              : "text-slate-400 hover:text-[#0f766e]"
+                          }`}
+                        >
+                          {speakingMsgIdx === i ? (
+                            <>
+                              <Square className="h-3 w-3 fill-current" />
+                              Stop
+                            </>
+                          ) : (
+                            <>
+                              <Volume2 className="h-3 w-3" />
+                              Listen
+                            </>
+                          )}
+                        </button>
                         <button 
-                          onClick={() => void navigator.clipboard.writeText(msg.content)}
+                          type="button"
+                          onClick={() => {
+                            void navigator.clipboard.writeText(msg.content);
+                            toast.success("Copied reply");
+                          }}
                           className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400 hover:text-blue-600 transition-colors"
                         >
                           <Copy className="h-3 w-3" />
                           Copy
                         </button>
-                        <button 
-                          onClick={() => void sendMessage(messages[messages.length - 2]?.content || "")}
-                          className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400 hover:text-[#fd5523] transition-colors"
-                        >
-                          <History className="h-3 w-3" />
-                          Regenerate
-                        </button>
+                        {i === messages.length - 1 && i >= 2 && messages[i - 1]?.role === "user" && (
+                          <button 
+                            type="button"
+                            onClick={() =>
+                              void sendMessage(messages[i - 1].content, { replaceLastAssistant: true })
+                            }
+                            className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400 hover:text-[#fd5523] transition-colors"
+                          >
+                            <History className="h-3 w-3" />
+                            Regenerate
+                          </button>
+                        )}
                       </div>
                     )}
                   </>
@@ -351,6 +587,20 @@ export function AiTutor({
                 transition-all
               "
             />
+            <button
+              type="button"
+              onClick={toggleDictation}
+              disabled={isStreaming}
+              aria-label={dictating ? "Stop voice dictation" : "Dictate question"}
+              title={dictating ? "Stop listening" : "Speak your question"}
+              className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border transition-all disabled:opacity-40 ${
+                dictating
+                  ? "border-rose-300 bg-rose-50 text-rose-600 animate-pulse"
+                  : "border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 hover:text-[#062e39]"
+              }`}
+            >
+              {dictating ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+            </button>
             <button
               type="button"
               onClick={() => void sendMessage(input.trim())}

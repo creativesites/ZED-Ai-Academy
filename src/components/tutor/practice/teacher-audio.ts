@@ -5,7 +5,12 @@
 
 import type { AvatarDriver } from "@/components/tutor/avatar/types";
 import type { SaySpeechEvent, SpeakOutcome } from "@/components/tutor/EventPlayer";
-import { visemeFromSpectrum, visemeTimelineFromText, type VisemeSegment } from "@/lib/tutor/visemes";
+import {
+  hybridVisemeFromAudio,
+  visemeAtCalibratedTime,
+  visemeTimelineFromText,
+  type VisemeSegment,
+} from "@/lib/tutor/visemes";
 import type { VisemeValue } from "@/lib/tutor/contract.generated";
 import { secondsToMs } from "@/lib/tutor/speaking-time";
 import { pickVoice, speechLangFor } from "@/lib/tutor/speech-lang";
@@ -44,6 +49,8 @@ export class TeacherAudio {
   private volume = 1;
   private playbackRate = 1;
   private language: string | null = null;
+  private ttsVoice: string | null = null;
+  private ttsCache = new Map<string, Promise<string | null>>();
   private synthPrimed = false;
   /** Set when the element was routed through a context that would not run. Plays direct from then on. */
   private analyserDisabled = false;
@@ -96,6 +103,53 @@ export class TeacherAudio {
     this.language = language ?? null;
   }
 
+  /** Enables progressive server TTS via /api/tutor/tts for turns that deferred inline synthesis. */
+  setTtsVoice(voice: string | null | undefined): void {
+    this.ttsVoice = voice ?? null;
+  }
+
+  /** Kicks off cached/synthesized TTS fetches in parallel for all `say` lines in a turn. */
+  prefetch(lines: readonly string[]): void {
+    if (!this.ttsVoice || this.muted) return;
+    for (const line of lines) {
+      if (line.trim()) void this.resolveTtsUrl(line);
+    }
+  }
+
+  private resolveTtsUrl(text: string): Promise<string | null> {
+    const voice = this.ttsVoice;
+    if (!voice) return Promise.resolve(null);
+    const key = `${voice}::${text}`;
+    const existing = this.ttsCache.get(key);
+    if (existing) return existing;
+
+    const promise = (async () => {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 3200);
+      try {
+        const res = await fetch("/api/tutor/tts", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "same-origin",
+          body: JSON.stringify({ text, voice }),
+          signal: controller.signal,
+        });
+        if (!res.ok) return null;
+        const data = (await res.json().catch(() => null)) as { url?: unknown } | null;
+        return typeof data?.url === "string" && data.url ? data.url : null;
+      } catch {
+        return null;
+      } finally {
+        clearTimeout(timer);
+      }
+    })();
+
+    // Cap cache size to keep memory bounded across long sessions
+    if (this.ttsCache.size > 40) this.ttsCache.clear();
+    this.ttsCache.set(key, promise);
+    return promise;
+  }
+
   isMuted(): boolean {
     return this.muted;
   }
@@ -143,8 +197,13 @@ export class TeacherAudio {
   readonly speak = async (event: SaySpeechEvent, avatar: AvatarDriver, signal: AbortSignal): Promise<SpeakOutcome> => {
     if (this.muted) return "unavailable";
     if (signal.aborted) return "stopped";
-    if (event.audioUrl) {
-      const outcome = await this.playAudio(event.audioUrl, event.text, avatar, signal);
+    let audioUrl = event.audioUrl;
+    if (!audioUrl && this.ttsVoice) {
+      audioUrl = (await this.resolveTtsUrl(event.text)) ?? undefined;
+      if (signal.aborted) return "stopped";
+    }
+    if (audioUrl) {
+      const outcome = await this.playAudio(audioUrl, event.text, avatar, signal);
       // Blocked by autoplay: the browser voice would be blocked too. The UI shows "tap to hear".
       if (outcome !== "unavailable" || this.blocked) return outcome;
     }
@@ -198,18 +257,29 @@ export class TeacherAudio {
       el.addEventListener("error", onError);
       signal.addEventListener("abort", onAbort);
 
-      // Mouth: live spectrum from WebAudio analyser when available, else phonetic text-to-viseme timeline.
+      // Mouth: hybrid duration-calibrated phonetic + live WebAudio amplitude gating for crisp lip-sync.
       const intervalId = setInterval(() => {
+        const elapsed =
+          Number.isFinite(el.currentTime) && el.currentTime > 0
+            ? el.currentTime * 1000
+            : performance.now() - startedAt;
+        const durationMs =
+          Number.isFinite(el.duration) && el.duration > 0 ? el.duration * 1000 : undefined;
+
         if (this.analyser && this.ctx) {
           const bins = new Uint8Array(this.analyser.frequencyBinCount);
           this.analyser.getByteFrequencyData(bins);
-          prevViseme = visemeFromSpectrum(bins, this.ctx.sampleRate, prevViseme);
+          prevViseme = hybridVisemeFromAudio({
+            timeline: phoneticTimeline,
+            elapsedMs: elapsed,
+            durationMs,
+            bins,
+            sampleRate: this.ctx.sampleRate,
+            prevViseme,
+          });
           avatar.setViseme(prevViseme);
         } else if (started) {
-          const elapsed = Number.isFinite(el.currentTime) && el.currentTime > 0
-            ? el.currentTime * 1000
-            : performance.now() - startedAt;
-          avatar.setViseme(visemeAt(phoneticTimeline, elapsed));
+          avatar.setViseme(visemeAtCalibratedTime(phoneticTimeline, elapsed, durationMs));
         }
       }, VISEME_INTERVAL_MS);
 
