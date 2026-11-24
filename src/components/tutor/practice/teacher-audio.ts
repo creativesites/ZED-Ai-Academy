@@ -5,21 +5,29 @@
 
 import type { AvatarDriver } from "@/components/tutor/avatar/types";
 import type { SaySpeechEvent, SpeakOutcome } from "@/components/tutor/EventPlayer";
-import { visemeFromSpectrum } from "@/lib/tutor/visemes";
+import { textToVisemes, visemeFromSpectrum } from "@/lib/tutor/visemes";
 import type { VisemeValue } from "@/lib/tutor/contract.generated";
 import { secondsToMs } from "@/lib/tutor/speaking-time";
 import { pickVoice, speechLangFor } from "@/lib/tutor/speech-lang";
 
 /** How often the mouth is updated from the audio (about 40 Hz, inside the 30-60 Hz target). */
 const VISEME_INTERVAL_MS = 25;
-/** Without WebAudio there is no spectrum. The mouth cycles open and closed instead. */
-const FALLBACK_CYCLE: readonly VisemeValue[] = [1, 0, 2, 0, 4, 0];
-const FALLBACK_STEP_MS = 110;
 /** Browser speech can fail to fire `end`. Give up after the line's rough length plus this margin. */
 const SYNTH_WATCHDOG_MARGIN_MS = 4000;
 const SYNTH_MS_PER_CHAR = 120;
 /** Audio that has not started by now (a slow first TTS render) gives way to the browser voice. */
 const AUDIO_START_TIMEOUT_MS = 8000;
+
+/** Looks up the active phonetic viseme at `elapsedMs` from a `textToVisemes` timeline. */
+function visemeAt(timeline: ReadonlyArray<{ atMs: number; value: VisemeValue }>, elapsedMs: number): VisemeValue {
+  if (timeline.length === 0) return 0;
+  let current: VisemeValue = 0;
+  for (let i = 0; i < timeline.length; i += 1) {
+    if (timeline[i].atMs <= elapsedMs) current = timeline[i].value;
+    else break;
+  }
+  return current;
+}
 
 type AudioContextCtor = typeof AudioContext;
 
@@ -110,24 +118,26 @@ export class TeacherAudio {
     if (this.muted) return "unavailable";
     if (signal.aborted) return "stopped";
     if (event.audioUrl) {
-      const outcome = await this.playAudio(event.audioUrl, avatar, signal);
+      const outcome = await this.playAudio(event.audioUrl, event.text, avatar, signal);
       // Blocked by autoplay: the browser voice would be blocked too. The UI shows "tap to hear".
       if (outcome !== "unavailable" || this.blocked) return outcome;
     }
     return this.synthesize(event.text, avatar, signal);
   };
 
-  private async playAudio(url: string, avatar: AvatarDriver, signal: AbortSignal): Promise<SpeakOutcome> {
+  private async playAudio(url: string, text: string, avatar: AvatarDriver, signal: AbortSignal): Promise<SpeakOutcome> {
     await this.ensureAudible();
     if (signal.aborted) return "stopped";
     const el = this.ensureElement();
     if (!el) return "unavailable";
 
+    const phoneticTimeline = textToVisemes(text, 75);
+
     return new Promise<SpeakOutcome>((resolve) => {
       let started = false;
       let settled = false;
       let prevViseme: VisemeValue | undefined;
-      let tick = 0;
+      let startedAt = performance.now();
 
       const cleanup = () => {
         clearInterval(intervalId);
@@ -142,10 +152,12 @@ export class TeacherAudio {
         settled = true;
         cleanup();
         el.pause();
+        avatar.setViseme(0);
         resolve(outcome);
       };
       const onPlaying = () => {
         started = true;
+        startedAt = performance.now();
         this.setBlocked(false);
       };
       const onEnded = () => {
@@ -160,17 +172,18 @@ export class TeacherAudio {
       el.addEventListener("error", onError);
       signal.addEventListener("abort", onAbort);
 
-      // Mouth: spectrum from the analyser when WebAudio is up, otherwise a simple open and close cycle.
+      // Mouth: live spectrum from WebAudio analyser when available, else phonetic text-to-viseme timeline.
       const intervalId = setInterval(() => {
-        tick++;
         if (this.analyser && this.ctx) {
           const bins = new Uint8Array(this.analyser.frequencyBinCount);
           this.analyser.getByteFrequencyData(bins);
           prevViseme = visemeFromSpectrum(bins, this.ctx.sampleRate, prevViseme);
           avatar.setViseme(prevViseme);
         } else if (started) {
-          const idx = Math.floor((tick * VISEME_INTERVAL_MS) / FALLBACK_STEP_MS) % FALLBACK_CYCLE.length;
-          avatar.setViseme(FALLBACK_CYCLE[idx]);
+          const elapsed = Number.isFinite(el.currentTime) && el.currentTime > 0
+            ? el.currentTime * 1000
+            : performance.now() - startedAt;
+          avatar.setViseme(visemeAt(phoneticTimeline, elapsed));
         }
       }, VISEME_INTERVAL_MS);
 
@@ -238,11 +251,12 @@ export class TeacherAudio {
     // A touch slower than default: learners are listening to a new language.
     utterance.rate = lang === "en-GB" ? 1 : 0.9;
 
+    const phoneticTimeline = textToVisemes(text, lang === "en-GB" ? 72 : 85);
+
     return new Promise<SpeakOutcome>((resolve) => {
       let settled = false;
       let started = false;
-      let tick = 0;
-      const startedAt = performance.now();
+      let startedAt = performance.now();
 
       const finish = (outcome: SpeakOutcome) => {
         if (settled) return;
@@ -253,6 +267,7 @@ export class TeacherAudio {
         utterance.onstart = null;
         utterance.onend = null;
         utterance.onerror = null;
+        avatar.setViseme(0);
         if (this.currentUtterance === utterance) this.currentUtterance = null;
         if (outcome === "stopped") synth.cancel();
         if (started) this.playedMs += Math.round(performance.now() - startedAt);
@@ -262,6 +277,7 @@ export class TeacherAudio {
 
       utterance.onstart = () => {
         started = true;
+        startedAt = performance.now();
       };
       utterance.onend = () => finish("played");
       utterance.onerror = (e) => {
@@ -271,12 +287,11 @@ export class TeacherAudio {
       };
       signal.addEventListener("abort", onAbort);
 
-      // No audio stream to analyse, so the mouth cycles open and closed while the voice speaks.
+      // Drive mouth using phonetic text-to-viseme timeline for natural lip-sync during synthesis.
       const intervalId = setInterval(() => {
         if (!started) return;
-        tick++;
-        const idx = Math.floor((tick * VISEME_INTERVAL_MS) / FALLBACK_STEP_MS) % FALLBACK_CYCLE.length;
-        avatar.setViseme(FALLBACK_CYCLE[idx]);
+        const elapsed = performance.now() - startedAt;
+        avatar.setViseme(visemeAt(phoneticTimeline, elapsed));
       }, VISEME_INTERVAL_MS);
       const watchdog = setTimeout(
         () => finish(started ? "played" : "unavailable"),
