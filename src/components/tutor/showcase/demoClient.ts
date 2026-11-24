@@ -80,11 +80,18 @@ export function createDemoClient(): TutorApiClient {
     const common = { scenarioKey: scenario.key, history: recentHistory(), elapsedMs };
 
     const res =
-      input === null || input.kind === "text"
+      input === null || input.kind !== "audio"
         ? await send<TurnResponse>(TURN_URL, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ ...common, ...(input ? { text: input.text } : {}) }),
+            body: JSON.stringify({
+              ...common,
+              ...(input?.kind === "text"
+                ? { text: input.text }
+                : input?.kind === "image"
+                  ? { text: input.text || "Please review my work." }
+                  : {}),
+            }),
           })
         : await send<TurnResponse>(TURN_URL, { method: "POST", body: audioForm(input, common) });
 

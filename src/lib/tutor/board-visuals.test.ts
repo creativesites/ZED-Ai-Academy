@@ -1,6 +1,12 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { parseChartData, parseCompareData, parseDiagramNodes } from "./board-visuals.ts";
+import {
+  formatEquationDisplay,
+  parseChartData,
+  parseCompareData,
+  parseDiagramNodes,
+  tokenizeCodeLine,
+} from "./board-visuals.ts";
 
 describe("tutor/board-visuals", () => {
   it("parses chart data from rows and skips non-numeric header row", () => {
@@ -67,5 +73,18 @@ describe("tutor/board-visuals", () => {
     });
     assert.equal(fromItems?.rows[0]?.left, "Passive voice");
     assert.equal(fromItems?.rows[0]?.right, "Active voice");
+  });
+
+  it("formats ASCII and LaTeX math into crisp typography", () => {
+    assert.equal(formatEquationDisplay("E = mc^2"), "E = mc²");
+    assert.equal(formatEquationDisplay("$x_1 + x_2 <= 10 \\times \\pi$"), "x₁ + x₂ ≤ 10 × π");
+    assert.equal(formatEquationDisplay("\\sqrt{a^2 + b^2}"), "√(a² + b²)");
+  });
+
+  it("tokenizes code lines into keywords, strings, numbers, and comments", () => {
+    const tokens = tokenizeCodeLine('const rate = 0.16; // VAT');
+    assert.ok(tokens.some((t) => t.kind === "keyword" && t.text === "const"));
+    assert.ok(tokens.some((t) => t.kind === "number" && t.text === "0.16"));
+    assert.ok(tokens.some((t) => t.kind === "comment" && t.text === "// VAT"));
   });
 });

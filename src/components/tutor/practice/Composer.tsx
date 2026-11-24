@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent, type PointerEvent } from "react";
-import { Check, ClipboardPaste, Keyboard, ListOrdered, Mic, MicOff, Pause, Play, Radio, RotateCcw, Send, Sparkles, Volume2, X } from "lucide-react";
+import { Camera, Check, ClipboardPaste, Keyboard, ListOrdered, Mic, MicOff, Pause, Play, Radio, RotateCcw, Send, Sparkles, Volume2, X } from "lucide-react";
 import { CONFIDENCE_LEVELS, type ConfidenceLevel } from "@/lib/tutor/board";
-import { MAX_RECORDING_MS } from "@/lib/tutor/recording";
+import { MAX_IMAGE_BYTES, MAX_RECORDING_MS } from "@/lib/tutor/recording";
 import type { ResponseMatchResult } from "@/lib/tutor/response-match";
 import type {
   ActiveChoice,
@@ -37,6 +37,8 @@ type ComposerProps = {
   onHoldStart: () => void;
   onHoldEnd: () => void;
   onSendText: (text: string) => void;
+  /** Optional multimodal photo/screenshot work-checking upload handler. */
+  onSendImage?: (file: File, caption?: string) => void;
   error: string | null;
   soundBlocked: boolean;
   onEnableSound: () => void;
@@ -93,6 +95,7 @@ export function Composer(props: ComposerProps) {
     onHoldStart,
     onHoldEnd,
     onSendText,
+    onSendImage,
     error,
     soundBlocked,
     onEnableSound,
@@ -121,13 +124,46 @@ export function Composer(props: ComposerProps) {
 
   const holdRef = useRef<HTMLButtonElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
   const learnerAudioRef = useRef<HTMLAudioElement | null>(null);
   const spaceDown = useRef(false);
   const [draft, setDraft] = useState("");
   const [playingSelf, setPlayingSelf] = useState(false);
   const [pasteWorkOpen, setPasteWorkOpen] = useState(false);
   const [pasteDraft, setPasteDraft] = useState("");
+  const [pendingImage, setPendingImage] = useState<{ file: File; previewUrl: string } | null>(null);
+  const [imageCaption, setImageCaption] = useState("");
+  const [imageError, setImageError] = useState<string | null>(null);
   const [showCustomInputForChallenge, setShowCustomInputForChallenge] = useState(false);
+
+  useEffect(() => {
+    return () => {
+      if (pendingImage) URL.revokeObjectURL(pendingImage.previewUrl);
+    };
+  }, [pendingImage]);
+
+  const handleImagePick = (file: File | null | undefined) => {
+    setImageError(null);
+    if (!file) return;
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+      setImageError("Please choose a JPG, PNG, or WebP photo/screenshot.");
+      return;
+    }
+    if (file.size > MAX_IMAGE_BYTES) {
+      setImageError("Image is over 3 MB. Try a cropped screenshot or smaller photo.");
+      return;
+    }
+    if (pendingImage) URL.revokeObjectURL(pendingImage.previewUrl);
+    setPendingImage({ file, previewUrl: URL.createObjectURL(file) });
+  };
+
+  const clearPendingImage = () => {
+    if (pendingImage) URL.revokeObjectURL(pendingImage.previewUrl);
+    setPendingImage(null);
+    setImageCaption("");
+    setImageError(null);
+    if (imageInputRef.current) imageInputRef.current.value = "";
+  };
 
   useEffect(() => {
     return () => {
@@ -594,6 +630,55 @@ export function Composer(props: ComposerProps) {
         </div>
       )}
 
+      {/* Multimodal Photo / Screenshot Work Review Box */}
+      {imageError && (
+        <p role="alert" className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs text-amber-800">
+          {imageError}
+        </p>
+      )}
+      {pendingImage && onSendImage && (
+        <div className="flex flex-wrap items-center gap-2.5 rounded-2xl border border-[#fd5523]/30 bg-[#fffaf6] p-2.5">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={pendingImage.previewUrl}
+            alt="Uploaded work preview"
+            className="h-14 w-14 shrink-0 rounded-xl border border-slate-200 object-cover"
+          />
+          <div className="min-w-0 flex-1 space-y-1">
+            <input
+              type="text"
+              value={imageCaption}
+              onChange={(e) => setImageCaption(e.target.value)}
+              maxLength={300}
+              placeholder="Optional note (e.g. Check step 2 of my calculation)"
+              className="h-8 w-full rounded-lg border border-slate-200 bg-white px-2.5 text-xs text-[#062e39] placeholder:text-slate-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#fd5523]"
+            />
+            <div className="flex items-center justify-end gap-1.5">
+              <button
+                type="button"
+                onClick={clearPendingImage}
+                className="rounded-full border border-slate-200 bg-white px-2.5 py-0.5 text-[11px] font-semibold text-slate-600 hover:bg-slate-100"
+              >
+                Remove
+              </button>
+              <button
+                type="button"
+                disabled={!canType}
+                onClick={() => {
+                  const file = pendingImage.file;
+                  const note = imageCaption.trim() || undefined;
+                  clearPendingImage();
+                  onSendImage(file, note);
+                }}
+                className={`${styles.primaryButton} rounded-full px-3 py-0.5 text-[11px] font-bold disabled:opacity-45`}
+              >
+                Send photo for review →
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* 5. Dynamic Contextual Quick Actions (single-row scroll on mobile, never needs page scroll) */}
       {!hasStructuredChallenge && !activeFillBlank && (
         <div
@@ -615,6 +700,26 @@ export function Composer(props: ComposerProps) {
               {q.label}
             </button>
           ))}
+          {onSendImage && (
+            <>
+              <input
+                ref={imageInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                className="hidden"
+                onChange={(e) => handleImagePick(e.target.files?.[0])}
+              />
+              <button
+                type="button"
+                disabled={!canType}
+                onClick={() => imageInputRef.current?.click()}
+                className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full border border-dashed border-slate-300 bg-white/90 px-2.5 py-1.5 text-xs font-semibold text-slate-600 transition hover:border-[#fd5523]/60 hover:bg-[#fff6ee] hover:text-[#fd5523] disabled:opacity-45"
+              >
+                <Camera className="h-3 w-3" aria-hidden="true" />
+                Show work
+              </button>
+            </>
+          )}
           <button
             type="button"
             disabled={!canType}

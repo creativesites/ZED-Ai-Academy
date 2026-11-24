@@ -28,6 +28,7 @@ import {
   type MicPermission,
   type SessionOriginInput,
   type TutorApiClient,
+  type TutorScenarioBeat,
 } from "./api";
 import { Composer, type InputMode } from "./Composer";
 import { GeminiLiveClient } from "./live-client";
@@ -81,7 +82,10 @@ export type TutorSessionProps = {
 
 type Phase = "intro" | "starting" | "live" | "ending" | "report";
 
-type TurnInput = { kind: "text"; text: string } | { kind: "audio"; clip: RecordingResult };
+type TurnInput =
+  | { kind: "text"; text: string }
+  | { kind: "audio"; clip: RecordingResult }
+  | { kind: "image"; file: File; text?: string };
 
 const ALL_MODES: InputMode[] = ["voice", "text"];
 const LEVEL_UPDATE_MS = 100;
@@ -149,6 +153,8 @@ export function TutorSession({
   const [turnCount, setTurnCount] = useState(0);
   const [stepsCompleted, setStepsCompleted] = useState(0);
   const [currentStepLabel, setCurrentStepLabel] = useState<string | null>(null);
+  const [scenarioBeats, setScenarioBeats] = useState<TutorScenarioBeat[]>([]);
+  const [activeBeatIdx, setActiveBeatIdx] = useState(0);
   const [celebratePulse, setCelebratePulse] = useState(0);
   const [hasReplayLine, setHasReplayLine] = useState(false);
   const [transcriptOpen, setTranscriptOpen] = useState(false);
@@ -178,6 +184,7 @@ export function TutorSession({
   const learnerAudioUrlRef = useRef<string | null>(null);
   const thinkingTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const lastSayEventRef = useRef<SaySpeechEvent | null>(null);
+  const scenarioBeatsRef = useRef<TutorScenarioBeat[]>([]);
   const lastTargetRef = useRef<string | null>(null);
   const personaLangRef = useRef<string>("en");
   const mutedRef = useRef(false);
@@ -246,6 +253,11 @@ export function TutorSession({
       onAdvance: (step) => {
         setStepsCompleted((n) => n + 1);
         setCurrentStepLabel(step.replace(/[_-]+/g, " ").trim());
+        setActiveBeatIdx((prev) => {
+          const beats = scenarioBeatsRef.current;
+          const idx = beats.findIndex((b) => b.id.toLowerCase() === step.toLowerCase());
+          return idx >= 0 ? idx : Math.min(Math.max(0, beats.length - 1), prev + 1);
+        });
         playStepTick({ muted: mutedRef.current, volume: volumeRef.current });
       },
       onBoard: (b) => {
@@ -449,6 +461,14 @@ export function TutorSession({
           { id: `learner-${++entrySeqRef.current}`, role: "learner", text: input.text },
         ]);
         setResponseMatch(expectedTarget ? compareResponseToTarget(input.text, expectedTarget) : null);
+      } else if (input.kind === "image") {
+        setResponseMatch(null);
+        const label = input.text ? `[Photo] ${input.text}` : "[Shared work photo]";
+        setLastSaid(label);
+        setTranscript((prev) => [
+          ...prev,
+          { id: `learner-${++entrySeqRef.current}`, role: "learner", text: label },
+        ]);
       } else {
         setResponseMatch(null);
         learnerTimeRef.current.addLearnerMs(input.clip.durationMs);
@@ -464,7 +484,9 @@ export function TutorSession({
         sessionId,
         input.kind === "text"
           ? { kind: "text", text: input.text }
-          : { kind: "audio", blob: input.clip.blob, mimeType: input.clip.mimeType },
+          : input.kind === "image"
+            ? { kind: "image", file: input.file, text: input.text }
+            : { kind: "audio", blob: input.clip.blob, mimeType: input.clip.mimeType },
       );
 
       if (thinkingTimerRef.current !== undefined) {
@@ -652,6 +674,10 @@ export function TutorSession({
       setSceneTitle(started.scenario.title);
       setGoal(started.scenario.goal);
       setMaxMinutes(started.scenario.maxMinutes);
+      const beats = started.scenario.beats ?? [];
+      scenarioBeatsRef.current = beats;
+      setScenarioBeats(beats);
+      setActiveBeatIdx(0);
 
       learnerTimeRef.current = new SpeakingTimeAccumulator();
       teacherBaseRef.current = audioRef.current?.getPlayedMs() ?? 0;
@@ -824,6 +850,11 @@ export function TutorSession({
       setRecording(false);
     }
     void submitTurn({ kind: "text", text });
+  };
+
+  const handleSendImage = (file: File, text?: string) => {
+    audioRef.current?.unlock();
+    void submitTurn({ kind: "image", file, text });
   };
 
   const toggleLiveMic = () => {
@@ -1339,13 +1370,45 @@ export function TutorSession({
             </button>
           </div>
         </div>
-        {/* Live Step & Turn Progress Bar */}
-        <div className="h-1 w-full bg-slate-200/70" aria-hidden="true">
+        {/* Live Step & Beat Progress Stepper */}
+        {scenarioBeats.length > 1 ? (
           <div
-            className="h-full bg-gradient-to-r from-[#fd5523] to-[#15805f] transition-[width] duration-500 ease-out"
-            style={{ width: `${progressPct}%` }}
-          />
-        </div>
+            aria-label="Lesson progress steps"
+            className="flex items-center gap-1 border-t border-slate-100/80 bg-white/70 px-3 py-1 sm:px-4"
+          >
+            {scenarioBeats.map((beat, idx) => {
+              const done = idx < activeBeatIdx;
+              const current = idx === activeBeatIdx;
+              return (
+                <div
+                  key={beat.id}
+                  title={beat.goal}
+                  className="flex min-w-0 flex-1 items-center gap-1"
+                >
+                  <div
+                    className={`h-1.5 w-full rounded-full transition-colors duration-300 ${
+                      done
+                        ? "bg-[#15805f]"
+                        : current
+                          ? "bg-[#fd5523]"
+                          : "bg-slate-200"
+                    }`}
+                  />
+                </div>
+              );
+            })}
+            <span className="ml-1 shrink-0 text-[10px] font-bold tabular-nums text-[var(--ink-dim)]">
+              {Math.min(activeBeatIdx + 1, scenarioBeats.length)}/{scenarioBeats.length}
+            </span>
+          </div>
+        ) : (
+          <div className="h-1 w-full bg-slate-200/70" aria-hidden="true">
+            <div
+              className="h-full bg-gradient-to-r from-[#fd5523] to-[#15805f] transition-[width] duration-500 ease-out"
+              style={{ width: `${progressPct}%` }}
+            />
+          </div>
+        )}
       </header>
 
       {/* Middle Scrollable Stage + Teaching Board */}
@@ -1422,6 +1485,7 @@ export function TutorSession({
             onHoldStart={holdStart}
             onHoldEnd={holdEnd}
             onSendText={handleSendText}
+            onSendImage={!client && !liveActive ? handleSendImage : undefined}
             error={error}
             soundBlocked={soundBlocked}
             onEnableSound={enableSound}

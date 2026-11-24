@@ -62,7 +62,7 @@ export function createTeacherPreviewClient(getFlow: () => PreviewFlowPayload): T
     const elapsedMs = Math.max(0, Date.now() - startedAt);
 
     let res: Result<TurnResponse & { persona?: StartResponse["persona"] }>;
-    if (input === null || input.kind === "text") {
+    if (input === null || input.kind !== "audio") {
       res = await sendPreview(PREVIEW_TURN_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -71,7 +71,11 @@ export function createTeacherPreviewClient(getFlow: () => PreviewFlowPayload): T
           history: recentHistory(),
           elapsedMs,
           mode,
-          ...(input ? { text: input.text } : {}),
+          ...(input?.kind === "text"
+            ? { text: input.text }
+            : input?.kind === "image"
+              ? { text: input.text || "Please review my work." }
+              : {}),
         }),
       });
     } else {

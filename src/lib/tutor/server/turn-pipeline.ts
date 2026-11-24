@@ -14,6 +14,7 @@ export type TurnGenerateRequest = {
   systemInstruction: string;
   contents: GenContent[];
   audio?: { bytes: Buffer; mimeType: string };
+  image?: { bytes: Buffer; mimeType: string };
 };
 
 export type TurnGenerateResult = { text: string | undefined; totalTokens?: number };
@@ -43,6 +44,8 @@ export type TurnPipelineInput = {
   learnerText: string | null;
   /** Optional raw learner audio for single-pass multimodal transcription + teacher reply. */
   learnerAudio?: { bytes: Buffer; mimeType: string };
+  /** Optional learner work photo or screenshot for multimodal coaching. */
+  learnerImage?: { bytes: Buffer; mimeType: string };
   /** Used as the user message when there is no learner text (the opening turn). */
   openingInstruction: string;
   /** Language of the fallback apology when the model gives no valid event. */
@@ -102,13 +105,14 @@ export async function runTutorTurn(input: TurnPipelineInput, deps: TurnPipelineD
 
   const contents = buildContents(
     input.history,
-    input.learnerText ?? (input.learnerAudio ? "[audio]" : null),
+    input.learnerText ?? (input.learnerAudio ? "[audio]" : input.learnerImage ? "[shared work image]" : null),
     input.openingInstruction,
   );
   const response = await deps.generate({
     systemInstruction: input.systemInstruction,
     contents,
     ...(input.learnerAudio ? { audio: input.learnerAudio } : {}),
+    ...(input.learnerImage ? { image: input.learnerImage } : {}),
   });
   const latencyMs = Math.max(0, deps.now() - startedAt);
 

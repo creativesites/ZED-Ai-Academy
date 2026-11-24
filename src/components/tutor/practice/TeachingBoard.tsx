@@ -1,10 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowDown, BarChart3, BookmarkCheck, BookmarkPlus, GitBranch, Scale, Terminal } from "lucide-react";
+import { ArrowDown, BarChart3, BookmarkCheck, BookmarkPlus, Check, Copy, GitBranch, Scale, Terminal } from "lucide-react";
 import type { ClipEvent, LessonRefEvent } from "@/components/tutor/EventPlayer";
 import { CONFIDENCE_LEVELS, type BoardState, type ConfidenceLevel } from "@/lib/tutor/board";
-import { parseChartData, parseCompareData, parseDiagramNodes } from "@/lib/tutor/board-visuals";
+import {
+  formatEquationDisplay,
+  parseChartData,
+  parseCompareData,
+  parseDiagramNodes,
+  tokenizeCodeLine,
+  type CodeTokenKind,
+} from "@/lib/tutor/board-visuals";
 import { dispatchLessonSeek } from "@/lib/tutor/lesson-seek";
 import styles from "./practice.module.css";
 
@@ -160,6 +167,14 @@ export function TeachingBoard({
   );
 }
 
+const CODE_TOKEN_CLASS: Record<CodeTokenKind, string> = {
+  plain: "text-slate-100",
+  keyword: "font-semibold text-sky-300",
+  string: "text-emerald-300",
+  comment: "italic text-slate-400",
+  number: "text-amber-300",
+};
+
 function BoardContent({
   board,
   disabled,
@@ -174,6 +189,13 @@ function BoardContent({
   onInteract?: (prompt: string) => void;
 }) {
   const [selectedCodeLine, setSelectedCodeLine] = useState<number | null>(null);
+  const [copiedText, setCopiedText] = useState(false);
+
+  const handleCopy = (text: string) => {
+    void navigator.clipboard?.writeText(text);
+    setCopiedText(true);
+    setTimeout(() => setCopiedText(false), 1800);
+  };
   const boardSummary =
     board.text?.trim() ||
     board.items?.slice(0, Math.max(board.shown, 1)).join(" · ") ||
@@ -243,53 +265,83 @@ function BoardContent({
       )}
 
       {board.kind === "equation" && board.text && (
-        <div className="rounded-xl border border-amber-200/70 bg-[#fffaf4] px-3 py-2.5 text-center">
-          <p className="whitespace-pre-wrap font-mono text-sm font-bold leading-relaxed text-[var(--ink)] sm:text-base">
-            {board.text}
+        <div className="rounded-xl border border-amber-200/70 bg-[#fffaf4] px-3 py-3 text-center">
+          <p className="whitespace-pre-wrap font-serif text-base font-bold tracking-wide leading-relaxed text-[var(--ink)] sm:text-lg">
+            {formatEquationDisplay(board.text)}
           </p>
-          {onInteract && (
+          <div className="mt-2.5 flex flex-wrap items-center justify-center gap-2">
+            {onInteract && (
+              <button
+                type="button"
+                disabled={disabled}
+                onClick={() => onInteract("Walk me through this formula step by step with concrete numbers.")}
+                className="rounded-full border border-amber-300 bg-white px-2.5 py-0.5 text-[11px] font-bold text-amber-900 transition hover:bg-amber-50 disabled:opacity-50"
+              >
+                Walk through with numbers →
+              </button>
+            )}
             <button
               type="button"
-              disabled={disabled}
-              onClick={() => onInteract("Walk me through this formula step by step with concrete numbers.")}
-              className="mt-2 rounded-full border border-amber-300 bg-white px-2.5 py-0.5 text-[11px] font-bold text-amber-900 transition hover:bg-amber-50 disabled:opacity-50"
+              onClick={() => handleCopy(board.text!)}
+              className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-white/80 px-2.5 py-0.5 text-[11px] font-semibold text-amber-800 transition hover:bg-white"
             >
-              Walk through with numbers →
+              {copiedText ? <Check className="h-3 w-3 text-emerald-600" /> : <Copy className="h-3 w-3" />}
+              {copiedText ? "Copied" : "Copy"}
             </button>
-          )}
+          </div>
         </div>
       )}
 
       {board.kind === "code" && board.text && (
         <div className="space-y-1.5">
-          <div
-            aria-label={board.language ? `${board.language} code` : "Code"}
-            className="overflow-x-auto rounded-xl bg-[#0f172a] p-2 font-mono text-xs leading-relaxed text-slate-100 sm:p-3 sm:text-[13px]"
-          >
-            {board.text.split("\n").map((line, i) => {
-              const lineNum = i + 1;
-              const isSelected = selectedCodeLine === lineNum;
-              return (
-                <button
-                  key={lineNum}
-                  type="button"
-                  disabled={!onInteract || disabled}
-                  onClick={() => setSelectedCodeLine(isSelected ? null : lineNum)}
-                  className={`flex w-full items-start gap-2.5 rounded px-1.5 py-0.5 text-left transition ${
-                    isSelected
-                      ? "bg-[#fd5523]/25 text-white ring-1 ring-[#fd5523]/60"
-                      : onInteract
-                        ? "hover:bg-white/10"
-                        : ""
-                  }`}
-                >
-                  <span className="w-5 shrink-0 select-none text-right text-[10px] text-slate-500">
-                    {lineNum}
-                  </span>
-                  <code className="whitespace-pre">{line || " "}</code>
-                </button>
-              );
-            })}
+          <div className="overflow-hidden rounded-xl bg-[#0f172a]">
+            <div className="flex items-center justify-between border-b border-slate-800 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+              <span>{board.language || "code"}</span>
+              <button
+                type="button"
+                onClick={() => handleCopy(board.text!)}
+                className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-bold text-slate-300 transition hover:bg-white/10 hover:text-white"
+              >
+                {copiedText ? <Check className="h-3 w-3 text-emerald-400" /> : <Copy className="h-3 w-3" />}
+                {copiedText ? "Copied" : "Copy"}
+              </button>
+            </div>
+            <div
+              aria-label={board.language ? `${board.language} code` : "Code"}
+              className="overflow-x-auto p-2 font-mono text-xs leading-relaxed text-slate-100 sm:p-3 sm:text-[13px]"
+            >
+              {board.text.split("\n").map((line, i) => {
+                const lineNum = i + 1;
+                const isSelected = selectedCodeLine === lineNum;
+                const tokens = tokenizeCodeLine(line);
+                return (
+                  <button
+                    key={lineNum}
+                    type="button"
+                    disabled={!onInteract || disabled}
+                    onClick={() => setSelectedCodeLine(isSelected ? null : lineNum)}
+                    className={`flex w-full items-start gap-2.5 rounded px-1.5 py-0.5 text-left transition ${
+                      isSelected
+                        ? "bg-[#fd5523]/25 text-white ring-1 ring-[#fd5523]/60"
+                        : onInteract
+                          ? "hover:bg-white/10"
+                          : ""
+                    }`}
+                  >
+                    <span className="w-5 shrink-0 select-none text-right text-[10px] text-slate-500">
+                      {lineNum}
+                    </span>
+                    <code className="whitespace-pre">
+                      {tokens.map((tok, ti) => (
+                        <span key={ti} className={CODE_TOKEN_CLASS[tok.kind]}>
+                          {tok.text}
+                        </span>
+                      ))}
+                    </code>
+                  </button>
+                );
+              })}
+            </div>
           </div>
           {onInteract && (
             <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-500">

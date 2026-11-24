@@ -113,3 +113,161 @@ export function parseCompareData(board: BoardState): ComparePair | null {
 
   return null;
 }
+
+const SUPERSCRIPTS: Record<string, string> = {
+  "0": "⁰",
+  "1": "¹",
+  "2": "²",
+  "3": "³",
+  "4": "⁴",
+  "5": "⁵",
+  "6": "⁶",
+  "7": "⁷",
+  "8": "⁸",
+  "9": "⁹",
+  "+": "⁺",
+  "-": "⁻",
+  "n": "ⁿ",
+  "x": "ˣ",
+};
+
+const SUBSCRIPTS: Record<string, string> = {
+  "0": "₀",
+  "1": "₁",
+  "2": "₂",
+  "3": "₃",
+  "4": "₄",
+  "5": "₅",
+  "6": "₆",
+  "7": "₇",
+  "8": "₈",
+  "9": "₉",
+  "i": "ᵢ",
+  "n": "ₙ",
+  "x": "ₓ",
+};
+
+/**
+ * Formats plain ASCII or LaTeX-like equations into clean publication-grade math typography
+ * without external runtime dependencies.
+ */
+export function formatEquationDisplay(raw: string): string {
+  let out = raw.trim();
+  if (!out) return "";
+
+  // Strip surrounding inline/display $ delimiters if the model emitted them.
+  out = out.replace(/^\$\$?([\s\S]*?)\$\$?$/, "$1").trim();
+
+  // Common LaTeX commands -> crisp Unicode symbols.
+  out = out
+    .replace(/\\frac\{([^{}]+)\}\{([^{}]+)\}/g, "($1) / ($2)")
+    .replace(/\\sqrt\{([^{}]+)\}/g, "√($1)")
+    .replace(/\\times\b/g, "×")
+    .replace(/\\cdot\b/g, "·")
+    .replace(/\\div\b/g, "÷")
+    .replace(/\\pm\b/g, "±")
+    .replace(/\\leq?\b/g, "≤")
+    .replace(/\\geq?\b/g, "≥")
+    .replace(/\\neq?\b/g, "≠")
+    .replace(/\\approx\b/g, "≈")
+    .replace(/\\infty\b/g, "∞")
+    .replace(/\\pi\b/g, "π")
+    .replace(/\\theta\b/g, "θ")
+    .replace(/\\Delta\b/g, "Δ")
+    .replace(/\\sum\b/g, "∑")
+    .replace(/\\rightarrow\b|\\to\b/g, "→")
+    .replace(/<=/g, "≤")
+    .replace(/>=/g, "≥")
+    .replace(/!=/g, "≠")
+    .replace(/->/g, "→");
+
+  // Superscripts (^2, ^{n+1}) and subscripts (_1, _{n}).
+  out = out.replace(/\^(?:\{([0-9+\-nx]+)\}|([0-9nx]))/g, (_, grp: string | undefined, single: string | undefined) => {
+    const src = grp ?? single ?? "";
+    return [...src].map((c) => SUPERSCRIPTS[c] ?? c).join("");
+  });
+  out = out.replace(/_(?:\{([0-9inx]+)\}|([0-9inx]))/g, (_, grp: string | undefined, single: string | undefined) => {
+    const src = grp ?? single ?? "";
+    return [...src].map((c) => SUBSCRIPTS[c] ?? c).join("");
+  });
+
+  return out;
+}
+
+export type CodeTokenKind = "plain" | "keyword" | "string" | "comment" | "number";
+export type CodeToken = { kind: CodeTokenKind; text: string };
+
+const CODE_KEYWORDS = new Set([
+  "const",
+  "let",
+  "var",
+  "function",
+  "return",
+  "if",
+  "else",
+  "for",
+  "while",
+  "def",
+  "class",
+  "import",
+  "from",
+  "export",
+  "async",
+  "await",
+  "try",
+  "catch",
+  "true",
+  "false",
+  "null",
+  "None",
+  "True",
+  "False",
+  "SELECT",
+  "FROM",
+  "WHERE",
+  "GROUP",
+  "BY",
+  "ORDER",
+  "JOIN",
+  "INSERT",
+  "INTO",
+  "UPDATE",
+  "SET",
+  "print",
+  "in",
+  "of",
+  "new",
+]);
+
+/** Lightweight syntax tokenizer for a single code line (comments, strings, keywords, numbers). */
+export function tokenizeCodeLine(line: string): CodeToken[] {
+  if (!line) return [{ kind: "plain", text: " " }];
+  const tokens: CodeToken[] = [];
+  const pattern = /(\/\/.*$|#.*$|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|`(?:\\.|[^`\\])*`|\b\d+(?:\.\d+)?\b|\b[A-Za-z_][A-Za-z0-9_]*\b)/g;
+  let lastIdx = 0;
+  let match: RegExpExecArray | null;
+
+  while ((match = pattern.exec(line)) !== null) {
+    if (match.index > lastIdx) {
+      tokens.push({ kind: "plain", text: line.slice(lastIdx, match.index) });
+    }
+    const text = match[0];
+    if (text.startsWith("//") || text.startsWith("#")) {
+      tokens.push({ kind: "comment", text });
+    } else if (text.startsWith('"') || text.startsWith("'") || text.startsWith("`")) {
+      tokens.push({ kind: "string", text });
+    } else if (/^\d/.test(text)) {
+      tokens.push({ kind: "number", text });
+    } else if (CODE_KEYWORDS.has(text)) {
+      tokens.push({ kind: "keyword", text });
+    } else {
+      tokens.push({ kind: "plain", text });
+    }
+    lastIdx = match.index + text.length;
+  }
+
+  if (lastIdx < line.length) {
+    tokens.push({ kind: "plain", text: line.slice(lastIdx) });
+  }
+  return tokens;
+}

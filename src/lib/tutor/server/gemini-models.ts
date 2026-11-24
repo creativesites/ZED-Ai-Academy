@@ -47,12 +47,15 @@ function thinkingFor(model: string) {
   return {};
 }
 
-/** Voice and Text turn: structured JSON with the turn schema. Supports inline multimodal audio for 1-pass voice turns. */
+/** Voice and Text turn: structured JSON with the turn schema. Supports inline multimodal audio or work images. */
 export async function generateTurnJson(input: {
   systemInstruction: string;
   contents: GenContent[];
   audio?: { bytes: Buffer; mimeType: string };
+  image?: { bytes: Buffer; mimeType: string };
+  cachedContent?: string;
 }): Promise<TurnGenerateResult & { model: string }> {
+  const lastTurnText = input.contents[input.contents.length - 1]?.parts?.[0]?.text ?? "";
   const contents = input.audio
     ? [
         ...input.contents.slice(0, -1),
@@ -71,14 +74,35 @@ export async function generateTurnJson(input: {
           ],
         },
       ]
-    : input.contents;
+    : input.image
+      ? [
+          ...input.contents.slice(0, -1),
+          {
+            role: "user" as const,
+            parts: [
+              {
+                inlineData: {
+                  data: input.image.bytes.toString("base64"),
+                  mimeType: input.image.mimeType,
+                },
+              },
+              {
+                text: lastTurnText && lastTurnText !== "Learner: [shared work image]"
+                  ? `${lastTurnText}\n\nExamine the learner's uploaded image of their work above carefully. Point out what they did well, spot any specific mistake or gap, and guide them step by step using show_board if helpful.`
+                  : "The learner uploaded a photo/screenshot of their work above. Examine it carefully, praise what they did well, point out any specific error or next step, and guide them warmly using show_board if helpful.",
+              },
+            ],
+          },
+        ]
+      : input.contents;
 
   return withModelFallback(modelFor("tutorTurn"), TEXT_FALLBACKS, async (model) => {
+    const useCache = Boolean(input.cachedContent && model === modelFor("tutorTurn"));
     const response = await gemini.models.generateContent({
       model,
       contents,
       config: {
-        systemInstruction: input.systemInstruction,
+        ...(useCache ? { cachedContent: input.cachedContent } : { systemInstruction: input.systemInstruction }),
         responseMimeType: "application/json",
         responseJsonSchema: TUTOR_TURN_JSON_SCHEMA,
         temperature: 0.8,

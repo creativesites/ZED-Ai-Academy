@@ -17,7 +17,14 @@ export type TutorPersona = {
   riveVariant?: unknown;
   voiceName?: string;
 };
-export type TutorScenario = { id: string; title: string; goal: string; maxMinutes: number };
+export type TutorScenarioBeat = { id: string; goal: string };
+export type TutorScenario = {
+  id: string;
+  title: string;
+  goal: string;
+  maxMinutes: number;
+  beats?: TutorScenarioBeat[];
+};
 
 export type StartResponse = {
   sessionId: string;
@@ -136,6 +143,17 @@ export function sendTutorAudio(sessionId: string, blob: Blob, recorderMime: stri
   return call<TurnResponse>(`/api/tutor/sessions/${sessionId}/turn`, { method: "POST", body: form });
 }
 
+export function sendTutorImage(
+  sessionId: string,
+  file: File,
+  text?: string,
+): Promise<Result<TurnResponse>> {
+  const form = new FormData();
+  form.append("image", file, file.name || "work.jpg");
+  if (text && text.trim()) form.append("text", text.trim());
+  return call<TurnResponse>(`/api/tutor/sessions/${sessionId}/turn`, { method: "POST", body: form });
+}
+
 export function syncLiveEvents(
   sessionId: string,
   turns: Array<{ idx: number; learnerText?: string | null; events: TutorEvent[]; latencyMs?: number }>,
@@ -175,7 +193,10 @@ export type TutorStartRequest = {
   preferMode?: "live" | "voice" | "text";
 };
 
-export type TutorTurnRequest = { kind: "text"; text: string } | { kind: "audio"; blob: Blob; mimeType: string };
+export type TutorTurnRequest =
+  | { kind: "text"; text: string }
+  | { kind: "audio"; blob: Blob; mimeType: string }
+  | { kind: "image"; file: File; text?: string };
 
 export type TutorApiClient = {
   start(input: TutorStartRequest): Promise<Result<StartResponse>>;
@@ -192,6 +213,8 @@ export const httpTutorClient: TutorApiClient = {
   turn: (sessionId, input) =>
     input.kind === "text"
       ? sendTutorText(sessionId, input.text)
-      : sendTutorAudio(sessionId, input.blob, input.mimeType),
+      : input.kind === "image"
+        ? sendTutorImage(sessionId, input.file, input.text)
+        : sendTutorAudio(sessionId, input.blob, input.mimeType),
   complete: completeTutorSession,
 };

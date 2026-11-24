@@ -5,13 +5,14 @@ import { loadSessionContext } from "@/lib/tutor/server/session-context";
 import { loadOwnedSession, readJson, sessionIdSchema } from "@/lib/tutor/server/session-store";
 import { runSessionTurn, TurnConflictError } from "@/lib/tutor/server/turn-runner";
 import { sessionLimitReason } from "@/lib/tutor/server/turn-pipeline";
-import { LEARNER_AUDIO_TYPES } from "@/lib/tutor/recording";
+import { LEARNER_AUDIO_TYPES, LEARNER_IMAGE_TYPES, MAX_IMAGE_BYTES } from "@/lib/tutor/recording";
 
-// POST /api/tutor/sessions/[id]/turn: one Voice or Text exchange.
-// Body: JSON { text } or multipart/form-data with an `audio` file (webm, ogg, wav or mp4, at most 2 MB).
+// POST /api/tutor/sessions/[id]/turn: one Voice, Text, or Multimodal Image exchange.
+// Body: JSON { text } or multipart/form-data with an `audio` file (max 2 MB) or `image` file (max 3 MB, optional `text`).
 
 const MAX_AUDIO_BYTES = 2 * 1024 * 1024;
 const ALLOWED_AUDIO_TYPES = new Set(LEARNER_AUDIO_TYPES);
+const ALLOWED_IMAGE_TYPES = new Set(LEARNER_IMAGE_TYPES);
 const MAX_TEXT_CHARS = 1000;
 
 const textSchema = z.object({
@@ -19,7 +20,12 @@ const textSchema = z.object({
 });
 
 type TurnInput =
-  | { ok: true; text?: string; audio?: { bytes: Buffer; mimeType: string } }
+  | {
+      ok: true;
+      text?: string;
+      audio?: { bytes: Buffer; mimeType: string };
+      image?: { bytes: Buffer; mimeType: string };
+    }
   | { ok: false; status: number; error: string };
 
 export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
@@ -54,10 +60,10 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
     nowMs: Date.now(),
   });
 
-  // Single-pass multimodal audio turn: send learnerAudio directly into runSessionTurn so
-  // Gemini Flash transcribes + responds in ONE round-trip instead of two sequential calls (~1.5-2s faster!).
+  // Single-pass multimodal turn: send learnerAudio or learnerImage directly into runSessionTurn.
   const learnerText: string | null = !limit && !input.audio ? (input.text ?? null) : null;
   const learnerAudio = !limit ? input.audio : undefined;
+  const learnerImage = !limit ? input.image : undefined;
 
   try {
     const result = await runSessionTurn({
@@ -65,6 +71,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
       idx,
       learnerText,
       learnerAudio,
+      learnerImage,
       openingInstruction: "",
       deferTts: true,
     });
@@ -89,8 +96,8 @@ async function readTurnInput(req: NextRequest): Promise<TurnInput> {
 
   if (contentType.includes("multipart/form-data")) {
     const declared = Number(req.headers.get("content-length") ?? 0);
-    if (declared > MAX_AUDIO_BYTES + 256 * 1024) {
-      return { ok: false, status: 413, error: "Audio is too large (2 MB maximum)" };
+    if (declared > MAX_IMAGE_BYTES + 256 * 1024) {
+      return { ok: false, status: 413, error: "Upload is too large (3 MB maximum)" };
     }
 
     let form: FormData;
@@ -101,8 +108,25 @@ async function readTurnInput(req: NextRequest): Promise<TurnInput> {
     }
 
     const file = form.get("audio");
+    const imageFile = form.get("image");
     const textField = form.get("text");
     const text = typeof textField === "string" ? textField.trim() : "";
+
+    if (imageFile instanceof Blob) {
+      if (file instanceof Blob) return { ok: false, status: 400, error: "Send audio or an image, not both" };
+      if (imageFile.size > MAX_IMAGE_BYTES) return { ok: false, status: 413, error: "Image is too large (3 MB maximum)" };
+      const mimeType = imageFile.type.split(";")[0].trim().toLowerCase();
+      if (!ALLOWED_IMAGE_TYPES.has(mimeType)) {
+        return { ok: false, status: 415, error: "Unsupported image type. Use JPG, PNG or WebP." };
+      }
+      if (text.length > MAX_TEXT_CHARS) return { ok: false, status: 400, error: "Text is too long" };
+      const bytes = Buffer.from(await imageFile.arrayBuffer());
+      return {
+        ok: true,
+        text: text || "Please review this image of my work.",
+        image: { bytes, mimeType },
+      };
+    }
 
     if (file instanceof Blob) {
       if (text) return { ok: false, status: 400, error: "Send either text or audio, not both" };
@@ -115,7 +139,7 @@ async function readTurnInput(req: NextRequest): Promise<TurnInput> {
       return { ok: true, audio: { bytes, mimeType } };
     }
 
-    if (!text) return { ok: false, status: 400, error: "Send text or an audio file" };
+    if (!text) return { ok: false, status: 400, error: "Send text, an audio file, or an image" };
     if (text.length > MAX_TEXT_CHARS) return { ok: false, status: 400, error: "Text is too long" };
     return { ok: true, text };
   }

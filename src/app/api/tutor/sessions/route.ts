@@ -195,10 +195,17 @@ export async function POST(req: NextRequest) {
 }
 
 function publicScenario(ctx: SessionContext) {
+  const rawBeats = Array.isArray(ctx.scenario.beats)
+    ? (ctx.scenario.beats as Array<{ id?: unknown; goal?: unknown }>)
+    : [];
+  const beats = rawBeats
+    .filter((b) => typeof b.id === "string" && typeof b.goal === "string")
+    .map((b) => ({ id: b.id as string, goal: b.goal as string }));
   return {
     id: ctx.scenario.id,
     title: ctx.scenario.title,
     goal: ctx.scenario.goal,
     maxMinutes: ctx.scenario.max_minutes,
+    beats,
   };
 }

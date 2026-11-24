@@ -43,6 +43,7 @@ export async function runSessionTurn(input: {
   idx: number;
   learnerText: string | null;
   learnerAudio?: { bytes: Buffer; mimeType: string };
+  learnerImage?: { bytes: Buffer; mimeType: string };
   openingInstruction: string;
   /** When true, skips blocking server TTS so captions/board/choices return immediately (~1s) while the client fetches cached audio progressively via /api/tutor/tts. */
   deferTts?: boolean;
@@ -111,6 +112,7 @@ export async function runSessionTurn(input: {
       idx: input.idx,
       learnerText: input.learnerText,
       learnerAudio: input.learnerAudio,
+      learnerImage: input.learnerImage,
       openingInstruction: input.openingInstruction,
       systemInstruction: sessionSystemPrompt(ctx, mode),
       voice: personaVoiceName(ctx.persona),

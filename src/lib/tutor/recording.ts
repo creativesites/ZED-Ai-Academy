@@ -27,6 +27,16 @@ export const LEARNER_AUDIO_TYPES: readonly string[] = [
   "audio/aac",
 ];
 
+/** Upload types the turn routes accept for multimodal learner work photos/screenshots. */
+export const LEARNER_IMAGE_TYPES: readonly string[] = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+];
+
+/** Maximum learner image upload size (3 MB). */
+export const MAX_IMAGE_BYTES = 3 * 1024 * 1024;
+
 /** The type to send Gemini for an upload. Gemini lists MP4 audio as audio/m4a, and wav under one name. */
 export function geminiAudioMimeType(uploadType: string): string {
   const base = uploadMimeType(uploadType);
