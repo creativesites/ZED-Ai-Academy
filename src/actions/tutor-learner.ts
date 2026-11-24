@@ -9,6 +9,10 @@ import { reviewCard, type ReviewQuality, type SrsReviewResult } from "@/lib/tuto
 import type { LearnerDeckCard } from "@/lib/tutor/server/learner-overview";
 import { normalizeObjectiveKey } from "@/lib/tutor/mastery/evidence";
 import { persistSessionMastery } from "@/lib/tutor/mastery/server";
+import { createDemoRateLimiter } from "@/lib/tutor/demo";
+
+/** Per-instance brake on dock knowledge checks (each one writes evidence and mastery). */
+const dockCheckLimiter = createDemoRateLimiter({ limit: 30, windowMs: 10 * 60_000 });
 
 const qualitySchema = z.enum(["again", "hard", "good", "easy"]);
 
@@ -21,9 +25,34 @@ const addCardSchema = z.object({
   level: z.string().trim().max(32).optional().nullable(),
 });
 
-async function resolveLearnerCompanyId(userId: string, preferred?: string): Promise<string> {
-  if (preferred) return preferred;
+/**
+ * The tenant a learner-owned write goes to. A client-supplied company is only honoured when the learner
+ * actually belongs to it (active membership or an active enrollment in one of its courses), or when it
+ * is the platform tenant; otherwise the learner's home tenant is used. Never trust the client's value.
+ */
+async function resolveLearnerCompanyId(userId: string, preferred?: string | null): Promise<string> {
   const db = createServiceClient();
+  if (preferred) {
+    if (preferred === ZEDAI_TENANT_ID) return preferred;
+    const [{ data: member }, { data: enrollment }] = await Promise.all([
+      db
+        .from("company_members")
+        .select("company_id")
+        .eq("profile_id", userId)
+        .eq("company_id", preferred)
+        .eq("status", "active")
+        .maybeSingle(),
+      db
+        .from("enrollments")
+        .select("id")
+        .eq("user_id", userId)
+        .eq("company_id", preferred)
+        .eq("status", "active")
+        .limit(1)
+        .maybeSingle(),
+    ]);
+    if (member || enrollment) return preferred;
+  }
   const { data } = await db
     .from("company_members")
     .select("company_id")
@@ -272,18 +301,24 @@ export async function recordDockKnowledgeCheck(
   if (!userId) return { recorded: false };
 
   const parsed = dockCheckSchema.parse(input);
-  const db = createServiceClient();
+  // Evidence must be tied to a course the learner is actively enrolled in. Without this a learner could
+  // mint mastery (and staff insights) for any course on the platform by calling the action directly.
+  if (!parsed.courseId) return { recorded: false };
+  if (!dockCheckLimiter.take(`dock-check:${userId}`).ok) return { recorded: false };
 
-  let companyId: string | null = null;
-  if (parsed.courseId) {
-    const { data: course } = await db
-      .from("courses")
-      .select("company_id")
-      .eq("id", parsed.courseId)
-      .maybeSingle();
-    companyId = course?.company_id ?? null;
-  }
-  const resolvedCompanyId = await resolveLearnerCompanyId(userId, companyId ?? undefined);
+  const db = createServiceClient();
+  const [{ data: course }, { data: enrollment }] = await Promise.all([
+    db.from("courses").select("company_id").eq("id", parsed.courseId).maybeSingle(),
+    db
+      .from("enrollments")
+      .select("id")
+      .eq("user_id", userId)
+      .eq("course_id", parsed.courseId)
+      .eq("status", "active")
+      .maybeSingle(),
+  ]);
+  if (!course || !enrollment) return { recorded: false };
+  const resolvedCompanyId = course.company_id ?? ZEDAI_TENANT_ID;
 
   const objectiveText = `${parsed.lessonTitle}: ${parsed.question}`.slice(0, 200);
   const objectiveKey = normalizeObjectiveKey(objectiveText, {
