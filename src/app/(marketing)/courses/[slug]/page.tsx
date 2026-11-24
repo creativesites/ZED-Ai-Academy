@@ -1,5 +1,7 @@
 import Link from "next/link";
+import { auth } from "@clerk/nextjs/server";
 import { createClient } from "@/lib/supabase/server";
+import { canManageCourse } from "@/lib/courses/course-auth-server";
 import { notFound, redirect } from "next/navigation";
 
 type PageProps = {
@@ -9,6 +11,7 @@ type PageProps = {
 type CourseWithCompany = {
   id: string;
   title: string;
+  status: string;
   company_id: string | null;
   companies: { slug: string; name: string } | { slug: string; name: string }[] | null;
 };
@@ -16,19 +19,31 @@ type CourseWithCompany = {
 export default async function LegacyCourseDetailPage({ params }: PageProps) {
   const { slug } = await params;
   const supabase = createClient();
+  const { userId } = await auth();
 
   const { data } = await supabase
     .from("courses")
-    .select("id, title, company_id, companies(slug, name)")
+    .select("id, title, status, company_id, companies(slug, name)")
     .eq("slug", slug)
-    .eq("status", "published")
     .limit(5);
 
-  const courses = (data ?? []) as unknown as CourseWithCompany[];
+  const candidates = (data ?? []) as unknown as CourseWithCompany[];
+  const visible: CourseWithCompany[] = [];
 
-  if (courses.length === 0) {
+  for (const c of candidates) {
+    if (c.status === "published") {
+      visible.push(c);
+    } else if (userId) {
+      const { allowed } = await canManageCourse(supabase, c.id, userId);
+      if (allowed) visible.push(c);
+    }
+  }
+
+  if (visible.length === 0) {
     notFound();
   }
+
+  const courses = visible;
 
   if (courses.length === 1) {
     const comp = Array.isArray(courses[0].companies)

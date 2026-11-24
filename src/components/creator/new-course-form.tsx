@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
 import Link from "next/link";
-import { createCourse } from "@/actions/courses";
+import { createCourseAction } from "@/actions/courses";
 import {
   CourseBlueprintAssistant,
   type CourseBlueprintResponse,
@@ -73,6 +73,7 @@ export function NewCourseForm({
   const [referenceMaterial, setReferenceMaterial] = useState<ReferenceMaterialPayload | null>(null);
   const [assistantMode, setAssistantMode] = useState<"idea" | "materials" | null>(null);
   const [domainPreset, setDomainPreset] = useState<CourseDomainPresetId>("ai-professional");
+  const [actionState, formAction] = useActionState(createCourseAction, null);
 
   function applyBlueprint(next: CourseBlueprintResponse) {
     setBlueprint(next);
@@ -204,7 +205,7 @@ export function NewCourseForm({
       <div className="grid gap-6 lg:grid-cols-[1fr_320px] lg:items-start">
         <Card className="rounded-2xl sm:rounded-3xl border border-slate-200/80 bg-white shadow-sm">
           <CardContent className="p-5 sm:p-8">
-            <form action={createCourse} className="space-y-8">
+            <form action={formAction} className="space-y-8">
               {companyId && <input type="hidden" name="company_id" value={companyId} />}
               {tenantSlug && <input type="hidden" name="tenant_slug" value={tenantSlug} />}
               {blueprint?.module_outline?.length ? (
@@ -402,6 +403,15 @@ export function NewCourseForm({
                   )}
                 </div>
               </section>
+
+              {actionState?.error && (
+                <div
+                  role="alert"
+                  className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-xs sm:text-sm font-semibold text-red-700"
+                >
+                  {actionState.error}
+                </div>
+              )}
 
               {/* Action Bar */}
               <div className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-3 pt-4 border-t border-slate-100">

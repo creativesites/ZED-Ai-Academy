@@ -25,7 +25,32 @@ export default async function CreatorCoursesPage() {
   if (orgId) {
     query = query.eq("company_id", orgId);
   } else {
-    query = query.eq("instructor_id", userId);
+    const [{ data: profile }, { data: staffMemberships }, { data: ownedCompanies }] =
+      await Promise.all([
+        supabase.from("profiles").select("role").eq("id", userId).maybeSingle(),
+        supabase
+          .from("company_members")
+          .select("company_id")
+          .eq("profile_id", userId)
+          .eq("status", "active")
+          .in("role", ["company_admin", "teacher", "instructor"]),
+        supabase.from("companies").select("id").eq("admin_id", userId),
+      ]);
+
+    if (profile?.role !== "super_admin") {
+      const companyIds = Array.from(
+        new Set([
+          ...(staffMemberships ?? []).map((m) => m.company_id),
+          ...(ownedCompanies ?? []).map((c) => c.id),
+        ]),
+      );
+
+      if (companyIds.length > 0) {
+        query = query.or(`instructor_id.eq.${userId},company_id.in.(${companyIds.join(",")})`);
+      } else {
+        query = query.eq("instructor_id", userId);
+      }
+    }
   }
 
   const { data: courses } = await query;

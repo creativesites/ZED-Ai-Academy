@@ -12,7 +12,7 @@ export async function generateMetadata({
 }) {
   const { courseId } = await params;
   const supabase = createClient();
-  const { data } = await supabase.from("courses").select("title").eq("id", courseId).single();
+  const { data } = await supabase.from("courses").select("title").eq("id", courseId).maybeSingle();
   return { title: data ? `${data.title} — Course Studio` : "Course Studio" };
 }
 

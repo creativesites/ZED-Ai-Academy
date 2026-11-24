@@ -38,11 +38,19 @@ type ModuleRow = { id: string; title: string; position: number; lessons: LessonR
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { domain, slug } = await params;
   const supabase = createClient();
-  const { data: course } = await supabase
-    .from("courses")
-    .select("title, description")
-    .eq("slug", slug)
-    .single();
+  const { data: company } = await supabase
+    .from("companies")
+    .select("id")
+    .eq("slug", domain)
+    .maybeSingle();
+  const { data: course } = company
+    ? await supabase
+        .from("courses")
+        .select("title, description")
+        .eq("slug", slug)
+        .eq("company_id", company.id)
+        .maybeSingle()
+    : await supabase.from("courses").select("title, description").eq("slug", slug).maybeSingle();
 
   if (!course) return { title: "Course Not Found" };
   return { title: `${course.title} — ${domain}` };

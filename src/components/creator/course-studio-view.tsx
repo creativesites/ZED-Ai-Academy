@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { CourseSettingsForm } from "@/components/creator/course-settings-form";
@@ -59,14 +60,19 @@ function formatPrice(course: Course) {
 export async function CourseStudioView({
   course,
   tenantSlug,
+  previewTenantSlug,
 }: {
   course: Course;
   tenantSlug?: string;
+  previewTenantSlug?: string;
 }) {
   const supabase = createClient();
   const courseId = course.id;
   const backHref = getCourseListPath(tenantSlug);
-  const previewHref = tenantSlug ? `/academy/${tenantSlug}/courses/${course.slug}` : `/courses/${course.slug}`;
+  const resolvedPreviewSlug = tenantSlug || previewTenantSlug;
+  const previewHref = resolvedPreviewSlug
+    ? `/academy/${resolvedPreviewSlug}/courses/${course.slug}`
+    : `/courses/${course.slug}`;
 
   const { data: modulesRaw } = (await supabase
     .from("modules")
@@ -505,9 +511,10 @@ export async function CourseStudioView({
           )}
         </header>
 
-        <StudioTabs
-          defaultTab="curriculum"
-          tabs={[
+        <Suspense fallback={<div className="py-8 text-sm text-slate-400">Loading studio...</div>}>
+          <StudioTabs
+            defaultTab="curriculum"
+            tabs={[
             {
               id: "curriculum",
               label: "Curriculum",
@@ -551,7 +558,8 @@ export async function CourseStudioView({
               content: insightsPanel,
             },
           ]}
-        />
+          />
+        </Suspense>
       </div>
     </>
   );

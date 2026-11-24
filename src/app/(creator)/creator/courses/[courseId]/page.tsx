@@ -8,7 +8,7 @@ import type { Course } from "@/types/database";
 export async function generateMetadata({ params }: { params: Promise<{ courseId: string }> }) {
   const { courseId } = await params;
   const supabase = createClient();
-  const { data } = await supabase.from("courses").select("title").eq("id", courseId).single();
+  const { data } = await supabase.from("courses").select("title").eq("id", courseId).maybeSingle();
   return { title: data ? `${data.title} — Course Builder` : "Course Builder" };
 }
 
@@ -29,9 +29,13 @@ export default async function CourseDetailPage({
     .from("courses")
     .select("*")
     .eq("id", courseId)
-    .single();
+    .maybeSingle();
 
   if (!course) notFound();
 
-  return <CourseStudioView course={course as Course} />;
+  const { data: company } = course.company_id
+    ? await supabase.from("companies").select("slug").eq("id", course.company_id).maybeSingle()
+    : { data: null };
+
+  return <CourseStudioView course={course as Course} previewTenantSlug={company?.slug} />;
 }

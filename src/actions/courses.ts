@@ -1,17 +1,18 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
+import { redirect, unstable_rethrow } from "next/navigation";
 import { auth } from "@clerk/nextjs/server";
 import { createClient } from "@/lib/supabase/server";
+import { ensureProfile } from "@/lib/supabase/ensure-profile";
 import type { CourseLevel, PriceType } from "@/types/database";
-import { ZEDAI_TENANT_ID } from "@/lib/tenants/constants";
 import {
   getCourseEditorPath,
   getCourseListPath,
   normalizeCourseSlug,
 } from "@/lib/courses/course-routes";
 import { assertCanManageCourse } from "@/lib/courses/course-auth-server";
+import { resolveCourseCreateCompany } from "@/lib/courses/course-create";
 
 function normalizePrice(
   priceType: PriceType,
@@ -82,50 +83,48 @@ export async function createCourse(formData: FormData) {
   const { userId, orgId } = await auth();
   if (!userId) throw new Error("Unauthorized");
 
+  await ensureProfile(userId);
   const supabase = createClient();
 
-  const explicitCompanyId = (formData.get("company_id") || formData.get("companyId")) as string | null;
-  const tenantSlug = formData.get("tenant_slug") as string | null;
-  const returnTo = formData.get("return_to") as string | null;
+  const explicitCompanyId = ((formData.get("company_id") || formData.get("companyId")) as string | null)?.trim() || null;
+  const tenantSlug = ((formData.get("tenant_slug") as string | null) ?? "").trim() || null;
+  const returnTo = ((formData.get("return_to") as string | null) ?? "").trim() || null;
 
-  // Determine which tenant owns this course
-  let companyId: string | null = explicitCompanyId || orgId || null;
-
-  if (companyId) {
-    // Verify user has rights in this company (or is super admin)
-    const { data: profile } = await supabase.from("profiles").select("role").eq("id", userId).maybeSingle();
-    if (profile?.role !== "super_admin") {
-      const { data: member } = await supabase
+  const [{ data: profile }, { data: memberRows }, { data: ownedRows }, explicitCompanyRes, orgCompanyRes] =
+    await Promise.all([
+      supabase.from("profiles").select("role, company_id").eq("id", userId).maybeSingle(),
+      supabase
         .from("company_members")
-        .select("role")
-        .eq("company_id", companyId)
-        .eq("profile_id", userId)
-        .eq("status", "active")
-        .maybeSingle();
+        .select("company_id, role, status")
+        .eq("profile_id", userId),
+      supabase.from("companies").select("id").eq("admin_id", userId),
+      explicitCompanyId
+        ? supabase.from("companies").select("id, admin_id").eq("id", explicitCompanyId).maybeSingle()
+        : Promise.resolve({ data: null as { id: string; admin_id: string | null } | null }),
+      orgId && orgId !== explicitCompanyId
+        ? supabase.from("companies").select("id, admin_id").eq("id", orgId).maybeSingle()
+        : Promise.resolve({ data: null as { id: string; admin_id: string | null } | null }),
+    ]);
 
-      if (!member || (member.role !== "company_admin" && member.role !== "teacher" && member.role !== "instructor")) {
-        throw new Error("You are not authorized to create courses in this academy.");
-      }
-    }
-  } else {
-    const { data: profile } = await supabase.from("profiles").select("role").eq("id", userId).maybeSingle();
-    if (profile?.role === "super_admin") {
-      companyId = ZEDAI_TENANT_ID;
-    } else {
-      // Look up user's active membership where they are an admin or teacher
-      const { data: member } = await supabase
-        .from("company_members")
-        .select("company_id, role")
-        .eq("profile_id", userId)
-        .eq("status", "active")
-        .in("role", ["company_admin", "teacher", "instructor"])
-        .limit(1)
-        .maybeSingle();
-      if (member) companyId = member.company_id;
-    }
+  const resolved = resolveCourseCreateCompany({
+    userId,
+    explicitCompanyId,
+    clerkOrgId: orgId,
+    profileRole: profile?.role,
+    profileCompanyId: profile?.company_id,
+    explicitCompanyAdminId: explicitCompanyRes.data?.admin_id ?? null,
+    clerkOrgAdminId:
+      orgId === explicitCompanyId
+        ? explicitCompanyRes.data?.admin_id ?? null
+        : orgCompanyRes.data?.admin_id ?? null,
+    memberships: (memberRows ?? []) as Array<{ company_id: string; role: string; status: string }>,
+    ownedCompanyIds: (ownedRows ?? []).map((c) => c.id),
+  });
+
+  if (!resolved.ok) {
+    throw new Error(resolved.error);
   }
-
-  if (!companyId) throw new Error("Select an academy before creating a course.");
+  const companyId = resolved.companyId;
 
   const rawTitle = (formData.get("title") as string | null) ?? "";
   const title = rawTitle.trim();
@@ -199,6 +198,21 @@ export async function createCourse(formData: FormData) {
 
   revalidatePath("/creator/courses");
   redirect(getCourseEditorPath(course.id));
+}
+
+export async function createCourseAction(
+  _prevState: { error?: string } | null,
+  formData: FormData,
+): Promise<{ error: string } | null> {
+  try {
+    await createCourse(formData);
+    return null;
+  } catch (err) {
+    unstable_rethrow(err);
+    return {
+      error: err instanceof Error ? err.message : "Unable to create course. Please check your inputs and try again.",
+    };
+  }
 }
 
 export async function updateCourse(courseId: string, formData: FormData, tenantSlug?: string) {

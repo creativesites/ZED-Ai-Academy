@@ -232,8 +232,14 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
     const requestHeaders = new Headers(req.headers);
     requestHeaders.set('x-tenant-slug', subdomain);
 
+    const tenantPrefix = `/academy/${subdomain}`;
+    const targetPath =
+      pathname === tenantPrefix || pathname.startsWith(`${tenantPrefix}/`)
+        ? pathname
+        : `${tenantPrefix}${pathname}`;
+
     const res = NextResponse.rewrite(
-      new URL(`/academy/${subdomain}${pathname}${url.search}`, req.url),
+      new URL(`${targetPath}${url.search}`, req.url),
       {
         request: { headers: requestHeaders },
       }
