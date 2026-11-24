@@ -1,20 +1,32 @@
-"use client";
-
-import { useState } from "react";
-import Header2 from "./header/Header2";
+'use client'
+import { useEffect, useState } from 'react'
+import Header2 from './header/Header2'
+import MobileMenu from './MobileMenu'
 
 export default function Header2Wrapper({ children }) {
-  const [isMobileMenu, setMobileMenu] = useState(false);
+    const [scroll, setScroll] = useState(false)
+    const [isMobileMenu, setMobileMenu] = useState(false)
 
-  const handleMobileMenu = () => {
-    setMobileMenu((prev) => !prev);
-  };
+    const handleMobileMenu = () => {
+        setMobileMenu(!isMobileMenu)
+        document.body.classList.toggle('mobile-menu-visible', !isMobileMenu)
+    }
 
-  return (
-    <Header2
-      isMobileMenu={isMobileMenu}
-      handleMobileMenu={handleMobileMenu}
-      notificationBell={children}
-    />
-  );
+    useEffect(() => {
+        const handleScroll = () => setScroll(window.scrollY > 100)
+        window.addEventListener('scroll', handleScroll)
+        return () => window.removeEventListener('scroll', handleScroll)
+    }, [])
+
+    return (
+        <>
+            <Header2
+                scroll={scroll}
+                isMobileMenu={isMobileMenu}
+                handleMobileMenu={handleMobileMenu}
+                notificationBell={children}
+            />
+            {isMobileMenu && <MobileMenu handleMobileMenu={handleMobileMenu} />}
+        </>
+    )
 }
