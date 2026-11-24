@@ -14,10 +14,10 @@ export default async function TenantClassroomPage({
   searchParams,
 }: {
   params: Promise<{ domain: string }>;
-  searchParams: Promise<{ tab?: string }>;
+  searchParams: Promise<{ tab?: string; cohort?: string }>;
 }) {
   const { domain } = await params;
-  const { tab } = await searchParams;
+  const { tab, cohort } = await searchParams;
   const { userId } = await auth();
 
   if (!userId) {
@@ -66,6 +66,7 @@ export default async function TenantClassroomPage({
           isAdminOrInstructor={isAdminOrInstructor}
           companySlug={company.slug}
           initialTab={tab as any}
+          initialCohortId={cohort}
         />
       </div>
     </div>

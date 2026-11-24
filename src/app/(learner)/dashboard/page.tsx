@@ -60,31 +60,42 @@ export default async function DashboardPage() {
   const isSuperAdmin = profile.role === "super_admin";
   const firstName = profile.full_name?.split(" ")[0] ?? "there";
 
-  // 2. Fetch all tenant memberships with company details
-  const { data: memberRows } = await supabase
-    .from("company_members")
-    .select(`
-      company_id,
-      role,
-      status,
-      joined_at,
-      companies (
-        id,
-        name,
-        slug,
-        logo_url,
-        primary_color,
-        status
-      )
-    `)
-    .eq("profile_id", userId)
-    .eq("status", "active")
-    .order("joined_at", { ascending: false });
+  // 2. Fetch all tenant memberships AND owned academies (companies.admin_id === userId)
+  const [{ data: memberRows }, { data: ownedRows }] = await Promise.all([
+    supabase
+      .from("company_members")
+      .select(`
+        company_id,
+        role,
+        status,
+        joined_at,
+        companies (
+          id,
+          name,
+          slug,
+          logo_url,
+          primary_color,
+          status,
+          admin_id
+        )
+      `)
+      .eq("profile_id", userId)
+      .eq("status", "active")
+      .order("joined_at", { ascending: false }),
+    supabase
+      .from("companies")
+      .select("id, name, slug, logo_url, primary_color, status, admin_id")
+      .eq("admin_id", userId)
+      .eq("status", "active"),
+  ]);
 
-  // 3. For each company, fetch course / enrollment stats
-  const companyIds = (memberRows ?? [])
-    .map((m: any) => m.company_id)
-    .filter(Boolean);
+  const ownedIdSet = new Set((ownedRows ?? []).map((c: any) => c.id));
+  const companyIds = Array.from(
+    new Set([
+      ...(memberRows ?? []).map((m: any) => m.company_id).filter(Boolean),
+      ...(ownedRows ?? []).map((c: any) => c.id).filter(Boolean),
+    ])
+  );
 
   const [coursesRes, enrollmentsRes, activeLiveSessions, tutorOverview] = await Promise.all([
     companyIds.length > 0
@@ -149,23 +160,45 @@ export default async function DashboardPage() {
     enrollCountMap.set(e.company_id, (enrollCountMap.get(e.company_id) ?? 0) + 1);
   });
 
-  const academies: AcademyCardData[] = (memberRows ?? [])
-    .map((m: any) => {
-      const comp = Array.isArray(m.companies) ? m.companies[0] : m.companies;
-      if (!comp) return null;
-      return {
-        companyId: comp.id,
-        name: comp.name,
-        slug: comp.slug,
-        logoUrl: comp.logo_url,
-        primaryColor: comp.primary_color,
-        role: m.role as CompanyMemberRole,
-        status: comp.status,
-        enrolledCoursesCount: enrollCountMap.get(comp.id) ?? 0,
-        totalCoursesCount: courseCountMap.get(comp.id) ?? 0,
-      };
-    })
-    .filter(Boolean) as AcademyCardData[];
+  const seenCompanyIds = new Set<string>();
+  const academies: AcademyCardData[] = [];
+
+  for (const m of (memberRows ?? []) as any[]) {
+    const comp = Array.isArray(m.companies) ? m.companies[0] : m.companies;
+    if (!comp || seenCompanyIds.has(comp.id)) continue;
+    seenCompanyIds.add(comp.id);
+    const effectiveRole: CompanyMemberRole =
+      ownedIdSet.has(comp.id) || comp.admin_id === userId
+        ? "company_admin"
+        : (m.role as CompanyMemberRole);
+    academies.push({
+      companyId: comp.id,
+      name: comp.name,
+      slug: comp.slug,
+      logoUrl: comp.logo_url,
+      primaryColor: comp.primary_color,
+      role: effectiveRole,
+      status: comp.status,
+      enrolledCoursesCount: enrollCountMap.get(comp.id) ?? 0,
+      totalCoursesCount: courseCountMap.get(comp.id) ?? 0,
+    });
+  }
+
+  for (const comp of (ownedRows ?? []) as any[]) {
+    if (!comp || seenCompanyIds.has(comp.id)) continue;
+    seenCompanyIds.add(comp.id);
+    academies.push({
+      companyId: comp.id,
+      name: comp.name,
+      slug: comp.slug,
+      logoUrl: comp.logo_url,
+      primaryColor: comp.primary_color,
+      role: "company_admin",
+      status: comp.status,
+      enrolledCoursesCount: enrollCountMap.get(comp.id) ?? 0,
+      totalCoursesCount: courseCountMap.get(comp.id) ?? 0,
+    });
+  }
 
   return (
     <div className="min-h-screen bg-slate-50/70 pb-20 pt-8">

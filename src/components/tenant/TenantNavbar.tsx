@@ -3,22 +3,35 @@
 import Link from "next/link";
 import { TenantUserButton } from "./TenantUserButton";
 import { TenantAcademySwitcher } from "./TenantAcademySwitcher";
-import { BookOpen, GraduationCap, Layout, Home, Mic, Search } from "lucide-react";
+import { NotificationBell } from "@/components/shared/notification-bell";
+import { BookOpen, GraduationCap, Layout, Home, Mic, Search, ShieldCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { usePathname } from "next/navigation";
 
 export function TenantNavbar({ 
-  tenant 
+  tenant,
+  staffRole,
 }: { 
   tenant: { 
     name: string; 
     slug: string; 
     logo_url?: string | null; 
     primary_color?: string | null; 
-  } 
+  };
+  staffRole?: string | null;
 }) {
   const pathname = usePathname();
   const brandColor = tenant.primary_color || "#fd5523";
+  const isStaff =
+    staffRole === "super_admin" ||
+    staffRole === "company_admin" ||
+    staffRole === "admin" ||
+    staffRole === "teacher" ||
+    staffRole === "instructor";
+  const isAdmin =
+    staffRole === "super_admin" ||
+    staffRole === "company_admin" ||
+    staffRole === "admin";
 
   const navLinks = [
     { name: "Dashboard", href: `/academy/${tenant.slug}/dashboard`, icon: Layout },
@@ -72,15 +85,21 @@ export function TenantNavbar({
         </div>
 
         {/* Right Actions */}
-        <div className="flex items-center gap-4">
-          <div className="hidden sm:flex items-center gap-2 bg-slate-50 border border-slate-100 px-4 py-2 rounded-full text-slate-400">
-            <Search className="h-4 w-4" />
-            <span className="text-[10px] font-black uppercase tracking-widest">Search...</span>
-          </div>
+        <div className="flex items-center gap-3">
+          {isStaff && (
+            <Link
+              href={`/academy/${tenant.slug}/admin`}
+              className="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-xl bg-[#062e39] hover:bg-[#0a4352] text-white text-xs font-bold shadow-xs transition-all shrink-0"
+            >
+              <ShieldCheck className="h-3.5 w-3.5 text-[#fd5523]" />
+              <span>{isAdmin ? "Admin Hub" : "Teacher Hub"}</span>
+            </Link>
+          )}
           
-          <div className="h-10 w-px bg-slate-100 hidden sm:block" />
+          <div className="h-8 w-px bg-slate-100 hidden sm:block" />
 
           <div className="flex items-center gap-2.5">
+            <NotificationBell />
             <TenantAcademySwitcher currentSlug={tenant.slug} variant="navbar" />
 
             <div className="h-10 w-10 rounded-full ring-2 ring-slate-100 overflow-hidden flex items-center justify-center bg-slate-50 shadow-sm">

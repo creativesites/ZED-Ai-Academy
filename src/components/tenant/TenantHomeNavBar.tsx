@@ -49,6 +49,8 @@ export default function TenantHomeNavBar({
     const isDark = template === "dark_mode";
     const isAdmin =
         role === "admin" || role === "super_admin" || role === "company_admin";
+    const isStaff =
+        isAdmin || role === "teacher" || role === "instructor";
 
     // Relative auth URLs: on a tenant subdomain the proxy (src/proxy.ts) redirects /sign-in and /sign-up
     // to the root domain centrally, so no host or protocol needs to be hardcoded here.
@@ -129,7 +131,7 @@ export default function TenantHomeNavBar({
                                             )}
                                         />
 
-                                        {isAdmin && (
+                                        {isStaff && (
                                             <Link
                                                 href={`/academy/${tenant.slug}/admin`}
                                                 className={cn(
@@ -140,7 +142,7 @@ export default function TenantHomeNavBar({
                                                 )}
                                             >
                                                 <Settings className="h-3.5 w-3.5" />
-                                                Admin
+                                                {isAdmin ? "Admin Hub" : "Teacher Hub"}
                                             </Link>
                                         )}
 
@@ -260,7 +262,7 @@ export default function TenantHomeNavBar({
                                         </Link>
                                     )}
 
-                                    {isAdmin && (
+                                    {isStaff && (
                                         <Link
                                             href={`/academy/${tenant.slug}/admin`}
                                             onClick={() => setIsMobileMenuOpen(false)}
@@ -272,7 +274,7 @@ export default function TenantHomeNavBar({
                                             )}
                                         >
                                             <Settings className="h-[18px] w-[18px] flex-shrink-0" />
-                                            Admin
+                                            {isAdmin ? "Admin Hub" : "Teacher Hub"}
                                         </Link>
                                     )}
 

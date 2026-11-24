@@ -22,6 +22,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { TenantUserButton } from "@/components/tenant/TenantUserButton";
 import { TenantAcademySwitcher } from "@/components/tenant/TenantAcademySwitcher";
+import { NotificationBell } from "@/components/shared/notification-bell";
 
 interface NavItem {
   label: string;
@@ -90,6 +91,15 @@ export function TenantAdminNavbar({ slug, name }: { slug: string; name: string }
               <Globe className="h-3 w-3" />
               <span>Public Site</span>
             </Link>
+
+            <Link
+              href={`/academy/${slug}/dashboard`}
+              className="hidden xl:inline-flex items-center gap-1 text-[11px] font-bold text-slate-500 hover:text-[#062e39] hover:bg-slate-100 transition-all px-2.5 py-1 rounded-lg border border-slate-200/60"
+              title="Preview Student Dashboard"
+            >
+              <UserCheck className="h-3 w-3 text-[#fd5523]" />
+              <span>Student View</span>
+            </Link>
           </div>
 
           {/* Desktop Nav */}
@@ -116,6 +126,7 @@ export function TenantAdminNavbar({ slug, name }: { slug: string; name: string }
 
           {/* Right Controls */}
           <div className="flex items-center gap-2 shrink-0">
+            <NotificationBell />
             <TenantAcademySwitcher currentSlug={slug} variant="admin" />
 
             <div className="h-9 w-9 rounded-full ring-2 ring-slate-100 flex items-center justify-center bg-slate-50 overflow-hidden shadow-sm">

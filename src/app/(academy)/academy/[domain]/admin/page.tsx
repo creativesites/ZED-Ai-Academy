@@ -6,6 +6,7 @@ import {
   Clock, Sparkles, PlusCircle, UserCheck, AlertCircle
 } from "lucide-react";
 import { TimetableCalendar } from "@/components/tenant/admin/TimetableCalendar";
+import { LaunchChecklistCard } from "@/components/tenant/admin/LaunchChecklistCard";
 import { cn } from "@/lib/utils";
 import { requireTenantAdminPage } from "@/lib/tenants/admin-guard";
 import { countTodaysSchedules } from "@/lib/tenants/admin-helpers";
@@ -22,24 +23,74 @@ export default async function AdminTenantHubPage({
   const { domain } = await params;
   const { supabase, company } = await requireTenantAdminPage(domain);
 
-  // 1. Fetch Stats
+  // 1. Fetch Stats & Launch Readiness Signals
   const [
     { count: studentCount },
     { count: courseCount },
+    { count: publishedCourseCount },
+    { count: groupsCount },
     { count: pendingCount },
+    { count: pendingGradingCount },
+    { data: companyBrand },
     { data: schedules },
-    { data: recentEnrollments }
+    { data: recentEnrollments },
   ] = await Promise.all([
     supabase.from("company_members").select("*", { count: "exact", head: true }).eq("company_id", company.id).eq("role", "learner"),
     supabase.from("courses").select("*", { count: "exact", head: true }).eq("company_id", company.id),
+    supabase.from("courses").select("*", { count: "exact", head: true }).eq("company_id", company.id).eq("status", "published"),
+    supabase.from("classroom_groups").select("*", { count: "exact", head: true }).eq("company_id", company.id),
     supabase.from("enrollments").select("*", { count: "exact", head: true }).eq("company_id", company.id).eq("status", "pending_payment"),
+    supabase.from("classroom_assignment_submissions").select("*", { count: "exact", head: true }).eq("company_id", company.id).eq("status", "submitted"),
+    supabase.from("companies").select("logo_url, home_content").eq("id", company.id).maybeSingle(),
     supabase.from("class_schedules").select("*").eq("company_id", company.id).order("starts_at"),
-    supabase.from("enrollments").select("id, status, enrolled_at, profiles(full_name, email)").eq("company_id", company.id).order("enrolled_at", { ascending: false }).limit(5)
+    supabase.from("enrollments").select("id, status, enrolled_at, profiles(full_name, email)").eq("company_id", company.id).order("enrolled_at", { ascending: false }).limit(5),
   ]);
 
   const todaysClassCount = countTodaysSchedules(schedules);
   const upcomingClasses = (schedules || []).slice(0, 4);
   const base = `/academy/${company.slug}/admin`;
+
+  const hasCustomBrand = Boolean(
+    companyBrand?.logo_url ||
+      (companyBrand?.home_content &&
+        typeof companyBrand.home_content === "object" &&
+        Object.keys(companyBrand.home_content as Record<string, unknown>).length > 0)
+  );
+
+  const launchItems = [
+    {
+      id: "brand",
+      title: "Customize Brand & Homepage",
+      description: "Upload your logo, pick a template, and publish your storefront.",
+      href: `${base}/settings/site`,
+      cta: "Open Site Studio",
+      done: hasCustomBrand,
+    },
+    {
+      id: "course",
+      title: "Publish Your First Course",
+      description: "Build lessons, quizzes, and publish to your academy catalog.",
+      href: (courseCount || 0) > 0 ? `${base}/courses` : `${base}/courses/new`,
+      cta: (courseCount || 0) > 0 ? "Review Courses" : "Create Course",
+      done: (publishedCourseCount || 0) > 0,
+    },
+    {
+      id: "classroom",
+      title: "Set Up Classes & Timetable",
+      description: "Create a cohort/subject or schedule your first live session.",
+      href: `${base}/classroom?tab=groups`,
+      cta: "Configure Classroom",
+      done: (groupsCount || 0) > 0 || (schedules?.length || 0) > 0,
+    },
+    {
+      id: "learners",
+      title: "Invite Your First Learner",
+      description: "Send invites or import students via CSV to start teaching.",
+      href: `${base}/enrollments`,
+      cta: "Invite Students",
+      done: (studentCount || 0) > 0,
+    },
+  ];
 
   return (
     <div className="container max-w-7xl px-4 py-6 md:py-8">
@@ -83,6 +134,27 @@ export default async function AdminTenantHubPage({
           </Link>
         </div>
       </div>
+
+      <LaunchChecklistCard companySlug={company.slug} items={launchItems} />
+
+      {(pendingGradingCount || 0) > 0 && (
+        <Link
+          href={`${base}/classroom?tab=assignments`}
+          className="mb-6 flex items-center justify-between gap-3 px-4 py-3 rounded-2xl bg-amber-50 border border-amber-200/80 text-amber-900 hover:bg-amber-100/70 transition-colors"
+        >
+          <div className="flex items-center gap-2.5 text-xs font-bold">
+            <AlertCircle className="h-4 w-4 text-amber-600 shrink-0" />
+            <span>
+              {pendingGradingCount}{" "}
+              {pendingGradingCount === 1 ? "assignment submission is" : "assignment submissions are"}{" "}
+              waiting for your review.
+            </span>
+          </div>
+          <span className="text-[11px] font-black uppercase tracking-wider text-amber-800 flex items-center gap-1 shrink-0">
+            Grade Now <ChevronRight className="h-3.5 w-3.5" />
+          </span>
+        </Link>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 md:gap-6">
         

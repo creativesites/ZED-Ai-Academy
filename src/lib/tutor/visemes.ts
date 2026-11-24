@@ -87,6 +87,27 @@ export function visemeTimelineFromText(text: string): VisemeSegment[] {
   return merged;
 }
 
+/**
+ * Converts text into a cumulative `{ atMs, value }` timeline for audio-synced
+ * mouth animation. `msPerUnit` optionally scales segment durations (baseline 80 ms).
+ */
+export function textToVisemes(
+  text: string,
+  msPerUnit = 80,
+): Array<{ atMs: number; value: VisemeValue }> {
+  const segments = visemeTimelineFromText(text);
+  if (segments.length === 0) return [];
+  const scale = Number.isFinite(msPerUnit) && msPerUnit > 0 ? msPerUnit / 80 : 1;
+  const timeline: Array<{ atMs: number; value: VisemeValue }> = [];
+  let cursor = 0;
+  for (const seg of segments) {
+    timeline.push({ atMs: Math.round(cursor), value: seg.viseme });
+    cursor += seg.ms * scale;
+  }
+  timeline.push({ atMs: Math.round(cursor), value: V.rest });
+  return timeline;
+}
+
 export const SPECTRUM_THRESHOLDS = {
   // Mean normalised magnitude (0..1) below which the mouth rests.
   silence: 0.08,

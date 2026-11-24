@@ -720,15 +720,27 @@ export async function getUpcomingUserClasses(): Promise<any[]> {
   if (!userId) return [];
 
   const supabase = createClient();
-  const { data: memberships } = await supabase
-    .from("company_members")
-    .select("company_id, companies(id, name, slug, logo_url, is_session_active, active_room_name)")
-    .eq("profile_id", userId)
-    .eq("status", "active");
+  const [{ data: memberships }, { data: groupMemberships }] = await Promise.all([
+    supabase
+      .from("company_members")
+      .select("company_id, role, companies(id, name, slug, logo_url, is_session_active, active_room_name)")
+      .eq("profile_id", userId)
+      .eq("status", "active"),
+    supabase
+      .from("classroom_group_members")
+      .select("group_id")
+      .eq("profile_id", userId),
+  ]);
 
   if (!memberships || memberships.length === 0) return [];
 
   const companyIds = memberships.map((m: any) => m.company_id);
+  const teachingCompanyIds = new Set(
+    memberships
+      .filter((m: any) => m.role === "company_admin" || m.role === "teacher" || m.role === "instructor")
+      .map((m: any) => m.company_id)
+  );
+  const myGroupIds = new Set((groupMemberships ?? []).map((g: any) => g.group_id));
 
   const { data: schedules } = await supabase
     .from("class_schedules")
@@ -737,7 +749,92 @@ export async function getUpcomingUserClasses(): Promise<any[]> {
     .order("day_of_week", { ascending: true })
     .order("start_time_only", { ascending: true });
 
-  return schedules ?? [];
+  // Filter schedules so learners only see academy-wide schedules or schedules for their cohorts
+  return (schedules ?? []).filter((s: any) => {
+    if (!s.group_id) return true;
+    if (teachingCompanyIds.has(s.company_id)) return true;
+    return myGroupIds.has(s.group_id);
+  });
+}
+
+export interface ActiveLiveSessionBannerItem {
+  companyId: string;
+  companyName: string;
+  companySlug: string;
+  cohortId: string | null;
+  cohortName: string | null;
+  scheduleId: string | null;
+  title: string;
+}
+
+/**
+ * Returns active live sessions across all academies AND enrolled cohorts for the signed-in user.
+ * Works for both scheduled and ad-hoc live sessions.
+ */
+export async function getActiveUserLiveSessions(): Promise<ActiveLiveSessionBannerItem[]> {
+  const { userId } = await auth();
+  if (!userId) return [];
+
+  const supabase = createClient();
+  const [{ data: memberships }, { data: groupMemberships }] = await Promise.all([
+    supabase
+      .from("company_members")
+      .select(
+        "company_id, role, companies(id, name, slug, is_session_active, active_schedule_id)"
+      )
+      .eq("profile_id", userId)
+      .eq("status", "active"),
+    supabase
+      .from("classroom_group_members")
+      .select(
+        "group_id, classroom_groups(id, name, company_id, is_session_active, active_schedule_id)"
+      )
+      .eq("profile_id", userId),
+  ]);
+
+  if (!memberships || memberships.length === 0) return [];
+
+  const companyMap = new Map<string, { id: string; name: string; slug: string }>();
+  const activeItems: ActiveLiveSessionBannerItem[] = [];
+
+  for (const m of memberships as any[]) {
+    const comp = Array.isArray(m.companies) ? m.companies[0] : m.companies;
+    if (!comp) continue;
+    companyMap.set(comp.id, { id: comp.id, name: comp.name, slug: comp.slug });
+
+    if (comp.is_session_active) {
+      activeItems.push({
+        companyId: comp.id,
+        companyName: comp.name,
+        companySlug: comp.slug,
+        cohortId: null,
+        cohortName: null,
+        scheduleId: comp.active_schedule_id ?? null,
+        title: `${comp.name} Live Classroom`,
+      });
+    }
+  }
+
+  for (const gm of (groupMemberships ?? []) as any[]) {
+    const grp = Array.isArray(gm.classroom_groups)
+      ? gm.classroom_groups[0]
+      : gm.classroom_groups;
+    if (!grp || !grp.is_session_active) continue;
+    const comp = companyMap.get(grp.company_id);
+    if (!comp) continue;
+
+    activeItems.push({
+      companyId: comp.id,
+      companyName: comp.name,
+      companySlug: comp.slug,
+      cohortId: grp.id,
+      cohortName: grp.name,
+      scheduleId: grp.active_schedule_id ?? null,
+      title: `${grp.name} · Live Class`,
+    });
+  }
+
+  return activeItems;
 }
 
 // Attendance

@@ -9,7 +9,7 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import type { Enrollment, Course } from "@/types/database";
-import { getCurrentTenantAccess } from "@/lib/tenants/access";
+import { getCurrentTenantAccess, isTeachingRole } from "@/lib/tenants/access";
 import { loadLearnerTutorOverview } from "@/lib/tutor/server/learner-overview";
 
 export const metadata = { title: "Student Dashboard" };
@@ -127,9 +127,42 @@ export default async function TenantStudentDashboardPage({
   const inProgressCount = enrollments.length - completedCount;
   const certificatesCount = certByCourse.size;
 
+  const isStaff = Boolean(
+    access?.isSuperAdmin ||
+      access?.isOwner ||
+      company.admin_id === userId ||
+      isTeachingRole(access?.tenantRole)
+  );
+  const staffRole = access?.isSuperAdmin
+    ? "super_admin"
+    : access?.isOwner || company.admin_id === userId
+    ? "company_admin"
+    : access?.tenantRole ?? null;
+  const isAdmin = staffRole === "super_admin" || staffRole === "company_admin";
+
   return (
     <div className="bg-slate-50 min-h-screen">
-      <TenantNavbar tenant={company} />
+      <TenantNavbar tenant={company} staffRole={isStaff ? staffRole : null} />
+
+      {isStaff && (
+        <div className="bg-[#062e39] text-white border-b border-white/10">
+          <div className="container max-w-7xl px-4 sm:px-6 md:px-8 py-2.5 flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-2 text-xs font-medium text-white/85">
+              <span className="inline-block h-2 w-2 rounded-full bg-[#fd5523]" />
+              <span>
+                You are previewing the <strong className="text-white">Student Dashboard</strong> for {company.name}.
+              </span>
+            </div>
+            <Link
+              href={`/academy/${company.slug}/admin`}
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#fd5523] hover:bg-[#e84b1c] text-white text-xs font-bold transition-colors"
+            >
+              <span>{isAdmin ? "Return to Admin Hub" : "Return to Teacher Hub"}</span>
+              <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          </div>
+        </div>
+      )}
       
       <div className="py-6 sm:py-10">
         <div className="container max-w-7xl px-4 space-y-6 sm:space-y-8">

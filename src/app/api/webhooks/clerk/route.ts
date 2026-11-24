@@ -83,12 +83,21 @@ export async function POST(req: Request) {
       }, { onConflict: "id" });
       if (error) console.error("Org sync error:", error);
 
-      // If it's a new organization, ensure the creator is marked as company_admin
+      // If it's a new organization, ensure the creator is marked as company_admin (never downgrade super_admin)
       if (event.type === "organization.created" && data.created_by) {
-        await supabase.from("profiles").update({
-          role: "company_admin",
-          company_id: data.id
-        }).eq("id", data.created_by);
+        const { data: creatorProfile } = await supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", data.created_by)
+          .maybeSingle();
+
+        await supabase
+          .from("profiles")
+          .update({
+            role: creatorProfile?.role === "super_admin" ? "super_admin" : "company_admin",
+            company_id: data.id,
+          })
+          .eq("id", data.created_by);
 
         await supabase.from("company_members").upsert({
           company_id: data.id,
@@ -108,38 +117,71 @@ export async function POST(req: Request) {
 
     if (event.type === "organizationMembership.created") {
       const { organization, public_user_data, role: clerkRole } = event.data as ClerkMembershipPayload;
-      
-      // Update profile's company_id and role
-      // If clerkRole is admin, they are either company_admin (if creator) or instructor (if invited)
-      // For now, let's assume invited admins are instructors
-      let dbRole: UserRole = "teacher";
-      let memberRole: CompanyMemberRole = "teacher";
-      if (clerkRole === "org:admin") {
-        // If they are the creator, they should already be company_admin from organization.created
-        // but we can check if they are the admin_id in companies
-        const { data: company } = await supabase.from("companies").select("admin_id").eq("id", organization.id).single();
-        if (company?.admin_id === public_user_data.user_id) {
-          dbRole = "company_admin";
-          memberRole = "company_admin";
-        }
-      } else {
-        dbRole = "learner";
-        memberRole = "learner";
-      }
+      const memberUserId = public_user_data.user_id;
+
+      const [{ data: company }, { data: existingMember }, { data: existingProfile }] =
+        await Promise.all([
+          supabase.from("companies").select("admin_id").eq("id", organization.id).maybeSingle(),
+          supabase
+            .from("company_members")
+            .select("role, joined_at")
+            .eq("company_id", organization.id)
+            .eq("profile_id", memberUserId)
+            .maybeSingle(),
+          supabase.from("profiles").select("role, company_id").eq("id", memberUserId).maybeSingle(),
+        ]);
+
+      const isOwner = Boolean(company?.admin_id && company.admin_id === memberUserId);
+      const requestedMemberRole: CompanyMemberRole =
+        isOwner
+          ? "company_admin"
+          : clerkRole === "org:admin"
+          ? "teacher"
+          : "learner";
+
+      const roleRank: Record<string, number> = {
+        learner: 1,
+        teacher: 2,
+        instructor: 2,
+        company_admin: 3,
+      };
+      const existingRank = existingMember?.role ? (roleRank[existingMember.role] ?? 0) : 0;
+      const requestedRank = roleRank[requestedMemberRole] ?? 0;
+      const memberRole: CompanyMemberRole = isOwner
+        ? "company_admin"
+        : existingRank >= requestedRank
+        ? (existingMember!.role as CompanyMemberRole)
+        : requestedMemberRole;
 
       await supabase.from("company_members").upsert({
         company_id: organization.id,
-        profile_id: public_user_data.user_id,
+        profile_id: memberUserId,
         status: "active",
         role: memberRole,
-        joined_at: new Date().toISOString(),
+        joined_at: existingMember?.joined_at ?? new Date().toISOString(),
         updated_at: new Date().toISOString(),
       }, { onConflict: "company_id, profile_id" });
 
-      await supabase.from("profiles").update({
-        company_id: organization.id,
-        role: dbRole
-      }).eq("id", public_user_data.user_id);
+      // Never downgrade an existing super_admin / company_admin / instructor profile role
+      const currentProfileRole = existingProfile?.role as UserRole | undefined;
+      const nextProfileRole: UserRole =
+        currentProfileRole === "super_admin" ||
+        currentProfileRole === "company_admin" ||
+        currentProfileRole === "instructor"
+          ? currentProfileRole
+          : memberRole === "company_admin"
+          ? "company_admin"
+          : memberRole === "teacher"
+          ? "teacher"
+          : currentProfileRole ?? "learner";
+
+      await supabase
+        .from("profiles")
+        .update({
+          company_id: existingProfile?.company_id || organization.id,
+          role: nextProfileRole,
+        })
+        .eq("id", memberUserId);
     }
 
     if (event.type === "organizationMembership.deleted") {

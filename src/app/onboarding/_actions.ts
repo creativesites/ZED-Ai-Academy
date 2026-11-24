@@ -119,12 +119,27 @@ export async function completeOnboarding(formData: FormData) {
 
         joinedCompanyId = tenant.id;
         joinedCompanySlug = tenant.slug;
+
+        const { data: existingM } = await supabase
+          .from("company_members")
+          .select("role, joined_at")
+          .eq("company_id", tenant.id)
+          .eq("profile_id", userId)
+          .maybeSingle();
+
+        const requestedMemberRole = membershipRoleForProfileRole(finalRole);
+        const rank: Record<string, number> = { learner: 1, teacher: 2, instructor: 2, company_admin: 3 };
+        const effectiveRole =
+          existingM?.role && (rank[existingM.role] ?? 0) >= (rank[requestedMemberRole] ?? 0)
+            ? existingM.role
+            : requestedMemberRole;
+
         await supabase.from("company_members").upsert({
           company_id: tenant.id,
           profile_id: userId,
           status: "active",
-          role: membershipRoleForProfileRole(finalRole),
-          joined_at: new Date().toISOString(),
+          role: effectiveRole,
+          joined_at: existingM?.joined_at ?? new Date().toISOString(),
           updated_at: new Date().toISOString(),
         }, { onConflict: "company_id, profile_id" });
       }
@@ -171,14 +186,23 @@ export async function completeOnboarding(formData: FormData) {
           }, { onConflict: "user_id,course_id" });
 
           if (requestedCourse.company_id) {
-            await supabase.from("company_members").upsert({
-              company_id: requestedCourse.company_id,
-              profile_id: userId,
-              status: "active",
-              role: "learner",
-              joined_at: new Date().toISOString(),
-              updated_at: new Date().toISOString(),
-            }, { onConflict: "company_id, profile_id" });
+            const { data: existingM } = await supabase
+              .from("company_members")
+              .select("role")
+              .eq("company_id", requestedCourse.company_id)
+              .eq("profile_id", userId)
+              .maybeSingle();
+
+            if (!existingM) {
+              await supabase.from("company_members").insert({
+                company_id: requestedCourse.company_id,
+                profile_id: userId,
+                status: "active",
+                role: "learner",
+                joined_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+              });
+            }
           }
           redirectUrl = `/courses/${requestedCourse.slug}/learn`;
         } else {
@@ -211,14 +235,23 @@ export async function completeOnboarding(formData: FormData) {
           }, { onConflict: "user_id,course_id" });
 
           if (globalCourse.company_id) {
-            await supabase.from("company_members").upsert({
-              company_id: globalCourse.company_id,
-              profile_id: userId,
-              status: "active",
-              role: "learner",
-              joined_at: new Date().toISOString(),
-              updated_at: new Date().toISOString(),
-            }, { onConflict: "company_id, profile_id" });
+            const { data: existingM } = await supabase
+              .from("company_members")
+              .select("role")
+              .eq("company_id", globalCourse.company_id)
+              .eq("profile_id", userId)
+              .maybeSingle();
+
+            if (!existingM) {
+              await supabase.from("company_members").insert({
+                company_id: globalCourse.company_id,
+                profile_id: userId,
+                status: "active",
+                role: "learner",
+                joined_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+              });
+            }
           }
         }
       }
@@ -226,7 +259,7 @@ export async function completeOnboarding(formData: FormData) {
 
     // 6. Role-based Redirection
     if (!enrollCourseSlug && joinedCompanySlug) {
-      if (finalRole === "company_admin") {
+      if (finalRole === "company_admin" || finalRole === "teacher") {
         redirectUrl = `/academy/${joinedCompanySlug}/admin`;
       } else {
         redirectUrl = `/academy/${joinedCompanySlug}/classroom`;

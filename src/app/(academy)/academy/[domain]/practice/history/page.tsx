@@ -5,6 +5,7 @@ import { TenantNavbar } from "@/components/tenant/TenantNavbar";
 import { SpeakingHistoryView } from "@/components/tutor/practice/SpeakingHistoryView";
 import { createClient } from "@/lib/supabase/server";
 import { loadLearnerSessionHistory } from "@/lib/tutor/server/learner-overview";
+import { getCurrentTenantAccess } from "@/lib/tenants/access";
 
 export const dynamic = "force-dynamic";
 
@@ -30,15 +31,24 @@ export default async function TenantPracticeHistoryPage({
     .single();
   if (!company) notFound();
 
-  const sessions = await loadLearnerSessionHistory(userId, {
-    kind: "tenant",
-    companyId: company.id,
-  }).catch(() => []);
+  const [sessions, access] = await Promise.all([
+    loadLearnerSessionHistory(userId, {
+      kind: "tenant",
+      companyId: company.id,
+    }).catch(() => []),
+    getCurrentTenantAccess(company.id),
+  ]);
+
+  const staffRole = access?.isSuperAdmin
+    ? "super_admin"
+    : access?.isOwner
+    ? "company_admin"
+    : access?.tenantRole ?? null;
 
   return (
     <>
       <Toaster />
-      <TenantNavbar tenant={company} />
+      <TenantNavbar tenant={company} staffRole={staffRole} />
       <SpeakingHistoryView
         initialSessions={sessions}
         backHref={`/academy/${company.slug}/practice`}

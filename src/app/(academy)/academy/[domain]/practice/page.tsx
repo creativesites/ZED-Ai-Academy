@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { groupByLanguage } from "@/lib/tutor/practice-library";
 import { loadPracticeLibrary } from "@/lib/tutor/server/practice-library";
 import { loadLearnerTutorOverview } from "@/lib/tutor/server/learner-overview";
+import { getCurrentTenantAccess } from "@/lib/tenants/access";
 
 export const dynamic = "force-dynamic";
 
@@ -28,15 +29,22 @@ export default async function TenantPracticePage({ params }: { params: Promise<{
     .single();
   if (!company) notFound();
 
-  const [result, overview] = await Promise.all([
+  const [result, overview, access] = await Promise.all([
     loadPracticeLibrary(userId, { kind: "tenant", companyId: company.id }),
     loadLearnerTutorOverview(userId, { kind: "tenant", companyId: company.id }).catch(() => undefined),
+    getCurrentTenantAccess(company.id),
   ]);
   if (!result.ok) redirect(`/academy/${company.slug}`);
 
+  const staffRole = access?.isSuperAdmin
+    ? "super_admin"
+    : access?.isOwner
+    ? "company_admin"
+    : access?.tenantRole ?? null;
+
   return (
     <>
-      <TenantNavbar tenant={company} />
+      <TenantNavbar tenant={company} staffRole={staffRole} />
       <PracticeLibrary
         groups={groupByLanguage(result.items)}
         sessionHref={(id) => `/academy/${company.slug}/practice/${id}`}

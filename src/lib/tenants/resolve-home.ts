@@ -36,7 +36,7 @@ type MembershipRow = {
 export async function resolveHome(userId: string, hintSlug?: string | null): Promise<ResolvedHome> {
   const supabase = createClient();
 
-  const [{ data: profile }, { data: rows }] = await Promise.all([
+  const [{ data: profile }, { data: rows }, { data: ownedCompanies }] = await Promise.all([
     supabase
       .from("profiles")
       .select("role, company_id, onboarding_completed")
@@ -44,17 +44,41 @@ export async function resolveHome(userId: string, hintSlug?: string | null): Pro
       .maybeSingle(),
     supabase
       .from("company_members")
-      .select("company_id, role, companies(slug, name)")
+      .select("company_id, role, companies(slug, name, admin_id)")
       .eq("profile_id", userId)
       .eq("status", "active")
       .order("joined_at", { ascending: false }),
+    supabase
+      .from("companies")
+      .select("id, slug, name")
+      .eq("admin_id", userId)
+      .eq("status", "active"),
   ]);
 
+  const ownedIds = new Set((ownedCompanies ?? []).map((c) => c.id));
+  const seenIds = new Set<string>();
+
   const memberships: HomeMembership[] = ((rows ?? []) as unknown as MembershipRow[]).flatMap((row) => {
-    const company = Array.isArray(row.companies) ? row.companies[0] : row.companies;
+    const company = (Array.isArray(row.companies) ? row.companies[0] : row.companies) as
+      | { slug: string; name: string; admin_id?: string | null }
+      | null;
     if (!company?.slug) return [];
-    return [{ companyId: row.company_id, slug: company.slug, name: company.name, role: row.role }];
+    seenIds.add(row.company_id);
+    const effectiveRole: CompanyMemberRole =
+      ownedIds.has(row.company_id) || company.admin_id === userId ? "company_admin" : row.role;
+    return [{ companyId: row.company_id, slug: company.slug, name: company.name, role: effectiveRole }];
   });
+
+  for (const owned of ownedCompanies ?? []) {
+    if (!owned.slug || seenIds.has(owned.id)) continue;
+    seenIds.add(owned.id);
+    memberships.push({
+      companyId: owned.id,
+      slug: owned.slug,
+      name: owned.name,
+      role: "company_admin",
+    });
+  }
 
   // Legacy fallback: profile.company_id without a membership row.
   if (memberships.length === 0 && profile?.company_id) {

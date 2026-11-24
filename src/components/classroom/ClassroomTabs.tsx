@@ -69,6 +69,7 @@ interface ClassroomTabsProps {
   isAdminOrInstructor: boolean;
   companySlug: string;
   initialTab?: string;
+  initialCohortId?: string;
 }
 
 const VALID_CLASSROOM_TABS = new Set<TabType>([
@@ -101,11 +102,12 @@ export function ClassroomTabs({
   isAdminOrInstructor,
   companySlug,
   initialTab = "overview",
+  initialCohortId,
 }: ClassroomTabsProps) {
   const [activeTab, setActiveTab] = useState<TabType>(() => normalizeClassroomTab(initialTab));
   const [cohorts, setCohorts] = useState<any[]>([]);
   const [courses, setCourses] = useState<any[]>([]);
-  const [activeCohortId, setActiveCohortId] = useState<string>("all");
+  const [activeCohortId, setActiveCohortId] = useState<string>(initialCohortId || "all");
   const [sessionState, setSessionState] = useState<any>({ is_session_active: false, active_room_name: null, active_session_id: null });
   const [announcements, setAnnouncements] = useState<any[]>([]);
   const [assignments, setAssignments] = useState<any[]>([]);

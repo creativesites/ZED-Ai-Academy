@@ -35,7 +35,11 @@ export default async function TenantClassroomLayout({
 
   const access = await getCurrentTenantAccess(company.id);
   const isMember = Boolean(access?.isSuperAdmin || access?.isMember || company.admin_id === userId);
-  const tenantRole = access?.tenantRole || (company.admin_id === userId ? "company_admin" : "");
+  const tenantRole = access?.isSuperAdmin
+    ? "super_admin"
+    : company.admin_id === userId
+    ? "company_admin"
+    : access?.tenantRole || "";
   
   // Students and staff must be members (or platform super admins) to access the classroom
   if (!isMember) {

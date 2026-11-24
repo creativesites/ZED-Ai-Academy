@@ -49,8 +49,9 @@ export async function getCurrentTenantAccess(companyId: string) {
     typedProfile?.role === "super_admin" ||
     (clerkMatchesOrg && activeOrgRole === "org:admin");
 
-  const effectiveRole: CompanyMemberRole | null =
-    typedMember?.role ?? (isOwner ? "company_admin" : clerkRole);
+  const effectiveRole: CompanyMemberRole | null = isOwner
+    ? "company_admin"
+    : (typedMember?.role ?? clerkRole);
 
   return {
     userId,

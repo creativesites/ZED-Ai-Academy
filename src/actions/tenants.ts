@@ -60,9 +60,29 @@ export async function joinTenantBySlug(formData: FormData) {
   redirect(next || `/academy/${company.slug}/classroom`);
 }
 
+const TENANT_ROLE_RANK: Record<CompanyMemberRole, number> = {
+  learner: 1,
+  teacher: 2,
+  instructor: 2,
+  company_admin: 3,
+};
+
+function preserveHigherTenantRole(
+  existingRole: CompanyMemberRole | null | undefined,
+  requestedRole: CompanyMemberRole,
+  isOwner: boolean
+): CompanyMemberRole {
+  if (isOwner) return "company_admin";
+  if (!existingRole) return requestedRole;
+  const existingRank = TENANT_ROLE_RANK[existingRole] ?? 0;
+  const requestedRank = TENANT_ROLE_RANK[requestedRole] ?? 0;
+  return existingRank >= requestedRank ? existingRole : requestedRole;
+}
+
 /**
  * Core utility to ensure a profile and membership exist for a specific tenant.
- * Does NOT overwrite existing high-level roles (admin/instructor).
+ * Never downgrades existing high-level roles (company_admin / teacher / instructor)
+ * or the academy owner (`companies.admin_id`).
  */
 export async function ensureTenantMembership(
   userId: string,
@@ -91,13 +111,36 @@ export async function ensureTenantMembership(
     ?? null;
   const fullName = [clerkUser?.firstName, clerkUser?.lastName].filter(Boolean).join(" ") || clerkUser?.fullName || null;
 
-  const { data: existingProfile } = await supabase
-    .from("profiles")
-    .select("role, company_id")
-    .eq("id", userId)
-    .maybeSingle();
+  const [{ data: existingProfile }, { data: existingMember }, { data: companyRow }] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("role, company_id")
+      .eq("id", userId)
+      .maybeSingle(),
+    supabase
+      .from("company_members")
+      .select("role, joined_at")
+      .eq("company_id", companyId)
+      .eq("profile_id", userId)
+      .maybeSingle(),
+    supabase
+      .from("companies")
+      .select("admin_id")
+      .eq("id", companyId)
+      .maybeSingle(),
+  ]);
 
-  const nextProfileRole = profileRoleForJoin((existingProfile?.role as UserRole | undefined) ?? null, role);
+  const isOwner = Boolean(companyRow?.admin_id && companyRow.admin_id === userId);
+  const effectiveTenantRole = preserveHigherTenantRole(
+    (existingMember?.role as CompanyMemberRole | undefined) ?? null,
+    role,
+    isOwner
+  );
+
+  const nextProfileRole = profileRoleForJoin(
+    (existingProfile?.role as UserRole | undefined) ?? null,
+    effectiveTenantRole
+  );
   
   // Keep existing company_id as default if it exists, otherwise set it.
   const companyIdUpdate = existingProfile?.company_id ? existingProfile.company_id : companyId;
@@ -120,8 +163,8 @@ export async function ensureTenantMembership(
       company_id: companyId,
       profile_id: userId,
       status: "active",
-      role,
-      joined_at: new Date().toISOString(),
+      role: effectiveTenantRole,
+      joined_at: existingMember?.joined_at ?? new Date().toISOString(),
       updated_at: new Date().toISOString(),
     },
     { onConflict: "company_id, profile_id" }
@@ -376,18 +419,25 @@ export async function getUserAcademies(): Promise<UserAcademy[]> {
 
   const results: UserAcademy[] = [];
   const seenIds = new Set<string>();
+  const ownedIds = new Set((ownedCompanies ?? []).map((c) => c.id));
 
   for (const row of (memberRows ?? []) as any[]) {
     const company = (Array.isArray(row.companies) ? row.companies[0] : row.companies) as CompanyRecord | null;
     if (!company?.slug || company.status === "suspended" || seenIds.has(company.id)) continue;
     seenIds.add(company.id);
 
-    const isStaff = row.role === "company_admin" || row.role === "teacher" || row.role === "instructor";
+    const effectiveRole: CompanyMemberRole = ownedIds.has(company.id)
+      ? "company_admin"
+      : (row.role as CompanyMemberRole);
+    const isStaff =
+      effectiveRole === "company_admin" ||
+      effectiveRole === "teacher" ||
+      effectiveRole === "instructor";
     results.push({
       id: company.id,
       name: company.name,
       slug: company.slug,
-      role: row.role as CompanyMemberRole,
+      role: effectiveRole,
       logo_url: company.logo_url,
       primary_color: company.primary_color,
       targetUrl: isStaff ? `/academy/${company.slug}/admin` : `/academy/${company.slug}/classroom`,

@@ -36,7 +36,11 @@ export default async function TenantHomePage({ params }: { params: Promise<{ dom
   // Check tenant-scoped membership & access
   const access = userId ? await getCurrentTenantAccess(tenant.id) : null;
   const isMember = Boolean(access?.isMember || access?.isSuperAdmin || tenant.admin_id === userId);
-  const tenantRole = access?.tenantRole || (tenant.admin_id === userId ? "company_admin" : null);
+  const tenantRole = access?.isSuperAdmin
+    ? "super_admin"
+    : tenant.admin_id === userId
+    ? "company_admin"
+    : access?.tenantRole || null;
 
   // Fetch Admin Profile for Tutor Details
   const { data: adminProfile } = tenant.admin_id

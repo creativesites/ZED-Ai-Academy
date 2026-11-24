@@ -1,9 +1,22 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect } from "react";
 import Link from "next/link";
-import { Bell, BookOpen, Award, Sparkles, Video, Clock, Calendar, X } from "lucide-react";
-import { getNotifications, markAllRead, markRead } from "@/actions/notifications";
+import {
+  Bell,
+  BookOpen,
+  Award,
+  Sparkles,
+  Video,
+  Clock,
+  Calendar,
+  X,
+  Megaphone,
+  FileCheck2,
+} from "lucide-react";
+import { useAuth } from "@clerk/nextjs";
+import { getNotifications, markAllRead } from "@/actions/notifications";
+import { createClient } from "@/lib/supabase/client";
 import type { Notification } from "@/types/database";
 
 const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -13,6 +26,8 @@ const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   live_session: Video,
   live_session_reminder: Clock,
   class_schedule: Calendar,
+  announcement: Megaphone,
+  assignment: FileCheck2,
   default: Bell,
 };
 
@@ -24,14 +39,69 @@ function timeAgo(date: string): string {
   return `${Math.floor(secs / 86400)}d ago`;
 }
 
-export function NotificationBell({ initialNotifications, initialUnread }: {
-  initialNotifications: Notification[];
-  initialUnread: number;
+export function NotificationBell({
+  initialNotifications,
+  initialUnread,
+}: {
+  initialNotifications?: Notification[];
+  initialUnread?: number;
 }) {
+  const { userId } = useAuth();
   const [open, setOpen] = useState(false);
-  const [notifications, setNotifications] = useState(initialNotifications);
-  const [unread, setUnread] = useState(initialUnread);
+  const [notifications, setNotifications] = useState<Notification[]>(
+    initialNotifications ?? []
+  );
+  const [unread, setUnread] = useState<number>(initialUnread ?? 0);
   const [, startTransition] = useTransition();
+
+  // Auto-load on mount when rendered inside client navbars without SSR props
+  useEffect(() => {
+    if (initialNotifications !== undefined) return;
+    let active = true;
+    getNotifications()
+      .then(({ notifications: fresh, unread: u }) => {
+        if (!active) return;
+        setNotifications(fresh);
+        setUnread(u);
+      })
+      .catch(() => null);
+    return () => {
+      active = false;
+    };
+  }, [initialNotifications]);
+
+  // Real-time Supabase subscription for instant incoming notifications
+  useEffect(() => {
+    if (!userId) return;
+    const supabase = createClient();
+    const channel = supabase
+      .channel(`user-notifications-${userId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "notifications",
+          filter: `user_id=eq.${userId}`,
+        },
+        (payload) => {
+          const incoming = payload.new as Notification;
+          if (!incoming?.id) return;
+          setNotifications((prev) => {
+            if (prev.some((n) => n.id === incoming.id)) return prev;
+            return [incoming, ...prev].slice(0, 30);
+          });
+          if (!incoming.read) {
+            setUnread((u) => u + 1);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [userId]);
 
   function toggle() {
     if (!open && unread > 0) {
@@ -53,13 +123,14 @@ export function NotificationBell({ initialNotifications, initialUnread }: {
   return (
     <div className="relative inline-block">
       <button
+        type="button"
         onClick={toggle}
         aria-label="Notifications"
-        className="relative flex items-center justify-center p-2 rounded-full text-[#062e39] hover:bg-[#fff6ee] transition-colors cursor-pointer border-none bg-none"
+        className="relative flex items-center justify-center p-2 rounded-full text-[#062e39] hover:bg-[#fff6ee] transition-colors cursor-pointer border-none bg-transparent"
       >
-        <Bell className="w-[22px] h-[22px]" />
+        <Bell className="w-[20px] h-[20px]" />
         {unread > 0 && (
-          <span className="absolute top-[4px] right-[4px] bg-[#fd5523] text-white rounded-full w-4 h-4 text-[10px] font-bold flex items-center justify-center">
+          <span className="absolute top-[3px] right-[3px] bg-[#fd5523] text-white rounded-full min-w-[16px] h-4 px-1 text-[10px] font-bold flex items-center justify-center">
             {unread > 9 ? "9+" : unread}
           </span>
         )}
@@ -67,71 +138,75 @@ export function NotificationBell({ initialNotifications, initialUnread }: {
 
       {open && (
         <>
-          {/* Backdrop */}
-          <div
-            onClick={() => setOpen(false)}
-            className="fixed inset-0 z-[99]"
-          />
+          <div onClick={() => setOpen(false)} className="fixed inset-0 z-[99]" />
 
-          {/* Dropdown */}
-          <div className="absolute right-[-32px] sm:right-0 top-[calc(100%+8px)] w-[290px] xs:w-[340px] max-h-[480px] overflow-y-auto bg-white border border-slate-100 rounded-[20px] shadow-[0_20px_60px_rgba(6,46,57,0.15)] z-[100] animate-in fade-in slide-in-from-top-1 duration-150">
-            <div className="flex items-center justify-between p-4 border-b border-slate-50">
-              <p style={{ fontWeight: 700, color: "#062e39", fontSize: "14px", margin: 0 }}>Notifications</p>
-              <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+          <div className="absolute right-[-32px] sm:right-0 top-[calc(100%+8px)] w-[300px] sm:w-[350px] max-h-[480px] overflow-y-auto bg-white border border-slate-200/80 rounded-2xl shadow-[0_20px_60px_rgba(6,46,57,0.16)] z-[100] animate-in fade-in slide-in-from-top-1 duration-150">
+            <div className="flex items-center justify-between px-4 py-3.5 border-b border-slate-100 sticky top-0 bg-white/95 backdrop-blur-sm z-10">
+              <p className="font-bold text-[#062e39] text-sm m-0">Notifications</p>
+              <div className="flex items-center gap-2.5">
                 <button
+                  type="button"
                   onClick={refresh}
-                  style={{ background: "none", border: "none", fontSize: "12px", color: "#fd5523", fontWeight: 600, cursor: "pointer" }}
+                  className="text-xs font-bold text-[#fd5523] hover:underline cursor-pointer"
                 >
                   Refresh
                 </button>
                 <button
+                  type="button"
                   onClick={() => setOpen(false)}
-                  style={{ background: "none", border: "none", cursor: "pointer", color: "#999", display: "flex" }}
+                  className="text-slate-400 hover:text-slate-700 cursor-pointer"
+                  aria-label="Close notifications"
                 >
-                  <X style={{ width: "16px", height: "16px" }} />
+                  <X className="w-4 h-4" />
                 </button>
               </div>
             </div>
 
             {notifications.length === 0 ? (
-              <div style={{ padding: "40px 20px", textAlign: "center", color: "#bbb" }}>
-                <Bell style={{ width: "28px", height: "28px", margin: "0 auto 12px", display: "block" }} />
-                <p style={{ fontSize: "14px", margin: 0 }}>No notifications yet.</p>
+              <div className="py-10 px-5 text-center text-slate-400">
+                <Bell className="w-7 h-7 mx-auto mb-2.5 opacity-40" />
+                <p className="text-xs font-medium m-0">You&apos;re all caught up.</p>
               </div>
             ) : (
               <div>
                 {notifications.map((n) => {
                   const Icon = ICONS[n.type] ?? ICONS.default;
+                  const dataObj = (n.data || {}) as Record<string, any>;
                   const targetUrl =
-                    (n.data as any)?.url ||
-                    ((n.data as any)?.company_slug ? `/academy/${(n.data as any).company_slug}/classroom` : null);
+                    dataObj.url ||
+                    (dataObj.company_slug
+                      ? `/academy/${dataObj.company_slug}/classroom`
+                      : null);
 
-                  const content = (
+                  const row = (
                     <div
                       key={n.id}
-                      style={{
-                        display: "flex", gap: "12px", padding: "14px 20px",
-                        borderBottom: "1px solid #f9f9f9",
-                        background: n.read ? "#fff" : "#fffbf8",
-                        cursor: targetUrl ? "pointer" : "default",
-                      }}
+                      className={`flex gap-3 px-4 py-3.5 border-b border-slate-50 transition-colors ${
+                        n.read ? "bg-white" : "bg-[#fffaf6]"
+                      } ${targetUrl ? "hover:bg-slate-50 cursor-pointer" : ""}`}
                     >
-                      <div style={{
-                        width: "36px", height: "36px", borderRadius: "12px",
-                        background: "#fff2e9", display: "flex", alignItems: "center",
-                        justifyContent: "center", flexShrink: 0, color: "#fd5523",
-                      }}>
+                      <div className="w-9 h-9 rounded-xl bg-[#fff2e9] text-[#fd5523] flex items-center justify-center shrink-0">
                         <Icon className="h-4 w-4" />
                       </div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <p style={{ fontWeight: n.read ? 500 : 700, color: "#062e39", fontSize: "13px", margin: "0 0 3px" }}>
+                      <div className="flex-1 min-w-0">
+                        <p
+                          className={`text-xs text-[#062e39] m-0 mb-0.5 leading-snug ${
+                            n.read ? "font-semibold" : "font-bold"
+                          }`}
+                        >
                           {n.title}
                         </p>
-                        {n.body && <p style={{ color: "#888", fontSize: "12px", margin: 0, lineHeight: 1.5 }}>{n.body}</p>}
-                        <p style={{ color: "#bbb", fontSize: "11px", margin: "4px 0 0" }}>{timeAgo(n.created_at)}</p>
+                        {n.body && (
+                          <p className="text-[11px] text-slate-500 m-0 leading-relaxed line-clamp-2">
+                            {n.body}
+                          </p>
+                        )}
+                        <p className="text-[10px] text-slate-400 m-0 mt-1">
+                          {timeAgo(n.created_at)}
+                        </p>
                       </div>
                       {!n.read && (
-                        <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#fd5523", flexShrink: 0, marginTop: "4px" }} />
+                        <div className="w-2 h-2 rounded-full bg-[#fd5523] shrink-0 mt-1.5" />
                       )}
                     </div>
                   );
@@ -142,14 +217,14 @@ export function NotificationBell({ initialNotifications, initialUnread }: {
                         key={n.id}
                         href={targetUrl}
                         onClick={() => setOpen(false)}
-                        className="block hover:bg-slate-50 transition-colors"
+                        className="block"
                       >
-                        {content}
+                        {row}
                       </Link>
                     );
                   }
 
-                  return content;
+                  return row;
                 })}
               </div>
             )}

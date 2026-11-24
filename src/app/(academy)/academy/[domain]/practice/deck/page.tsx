@@ -5,6 +5,7 @@ import { TenantNavbar } from "@/components/tenant/TenantNavbar";
 import { VocabDeckReview } from "@/components/tutor/practice/VocabDeckReview";
 import { createClient } from "@/lib/supabase/server";
 import { loadLearnerDeck } from "@/lib/tutor/server/learner-overview";
+import { getCurrentTenantAccess } from "@/lib/tenants/access";
 
 export const dynamic = "force-dynamic";
 
@@ -30,12 +31,21 @@ export default async function TenantPracticeDeckPage({
     .single();
   if (!company) notFound();
 
-  const cards = await loadLearnerDeck(userId, company.id).catch(() => []);
+  const [cards, access] = await Promise.all([
+    loadLearnerDeck(userId, company.id).catch(() => []),
+    getCurrentTenantAccess(company.id),
+  ]);
+
+  const staffRole = access?.isSuperAdmin
+    ? "super_admin"
+    : access?.isOwner
+    ? "company_admin"
+    : access?.tenantRole ?? null;
 
   return (
     <>
       <Toaster />
-      <TenantNavbar tenant={company} />
+      <TenantNavbar tenant={company} staffRole={staffRole} />
       <VocabDeckReview
         initialCards={cards}
         companyId={company.id}
