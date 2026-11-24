@@ -12,6 +12,7 @@ import { generateTurnJson, synthesizeCachedSpeech, transcribeLearnerAudio } from
 import { buildSystemPrompt } from "@/lib/tutor/server/prompt";
 import { fallbackLanguageFor, runTutorTurn } from "@/lib/tutor/server/turn-pipeline";
 import { recordUsage } from "@/lib/tutor/server/usage";
+import { assertTenantRefs, tenantRefErrorResponse } from "@/lib/tenants/tenant-refs-server";
 import {
   PREVIEW_MAX_LEARNER_CHARS,
   previewHistoryToTurns,
@@ -162,6 +163,19 @@ export async function POST(req: NextRequest) {
   if (!authResult.allowed) return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
 
   const companyId = authResult.companyId;
+  try {
+    // The flow payload comes from the client: its lesson and persona must belong to the authorised tenant
+    // (and the lesson to the flow's course), or this route would read another academy's content.
+    await assertTenantRefs(companyId, {
+      courseId: body.flow.courseId ?? null,
+      lessonId: body.flow.lessonId ?? null,
+      personaId: body.flow.personaId ?? null,
+    });
+  } catch (err) {
+    const denied = tenantRefErrorResponse(err);
+    if (denied) return denied;
+    throw err;
+  }
   const learnerTurn = body.audio !== undefined || body.text !== null;
   const limitReason = previewLimitReason({
     history: body.history,

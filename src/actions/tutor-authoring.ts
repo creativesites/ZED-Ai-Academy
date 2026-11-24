@@ -6,6 +6,8 @@ import { z } from "zod";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { assertCanManageCourse, assertCanManageLesson } from "@/lib/courses/course-auth-server";
 import { ZEDAI_TENANT_ID } from "@/lib/tenants/constants";
+import { courseTenantId } from "@/lib/tenants/tenant-refs";
+import { assertTenantRefs } from "@/lib/tenants/tenant-refs-server";
 import {
   FACE_STYLES,
   HAIR_STYLES,
@@ -657,6 +659,7 @@ export async function createFixItFlowFromMisconception(
 
   const parsed = fixItSchema.parse(input);
   await assertTenantStaff(parsed.companyId, userId);
+  await assertTenantRefs(parsed.companyId, { courseId: parsed.courseId ?? null });
 
   const db = createServiceClient();
   const { data: personaRow } = await db
@@ -795,12 +798,35 @@ export async function upsertScenario(input: UpsertScenarioInput): Promise<Scenar
 
   const parsed = scenarioInputSchema.parse(input);
 
-  // Authorize via course ownership if courseId is given, otherwise tenant staff check.
+  // Authorize via course ownership if courseId is given, otherwise tenant staff check. The tenant is
+  // derived from the course, never taken from the client, so a course manager cannot write into
+  // another academy by passing its companyId.
+  let companyId = parsed.companyId;
   if (parsed.courseId) {
     const supabase = createClient();
-    await assertCanManageCourse(supabase, parsed.courseId, userId);
+    const course = await assertCanManageCourse(supabase, parsed.courseId, userId);
+    companyId = courseTenantId(course.company_id, ZEDAI_TENANT_ID);
   } else {
-    await assertTenantStaff(parsed.companyId, userId);
+    await assertTenantStaff(companyId, userId);
+  }
+  await assertTenantRefs(companyId, {
+    courseId: parsed.courseId ?? null,
+    lessonId: parsed.lessonId ?? null,
+    personaId: parsed.personaId ?? null,
+  });
+
+  if (parsed.id && parsed.courseId) {
+    // Course managers may only edit flows of their own course; other tenant flows need tenant staff.
+    const { data: existing } = await createServiceClient()
+      .from("practice_scenarios")
+      .select("course_id")
+      .eq("id", parsed.id)
+      .eq("company_id", companyId)
+      .maybeSingle();
+    if (!existing) throw new Error("Scenario not found");
+    if (existing.course_id && existing.course_id !== parsed.courseId) {
+      await assertTenantStaff(companyId, userId);
+    }
   }
 
   // Only super admins can publish platform-wide scenarios.
@@ -841,7 +867,7 @@ export async function upsertScenario(input: UpsertScenarioInput): Promise<Scenar
       .from("practice_scenarios")
       .update(updatePayload)
       .eq("id", parsed.id)
-      .eq("company_id", parsed.companyId)
+      .eq("company_id", companyId)
       .select(SCENARIO_FULL_SELECT)
       .single();
     data = res.data;
@@ -851,7 +877,7 @@ export async function upsertScenario(input: UpsertScenarioInput): Promise<Scenar
       .from("practice_scenarios")
       .insert({
         ...updatePayload,
-        company_id: parsed.companyId,
+        company_id: companyId,
         created_by: userId,
       })
       .select(SCENARIO_FULL_SELECT)
@@ -1077,7 +1103,12 @@ export async function updateCourseVivaConfig(input: {
     })
     .parse(input);
 
-  await assertCanManageCourse(createClient(), parsed.courseId, userId);
+  const course = await assertCanManageCourse(createClient(), parsed.courseId, userId);
+  if (parsed.vivaScenarioId) {
+    await assertTenantRefs(courseTenantId(course.company_id, ZEDAI_TENANT_ID), {
+      scenarioId: parsed.vivaScenarioId,
+    });
+  }
 
   const db = createServiceClient();
   const loose = db as unknown as {
@@ -1579,6 +1610,7 @@ export async function createTutorAssignment(input: {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
   await assertTenantStaff(input.companyId, userId);
+  await assertTenantRefs(input.companyId, { scenarioId: input.scenarioId, groupId: input.groupId || null });
 
   const db = createServiceClient();
   const { data, error } = await db
@@ -1883,6 +1915,7 @@ export async function upsertTeacherMoment(input: UpsertTeacherMomentInput): Prom
     .eq("id", parsed.courseId)
     .single();
   const companyId = course?.company_id ?? ZEDAI_TENANT_ID;
+  await assertTenantRefs(companyId, { scenarioId: parsed.scenarioId });
 
   const payload = {
     company_id: companyId,

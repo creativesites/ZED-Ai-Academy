@@ -29,6 +29,7 @@ import {
 import { AUTHORING_TEMPLATE_IDS, getAuthoringTemplate } from "@/lib/tutor/authoring/templates";
 import { parseTutorSessionBlock, sceneFromValue } from "@/lib/tutor/tutor-session-block";
 import type { Json } from "@/types/database";
+import { assertTenantRefs, tenantRefErrorResponse } from "@/lib/tenants/tenant-refs-server";
 
 const bodySchema = z.object({
   courseId: z.string().uuid(),
@@ -219,6 +220,13 @@ export async function POST(req: NextRequest) {
       { requestedLessonIds: lessonIds, maxBatch },
     );
 
+    try {
+      await assertTenantRefs(baseCtx.course.company_id, { personaId: personaId ?? null });
+    } catch (err) {
+      const denied = tenantRefErrorResponse(err);
+      if (denied) return denied;
+      throw err;
+    }
     const chosenPersonaId = personaId ?? baseCtx.defaultPersonaId;
     let teacherName = baseCtx.defaultTeacherName;
     let personaDefaultScene = null;

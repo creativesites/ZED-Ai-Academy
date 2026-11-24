@@ -13,6 +13,7 @@ import { lessonObjectiveSchema, summarizeLessonMaterial } from "@/lib/tutor/auth
 import { AUTHORING_TEMPLATE_IDS, getAuthoringTemplate } from "@/lib/tutor/authoring/templates";
 import { generateAuthoringJson, loadLessonAuthoringContext } from "@/lib/tutor/authoring/server";
 import { sceneFromValue } from "@/lib/tutor/tutor-session-block";
+import { assertTenantRefs, tenantRefErrorResponse } from "@/lib/tenants/tenant-refs-server";
 
 const bodySchema = z.object({
   courseId: z.string().uuid(),
@@ -44,6 +45,13 @@ export async function POST(req: NextRequest) {
       lessonId: parsed.data.lessonId,
     });
 
+    try {
+      await assertTenantRefs(ctx.course.company_id, { personaId: parsed.data.personaId ?? null });
+    } catch (err) {
+      const denied = tenantRefErrorResponse(err);
+      if (denied) return denied;
+      throw err;
+    }
     const personaId = parsed.data.personaId ?? ctx.defaultPersonaId;
     let teacherName = ctx.defaultTeacherName;
     let personaDefaultScene = null;

@@ -13,6 +13,7 @@ import { generateAuthoringJson, loadLessonAuthoringContext } from "@/lib/tutor/a
 import { isSchemaUnavailableError } from "@/lib/tutor/mastery/server";
 import { buildCourseVivaPrompt } from "@/lib/tutor/viva";
 import type { Json } from "@/types/database";
+import { assertTenantRefs, tenantRefErrorResponse } from "@/lib/tenants/tenant-refs-server";
 
 const bodySchema = z.object({
   courseId: z.string().uuid(),
@@ -37,6 +38,13 @@ export async function POST(req: NextRequest) {
       userId,
       courseId: parsed.data.courseId,
     });
+    try {
+      await assertTenantRefs(baseCtx.course.company_id, { personaId: parsed.data.personaId ?? null });
+    } catch (err) {
+      const denied = tenantRefErrorResponse(err);
+      if (denied) return denied;
+      throw err;
+    }
     const personaId = parsed.data.personaId ?? baseCtx.defaultPersonaId;
     let teacherName = baseCtx.defaultTeacherName;
     if (personaId) {
