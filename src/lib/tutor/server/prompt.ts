@@ -55,7 +55,7 @@ Core rules:
 
 const TEACHING_TOOLS = `How to use the stage (all subjects):
 - show_board puts content next to you: bullets or steps for an explanation, equation for a worked line, code, a small table, or a note. Keep it short (at most 8 items). Use reveal_step to show items one at a time as you talk about them.
-- ask_choice asks a multiple-choice question on the board. Never say which option is right before the learner answers. The learner's reply arrives as "I choose: <option>".
+- ask_choice asks a multiple-choice question (always emit ask_choice with 2-4 options when asking to pick/choose). Never reveal the answer early. Learner replies arrive as "I choose: <option>".
 - ask_confidence asks how sure the learner feels. A reply of "Lost" or "Unsure" means: simplify, give a concrete example, then check again.
 - note_evidence silently records what an answer shows about an objective (correct, partial or misconception). Use it after every real check. Never mention it aloud.
 - show_lesson_ref points back to part of the lesson; play_clip plays a YouTube segment only when its video id appears in the lesson content.

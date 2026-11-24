@@ -1,11 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { ArrowLeft, Gauge, Sparkles, Volume1, Volume2, VolumeX, Wifi } from "lucide-react";
 import type { AvatarDriver } from "@/components/tutor/avatar/types";
 import type { TeacherStageHandle } from "@/components/tutor/avatar/TeacherStage";
 import type { TeacherEngine } from "@/components/tutor/avatar/Teacher";
 import type { AvatarEvent, PersonaLook } from "@/components/tutor/avatar/types";
-import { EventPlayer, type CardItem, type ClipEvent, type LessonRefEvent, type PlayerUI } from "@/components/tutor/EventPlayer";
+import { EventPlayer, type CardItem, type ClipEvent, type LessonRefEvent, type PlayerUI, type SaySpeechEvent } from "@/components/tutor/EventPlayer";
 import { boardFromEvent, choiceReply, revealBoard, type BoardState, type ConfidenceLevel } from "@/lib/tutor/board";
 import type { TutorEvent } from "@/lib/tutor/events";
 import { SCENE_ARTBOARDS, type SceneArtboard } from "@/lib/tutor/rive-driver";
@@ -13,6 +14,7 @@ import { tutorErrorMessage } from "@/lib/tutor/client-errors";
 import type { TutorReportContent } from "@/lib/tutor/report-model";
 import { shouldSendRecording } from "@/lib/tutor/recording";
 import { MAX_SPEAKING_MS, SpeakingTimeAccumulator } from "@/lib/tutor/speaking-time";
+import { deriveTurnInteraction } from "@/lib/tutor/turn-interaction";
 import { personaLookFromVariant } from "@/lib/tutor/tutor-session-block";
 import {
   detectMicPermission,
@@ -133,6 +135,11 @@ export function TutorSession({
   const [elapsedMs, setElapsedMs] = useState(0);
   const [soundBlocked, setSoundBlocked] = useState(false);
   const [muted, setMuted] = useState(false);
+  const [volume, setVolume] = useState(1);
+  const [audioMenuOpen, setAudioMenuOpen] = useState(false);
+  const [playbackRate, setPlaybackRate] = useState<0.85 | 1 | 1.15>(1);
+  const [turnCount, setTurnCount] = useState(0);
+  const [hasReplayLine, setHasReplayLine] = useState(false);
   const [avatarMode, setAvatarMode] = useState<"rive" | "three">(
     engine === "three" || look?.engine === "three" ? "three" : "rive",
   );
@@ -145,6 +152,7 @@ export function TutorSession({
   const playerRef = useRef<EventPlayer | null>(null);
   const audioRef = useRef<TeacherAudio | null>(null);
   const recorderRef = useRef<LearnerRecorder | null>(null);
+  const lastSayEventRef = useRef<SaySpeechEvent | null>(null);
   const sessionIdRef = useRef<string | null>(null);
   const modeRef = useRef<InputMode>("voice");
   const phaseRef = useRef<Phase>("intro");
@@ -243,6 +251,11 @@ export function TutorSession({
   const speakEvents = useCallback(async (events: readonly TutorEvent[]) => {
     const player = playerRef.current;
     if (!player || events.length === 0) return;
+    const lastSay = [...events].reverse().find((ev): ev is SaySpeechEvent => ev.type === "say");
+    if (lastSay) {
+      lastSayEventRef.current = lastSay;
+      setHasReplayLine(true);
+    }
     const seq = ++speakSeqRef.current;
     setTeacherSpeaking(true);
     try {
@@ -297,6 +310,7 @@ export function TutorSession({
       audioRef.current?.stopPlayback();
       setTeacherSpeaking(false);
       setListenHint(null);
+      setChoice(null);
       setConfidence(null);
       setError(null);
       setThinking(true);
@@ -327,6 +341,7 @@ export function TutorSession({
       }
 
       turnsRef.current += 1;
+      setTurnCount(turnsRef.current);
       if (res.data.learnerText) setLastSaid(res.data.learnerText);
       if (res.data.ended) pendingEndRef.current = true;
       await speakEvents(res.data.events);
@@ -463,6 +478,9 @@ export function TutorSession({
     learnerTimeRef.current = new SpeakingTimeAccumulator();
     teacherBaseRef.current = audioRef.current?.getPlayedMs() ?? 0;
     turnsRef.current = 0;
+    setTurnCount(0);
+    lastSayEventRef.current = null;
+    setHasReplayLine(false);
     wordsRef.current = [];
     endingRef.current = false;
     pendingEndRef.current = false;
@@ -529,6 +547,38 @@ export function TutorSession({
     audioRef.current?.setMuted(next);
     setMuted(next);
   };
+
+  const handleVolumeChange = (next: number) => {
+    const clamped = Math.max(0, Math.min(1, next));
+    setVolume(clamped);
+    audioRef.current?.setVolume(clamped);
+    if (clamped === 0 && !muted) {
+      audioRef.current?.setMuted(true);
+      setMuted(true);
+    } else if (clamped > 0 && muted) {
+      audioRef.current?.setMuted(false);
+      setMuted(false);
+    }
+  };
+
+  const cyclePlaybackRate = () => {
+    const next: 0.85 | 1 | 1.15 = playbackRate === 1 ? 0.85 : playbackRate === 0.85 ? 1.15 : 1;
+    setPlaybackRate(next);
+    audioRef.current?.setPlaybackRate(next);
+  };
+
+  const handleReplayLast = useCallback(() => {
+    const lastSay = lastSayEventRef.current;
+    if (!lastSay || thinking || recording || phaseRef.current !== "live") return;
+    audioRef.current?.unlock();
+    if (muted) {
+      audioRef.current?.setMuted(false);
+      setMuted(false);
+    }
+    playerRef.current?.stop();
+    audioRef.current?.stopPlayback();
+    void speakEvents([lastSay]);
+  }, [muted, recording, speakEvents, thinking]);
 
   const enableSound = () => {
     audioRef.current?.unlock();
@@ -629,55 +679,211 @@ export function TutorSession({
   const canTalk = phase === "live" && mode === "voice" && !thinking && !micBlocked && !ending;
   const canType = phase === "live" && !thinking && !ending;
 
-  const hasBoard = Boolean(board || choice || confidence || lessonRefs.length || clip || award);
+  const interaction = deriveTurnInteraction({
+    choice,
+    confidence,
+    board,
+    caption,
+    listenHint,
+    turnCount,
+  });
+
+  // TeachingBoard displays board content, clips, awards, and lesson references;
+  // interactive choice & confidence controls live directly in the sticky bottom dock (no scrolling needed).
+  const hasBoardContent = Boolean(board || lessonRefs.length || clip || award);
 
   return (
-    <div className={`${styles.room} flex min-h-[100dvh] flex-col`}>
+    <div className={`${styles.room} flex ${client ? "h-[min(86dvh,760px)]" : "h-[100dvh]"} flex-col overflow-hidden`}>
       {!lite && <SceneBackdrop scene={activeScene} className="absolute inset-0 h-full w-full" />}
-      <div
-        className={`relative z-10 mx-auto flex w-full flex-1 flex-col gap-3 px-3 pb-[max(16px,env(safe-area-inset-bottom))] pt-[max(12px,env(safe-area-inset-top))] sm:px-4 ${
-          hasBoard
-            ? "max-w-[640px] lg:grid lg:max-w-[1160px] lg:grid-cols-[minmax(0,560px)_minmax(0,1fr)] lg:items-start lg:gap-5"
-            : "max-w-[640px]"
-        }`}
-      >
-        <div className={lite ? "mx-auto w-full max-w-[420px] lg:col-start-1 lg:row-start-1" : "lg:col-start-1 lg:row-start-1"}>
-          <SpeakingStage
-            avatarRef={avatarRef}
-            onAvatarEvent={avatarEvent}
-            reducedMotion={reducedMotion}
-            engine={lite ? "placeholder" : engine === "placeholder" ? "placeholder" : avatarMode}
-            scene={activeScene}
-            look={activeLook}
-            teacherName={teacherName}
-            sceneTitle={sceneTitle}
-            modeLabel={`${mode === "voice" ? "Voice" : "Tap / Type"}${avatarMode === "three" && !lite ? " · 3D" : ""}${lite ? " · Lite" : ""}`}
-            caption={caption}
-            card={card}
-            onDismissCard={() => setCard(null)}
-            whiteboard={whiteboard}
-          />
+
+      {/* Sticky Slim Top Session HUD — Audio, Volume, Speed, 3D, Lite, End always 1 tap away */}
+      <header className="relative z-20 flex shrink-0 items-center justify-between gap-2 border-b border-[var(--line)] bg-white/85 px-2.5 pb-2 pt-[max(0.5rem,env(safe-area-inset-top))] backdrop-blur-md sm:px-4">
+        <div className="flex min-w-0 items-center gap-2">
+          {doneHref && (
+            <a
+              href={doneHref}
+              aria-label="Leave session"
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[var(--line-strong)] bg-white text-[var(--ink)] transition hover:bg-[var(--soft-hover)]"
+            >
+              <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+            </a>
+          )}
+          <div className="min-w-0">
+            <p className="truncate text-xs font-bold text-[var(--ink)] sm:text-sm">{sceneTitle}</p>
+            <div className="flex items-center gap-1.5 text-[10px] font-semibold text-[var(--ink-dim)]">
+              <span className="inline-flex items-center gap-0.5 text-[#fd5523]">
+                <Sparkles className="h-2.5 w-2.5" aria-hidden="true" />
+                Turn {turnCount + 1}
+              </span>
+              <span>·</span>
+              <span>{maxMinutes}m</span>
+            </div>
+          </div>
         </div>
 
-        {hasBoard && (
-          <div className="lg:col-start-2 lg:row-span-2 lg:row-start-1">
-            <TeachingBoard
-              board={board}
-              choice={choice}
-              confidence={confidence}
-              lessonRefs={lessonRefs}
-              clip={clip}
-              award={award}
-              lite={lite}
-              disabled={thinking || phase !== "live"}
-              onChoose={handleChoose}
-              onConfidence={handleConfidence}
-              onDismissAward={() => setAward(null)}
+        <div className="flex shrink-0 items-center gap-1 sm:gap-1.5">
+          {/* Speed toggle (0.85x / 1x / 1.15x) */}
+          <button
+            type="button"
+            onClick={cyclePlaybackRate}
+            title="Teacher speaking speed"
+            aria-label={`Speaking speed ${playbackRate}x. Tap to change.`}
+            className="inline-flex h-8 items-center gap-1 rounded-full border border-[var(--line-strong)] bg-white px-2 text-[11px] font-bold text-[var(--ink)] transition hover:bg-[var(--soft-hover)] sm:px-2.5"
+          >
+            <Gauge className="h-3.5 w-3.5 text-[#fd5523]" aria-hidden="true" />
+            <span>{playbackRate === 1 ? "1×" : `${playbackRate}×`}</span>
+          </button>
+
+          {/* Mute + Volume slider (inline on sm+, popover on mobile) */}
+          <div className="relative flex h-8 items-center gap-1 rounded-full border border-[var(--line-strong)] bg-white px-2">
+            <button
+              type="button"
+              onClick={toggleMute}
+              aria-pressed={muted}
+              aria-label={muted ? `Unmute ${teacherName}` : `Mute ${teacherName}`}
+              className="flex h-6 w-6 items-center justify-center rounded-full text-[var(--ink)] transition hover:bg-[var(--soft-hover)]"
+            >
+              {muted || volume === 0 ? (
+                <VolumeX className="h-3.5 w-3.5 text-rose-600" aria-hidden="true" />
+              ) : volume < 0.5 ? (
+                <Volume1 className="h-3.5 w-3.5 text-[var(--ink)]" aria-hidden="true" />
+              ) : (
+                <Volume2 className="h-3.5 w-3.5 text-[var(--ink)]" aria-hidden="true" />
+              )}
+            </button>
+            <input
+              type="range"
+              min={0}
+              max={1}
+              step={0.05}
+              value={muted ? 0 : volume}
+              onChange={(e) => handleVolumeChange(Number(e.target.value))}
+              aria-label="Teacher volume"
+              className="hidden h-1.5 w-16 cursor-pointer accent-[#fd5523] sm:block"
+            />
+            <button
+              type="button"
+              onClick={() => setAudioMenuOpen((o) => !o)}
+              aria-expanded={audioMenuOpen}
+              aria-label="Adjust volume"
+              className="text-[10px] font-bold text-[var(--ink-dim)] sm:hidden"
+            >
+              {muted ? "0%" : `${Math.round(volume * 100)}%`}
+            </button>
+            {audioMenuOpen && (
+              <div className="absolute right-0 top-10 z-30 flex w-44 items-center gap-2 rounded-2xl border border-[var(--line-strong)] bg-white p-2.5 shadow-xl sm:hidden">
+                <Volume1 className="h-3.5 w-3.5 shrink-0 text-[var(--ink-dim)]" aria-hidden="true" />
+                <input
+                  type="range"
+                  min={0}
+                  max={1}
+                  step={0.05}
+                  value={muted ? 0 : volume}
+                  onChange={(e) => handleVolumeChange(Number(e.target.value))}
+                  aria-label="Teacher volume"
+                  className="h-1.5 flex-1 cursor-pointer accent-[#fd5523]"
+                />
+                <Volume2 className="h-3.5 w-3.5 shrink-0 text-[var(--ink)]" aria-hidden="true" />
+              </div>
+            )}
+          </div>
+
+          {/* 3D / 2D Avatar toggle */}
+          {!lite && (
+            <button
+              type="button"
+              onClick={() => setAvatarMode((m) => (m === "three" ? "rive" : "three"))}
+              title="Switch between 3D WebGL and 2D animated teacher"
+              className={`h-8 rounded-full border px-2.5 text-[11px] font-bold transition ${
+                avatarMode === "three"
+                  ? "border-[#fd5523]/40 bg-[#fff2e9] text-[#c83a10]"
+                  : "border-[var(--line-strong)] bg-white text-[var(--ink)] hover:bg-[var(--soft-hover)]"
+              }`}
+            >
+              {avatarMode === "three" ? "3D On" : "3D"}
+            </button>
+          )}
+
+          {/* Lite (Data Saver) toggle */}
+          <button
+            type="button"
+            onClick={toggleLite}
+            aria-pressed={lite}
+            title={lite ? "Switch to full animated stage" : "Enable data saver (Lite)"}
+            className={`hidden h-8 items-center gap-1 rounded-full border px-2.5 text-[11px] font-semibold transition sm:inline-flex ${
+              lite
+                ? "border-emerald-300 bg-emerald-50 text-emerald-800"
+                : "border-[var(--line-strong)] bg-white text-[var(--ink-dim)] hover:bg-[var(--soft-hover)]"
+            }`}
+          >
+            <Wifi className="h-3 w-3" aria-hidden="true" />
+            {lite ? "Lite" : "HD"}
+          </button>
+
+          {/* End session */}
+          <button
+            type="button"
+            onClick={endFromButton}
+            disabled={ending}
+            className="h-8 rounded-full border border-[var(--line-strong)] bg-white px-3 text-xs font-bold text-[var(--ink)] transition hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700 disabled:opacity-50"
+          >
+            {ending ? "Saving..." : "End"}
+          </button>
+        </div>
+      </header>
+
+      {/* Middle Scrollable Stage + Teaching Board */}
+      <main className="relative z-10 min-h-0 flex-1 overflow-y-auto overscroll-contain px-2.5 py-2 sm:px-4 sm:py-3">
+        <div
+          className={`mx-auto flex w-full flex-col gap-2.5 ${
+            hasBoardContent
+              ? "max-w-[640px] lg:grid lg:max-w-[1140px] lg:grid-cols-[minmax(0,540px)_minmax(0,1fr)] lg:items-start lg:gap-4"
+              : "max-w-[580px]"
+          }`}
+        >
+          <div className={lite ? "mx-auto w-full max-w-[420px]" : "w-full"}>
+            <SpeakingStage
+              avatarRef={avatarRef}
+              onAvatarEvent={avatarEvent}
+              reducedMotion={reducedMotion}
+              engine={lite ? "placeholder" : engine === "placeholder" ? "placeholder" : avatarMode}
+              scene={activeScene}
+              look={activeLook}
+              teacherName={teacherName}
+              sceneTitle={sceneTitle}
+              modeLabel={`${mode === "voice" ? "Voice" : "Tap / Type"}${avatarMode === "three" && !lite ? " · 3D" : ""}${lite ? " · Lite" : ""}`}
+              caption={caption}
+              card={card}
+              onDismissCard={() => setCard(null)}
+              whiteboard={whiteboard}
+              canReplay={hasReplayLine && !thinking && !recording}
+              onReplay={handleReplayLast}
             />
           </div>
-        )}
 
-        <div className={`${styles.glass} rounded-2xl p-3 sm:rounded-[24px] sm:p-4 lg:col-start-1 lg:row-start-2`}>
+          {hasBoardContent && (
+            <div className="w-full">
+              <TeachingBoard
+                board={board}
+                choice={null}
+                confidence={null}
+                lessonRefs={lessonRefs}
+                clip={clip}
+                award={award}
+                lite={lite}
+                disabled={thinking || phase !== "live"}
+                onChoose={handleChoose}
+                onConfidence={handleConfidence}
+                onDismissAward={() => setAward(null)}
+              />
+            </div>
+          )}
+        </div>
+      </main>
+
+      {/* Bottom Sticky Dynamic Action Dock — NEVER requires scrolling to access */}
+      <footer className="relative z-20 shrink-0 border-t border-[var(--line)] bg-white/92 px-3 pb-[max(10px,env(safe-area-inset-bottom))] pt-2.5 shadow-[0_-8px_28px_rgba(6,46,57,0.08)] backdrop-blur-md sm:px-4">
+        <div className="mx-auto w-full max-w-[760px]">
           <Composer
             mode={mode}
             modes={modes}
@@ -694,45 +900,29 @@ export function TutorSession({
             onHoldStart={holdStart}
             onHoldEnd={holdEnd}
             onSendText={handleSendText}
-            onEnd={endFromButton}
-            ending={ending}
             error={error}
             soundBlocked={soundBlocked}
             onEnableSound={enableSound}
-            muted={muted}
-            onToggleMute={toggleMute}
             teacherName={teacherName}
-            avatarMode={lite ? undefined : avatarMode}
-            onToggleAvatarMode={
-              lite ? undefined : () => setAvatarMode((m) => (m === "three" ? "rive" : "three"))
-            }
+            activeChoice={interaction.activeChoice}
+            showConfidence={interaction.showConfidence}
+            confidencePrompt={confidence?.prompt}
+            preferTextInput={interaction.preferTextInput}
+            quickActions={interaction.quickActions}
+            onChoose={handleChoose}
+            onConfidence={handleConfidence}
           />
           {ending && error && (
             <button
               type="button"
               onClick={() => void finalize(turnsRef.current > 0 ? "completed" : "abandoned")}
-              className={`${styles.primaryButton} mt-3 w-full rounded-2xl px-5 py-3 text-sm font-bold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus)]`}
+              className={`${styles.primaryButton} mt-2 w-full rounded-xl px-4 py-2.5 text-sm font-bold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus)]`}
             >
               Try again
             </button>
           )}
-          <p className="mt-3 text-center text-[11px] text-[var(--ink-faint)]">
-            {goal ? `Goal: ${goal}` : null}
-            {goal ? " · " : null}
-            Up to {maxMinutes} min
-          </p>
-          <div className="mt-2 flex justify-center">
-            <button
-              type="button"
-              onClick={toggleLite}
-              aria-pressed={lite}
-              className="rounded-full border border-[var(--line-strong)] bg-white/80 px-3 py-1.5 text-[12px] font-semibold text-[var(--ink-dim)] hover:bg-[var(--soft-hover)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus)]"
-            >
-              {lite ? "Data saver on · switch to full stage" : "Use data saver (Lite)"}
-            </button>
-          </div>
         </div>
-      </div>
+      </footer>
     </div>
   );
 }

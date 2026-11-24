@@ -41,6 +41,8 @@ export class TeacherAudio {
   private blockedListeners = new Set<(blocked: boolean) => void>();
   private blocked = false;
   private muted = false;
+  private volume = 1;
+  private playbackRate = 1;
   private language: string | null = null;
   private synthPrimed = false;
   /** Set when the element was routed through a context that would not run. Plays direct from then on. */
@@ -101,7 +103,30 @@ export class TeacherAudio {
   /** Mute stops the current line. Muted lines fall back to captions with a moving mouth. */
   setMuted(next: boolean): void {
     this.muted = next;
+    if (this.element) this.element.muted = next;
     if (next) this.stopPlayback();
+  }
+
+  /** Sets output volume (0..1). Live-updates the active audio element when playing. */
+  setVolume(next: number): void {
+    const clamped = Math.max(0, Math.min(1, Number.isFinite(next) ? next : 1));
+    this.volume = clamped;
+    if (this.element) this.element.volume = clamped;
+  }
+
+  getVolume(): number {
+    return this.volume;
+  }
+
+  /** Sets teacher speech speed multiplier (0.75..1.35). */
+  setPlaybackRate(rate: number): void {
+    const clamped = Math.max(0.75, Math.min(1.35, Number.isFinite(rate) ? rate : 1));
+    this.playbackRate = clamped;
+    if (this.element) this.element.playbackRate = clamped;
+  }
+
+  getPlaybackRate(): number {
+    return this.playbackRate;
   }
 
   /** Stops anything playing. The EventPlayer also aborts the running line through its signal. */
@@ -193,6 +218,9 @@ export class TeacherAudio {
       }, AUDIO_START_TIMEOUT_MS);
 
       el.src = url;
+      el.volume = this.volume;
+      el.muted = this.muted;
+      el.playbackRate = this.playbackRate;
       this.connectAnalyser(el);
       const playing = el.play();
       if (playing && typeof playing.catch === "function") {
@@ -250,7 +278,9 @@ export class TeacherAudio {
       // Some browsers reject a voice from an older list. utterance.lang still picks one.
     }
     // A touch slower than default: learners are listening to a new language.
-    utterance.rate = lang === "en-GB" ? 1 : 0.9;
+    const baseRate = lang === "en-GB" ? 1 : 0.9;
+    utterance.rate = Math.max(0.65, Math.min(1.5, baseRate * this.playbackRate));
+    utterance.volume = this.volume;
 
     const phoneticTimeline = visemeTimelineFromText(text);
 
