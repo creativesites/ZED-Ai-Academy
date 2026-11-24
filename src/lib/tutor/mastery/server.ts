@@ -12,6 +12,7 @@ import {
 } from "./evidence";
 import {
   buildDailyPlan,
+  isPlanScenarioVisible,
   type DailyPlanFlowCandidate,
   type DailyPlanItem,
   type DailyPlanLessonCandidate,
@@ -396,26 +397,45 @@ export async function loadDashboardDailyPlan(input: {
     }
   }
 
-  // 2. Untried published flows
+  // 2. Untried published flows the learner may actually open (server code bypasses RLS, so visibility is
+  // enforced here): platform flows, library flows of the learner's academies, flows of enrolled courses.
   let scenariosQuery = supabase
     .from("practice_scenarios")
-    .select("id, company_id, title, goal, max_minutes, course_id, persona_id")
+    .select("id, company_id, title, goal, max_minutes, course_id, persona_id, visibility")
     .eq("status", "published")
     .order("created_at", { ascending: false })
-    .limit(15);
+    .limit(40);
 
   if (input.companyId) {
     scenariosQuery = scenariosQuery.eq("company_id", input.companyId);
   }
 
-  const [{ data: scenariosData }, { data: completedSessionRows }] = await Promise.all([
+  const [{ data: scenarioRows }, { data: completedSessionRows }, { data: membershipRows }] = await Promise.all([
     scenariosQuery,
     supabase
       .from("tutor_sessions")
       .select("scenario_id")
       .eq("user_id", input.userId)
       .in("status", ["completed", "active"]),
+    supabase
+      .from("company_members")
+      .select("company_id")
+      .eq("profile_id", input.userId)
+      .eq("status", "active"),
   ]);
+
+  const memberCompanyIds = new Set(
+    (membershipRows ?? []).map((m) => m.company_id).filter((id): id is string => typeof id === "string"),
+  );
+  const enrolledCourseIdSet = new Set(enrolledCourseIds);
+  const scenariosData = (scenarioRows ?? [])
+    .filter((s) =>
+      isPlanScenarioVisible(
+        { companyId: s.company_id, visibility: s.visibility ?? null, courseId: s.course_id ?? null },
+        { memberCompanyIds, enrolledCourseIds: enrolledCourseIdSet, scopeCompanyId: input.companyId ?? null },
+      ),
+    )
+    .slice(0, 15);
 
   const personaIds = Array.from(
     new Set(

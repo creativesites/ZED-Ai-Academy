@@ -246,3 +246,31 @@ export function buildDailyPlan(input: {
 
   return items.slice(0, 3);
 }
+
+export type PlanScenarioFacts = {
+  companyId: string;
+  visibility: string | null;
+  courseId: string | null;
+};
+
+/**
+ * Whether a published flow may be suggested to this learner in the daily plan. Platform flows are open to
+ * everyone; academy-library flows only to members of that academy; course flows only to learners enrolled
+ * in that course. When the plan is scoped to one academy, flows from other academies are never suggested.
+ */
+export function isPlanScenarioVisible(
+  scenario: PlanScenarioFacts,
+  learner: { memberCompanyIds: ReadonlySet<string>; enrolledCourseIds: ReadonlySet<string>; scopeCompanyId?: string | null },
+): boolean {
+  if (learner.scopeCompanyId && scenario.companyId !== learner.scopeCompanyId) return false;
+  switch (scenario.visibility) {
+    case "platform":
+      return true;
+    case "tenant_library":
+      return learner.memberCompanyIds.has(scenario.companyId);
+    case "course":
+      return !!scenario.courseId && learner.enrolledCourseIds.has(scenario.courseId);
+    default:
+      return false;
+  }
+}

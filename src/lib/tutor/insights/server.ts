@@ -2,6 +2,8 @@ import "server-only";
 import { createServiceClient } from "@/lib/supabase/server";
 import type { EvidenceResult } from "../mastery/evidence";
 import { isSchemaUnavailableError } from "../mastery/server";
+import { canViewTutorSession } from "../visibility";
+import type { SessionOrigin } from "../scenario";
 import {
   buildTeacherInsightsSummary,
   type InsightEvidenceRow,
@@ -37,7 +39,7 @@ export async function loadTenantTutorInsights(input: {
 
   let evidenceQuery = looseDb
     .from("learner_evidence")
-    .select("user_id, course_id, scenario_id, objective_key, objective_text, result, detail, created_at")
+    .select("user_id, session_id, course_id, scenario_id, objective_key, objective_text, result, detail, created_at")
     .eq("company_id", input.companyId);
   if (input.courseId) {
     evidenceQuery = evidenceQuery.eq("course_id", input.courseId);
@@ -80,9 +82,44 @@ export async function loadTenantTutorInsights(input: {
   const missingSchema =
     isSchemaUnavailableError(evRes.error) || isSchemaUnavailableError(mRes.error);
 
-  const evidence: InsightEvidenceRow[] = missingSchema
-    ? []
-    : (evRes.data ?? []).map((r) => ({
+  // Staff may only see evidence (including its free-text detail) from sessions the tutor privacy rule lets
+  // them read: lesson and assignment sessions, sessions the learner shared, and flagged sessions. Evidence
+  // without a session (lesson checks) stays visible. Private practice and revision sessions are excluded.
+  const evidenceRows = missingSchema ? [] : evRes.data ?? [];
+  const sessionIds = Array.from(
+    new Set(
+      evidenceRows
+        .map((r) => r.session_id)
+        .filter((id): id is string => typeof id === "string" && id.length > 0),
+    ),
+  );
+  const staffVisibleSessionIds = new Set<string>();
+  if (sessionIds.length > 0) {
+    const { data: sessionRows } = await db
+      .from("tutor_sessions")
+      .select("id, user_id, origin, shared_with_teacher, status")
+      .in("id", sessionIds);
+    for (const row of sessionRows ?? []) {
+      const visible = canViewTutorSession(
+        "",
+        {
+          userId: row.user_id,
+          origin: row.origin as SessionOrigin,
+          sharedWithTeacher: Boolean(row.shared_with_teacher),
+          status: row.status as "active" | "completed" | "abandoned" | "flagged",
+        },
+        { isTenantStaff: true },
+      );
+      if (visible) staffVisibleSessionIds.add(row.id);
+    }
+  }
+
+  const evidence: InsightEvidenceRow[] = evidenceRows
+    .filter((r) => {
+      const sessionId = typeof r.session_id === "string" ? r.session_id : null;
+      return !sessionId || staffVisibleSessionIds.has(sessionId);
+    })
+    .map((r) => ({
         userId: String(r.user_id),
         courseId: (r.course_id as string | null) ?? null,
         scenarioId: (r.scenario_id as string | null) ?? null,

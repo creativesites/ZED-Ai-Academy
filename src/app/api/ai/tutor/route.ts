@@ -7,6 +7,7 @@ import { getLessonAccess } from "@/lib/courses/course-auth-server";
 import { DEFAULT_TEACHER_NAME, safeTeacherName } from "@/lib/tutor/course-teacher";
 import { buildDockContents } from "@/lib/tutor/dock-chat";
 import { loadWeakMasteryRows } from "@/lib/tutor/mastery/server";
+import { ZEDAI_TENANT_ID } from "@/lib/tenants/constants";
 import { formatMasteryMemoryNotes } from "@/lib/tutor/mastery/evidence";
 import { createDemoRateLimiter, DEMO_WINDOW_MS } from "@/lib/tutor/demo";
 import { NextRequest } from "next/server";
@@ -121,12 +122,14 @@ export async function POST(req: NextRequest) {
       .eq("id", courseId)
       .single();
     if (course) {
-      companyId = course.company_id;
+      companyId = course.company_id ?? ZEDAI_TENANT_ID;
       courseContext = `Course: ${course.title}\nDescription: ${course.description}`;
     }
   }
 
-  const weakRows = userId
+  // Only this course's tenant: without a resolved course, weak objectives from every academy the learner
+  // belongs to would be pulled into this academy's prompt.
+  const weakRows = userId && companyId
     ? await loadWeakMasteryRows({
         supabase,
         userId,

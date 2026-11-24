@@ -3,6 +3,7 @@ import { describe, it } from "node:test";
 import {
   buildDailyPlan,
   buildRevisionSprintScenario,
+  isPlanScenarioVisible,
   selectWeakObjectives,
 } from "./sprint.ts";
 
@@ -113,5 +114,37 @@ describe("mastery/sprint", () => {
     assert.equal(plan[1].title, "Lesson 2: Practice");
     assert.equal(plan[2].kind, "untried_flow");
     assert.equal(plan[2].href, "/academy/glory-academy/practice/sc-1");
+  });
+});
+
+describe("isPlanScenarioVisible", () => {
+  const learner = {
+    memberCompanyIds: new Set(["orgA"]),
+    enrolledCourseIds: new Set(["courseA"]),
+  };
+
+  it("offers platform flows to everyone", () => {
+    assert.equal(isPlanScenarioVisible({ companyId: "orgZ", visibility: "platform", courseId: null }, learner), true);
+  });
+
+  it("offers academy-library flows only to members", () => {
+    assert.equal(isPlanScenarioVisible({ companyId: "orgA", visibility: "tenant_library", courseId: null }, learner), true);
+    assert.equal(isPlanScenarioVisible({ companyId: "orgB", visibility: "tenant_library", courseId: null }, learner), false);
+  });
+
+  it("offers course flows only to enrolled learners", () => {
+    assert.equal(isPlanScenarioVisible({ companyId: "orgA", visibility: "course", courseId: "courseA" }, learner), true);
+    assert.equal(isPlanScenarioVisible({ companyId: "orgA", visibility: "course", courseId: "courseX" }, learner), false);
+    assert.equal(isPlanScenarioVisible({ companyId: "orgA", visibility: "course", courseId: null }, learner), false);
+  });
+
+  it("keeps an academy-scoped plan inside that academy", () => {
+    const scoped = { ...learner, scopeCompanyId: "orgA" };
+    assert.equal(isPlanScenarioVisible({ companyId: "orgZ", visibility: "platform", courseId: null }, scoped), false);
+    assert.equal(isPlanScenarioVisible({ companyId: "orgA", visibility: "tenant_library", courseId: null }, scoped), true);
+  });
+
+  it("rejects unknown visibility", () => {
+    assert.equal(isPlanScenarioVisible({ companyId: "orgA", visibility: null, courseId: null }, learner), false);
   });
 });
