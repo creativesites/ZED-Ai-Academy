@@ -293,13 +293,32 @@ export default async function TenantCourseDetailPage({ params, searchParams }: P
                     </Link>
                   </div>
                 ) : !userId ? (
-                  <Link
-                    href={`/sign-in?redirect_url=/academy/${tenant.slug}/courses/${course.slug}`}
-                    className="w-full flex items-center justify-center gap-2 text-white font-bold text-xs uppercase tracking-wider py-4 rounded-2xl shadow-lg transition-all hover:scale-105 active:scale-95"
-                    style={{ backgroundColor: brandColor }}
-                  >
-                    <span>Sign In to Enrol</span>
-                  </Link>
+                  isFree && firstPreviewLesson ? (
+                    <div className="space-y-3">
+                      <Link
+                        href={`/courses/${course.slug}/learn?lesson=${firstPreviewLesson.id}`}
+                        className="w-full flex items-center justify-center gap-2 text-white font-bold text-sm py-4 rounded-2xl shadow-lg transition-all hover:opacity-95 active:scale-95"
+                        style={{ backgroundColor: brandColor }}
+                      >
+                        <Play className="h-4 w-4 fill-white" />
+                        <span>Start Free Course — No Login</span>
+                      </Link>
+                      <Link
+                        href={`/sign-in?redirect_url=/academy/${tenant.slug}/courses/${course.slug}`}
+                        className="flex w-full items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white py-3 text-xs font-bold text-slate-700 hover:bg-slate-100"
+                      >
+                        Sign in to save progress &amp; certificate
+                      </Link>
+                    </div>
+                  ) : (
+                    <Link
+                      href={`/sign-in?redirect_url=/academy/${tenant.slug}/courses/${course.slug}`}
+                      className="w-full flex items-center justify-center gap-2 text-white font-bold text-xs uppercase tracking-wider py-4 rounded-2xl shadow-lg transition-all hover:scale-105 active:scale-95"
+                      style={{ backgroundColor: brandColor }}
+                    >
+                      <span>Sign In to Enrol</span>
+                    </Link>
+                  )
                 ) : isFree ? (
                   <form action={enrollFree.bind(null, course.id, course.slug)}>
                     <button
@@ -322,7 +341,7 @@ export default async function TenantCourseDetailPage({ params, searchParams }: P
                 )}
               </div>
 
-              {firstPreviewLesson && !isEnrolled && (
+              {firstPreviewLesson && !isEnrolled && !(isFree && !userId) && (
                 <Link
                   href={`/courses/${course.slug}/learn?lesson=${firstPreviewLesson.id}`}
                   className="flex w-full items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white py-3 text-sm font-semibold text-slate-700 hover:bg-slate-100"

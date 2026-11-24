@@ -21,6 +21,7 @@ export function TutorSessionBlock({
   origin,
   scenario,
   done,
+  isGuest = false,
 }: {
   content: Record<string, unknown>;
   lessonId?: string;
@@ -28,6 +29,7 @@ export function TutorSessionBlock({
   /** Undefined when the scenario is missing or not published. */
   scenario: TutorScenarioView | undefined;
   done: boolean;
+  isGuest?: boolean;
   onComplete?: (scenarioId: string) => void;
 }) {
   const pathname = usePathname();
@@ -49,11 +51,15 @@ export function TutorSessionBlock({
 
   const tenantMatch = /^\/academy\/([^/]+)/.exec(pathname ?? "");
   const basePath = tenantMatch ? `/academy/${tenantMatch[1]}` : "";
+  const returnPath =
+    pathname && lessonId && pathname.endsWith("/learn") ? `${pathname}?lesson=${lessonId}` : pathname;
   const qs = new URLSearchParams();
-  if (resolvedOrigin === "lesson" && lessonId) qs.set("lessonId", lessonId);
-  if (pathname) qs.set("back", pathname);
+  if (!isGuest && resolvedOrigin === "lesson" && lessonId) qs.set("lessonId", lessonId);
+  if (returnPath) qs.set("back", returnPath);
   const practiceHref = scenario
-    ? `${basePath}/practice/${scenario.id}${qs.toString() ? `?${qs.toString()}` : ""}`
+    ? isGuest
+      ? `/try/${scenario.id}${qs.toString() ? `?${qs.toString()}` : ""}`
+      : `${basePath}/practice/${scenario.id}${qs.toString() ? `?${qs.toString()}` : ""}`
     : "#";
 
   return (

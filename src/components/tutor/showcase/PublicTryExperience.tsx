@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowRight, CheckCircle2, Sparkles } from "lucide-react";
+import { ArrowLeft, ArrowRight, CheckCircle2, Sparkles } from "lucide-react";
 import type {
   CompleteResponse,
   Result,
@@ -25,6 +25,7 @@ type PublicTryExperienceProps = {
   title: string;
   goal: string;
   maxMinutes: number;
+  beats?: Array<{ id: string; goal: string }>;
   scene: SceneArtboard;
   personaName: string;
   personaLanguages: string[];
@@ -35,6 +36,7 @@ type PublicTryExperienceProps = {
     logoUrl: string | null;
     primaryColor: string | null;
   };
+  backUrl?: string | null;
 };
 
 async function callTryApi<T>(url: string, init: RequestInit): Promise<Result<T>> {
@@ -115,6 +117,7 @@ function createPublicTryClient(props: PublicTryExperienceProps): TutorApiClient 
             title: props.title,
             goal: props.goal,
             maxMinutes: props.maxMinutes,
+            beats: props.beats?.map((b, i) => ({ id: b.id, label: b.goal.slice(0, 48) || `Step ${i + 1}`, goal: b.goal })),
           },
           openingEvents: opening.data.events,
         },
@@ -165,14 +168,25 @@ export function PublicTryExperience(props: PublicTryExperienceProps) {
             </p>
           </div>
           <div className="flex flex-col gap-2.5 sm:flex-row sm:justify-center">
-            <Link
-              href={joinHref}
-              style={{ backgroundColor: brandColor }}
-              className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl px-6 text-sm font-bold text-white shadow-md transition hover:opacity-95"
-            >
-              Join {props.academy.name}
-              <ArrowRight className="h-4 w-4" />
-            </Link>
+            {props.backUrl ? (
+              <Link
+                href={props.backUrl}
+                style={{ backgroundColor: brandColor }}
+                className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl px-6 text-sm font-bold text-white shadow-md transition hover:opacity-95"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Back to Lesson
+              </Link>
+            ) : (
+              <Link
+                href={joinHref}
+                style={{ backgroundColor: brandColor }}
+                className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl px-6 text-sm font-bold text-white shadow-md transition hover:opacity-95"
+              >
+                Join {props.academy.name}
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            )}
             <button
               type="button"
               onClick={() => setCompletedReport(null)}
@@ -191,6 +205,16 @@ export function PublicTryExperience(props: PublicTryExperienceProps) {
       {/* Branded Academy Mini-Lesson Conversion Bar */}
       <div className="flex shrink-0 items-center justify-between gap-3 border-b border-slate-200/80 bg-white px-3 py-2 sm:px-5">
         <div className="flex min-w-0 items-center gap-2.5">
+          {props.backUrl && (
+            <Link
+              href={props.backUrl}
+              className="inline-flex h-8 shrink-0 items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-3 text-xs font-bold text-[#062e39] transition hover:bg-slate-100"
+            >
+              <ArrowLeft className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Back to Lesson</span>
+              <span className="sm:hidden">Lesson</span>
+            </Link>
+          )}
           {props.academy.logoUrl ? (
             <img
               src={props.academy.logoUrl}

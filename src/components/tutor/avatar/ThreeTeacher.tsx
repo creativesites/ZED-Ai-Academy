@@ -250,8 +250,16 @@ function buildStylizedTeacher(THREE: typeof THREE_NS, look: PersonaLook): Styliz
   });
   const hairMat = new THREE.MeshStandardMaterial({
     color: new THREE.Color(look.hairColor),
-    roughness: 0.72,
-    metalness: 0.08,
+    roughness: 0.62,
+    metalness: 0.06,
+    side: THREE.DoubleSide,
+  });
+  const hairShadeColor = new THREE.Color(look.hairColor).multiplyScalar(0.76);
+  const hairShadeMat = new THREE.MeshStandardMaterial({
+    color: hairShadeColor,
+    roughness: 0.7,
+    metalness: 0.04,
+    side: THREE.DoubleSide,
   });
   const outfitMat = new THREE.MeshStandardMaterial({
     color: new THREE.Color(look.outfitPrimary),
@@ -330,39 +338,150 @@ function buildStylizedTeacher(THREE: typeof THREE_NS, look: PersonaLook): Styliz
   nose.position.set(0, -0.04, 0.44);
   headGroup.add(nose);
 
-  // Hair variations based on PersonaLook.hairStyle
-  const hairCap = new THREE.Mesh(
-    new THREE.SphereGeometry(0.505, 32, 24, 0, Math.PI * 2, 0, Math.PI * 0.58),
+  // Sculpted, skull-fitted 3D hair matched to head ellipsoid (0.96, 1.05, 0.94)
+  // Using DoubleSide + crown & back-of-head occiput shells eliminates floating helmet gaps and hollow rims.
+  const hairGroup = new THREE.Group();
+  headGroup.add(hairGroup);
+
+  // 1. Fitted crown cap scaled to match the head's oval proportions
+  const crownCap = new THREE.Mesh(
+    new THREE.SphereGeometry(0.494, 40, 28, 0, Math.PI * 2, 0, Math.PI * 0.54),
     hairMat,
   );
-  hairCap.position.set(0, 0.06, -0.02);
-  hairCap.rotation.x = -0.18;
-  headGroup.add(hairCap);
+  crownCap.scale.set(0.99, 1.08, 0.985);
+  crownCap.position.set(0, 0.012, -0.022);
+  crownCap.rotation.x = -0.26;
+  hairGroup.add(crownCap);
+
+  // 2. Fitted back-of-head occiput shell covering behind the ears (-Z hemisphere: phi PI -> 2*PI)
+  const backShell = new THREE.Mesh(
+    new THREE.SphereGeometry(0.496, 32, 24, Math.PI * 0.96, Math.PI * 1.08, Math.PI * 0.24, Math.PI * 0.56),
+    hairShadeMat,
+  );
+  backShell.scale.set(0.995, 1.075, 0.99);
+  backShell.position.set(0, 0.005, -0.018);
+  hairGroup.add(backShell);
+
+  // 3. Soft hairline temples bridging the crown cleanly above both ears
+  const templeGeo = new THREE.SphereGeometry(0.115, 16, 16);
+  const leftTemple = new THREE.Mesh(templeGeo, hairMat);
+  leftTemple.scale.set(0.62, 1.35, 1.15);
+  leftTemple.position.set(-0.435, 0.14, 0.06);
+  const rightTemple = new THREE.Mesh(templeGeo, hairMat);
+  rightTemple.scale.set(0.62, 1.35, 1.15);
+  rightTemple.position.set(0.435, 0.14, 0.06);
+  hairGroup.add(leftTemple, rightTemple);
 
   if (look.hairStyle === "bun") {
-    const bun = new THREE.Mesh(new THREE.SphereGeometry(0.22, 24, 24), hairMat);
-    bun.position.set(0, 0.56, -0.16);
-    headGroup.add(bun);
+    // Sleek pulled-back hairline swoop + high sculpted chignon bun with accent hair-tie
+    const swoop = new THREE.Mesh(new THREE.SphereGeometry(0.24, 24, 18), hairMat);
+    swoop.scale.set(1.55, 0.42, 0.85);
+    swoop.position.set(0, 0.36, 0.15);
+    swoop.rotation.x = 0.28;
+    const bun = new THREE.Mesh(new THREE.SphereGeometry(0.21, 28, 24), hairMat);
+    bun.scale.set(1.08, 0.88, 1.02);
+    bun.position.set(0, 0.53, -0.17);
+    const band = new THREE.Mesh(new THREE.TorusGeometry(0.155, 0.022, 12, 32), accentMat);
+    band.rotation.x = Math.PI / 2 - 0.3;
+    band.position.set(0, 0.43, -0.14);
+    hairGroup.add(swoop, bun, band);
   } else if (look.hairStyle === "curly") {
-    const puffOffsets = [
-      [-0.44, 0.14, -0.06],
-      [0.44, 0.14, -0.06],
-      [-0.38, -0.14, -0.12],
-      [0.38, -0.14, -0.12],
-      [0, 0.44, -0.12],
+    // Layered, overlapping volumetric curls wrapping crown, hairline, sides, and nape
+    const curls: Array<[number, number, number, number, boolean?]> = [
+      [0, 0.49, 0.05, 0.19],
+      [-0.22, 0.46, 0.12, 0.18],
+      [0.22, 0.46, 0.12, 0.18],
+      [-0.38, 0.34, 0.06, 0.175],
+      [0.38, 0.34, 0.06, 0.175],
+      [-0.45, 0.14, -0.02, 0.18],
+      [0.45, 0.14, -0.02, 0.18],
+      [-0.43, -0.09, -0.08, 0.175, true],
+      [0.43, -0.09, -0.08, 0.175, true],
+      [-0.34, -0.27, -0.14, 0.16, true],
+      [0.34, -0.27, -0.14, 0.16, true],
+      [0, 0.45, -0.22, 0.21, true],
+      [-0.25, 0.24, -0.34, 0.2, true],
+      [0.25, 0.24, -0.34, 0.2, true],
+      [0, -0.04, -0.38, 0.21, true],
     ];
-    for (const [x, y, z] of puffOffsets) {
-      const puff = new THREE.Mesh(new THREE.SphereGeometry(0.18, 18, 18), hairMat);
+    for (const [x, y, z, r, dark] of curls) {
+      const puff = new THREE.Mesh(new THREE.SphereGeometry(r, 20, 18), dark ? hairShadeMat : hairMat);
       puff.position.set(x, y, z);
-      headGroup.add(puff);
+      hairGroup.add(puff);
     }
-  } else if (look.hairStyle === "bob" || look.hairStyle === "braids") {
-    const sideGeo = new THREE.CapsuleGeometry(0.13, 0.36, 8, 16);
+  } else if (look.hairStyle === "bob") {
+    // Smooth side-parted bangs + cheek-framing contoured bob sweeps + rounded back bob drape
+    const leftBang = new THREE.Mesh(new THREE.SphereGeometry(0.24, 24, 18), hairMat);
+    leftBang.scale.set(1.25, 0.44, 0.72);
+    leftBang.position.set(-0.14, 0.34, 0.24);
+    leftBang.rotation.set(0.22, 0.18, 0.22);
+
+    const rightBang = new THREE.Mesh(new THREE.SphereGeometry(0.22, 24, 18), hairMat);
+    rightBang.scale.set(1.05, 0.4, 0.68);
+    rightBang.position.set(0.18, 0.35, 0.22);
+    rightBang.rotation.set(0.2, -0.24, -0.18);
+
+    const sideGeo = new THREE.CapsuleGeometry(0.135, 0.42, 10, 20);
     const leftSide = new THREE.Mesh(sideGeo, hairMat);
-    leftSide.position.set(-0.42, -0.08, -0.06);
+    leftSide.position.set(-0.42, -0.07, -0.02);
+    leftSide.rotation.z = -0.1;
     const rightSide = new THREE.Mesh(sideGeo, hairMat);
-    rightSide.position.set(0.42, -0.08, -0.06);
-    headGroup.add(leftSide, rightSide);
+    rightSide.position.set(0.42, -0.07, -0.02);
+    rightSide.rotation.z = 0.1;
+
+    const backDrape = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.43, 0.46, 0.44, 28, 1, false, Math.PI * 0.5, Math.PI),
+      hairShadeMat,
+    );
+    backDrape.position.set(0, -0.14, -0.02);
+
+    hairGroup.add(leftBang, rightBang, leftSide, rightSide, backDrape);
+  } else if (look.hairStyle === "braids") {
+    // Cornrow crown ridges + layered flowing braided strands with accent beads
+    for (let i = -2; i <= 2; i += 1) {
+      const ridge = new THREE.Mesh(
+        new THREE.TorusGeometry(0.495, 0.03, 10, 28, Math.PI * 0.72),
+        i % 2 === 0 ? hairMat : hairShadeMat,
+      );
+      ridge.scale.set(0.98, 1.07, 0.98);
+      ridge.rotation.y = Math.PI / 2;
+      ridge.rotation.z = 0.08;
+      ridge.position.set(i * 0.11, 0.015, -0.015);
+      hairGroup.add(ridge);
+    }
+    const strandSpecs: Array<[number, number, number, number]> = [
+      [-0.43, -0.06, 0.05, 0.06],
+      [-0.46, -0.14, -0.06, 0.08],
+      [-0.38, -0.18, -0.18, 0.05],
+      [0.43, -0.06, 0.05, -0.06],
+      [0.46, -0.14, -0.06, -0.08],
+      [0.38, -0.18, -0.18, -0.05],
+    ];
+    for (const [x, y, z, rz] of strandSpecs) {
+      const strand = new THREE.Group();
+      strand.position.set(x, y, z);
+      strand.rotation.z = rz;
+      for (let seg = 0; seg < 5; seg += 1) {
+        const bead = new THREE.Mesh(new THREE.SphereGeometry(0.058 - seg * 0.004, 12, 10), seg % 2 === 0 ? hairMat : hairShadeMat);
+        bead.scale.set(0.95, 1.2, 0.95);
+        bead.position.set(0, -seg * 0.095, 0);
+        strand.add(bead);
+      }
+      const cuff = new THREE.Mesh(new THREE.CylinderGeometry(0.042, 0.042, 0.045, 12), accentMat);
+      cuff.position.set(0, -0.44, 0);
+      strand.add(cuff);
+      hairGroup.add(strand);
+    }
+  } else {
+    // "short" (default): crisp tapered crop with subtle textured top volume & clean hairline
+    const topCrop = new THREE.Mesh(new THREE.SphereGeometry(0.41, 28, 20), hairMat);
+    topCrop.scale.set(1.06, 0.42, 0.96);
+    topCrop.position.set(0, 0.41, 0.02);
+    topCrop.rotation.x = -0.12;
+    const hairlineEdge = new THREE.Mesh(new THREE.BoxGeometry(0.56, 0.075, 0.14), hairMat);
+    hairlineEdge.position.set(0, 0.34, 0.28);
+    hairlineEdge.rotation.x = 0.28;
+    hairGroup.add(topCrop, hairlineEdge);
   }
 
   // Eyes (with gaze pupils)
@@ -557,6 +676,7 @@ export const ThreeTeacher = forwardRef<AvatarDriver, ThreeTeacherProps>(function
     let onPointerMove: ((e: PointerEvent) => void) | null = null;
     let pmrem: THREE_NS.PMREMGenerator | null = null;
     let envTex: THREE_NS.Texture | null = null;
+    let disposeScene: (() => void) | null = null;
 
     async function boot() {
       const THREE = await import("three");
@@ -660,8 +780,26 @@ export const ThreeTeacher = forwardRef<AvatarDriver, ThreeTeacherProps>(function
 
           glbRoot.traverse((obj) => {
             const mesh = obj as THREE_NS.Mesh;
-            if (mesh.isMesh && mesh.morphTargetDictionary && mesh.morphTargetInfluences) {
-              morphMeshes.push(mesh);
+            if (mesh.isMesh) {
+              // Fix transparent / single-sided hair & eyelash cards common in RPM/Avaturn/Blender GLBs
+              const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+              const isHairMesh = /hair|lash|brow|beard|mustache|fur|strand/i.test(mesh.name);
+              for (const rawMat of mats) {
+                if (!rawMat) continue;
+                const mat = rawMat as THREE_NS.MeshStandardMaterial;
+                const isHairMat = isHairMesh || /hair|lash|brow|fur/i.test(mat.name || "");
+                if (isHairMat || mat.alphaMap) {
+                  mat.side = THREE.DoubleSide;
+                  if (mat.transparent && !mat.alphaTest) {
+                    mat.alphaTest = 0.25;
+                    mat.depthWrite = true;
+                  }
+                  mat.needsUpdate = true;
+                }
+              }
+              if (mesh.morphTargetDictionary && mesh.morphTargetInfluences) {
+                morphMeshes.push(mesh);
+              }
             }
             if (!glbHeadBone && /head|neck/i.test(obj.name)) {
               glbHeadBone = obj;
@@ -677,6 +815,18 @@ export const ThreeTeacher = forwardRef<AvatarDriver, ThreeTeacherProps>(function
         stylized = buildStylizedTeacher(THREE, mergedLook);
         scene.add(stylized.root);
       }
+
+      const cleanupScene = () => {
+        scene.traverse((obj) => {
+          const mesh = obj as THREE_NS.Mesh;
+          if (mesh.isMesh) {
+            mesh.geometry?.dispose();
+            const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+            for (const m of mats) m?.dispose();
+          }
+        });
+      };
+      disposeScene = cleanupScene;
 
       const handleResize = () => {
         if (!container || !renderer) return;
@@ -854,6 +1004,7 @@ export const ThreeTeacher = forwardRef<AvatarDriver, ThreeTeacherProps>(function
       if (onVisibility) document.removeEventListener("visibilitychange", onVisibility);
       if (onPointerMove) container.removeEventListener("pointermove", onPointerMove);
       resizeObserver?.disconnect();
+      disposeScene?.();
       envTex?.dispose();
       pmrem?.dispose();
       if (renderer) {

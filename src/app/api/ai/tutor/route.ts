@@ -8,16 +8,20 @@ import { DEFAULT_TEACHER_NAME, safeTeacherName } from "@/lib/tutor/course-teache
 import { buildDockContents } from "@/lib/tutor/dock-chat";
 import { loadWeakMasteryRows } from "@/lib/tutor/mastery/server";
 import { formatMasteryMemoryNotes } from "@/lib/tutor/mastery/evidence";
+import { createDemoRateLimiter, DEMO_WINDOW_MS } from "@/lib/tutor/demo";
 import { NextRequest } from "next/server";
 
 const MAX_TUTOR_MESSAGE_CHARS = 2000;
+const guestDockLimiter = createDemoRateLimiter({ limit: 20, windowMs: DEMO_WINDOW_MS });
+
+function requestIp(req: NextRequest): string {
+  const fwd = req.headers.get("x-forwarded-for");
+  if (fwd) return fwd.split(",")[0].trim() || "unknown";
+  return req.headers.get("x-real-ip") ?? "unknown";
+}
 
 export async function POST(req: NextRequest) {
   const { userId } = await auth();
-  if (!userId) {
-    return new Response("Unauthorized", { status: 401 });
-  }
-
   const supabase = createClient();
 
   const payload = await req.json().catch(() => null);
@@ -41,8 +45,38 @@ export async function POST(req: NextRequest) {
     return new Response("Message is required and must be at most 2000 characters", { status: 400 });
   }
 
-  // Enforce enrollment / preview / staff access when targeting a specific lesson
-  if (typeof lessonId === "string" && lessonId.trim()) {
+  // Enforce enrollment / preview / staff access when targeting a specific lesson.
+  // Unauthenticated guests are only allowed on published, free courses with is_preview lessons.
+  if (!userId) {
+    if (typeof lessonId !== "string" || !lessonId.trim()) {
+      return new Response("Unauthorized", { status: 401 });
+    }
+    const { data: lessonRowRaw } = await supabase
+      .from("lessons")
+      .select("id, is_preview, modules!inner(courses!inner(id, status, price_type))")
+      .eq("id", lessonId)
+      .maybeSingle();
+
+    const lessonRow = lessonRowRaw as {
+      is_preview?: boolean;
+      modules?:
+        | { courses?: { status?: string; price_type?: string } | Array<{ status?: string; price_type?: string }> }
+        | Array<{ courses?: { status?: string; price_type?: string } | Array<{ status?: string; price_type?: string }> }>;
+    } | null;
+    const mod = Array.isArray(lessonRow?.modules) ? lessonRow.modules[0] : lessonRow?.modules;
+    const crs = Array.isArray(mod?.courses) ? mod.courses[0] : mod?.courses;
+    const allowedGuest =
+      Boolean(lessonRow?.is_preview) && crs?.status === "published" && crs?.price_type === "free";
+    if (!allowedGuest) {
+      return new Response("Unauthorized", { status: 401 });
+    }
+    const budget = guestDockLimiter.take(`dock:${requestIp(req)}`);
+    if (!budget.ok) {
+      return new Response("Guest preview chat limit reached. Sign in for unlimited AI Teacher help!", {
+        status: 429,
+      });
+    }
+  } else if (typeof lessonId === "string" && lessonId.trim()) {
     const access = await getLessonAccess(supabase, lessonId, userId);
     if (!access.allowed) {
       return new Response("Forbidden", { status: 403 });
@@ -92,13 +126,15 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  const weakRows = await loadWeakMasteryRows({
-    supabase,
-    userId,
-    companyId,
-    courseId: typeof courseId === "string" ? courseId : null,
-    limit: 5,
-  });
+  const weakRows = userId
+    ? await loadWeakMasteryRows({
+        supabase,
+        userId,
+        companyId,
+        courseId: typeof courseId === "string" ? courseId : null,
+        limit: 5,
+      })
+    : [];
   const masteryNotes = formatMasteryMemoryNotes(weakRows, 5);
   const memorySection =
     masteryNotes.length > 0

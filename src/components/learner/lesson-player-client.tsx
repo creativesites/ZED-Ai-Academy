@@ -143,11 +143,47 @@ export function LessonPlayerClient({
   const [certifying, startCertify] = useTransition();
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Server-provided progress is the source of truth whenever it changes.
+  const isGuest = !userId;
+  const allLessons = modules.flatMap((m) => m.lessons);
+  const isOpenGuestShowcase =
+    isGuest && course.price_type === "free" && allLessons.some((l) => l.is_preview);
+  const guestStorageKey = `zedai_guest_progress_${course.id}`;
+
+  // Server-provided progress is the source of truth whenever signed-in progress changes.
   const [syncedProgress, setSyncedProgress] = useState(completedLessonIds);
   if (syncedProgress !== completedLessonIds) {
     setSyncedProgress(completedLessonIds);
-    setCompleted(new Set(completedLessonIds));
+    if (!isOpenGuestShowcase) {
+      setCompleted(new Set(completedLessonIds));
+    }
+  }
+
+  // Hydrate local guest progress so open free-showcase visitors can track progress without login.
+  useEffect(() => {
+    if (!isOpenGuestShowcase) return;
+    try {
+      const raw = window.localStorage.getItem(guestStorageKey);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+          setCompleted(new Set(parsed.filter((v): v is string => typeof v === "string")));
+        }
+      }
+    } catch {
+      // Ignore storage errors in private browsing
+    }
+  }, [isOpenGuestShowcase, guestStorageKey]);
+
+  function markGuestLessonDone(lessonId: string) {
+    setCompleted((prev) => {
+      const next = new Set([...prev, lessonId]);
+      try {
+        window.localStorage.setItem(guestStorageKey, JSON.stringify([...next]));
+      } catch {
+        // Ignore storage errors
+      }
+      return next;
+    });
   }
 
   // New lesson → close the mobile drawer and go back to the lesson tab…
@@ -163,7 +199,6 @@ export function LessonPlayerClient({
   }, [activeLessonId]);
 
   const learnHref = (lessonId: string) => `/courses/${course.slug}/learn?lesson=${lessonId}`;
-  const allLessons = modules.flatMap((m) => m.lessons);
   const currentIdx = allLessons.findIndex((l) => l.id === activeLessonId);
   const currentLesson = allLessons[currentIdx];
   const currentModule = modules.find((m) => m.lessons.some((l) => l.id === activeLessonId));
@@ -174,8 +209,13 @@ export function LessonPlayerClient({
   const progressPct = totalLessons > 0 ? Math.round((doneCount / totalLessons) * 100) : 0;
   const isDone = completed.has(activeLessonId);
   const courseComplete = !isPreview && totalLessons > 0 && (allDone || doneCount === totalLessons);
-  const backHref = course.company_slug ? `/academy/${course.company_slug}/classroom` : "/dashboard";
   const courseHref = course.company_slug ? `/academy/${course.company_slug}/courses/${course.slug}` : `/courses/${course.slug}`;
+  const backHref = isGuest
+    ? courseHref
+    : course.company_slug
+      ? `/academy/${course.company_slug}/classroom`
+      : "/dashboard";
+  const signInHref = `/sign-in?redirect_url=${encodeURIComponent(courseHref)}`;
 
   const isLessonLocked = (lessonId: string) => {
     const lesson = allLessons.find((l) => l.id === lessonId);
@@ -239,6 +279,16 @@ export function LessonPlayerClient({
   }
 
   function handleMarkComplete() {
+    if (isOpenGuestShowcase) {
+      markGuestLessonDone(activeLessonId);
+      if (nextAllowed) {
+        toast.success("Lesson complete — on to the next one!");
+        router.push(learnHref(nextAllowed.id));
+      } else {
+        toast.success("You finished the open showcase! Sign in anytime to claim your certificate.");
+      }
+      return;
+    }
     startMark(async () => {
       try {
         await markLessonComplete(activeLessonId, course.slug);
@@ -277,7 +327,7 @@ export function LessonPlayerClient({
     | { kind: "complete" }
     | { kind: "quiz" }
     | { kind: "done" };
-  const primary: Primary = isPreview
+  const primary: Primary = isPreview && !isOpenGuestShowcase
     ? { kind: "enroll" }
     : courseComplete && !certificate
       ? { kind: "certificate" }
@@ -286,7 +336,9 @@ export function LessonPlayerClient({
         : isDone
           ? nextAllowed
             ? { kind: "next", href: learnHref(nextAllowed.id) }
-            : { kind: "done" }
+            : isOpenGuestShowcase
+              ? { kind: "enroll" }
+              : { kind: "done" }
           : hasQuiz && !quizPassed
             ? { kind: "quiz" }
             : { kind: "complete" };
@@ -299,8 +351,8 @@ export function LessonPlayerClient({
     switch (primary.kind) {
       case "enroll":
         return (
-          <Link href={courseHref} className={cn(base, "bg-[#fd5523] text-white hover:bg-[#ef4a16]")}>
-            Enrol to continue
+          <Link href={isOpenGuestShowcase ? signInHref : courseHref} className={cn(base, "bg-[#fd5523] text-white hover:bg-[#ef4a16]")}>
+            {isOpenGuestShowcase ? "Sign in to save & earn certificate" : "Enrol to continue"}
           </Link>
         );
       case "certificate":
@@ -343,7 +395,7 @@ export function LessonPlayerClient({
           <button
             type="button"
             onClick={handleMarkComplete}
-            disabled={marking || pendingRequiredTutor.length > 0}
+            disabled={marking || (!isOpenGuestShowcase && pendingRequiredTutor.length > 0)}
             className={cn(base, "bg-[#fd5523] text-white hover:bg-[#ef4a16]")}
           >
             {marking ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
@@ -438,7 +490,7 @@ export function LessonPlayerClient({
         <p className="text-[11px] font-semibold uppercase tracking-wider text-[#fd8d69]">{course.category || "Course"}</p>
         <h2 className="mt-0.5 line-clamp-2 text-base font-bold leading-snug text-white">{course.title}</h2>
       </div>
-      {!isPreview && (
+      {(!isPreview || isOpenGuestShowcase) && (
         <div>
           <div className="mb-1.5 flex items-center justify-between text-xs">
             <span className="text-white/50">
@@ -531,7 +583,7 @@ export function LessonPlayerClient({
             </span>
           )}
 
-          {!isPreview && (
+          {(!isPreview || isOpenGuestShowcase) && (
             <button
               type="button"
               onClick={() => handleOpenStudio()}
@@ -563,7 +615,24 @@ export function LessonPlayerClient({
         <div ref={scrollRef} className="scrollbar-hide flex-1 overflow-y-auto">
           <article className="mx-auto w-full max-w-3xl px-4 pb-32 pt-6 sm:px-6 sm:pt-10 lg:pb-16">
             {/* Access banners */}
-            {isPreview && (
+            {isOpenGuestShowcase ? (
+              <div className="mb-6 flex flex-col gap-3 rounded-2xl border border-emerald-200 bg-emerald-50/70 p-4 sm:flex-row sm:items-center">
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold text-[#062e39]">
+                    Free Open Showcase · No login required
+                  </p>
+                  <p className="text-xs text-slate-600 sm:text-sm">
+                    Explore every lesson, interactive quiz, and live 3D/2D AI Teacher session freely. Sign in anytime to save progress &amp; earn a certificate.
+                  </p>
+                </div>
+                <Link
+                  href={signInHref}
+                  className="inline-flex h-10 shrink-0 items-center justify-center rounded-xl bg-[#062e39] px-4 text-xs font-semibold text-white hover:bg-[#0a4055]"
+                >
+                  Sign in to save
+                </Link>
+              </div>
+            ) : isPreview ? (
               <div className="mb-6 flex flex-col gap-3 rounded-2xl border border-[#fd5523]/20 bg-[#fff6ee] p-4 sm:flex-row sm:items-center">
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-semibold text-[#062e39]">You&apos;re watching a free preview</p>
@@ -576,7 +645,7 @@ export function LessonPlayerClient({
                   View course
                 </Link>
               </div>
-            )}
+            ) : null}
             {isPartialEnrollment && (
               <div className="mb-6 flex flex-col gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 sm:flex-row sm:items-center">
                 <Lock className="hidden h-5 w-5 shrink-0 text-amber-600 sm:block" />
@@ -601,7 +670,7 @@ export function LessonPlayerClient({
               <h1 className="text-2xl font-bold leading-tight tracking-tight text-[#062e39] sm:text-[2rem]">
                 {currentLesson?.title ?? "Lesson"}
               </h1>
-              {isDone && !isPreview && (
+              {isDone && (!isPreview || isOpenGuestShowcase) && (
                 <p className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">
                   <CheckCircle2 className="h-3.5 w-3.5" /> Completed
                 </p>
@@ -669,6 +738,7 @@ export function LessonPlayerClient({
                           lessonId={activeLessonId}
                           scenario={tutorScenarios[moment.scenario_id]}
                           done={tutorDone.has(moment.scenario_id)}
+                          isGuest={isGuest}
                           onComplete={(scenarioId: string) => {
                             setTutorDone((prev) => new Set([...prev, scenarioId]));
                             toast.success("AI Teacher check-in complete");
@@ -687,11 +757,16 @@ export function LessonPlayerClient({
                               questions={[...quiz!.quiz_questions].sort((a, b) => a.position - b.position)}
                               initialAttempt={initialQuizAttempt}
                               attemptsUsed={quizAttemptsUsed}
-                              disabled={isPreview}
+                              disabled={isPreview && !isOpenGuestShowcase}
+                              guestMode={isOpenGuestShowcase}
                               lessonId={activeLessonId}
                               courseSlug={course.slug}
                               onPassed={() => {
-                                setCompleted((prev) => new Set([...prev, activeLessonId]));
+                                if (isOpenGuestShowcase) {
+                                  markGuestLessonDone(activeLessonId);
+                                } else {
+                                  setCompleted((prev) => new Set([...prev, activeLessonId]));
+                                }
                                 toast.success("Quiz passed — lesson complete");
                               }}
                             />
@@ -708,9 +783,11 @@ export function LessonPlayerClient({
                           practiceSubmissions={practiceSubmissions}
                           courseId={course.id}
                           lessonId={activeLessonId}
+                          previewMode={isOpenGuestShowcase}
                           tutor={{
                             scenarios: tutorScenarios,
                             completedScenarioIds: [...tutorDone],
+                            isGuest,
                             onComplete: (scenarioId: string) => {
                               setTutorDone((prev) => new Set([...prev, scenarioId]));
                               toast.success("AI Teacher check-in complete");
@@ -740,6 +817,7 @@ export function LessonPlayerClient({
                         lessonId={activeLessonId}
                         scenario={tutorScenarios[moment.scenario_id]}
                         done={tutorDone.has(moment.scenario_id)}
+                        isGuest={isGuest}
                         onComplete={(scenarioId: string) => {
                           setTutorDone((prev) => new Set([...prev, scenarioId]));
                           toast.success("AI Teacher check-in complete");
@@ -756,11 +834,16 @@ export function LessonPlayerClient({
                         questions={[...quiz!.quiz_questions].sort((a, b) => a.position - b.position)}
                         initialAttempt={initialQuizAttempt}
                         attemptsUsed={quizAttemptsUsed}
-                        disabled={isPreview}
+                        disabled={isPreview && !isOpenGuestShowcase}
+                        guestMode={isOpenGuestShowcase}
                         lessonId={activeLessonId}
                         courseSlug={course.slug}
                         onPassed={() => {
-                          setCompleted((prev) => new Set([...prev, activeLessonId]));
+                          if (isOpenGuestShowcase) {
+                            markGuestLessonDone(activeLessonId);
+                          } else {
+                            setCompleted((prev) => new Set([...prev, activeLessonId]));
+                          }
                           toast.success("Quiz passed — lesson complete");
                         }}
                       />
@@ -792,7 +875,7 @@ export function LessonPlayerClient({
                       </div>
                       {(!vivaStatus?.required || vivaStatus.passed || certificate) && renderPrimary()}
                     </div>
-                  ) : isPreview ? (
+                  ) : isPreview && !isOpenGuestShowcase ? (
                     <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center">
                       <div className="min-w-0 flex-1">
                         <p className="font-semibold text-[#062e39]">Enjoying the preview?</p>

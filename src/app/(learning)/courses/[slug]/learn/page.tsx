@@ -29,8 +29,8 @@ export default async function LearnPage({ params, searchParams }: PageProps) {
   const { lesson: lessonIdParam } = await searchParams;
 
   const clerkUser = await currentUser();
-  if (!clerkUser) redirect("/sign-in");
-  const userId = clerkUser.id;
+  const userId = clerkUser?.id ?? null;
+  const isGuest = !userId;
 
   const supabase = createClient();
 
@@ -48,6 +48,11 @@ export default async function LearnPage({ params, searchParams }: PageProps) {
     ? course.companies[0]
     : course.companies;
 
+  // Unauthenticated guests may only view published courses with preview lessons.
+  if (isGuest && course.status !== "published") {
+    notFound();
+  }
+
   // 2. Parallelize queries that depend on course.id or userId
   const [
     { data: enrollmentInitial },
@@ -55,21 +60,29 @@ export default async function LearnPage({ params, searchParams }: PageProps) {
     { data: existingCert },
     { data: bookingsData }
   ] = await Promise.all([
-    supabase.from("enrollments").select("id, status").eq("user_id", userId).eq("course_id", course.id).maybeSingle(),
+    userId
+      ? supabase.from("enrollments").select("id, status").eq("user_id", userId).eq("course_id", course.id).maybeSingle()
+      : Promise.resolve({ data: null }),
     supabase.from("modules").select("id, title, position, lessons(id, title, position, is_preview)").eq("course_id", course.id).order("position", { ascending: true }),
-    supabase.from("certificates").select("id, public_id, issued_at").eq("user_id", userId).eq("course_id", course.id).maybeSingle(),
-    supabase.from("live_session_bookings").select("*, zoom_meetings(*)").eq("learner_id", userId).in("status", ["requested", "confirmed", "reschedule_requested", "completed"])
+    userId
+      ? supabase.from("certificates").select("id, public_id, issued_at").eq("user_id", userId).eq("course_id", course.id).maybeSingle()
+      : Promise.resolve({ data: null }),
+    userId
+      ? supabase.from("live_session_bookings").select("*, zoom_meetings(*)").eq("learner_id", userId).in("status", ["requested", "confirmed", "reschedule_requested", "completed"])
+      : Promise.resolve({ data: [] }),
   ]);
 
   let enrollment = enrollmentInitial;
-  const { allowed: isManager } = await canManageCourse(supabase, course.id, userId);
+  const { allowed: isManager } = userId
+    ? await canManageCourse(supabase, course.id, userId)
+    : { allowed: false };
 
   // Draft/archived courses are only visible to their authors and to learners who already enrolled.
   if (course.status !== "published" && !isManager && !enrollment) notFound();
   if (enrollment?.status === "revoked" && !isManager) redirect(`/courses/${slug}`);
 
-  // Auto-enroll if free (published courses only)
-  if (!enrollment && course.price_type === "free" && course.status === "published" && !isManager) {
+  // Auto-enroll signed-in learners if free (published courses only)
+  if (clerkUser && userId && !enrollment && course.price_type === "free" && course.status === "published" && !isManager) {
     const email = clerkUser.emailAddresses.find((e) => e.id === clerkUser.primaryEmailAddressId)?.emailAddress;
     await supabase.from("profiles").upsert({
       id: userId,
@@ -113,7 +126,7 @@ export default async function LearnPage({ params, searchParams }: PageProps) {
 
   // Resume where the learner left off: first incomplete lesson when no lesson is requested.
   let activeLessonId: string = lessonIdParam ?? allLessons[0].id;
-  if (!lessonIdParam && enrollment) {
+  if (!lessonIdParam && enrollment && userId) {
     const { data: doneRows } = await supabase
       .from("lesson_progress")
       .select("lesson_id")
@@ -127,12 +140,19 @@ export default async function LearnPage({ params, searchParams }: PageProps) {
 
   // Security checks
   const isPreview = !enrollment && !isManager;
+  const fallbackCourseUrl = comp?.slug ? `/academy/${comp.slug}/courses/${slug}` : `/courses/${slug}`;
   if (isPreview && !lessonIdParam) {
     const firstPreview = allLessons.find((l) => l.is_preview);
-    if (!firstPreview) redirect(`/courses/${slug}`);
+    if (!firstPreview) {
+      if (isGuest) redirect(`/sign-in?redirect_url=${encodeURIComponent(`/courses/${slug}/learn`)}`);
+      redirect(fallbackCourseUrl);
+    }
     activeLessonId = firstPreview.id;
   }
-  if (isPreview && !allLessons.find((l) => l.id === activeLessonId)?.is_preview) redirect(`/courses/${slug}`);
+  if (isPreview && !allLessons.find((l) => l.id === activeLessonId)?.is_preview) {
+    if (isGuest) redirect(`/sign-in?redirect_url=${encodeURIComponent(`/courses/${slug}/learn?lesson=${activeLessonId}`)}`);
+    redirect(fallbackCourseUrl);
+  }
 
   const isPartialEnrollment = enrollment?.status === "pending_payment" && !isManager;
   if (isPartialEnrollment) {
@@ -155,9 +175,13 @@ export default async function LearnPage({ params, searchParams }: PageProps) {
   ] = await Promise.all([
     supabase.from("content_blocks").select("id, type, position, content").eq("lesson_id", activeLessonId).order("position", { ascending: true }),
     supabase.from("quizzes").select("id, title, pass_threshold, max_attempts, quiz_questions(id, question, options, correct_indices, explanation, position)").eq("lesson_id", activeLessonId).maybeSingle(),
-    supabase.from("lesson_progress").select("lesson_id, completed").eq("user_id", userId).in("lesson_id", allLessonIds),
+    userId
+      ? supabase.from("lesson_progress").select("lesson_id, completed").eq("user_id", userId).in("lesson_id", allLessonIds)
+      : Promise.resolve({ data: [] }),
     supabase.from("discussions").select("*").eq("lesson_id", activeLessonId).order("created_at", { ascending: true }),
-    supabase.from("practice_exercise_submissions").select("*, practice_exercise_scores(*), practice_exercise_files(*)").eq("user_id", userId).eq("lesson_id", activeLessonId).order("attempt_number", { ascending: false })
+    userId
+      ? supabase.from("practice_exercise_submissions").select("*, practice_exercise_scores(*), practice_exercise_files(*)").eq("user_id", userId).eq("lesson_id", activeLessonId).order("attempt_number", { ascending: false })
+      : Promise.resolve({ data: [] }),
   ]);
 
   // Fetch profiles separately — discussions.user_id has no FK to profiles so the
@@ -196,10 +220,12 @@ export default async function LearnPage({ params, searchParams }: PageProps) {
         }
       : null;
   }
-  // Never ship the answer key to the browser until the learner has passed or used every attempt.
+  // Never ship the answer key to the browser until the learner has passed or used every attempt —
+  // except for open free-showcase guest mode where quizzes are graded client-side for instant feedback.
+  const isOpenGuestFreeQuiz = isGuest && course.price_type === "free" && course.status === "published";
   const attemptsExhausted =
     !!quizData?.max_attempts && quizData.max_attempts > 0 && quizAttemptsUsed >= quizData.max_attempts;
-  if (quizData && !quizPassed && !attemptsExhausted) {
+  if (quizData && !quizPassed && !attemptsExhausted && !isOpenGuestFreeQuiz) {
     quizData.quiz_questions = (quizData.quiz_questions ?? []).map((q: any) => ({
       ...q,
       correct_indices: [],
@@ -259,13 +285,15 @@ export default async function LearnPage({ params, searchParams }: PageProps) {
           .select("id, title, goal, style, scene, max_minutes, allowed_modes, ai_personas(name, display_name, rive_variant)")
           .in("id", tutorScenarioIds)
           .eq("status", "published"),
-        supabase
-          .from("tutor_sessions")
-          .select("scenario_id")
-          .eq("user_id", userId)
-          .eq("lesson_id", activeLessonId)
-          .eq("origin", "lesson")
-          .eq("status", "completed"),
+        userId
+          ? supabase
+              .from("tutor_sessions")
+              .select("scenario_id")
+              .eq("user_id", userId)
+              .eq("lesson_id", activeLessonId)
+              .eq("origin", "lesson")
+              .eq("status", "completed")
+          : Promise.resolve({ data: [] }),
       ])
     : [{ data: [] }, { data: [] }];
   const tutorScenarios: Record<string, TutorScenarioView> = {};
@@ -284,8 +312,8 @@ export default async function LearnPage({ params, searchParams }: PageProps) {
     (progressData ?? []).filter((p) => p.completed).map((p) => p.lesson_id)
   );
 
-  const allDone = allLessonIds.length > 0 && allLessonIds.every((id) => completedSet.has(id));
-  const vivaStatus = allDone ? await getCourseVivaStatus(course.id, userId) : null;
+  const allDone = Boolean(userId) && allLessonIds.length > 0 && allLessonIds.every((id) => completedSet.has(id));
+  const vivaStatus = allDone && userId ? await getCourseVivaStatus(course.id, userId) : null;
 
   // Filter visibility in JS — avoids failing if is_public/status columns don't yet exist
   const discussionsData = (isInstructor

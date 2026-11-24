@@ -128,7 +128,7 @@ export function SpeakingStage({
         </div>
       )}
 
-      <div className="pointer-events-none absolute inset-x-2 top-2 flex items-start justify-between gap-1.5 sm:inset-x-3 sm:top-3 sm:gap-2">
+      <div className="pointer-events-none absolute inset-x-2 top-2 z-10 flex items-start justify-between gap-1.5 sm:inset-x-3 sm:top-3 sm:gap-2">
         <div className={`${styles.glass} grid max-w-[62%] gap-0 rounded-xl px-2.5 py-1 sm:rounded-2xl sm:px-3 sm:py-1.5`}>
           <div className="truncate font-heading text-xs font-semibold leading-tight text-[var(--ink)] sm:text-sm">
             {teacherName}
@@ -145,7 +145,7 @@ export function SpeakingStage({
       </div>
 
       {whiteboard && (
-        <div className="absolute right-2 top-[16%] max-w-[48%] rounded-xl bg-[#fbf3e6]/95 px-2.5 py-1.5 text-xs font-semibold text-[var(--ink)] shadow-md sm:right-3 sm:top-[18%] sm:px-3 sm:py-2 sm:text-sm">
+        <div className="absolute right-2 top-[16%] z-10 max-w-[48%] rounded-xl bg-[#fbf3e6]/95 px-2.5 py-1.5 text-xs font-semibold text-[var(--ink)] shadow-md sm:right-3 sm:top-[18%] sm:px-3 sm:py-2 sm:text-sm">
           {whiteboard}
         </div>
       )}
@@ -168,7 +168,7 @@ function FlashCard({ card, onDismiss }: { card: CardItem | null; onDismiss: () =
   return (
     <div
       aria-live="polite"
-      className={`${styles.card} ${visible ? "" : styles.cardHidden} absolute left-2 top-[20%] w-[40%] max-w-[180px] min-w-[100px] rounded-2xl px-2.5 pb-2 pt-2.5 text-center backdrop-blur-md sm:left-3 sm:top-[22%] sm:w-[36%] sm:rounded-[22px] sm:px-3 sm:pb-3 sm:pt-3`}
+      className={`${styles.card} ${visible ? "" : styles.cardHidden} absolute left-2 top-[20%] z-10 w-[40%] max-w-[180px] min-w-[100px] rounded-2xl px-2.5 pb-2 pt-2.5 text-center backdrop-blur-md sm:left-3 sm:top-[22%] sm:w-[36%] sm:rounded-[22px] sm:px-3 sm:pb-3 sm:pt-3`}
     >
       {card && (
         <>
@@ -213,7 +213,7 @@ function Captions({
   if (!caption) {
     return (
       <div
-        className={`${styles.glass} absolute inset-x-2 bottom-2 rounded-2xl px-3 py-1.5 text-center text-xs text-[var(--ink-dim)] sm:inset-x-3 sm:bottom-3 sm:px-4 sm:py-2.5 sm:text-sm`}
+        className={`${styles.glass} absolute inset-x-2 bottom-2 z-10 rounded-2xl px-3 py-1.5 text-center text-xs text-[var(--ink-dim)] sm:inset-x-3 sm:bottom-3 sm:px-4 sm:py-2.5 sm:text-sm`}
       >
         Captions appear here.
       </div>
@@ -225,7 +225,7 @@ function Captions({
       role="region"
       aria-label="Captions"
       aria-live="polite"
-      className={`${styles.glass} absolute inset-x-2 bottom-2 flex items-center gap-2 rounded-2xl px-3 py-2 sm:inset-x-3 sm:bottom-3 sm:px-4 sm:py-2.5`}
+      className={`${styles.glass} absolute inset-x-2 bottom-2 z-10 flex items-center gap-2 rounded-2xl px-3 py-2 sm:inset-x-3 sm:bottom-3 sm:px-4 sm:py-2.5`}
     >
       <div className="min-w-0 flex-1 text-center">
         <p

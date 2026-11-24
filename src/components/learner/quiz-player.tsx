@@ -46,10 +46,13 @@ export function QuizPlayer({
   onPassed,
   attemptsUsed = 0,
   disabled = false,
+  guestMode = false,
 }: {
   attemptsUsed?: number;
-  /** e.g. free-preview visitors: show the questions but don't allow submitting. */
+  /** e.g. paid-course preview visitors: show the questions but don't allow submitting. */
   disabled?: boolean;
+  /** Open free showcase guest mode: grade interactively client-side without requiring login. */
+  guestMode?: boolean;
   quiz: Quiz;
   questions: Question[];
   initialAttempt?: {
@@ -103,6 +106,30 @@ export function QuizPlayer({
     const unanswered = questions.filter((q) => !answers[q.id]?.length);
     if (unanswered.length > 0) {
       toast.error(`Please answer all ${unanswered.length} remaining question(s)`);
+      return;
+    }
+
+    if (guestMode) {
+      let correctCount = 0;
+      const correctAnswers: Record<string, number[]> = {};
+      for (const q of questions) {
+        const expected = [...(q.correct_indices ?? [])].sort();
+        const chosen = [...(answers[q.id] ?? [])].sort();
+        correctAnswers[q.id] = expected;
+        if (expected.length > 0 && JSON.stringify(expected) === JSON.stringify(chosen)) {
+          correctCount += 1;
+        }
+      }
+      const score = questions.length > 0 ? Math.round((correctCount / questions.length) * 100) : 100;
+      const passed = score >= quiz.pass_threshold;
+      setResult({ score, passed, correctAnswers });
+      setSubmitted(true);
+      if (passed) {
+        toast.success(`🎉 Great job! You scored ${score}% and passed the quiz!`);
+        onPassed?.(score);
+      } else {
+        toast.error(`Score: ${score}%. You need ${quiz.pass_threshold}% to pass — give it another try!`);
+      }
       return;
     }
 

@@ -58,6 +58,7 @@ export function HeroTeacher({
             key={opt.id}
             type="button"
             onClick={() => setEngine(opt.id)}
+            onPointerEnter={opt.id === "three" ? () => { void import("three"); } : undefined}
             className={`rounded-full px-2.5 py-1 transition-colors ${
               engine === opt.id ? "bg-[#fd5523] text-white" : "text-white/80 hover:text-white"
             }`}

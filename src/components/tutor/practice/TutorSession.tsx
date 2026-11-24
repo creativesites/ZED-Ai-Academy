@@ -1384,20 +1384,46 @@ export function TutorSession({
               )}
             </div>
 
-            {/* 3D / 2D Avatar toggle — shown only when this persona has a custom 3D model or 3D mode configured */}
-            {!lite && (Boolean(activeLook?.glbUrl) || engine === "three" || activeLook?.engine === "three") && (
-              <button
-                type="button"
-                onClick={() => setAvatarMode((m) => (m === "three" ? "rive" : "three"))}
-                title="Switch between 3D WebGL and 2D animated teacher"
-                className={`h-8 rounded-full border px-2.5 text-[11px] font-bold transition ${
-                  avatarMode === "three"
-                    ? "border-[#fd5523]/40 bg-[#fff2e9] text-[#c83a10]"
-                    : "border-[var(--line-strong)] bg-white text-[var(--ink)] hover:bg-[var(--soft-hover)]"
-                }`}
+            {/* Seamless 2D Rive <-> 3D WebGL Avatar Switcher (always available outside Lite mode) */}
+            {!lite && engine !== "placeholder" && (
+              <div
+                role="group"
+                aria-label="Avatar renderer"
+                className="inline-flex h-8 items-center rounded-full border border-[var(--line-strong)] bg-white p-0.5 text-[11px] font-bold"
               >
-                {avatarMode === "three" ? "3D On" : "3D"}
-              </button>
+                <button
+                  type="button"
+                  onClick={() => setAvatarMode("rive")}
+                  aria-pressed={avatarMode === "rive"}
+                  title="2D Rive animated teacher"
+                  className={`h-7 rounded-full px-2 transition-colors ${
+                    avatarMode === "rive"
+                      ? "bg-[#062e39] text-white shadow-xs"
+                      : "text-[var(--ink-dim)] hover:text-[var(--ink)]"
+                  }`}
+                >
+                  2D
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAvatarMode("three")}
+                  onPointerEnter={() => {
+                    void import("three");
+                  }}
+                  onFocus={() => {
+                    void import("three");
+                  }}
+                  aria-pressed={avatarMode === "three"}
+                  title="3D WebGL studio teacher"
+                  className={`h-7 rounded-full px-2 transition-colors ${
+                    avatarMode === "three"
+                      ? "bg-[#fd5523] text-white shadow-xs"
+                      : "text-[var(--ink-dim)] hover:text-[var(--ink)]"
+                  }`}
+                >
+                  3D
+                </button>
+              </div>
             )}
 
             {/* Lite (Data Saver) toggle */}

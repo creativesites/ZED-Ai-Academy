@@ -1,7 +1,16 @@
 import { auth } from "@clerk/nextjs/server";
 import { gemini } from "@/lib/ai/gemini";
 import { modelFor } from "@/lib/ai/models";
+import { createDemoRateLimiter, DEMO_WINDOW_MS } from "@/lib/tutor/demo";
 import { NextRequest } from "next/server";
+
+const guestStudioLimiter = createDemoRateLimiter({ limit: 8, windowMs: DEMO_WINDOW_MS });
+
+function studioRequestIp(req: NextRequest): string {
+  const fwd = req.headers.get("x-forwarded-for");
+  if (fwd) return fwd.split(",")[0].trim() || "unknown";
+  return req.headers.get("x-real-ip") ?? "unknown";
+}
 
 interface ToolConfig {
   systemPrompt: string;
@@ -76,7 +85,12 @@ const TOOLS: Record<string, ToolConfig> = {
 export async function POST(req: NextRequest) {
   const { userId } = await auth();
   if (!userId) {
-    return new Response("Unauthorized", { status: 401 });
+    const budget = guestStudioLimiter.take(`studio:${studioRequestIp(req)}`);
+    if (!budget.ok) {
+      return new Response("Guest Practice Studio limit reached. Sign in for unlimited runs!", {
+        status: 429,
+      });
+    }
   }
 
   const body = await req.json();

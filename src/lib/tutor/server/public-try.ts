@@ -144,7 +144,7 @@ export async function loadPublicTryScenario(scenarioId: string): Promise<PublicT
     skillPack: normalizeDemoSkillPack(row.skill_pack),
     language: lang,
     level: row.level ?? "Interactive Mini-Lesson",
-    maxMinutes: Math.min(3, Math.max(2, row.max_minutes ?? 3)),
+    maxMinutes: Math.min(5, Math.max(2, row.max_minutes ?? 4)),
     scene: normalizeDemoScene(actualScene),
     thumb: { from: "#fff2e9", to: "#e9f8f2" },
     persona: {
@@ -155,13 +155,13 @@ export async function loadPublicTryScenario(scenarioId: string): Promise<PublicT
       languages: personaLangs,
       personalityPrompt:
         persona?.personality_prompt ??
-        "Warm, clear, encouraging AI teacher guiding a short 2-minute interactive mini-lesson.",
+        "Warm, clear, encouraging AI teacher guiding a short interactive mini-lesson.",
       voiceName: extractVoiceName(persona?.voice),
     },
     beats: parseBeats(row.beats),
     targetItems: parseTargetItems(row.target_items),
     roleNotes:
-      "This is a 2-minute public mini-lesson preview. Give the learner an engaging, memorable taste of the topic in 3-4 turns using show_board and ask_choice.",
+      "This is a public interactive AI Teacher session. Give the learner an engaging, memorable hands-on experience following the beats closely, using show_board (with equations, charts, diagrams, or compare visuals when helpful) and ask_choice so every turn has clear interactive controls.",
     allowedModes: ["voice", "text"],
     scripted: { learnerLines: [], turns: [] },
     scriptedReport: {
