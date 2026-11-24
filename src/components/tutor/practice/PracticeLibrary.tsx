@@ -25,8 +25,8 @@ import { DEFAULT_PERSONA_LOOK } from "@/components/tutor/avatar/types";
 
 type PracticeLibraryProps = {
   groups: LanguageGroup[];
-  /** Path of the session route for one scenario, for example /practice/<id>. */
-  sessionHref: (scenarioId: string) => string;
+  /** Base path for scenario session routes, e.g. "/practice" or "/academy/slug/practice". */
+  sessionBasePath: string;
   /** Optional path to the learner's spaced-repetition vocabulary deck. */
   deckHref?: string;
   /** Optional path to the learner's speaking session history & reports. */
@@ -42,7 +42,7 @@ type PracticeLibraryProps = {
 
 export function PracticeLibrary({
   groups,
-  sessionHref,
+  sessionBasePath,
   deckHref,
   historyHref,
   overview,
@@ -51,6 +51,7 @@ export function PracticeLibrary({
   heading,
   subheading,
 }: PracticeLibraryProps) {
+  const sessionHref = (id: string) => `${sessionBasePath.replace(/\/+$/, "")}/${id}`;
   const [activeGroup, setActiveGroup] = useState<string>("all");
   const [query, setQuery] = useState("");
 

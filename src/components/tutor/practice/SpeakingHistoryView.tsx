@@ -42,13 +42,14 @@ export function SpeakingHistoryView({
   initialSessions,
   backHref,
   backLabel = "Back to Teacher's Room",
-  sessionHref,
+  sessionBasePath,
 }: {
   initialSessions: LearnerSessionHistoryItem[];
   backHref: string;
   backLabel?: string;
-  sessionHref: (scenarioId: string) => string;
+  sessionBasePath: string;
 }) {
+  const sessionHref = (id: string) => `${sessionBasePath.replace(/\/+$/, "")}/${id}`;
   const [sessions, setSessions] = useState<LearnerSessionHistoryItem[]>(initialSessions);
   const [expandedId, setExpandedId] = useState<string | null>(initialSessions[0]?.sessionId ?? null);
   const [isPending, startTransition] = useTransition();

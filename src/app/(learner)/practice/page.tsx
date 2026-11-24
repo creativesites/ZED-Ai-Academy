@@ -23,7 +23,7 @@ export default async function PracticeRoomPage() {
   return (
     <PracticeLibrary
       groups={groupByLanguage(items)}
-      sessionHref={(id) => `/practice/${id}`}
+      sessionBasePath="/practice"
       deckHref="/practice/deck"
       historyHref="/practice/history"
       overview={overview}

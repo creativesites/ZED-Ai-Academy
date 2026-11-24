@@ -20,7 +20,7 @@ export default async function PracticeHistoryPage() {
         initialSessions={sessions}
         backHref="/practice"
         backLabel="Back to Teacher's Room"
-        sessionHref={(id) => `/practice/${id}`}
+        sessionBasePath="/practice"
       />
     </>
   );

@@ -47,7 +47,7 @@ export default async function TenantPracticePage({ params }: { params: Promise<{
       <TenantNavbar tenant={company} staffRole={staffRole} />
       <PracticeLibrary
         groups={groupByLanguage(result.items)}
-        sessionHref={(id) => `/academy/${company.slug}/practice/${id}`}
+        sessionBasePath={`/academy/${company.slug}/practice`}
         deckHref={`/academy/${company.slug}/practice/deck`}
         historyHref={`/academy/${company.slug}/practice/history`}
         overview={overview}

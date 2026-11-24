@@ -53,7 +53,7 @@ export default async function TenantPracticeHistoryPage({
         initialSessions={sessions}
         backHref={`/academy/${company.slug}/practice`}
         backLabel={`Back to ${company.name} Teacher's Room`}
-        sessionHref={(id) => `/academy/${company.slug}/practice/${id}`}
+        sessionBasePath={`/academy/${company.slug}/practice`}
       />
     </>
   );

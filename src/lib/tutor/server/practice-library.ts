@@ -23,14 +23,29 @@ const SCENARIO_COLUMNS =
 export async function loadPracticeLibrary(userId: string, scope: PracticeLibraryScope): Promise<PracticeLibraryResult> {
   const supabase = createServiceClient();
 
-  const { data: memberships } = await supabase
-    .from("company_members")
-    .select("company_id")
-    .eq("profile_id", userId)
-    .eq("status", "active");
-  const memberOf = new Set((memberships ?? []).map((m) => m.company_id));
+  const [{ data: memberships }, { data: ownedCompanies }, { data: profile }] = await Promise.all([
+    supabase
+      .from("company_members")
+      .select("company_id")
+      .eq("profile_id", userId)
+      .eq("status", "active"),
+    supabase
+      .from("companies")
+      .select("id")
+      .eq("admin_id", userId),
+    supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", userId)
+      .maybeSingle(),
+  ]);
+  const isSuperAdmin = profile?.role === "super_admin";
+  const memberOf = new Set([
+    ...(memberships ?? []).map((m) => m.company_id),
+    ...(ownedCompanies ?? []).map((c) => c.id),
+  ]);
 
-  if (scope.kind === "tenant" && !memberOf.has(scope.companyId)) {
+  if (scope.kind === "tenant" && !isSuperAdmin && !memberOf.has(scope.companyId)) {
     return { ok: false, reason: "not_tenant_member" };
   }
 
