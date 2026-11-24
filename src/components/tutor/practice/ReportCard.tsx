@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { CheckCircle2, CircleDot, Loader2, RotateCcw, Sparkles, Volume2 } from "lucide-react";
+import { CheckCircle2, CircleDot, Download, Loader2, RotateCcw, Sparkles, Volume2 } from "lucide-react";
 import Link from "next/link";
 import type { CardItem } from "@/components/tutor/EventPlayer";
 import {
@@ -12,6 +12,7 @@ import {
 } from "@/lib/tutor/report-model";
 import { toneSegments } from "@/lib/tutor/romanization";
 import { speechLangFor } from "@/lib/tutor/speech-lang";
+import { buildStudyNotesMarkdown, slugifyFilename, type ExportTranscriptLine } from "@/lib/tutor/study-export";
 import { saveSessionWordsToDeck } from "@/actions/tutor-learner";
 import styles from "./practice.module.css";
 import { hasHan, toneClass } from "./SpeakingStage";
@@ -31,10 +32,13 @@ type Mistake = TutorReportContent["mistakes"][number] & { audioUrl?: string };
 type ReportCardProps = {
   report: TutorReportContent;
   title: string;
+  teacherName?: string;
   words: CardItem[];
+  transcript?: ExportTranscriptLine[];
   onPractiseAgain: () => void;
   onPractiseObjective?: (objectiveText: string) => void;
   onStartSprint?: () => void;
+  onStartNextScenario?: (scenarioId: string) => void;
   onDone?: () => void;
 };
 
@@ -62,10 +66,13 @@ const OBJECTIVE_STATUS_STYLE: Record<
 export function ReportCard({
   report,
   title,
+  teacherName,
   words,
+  transcript,
   onPractiseAgain,
   onPractiseObjective,
   onStartSprint,
+  onStartNextScenario,
   onDone,
 }: ReportCardProps) {
   const scores = REPORT_SCORE_KEYS.filter((key) => typeof report.scores[key] === "number");
@@ -288,10 +295,23 @@ export function ReportCard({
       )}
 
       <div className="flex flex-wrap gap-2">
+        {report.nextScenario && onStartNextScenario && (
+          <button
+            type="button"
+            onClick={() => onStartNextScenario(report.nextScenario!.id)}
+            className={`${styles.primaryButton} flex-1 rounded-2xl px-5 py-3 text-sm font-bold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus)]`}
+          >
+            Up next: {report.nextScenario.title} →
+          </button>
+        )}
         <button
           type="button"
           onClick={onPractiseAgain}
-          className={`${styles.primaryButton} flex-1 rounded-2xl px-5 py-3 text-sm font-bold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus)]`}
+          className={`${
+            report.nextScenario && onStartNextScenario
+              ? "rounded-2xl border border-[var(--line-strong)] bg-[var(--soft)] px-5 py-3 text-sm font-semibold text-[var(--ink)] hover:bg-[var(--soft-hover)]"
+              : `${styles.primaryButton} flex-1 rounded-2xl px-5 py-3 text-sm font-bold`
+          } focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus)]`}
         >
           Practise again
         </button>
@@ -305,6 +325,31 @@ export function ReportCard({
             5-min revision sprint
           </button>
         )}
+        <button
+          type="button"
+          onClick={() => {
+            const md = buildStudyNotesMarkdown({
+              title,
+              teacherName,
+              report,
+              savedTakeaways: words,
+              transcript,
+            });
+            const blob = new Blob([md], { type: "text/markdown;charset=utf-8" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = slugifyFilename(title);
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            URL.revokeObjectURL(url);
+          }}
+          className="inline-flex items-center justify-center gap-1.5 rounded-2xl border border-[var(--line-strong)] bg-white px-4 py-3 text-sm font-semibold text-[var(--ink)] hover:bg-[var(--soft-hover)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus)]"
+        >
+          <Download className="h-4 w-4 text-[#fd5523]" aria-hidden="true" />
+          Download notes
+        </button>
         {onDone && (
           <button
             type="button"

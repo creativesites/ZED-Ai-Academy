@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { ArrowDown, BarChart3, BookmarkCheck, BookmarkPlus, Check, Copy, GitBranch, Scale, Terminal } from "lucide-react";
+import { useMemo, useState } from "react";
+import { ArrowDown, BarChart3, BookmarkCheck, BookmarkPlus, Check, Copy, GitBranch, PieChart, Scale, SlidersHorizontal, Terminal, TrendingUp } from "lucide-react";
 import type { ClipEvent, LessonRefEvent } from "@/components/tutor/EventPlayer";
 import { CONFIDENCE_LEVELS, type BoardState, type ConfidenceLevel } from "@/lib/tutor/board";
 import {
@@ -10,8 +10,10 @@ import {
   parseCompareData,
   parseDiagramNodes,
   tokenizeCodeLine,
+  type ChartDatum,
   type CodeTokenKind,
 } from "@/lib/tutor/board-visuals";
+import { evaluateFormulaExpression, parseInteractiveFormula, type InteractiveFormula } from "@/lib/tutor/formula-sandbox";
 import { dispatchLessonSeek } from "@/lib/tutor/lesson-seek";
 import styles from "./practice.module.css";
 
@@ -265,11 +267,16 @@ function BoardContent({
       )}
 
       {board.kind === "equation" && board.text && (
-        <div className="rounded-xl border border-amber-200/70 bg-[#fffaf4] px-3 py-3 text-center">
+        <div className="space-y-2.5 rounded-xl border border-amber-200/70 bg-[#fffaf4] px-3 py-3 text-center">
           <p className="whitespace-pre-wrap font-serif text-base font-bold tracking-wide leading-relaxed text-[var(--ink)] sm:text-lg">
             {formatEquationDisplay(board.text)}
           </p>
-          <div className="mt-2.5 flex flex-wrap items-center justify-center gap-2">
+          <FormulaSandboxWidget
+            equationText={board.text}
+            disabled={disabled}
+            onInteract={onInteract}
+          />
+          <div className="flex flex-wrap items-center justify-center gap-2">
             {onInteract && (
               <button
                 type="button"
@@ -407,28 +414,11 @@ function BoardContent({
       )}
 
       {board.kind === "chart" && chartData.length > 0 && (
-        <div className="space-y-2">
-          {chartData.map((bar, i) => (
-            <button
-              key={`${bar.label}-${i}`}
-              type="button"
-              disabled={!onInteract || disabled}
-              onClick={() => onInteract?.(`Explain "${bar.label}" (${bar.displayValue}) on this chart.`)}
-              className="group block w-full space-y-1 rounded-xl p-1.5 text-left transition hover:bg-slate-50 disabled:cursor-default"
-            >
-              <div className="flex items-center justify-between gap-2 text-xs">
-                <span className="font-semibold text-[#062e39] group-hover:text-[#fd5523]">{bar.label}</span>
-                <span className="font-mono font-bold text-slate-600">{bar.displayValue}</span>
-              </div>
-              <div className="h-2.5 w-full overflow-hidden rounded-full bg-slate-100">
-                <div
-                  className="h-full rounded-full bg-gradient-to-r from-[#fd5523] to-[#f59e0b] transition-[width] duration-500"
-                  style={{ width: `${bar.pct}%` }}
-                />
-              </div>
-            </button>
-          ))}
-        </div>
+        <InteractiveChartWidget
+          data={chartData}
+          disabled={disabled}
+          onInteract={onInteract}
+        />
       )}
 
       {board.kind === "compare" && compareData && (
@@ -554,4 +544,266 @@ function formatSeconds(total: number): string {
   const m = Math.floor(total / 60);
   const s = total % 60;
   return `${m}:${String(s).padStart(2, "0")}`;
+}
+
+function FormulaSandboxWidget({
+  equationText,
+  disabled,
+  onInteract,
+}: {
+  equationText: string;
+  disabled: boolean;
+  onInteract?: (prompt: string) => void;
+}) {
+  const formula = useMemo<InteractiveFormula | null>(
+    () => parseInteractiveFormula(equationText),
+    [equationText],
+  );
+  const [open, setOpen] = useState(false);
+  const [values, setValues] = useState<Record<string, number>>(() =>
+    formula ? Object.fromEntries(formula.variables.map((v) => [v.name, v.defaultValue])) : {},
+  );
+
+  if (!formula) return null;
+
+  const activeValues = Object.fromEntries(
+    formula.variables.map((v) => [v.name, values[v.name] ?? v.defaultValue]),
+  );
+  const result = evaluateFormulaExpression(formula.expression, activeValues);
+  const formattedResult =
+    result === null
+      ? "—"
+      : Math.abs(result) >= 100
+        ? result.toFixed(1).replace(/\.0$/, "")
+        : result.toFixed(2).replace(/\.?0+$/, "");
+
+  if (!open) {
+    return (
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="inline-flex items-center gap-1.5 rounded-full border border-[#fd5523]/30 bg-[#fff2e9] px-3 py-1 text-[11px] font-bold text-[#c83a10] transition hover:bg-[#ffe5d4]"
+      >
+        <SlidersHorizontal className="h-3 w-3" aria-hidden="true" />
+        Try interactive sliders
+      </button>
+    );
+  }
+
+  return (
+    <div className="space-y-2.5 rounded-xl border border-amber-200 bg-white p-3 text-left shadow-xs">
+      <div className="flex items-center justify-between gap-2">
+        <span className="inline-flex items-center gap-1 text-[10px] font-extrabold uppercase tracking-wider text-amber-800">
+          <SlidersHorizontal className="h-3 w-3" aria-hidden="true" />
+          Live Formula Sandbox
+        </span>
+        <span className="rounded-lg bg-emerald-50 px-2.5 py-0.5 font-mono text-xs font-extrabold text-emerald-800">
+          {formula.outputName} = {formattedResult}
+        </span>
+      </div>
+      <div className="space-y-2">
+        {formula.variables.map((v) => {
+          const val = activeValues[v.name];
+          return (
+            <label key={v.name} className="block space-y-0.5 text-xs">
+              <div className="flex items-center justify-between font-semibold text-[#062e39]">
+                <span>{v.name}</span>
+                <span className="font-mono text-[#fd5523]">{val}</span>
+              </div>
+              <input
+                type="range"
+                min={v.min}
+                max={v.max}
+                step={v.step}
+                value={val}
+                onChange={(e) =>
+                  setValues((prev) => ({ ...prev, [v.name]: Number(e.target.value) }))
+                }
+                className="h-1.5 w-full cursor-pointer accent-[#fd5523]"
+              />
+            </label>
+          );
+        })}
+      </div>
+      {onInteract && result !== null && (
+        <button
+          type="button"
+          disabled={disabled}
+          onClick={() => {
+            const summary = formula.variables
+              .map((v) => `${v.name}=${activeValues[v.name]}`)
+              .join(", ");
+            onInteract(
+              `In the sandbox with ${summary}, I got ${formula.outputName} = ${formattedResult}. What does this result tell us?`,
+            );
+          }}
+          className="w-full rounded-lg bg-[#062e39] px-3 py-1.5 text-[11px] font-bold text-white transition hover:bg-[#0a4352] disabled:opacity-50"
+        >
+          Ask teacher about this case →
+        </button>
+      )}
+    </div>
+  );
+}
+
+const CHART_COLORS = ["#fd5523", "#15805f", "#2563eb", "#f59e0b", "#7c3aed", "#ec4899"];
+
+function InteractiveChartWidget({
+  data,
+  disabled,
+  onInteract,
+}: {
+  data: ChartDatum[];
+  disabled: boolean;
+  onInteract?: (prompt: string) => void;
+}) {
+  const [view, setView] = useState<"bar" | "line" | "donut">("bar");
+
+  const totalAbs = Math.max(
+    data.reduce((s, d) => s + Math.abs(d.value), 0),
+    1,
+  );
+
+  return (
+    <div className="space-y-2">
+      {/* Compact view switcher */}
+      <div className="flex items-center justify-end gap-1">
+        {(
+          [
+            { id: "bar", label: "Bar", Icon: BarChart3 },
+            { id: "line", label: "Line", Icon: TrendingUp },
+            { id: "donut", label: "Donut", Icon: PieChart },
+          ] as const
+        ).map(({ id, label, Icon }) => (
+          <button
+            key={id}
+            type="button"
+            onClick={() => setView(id)}
+            className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold transition ${
+              view === id
+                ? "bg-[#062e39] text-white"
+                : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+            }`}
+          >
+            <Icon className="h-3 w-3" aria-hidden="true" />
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {view === "bar" && (
+        <div className="space-y-1.5">
+          {data.map((bar, i) => (
+            <button
+              key={`${bar.label}-${i}`}
+              type="button"
+              disabled={!onInteract || disabled}
+              onClick={() => onInteract?.(`Explain "${bar.label}" (${bar.displayValue}) on this chart.`)}
+              className="group block w-full space-y-1 rounded-xl p-1.5 text-left transition hover:bg-slate-50 disabled:cursor-default"
+            >
+              <div className="flex items-center justify-between gap-2 text-xs">
+                <span className="font-semibold text-[#062e39] group-hover:text-[#fd5523]">{bar.label}</span>
+                <span className="font-mono font-bold text-slate-600">{bar.displayValue}</span>
+              </div>
+              <div className="h-2.5 w-full overflow-hidden rounded-full bg-slate-100">
+                <div
+                  className="h-full rounded-full transition-[width] duration-500"
+                  style={{
+                    width: `${bar.pct}%`,
+                    backgroundColor: CHART_COLORS[i % CHART_COLORS.length],
+                  }}
+                />
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
+
+      {view === "line" && (
+        <div className="rounded-xl border border-slate-100 bg-slate-50/70 p-3">
+          <svg viewBox="0 0 280 120" className="h-32 w-full overflow-visible" role="img" aria-label="Line chart">
+            <line x1="16" y1="100" x2="264" y2="100" stroke="#cbd5e1" strokeWidth="1" />
+            {data.length > 1 && (
+              <polyline
+                fill="none"
+                stroke="#fd5523"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                points={data
+                  .map((d, i) => {
+                    const x = 24 + (i * 232) / Math.max(1, data.length - 1);
+                    const y = 96 - (d.pct / 100) * 76;
+                    return `${x},${y}`;
+                  })
+                  .join(" ")}
+              />
+            )}
+            {data.map((d, i) => {
+              const x = data.length === 1 ? 140 : 24 + (i * 232) / Math.max(1, data.length - 1);
+              const y = 96 - (d.pct / 100) * 76;
+              return (
+                <g key={`${d.label}-${i}`}>
+                  <circle cx={x} cy={y} r="4.5" fill="#062e39" stroke="#ffffff" strokeWidth="1.5" />
+                  <text x={x} y={y - 9} textAnchor="middle" fontSize="9" fontWeight="700" fill="#062e39">
+                    {d.displayValue}
+                  </text>
+                  <text x={x} y={114} textAnchor="middle" fontSize="9" fill="#64748b">
+                    {d.label.slice(0, 10)}
+                  </text>
+                </g>
+              );
+            })}
+          </svg>
+        </div>
+      )}
+
+      {view === "donut" && (
+        <div className="flex flex-wrap items-center justify-center gap-4 rounded-xl border border-slate-100 bg-slate-50/70 p-3">
+          <svg viewBox="0 0 100 100" className="h-28 w-28 -rotate-90" role="img" aria-label="Donut chart">
+            {(() => {
+              let offset = 0;
+              const circ = 2 * Math.PI * 36;
+              return data.map((d, i) => {
+                const frac = Math.abs(d.value) / totalAbs;
+                const dash = frac * circ;
+                const el = (
+                  <circle
+                    key={`${d.label}-${i}`}
+                    cx="50"
+                    cy="50"
+                    r="36"
+                    fill="none"
+                    stroke={CHART_COLORS[i % CHART_COLORS.length]}
+                    strokeWidth="14"
+                    strokeDasharray={`${dash} ${circ - dash}`}
+                    strokeDashoffset={-offset}
+                  />
+                );
+                offset += dash;
+                return el;
+              });
+            })()}
+          </svg>
+          <ul className="space-y-1 text-xs">
+            {data.map((d, i) => {
+              const share = Math.round((Math.abs(d.value) / totalAbs) * 100);
+              return (
+                <li key={`${d.label}-${i}`} className="flex items-center gap-2">
+                  <span
+                    className="h-2.5 w-2.5 shrink-0 rounded-full"
+                    style={{ backgroundColor: CHART_COLORS[i % CHART_COLORS.length] }}
+                  />
+                  <span className="font-semibold text-[#062e39]">{d.label}</span>
+                  <span className="font-mono text-slate-500">
+                    {d.displayValue} ({share}%)
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
 }

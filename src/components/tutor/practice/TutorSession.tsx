@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ArrowLeft, Gauge, MessageSquareText, Sparkles, Volume1, Volume2, VolumeX, Wifi } from "lucide-react";
+import { ArrowLeft, Gauge, Headphones, MessageSquareText, Sparkles, Volume1, Volume2, VolumeX, Wifi } from "lucide-react";
 import { toast } from "sonner";
 import { saveSessionWordsToDeck } from "@/actions/tutor-learner";
 import type { AvatarDriver } from "@/components/tutor/avatar/types";
@@ -30,6 +30,7 @@ import {
   type TutorApiClient,
   type TutorScenarioBeat,
 } from "./api";
+import { AmbientSoundscape } from "./ambient-audio";
 import { Composer, type InputMode } from "./Composer";
 import { GeminiLiveClient } from "./live-client";
 import { LearnerRecorder, RecorderError, type RecordingResult } from "./learner-recorder";
@@ -148,6 +149,7 @@ export function TutorSession({
   const [soundBlocked, setSoundBlocked] = useState(false);
   const [muted, setMuted] = useState(false);
   const [volume, setVolume] = useState(1);
+  const [ambientOn, setAmbientOn] = useState(false);
   const [audioMenuOpen, setAudioMenuOpen] = useState(false);
   const [playbackRate, setPlaybackRate] = useState<0.85 | 1 | 1.15>(1);
   const [turnCount, setTurnCount] = useState(0);
@@ -179,6 +181,7 @@ export function TutorSession({
   const avatarRef = useRef<TeacherStageHandle | null>(null);
   const playerRef = useRef<EventPlayer | null>(null);
   const audioRef = useRef<TeacherAudio | null>(null);
+  const ambientRef = useRef<AmbientSoundscape | null>(null);
   const liveClientRef = useRef<GeminiLiveClient | null>(null);
   const recorderRef = useRef<LearnerRecorder | null>(null);
   const learnerAudioUrlRef = useRef<string | null>(null);
@@ -664,6 +667,7 @@ export function TutorSession({
       personaLangRef.current = started.persona.languages?.[0] ?? "en";
       audioRef.current?.setLanguage(started.persona.languages?.[0]);
       audioRef.current?.setTtsVoice(client ? null : started.persona.voiceName ?? null);
+      audioRef.current?.setPronunciationGlossary(started.persona.pronunciationGlossary ?? []);
       audioRef.current?.setMuted(false);
       mutedRef.current = false;
       setMuted(false);
@@ -1023,6 +1027,25 @@ export function TutorSession({
     void handleStart();
   };
 
+  // Manage procedural ambient room soundscape lifecycle cleanly
+  useEffect(() => {
+    if (!ambientRef.current) ambientRef.current = new AmbientSoundscape();
+    const amb = ambientRef.current;
+    if (ambientOn && phase === "live") {
+      amb.start(activeScene, muted ? 0 : volume);
+      amb.setLevel(volume, muted);
+    } else {
+      amb.stop();
+    }
+    return () => {
+      amb.stop();
+    };
+  }, [ambientOn, phase, activeScene]);
+
+  useEffect(() => {
+    ambientRef.current?.setLevel(volume, muted);
+  }, [volume, muted]);
+
   const toggleMute = () => {
     const next = !muted;
     audioRef.current?.unlock();
@@ -1183,10 +1206,27 @@ export function TutorSession({
           <ReportCard
             report={report}
             title={sceneTitle}
+            teacherName={teacherName}
             words={words}
+            transcript={transcript.map((t) => ({
+              role: t.role,
+              title: t.role === "note" ? t.title : undefined,
+              text: t.text,
+              translation: t.role === "teacher" ? t.translation : undefined,
+            }))}
             onPractiseAgain={practiseAgain}
             onPractiseObjective={client ? undefined : (obj) => navigateToSprint(obj)}
             onStartSprint={client ? undefined : () => navigateToSprint()}
+            onStartNextScenario={
+              client
+                ? undefined
+                : (nextId) => {
+                    if (typeof window === "undefined") return;
+                    const match = /^\/academy\/([^/]+)/.exec(window.location.pathname);
+                    const base = match ? `/academy/${match[1]}` : "";
+                    window.location.assign(`${base}/practice/${nextId}`);
+                  }
+            }
             onDone={handleDone}
           />
         </div>
@@ -1271,6 +1311,23 @@ export function TutorSession({
             >
               <Gauge className="h-3.5 w-3.5 text-[#fd5523]" aria-hidden="true" />
               <span>{playbackRate === 1 ? "1×" : `${playbackRate}×`}</span>
+            </button>
+
+            {/* Ambient Focus Room Soundscape toggle */}
+            <button
+              type="button"
+              onClick={() => setAmbientOn((on) => !on)}
+              aria-pressed={ambientOn}
+              title={ambientOn ? "Turn off ambient room sound" : "Turn on subtle ambient room sound"}
+              aria-label={ambientOn ? "Turn off ambient room sound" : "Turn on subtle ambient room sound"}
+              className={`hidden h-8 items-center gap-1 rounded-full border px-2 text-[11px] font-bold transition md:inline-flex ${
+                ambientOn
+                  ? "border-emerald-300 bg-emerald-50 text-emerald-800"
+                  : "border-[var(--line-strong)] bg-white text-[var(--ink-dim)] hover:bg-[var(--soft-hover)]"
+              }`}
+            >
+              <Headphones className="h-3.5 w-3.5" aria-hidden="true" />
+              <span>{ambientOn ? "Ambient" : "Ambience"}</span>
             </button>
 
             {/* Mute + Volume slider (inline on sm+, popover on mobile) */}
@@ -1527,6 +1584,7 @@ export function TutorSession({
       <TranscriptDrawer
         open={transcriptOpen}
         onClose={() => setTranscriptOpen(false)}
+        sceneTitle={sceneTitle}
         teacherName={teacherName}
         entries={transcript}
         savedKeys={savedDeckKeys}

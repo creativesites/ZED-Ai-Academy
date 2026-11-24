@@ -1,7 +1,8 @@
 "use client";
 
-import { BookmarkCheck, BookmarkPlus, RotateCcw, Sparkles, X } from "lucide-react";
+import { BookmarkCheck, BookmarkPlus, Download, RotateCcw, Sparkles, X } from "lucide-react";
 import type { SaySpeechEvent } from "@/components/tutor/EventPlayer";
+import { buildStudyNotesMarkdown, slugifyFilename } from "@/lib/tutor/study-export";
 
 export type TranscriptEntry =
   | {
@@ -27,6 +28,7 @@ export type TranscriptEntry =
 type TranscriptDrawerProps = {
   open: boolean;
   onClose: () => void;
+  sceneTitle?: string;
   teacherName: string;
   entries: TranscriptEntry[];
   savedKeys: ReadonlySet<string>;
@@ -37,11 +39,13 @@ type TranscriptDrawerProps = {
 /**
  * Slide-over session transcript & universal Study Notes drawer.
  * Works for ANY subject (concepts, formulas, definitions, code tips, or language phrases):
- * tap Bookmark on any teacher line or board takeaway to save it to your SM-2 Study Deck.
+ * tap Bookmark on any teacher line or board takeaway to save it to your SM-2 Study Deck,
+ * or export the full Markdown study sheet in one click.
  */
 export function TranscriptDrawer({
   open,
   onClose,
+  sceneTitle,
   teacherName,
   entries,
   savedKeys,
@@ -49,6 +53,28 @@ export function TranscriptDrawer({
   onReplayEvent,
 }: TranscriptDrawerProps) {
   if (!open) return null;
+
+  const handleDownloadNotes = () => {
+    const md = buildStudyNotesMarkdown({
+      title: sceneTitle || "AI Teacher Session",
+      teacherName,
+      transcript: entries.map((e) => ({
+        role: e.role,
+        title: e.role === "note" ? e.title : undefined,
+        text: e.text,
+        translation: e.role === "teacher" ? e.translation : undefined,
+      })),
+    });
+    const blob = new Blob([md], { type: "text/markdown;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = slugifyFilename(sceneTitle || "ai-teacher-notes");
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  };
 
   return (
     <div
@@ -72,14 +98,27 @@ export function TranscriptDrawer({
               Tap the bookmark on any explanation, tip, or phrase to save it to your Study Deck.
             </p>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close transcript drawer"
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 hover:bg-slate-100"
-          >
-            <X className="h-4 w-4" aria-hidden="true" />
-          </button>
+          <div className="flex shrink-0 items-center gap-1.5">
+            {entries.length > 0 && (
+              <button
+                type="button"
+                onClick={handleDownloadNotes}
+                title="Download Markdown study notes"
+                className="inline-flex h-8 items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-2.5 text-[11px] font-bold text-[#062e39] transition hover:border-[#fd5523]/40 hover:bg-[#fff2e9] hover:text-[#fd5523]"
+              >
+                <Download className="h-3.5 w-3.5" aria-hidden="true" />
+                Export
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Close transcript drawer"
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 hover:bg-slate-100"
+            >
+              <X className="h-4 w-4" aria-hidden="true" />
+            </button>
+          </div>
         </header>
 
         <div className="min-h-0 flex-1 space-y-2.5 overflow-y-auto p-3 sm:p-4">
