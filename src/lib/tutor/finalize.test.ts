@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {
   finalizeSessionCore,
   mergeMistakes,
+  pickRecommendedNextScenario,
   type FinalizeCoreDeps,
   type FinalizeCoreInput,
   type ProfileState,
@@ -284,4 +285,34 @@ test("collects note_evidence into objectives and runs persistMastery only on win
   );
   assert.equal(second.created, false);
   assert.equal(persistedBatches.length, 1);
+});
+
+test("isolated side-effect errors do not prevent profile or mastery from saving", async () => {
+  const { deps, state } = makeStore();
+  const sideEffectErrors: string[] = [];
+  deps.recordUsage = async () => {
+    throw new Error("usage table offline");
+  };
+  deps.onSideEffectError = (step) => sideEffectErrors.push(step);
+
+  const res = await finalizeSessionCore(input(), deps);
+  assert.equal(res.created, true);
+  assert.deepEqual(sideEffectErrors, ["usage"]);
+  assert.equal(state.profileSaves, 1, "profile still saves despite usage failure");
+  assert.equal(state.vocabCalls.length, 1, "vocab still saves despite usage failure");
+});
+
+test("pickRecommendedNextScenario prefers uncompleted same-course and next-level scenarios", () => {
+  const candidates = [
+    { id: "s1", title: "Current", skillPack: "language-zh", level: "HSK1", courseId: "c1" },
+    { id: "s2", title: "Done already", skillPack: "language-zh", level: "HSK2", courseId: "c1" },
+    { id: "s3", title: "Next step", skillPack: "language-zh", level: "HSK2", courseId: "c1" },
+    { id: "s4", title: "Other subject", skillPack: "general-tutor", level: "A1", courseId: "c2" },
+  ];
+  const picked = pickRecommendedNextScenario(
+    { id: "s1", skillPack: "language-zh", level: "HSK1", courseId: "c1" },
+    candidates,
+    new Set(["s2"]),
+  );
+  assert.equal(picked?.id, "s3");
 });

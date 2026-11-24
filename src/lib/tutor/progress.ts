@@ -1,8 +1,32 @@
 // Learner progress helpers: practice streak and the language a profile row is keyed by.
-// Pure. Dates are UTC calendar days ("YYYY-MM-DD").
+// Pure. Supports timezone-aware calendar days ("YYYY-MM-DD"), defaulting to Africa/Lusaka (CAT, UTC+2).
+
+export const DEFAULT_STREAK_TIMEZONE = "Africa/Lusaka";
 
 export function utcDateString(date: Date): string {
   return date.toISOString().slice(0, 10);
+}
+
+/**
+ * Formats `date` as "YYYY-MM-DD" in the learner's local IANA timezone (defaults to Africa/Lusaka).
+ * Falls back safely to UTC if an unsupported timezone string is passed.
+ */
+export function localDateString(date: Date, timeZone = DEFAULT_STREAK_TIMEZONE): string {
+  try {
+    const parts = new Intl.DateTimeFormat("en-CA", {
+      timeZone,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).formatToParts(date);
+    const y = parts.find((p) => p.type === "year")?.value;
+    const m = parts.find((p) => p.type === "month")?.value;
+    const d = parts.find((p) => p.type === "day")?.value;
+    if (y && m && d) return `${y}-${m}-${d}`;
+  } catch {
+    // Fall through to UTC on invalid timezone
+  }
+  return utcDateString(date);
 }
 
 function dayNumber(day: string): number {

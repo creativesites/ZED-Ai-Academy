@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { nextStreak, profileLanguage, utcDateString } from "./progress.ts";
+import { localDateString, nextStreak, profileLanguage, utcDateString } from "./progress.ts";
 
 test("first practice starts a streak of 1", () => {
   assert.deepEqual(nextStreak({ lastPracticeDate: null, streakDays: 0, today: "2026-10-27" }), {
@@ -44,6 +44,14 @@ test("a clock-skewed earlier day leaves the streak and date unchanged", () => {
 
 test("utcDateString formats the UTC calendar day", () => {
   assert.equal(utcDateString(new Date("2026-10-27T23:30:00-02:00")), "2026-10-28");
+});
+
+test("localDateString computes calendar days in Africa/Lusaka (UTC+2) and falls back cleanly", () => {
+  // 22:30 UTC on Oct 27 is 00:30 CAT on Oct 28 in Lusaka!
+  assert.equal(localDateString(new Date("2026-10-27T22:30:00Z"), "Africa/Lusaka"), "2026-10-28");
+  assert.equal(localDateString(new Date("2026-10-27T21:30:00Z"), "Africa/Lusaka"), "2026-10-27");
+  // Invalid timezone degrades cleanly to UTC.
+  assert.equal(localDateString(new Date("2026-10-27T22:30:00Z"), "Invalid/Zone"), "2026-10-27");
 });
 
 test("profileLanguage prefers the language pack, then the persona language", () => {

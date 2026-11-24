@@ -3,6 +3,7 @@
 
 import type { TutorEvent } from "@/lib/tutor/events";
 import { parseTutorErrorBody, type TutorFailure } from "@/lib/tutor/client-errors";
+import type { PronunciationEntry } from "@/lib/tutor/pronunciation";
 import type { TutorReportContent } from "@/lib/tutor/report-model";
 import type { Mode } from "@/lib/tutor/scenario";
 import { uploadMimeType } from "@/lib/tutor/recording";
@@ -16,6 +17,7 @@ export type TutorPersona = {
   languages: string[];
   riveVariant?: unknown;
   voiceName?: string;
+  pronunciationGlossary?: PronunciationEntry[];
 };
 export type TutorScenarioBeat = { id: string; goal: string };
 export type TutorScenario = {

@@ -22,6 +22,11 @@ import {
 import { DEFAULT_PERSONA_LOOK, type PersonaLook } from "@/components/tutor/avatar/types";
 import { applyBrandColorsToLook } from "@/lib/tutor/branding";
 import {
+  applyPronunciationGlossary,
+  formatPronunciationGlossary,
+  parsePronunciationGlossary,
+} from "@/lib/tutor/pronunciation";
+import {
   FACE_STYLES,
   HAIR_STYLES,
   OUTFIT_STYLES,
@@ -95,6 +100,7 @@ type EditorDraft = {
   look: PersonaLook;
   voiceName: string;
   speakingRate: number;
+  pronunciationGlossaryText: string;
   personalityPrompt: string;
   defaultScene: SceneArtboard;
   isActive: boolean;
@@ -109,6 +115,7 @@ function draftFromRecord(p: PersonaRecord): EditorDraft {
     look: { ...DEFAULT_PERSONA_LOOK, ...p.rive_variant },
     voiceName: p.voice.voiceName ?? "Kore",
     speakingRate: p.voice.speakingRate ?? 1.0,
+    pronunciationGlossaryText: formatPronunciationGlossary(p.voice.pronunciationGlossary ?? []),
     personalityPrompt: p.personality_prompt,
     defaultScene: p.default_scene ?? "Scene_TeaHouse",
     isActive: p.is_active,
@@ -123,6 +130,7 @@ function emptyDraft(): EditorDraft {
     look: { ...DEFAULT_PERSONA_LOOK },
     voiceName: "Kore",
     speakingRate: 1.0,
+    pronunciationGlossaryText: "",
     personalityPrompt:
       "You are a warm, encouraging AI teacher at our academy. Keep turns short, guide learners step by step, and celebrate progress.",
     defaultScene: "Scene_TeaHouse",
@@ -140,6 +148,8 @@ export function PersonaStudio({
   onPersonasChange?: (next: PersonaRecord[]) => void;
 }) {
   const stageRef = useRef<TeacherStageHandle | null>(null);
+  const voicePreviewAudioRef = useRef<HTMLAudioElement | null>(null);
+  const [testingVoice, setTestingVoice] = useState(false);
   const [personas, setPersonas] = useState<PersonaRecord[]>(initialPersonas);
   const [selectedId, setSelectedId] = useState<string | "new">(
     initialPersonas[0]?.id ?? "new"
@@ -211,6 +221,49 @@ export function PersonaStudio({
     });
   }
 
+  async function handleTestVoice() {
+    if (testingVoice) return;
+    setTestingVoice(true);
+    const glossary = parsePronunciationGlossary(draft.pronunciationGlossaryText);
+    const sampleRaw = `Hello! I'm ${draft.displayName.trim() || draft.name.trim() || "your AI teacher"}.${
+      glossary.length > 0 ? ` Today we'll practise ${glossary.slice(0, 3).map((g) => g.term).join(", ")}.` : " Ready to learn step by step?"
+    }`;
+    const spoken = applyPronunciationGlossary(sampleRaw, glossary);
+    try {
+      const res = await fetch("/api/tutor/tts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        body: JSON.stringify({ text: spoken, voice: draft.voiceName, companyId }),
+      });
+      const data = (await res.json().catch(() => null)) as { url?: unknown } | null;
+      if (typeof data?.url === "string" && data.url) {
+        if (!voicePreviewAudioRef.current) voicePreviewAudioRef.current = new Audio();
+        const el = voicePreviewAudioRef.current;
+        el.src = data.url;
+        el.playbackRate = Math.max(0.7, Math.min(1.3, draft.speakingRate));
+        stageRef.current?.setSpeaking(true);
+        stageRef.current?.playGesture("wave");
+        el.onended = () => {
+          stageRef.current?.setSpeaking(false);
+          setTestingVoice(false);
+        };
+        el.onerror = () => {
+          stageRef.current?.setSpeaking(false);
+          setTestingVoice(false);
+        };
+        await el.play();
+        return;
+      }
+      toast.info("Live TTS preview unavailable — check Gemini TTS configuration.");
+      setTestingVoice(false);
+    } catch {
+      stageRef.current?.setSpeaking(false);
+      setTestingVoice(false);
+      toast.error("Could not preview voice right now.");
+    }
+  }
+
   function handleSave() {
     if (!draft.name.trim()) {
       toast.error("Please enter a teacher name.");
@@ -227,6 +280,7 @@ export function PersonaStudio({
           look: draft.look,
           voiceName: draft.voiceName,
           speakingRate: draft.speakingRate,
+          pronunciationGlossary: parsePronunciationGlossary(draft.pronunciationGlossaryText),
           personalityPrompt: draft.personalityPrompt.trim(),
           defaultScene: draft.defaultScene,
           isActive: draft.isActive,
@@ -654,38 +708,64 @@ export function PersonaStudio({
             </div>
           </div>
 
-          {/* Voice */}
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-1.5">
-              <Label className="flex items-center gap-1.5 text-xs font-semibold text-slate-700">
-                <Volume2 className="h-3.5 w-3.5 text-[#fd5523]" />
-                Gemini Voice
-              </Label>
-              <select
-                value={draft.voiceName}
-                onChange={(e) => setDraft((d) => ({ ...d, voiceName: e.target.value }))}
-                className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-800"
-              >
-                {GEMINI_VOICES.map((v) => (
-                  <option key={v.name} value={v.name}>
-                    {v.label}
-                  </option>
-                ))}
-              </select>
+          {/* Voice & Pronunciation Glossary */}
+          <div className="space-y-4">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between gap-2">
+                  <Label className="flex items-center gap-1.5 text-xs font-semibold text-slate-700">
+                    <Volume2 className="h-3.5 w-3.5 text-[#fd5523]" />
+                    Gemini Voice
+                  </Label>
+                  <button
+                    type="button"
+                    disabled={testingVoice}
+                    onClick={() => void handleTestVoice()}
+                    className="inline-flex items-center gap-1 rounded-full border border-[#fd5523]/30 bg-[#fff2e9] px-2.5 py-0.5 text-[10px] font-bold text-[#c83a10] transition hover:bg-[#ffe5d4] disabled:opacity-50"
+                  >
+                    {testingVoice ? <Loader2 className="h-3 w-3 animate-spin" /> : <Volume2 className="h-3 w-3" />}
+                    {testingVoice ? "Playing..." : "Test voice"}
+                  </button>
+                </div>
+                <select
+                  value={draft.voiceName}
+                  onChange={(e) => setDraft((d) => ({ ...d, voiceName: e.target.value }))}
+                  className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-800"
+                >
+                  {GEMINI_VOICES.map((v) => (
+                    <option key={v.name} value={v.name}>
+                      {v.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold text-slate-700">
+                  Speaking Speed ({draft.speakingRate.toFixed(1)}x)
+                </Label>
+                <input
+                  type="range"
+                  min={0.7}
+                  max={1.3}
+                  step={0.1}
+                  value={draft.speakingRate}
+                  onChange={(e) => setDraft((d) => ({ ...d, speakingRate: Number(e.target.value) }))}
+                  className="mt-2.5 w-full accent-[#fd5523]"
+                />
+              </div>
             </div>
 
             <div className="space-y-1.5">
               <Label className="text-xs font-semibold text-slate-700">
-                Speaking Speed ({draft.speakingRate.toFixed(1)}x)
+                Pronunciation Glossary (optional — TTS only, captions keep real spelling)
               </Label>
-              <input
-                type="range"
-                min={0.7}
-                max={1.3}
-                step={0.1}
-                value={draft.speakingRate}
-                onChange={(e) => setDraft((d) => ({ ...d, speakingRate: Number(e.target.value) }))}
-                className="mt-2.5 w-full accent-[#fd5523]"
+              <Textarea
+                rows={2}
+                value={draft.pronunciationGlossaryText}
+                onChange={(e) => setDraft((d) => ({ ...d, pronunciationGlossaryText: e.target.value }))}
+                placeholder={"ZRA = Z R A\nKwacha = Kwah-chah\nMwila = Mwee-lah"}
+                className="font-mono text-xs"
               />
             </div>
           </div>

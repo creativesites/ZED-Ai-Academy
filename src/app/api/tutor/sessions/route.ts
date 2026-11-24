@@ -6,7 +6,13 @@ import { isSchemaUnavailableError } from "@/lib/tutor/mastery/server";
 import { applyModePreference, chooseStartMode } from "@/lib/tutor/mode-policy";
 import { resolveTutorAccess } from "@/lib/tutor/server/access";
 import { mintLiveToken } from "@/lib/tutor/server/gemini-calls";
-import { loadSessionContext, personaVoiceName, type SessionContext, type TutorSessionRow } from "@/lib/tutor/server/session-context";
+import {
+  loadSessionContext,
+  personaPronunciationGlossary,
+  personaVoiceName,
+  type SessionContext,
+  type TutorSessionRow,
+} from "@/lib/tutor/server/session-context";
 import {
   abandonSession,
   countRecentSessionStarts,
@@ -142,6 +148,7 @@ export async function POST(req: NextRequest) {
     languages: sessionContext.persona.languages,
     riveVariant: sessionContext.persona.rive_variant,
     voiceName: personaVoiceName(sessionContext.persona),
+    pronunciationGlossary: personaPronunciationGlossary(sessionContext.persona),
   };
   const scenario = publicScenario(sessionContext);
 

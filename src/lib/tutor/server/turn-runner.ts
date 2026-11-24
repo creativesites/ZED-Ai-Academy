@@ -1,9 +1,19 @@
 import "server-only";
 import { createServiceClient } from "@/lib/supabase/server";
 import type { Json } from "@/types/database";
+import { modelFor } from "@/lib/ai/models";
 import { buildSystemPrompt, type TutorPromptMode } from "./prompt.ts";
 import { generateTurnJson, synthesizeCachedSpeech } from "./gemini-calls.ts";
-import { personaVoiceName, toPromptPersona, toPromptScenario, type SessionContext, type TutorSessionRow } from "./session-context.ts";
+import { getOrCreatePromptCache } from "./prompt-cache.ts";
+import { applyPronunciationGlossary } from "../pronunciation.ts";
+import {
+  personaPronunciationGlossary,
+  personaVoiceName,
+  toPromptPersona,
+  toPromptScenario,
+  type SessionContext,
+  type TutorSessionRow,
+} from "./session-context.ts";
 import { recordUsage } from "./usage.ts";
 import {
   DEBUG_RAW_OUTPUT_TYPE,
@@ -56,7 +66,8 @@ export async function runSessionTurn(input: {
   const deps: TurnPipelineDeps = {
     now: () => Date.now(),
     generate: async (req) => {
-      const result = await generateTurnJson(req);
+      const cachedContent = await getOrCreatePromptCache(modelFor("tutorTurn"), req.systemInstruction);
+      const result = await generateTurnJson({ ...req, cachedContent });
       // Fire-and-forget usage metering so it never adds latency to the learner's turn.
       void recordUsage({
         companyId: session.company_id,
@@ -71,7 +82,9 @@ export async function runSessionTurn(input: {
     },
     synthesize: async (text, voice) => {
       if (input.deferTts) return null;
-      const speech = await synthesizeCachedSpeech(text, voice);
+      const glossary = personaPronunciationGlossary(ctx.persona);
+      const spokenText = applyPronunciationGlossary(text, glossary);
+      const speech = await synthesizeCachedSpeech(spokenText, voice);
       if (!speech.cached) {
         void recordUsage({
           companyId: session.company_id,

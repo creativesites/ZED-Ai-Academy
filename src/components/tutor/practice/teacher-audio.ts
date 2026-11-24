@@ -12,6 +12,7 @@ import {
   type VisemeSegment,
 } from "@/lib/tutor/visemes";
 import type { VisemeValue } from "@/lib/tutor/contract.generated";
+import { applyPronunciationGlossary, type PronunciationEntry } from "@/lib/tutor/pronunciation";
 import { secondsToMs } from "@/lib/tutor/speaking-time";
 import { pickVoice, speechLangFor } from "@/lib/tutor/speech-lang";
 
@@ -50,6 +51,7 @@ export class TeacherAudio {
   private playbackRate = 1;
   private language: string | null = null;
   private ttsVoice: string | null = null;
+  private pronunciationGlossary: PronunciationEntry[] = [];
   private ttsCache = new Map<string, Promise<string | null>>();
   private synthPrimed = false;
   /** Set when the element was routed through a context that would not run. Plays direct from then on. */
@@ -108,6 +110,11 @@ export class TeacherAudio {
     this.ttsVoice = voice ?? null;
   }
 
+  /** Sets optional persona pronunciation overrides applied to TTS text while captions keep real spelling. */
+  setPronunciationGlossary(entries: readonly PronunciationEntry[] | null | undefined): void {
+    this.pronunciationGlossary = entries ? [...entries] : [];
+  }
+
   /** Kicks off cached/synthesized TTS fetches in parallel for all `say` lines in a turn. */
   prefetch(lines: readonly string[]): void {
     if (!this.ttsVoice || this.muted) return;
@@ -119,7 +126,8 @@ export class TeacherAudio {
   private resolveTtsUrl(text: string): Promise<string | null> {
     const voice = this.ttsVoice;
     if (!voice) return Promise.resolve(null);
-    const key = `${voice}::${text}`;
+    const spokenText = applyPronunciationGlossary(text, this.pronunciationGlossary);
+    const key = `${voice}::${spokenText}`;
     const existing = this.ttsCache.get(key);
     if (existing) return existing;
 
@@ -131,7 +139,7 @@ export class TeacherAudio {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "same-origin",
-          body: JSON.stringify({ text, voice }),
+          body: JSON.stringify({ text: spokenText, voice }),
           signal: controller.signal,
         });
         if (!res.ok) return null;

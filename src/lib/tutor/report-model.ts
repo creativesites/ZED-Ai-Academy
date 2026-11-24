@@ -44,6 +44,12 @@ export const tutorReportSchema = z.object({
     .max(MAX_REPORT_MISTAKES),
   nextStep: z.string().min(1).max(500),
   objectives: z.array(objectiveOutcomeSchema).optional(),
+  nextScenario: z
+    .object({
+      id: z.string().min(1),
+      title: z.string().min(1),
+    })
+    .optional(),
 });
 
 export type TutorReportContent = z.infer<typeof tutorReportSchema>;

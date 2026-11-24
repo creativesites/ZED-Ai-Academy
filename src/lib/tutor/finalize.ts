@@ -107,6 +107,8 @@ export type FinalizeCoreDeps<R> = {
   addMistakeVocabulary(mistakes: LearnerMistake[]): Promise<void>;
   /** Optional Phase 2 persistence of `note_evidence` -> `learner_evidence` + `learner_mastery`. */
   persistMastery?(evidence: CollectedEvidence[]): Promise<MasteryState[]>;
+  /** Optional observer called when a post-claim side effect fails, so other side effects still complete. */
+  onSideEffectError?(step: "usage" | "profile" | "vocab" | "mastery", err: unknown): void;
 };
 
 export type FinalizeCoreResult<R> = { report: R; created: boolean };
@@ -167,53 +169,146 @@ export async function finalizeSessionCore<R>(
   });
   if (!claim.created) return { report: claim.report, created: false };
 
-  // Winner only: side effects. Nothing here runs for a duplicate.
-  if (llm) {
-    await deps.recordUsage({ kind: "llm", model: llm.model, units: llm.totalTokens, unit: "tokens" });
-  }
-  if (input.mode === "live") {
-    await deps.recordUsage({
-      kind: "live_audio_in",
-      model: input.liveModel,
-      units: Math.ceil(learnerMs / 1000),
-      unit: "seconds",
-    });
-    await deps.recordUsage({
-      kind: "live_audio_out",
-      model: input.liveModel,
-      units: Math.ceil(teacherMs / 1000),
-      unit: "seconds",
-    });
-  }
+  // Winner only: side effects run in isolated guards so a transient error in one (e.g. usage log)
+  // never blocks learner streaks, vocabulary SRS, or objective mastery persistence.
+  const runSideEffect = async (
+    step: "usage" | "profile" | "vocab" | "mastery",
+    fn: () => Promise<void>,
+  ) => {
+    try {
+      await fn();
+    } catch (err) {
+      if (deps.onSideEffectError) {
+        deps.onSideEffectError(step, err);
+      } else {
+        throw err;
+      }
+    }
+  };
 
-  const previous = await deps.loadProfile();
-  const memory = parseMemory(previous?.memory);
-  const recent = [...mistakes, ...memory.recentMistakes]
-    .filter((m, i, all) => all.findIndex((x) => x.said === m.said && x.correct === m.correct) === i)
-    .slice(0, RECENT_MISTAKES_KEPT);
-  const streak = nextStreak({
-    lastPracticeDate: previous?.last_practice_date ?? null,
-    streakDays: previous?.streak_days ?? 0,
-    today: input.today,
+  await runSideEffect("usage", async () => {
+    if (llm) {
+      await deps.recordUsage({ kind: "llm", model: llm.model, units: llm.totalTokens, unit: "tokens" });
+    }
+    if (input.mode === "live") {
+      await deps.recordUsage({
+        kind: "live_audio_in",
+        model: input.liveModel,
+        units: Math.ceil(learnerMs / 1000),
+        unit: "seconds",
+      });
+      await deps.recordUsage({
+        kind: "live_audio_out",
+        model: input.liveModel,
+        units: Math.ceil(teacherMs / 1000),
+        unit: "seconds",
+      });
+    }
   });
-  await deps.saveProfile({
-    level_estimate: previous?.level_estimate ?? null,
-    framework: previous?.framework ?? null,
-    can_do: previous?.can_do ?? [],
-    memory: { recentMistakes: recent, notes: memory.notes },
-    streak_days: streak.streakDays,
-    last_practice_date: streak.lastPracticeDate,
-    total_speaking_ms: (previous?.total_speaking_ms ?? 0) + learnerMs + teacherMs,
+
+  await runSideEffect("profile", async () => {
+    const previous = await deps.loadProfile();
+    const memory = parseMemory(previous?.memory);
+    const recent = [...mistakes, ...memory.recentMistakes]
+      .filter((m, i, all) => all.findIndex((x) => x.said === m.said && x.correct === m.correct) === i)
+      .slice(0, RECENT_MISTAKES_KEPT);
+    const streak = nextStreak({
+      lastPracticeDate: previous?.last_practice_date ?? null,
+      streakDays: previous?.streak_days ?? 0,
+      today: input.today,
+    });
+    await deps.saveProfile({
+      level_estimate: previous?.level_estimate ?? null,
+      framework: previous?.framework ?? null,
+      can_do: previous?.can_do ?? [],
+      memory: { recentMistakes: recent, notes: memory.notes },
+      streak_days: streak.streakDays,
+      last_practice_date: streak.lastPracticeDate,
+      total_speaking_ms: (previous?.total_speaking_ms ?? 0) + learnerMs + teacherMs,
+    });
   });
 
   // Vocabulary review (SRS) is a Language pack feature: other subjects' mistakes are not words to drill.
-  if (input.skillLanguage) await deps.addMistakeVocabulary(mistakes);
+  if (input.skillLanguage) {
+    await runSideEffect("vocab", async () => {
+      await deps.addMistakeVocabulary(mistakes);
+    });
+  }
 
   if (deps.persistMastery && noteEvidence.length > 0) {
-    await deps.persistMastery(noteEvidence);
+    await runSideEffect("mastery", async () => {
+      await deps.persistMastery!(noteEvidence);
+    });
   }
 
   return { report: claim.report, created: true };
+}
+
+export type NextScenarioCandidate = {
+  id: string;
+  title: string;
+  skillPack: string;
+  courseId?: string | null;
+  level?: string | null;
+};
+
+const LEVEL_RANK: Record<string, number> = {
+  a1: 1,
+  hsk1: 1,
+  beginner: 1,
+  a2: 2,
+  hsk2: 2,
+  elementary: 2,
+  b1: 3,
+  hsk3: 3,
+  intermediate: 3,
+  b2: 4,
+  hsk4: 4,
+  c1: 5,
+  advanced: 5,
+};
+
+function levelRank(level: string | null | undefined): number {
+  if (!level) return 0;
+  return LEVEL_RANK[level.trim().toLowerCase()] ?? 0;
+}
+
+/**
+ * Picks the best recommended next published scenario for the learner after completing a session:
+ * 1) Another scenario in the same course (if applicable)
+ * 2) Another scenario in the same skill pack at the same or next difficulty level
+ * 3) Any other distinct published scenario in the candidate list
+ */
+export function pickRecommendedNextScenario(
+  current: { id?: string | null; skillPack: string; courseId?: string | null; level?: string | null },
+  candidates: ReadonlyArray<NextScenarioCandidate>,
+  completedScenarioIds: ReadonlySet<string> = new Set(),
+): NextScenarioCandidate | null {
+  const pool = candidates.filter((c) => c.id !== current.id);
+  if (pool.length === 0) return null;
+
+  const curRank = levelRank(current.level);
+  const score = (c: NextScenarioCandidate): number => {
+    let pts = 0;
+    if (!completedScenarioIds.has(c.id)) pts += 40;
+    if (current.courseId && c.courseId === current.courseId) pts += 30;
+    if (c.skillPack === current.skillPack) pts += 20;
+    const r = levelRank(c.level);
+    if (curRank > 0 && r === curRank + 1) pts += 12;
+    else if (curRank > 0 && r === curRank) pts += 8;
+    return pts;
+  };
+
+  let best = pool[0];
+  let bestScore = score(best);
+  for (let i = 1; i < pool.length; i += 1) {
+    const s = score(pool[i]);
+    if (s > bestScore) {
+      best = pool[i];
+      bestScore = s;
+    }
+  }
+  return best;
 }
 
 /** Note-taken mistakes first, then the model's extra mistakes whose (said, correct) pair is new. Capped. */

@@ -13,6 +13,8 @@ import {
   PROPS,
 } from "@/lib/tutor/contract.generated";
 import { SCENE_ARTBOARDS, type SceneArtboard } from "@/lib/tutor/rive-driver";
+import { buildFixItFlowFromMisconception } from "@/lib/tutor/authoring/fix-it";
+import { parsePronunciationGlossary, type PronunciationEntry } from "@/lib/tutor/pronunciation";
 import {
   ALL_SKILL_PACKS,
   MODES,
@@ -123,7 +125,12 @@ export type PersonaRecord = {
   display_name: string | null;
   languages: string[];
   rive_variant: Partial<TutorPersonaLook>;
-  voice: { provider?: string; voiceName?: string; speakingRate?: number };
+  voice: {
+    provider?: string;
+    voiceName?: string;
+    speakingRate?: number;
+    pronunciationGlossary?: PronunciationEntry[];
+  };
   personality_prompt: string;
   default_scene: SceneArtboard | null;
   is_active: boolean;
@@ -307,6 +314,15 @@ const personaInputSchema = z.object({
   }),
   voiceName: z.string().trim().min(1).max(60).default("Kore"),
   speakingRate: z.number().min(0.6).max(1.4).default(1.0),
+  pronunciationGlossary: z
+    .array(
+      z.object({
+        term: z.string().trim().min(1).max(60),
+        spoken: z.string().trim().min(1).max(80),
+      }),
+    )
+    .max(30)
+    .optional(),
   personalityPrompt: z.string().trim().min(10, "Personality prompt should be at least 10 characters").max(4000),
   defaultScene: z.enum(SCENE_ARTBOARDS).optional().nullable(),
   isActive: z.boolean().default(true),
@@ -369,6 +385,7 @@ function mapPersonaRow(row: Record<string, unknown>): PersonaRecord {
       provider: typeof voiceRaw.provider === "string" ? voiceRaw.provider : "gemini",
       voiceName: typeof voiceRaw.voiceName === "string" ? voiceRaw.voiceName : "Kore",
       speakingRate: typeof voiceRaw.speakingRate === "number" ? voiceRaw.speakingRate : 1.0,
+      pronunciationGlossary: parsePronunciationGlossary(voiceRaw.pronunciationGlossary),
     },
     personality_prompt: String(row.personality_prompt ?? ""),
     default_scene: sceneFromValue(row.default_scene) ?? null,
@@ -568,6 +585,9 @@ export async function upsertPersona(input: UpsertPersonaInput): Promise<PersonaR
       provider: "gemini",
       voiceName: parsed.voiceName,
       speakingRate: parsed.speakingRate,
+      ...(parsed.pronunciationGlossary && parsed.pronunciationGlossary.length > 0
+        ? { pronunciationGlossary: parsed.pronunciationGlossary }
+        : {}),
     } as unknown as Json,
     personality_prompt: parsed.personalityPrompt,
     default_scene: parsed.defaultScene ?? "Scene_TeaHouse",
@@ -614,6 +634,75 @@ export async function deletePersona(companyId: string, personaId: string): Promi
 
   if (error) throw new Error(error.message);
   revalidatePath("/creator/ai-teachers");
+}
+
+const fixItSchema = z.object({
+  companyId: z.string().min(1),
+  courseId: z.string().uuid().optional().nullable(),
+  objectiveText: z.string().trim().min(2).max(200),
+  sampleDetails: z.array(z.string().max(400)).max(8).default([]),
+  misconceptionCount: z.number().int().min(0).default(0),
+  partialCount: z.number().int().min(0).default(0),
+});
+
+/**
+ * 1-click Remediation Action from Teacher Insights:
+ * Builds and publishes a targeted 3-minute Fix-It micro-flow from a recurring misconception cluster.
+ */
+export async function createFixItFlowFromMisconception(
+  input: z.input<typeof fixItSchema>,
+): Promise<{ id: string; title: string }> {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
+  const parsed = fixItSchema.parse(input);
+  await assertTenantStaff(parsed.companyId, userId);
+
+  const db = createServiceClient();
+  const { data: personaRow } = await db
+    .from("ai_personas")
+    .select("id")
+    .eq("company_id", parsed.companyId)
+    .eq("is_active", true)
+    .order("created_at", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+
+  const generated = buildFixItFlowFromMisconception({
+    objectiveText: parsed.objectiveText,
+    sampleDetails: parsed.sampleDetails,
+    misconceptionCount: parsed.misconceptionCount,
+    partialCount: parsed.partialCount,
+  });
+
+  const { data, error } = await db
+    .from("practice_scenarios")
+    .insert({
+      company_id: parsed.companyId,
+      course_id: parsed.courseId ?? null,
+      persona_id: personaRow?.id ?? null,
+      skill_pack: generated.skillPack,
+      title: generated.title,
+      goal: generated.goal,
+      beats: generated.beats as unknown as Json,
+      target_items: generated.targetItems as unknown as Json,
+      level: generated.level,
+      max_minutes: generated.maxMinutes,
+      allowed_modes: ["voice", "text"],
+      scene: generated.scene,
+      visibility: parsed.courseId ? "course" : "tenant_library",
+      style: generated.style,
+      status: "published",
+      created_by: userId,
+    })
+    .select("id, title")
+    .single();
+
+  if (error || !data) throw new Error(error?.message ?? "Could not create Fix-It flow");
+
+  revalidatePath("/creator/ai-teachers");
+  revalidatePath("/practice");
+  return { id: String(data.id), title: String(data.title) };
 }
 
 /** Seeds any missing starter cast personas (Lín Lǎoshī, Sofía, Camille, Nurse Tendai, Tinashe) for a tenant. */

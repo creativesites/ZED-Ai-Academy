@@ -2,7 +2,13 @@ import "server-only";
 import { createServiceClient } from "@/lib/supabase/server";
 import { modelFor } from "@/lib/ai/models";
 import type { Database, Json } from "@/types/database";
-import { finalizeSessionCore, type FinalizeCoreDeps, type ReportPayload, type ProfileState } from "../finalize.ts";
+import {
+  finalizeSessionCore,
+  pickRecommendedNextScenario,
+  type FinalizeCoreDeps,
+  type ProfileState,
+  type ReportPayload,
+} from "../finalize.ts";
 import { summarizeSessionObjectives, type CollectedEvidence } from "../mastery/evidence.ts";
 import { isSchemaUnavailableError, persistSessionMastery } from "../mastery/server.ts";
 import {
@@ -14,7 +20,7 @@ import {
 import { generateReportJson } from "./gemini-calls.ts";
 import { loadSessionContext, type TutorSessionRow } from "./session-context.ts";
 import { recordUsage } from "./usage.ts";
-import { utcDateString } from "../progress.ts";
+import { localDateString } from "../progress.ts";
 import { evaluateVivaOutcome } from "../viva.ts";
 
 // Database and model wiring for finalizeSessionCore. The sequencing and the idempotency rules
@@ -43,6 +49,17 @@ export async function finalizeTutorSession(input: FinalizeInput): Promise<Finali
   const sessionId = session.id;
   let lastPayloadFallback: { nextStep: string; objectives: ReportObjectiveOutcome[] } | undefined;
   let refinedObjectives: ReportObjectiveOutcome[] | undefined;
+
+  // Recommend the best next published scenario in the learner's academy / platform library.
+  const recommendedNext = await resolveRecommendedNextScenario({
+    supabase,
+    companyId: session.company_id,
+    userId: session.user_id,
+    currentScenarioId: session.scenario_id,
+    skillPack: ctx.scenario.skill_pack,
+    courseId: ctx.courseId,
+    level: ctx.scenario.level,
+  }).catch(() => null);
 
   const deps: FinalizeCoreDeps<FinalizedReportPayload> = {
     getReport: async () => {
@@ -84,7 +101,7 @@ export async function finalizeTutorSession(input: FinalizeInput): Promise<Finali
         strengths: payload.strengths as Json,
         mistakes: payload.mistakes as unknown as Json,
         tone_stats: payload.tone_stats as Json,
-        next_scenario_id: null,
+        next_scenario_id: recommendedNext?.id ?? null,
       };
 
       const isViva = ctx.scenario.exam_task === "certificate_viva";
@@ -205,6 +222,9 @@ export async function finalizeTutorSession(input: FinalizeInput): Promise<Finali
       refinedObjectives = summarizeSessionObjectives(evidence, updated);
       return updated;
     },
+    onSideEffectError: (step, err) => {
+      console.error(`[tutor/report] post-claim side effect "${step}" failed for session ${sessionId}:`, err);
+    },
   };
 
   const result = await finalizeSessionCore(
@@ -222,7 +242,7 @@ export async function finalizeTutorSession(input: FinalizeInput): Promise<Finali
       skillLanguage: ctx.skillLanguage,
       profileLanguage: ctx.profileLanguage,
       liveModel: modelFor("tutorLive"),
-      today: utcDateString(new Date()),
+      today: localDateString(new Date()),
     },
     deps,
   );
@@ -230,8 +250,59 @@ export async function finalizeTutorSession(input: FinalizeInput): Promise<Finali
   if (result.created && refinedObjectives && refinedObjectives.length > 0) {
     result.report = { ...result.report, objectives: refinedObjectives };
   }
+  if (recommendedNext) {
+    result.report = { ...result.report, nextScenario: recommendedNext };
+  }
 
   return result;
+}
+
+async function resolveRecommendedNextScenario(input: {
+  supabase: ReturnType<typeof createServiceClient>;
+  companyId: string;
+  userId: string;
+  currentScenarioId: string | null;
+  skillPack: string;
+  courseId: string | null;
+  level: string | null;
+}): Promise<{ id: string; title: string } | null> {
+  const [{ data: candidates }, { data: past }] = await Promise.all([
+    input.supabase
+      .from("practice_scenarios")
+      .select("id, title, skill_pack, course_id, level")
+      .eq("status", "published")
+      .or(`company_id.eq.${input.companyId},visibility.eq.platform`)
+      .limit(40),
+    input.supabase
+      .from("tutor_sessions")
+      .select("scenario_id")
+      .eq("user_id", input.userId)
+      .eq("status", "completed")
+      .not("scenario_id", "is", null)
+      .limit(100),
+  ]);
+
+  if (!candidates || candidates.length === 0) return null;
+  const completedIds = new Set(
+    (past ?? []).map((p) => p.scenario_id).filter((id): id is string => typeof id === "string"),
+  );
+  const picked = pickRecommendedNextScenario(
+    {
+      id: input.currentScenarioId,
+      skillPack: input.skillPack,
+      courseId: input.courseId,
+      level: input.level,
+    },
+    candidates.map((c) => ({
+      id: c.id,
+      title: c.title,
+      skillPack: c.skill_pack,
+      courseId: c.course_id,
+      level: c.level,
+    })),
+    completedIds,
+  );
+  return picked ? { id: picked.id, title: picked.title } : null;
 }
 
 async function addMistakeVocabulary(

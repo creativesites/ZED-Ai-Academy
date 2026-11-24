@@ -3,11 +3,12 @@
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
-import { ExternalLink, Loader2, Plus, Sparkles, Trash2, Wand2 } from "lucide-react";
+import { AlertTriangle, CheckCircle2, ExternalLink, Loader2, Plus, ShieldCheck, Sparkles, Trash2, Wand2 } from "lucide-react";
 import { Teacher } from "@/components/tutor/avatar/Teacher";
 import { DEFAULT_PERSONA_LOOK } from "@/components/tutor/avatar/types";
 import { FlowStoryboard } from "@/components/tutor/studio/FlowStoryboard";
 import type { DraftedFlow, FlowDiffEntry, FlowStep } from "@/lib/tutor/authoring/flow";
+import type { StressTestSummary } from "@/lib/tutor/authoring/stress-test";
 import { AUTHORING_TEMPLATES, type AuthoringTemplateId } from "@/lib/tutor/authoring/templates";
 import { SCENE_ARTBOARDS, type SceneArtboard } from "@/lib/tutor/rive-driver";
 import {
@@ -224,11 +225,54 @@ export function ScenarioEditorModal({
   const [aiNotes, setAiNotes] = useState("");
   const [isDrafting, setIsDrafting] = useState(false);
   const [isRevising, setIsRevising] = useState(false);
+  const [isStressTesting, setIsStressTesting] = useState(false);
+  const [stressResult, setStressResult] = useState<StressTestSummary | null>(null);
   const [undoSnapshot, setUndoSnapshot] = useState<DraftedFlow | null>(null);
   const [diff, setDiff] = useState<FlowDiffEntry[] | null>(null);
   const [isSaving, startSaving] = useTransition();
 
   const selectedPersona = personas.find((p) => p.id === personaId) ?? null;
+
+  async function handleStressTest() {
+    if (!title.trim() || !goal.trim()) {
+      toast.error("Add a title and goal before running QA stress-test.");
+      return;
+    }
+    setIsStressTesting(true);
+    try {
+      const res = await fetch("/api/ai/teacher/stress-test", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: title.trim(),
+          goal: goal.trim(),
+          skillPack,
+          level: level.trim() || null,
+          maxMinutes,
+          beats: beats
+            .filter((b) => b.goal.trim())
+            .map((b, i) => ({ id: b.id || `step-${i + 1}`, goal: b.goal.trim() })),
+          targetItems: targetItems.filter((t) => t.text.trim()),
+          personaName: selectedPersona?.display_name ?? selectedPersona?.name ?? undefined,
+          personalityPrompt: selectedPersona?.personality_prompt ?? undefined,
+          languages: selectedPersona?.languages ?? undefined,
+        }),
+      });
+      const data = (await res.json().catch(() => null)) as {
+        summary?: StressTestSummary;
+        error?: string;
+      } | null;
+      if (!res.ok || !data?.summary) {
+        throw new Error(data?.error ?? "Stress test failed");
+      }
+      setStressResult(data.summary);
+      toast.success(`QA Stress Test complete: ${data.summary.overallScore}% readiness`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not run QA stress test");
+    } finally {
+      setIsStressTesting(false);
+    }
+  }
 
   function currentAsDraftedFlow(): DraftedFlow {
     return {
@@ -783,23 +827,93 @@ export function ScenarioEditorModal({
             )}
           </div>
 
+          {/* Simulated Student QA Stress Test Scorecard */}
+          {stressResult && (
+            <div className="space-y-2.5 rounded-2xl border border-slate-200 bg-slate-50/90 p-3.5">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center gap-1.5">
+                  <ShieldCheck className="h-4 w-4 text-emerald-600" />
+                  <span className="text-xs font-bold text-[#062e39]">
+                    Simulated Student QA ({stressResult.passedCount}/{stressResult.totalCount} personas passed)
+                  </span>
+                </div>
+                <span
+                  className={`rounded-full px-2.5 py-0.5 text-[11px] font-extrabold ${
+                    stressResult.overallScore >= 85
+                      ? "bg-emerald-100 text-emerald-800"
+                      : "bg-amber-100 text-amber-800"
+                  }`}
+                >
+                  {stressResult.overallScore}% ready
+                </span>
+              </div>
+              <div className="grid gap-2 sm:grid-cols-3">
+                {stressResult.cases.map((c) => (
+                  <div
+                    key={c.id}
+                    className="space-y-1.5 rounded-xl border border-slate-200/80 bg-white p-2.5 text-[11px]"
+                  >
+                    <div className="flex items-center justify-between gap-1">
+                      <span className="font-bold text-[#062e39]">{c.label}</span>
+                      {c.passed ? (
+                        <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-emerald-600" />
+                      ) : (
+                        <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-amber-500" />
+                      )}
+                    </div>
+                    <p className="line-clamp-2 italic text-slate-500">&ldquo;{c.teacherReply}&rdquo;</p>
+                    <ul className="space-y-0.5 pt-1">
+                      {c.checks.map((chk) => (
+                        <li
+                          key={chk.label}
+                          title={chk.note}
+                          className={`flex items-center gap-1 ${chk.ok ? "text-emerald-700" : "text-amber-700"}`}
+                        >
+                          <span>{chk.ok ? "✓" : "!"}</span>
+                          <span className="truncate">{chk.label}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Footer actions */}
           <div className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-4">
-            {initialScenario?.id ? (
-              <Link
-                href={`/practice/${initialScenario.id}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-input bg-background px-3 text-xs font-bold text-[#062e39] shadow-xs transition hover:bg-accent hover:text-accent-foreground"
+            <div className="flex flex-wrap items-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={isStressTesting}
+                onClick={() => void handleStressTest()}
+                className="h-9 rounded-xl text-xs font-bold"
               >
-                <ExternalLink className="h-3.5 w-3.5 text-[#fd5523]" />
-                Open full practice
-              </Link>
-            ) : (
-              <span className="text-[11px] text-slate-400">
-                Save scenario to test in full-page Practice Room
-              </span>
-            )}
+                {isStressTesting ? (
+                  <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin text-[#fd5523]" />
+                ) : (
+                  <ShieldCheck className="mr-1.5 h-3.5 w-3.5 text-emerald-600" />
+                )}
+                {isStressTesting ? "Running QA..." : "Stress-test flow"}
+              </Button>
+              {initialScenario?.id ? (
+                <Link
+                  href={`/practice/${initialScenario.id}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-input bg-background px-3 text-xs font-bold text-[#062e39] shadow-xs transition hover:bg-accent hover:text-accent-foreground"
+                >
+                  <ExternalLink className="h-3.5 w-3.5 text-[#fd5523]" />
+                  Open full practice
+                </Link>
+              ) : (
+                <span className="text-[11px] text-slate-400">
+                  Save to test in full Practice Room
+                </span>
+              )}
+            </div>
             <div className="flex items-center gap-2">
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 Cancel

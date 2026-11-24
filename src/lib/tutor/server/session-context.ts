@@ -6,6 +6,7 @@ import { DEFAULT_TEACHER_NAME } from "../course-teacher.ts";
 import { loadSessionMemoryNotes, loadWeakMasteryRows } from "../mastery/server.ts";
 import { buildRevisionSprintScenario } from "../mastery/sprint.ts";
 import { parseMemory } from "../memory.ts";
+import { parsePronunciationGlossary, type PronunciationEntry } from "../pronunciation.ts";
 import { profileLanguage } from "../progress.ts";
 import { skillPackLanguage, type SkillPackLanguage } from "../skill-packs.ts";
 import type { PromptLearnerProfile, PromptPersona, PromptScenario } from "./prompt.ts";
@@ -58,6 +59,12 @@ export function toPromptPersona(persona: PersonaRow): PromptPersona {
 export function personaVoiceName(persona: PersonaRow): string {
   const voice = typeof persona.voice === "object" && persona.voice !== null ? (persona.voice as Record<string, unknown>) : {};
   return typeof voice.voiceName === "string" && voice.voiceName.trim() ? voice.voiceName.trim() : "Kore";
+}
+
+/** Optional pronunciation overrides stored in the persona's voice JSONB (applied to TTS only). */
+export function personaPronunciationGlossary(persona: PersonaRow): PronunciationEntry[] {
+  const voice = typeof persona.voice === "object" && persona.voice !== null ? (persona.voice as Record<string, unknown>) : {};
+  return parsePronunciationGlossary(voice.pronunciationGlossary);
 }
 
 export type SessionContext = {

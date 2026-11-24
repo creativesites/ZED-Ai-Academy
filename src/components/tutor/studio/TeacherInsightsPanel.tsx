@@ -1,7 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { AlertTriangle, BarChart3, CheckCircle2, Clock, Loader2, RefreshCw, Users } from "lucide-react";
+import Link from "next/link";
+import { toast } from "sonner";
+import { AlertTriangle, BarChart3, CheckCircle2, Clock, ExternalLink, Loader2, RefreshCw, Sparkles, Users } from "lucide-react";
+import { createFixItFlowFromMisconception } from "@/actions/tutor-authoring";
 import type { TenantInsightsSummary } from "@/lib/tutor/insights/misconceptions";
 import { Button } from "@/components/ui/button";
 
@@ -16,6 +19,29 @@ export function TeacherInsightsPanel({
   const [masteryAvailable, setMasteryAvailable] = useState(true);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [creatingKey, setCreatingKey] = useState<string | null>(null);
+  const [createdFlows, setCreatedFlows] = useState<Record<string, { id: string; title: string }>>({});
+
+  async function handleCreateFixIt(item: TenantInsightsSummary["topMisconceptions"][number]) {
+    if (creatingKey) return;
+    setCreatingKey(item.objectiveKey);
+    try {
+      const created = await createFixItFlowFromMisconception({
+        companyId,
+        courseId: courseId ?? null,
+        objectiveText: item.objectiveText,
+        sampleDetails: item.sampleDetails,
+        misconceptionCount: item.misconceptionCount,
+        partialCount: item.partialCount,
+      });
+      setCreatedFlows((prev) => ({ ...prev, [item.objectiveKey]: created }));
+      toast.success(`Published "${created.title}"`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not create Fix-It flow");
+    } finally {
+      setCreatingKey(null);
+    }
+  }
 
   const fetchInsights = useCallback(async () => {
     const params = new URLSearchParams({ companyId });
@@ -207,6 +233,33 @@ export function TeacherInsightsPanel({
                       ))}
                     </ul>
                   )}
+                  <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-slate-200/60 pt-2.5">
+                    {createdFlows[item.objectiveKey] ? (
+                      <Link
+                        href={`/practice/${createdFlows[item.objectiveKey].id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-[11px] font-bold text-emerald-800 transition hover:bg-emerald-100"
+                      >
+                        <ExternalLink className="h-3 w-3" />
+                        Open Fix-It Flow →
+                      </Link>
+                    ) : (
+                      <button
+                        type="button"
+                        disabled={creatingKey !== null}
+                        onClick={() => void handleCreateFixIt(item)}
+                        className="inline-flex items-center gap-1.5 rounded-full border border-[#fd5523]/30 bg-[#fff2e9] px-3 py-1 text-[11px] font-bold text-[#c83a10] transition hover:bg-[#ffe5d4] disabled:opacity-50"
+                      >
+                        {creatingKey === item.objectiveKey ? (
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                        ) : (
+                          <Sparkles className="h-3 w-3" />
+                        )}
+                        {creatingKey === item.objectiveKey ? "Creating..." : "Create 3-min Fix-It Flow"}
+                      </button>
+                    )}
+                  </div>
                 </li>
               ))}
             </ul>
