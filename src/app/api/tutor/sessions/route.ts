@@ -22,6 +22,8 @@ import {
 import { recordUsage } from "@/lib/tutor/server/usage";
 import { runSessionTurn, sessionSystemPrompt } from "@/lib/tutor/server/turn-runner";
 import { buildOpeningWithWarmup } from "@/lib/tutor/warmup";
+import { loadLearnerPreferences } from "@/lib/tutor/learner/preferences-server";
+import { resolvePreferMode } from "@/lib/tutor/learner/preferences";
 
 // POST /api/tutor/sessions: start a ZAI Tutor session.
 // Live mode returns a single-use ephemeral token. Voice and Text mode runs the opening turn server-side.
@@ -96,7 +98,11 @@ export async function POST(req: NextRequest) {
       liveMinutesLeft: access.liveMinutesLeft,
     }),
     allowedModes: access.allowedModes,
-    preferMode: body.preferMode,
+    // P1-07: the learner's saved voice/text preference applies when the client sent no hint.
+    preferMode: resolvePreferMode(
+      body.preferMode,
+      body.preferMode ? null : (await loadLearnerPreferences(userId)).preferences,
+    ),
   });
 
   const serviceClient = createServiceClient();

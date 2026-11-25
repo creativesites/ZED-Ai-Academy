@@ -1,5 +1,7 @@
 // Pure habit, XP, level, and weekly practice goal calculations for ALL subjects.
 
+import { nextStreak } from "./progress.ts";
+
 export type LearnerTier = {
   level: number;
   title: string;
@@ -120,4 +122,74 @@ export function computeLearnerHabits(input: {
     weeklyGoalMet,
     nextBestAction,
   };
+}
+
+// ---------------------------------------------------------------------------
+// Per-person habit row (learner_habits, P1-07). One streak per person instead of one per language,
+// so a learner practising Maths on Monday and Chinese on Tuesday keeps a 2-day streak.
+
+export type HabitRowState = {
+  streakDays: number;
+  longestStreakDays: number;
+  lastPracticeDate: string | null;
+  totalPracticeMs: number;
+};
+
+export type LegacyStreakRow = {
+  streak_days: number | null;
+  last_practice_date: string | null;
+  total_speaking_ms: number | null;
+};
+
+/**
+ * Initial habit state for a learner who has no learner_habits row yet, from their legacy per-language
+ * rows: the streak of the most recently practised language (ties: the longest), totals summed.
+ */
+export function seedHabitsFromLegacy(rows: ReadonlyArray<LegacyStreakRow>): HabitRowState | null {
+  if (rows.length === 0) return null;
+  let best: LegacyStreakRow | null = null;
+  for (const r of rows) {
+    if (!r.last_practice_date) continue;
+    if (
+      !best ||
+      r.last_practice_date > (best.last_practice_date ?? "") ||
+      (r.last_practice_date === best.last_practice_date && (r.streak_days ?? 0) > (best.streak_days ?? 0))
+    ) {
+      best = r;
+    }
+  }
+  const streak = Math.max(0, best?.streak_days ?? 0);
+  return {
+    streakDays: streak,
+    longestStreakDays: Math.max(streak, ...rows.map((r) => Math.max(0, r.streak_days ?? 0))),
+    lastPracticeDate: best?.last_practice_date ?? null,
+    totalPracticeMs: rows.reduce((sum, r) => sum + Math.max(0, Number(r.total_speaking_ms ?? 0)), 0),
+  };
+}
+
+/** Habit row after practising on `today` (calendar day "YYYY-MM-DD") for `addMs` milliseconds. */
+export function applyPracticeDay(prev: HabitRowState | null, today: string, addMs: number): HabitRowState {
+  const streak = nextStreak({
+    lastPracticeDate: prev?.lastPracticeDate ?? null,
+    streakDays: prev?.streakDays ?? 0,
+    today,
+  });
+  const add = Number.isFinite(addMs) ? Math.max(0, Math.round(addMs)) : 0;
+  return {
+    streakDays: streak.streakDays,
+    longestStreakDays: Math.max(prev?.longestStreakDays ?? 0, streak.streakDays),
+    lastPracticeDate: streak.lastPracticeDate,
+    totalPracticeMs: (prev?.totalPracticeMs ?? 0) + add,
+  };
+}
+
+/** The streak to show on `today`: a streak whose last practice is older than yesterday has lapsed (0). */
+export function currentStreakDays(
+  state: Pick<HabitRowState, "streakDays" | "lastPracticeDate">,
+  today: string,
+): number {
+  if (!state.lastPracticeDate) return 0;
+  const gap = (Date.parse(`${today}T00:00:00Z`) - Date.parse(`${state.lastPracticeDate}T00:00:00Z`)) / 86_400_000;
+  if (!Number.isFinite(gap)) return Math.max(0, state.streakDays);
+  return gap > 1 ? 0 : Math.max(0, state.streakDays);
 }

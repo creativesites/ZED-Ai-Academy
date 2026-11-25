@@ -35,6 +35,11 @@ export type PromptLearnerProfile = {
   levelEstimate: string | null;
   recentMistakes: { said: string; correct: string; category: string }[];
   memoryNotes: string[];
+  /**
+   * P1-07 learner brief from `buildLearnerBrief` (already sanitised and fenced in <learner_brief>). When set,
+   * it replaces the legacy recentMistakes/memoryNotes lines, which it supersedes.
+   */
+  brief?: string | null;
 };
 
 export type BuildSystemPromptInput = {
@@ -116,6 +121,10 @@ function scenarioBlock(scenario: PromptScenario): string {
 function memoryBlock(profile: PromptLearnerProfile): string {
   const lines: string[] = [];
   lines.push(`Estimated level: ${profile.levelEstimate ?? "unknown; start at a comfortable level and adjust"}.`);
+  if (profile.brief && profile.brief.trim()) {
+    lines.push(profile.brief.trim());
+    return lines.join("\n");
+  }
   if (profile.recentMistakes.length) {
     lines.push(
       "Recent mistakes to revisit when natural:\n" +

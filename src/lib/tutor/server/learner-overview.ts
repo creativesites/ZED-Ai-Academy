@@ -2,6 +2,8 @@ import "server-only";
 import { createServiceClient } from "@/lib/supabase/server";
 import { computeLearnerHabits, type LearnerHabitSummary } from "../habits.ts";
 import { summarizeDeck, type DeckSummary } from "../srs.ts";
+import { loadDisplayStreak } from "../learner/memory-server.ts";
+import { localDateString } from "../progress.ts";
 import { personaLookFromVariant, type TutorPersonaLook } from "../tutor-session-block.ts";
 
 export type LearnerLanguageStat = {
@@ -152,7 +154,9 @@ export async function loadLearnerTutorOverview(
     lastPracticeDate: r.last_practice_date,
   }));
 
-  const streakDays = languages.reduce((max, l) => Math.max(max, l.streakDays), 0);
+  // P1-07: one streak per person (learner_habits); the per-language max is the fallback before migration.
+  const habitStreak = await loadDisplayStreak(userId, localDateString(new Date()));
+  const streakDays = habitStreak ?? languages.reduce((max, l) => Math.max(max, l.streakDays), 0);
   const totalSpeakingMinutes = languages.reduce((sum, l) => sum + l.totalSpeakingMinutes, 0);
 
   const deck = summarizeDeck(

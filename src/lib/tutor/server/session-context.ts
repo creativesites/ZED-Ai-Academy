@@ -6,6 +6,7 @@ import { DEFAULT_TEACHER_NAME } from "../course-teacher.ts";
 import { loadSessionMemoryNotes, loadWeakMasteryRows } from "../mastery/server.ts";
 import { buildRevisionSprintScenario } from "../mastery/sprint.ts";
 import { parseMemory } from "../memory.ts";
+import { withLearnerBrief } from "../learner/memory-server.ts";
 import { parsePronunciationGlossary, type PronunciationEntry } from "../pronunciation.ts";
 import { profileLanguage } from "../progress.ts";
 import { skillPackLanguage, type SkillPackLanguage } from "../skill-packs.ts";
@@ -329,11 +330,16 @@ export async function loadSessionContext(
     courseId,
     skillLanguage,
     profileLanguage: language,
-    learnerProfile: {
-      levelEstimate: profile?.level_estimate ?? scenario.level ?? null,
-      recentMistakes: memory.recentMistakes,
-      memoryNotes,
-    },
+    // [P1-07 learner brief] One call: adds the fenced learner brief from learner_memories; returns the
+    // legacy profile unchanged when the memory schema is unavailable.
+    learnerProfile: await withLearnerBrief(
+      {
+        levelEstimate: profile?.level_estimate ?? scenario.level ?? null,
+        recentMistakes: memory.recentMistakes,
+        memoryNotes,
+      },
+      { supabase, userId: session.user_id, companyId: session.company_id, courseId },
+    ),
     lessonText: blocksToText(blocks ?? [], { maxChars: LESSON_CONTEXT_MAX_CHARS }),
     history: (turns ?? []).map((t) => ({ idx: t.idx, learner_text: t.learner_text, events: t.events })),
   };
