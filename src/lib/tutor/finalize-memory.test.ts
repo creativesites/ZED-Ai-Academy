@@ -93,3 +93,19 @@ test("habits are recorded once with the session's calendar day and time", async 
   await finalizeSessionCore(INPUT, r.deps);
   assert.deepEqual(r.calls.habits, [{ today: "2026-11-25", practiceMs: 3000 }]);
 });
+
+test("habits run before the legacy profile write (first habit row is seeded from pre-session streaks)", async () => {
+  const order: string[] = [];
+  const r = run({ memoriesStored: true });
+  const deps = {
+    ...r.deps,
+    recordHabits: async () => {
+      order.push("habits");
+    },
+    saveProfile: async () => {
+      order.push("profile");
+    },
+  };
+  await finalizeSessionCore(INPUT, deps);
+  assert.deepEqual(order, ["habits", "profile"]);
+});
