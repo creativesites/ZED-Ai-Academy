@@ -25,6 +25,7 @@ import { DEFAULT_PERSONA_LOOK } from "@/components/tutor/avatar/types";
 import { ScenarioEditorModal } from "@/components/tutor/studio/ScenarioEditorModal";
 import { TeacherInsightsPanel } from "@/components/tutor/studio/TeacherInsightsPanel";
 import { CourseObjectivesPanel } from "@/components/creator/course-objectives-panel";
+import { VivaRubricEditor } from "@/components/creator/viva-rubric-editor";
 import { AUTHORING_TEMPLATES, type AuthoringTemplateId } from "@/lib/tutor/authoring/templates";
 import { TUTOR_STYLE_LABELS } from "@/lib/tutor/tutor-session-block";
 import {
@@ -543,6 +544,13 @@ export function CourseTutorTab({
               Auto-draft Viva
             </Button>
           </div>
+
+          {requireViva && (
+            <VivaRubricEditor
+              courseId={courseId}
+              reviewsHref={tenantSlug ? `/academy/${tenantSlug}/admin/ai-teachers/reviews` : null}
+            />
+          )}
         </div>
       </div>
 

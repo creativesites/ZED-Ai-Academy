@@ -10,6 +10,7 @@ import { PracticeStudio } from "@/components/learner/practice-studio";
 import { LessonDiscussions } from "@/components/learner/lesson-discussions";
 import type { Discussion } from "@/types/database";
 import { markLessonComplete, generateCertificate } from "@/actions/certificates";
+import { VivaReviewRequest } from "@/components/learner/viva-review-request";
 import { cn } from "@/lib/utils";
 import {
   ArrowLeft,
@@ -123,6 +124,8 @@ export function LessonPlayerClient({
     scenarioId: string | null;
     scenario: TutorScenarioView | null;
     reason: string | null;
+    /** P2-08: the learner may ask for one human review of the oral check. */
+    canRequestReview?: boolean;
   } | null;
 }) {
   const router = useRouter();
@@ -872,6 +875,7 @@ export function LessonPlayerClient({
                               ? vivaStatus.reason ?? `Complete your oral Certificate Viva with ${teacher.name} to unlock your certificate.`
                               : "Claim your verified certificate to share your achievement."}
                         </p>
+                        {!certificate && vivaStatus?.canRequestReview && <VivaReviewRequest courseId={course.id} />}
                       </div>
                       {(!vivaStatus?.required || vivaStatus.passed || certificate) && renderPrimary()}
                     </div>
