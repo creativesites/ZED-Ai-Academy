@@ -36,9 +36,9 @@ DECLARE
 BEGIN
   -- 1. Evidence rows
   LOOP
-    SELECT max(id) INTO v_max FROM (
+    SELECT b.id INTO v_max FROM (
       SELECT id FROM public.learner_evidence WHERE id > v_last ORDER BY id LIMIT p_batch
-    ) b;
+    ) b ORDER BY b.id DESC LIMIT 1;
     EXIT WHEN v_max IS NULL;
 
     UPDATE public.learner_evidence
@@ -58,9 +58,9 @@ BEGIN
   v_last := '00000000-0000-0000-0000-000000000000';
   v_total := 0;
   LOOP
-    SELECT max(id) INTO v_max FROM (
+    SELECT b.id INTO v_max FROM (
       SELECT id FROM public.learner_mastery WHERE id > v_last ORDER BY id LIMIT p_batch
-    ) b;
+    ) b ORDER BY b.id DESC LIMIT 1;
     EXIT WHEN v_max IS NULL;
 
     UPDATE public.learner_mastery m
