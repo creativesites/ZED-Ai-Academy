@@ -24,10 +24,10 @@ import {
 /**
  * Version of the tutor event contract (event set + fields), stored on each `tutor_turns` row.
  * 1: the original language-tutor events. 2: teaching events (show_board, ask_choice, note_evidence, ...).
- * 3 (planned, Stream F): ask_order / ask_fill / ask_numeric and server-held answers.
+ * 3: ask_order / ask_fill / ask_numeric and server-held answer keys (ask_choice.answer), graded by the server.
  * Not the Rive avatar contract version (contract.generated.ts CONTRACT_VERSION, a semver string).
  */
-export const CONTRACT_VERSION = 2 as const;
+export const CONTRACT_VERSION = 3 as const;
 
 export * from "./definitions.ts";
 export type { LiveSchemaProperty, TurnSchemaProperty } from "./derive.ts";

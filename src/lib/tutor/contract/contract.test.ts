@@ -126,10 +126,38 @@ test("teaching lists and legacy aliases only name defined events", () => {
   }
 });
 
-test("contract v2 has no server-only fields, and toClientEvent passes events through untouched", () => {
-  assert.deepEqual(SERVER_ONLY_FIELDS, {});
-  const ev = { type: "ask_choice" as const, question: "2+2?", options: ["3", "4"] };
-  assert.equal(toClientEvent(ev), ev);
+test("contract v3 server-only fields are the answer keys, and toClientEvent strips them", () => {
+  assert.deepEqual(SERVER_ONLY_FIELDS, {
+    ask_choice: ["answer"],
+    ask_order: ["answer"],
+    ask_fill: ["answer"],
+    ask_numeric: ["value", "tolerance"],
+  });
+  const ev = { type: "ask_choice" as const, question: "2+2?", options: ["3", "4"], answer: ["4"], checkId: "t1-0" };
+  assert.deepEqual(toClientEvent(ev), { type: "ask_choice", question: "2+2?", options: ["3", "4"], checkId: "t1-0" });
+  assert.deepEqual(ev.answer, ["4"], "server copy keeps the key");
+  const say = { type: "say" as const, text: "hi" };
+  assert.equal(toClientEvent(say), say, "events without keys pass through untouched");
+});
+
+test("answer keys are never Live tool parameters (Live calls reach the browser directly)", () => {
+  for (const tool of liveToolDeclarations()) {
+    for (const key of SERVER_ONLY_FIELDS[tool.name] ?? []) {
+      assert.ok(!(key in tool.parameters.properties), `${tool.name}.${key} must not be a Live parameter`);
+    }
+  }
+});
+
+test("v2 events still parse under v3 (stored sessions replay)", () => {
+  const v2Events = [
+    { type: "ask_choice", question: "Pick", options: ["a", "b"] },
+    { type: "show_board", kind: "bullets", items: ["x"] },
+    { type: "note_evidence", objective: "fractions", result: "partial" },
+    { type: "ask_confidence" },
+  ];
+  for (const e of v2Events) assert.ok(tutorEventSchema.safeParse(e).success, e.type);
+  const v2Snapshot = JSON.parse(readFileSync(new URL("./__fixtures__/contract-v2.snapshot.json", import.meta.url), "utf8"));
+  for (const t of v2Snapshot.eventTypes as string[]) assert.ok((TUTOR_EVENT_TYPES as readonly string[]).includes(t), t);
 });
 
 // ---- A hypothetical v3 definition set: proves answer keys are an additive change. ----

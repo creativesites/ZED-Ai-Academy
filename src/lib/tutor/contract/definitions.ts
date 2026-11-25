@@ -9,10 +9,8 @@ import { defineEvent, field, objectField } from "./define.ts";
 // Changing anything here changes what the model is taught. Bump CONTRACT_VERSION (index.ts) and refresh the
 // snapshot fixture (contract.test.ts explains how) in the same commit; the drift test fails otherwise.
 //
-// Adding v3 events (Architecture §3.4) is additive: define them with `since: 3`, list them in CORE_EVENT_TYPES, and
-// mark answer-key fields `serverOnly: true`, e.g.
-//   ask_choice: answer: field(z.array(z.number().int().min(0).max(4)).optional(), { serverOnly: true, ... })
-// The parser keeps the answer for the server; `toClientEvent` strips it before the event reaches the browser.
+// v3 (Architecture §3.4) added answerable events. Answer-key fields are `serverOnly: true`: the parser keeps them for
+// the server and `toClientEvent` strips them before the event reaches the browser.
 
 const nonEmpty = z.string().min(1);
 const YOUTUBE_ID = /^[A-Za-z0-9_-]{11}$/;
@@ -200,11 +198,44 @@ const revealStep = defineEvent(
   { since: 2, liveDescription: "Reveal the next item on the board (or up to index), in step with what you are saying." },
 );
 
+// ---- v3 answerable interactions (Architecture §3.4) ----
+// The model supplies an answer key; the server moves it into the session's pending check, strips it from every
+// event that leaves the server (`toClientEvent`) and grades the learner's reply itself. Live sessions are not
+// taught answer keys (`live: false`): Live tool calls reach the browser directly, so a key there could not be
+// kept from the learner and would not make the evidence trustworthy.
+
+/** Server-held answer key: option text(s) for ask_choice, accepted answers per blank for ask_fill. */
+// The flat turn schema has one property per name, so only the first event using a name carries its turnDescription.
+const answerKey = (max: number, first = false) =>
+  field(z.array(z.string().min(1).max(160)).min(1).max(max).optional(), {
+    serverOnly: true,
+    live: false,
+    ...(first
+      ? {
+          turnDescription:
+            "Answer key, held by the server and never shown. ask_choice: the correct option text(s), copied exactly. ask_fill: one accepted answer per blank, synonyms separated by |.",
+        }
+      : {}),
+  });
+
+/** Objective id (from the objectives list) a check is evidence for. */
+const checkObjective = (first = false) =>
+  field(z.string().max(200).optional(), {
+    live: false,
+    ...(first ? { turnDescription: "Objective id (before the colon in the objectives list) this check or evidence is about." } : {}),
+  });
+
+/** Set by the server when it holds the answer; the learner's reply quotes it. Never written by the model. */
+const checkId = () => field(z.string().max(64).optional(), { turn: false, live: false });
+
 const askChoice = defineEvent(
   "ask_choice",
   {
     question: field(nonEmpty.max(240)),
     options: field(z.array(z.string().min(1).max(160)).min(2).max(5)),
+    answer: answerKey(5, true),
+    objective: checkObjective(true),
+    checkId: checkId(),
   },
   {
     since: 2,
@@ -283,6 +314,64 @@ const award = defineEvent(
   { since: 2, liveDescription: "Celebrate a real achievement, such as an objective clearly met. Use rarely." },
 );
 
+const askOrder = defineEvent(
+  "ask_order",
+  {
+    prompt: field(nonEmpty.max(240)),
+    /** The model writes the items in the CORRECT order; the server shuffles them and keeps the order as `answer`. */
+    items: field(z.array(z.string().min(1).max(160)).min(2).max(6)),
+    answer: field(z.array(z.string().min(1).max(160)).min(2).max(6).optional(), { serverOnly: true, turn: false, live: false }),
+    objective: checkObjective(),
+    checkId: checkId(),
+  },
+  {
+    since: 3,
+    liveDescription:
+      "Ask the learner to put two to six items in order. List the items in the correct order; they are shuffled for the learner.",
+  },
+);
+
+const askFill = defineEvent(
+  "ask_fill",
+  {
+    /** Text with one ___ per blank. */
+    prompt: field(nonEmpty.max(400)),
+    /** Optional word bank. */
+    options: field(z.array(z.string().min(1).max(160)).min(2).max(8).optional()),
+    answer: answerKey(4),
+    objective: checkObjective(),
+    checkId: checkId(),
+  },
+  {
+    since: 3,
+    liveDescription: "Ask the learner to fill in the blanks (___) in a short text, optionally from a word bank.",
+  },
+);
+
+const askNumeric = defineEvent(
+  "ask_numeric",
+  {
+    prompt: field(nonEmpty.max(240)),
+    unit: field(z.string().max(24).optional(), { turnDescription: "ask_numeric: unit of the answer, e.g. kg or %." }),
+    value: field(z.number().finite().optional(), {
+      serverOnly: true,
+      live: false,
+      turnDescription: "ask_numeric: the correct number. Held by the server, never shown.",
+    }),
+    tolerance: field(z.number().finite().min(0).optional(), {
+      serverOnly: true,
+      live: false,
+      turnDescription: "ask_numeric: allowed difference from value (absolute). Omit to accept correct rounding only.",
+    }),
+    objective: checkObjective(),
+    checkId: checkId(),
+  },
+  {
+    since: 3,
+    liveDescription: "Ask the learner for a number, with an optional unit.",
+  },
+);
+
 /** Every event, in wire order. The order is the Gemini enum order and the Live tool order: append only. */
 export const EVENT_DEFINITIONS = [
   say,
@@ -305,9 +394,16 @@ export const EVENT_DEFINITIONS = [
   advanceStep,
   switchScene,
   award,
+  askOrder,
+  askFill,
+  askNumeric,
 ] as const;
 
 export type TutorEventType = (typeof EVENT_DEFINITIONS)[number]["type"];
+
+/** Events that carry a server-held answer key and are graded by the server (contract v3). */
+export const ANSWERABLE_EVENT_TYPES = ["ask_choice", "ask_order", "ask_fill", "ask_numeric"] as const satisfies readonly TutorEventType[];
+export type AnswerableEventType = (typeof ANSWERABLE_EVENT_TYPES)[number];
 
 // ---- Teaching policy: which events each kind of pack is taught (prompt and Live tools). ----
 // Explicit lists because their order is part of the prompt text. Parsing still accepts every type.
@@ -315,7 +411,7 @@ export type TutorEventType = (typeof EVENT_DEFINITIONS)[number]["type"];
 /** Events only language packs may use. Other packs never see them in their prompt or tools. */
 export const LANGUAGE_ONLY_EVENT_TYPES = ["show_card", "trace_tone"] as const satisfies readonly TutorEventType[];
 
-/** Events every pack is taught to use (v2). */
+/** Events every pack is taught to use (v2 + the v3 answerable checks). */
 export const CORE_EVENT_TYPES = [
   "say",
   "gesture",
@@ -324,6 +420,9 @@ export const CORE_EVENT_TYPES = [
   "show_board",
   "reveal_step",
   "ask_choice",
+  "ask_order",
+  "ask_fill",
+  "ask_numeric",
   "ask_confidence",
   "show_lesson_ref",
   "play_clip",
