@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { ArrowRight, BookMarked, Flame, History, Mic, Sparkles } from "lucide-react";
 import { Teacher } from "@/components/tutor/avatar/Teacher";
-import { PERSONA_PRESETS } from "@/components/tutor/avatar/persona-presets";
+import { personaPreset } from "@/components/tutor/avatar/persona-presets";
 
 export function TutorSpotlightBanner({
   practiceHref = "/practice",
@@ -26,7 +26,7 @@ export function TutorSpotlightBanner({
   title?: string;
   description?: string;
 }) {
-  const lin = PERSONA_PRESETS[0];
+  const lin = personaPreset("lin");
 
   return (
     <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#062e39] via-[#132842] to-[#2a1745] p-6 text-white shadow-xl sm:p-8">

@@ -18,8 +18,9 @@ import {
   Volume2,
 } from "lucide-react";
 import { Teacher } from "@/components/tutor/avatar/Teacher";
-import { PERSONA_PRESETS, SCALE_PERSONA_PRESETS } from "@/components/tutor/avatar/persona-presets";
-import type { AvatarDriver, PersonaLook } from "@/components/tutor/avatar/types";
+import { personaPreset } from "@/components/tutor/avatar/persona-presets";
+import type { AvatarDriver } from "@/components/tutor/avatar/types";
+import { DEFAULT_DECK_TEACHER, deckTeacherFor } from "@/lib/tutor/deck-teacher";
 import { compareResponseToTarget, type ResponseMatchResult } from "@/lib/tutor/response-match";
 import {
   formatInterval,
@@ -56,26 +57,6 @@ const LANG_LABELS: Record<string, string> = {
   bem: "Bemba",
   ny: "Nyanja",
   tog: "Tonga",
-};
-
-const LANG_PRESET_MAP: Record<string, { key: string; label: string; look: PersonaLook }> = {
-  en: PERSONA_PRESETS[4], // Tinashe
-  zh: PERSONA_PRESETS[0], // Lin
-  es: PERSONA_PRESETS[1], // Sofia
-  fr: PERSONA_PRESETS[2], // Camille
-  bem: SCALE_PERSONA_PRESETS[0] ?? PERSONA_PRESETS[4], // Mwila
-  ny: SCALE_PERSONA_PRESETS[1] ?? PERSONA_PRESETS[4], // Banda
-  tog: SCALE_PERSONA_PRESETS[3] ?? PERSONA_PRESETS[4], // Chanda
-};
-
-const LANG_TTS_VOICE: Record<string, string> = {
-  en: "Puck",
-  zh: "Kore",
-  es: "Aoede",
-  fr: "Leda",
-  bem: "Kore",
-  ny: "Charon",
-  tog: "Fenrir",
 };
 
 const deckTtsCache = new Map<string, string | null>();
@@ -184,7 +165,7 @@ async function speakTerm(
   if (typeof window === "undefined" || !text.trim()) return;
   stopDeckAudio(avatar);
 
-  const voice = LANG_TTS_VOICE[language] ?? "Kore";
+  const voice = deckTeacherFor(language).voice;
   const cacheKey = `${voice}::${text}`;
   let url = deckTtsCache.get(cacheKey);
 
@@ -313,10 +294,14 @@ export function VocabDeckReview({
   const summary = useMemo(() => summarizeDeck(filteredCards), [filteredCards]);
   const activeCard = dueQueue[0] ?? null;
 
-  const activePreset =
-    (activeCard && LANG_PRESET_MAP[activeCard.language]) ||
-    (langFilter !== "all" && LANG_PRESET_MAP[langFilter]) ||
-    PERSONA_PRESETS[0];
+  // Persona by key (never by array index): the card's language picks the teacher.
+  const activePreset = personaPreset(
+    activeCard
+      ? deckTeacherFor(activeCard.language).presetKey
+      : langFilter !== "all"
+        ? deckTeacherFor(langFilter).presetKey
+        : DEFAULT_DECK_TEACHER.presetKey,
+  );
 
   const handleRate = useCallback(
     (quality: ReviewQuality) => {
