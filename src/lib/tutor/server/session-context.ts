@@ -5,6 +5,8 @@ import type { Database } from "@/types/database";
 import { DEFAULT_TEACHER_NAME } from "../course-teacher.ts";
 import { loadSessionMemoryNotes, loadWeakMasteryRows } from "../mastery/server.ts";
 import { buildRevisionSprintScenario } from "../mastery/sprint.ts";
+import type { ObjectiveRef } from "../learner/objectives.ts";
+import { loadScenarioObjectiveRefs } from "../learner/objectives-server.ts";
 import { parseMemory } from "../memory.ts";
 import { parsePronunciationGlossary, type PronunciationEntry } from "../pronunciation.ts";
 import { profileLanguage } from "../progress.ts";
@@ -77,6 +79,8 @@ export type SessionContext = {
   learnerProfile: PromptLearnerProfile;
   lessonText: string;
   history: HistoryTurn[];
+  /** Registered objectives this session teaches (P2-01): listed in the prompt, cited by note_evidence. */
+  objectives: ObjectiveRef[];
 };
 
 type SprintContextSnapshot = {
@@ -84,6 +88,8 @@ type SprintContextSnapshot = {
   courseId?: string | null;
   courseTitle?: string | null;
   focusObjective?: string | null;
+  /** Registered objectives a seeded revision session targets (e.g. from a quiz result). */
+  objectives?: Array<{ id?: unknown; code?: unknown; text?: unknown }> | null;
   personaId?: string | null;
   teacherName?: string | null;
   scenario?: {
@@ -186,6 +192,7 @@ export async function loadSessionContext(
   let scenario: ScenarioRow;
   let persona: PersonaRow;
   let courseId: string | null = null;
+  let objectives: ObjectiveRef[] = [];
 
   if (session.scenario_id) {
     const { data: scenarioRow, error: scenarioError } = await supabase
@@ -209,6 +216,7 @@ export async function loadSessionContext(
       sprintFallback ??
       null;
     courseId = rawSprint?.courseId ?? null;
+    objectives = sprintObjectiveRefs(rawSprint?.objectives);
     persona = await resolveDefaultPersona(supabase, session.company_id, rawSprint?.personaId ?? null);
     const teacherName = rawSprint?.teacherName ?? persona.display_name ?? persona.name ?? DEFAULT_TEACHER_NAME;
 
@@ -291,6 +299,9 @@ export async function loadSessionContext(
   const skillLanguage = skillPackLanguage(scenario.skill_pack);
   const language = profileLanguage(skillLanguage, persona.languages);
 
+  const scenarioObjectivesPromise = session.scenario_id
+    ? loadScenarioObjectiveRefs({ client: supabase, scenarioId: session.scenario_id, companyId: session.company_id })
+    : null;
   const [{ data: profile }, { data: blocks }, { data: turns }] = await Promise.all([
     supabase
       .from("learner_language_profiles")
@@ -312,6 +323,8 @@ export async function loadSessionContext(
       .eq("session_id", session.id)
       .order("idx", { ascending: true }),
   ]);
+
+  if (scenarioObjectivesPromise) objectives = await scenarioObjectivesPromise;
 
   const memory = parseMemory(profile?.memory);
   const memoryNotes = await loadSessionMemoryNotes({
@@ -336,5 +349,14 @@ export async function loadSessionContext(
     },
     lessonText: blocksToText(blocks ?? [], { maxChars: LESSON_CONTEXT_MAX_CHARS }),
     history: (turns ?? []).map((t) => ({ idx: t.idx, learner_text: t.learner_text, events: t.events })),
+    objectives,
   };
+}
+
+function sprintObjectiveRefs(raw: SprintContextSnapshot["objectives"]): ObjectiveRef[] {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .filter((o): o is { id: string; code?: unknown; text: string } => typeof o?.id === "string" && typeof o?.text === "string")
+    .slice(0, 12)
+    .map((o) => ({ id: o.id, code: typeof o.code === "string" ? o.code : null, text: o.text }));
 }

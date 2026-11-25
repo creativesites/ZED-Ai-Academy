@@ -239,6 +239,7 @@ export async function finalizeTutorSession(input: FinalizeInput): Promise<Finali
       scenarioGoal: ctx.scenario.goal,
       courseId: ctx.courseId,
       scenarioId: session.scenario_id,
+      objectives: ctx.objectives,
       skillLanguage: ctx.skillLanguage,
       profileLanguage: ctx.profileLanguage,
       liveModel: modelFor("tutorLive"),

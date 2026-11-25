@@ -35,7 +35,7 @@ export class TurnConflictError extends Error {
 
 export function sessionSystemPrompt(ctx: SessionContext, mode: TutorPromptMode): string {
   return buildSystemPrompt({
-    scenario: toPromptScenario(ctx.scenario),
+    scenario: { ...toPromptScenario(ctx.scenario), objectives: ctx.objectives },
     persona: toPromptPersona(ctx.persona),
     skillPack: ctx.scenario.skill_pack,
     learnerProfile: ctx.learnerProfile,
