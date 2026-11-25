@@ -26,6 +26,7 @@ export default async function PracticeRoomPage() {
       sessionBasePath="/practice"
       deckHref="/practice/deck"
       historyHref="/practice/history"
+      aboutMeHref="/practice/about-me"
       overview={overview}
       browseHref="/courses"
       browseLabel="Browse courses"

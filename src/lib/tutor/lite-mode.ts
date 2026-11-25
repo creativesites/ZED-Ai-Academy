@@ -23,9 +23,18 @@ export function shouldDefaultToLite(hints: ConnectionHints | null | undefined): 
   return false;
 }
 
-/** The learner's saved choice wins over the network guess. Anything but "1" / "0" counts as no choice. */
-export function resolveLite(stored: string | null, hints: ConnectionHints | null | undefined): boolean {
+/**
+ * The learner's saved choice on this device wins, then their account preference (learner_preferences.
+ * data_saver, P1-07; null/undefined = none), then the network guess. Anything but "1" / "0" counts as no
+ * device choice.
+ */
+export function resolveLite(
+  stored: string | null,
+  hints: ConnectionHints | null | undefined,
+  accountDataSaver?: boolean | null,
+): boolean {
   if (stored === "1") return true;
   if (stored === "0") return false;
+  if (typeof accountDataSaver === "boolean") return accountDataSaver;
   return shouldDefaultToLite(hints);
 }
