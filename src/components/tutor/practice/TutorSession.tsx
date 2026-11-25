@@ -1187,6 +1187,8 @@ export function TutorSession({
             starting={phase === "starting"}
             error={error}
             onStart={() => void handleStart()}
+            lite={lite}
+            onLiteChange={setLite}
           />
         </div>
       </div>

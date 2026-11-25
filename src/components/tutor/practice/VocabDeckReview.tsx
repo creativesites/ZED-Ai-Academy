@@ -38,6 +38,7 @@ import {
 } from "@/actions/tutor-learner";
 import type { LearnerDeckCard } from "@/lib/tutor/server/learner-overview";
 import { playChoiceChime, playStepTick } from "./sound-fx";
+import { useLiteMode } from "./use-lite-mode";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -255,6 +256,8 @@ export function VocabDeckReview({
   companyId?: string;
 }) {
   const avatarRef = useRef<AvatarDriver | null>(null);
+  // Data saver: the light SVG teacher instead of the Rive one. The card is still read aloud.
+  const [lite] = useLiteMode();
   const [cards, setCards] = useState<LearnerDeckCard[]>(initialCards);
   const [langFilter, setLangFilter] = useState<string>("all");
   const [revealed, setRevealed] = useState(false);
@@ -575,6 +578,7 @@ export function VocabDeckReview({
               <Teacher
                 ref={avatarRef}
                 variant="bust"
+                engine={lite ? "placeholder" : undefined}
                 persona={activePreset.look}
                 className="h-16 w-16"
                 label={`${activePreset.label}, your vocabulary coach`}

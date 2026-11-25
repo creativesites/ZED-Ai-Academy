@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { ArrowRight, CheckCircle, Mic } from "lucide-react";
 import { Teacher } from "@/components/tutor/avatar/Teacher";
 import { DEFAULT_PERSONA_LOOK } from "@/components/tutor/avatar/types";
+import { useLiteMode } from "@/components/tutor/practice/use-lite-mode";
 import {
   TUTOR_STYLE_LABELS,
   parseTutorSessionBlock,
@@ -39,6 +40,8 @@ export function TutorSessionBlock({
   academySlug?: string | null;
 }) {
   const pathname = usePathname();
+  // Data saver: the light SVG teacher, so the Rive runtime is never downloaded for this card.
+  const [lite] = useLiteMode();
   const block = parseTutorSessionBlock(content);
 
   if (!block) {
@@ -74,6 +77,7 @@ export function TutorSessionBlock({
           <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-gradient-to-b from-[#1a1338] to-[#321b4e] shadow-md sm:h-16 sm:w-16 sm:rounded-2xl">
             <Teacher
               variant="bust"
+              engine={lite ? "placeholder" : undefined}
               persona={persona?.look ?? DEFAULT_PERSONA_LOOK}
               className="h-12 w-12 sm:h-16 sm:w-16"
               label={personaName ?? "Animated AI teacher"}
