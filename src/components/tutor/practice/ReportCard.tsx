@@ -40,6 +40,8 @@ type ReportCardProps = {
   onStartSprint?: () => void;
   onStartNextScenario?: (scenarioId: string) => void;
   onDone?: () => void;
+  /** Cards page in the learner's academy (see academyHref). Defaults to the platform deck. */
+  deckHref?: string;
 };
 
 const OBJECTIVE_STATUS_STYLE: Record<
@@ -74,6 +76,7 @@ export function ReportCard({
   onStartSprint,
   onStartNextScenario,
   onDone,
+  deckHref = "/practice/deck",
 }: ReportCardProps) {
   const scores = REPORT_SCORE_KEYS.filter((key) => typeof report.scores[key] === "number");
   const objectives = report.objectives ?? [];
@@ -284,7 +287,7 @@ export function ReportCard({
             </button>
             {deckState === "saved" && (
               <Link
-                href="/practice/deck"
+                href={deckHref}
                 className="text-xs font-semibold text-[var(--accent)] underline underline-offset-4"
               >
                 Review deck →

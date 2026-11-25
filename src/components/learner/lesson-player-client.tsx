@@ -740,6 +740,7 @@ export function LessonPlayerClient({
                           scenario={tutorScenarios[moment.scenario_id]}
                           done={tutorDone.has(moment.scenario_id)}
                           isGuest={isGuest}
+                          academySlug={course.company_slug ?? null}
                         />
                       </div>
                     ));
@@ -785,6 +786,7 @@ export function LessonPlayerClient({
                             scenarios: tutorScenarios,
                             completedScenarioIds: [...tutorDone],
                             isGuest,
+                            academySlug: course.company_slug ?? null,
                           }}
                           onLaunchStudio={(initialTool) =>
                             handleOpenStudio(block.id, initialTool, {
@@ -811,6 +813,7 @@ export function LessonPlayerClient({
                         scenario={tutorScenarios[moment.scenario_id]}
                         done={tutorDone.has(moment.scenario_id)}
                         isGuest={isGuest}
+                        academySlug={course.company_slug ?? null}
                       />
                     </div>
                   ))}
@@ -901,6 +904,7 @@ export function LessonPlayerClient({
                       }}
                       scenario={vivaStatus.scenario}
                       done={false}
+                      academySlug={course.company_slug ?? null}
                     />
                   </div>
                 )}

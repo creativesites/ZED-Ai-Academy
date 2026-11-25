@@ -19,6 +19,7 @@ import { compareResponseToTarget, type ResponseMatchResult } from "@/lib/tutor/r
 import { MAX_SPEAKING_MS, SpeakingTimeAccumulator } from "@/lib/tutor/speaking-time";
 import { deriveTurnInteraction } from "@/lib/tutor/turn-interaction";
 import { personaLookFromVariant } from "@/lib/tutor/tutor-session-block";
+import { academyHref, academySlugFromPath } from "@/lib/tutor/academy-href";
 import { VadTracker } from "@/lib/tutor/vad";
 import {
   detectMicPermission,
@@ -1131,13 +1132,12 @@ export function TutorSession({
   const navigateToSprint = useCallback(
     (objectiveText?: string) => {
       if (typeof window === "undefined") return;
-      const match = /^\/academy\/([^/]+)/.exec(window.location.pathname);
-      const base = match ? `/academy/${match[1]}` : "";
       const params = new URLSearchParams();
       if (objectiveText) params.set("focus", objectiveText);
       if (sprintCourseId) params.set("courseId", sprintCourseId);
       const qs = params.toString();
-      window.location.assign(`${base}/practice/sprint${qs ? `?${qs}` : ""}`);
+      const academy = academySlugFromPath(window.location.pathname);
+      window.location.assign(academyHref(academy, `/practice/sprint${qs ? `?${qs}` : ""}`));
     },
     [sprintCourseId],
   );
@@ -1222,12 +1222,15 @@ export function TutorSession({
                 ? undefined
                 : (nextId) => {
                     if (typeof window === "undefined") return;
-                    const match = /^\/academy\/([^/]+)/.exec(window.location.pathname);
-                    const base = match ? `/academy/${match[1]}` : "";
-                    window.location.assign(`${base}/practice/${nextId}`);
+                    const academy = academySlugFromPath(window.location.pathname);
+                    window.location.assign(academyHref(academy, `/practice/${encodeURIComponent(nextId)}`));
                   }
             }
             onDone={handleDone}
+            deckHref={academyHref(
+              academySlugFromPath(typeof window === "undefined" ? null : window.location.pathname),
+              "/practice/deck",
+            )}
           />
         </div>
       </div>

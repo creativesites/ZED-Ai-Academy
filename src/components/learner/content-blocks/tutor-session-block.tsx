@@ -10,6 +10,7 @@ import {
   parseTutorSessionBlock,
   type TutorScenarioView,
 } from "@/lib/tutor/tutor-session-block";
+import { academyHref, academySlugFromPath } from "@/lib/tutor/academy-href";
 
 // A tutor_session block in the lesson player. Navigates directly to the dedicated full-page
 // Practice Room route (no cramped modal overlay), passing lessonId and a back URL so the learner
@@ -22,6 +23,7 @@ export function TutorSessionBlock({
   scenario,
   done,
   isGuest = false,
+  academySlug,
 }: {
   content: Record<string, unknown>;
   lessonId?: string;
@@ -30,6 +32,11 @@ export function TutorSessionBlock({
   scenario: TutorScenarioView | undefined;
   done: boolean;
   isGuest?: boolean;
+  /**
+   * Slug of the academy that owns the course (null: platform course). Teacher links are built from the
+   * course, not from the URL: the lesson player is /courses/[slug]/learn for every academy.
+   */
+  academySlug?: string | null;
 }) {
   const pathname = usePathname();
   const block = parseTutorSessionBlock(content);
@@ -48,8 +55,7 @@ export function TutorSessionBlock({
   const persona = scenario?.persona;
   const personaName = persona ? persona.displayName ?? persona.name : null;
 
-  const tenantMatch = /^\/academy\/([^/]+)/.exec(pathname ?? "");
-  const basePath = tenantMatch ? `/academy/${tenantMatch[1]}` : "";
+  const academy = academySlug !== undefined ? academySlug : academySlugFromPath(pathname);
   const returnPath =
     pathname && lessonId && pathname.endsWith("/learn") ? `${pathname}?lesson=${lessonId}` : pathname;
   const qs = new URLSearchParams();
@@ -58,7 +64,7 @@ export function TutorSessionBlock({
   const practiceHref = scenario
     ? isGuest
       ? `/try/${scenario.id}${qs.toString() ? `?${qs.toString()}` : ""}`
-      : `${basePath}/practice/${scenario.id}${qs.toString() ? `?${qs.toString()}` : ""}`
+      : academyHref(academy, `/practice/${scenario.id}${qs.toString() ? `?${qs.toString()}` : ""}`)
     : "#";
 
   return (
