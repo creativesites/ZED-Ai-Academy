@@ -1,7 +1,8 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { PDFDocument, StandardFonts } from "pdf-lib";
-import { buildStudyNotesPdf, pdfFilename, sanitizePdfText, wrapText } from "./study-pdf.ts";
+import { readFileSync } from "node:fs";
+import { buildStudyNotesPdf, collectStudyText, needsUnicodeFont, pdfFilename, sanitizePdfText, wrapText } from "./study-pdf.ts";
 
 describe("study notes PDF", () => {
   it("sanitises text Helvetica cannot draw", async () => {
@@ -31,5 +32,22 @@ describe("study notes PDF", () => {
     const empty = await buildStudyNotesPdf({ title: "" });
     assert.equal((await PDFDocument.load(empty)).getPageCount(), 1);
     assert.equal(pdfFilename("Gross Margin 101!"), "gross-margin-101.pdf");
+  });
+
+  it("detects when Chinese or pinyin needs the Unicode font", () => {
+    assert.equal(needsUnicodeFont("Prompt makeover — café “ok”"), false);
+    assert.equal(needsUnicodeFont("nǐ hǎo"), true);
+    assert.equal(needsUnicodeFont("你好"), true);
+    assert.ok(collectStudyText({ title: "x", savedTakeaways: [{ text: "谢谢" }] }).includes("谢谢"));
+  });
+
+  it("embeds Noto Sans SC so Chinese text keeps its characters", async () => {
+    const font = (n: string) => readFileSync(new URL(`../../../public/fonts/pdf/NotoSansSC-${n}.ttf`, import.meta.url));
+    const bytes = await buildStudyNotesPdf(
+      { title: "Greetings 你好", savedTakeaways: [{ text: "你好", pron: "nǐ hǎo", meaning: "Hello" }] },
+      { unicodeFonts: { regular: font("Regular"), bold: font("Bold") } },
+    );
+    assert.equal((await PDFDocument.load(bytes)).getPageCount(), 1);
+    assert.ok(bytes.length > 500_000, "fonts are embedded");
   });
 });

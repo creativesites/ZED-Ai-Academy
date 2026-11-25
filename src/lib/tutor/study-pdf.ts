@@ -1,5 +1,6 @@
 // Renders AI Teacher study notes as a designed, print-ready A4 PDF (client or server).
-// Uses pdf-lib's built-in Helvetica, so text is sanitised to the WinAnsi character set.
+// Uses pdf-lib's built-in Helvetica (WinAnsi only) unless Unicode fonts are passed in,
+// e.g. Noto Sans SC for Chinese characters and pinyin tone marks.
 
 import {
   PDFDocument,
@@ -10,7 +11,26 @@ import {
   type PDFPage,
   type RGB,
 } from "pdf-lib";
+import fontkit from "@pdf-lib/fontkit";
 import type { StudyExportInput } from "./study-export.ts";
+
+/** True when the text needs more than Helvetica's WinAnsi set (CJK, pinyin tones, etc.). */
+export function needsUnicodeFont(text: string): boolean {
+  return /[\u0100-\u024f\u0370-\u03ff\u0400-\u04ff\u3000-\u30ff\u3400-\u9fff\uf900-\ufaff\uff00-\uffef]/.test(text);
+}
+
+/** Every string the PDF would print, for font detection. */
+export function collectStudyText(input: StudyExportInput): string {
+  const parts: string[] = [input.title, input.teacherName ?? ""];
+  const r = input.report;
+  if (r) {
+    parts.push(...(r.strengths ?? []), r.nextStep ?? "");
+    for (const m of r.mistakes ?? []) parts.push(m.said, m.correct, m.category, m.note ?? "");
+  }
+  for (const w of input.savedTakeaways ?? []) parts.push(w.text, w.pron ?? "", w.meaning ?? "");
+  for (const e of input.transcript ?? []) parts.push(e.text, e.title ?? "", e.translation ?? "");
+  return parts.join("\n");
+}
 
 const PAGE_W = 595.28;
 const PAGE_H = 841.89;
@@ -103,6 +123,8 @@ export type StudyPdfOptions = {
   /** PNG bytes of the brand logo, drawn in the header if given. */
   logoPng?: Uint8Array | ArrayBuffer | null;
   brandName?: string;
+  /** TrueType fonts with wider coverage (e.g. Noto Sans SC). Subset into the PDF. */
+  unicodeFonts?: { regular: Uint8Array | ArrayBuffer; bold: Uint8Array | ArrayBuffer } | null;
 };
 
 export async function buildStudyNotesPdf(
@@ -116,9 +138,19 @@ export async function buildStudyNotesPdf(
   doc.setSubject("AI Teacher study notes");
   doc.setCreator(brand);
 
-  const regular = await doc.embedFont(StandardFonts.Helvetica);
-  const bold = await doc.embedFont(StandardFonts.HelveticaBold);
-  const italic = await doc.embedFont(StandardFonts.HelveticaOblique);
+  let regular: PDFFont;
+  let bold: PDFFont;
+  let italic: PDFFont;
+  if (options.unicodeFonts) {
+    doc.registerFontkit(fontkit);
+    regular = await doc.embedFont(options.unicodeFonts.regular, { subset: false });
+    bold = await doc.embedFont(options.unicodeFonts.bold, { subset: false });
+    italic = regular; // CJK fonts have no italic; the muted colour still sets notes apart.
+  } else {
+    regular = await doc.embedFont(StandardFonts.Helvetica);
+    bold = await doc.embedFont(StandardFonts.HelveticaBold);
+    italic = await doc.embedFont(StandardFonts.HelveticaOblique);
+  }
   const supported = new Set(regular.getCharacterSet());
   const t = (s: string | undefined | null) => sanitizePdfText(s ?? "", supported).trim();
 

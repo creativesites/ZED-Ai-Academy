@@ -14,14 +14,34 @@ function loadLogo(): Promise<Uint8Array | null> {
   return logoCache;
 }
 
+let unicodeFontCache: Promise<{ regular: Uint8Array; bold: Uint8Array } | null> | null = null;
+
+/** Noto Sans SC (GB2312 + Latin + pinyin), fetched only for sessions that need it. */
+function loadUnicodeFonts() {
+  if (!unicodeFontCache) {
+    const get = (name: string) =>
+      fetch(`/fonts/pdf/${name}`).then((r) => {
+        if (!r.ok) throw new Error(`font ${name}: ${r.status}`);
+        return r.arrayBuffer();
+      });
+    unicodeFontCache = Promise.all([get("NotoSansSC-Regular.ttf"), get("NotoSansSC-Bold.ttf")])
+      .then(([regular, bold]) => ({ regular: new Uint8Array(regular), bold: new Uint8Array(bold) }))
+      .catch((err) => {
+        console.warn("[study-notes] Unicode font unavailable, using built-in font", err);
+        unicodeFontCache = null;
+        return null;
+      });
+  }
+  return unicodeFontCache;
+}
+
 export async function downloadStudyNotesPdf(input: StudyExportInput): Promise<void> {
-  const [{ buildStudyNotesPdf, pdfFilename }, logoPng] = await Promise.all([
-    import("./study-pdf.ts"),
-    loadLogo(),
-  ]);
+  const [mod, logoPng] = await Promise.all([import("./study-pdf.ts"), loadLogo()]);
+  const { buildStudyNotesPdf, pdfFilename, needsUnicodeFont, collectStudyText } = mod;
+  const unicodeFonts = needsUnicodeFont(collectStudyText(input)) ? await loadUnicodeFonts() : null;
   const bytes = await buildStudyNotesPdf(
     { ...input, dateIso: input.dateIso ?? new Date().toISOString() },
-    { logoPng },
+    { logoPng, unicodeFonts },
   );
   const blob = new Blob([bytes as BlobPart], { type: "application/pdf" });
   const url = URL.createObjectURL(blob);
