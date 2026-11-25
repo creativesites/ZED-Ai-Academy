@@ -341,6 +341,9 @@ export async function recordDockKnowledgeCheck(
         objectiveText,
         result: parsed.isCorrect ? "correct" : "misconception",
         detail,
+        // Graded in the browser (the client reports isCorrect), so never server-verified (P2-02).
+        source: "interaction",
+        serverVerified: false,
       },
     ],
   });

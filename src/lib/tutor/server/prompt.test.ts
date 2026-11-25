@@ -80,6 +80,17 @@ test("lesson content is wrapped as data and clipped", () => {
   assert.ok(prompt.length < 30_000);
 });
 
+test("registered objectives are listed as id: text for note_evidence (P2-01)", () => {
+  const id = "11111111-1111-4111-8111-111111111111";
+  const base = input();
+  const prompt = buildSystemPrompt(
+    input({ scenario: { ...base.scenario, objectives: [{ id, text: "Learner can greet politely" }] } }),
+  );
+  assert.match(prompt, /Learning objectives \(for note_evidence, set objective to the id before the colon\)/);
+  assert.ok(prompt.includes(`- ${id}: Learner can greet politely`));
+  assert.doesNotMatch(buildSystemPrompt(input()), /Learning objectives \(for note_evidence/);
+});
+
 test("no lesson text is said plainly", () => {
   const prompt = buildSystemPrompt(input({ lessonText: "   " }));
   assert.match(prompt, /none was attached to this session/);

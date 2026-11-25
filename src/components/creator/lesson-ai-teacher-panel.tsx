@@ -30,6 +30,7 @@ import {
   type ScenarioRecord,
   type TeacherMomentRecord,
 } from "@/actions/tutor-authoring";
+import { saveLessonObjectivesAction } from "@/actions/tutor-objectives";
 import type { TutorScenarioOption } from "@/actions/tutor-scenarios";
 import { Teacher } from "@/components/tutor/avatar/Teacher";
 import { DEFAULT_PERSONA_LOOK } from "@/components/tutor/avatar/types";
@@ -311,6 +312,19 @@ export function LessonAITeacherPanel({
       status,
     });
     setSavedScenario(saved);
+    // P2-01: the reviewed objectives ("accept all", edited inline above) go into the course registry and
+    // are linked to this flow. Never blocks saving the flow (registry may not be migrated yet).
+    const accepted = objectives.filter((o) => o.text.trim().length >= 3);
+    if (accepted.length > 0) {
+      saveLessonObjectivesAction({
+        courseId,
+        lessonId,
+        scenarioId: saved.id,
+        objectives: accepted.map((o) => ({ text: o.text, evidence: o.evidence })),
+      }).catch((err: unknown) => {
+        console.warn("[lesson-ai-teacher] could not save objectives to the course registry", err);
+      });
+    }
     return saved;
   }
 

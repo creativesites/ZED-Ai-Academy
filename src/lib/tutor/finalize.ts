@@ -5,6 +5,7 @@ import {
   type MasteryState,
   type SessionObjectiveSummary,
 } from "./mastery/evidence.ts";
+import type { ObjectiveRef } from "./learner/objectives.ts";
 import { parseMemory } from "./memory.ts";
 import { nextStreak } from "./progress.ts";
 import {
@@ -63,6 +64,8 @@ export type FinalizeCoreInput = {
   scenarioGoal: string;
   courseId?: string | null;
   scenarioId?: string | null;
+  /** Registered objectives of the session (P2-01), so note_evidence citing an id maps to it. */
+  objectives?: ReadonlyArray<ObjectiveRef>;
   /** Language pack code (zh, es, fr) or null for non-language packs. */
   skillLanguage: string | null;
   /** learner_language_profiles.language key. */
@@ -143,6 +146,7 @@ export async function finalizeSessionCore<R>(
   const noteEvidence = collectNoteEvidence(
     input.turns.map((t) => ({ eventsJson: t.events })),
     { courseId: input.courseId, scenarioId: input.scenarioId },
+    input.objectives ?? [],
   );
   const preliminaryObjectives = summarizeSessionObjectives(noteEvidence, []);
 

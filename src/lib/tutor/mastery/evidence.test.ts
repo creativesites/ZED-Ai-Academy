@@ -139,4 +139,43 @@ describe("mastery/evidence", () => {
     assert.ok(notes[0].includes("Shaky concept"));
     assert.ok(notes[1].includes("Almost there"));
   });
+
+  it("gives non-Latin objectives distinct, stable legacy keys (no more shared general-objective)", () => {
+    const a = normalizeObjectiveKey("学习者能够用中文问候", { courseId: "c-1" });
+    const b = normalizeObjectiveKey("学习者能够数到十", { courseId: "c-1" });
+    assert.notEqual(a, b);
+    assert.match(a, /^course:c-1:u-[0-9a-z]+$/);
+    assert.equal(a, normalizeObjectiveKey("  学习者能够用中文问候！ ", { courseId: "c-1" }));
+    // ASCII keys are unchanged, so existing mastery rows keep matching.
+    assert.equal(normalizeObjectiveKey("Compare Two Fractions!", { courseId: "c-1" }), "course:c-1:compare-two-fractions");
+    assert.equal(normalizeObjectiveKey("!!!", { courseId: "c-1" }), "course:c-1:general-objective");
+  });
+
+  it("maps note_evidence citing a registered objective id to that id (P2-01)", () => {
+    const id = "11111111-1111-4111-8111-111111111111";
+    const collected = collectNoteEvidence(
+      [
+        {
+          eventsJson: [
+            { type: "note_evidence", objective: id, result: "correct" },
+            { type: "note_evidence", objective: "学习者能够数到十", result: "partial" },
+            { type: "note_evidence", objective: "Something unlisted", result: "misconception" },
+          ],
+        },
+      ],
+      { courseId: "c-1" },
+      [
+        { id, text: "Learner can greet" },
+        { id: "22222222-2222-4222-8222-222222222222", text: "学习者能够数到十" },
+      ],
+    );
+    assert.equal(collected[0].objectiveKey, id);
+    assert.equal(collected[0].objectiveId, id);
+    assert.equal(collected[0].objectiveText, "Learner can greet");
+    assert.equal(collected[0].source, "teacher_judgement");
+    assert.equal(collected[0].serverVerified, false);
+    assert.equal(collected[1].objectiveId, "22222222-2222-4222-8222-222222222222");
+    assert.equal(collected[2].objectiveId, null);
+    assert.equal(collected[2].objectiveKey, "course:c-1:something-unlisted");
+  });
 });

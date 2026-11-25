@@ -18,6 +18,7 @@ import {
   type TutorReportContent,
 } from "../report-model.ts";
 import { generateReportJson } from "./gemini-calls.ts";
+import { loose } from "../learner/loose-db.ts";
 import { loadSessionContext, type TutorSessionRow } from "./session-context.ts";
 import { recordUsage } from "./usage.ts";
 import { localDateString } from "../progress.ts";
@@ -260,6 +261,7 @@ export async function finalizeTutorSession(input: FinalizeInput): Promise<Finali
       scenarioGoal: ctx.scenario.goal,
       courseId: ctx.courseId,
       scenarioId: session.scenario_id,
+      objectives: ctx.objectives,
       skillLanguage: ctx.skillLanguage,
       profileLanguage: ctx.profileLanguage,
       liveModel: modelFor("tutorLive"),
@@ -283,6 +285,15 @@ export async function finalizeTutorSession(input: FinalizeInput): Promise<Finali
 
   if (result.created && refinedObjectives && refinedObjectives.length > 0) {
     result.report = { ...result.report, objectives: refinedObjectives };
+    // P2-02: the report was claimed before mastery was written, so its stored objective levels were
+    // provisional. Store the levels read back from the database so the stored and live reports agree.
+    const { error: objectivesError } = await loose(supabase)
+      .from("tutor_reports")
+      .update({ objectives: refinedObjectives })
+      .eq("session_id", sessionId);
+    if (objectivesError && !isSchemaUnavailableError(objectivesError)) {
+      console.warn(`[tutor/report] could not store final objective levels for session ${sessionId}:`, objectivesError.message);
+    }
   }
   if (recommendedNext) {
     result.report = { ...result.report, nextScenario: recommendedNext };

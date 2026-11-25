@@ -1,5 +1,6 @@
 import { eventTypesForPack, liveToolDeclarations, MAX_EVENTS_PER_TURN } from "../events.ts";
 import { SKILL_PACK_SAFETY, skillPackPrompt } from "../skill-packs.ts";
+import { formatObjectivePromptLines, type ObjectiveRef } from "../learner/objectives.ts";
 
 // Layered system prompt (plan section 2.4). Pure: no I/O and no "@/" imports, so it can be tested
 // with node:test. Layers, in order:
@@ -22,6 +23,8 @@ export type PromptScenario = {
   /** Extra role instructions for the teacher in this scenario (the showcase's training simulation). */
   roleNotes?: string | null;
   maxMinutes: number;
+  /** Registered objectives this session teaches (P2-01). Listed as `id: text`; note_evidence cites the id. */
+  objectives?: ObjectiveRef[];
 };
 
 export type PromptPersona = {
@@ -113,9 +116,16 @@ function scenarioBlock(scenario: PromptScenario): string {
     `Time box: ${scenario.maxMinutes} minutes.`,
     `Steps (advance_step by id):\n${beats}`,
     `Target items to practise: ${targets}`,
+    objectivesLine(scenario),
   ]
     .filter((line): line is string => line !== null)
     .join("\n");
+}
+
+function objectivesLine(scenario: PromptScenario): string | null {
+  const lines = formatObjectivePromptLines(scenario.objectives ?? []);
+  if (lines.length === 0) return null;
+  return `Learning objectives (for note_evidence, set objective to the id before the colon):\n${lines.map((l) => `- ${l}`).join("\n")}`;
 }
 
 function memoryBlock(profile: PromptLearnerProfile): string {

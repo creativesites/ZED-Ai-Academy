@@ -1,4 +1,6 @@
 import type { TutorEvent } from "../events.ts";
+import type { EvidenceSource } from "../learner/knowledge.ts";
+import { objectiveKeyForId, resolveObjectiveRef, type ObjectiveRef } from "../learner/objectives.ts";
 
 export type EvidenceResult = "correct" | "partial" | "misconception";
 
@@ -9,6 +11,17 @@ export type CollectedEvidence = {
   objectiveText: string;
   result: EvidenceResult;
   detail: string | null;
+  /** Registered objective (P2-01). When set, objectiveKey is the id. */
+  objectiveId?: string | null;
+  /** Evidence v2 (P2-02). Defaults: teacher_judgement, unverified. */
+  source?: EvidenceSource;
+  serverVerified?: boolean;
+  /** 0..1, overrides result in the knowledge rule. */
+  score?: number | null;
+  /** 1 recall .. 3 transfer. */
+  difficulty?: number | null;
+  /** Quiz question id, interaction id, ... */
+  itemRef?: string | null;
 };
 
 export type MasteryState = {
@@ -18,6 +31,11 @@ export type MasteryState = {
   evidenceCount: number;
   lastResult: EvidenceResult | null;
   lastEvidenceAt: string | null;
+  /** Evidence v2 (P2-02), present when read back from the database after record_evidence(). */
+  objectiveId?: string | null;
+  pMastery?: number | null;
+  status?: string | null;
+  nextReviewAt?: string | null;
 };
 
 export type SessionObjectiveSummary = {
@@ -53,7 +71,9 @@ export function normalizeObjectiveKey(
     .slice(0, MAX_OBJECTIVE_SLUG)
     .replace(/^-+|-+$/g, "");
 
-  const slug = normalized || "general-objective";
+  // Text with no ASCII letters/digits (Chinese, Arabic, ...) used to collapse to one shared key. Such text now
+  // gets a stable hash of its Unicode form; ASCII keys are unchanged so existing mastery rows still match.
+  const slug = normalized || unicodeObjectiveSlug(objectiveText) || "general-objective";
   const prefix = scope.courseId
     ? `course:${scope.courseId}:`
     : scope.scenarioId
@@ -61,6 +81,25 @@ export function normalizeObjectiveKey(
       : "global:";
 
   return `${prefix}${slug}`;
+}
+
+function unicodeObjectiveSlug(objectiveText: string): string {
+  const folded = objectiveText
+    .normalize("NFKC")
+    .toLocaleLowerCase()
+    .replace(/[^\p{L}\p{N}\p{M}]+/gu, " ")
+    .trim();
+  if (!folded) return "";
+  // FNV-1a 32-bit, twice with different offsets for a 64-bit-ish key: deterministic and dependency-free.
+  const fnv = (seed: number) => {
+    let h = seed >>> 0;
+    for (const ch of folded) {
+      h ^= ch.codePointAt(0) ?? 0;
+      h = Math.imul(h, 0x01000193) >>> 0;
+    }
+    return h.toString(36);
+  };
+  return `u-${fnv(0x811c9dc5)}${fnv(0x01234567)}`;
 }
 
 export function clampMasteryLevel(level: number): number {
@@ -97,6 +136,8 @@ function cleanText(raw: string | undefined | null, fallback = ""): string {
 export function collectNoteEvidence(
   turns: Array<{ eventsJson?: unknown }>,
   scope: MasteryScope = {},
+  /** Registered objectives of the session: note_evidence citing one of them (by id, code or text) maps to it. */
+  objectives: ReadonlyArray<ObjectiveRef> = [],
 ): CollectedEvidence[] {
   const items: CollectedEvidence[] = [];
 
@@ -124,11 +165,16 @@ export function collectNoteEvidence(
         "detail" in ev ? cleanText(ev.detail) : "";
       const detail = rawDetail ? rawDetail.slice(0, MAX_DETAIL_CHARS) : null;
 
+      const registered = resolveObjectiveRef(objectiveText, objectives);
       items.push({
-        objectiveKey: normalizeObjectiveKey(objectiveText, scope),
-        objectiveText,
+        objectiveKey: registered ? objectiveKeyForId(registered.id) : normalizeObjectiveKey(objectiveText, scope),
+        objectiveText: registered ? registered.text : objectiveText,
         result,
         detail,
+        objectiveId: registered ? registered.id : null,
+        // The teacher's judgement of an open answer: half weight, never server-verified (Architecture §4.3).
+        source: "teacher_judgement",
+        serverVerified: false,
       });
     }
   }
