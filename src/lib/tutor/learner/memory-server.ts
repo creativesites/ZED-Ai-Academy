@@ -1,13 +1,12 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { gemini } from "@/lib/ai/gemini";
+import { aiCall } from "@/lib/ai/call";
 import { createServiceClient } from "@/lib/supabase/server";
 import type { Database } from "@/types/database";
 import { applyPracticeDay, currentStreakDays, seedHabitsFromLegacy, type HabitRowState } from "../habits.ts";
 import { isSchemaUnavailableError, loadWeakMasteryRows } from "../mastery/server.ts";
 import type { LearnerMistake } from "../report-model.ts";
 import type { PromptLearnerProfile } from "../server/prompt.ts";
-import { recordUsage } from "../server/usage.ts";
 import {
   buildLearnerBrief,
   defaultExpiry,
@@ -61,11 +60,6 @@ export function looseDb(client?: SupabaseClient<Database>): LooseDb {
 
 export const MEMORY_COLUMNS =
   "id, company_id, kind, content, source, source_ref, session_id, course_id, objective_key, confidence, visible_to_staff, status, expires_at, created_at";
-
-/** Model for post-session memory extraction (cheap tier). Swap for aiCall("memoryExtract") once Stream A lands. */
-export function memoryExtractModel(): string {
-  return process.env.GEMINI_MODEL_MEMORY_EXTRACT?.trim() || "gemini-3.5-flash-lite";
-}
 
 /**
  * A learner's memories in one tenant. `available: false` when the table is not migrated yet.
@@ -208,21 +202,23 @@ export async function saveMisconceptionMemories(input: {
   return true;
 }
 
-/** The one model call of the summariser. Kept alone so it can be swapped for Stream A's aiCall. */
-async function callMemoryExtractModel(transcript: string): Promise<{ text: string | undefined; model: string; totalTokens: number }> {
-  const model = memoryExtractModel();
-  const response = await gemini.models.generateContent({
-    model,
-    contents: [{ role: "user", parts: [{ text: `Transcript:\n${transcript}` }] }],
-    config: {
+/** The one model call of the summariser (task `memoryExtract`; GEMINI_MODEL_MEMORY_EXTRACT overrides). Metered by aiCall. */
+async function callMemoryExtractModel(
+  transcript: string,
+  meter: { companyId: string; userId: string; sessionId: string },
+): Promise<{ text: string | undefined }> {
+  const result = await aiCall(
+    "memoryExtract",
+    {
+      contents: `Transcript:\n${transcript}`,
       systemInstruction: MEMORY_SUMMARY_SYSTEM_PROMPT,
-      responseMimeType: "application/json",
       responseJsonSchema: MEMORY_SUMMARY_JSON_SCHEMA,
       temperature: 0.2,
       maxOutputTokens: 1024,
     },
-  });
-  return { text: response.text, model, totalTokens: response.usageMetadata?.totalTokenCount ?? 0 };
+    { meter },
+  );
+  return { text: result.text };
 }
 
 /**
@@ -247,15 +243,10 @@ export async function summariseSessionMemories(input: {
     });
     if (!existing.available) return { stored: 0 };
 
-    const generated = await callMemoryExtractModel(buildIndexedTranscript(input.turns));
-    await recordUsage({
+    const generated = await callMemoryExtractModel(buildIndexedTranscript(input.turns), {
       companyId: input.companyId,
       userId: input.userId,
       sessionId: input.sessionId,
-      model: generated.model,
-      kind: "llm",
-      units: generated.totalTokens,
-      unit: "tokens",
     });
 
     const parsed = parseMemoryCandidates(

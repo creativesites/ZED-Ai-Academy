@@ -8,6 +8,7 @@ export type AiTask =
   | "lessonContent" | "curriculum" | "courseBlueprint" | "quiz" | "practiceExercise" | "practiceScoring" // quality-sensitive generation
   | "teacherAuthoring" // ZAI Teacher Phase 1 objective extraction, flow drafting & revision
   | "tutorTurn" | "tutorReport" // ZAI Tutor text reasoning
+  | "memoryExtract" // post-session learner memory summariser (cheap, async)
   | "tutorLive" | "tutorTts" | "tutorTranscribe" // ZAI Tutor audio models (not text models)
   | "image";
 
@@ -26,6 +27,7 @@ export const DEFAULT_MODELS: Record<AiTask, string> = {
   teacherAuthoring: "gemini-3.8-flash",
   tutorTurn: "gemini-3.8-flash",
   tutorReport: "gemini-3.8-flash",
+  memoryExtract: "gemini-3.5-flash-lite",
   tutorLive: "gemini-3.8-live",
   tutorTts: "gemini-3.8-flash-lite-tts",
   tutorTranscribe: "gemini-3.5-transcribe",
