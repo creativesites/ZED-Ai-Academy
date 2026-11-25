@@ -1002,6 +1002,7 @@ export function LessonPlayerClient({
           moduleTitle={currentModule?.title}
           sectionTitle={currentModule?.title}
           teacher={teacher}
+          isGuest={isGuest}
           onClose={() => setTutorOpen(false)}
         />
       )}

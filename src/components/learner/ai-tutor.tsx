@@ -16,6 +16,37 @@ import { DEFAULT_TEACHER_NAME } from "@/lib/tutor/course-teacher";
 import { stripDockMarkupForSpeech } from "@/lib/tutor/dock-chat";
 import { dispatchLessonSeek, extractDockBoardFromText } from "@/lib/tutor/lesson-seek";
 import type { VisemeValue } from "@/lib/tutor/contract.generated";
+import type { TutorEvent } from "@/lib/tutor/events";
+import { choiceReply, type ConfidenceLevel } from "@/lib/tutor/board";
+import { ASK_QUICK_ACTIONS, deriveAskBoard, isAskRuntimeEnabled } from "@/lib/tutor/runtime/ask";
+import { EventPlayer, type PlayerUI, type SaySpeechEvent } from "@/components/tutor/EventPlayer";
+import { AskThread } from "./ask/AskThread";
+import { useAskRuntime } from "./ask/use-ask-runtime";
+
+// P1-06: the dock runs on the Teacher Runtime (`ask` session, streamed turns) when this flag is on and the server
+// accepts the learner's session; otherwise it keeps the /api/ai/tutor path below unchanged. Inlined at build time.
+const ASK_RUNTIME_FLAG = isAskRuntimeEnabled(process.env.NEXT_PUBLIC_TEACHER_ASK_RUNTIME);
+
+const NOOP_AVATAR: AvatarDriver = {
+  playGesture: () => undefined,
+  setMood: () => undefined,
+  setViseme: () => undefined,
+  setSpeaking: () => undefined,
+  setListening: () => undefined,
+  setThinking: () => undefined,
+  lookAt: () => undefined,
+};
+
+// In the dock the thread and the pinned board render events directly (deriveAskBoard); the player only animates
+// the teacher (gestures, mood, mouth, read-aloud), so its UI callbacks are no-ops.
+const AVATAR_ONLY_UI: PlayerUI = {
+  onCaption: () => undefined,
+  onCard: () => undefined,
+  onText: () => undefined,
+  onListen: () => undefined,
+  onMistake: () => undefined,
+  onEnd: () => undefined,
+};
 
 type Message = { role: "user" | "assistant"; content: string };
 
@@ -45,13 +76,8 @@ function createSpeechRecognition(): BrowserSpeechRecognition | null {
   }
 }
 
-// Teaching moves the learner can ask for in one tap. Same for every subject.
-const STARTER_PROMPTS = [
-  { label: "Explain simpler", body: "Explain the main idea of this lesson more simply, with one everyday example." },
-  { label: "Give me an example", body: "Give me a real, local example of how this lesson applies at work or in a small business." },
-  { label: "Quiz me", body: "Ask me one question at a time to check I understood this lesson. Wait for my answer before the next one." },
-  { label: "Summarise", body: "Summarise this lesson in five short bullet points I can review later." },
-] as const;
+// Teaching moves the learner can ask for in one tap. Same for every subject (and both dock paths).
+const STARTER_PROMPTS = ASK_QUICK_ACTIONS;
 
 export function AiTutor({
   courseId,
@@ -61,10 +87,13 @@ export function AiTutor({
   moduleTitle,
   sectionTitle,
   teacher,
+  isGuest,
   onClose,
 }: {
   /** The course's AI teacher (see courseTeacher()). Defaults to the platform default teacher. */
   teacher?: { name: string; look?: Partial<PersonaLook> };
+  /** Signed-out visitor on a free preview: always the in-memory /api/ai/tutor path, nothing stored. */
+  isGuest?: boolean;
   courseId: string;
   lessonId: string;
   courseTitle: string;
@@ -98,6 +127,9 @@ export function AiTutor({
   const [dictating, setDictating] = useState(false);
   const avatarRef = useRef<AvatarDriver | null>(null);
   const audioRef = useRef<TeacherAudio | null>(null);
+  const autoSpeakRef = useRef(autoSpeak);
+  const playerRef = useRef<EventPlayer | null>(null);
+  const playQueueRef = useRef<Promise<void>>(Promise.resolve());
   const speakAbortRef = useRef<AbortController | null>(null);
   const recognitionRef = useRef<BrowserSpeechRecognition | null>(null);
   const messagesRef = useRef<Message[]>(messages);
@@ -117,6 +149,7 @@ export function AiTutor({
     audio.setTtsVoice("Kore");
     audioRef.current = audio;
     return () => {
+      playerRef.current?.stop();
       speakAbortRef.current?.abort();
       audio.stopPlayback();
       recognitionRef.current?.stop();
@@ -124,6 +157,8 @@ export function AiTutor({
   }, []);
 
   const stopSpeaking = useCallback(() => {
+    playerRef.current?.stop();
+    playQueueRef.current = Promise.resolve();
     speakAbortRef.current?.abort();
     speakAbortRef.current = null;
     audioRef.current?.stopPlayback();
@@ -175,6 +210,83 @@ export function AiTutor({
     },
     [speakingMsgIdx, stopSpeaking],
   );
+
+  // ---- Teacher Runtime path (P1-06) ----
+  // Voice for a streamed `say` line: read aloud when "Voice on", otherwise the player moves the mouth for the
+  // reading time. Kept beside speakMessage so a single teacher-voice component can replace both.
+  useEffect(() => {
+    autoSpeakRef.current = autoSpeak;
+  }, [autoSpeak]);
+  const speakLine = useCallback(async (event: SaySpeechEvent, avatar: AvatarDriver, signal: AbortSignal) => {
+    const audio = audioRef.current;
+    if (!autoSpeakRef.current || !audio) return "unavailable" as const;
+    const clean = stripDockMarkupForSpeech(event.text);
+    if (!clean) return "played" as const;
+    return audio.speak({ ...event, text: clean }, avatar, signal);
+  }, []);
+  const playEvents = useCallback(
+    (events: TutorEvent[]) => {
+      if (events.length === 0) return;
+      if (!playerRef.current) {
+        // Forward to whichever avatar is mounted now (Data saver swaps the Rive teacher for a placeholder).
+        const current = () => avatarRef.current ?? NOOP_AVATAR;
+        const avatar: AvatarDriver = {
+          playGesture: (name, opts) => current().playGesture(name, opts),
+          setMood: (mood, intensity) => current().setMood(mood, intensity),
+          setViseme: (v) => current().setViseme(v),
+          setSpeaking: (on) => current().setSpeaking(on),
+          setListening: (on, level) => current().setListening(on, level),
+          setThinking: (on) => current().setThinking(on),
+          lookAt: (x, y) => current().lookAt(x, y),
+        };
+        playerRef.current = new EventPlayer({ avatar, ui: AVATAR_ONLY_UI, speak: speakLine });
+      }
+      const player = playerRef.current;
+      // Events arrive one by one while streaming; play them in order, one at a time.
+      playQueueRef.current = playQueueRef.current.then(() => player.play(events)).catch(() => undefined);
+    },
+    [speakLine],
+  );
+  const runtime = useAskRuntime({
+    lessonId,
+    enabled: ASK_RUNTIME_FLAG && !isGuest,
+    onTurnStart: () => {
+      avatarRef.current?.setThinking(true);
+      avatarRef.current?.setMood("curious", 75);
+    },
+    onStreamEvent: (event) => {
+      avatarRef.current?.setThinking(false);
+      playEvents([event]);
+    },
+    onTurnDone: (events, streamed) => {
+      avatarRef.current?.setThinking(false);
+      // Nothing streamed (non-stream fallback): play the final turn now.
+      if (streamed === 0) playEvents(events);
+    },
+    onTurnFailed: () => {
+      avatarRef.current?.setThinking(false);
+      avatarRef.current?.setMood("concerned", 70);
+    },
+  });
+  const onRuntime = runtime.status === "ready";
+  const askBoard = useMemo(
+    () =>
+      deriveAskBoard(
+        runtime.messages.map((m) => (m.role === "user" ? { role: "user" as const, text: m.text } : { role: "assistant" as const, events: m.events })),
+      ),
+    [runtime.messages],
+  );
+  const sendRuntime = useCallback(
+    (text: string) => {
+      stopSpeaking();
+      audioRef.current?.unlock();
+      setInput("");
+      void runtime.send(text).finally(() => textareaRef.current?.focus());
+    },
+    [runtime, stopSpeaking],
+  );
+  const handleRuntimeChoose = useCallback((option: string) => sendRuntime(choiceReply(option)), [sendRuntime]);
+  const handleRuntimeConfidence = useCallback((level: ConfidenceLevel) => sendRuntime(level), [sendRuntime]);
 
   const toggleDictation = useCallback(() => {
     if (dictating) {
@@ -251,18 +363,24 @@ export function AiTutor({
     return { board: latestBoard, lessonRefs: latestRefs };
   }, [messages]);
 
-  // Save history when messages change
+  // Save history when messages change (legacy path only: on the runtime the conversation lives on the server).
   useEffect(() => {
+    if (onRuntime) return;
     if (messages.length > 1 || messages[0]?.role === "user") {
       localStorage.setItem(storageKey, JSON.stringify(messages));
     }
-  }, [messages, storageKey]);
+  }, [messages, storageKey, onRuntime]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  }, [messages, runtime.messages]);
 
   async function sendMessage(message: string, opts?: { replaceLastAssistant?: boolean }) {
+    if (onRuntime) {
+      if (message.trim() && !runtime.busy) sendRuntime(message);
+      return;
+    }
+    if (runtime.status === "checking") return;
     if (!message.trim() || isStreaming) return;
     stopSpeaking();
     setInput("");
@@ -339,6 +457,13 @@ export function AiTutor({
     }
   }
 
+  const threadBusy = onRuntime ? runtime.busy : isStreaming || runtime.status === "checking";
+  const showStarters = onRuntime ? !runtime.messages.some((m) => m.role === "user") : !hasUserMessages;
+  const pinned = onRuntime
+    ? { board: askBoard.board, lessonRefs: askBoard.lessonRefs, clip: askBoard.clip, award: askBoard.award }
+    : { board: dockBoard.board, lessonRefs: dockBoard.lessonRefs, clip: null, award: null };
+  const hasPinned = Boolean(pinned.board || pinned.lessonRefs.length > 0 || pinned.clip || pinned.award);
+
   function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -383,14 +508,24 @@ export function AiTutor({
               <button
                 type="button"
                 onClick={() => {
+                  if (onRuntime) {
+                    if (confirm("Start a new conversation? This one stays saved in your history.")) {
+                      stopSpeaking();
+                      void runtime.restart().then((ok) => {
+                        if (!ok) toast.error("Could not start a new conversation. Try again.");
+                      });
+                    }
+                    return;
+                  }
                   if (confirm("Clear chat history for this section?")) {
                     setMessages([{ role: "assistant", content: greeting }]);
                     localStorage.removeItem(storageKey);
                   }
                 }}
-                className="shrink-0 rounded-full px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-600 transition-colors hover:bg-white hover:text-[#062e39]"
+                disabled={threadBusy}
+                className="shrink-0 rounded-full px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-600 transition-colors hover:bg-white hover:text-[#062e39] disabled:opacity-40"
               >
-                Clear
+                {onRuntime ? "New chat" : "Clear"}
               </button>
               <button
                 type="button"
@@ -440,34 +575,49 @@ export function AiTutor({
         <div className="flex-1 overflow-y-auto bg-[#f7f8fb] px-4 py-4 space-y-4">
 
           {/* Pinned Teaching Board & lesson references (v2 contract unified into the dock) */}
-          {(dockBoard.board || dockBoard.lessonRefs.length > 0) && (
+          {hasPinned && (
             <div className="rounded-2xl border border-slate-200/80 bg-white/90 p-3 shadow-sm">
               <TeachingBoard
-                board={dockBoard.board}
+                board={pinned.board}
                 choice={null}
                 confidence={null}
-                lessonRefs={dockBoard.lessonRefs}
-                clip={null}
-                award={null}
+                lessonRefs={pinned.lessonRefs}
+                clip={pinned.clip}
+                award={pinned.award}
                 lite={lite}
-                disabled={isStreaming}
+                disabled={threadBusy}
                 onChoose={() => {}}
                 onConfidence={() => {}}
                 onDismissAward={() => {}}
                 onLessonRefClick={(ref) => dispatchLessonSeek(ref)}
+                onInteract={onRuntime ? (prompt) => sendRuntime(prompt) : undefined}
               />
             </div>
           )}
 
+          {/* On the runtime the greeting is not a stored turn: show it above the saved conversation. */}
+          {onRuntime && (
+            <div className="flex flex-row gap-2.5">
+              <div className="max-w-[95%] rounded-[1.8rem] rounded-tl-sm border border-slate-100 bg-white px-4 py-4 text-sm leading-relaxed text-slate-700 shadow-sm">
+                {greeting}
+              </div>
+            </div>
+          )}
+          {runtime.status === "checking" && (
+            <p className="flex items-center gap-2 text-xs text-slate-500">
+              <Loader2 className="h-3 w-3 animate-spin" /> Loading your conversation…
+            </p>
+          )}
+
           {/* Starter prompt cards — visible until first user message */}
-          {!hasUserMessages && (
+          {showStarters && runtime.status !== "checking" && (
             <div className="grid grid-cols-2 gap-2 pb-2">
               {STARTER_PROMPTS.map((sp) => (
                 <button
                   key={sp.label}
                   type="button"
                   onClick={() => void sendMessage(sp.body)}
-                  disabled={isStreaming}
+                  disabled={threadBusy}
                   className="group rounded-2xl border-2 border-slate-100 bg-white p-3 text-left transition-all hover:border-[#fd5523]/30 hover:shadow-md disabled:opacity-50"
                 >
                   <p className="mb-1 text-[10px] font-bold uppercase tracking-widest text-[#fd5523]">{sp.label}</p>
@@ -477,8 +627,8 @@ export function AiTutor({
             </div>
           )}
 
-          {/* Messages */}
-          {messages.map((msg, i) => (
+          {/* Messages (legacy /api/ai/tutor path) */}
+          {runtime.status === "legacy" && messages.map((msg, i) => (
             <div
               key={`${msg.role}-${i}`}
               className={`flex gap-2.5 ${msg.role === "user" ? "flex-row-reverse" : "flex-row"}`}
@@ -567,8 +717,37 @@ export function AiTutor({
             </div>
           ))}
 
+          {onRuntime && (
+            <AskThread
+              messages={runtime.messages}
+              boardState={askBoard}
+              busy={runtime.busy}
+              speakingIdx={speakingMsgIdx}
+              onListen={(text, idx) => void speakMessage(text, idx)}
+              onChoose={handleRuntimeChoose}
+              onConfidence={handleRuntimeConfidence}
+            />
+          )}
+
           <div ref={bottomRef} />
         </div>
+
+        {/* Quick actions stay one tap away once the conversation has started (runtime path). */}
+        {onRuntime && !showStarters && (
+          <div className="flex flex-shrink-0 gap-1.5 overflow-x-auto bg-white px-4 pt-2">
+            {STARTER_PROMPTS.map((sp) => (
+              <button
+                key={sp.label}
+                type="button"
+                onClick={() => sendRuntime(sp.body)}
+                disabled={threadBusy}
+                className="shrink-0 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[11px] font-semibold text-slate-600 hover:bg-white disabled:opacity-50"
+              >
+                {sp.label}
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* Input area */}
         <div className="flex-shrink-0 border-t border-slate-100 bg-white px-4 pb-4 pt-3">
@@ -590,7 +769,7 @@ export function AiTutor({
             <button
               type="button"
               onClick={toggleDictation}
-              disabled={isStreaming}
+              disabled={threadBusy}
               aria-label={dictating ? "Stop voice dictation" : "Dictate question"}
               title={dictating ? "Stop listening" : "Speak your question"}
               className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border transition-all disabled:opacity-40 ${
@@ -604,7 +783,7 @@ export function AiTutor({
             <button
               type="button"
               onClick={() => void sendMessage(input.trim())}
-              disabled={!input.trim() || isStreaming}
+              disabled={!input.trim() || threadBusy}
               className="
                 flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl
                 bg-[#fd5523] text-white shadow-md shadow-[#fd5523]/25
@@ -612,7 +791,7 @@ export function AiTutor({
                 disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none disabled:hover:scale-100
               "
             >
-              {isStreaming ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+              {threadBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
             </button>
           </div>
           <p className="mt-2 text-center text-[10px] text-slate-400">

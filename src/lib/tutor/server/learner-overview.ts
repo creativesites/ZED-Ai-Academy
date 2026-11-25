@@ -106,7 +106,8 @@ export async function loadLearnerTutorOverview(
     .from("tutor_sessions")
     .select("id", { count: "exact", head: true })
     .eq("user_id", userId)
-    .eq("status", "completed");
+    .eq("status", "completed")
+    .neq("origin", "ask"); // P1-06: lesson Ask conversations are not practice sessions
   if (companyFilter) sessionsQuery = sessionsQuery.eq("company_id", companyFilter);
 
   let weeklySessionsQuery = supabase
@@ -114,6 +115,7 @@ export async function loadLearnerTutorOverview(
     .select("started_at, ended_at, learner_speaking_ms, teacher_speaking_ms")
     .eq("user_id", userId)
     .eq("status", "completed")
+    .neq("origin", "ask")
     .gte("started_at", sevenDaysAgo);
   if (companyFilter) weeklySessionsQuery = weeklySessionsQuery.eq("company_id", companyFilter);
 
@@ -349,6 +351,7 @@ export async function loadLearnerSessionHistory(
     )
     .eq("user_id", userId)
     .in("status", ["completed", "abandoned"])
+    .neq("origin", "ask") // P1-06: Ask conversations get their own history view (not built yet)
     .order("started_at", { ascending: false })
     .limit(limit);
 
