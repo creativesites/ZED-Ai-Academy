@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ArrowRight, CheckCircle, Mic } from "lucide-react";
 import { Teacher } from "@/components/tutor/avatar/Teacher";
@@ -122,14 +121,17 @@ export function TutorSessionBlock({
 
         <div className="flex flex-wrap items-center gap-3">
           {canStart ? (
-            <Link
+            // A plain <a>, not next/link: the session page is a full-screen app (audio unlock, Live) and
+            // in-app navigation between the lesson and the session left learners on "page not found" until a
+            // reload (both forward and on browser Back). A full page load is reliable here.
+            <a
               href={practiceHref}
               className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-[#fd5523] px-5 text-sm font-bold text-white shadow-sm transition hover:bg-[#ef4a16] sm:h-12 sm:rounded-2xl sm:px-6 sm:text-base"
             >
               <Mic className="h-4 w-4 sm:h-5 sm:w-5" />
               {done ? "Go again" : personaName ? `Start with ${personaName}` : "Start session"}
               <ArrowRight className="h-4 w-4" />
-            </Link>
+            </a>
           ) : (
             <button
               type="button"
