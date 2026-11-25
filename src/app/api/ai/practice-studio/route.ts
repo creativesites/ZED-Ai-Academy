@@ -1,6 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
-import { gemini } from "@/lib/ai/gemini";
-import { modelFor } from "@/lib/ai/models";
+import { aiStream } from "@/lib/ai/call";
+import { meterFor } from "@/lib/ai/meter-server";
+import { ZEDAI_TENANT_ID } from "@/lib/tenants/constants";
 import { createDemoRateLimiter, DEMO_WINDOW_MS } from "@/lib/tutor/demo";
 import { NextRequest } from "next/server";
 
@@ -112,11 +113,13 @@ export async function POST(req: NextRequest) {
   const systemPrompt = toolConfig.systemPrompt;
   const userPrompt = toolConfig.buildUserPrompt(inputs as Record<string, string>);
 
-  const stream = await gemini.models.generateContentStream({
-    model: modelFor("practiceStudio"),
-    contents: [{ role: "user", parts: [{ text: userPrompt }] }],
-    config: { systemInstruction: systemPrompt, temperature: 0.7 },
-  });
+  // Guests are budgeted per IP and billed to the platform tenant; signed-in users to their home tenant.
+  const meter = userId ? await meterFor(userId) : { companyId: ZEDAI_TENANT_ID, userId: null };
+  const { stream } = await aiStream(
+    "practiceStudio",
+    { contents: [{ role: "user", parts: [{ text: userPrompt }] }], systemInstruction: systemPrompt, temperature: 0.7 },
+    { meter },
+  );
 
   const encoder = new TextEncoder();
 

@@ -1,6 +1,6 @@
 import "server-only";
 import { Modality, type LiveConnectConfig } from "@google/genai";
-import { gemini } from "@/lib/ai/gemini";
+import { gemini } from "@/lib/ai/gemini/client";
 import { modelFor } from "@/lib/ai/models";
 import { createServiceClient } from "@/lib/supabase/server";
 import { liveToolDeclarations } from "../events.ts";

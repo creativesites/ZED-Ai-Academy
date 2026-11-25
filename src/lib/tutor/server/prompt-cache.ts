@@ -1,5 +1,5 @@
 import "server-only";
-import { gemini } from "@/lib/ai/gemini";
+import { gemini } from "@/lib/ai/gemini/client";
 import {
   PROMPT_CACHE_TTL_MS,
   PromptCacheRegistry,

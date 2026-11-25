@@ -1,6 +1,6 @@
 import "server-only";
 import { Modality, ThinkingLevel } from "@google/genai";
-import { gemini } from "@/lib/ai/gemini";
+import { gemini } from "@/lib/ai/gemini/client";
 import { modelFor } from "@/lib/ai/models";
 import { parsePcmSampleRate, pcmToWav } from "../audio.ts";
 import { geminiAudioMimeType } from "../recording.ts";

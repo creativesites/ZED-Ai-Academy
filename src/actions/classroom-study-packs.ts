@@ -1,8 +1,9 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { gemini } from "@/lib/ai/gemini";
-import { modelFor } from "@/lib/ai/models";
+import { aiJson } from "@/lib/ai/call";
+import { STUDY_PACK_SCHEMA } from "@/lib/ai/generation/schemas";
+import type { Json } from "@/types/database";
 import { requireTenantMember, requireTenantTeacher, isTeachingRole } from "@/lib/tenants/access";
 import { createServiceClient } from "@/lib/supabase/server";
 
@@ -75,6 +76,7 @@ export async function generateClassStudyPack(params: {
     const { data: docs } = await supabase
       .from("classroom_materials")
       .select("title, description, tags")
+      .eq("company_id", companyId)
       .in("id", documentIds);
 
     if (docs && docs.length > 0) {
@@ -123,17 +125,18 @@ The JSON response MUST have this exact schema:
 Provide 4-6 key concepts, 6-8 flashcards, and 4-5 multiple choice quiz questions.`;
 
   try {
-    const response = await gemini.models.generateContent({
-      model: modelFor("lessonContent"),
-      contents: prompt,
-      config: {
-        systemInstruction,
-        responseMimeType: "application/json",
-      },
-    });
-
-    const raw = response.text ?? "";
-    const parsed = JSON.parse(raw);
+    const { data } = await aiJson(
+      "lessonContent",
+      { contents: prompt, systemInstruction, responseJsonSchema: STUDY_PACK_SCHEMA },
+      { meter: { companyId, userId } },
+    );
+    const parsed = data as {
+      title?: string;
+      summary?: string;
+      concepts?: Json[];
+      flashcards?: Json[];
+      quiz_questions?: Json[];
+    };
 
     const serviceClient = createServiceClient();
     const { data: createdPack, error: insertError } = await serviceClient

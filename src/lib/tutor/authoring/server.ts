@@ -1,13 +1,9 @@
 import "server-only";
-import { ThinkingLevel } from "@google/genai";
-import { gemini } from "@/lib/ai/gemini";
-import { modelFor } from "@/lib/ai/models";
+import { aiCall } from "@/lib/ai/call";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { assertCanManageCourse } from "@/lib/courses/course-auth-server";
 import { ZEDAI_TENANT_ID } from "@/lib/tenants/constants";
-import { describeGeminiError, worthTryingAnotherModel } from "@/lib/tutor/gemini-errors";
 import { isSchemaUnavailableError } from "@/lib/tutor/mastery/server";
-import { recordUsage } from "@/lib/tutor/server/usage";
 import {
   DEFAULT_TEACHER_NAME,
   courseTeacher,
@@ -18,12 +14,10 @@ import {
 } from "@/lib/tutor/tutor-session-block";
 import type { LessonSourceBlock, QuizQuestionSource } from "./objectives";
 
-const AUTHORING_FALLBACKS = ["gemini-3.5-flash-lite", "gemini-2.5-flash"];
-
-function thinkingFor(model: string) {
-  return /^gemini-3/.test(model) ? { thinkingConfig: { thinkingLevel: ThinkingLevel.LOW } } : {};
-}
-
+/**
+ * Structured JSON for teacher authoring (objectives, flow drafts, revisions, viva drafts). Goes through `aiCall`:
+ * teacherAuthoring model + fallback chain, low thinking, metered to the course's tenant.
+ */
 export async function generateAuthoringJson(input: {
   systemInstruction: string;
   prompt: string;
@@ -32,45 +26,19 @@ export async function generateAuthoringJson(input: {
   userId: string;
   temperature?: number;
 }): Promise<{ text: string | undefined; model: string }> {
-  const primary = modelFor("teacherAuthoring");
-  const models = [primary, ...AUTHORING_FALLBACKS.filter((m) => m !== primary)];
-  let firstError: unknown;
-
-  for (const model of models) {
-    try {
-      const response = await gemini.models.generateContent({
-        model,
-        contents: input.prompt,
-        config: {
-          systemInstruction: input.systemInstruction,
-          responseMimeType: "application/json",
-          responseJsonSchema: input.responseJsonSchema,
-          temperature: input.temperature ?? 0.4,
-          ...thinkingFor(model),
-          maxOutputTokens: 8192,
-        },
-      });
-
-      const tokens = response.usageMetadata?.totalTokenCount ?? 0;
-      await recordUsage({
-        companyId: input.companyId,
-        userId: input.userId,
-        sessionId: null,
-        model,
-        kind: "llm",
-        units: tokens,
-        unit: "tokens",
-      });
-
-      return { text: response.text, model };
-    } catch (err) {
-      const info = describeGeminiError(err);
-      console.warn(`[teacher-authoring] Gemini ${model} failed (${info.code}): ${info.detail}`);
-      firstError ??= err;
-      if (!worthTryingAnotherModel(info)) break;
-    }
-  }
-  throw firstError;
+  const result = await aiCall(
+    "teacherAuthoring",
+    {
+      contents: input.prompt,
+      systemInstruction: input.systemInstruction,
+      responseJsonSchema: input.responseJsonSchema,
+      temperature: input.temperature ?? 0.4,
+      thinking: "low",
+      maxOutputTokens: 8192,
+    },
+    { meter: { companyId: input.companyId, userId: input.userId } },
+  );
+  return { text: result.text, model: result.model };
 }
 
 export type LessonAuthoringContext = {

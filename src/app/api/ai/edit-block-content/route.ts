@@ -1,7 +1,8 @@
 import { requireContentAuthor } from "@/lib/authz/content-author-server";
 import { auth } from "@clerk/nextjs/server";
-import { gemini } from "@/lib/ai/gemini";
-import { modelFor } from "@/lib/ai/models";
+import { aiCall } from "@/lib/ai/call";
+import { parseModelJson } from "@/lib/ai/json";
+import { meterFor } from "@/lib/ai/meter-server";
 import { NextRequest } from "next/server";
 
 export async function POST(req: NextRequest) {
@@ -58,17 +59,13 @@ VALID SCHEMAS REFERENCE:
 
 Return ONLY the updated JSON block content:`;
 
-    const response = await gemini.models.generateContent({
-      model: modelFor("editBlock"),
-      contents: prompt,
-      config: { maxOutputTokens: 2500, responseMimeType: "application/json" },
-    });
-
-    const raw = response.text ?? "";
-    const match = raw.match(/\{[\s\S]*\}/);
-    if (!match) return Response.json({ error: "Invalid AI response format" }, { status: 500 });
-
-    const newContent = JSON.parse(match[0]);
+    // The block's schema depends on its type, so this stays JSON mode (no schema) with the tolerant parser.
+    const response = await aiCall(
+      "editBlock",
+      { contents: prompt, json: true, maxOutputTokens: 2500 },
+      { meter: await meterFor(userId) },
+    );
+    const newContent = parseModelJson(response.text);
     return Response.json({ newContent });
   } catch (error) {
     console.error("Edit block content error:", error);

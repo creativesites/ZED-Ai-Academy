@@ -1,7 +1,7 @@
 import { requireContentAuthor } from "@/lib/authz/content-author-server";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
-import { gemini } from "@/lib/ai/gemini";
+import { gemini } from "@/lib/ai/gemini/client";
 import { modelFor } from "@/lib/ai/models";
 import { createServiceClient } from "@/lib/supabase/server";
 import { v4 as uuidv4 } from "uuid";

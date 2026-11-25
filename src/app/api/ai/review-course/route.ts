@@ -1,8 +1,9 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { gemini } from "@/lib/ai/gemini";
-import { modelFor } from "@/lib/ai/models";
+import { aiJson } from "@/lib/ai/call";
+import { COURSE_REVIEW_SCHEMA } from "@/lib/ai/generation/schemas";
+import { ZEDAI_TENANT_ID } from "@/lib/tenants/constants";
 import { canManageCourse } from "@/lib/courses/course-auth-server";
 
 export type CourseReviewResult = {
@@ -30,8 +31,8 @@ export async function POST(req: NextRequest) {
   }
 
   const supabase = createClient();
-  const { allowed } = await canManageCourse(supabase, courseId, userId);
-  if (!allowed) {
+  const { allowed, course: owned } = await canManageCourse(supabase, courseId, userId);
+  if (!allowed || !owned) {
     return Response.json({ error: "Unauthorized" }, { status: 403 });
   }
 
@@ -102,22 +103,12 @@ Rules:
 - Keep arrays concise (2-4 items each).`;
 
   try {
-    const response = await gemini.models.generateContent({
-      model: modelFor("courseBlueprint"),
-      contents: prompt,
-      config: {
-        maxOutputTokens: 1500,
-        responseMimeType: "application/json",
-      },
-    });
-
-    const raw = response.text ?? "";
-    const match = raw.match(/\{[\s\S]*\}/);
-    if (!match) {
-      return Response.json({ error: "Invalid AI review response" }, { status: 500 });
-    }
-
-    const parsed = JSON.parse(match[0]) as CourseReviewResult;
+    const { data } = await aiJson(
+      "courseBlueprint",
+      { contents: prompt, responseJsonSchema: COURSE_REVIEW_SCHEMA, maxOutputTokens: 1500 },
+      { meter: { companyId: owned.company_id ?? ZEDAI_TENANT_ID, userId } },
+    );
+    const parsed = data as CourseReviewResult;
     return Response.json(parsed);
   } catch (error) {
     console.error("Course review error:", error);
