@@ -4,7 +4,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { VocabDeckReview } from "@/components/tutor/practice/VocabDeckReview";
 import { loadLearnerDeck } from "@/lib/tutor/server/learner-overview";
 
-export const metadata = { title: "Vocabulary Deck — Teacher's Room" };
+export const metadata = { title: "Cards — Teacher" };
 export const dynamic = "force-dynamic";
 
 export default async function PracticeDeckPage() {
@@ -19,7 +19,7 @@ export default async function PracticeDeckPage() {
       <VocabDeckReview
         initialCards={cards}
         backHref="/practice"
-        backLabel="Back to Teacher's Room"
+        backLabel="Back to Teacher"
       />
     </>
   );

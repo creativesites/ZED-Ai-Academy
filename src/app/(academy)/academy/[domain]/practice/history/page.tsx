@@ -52,7 +52,7 @@ export default async function TenantPracticeHistoryPage({
       <SpeakingHistoryView
         initialSessions={sessions}
         backHref={`/academy/${company.slug}/practice`}
-        backLabel={`Back to ${company.name} Teacher's Room`}
+        backLabel="Back to Teacher"
         sessionBasePath={`/academy/${company.slug}/practice`}
       />
     </>

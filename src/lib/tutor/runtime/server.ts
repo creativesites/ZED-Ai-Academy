@@ -235,7 +235,11 @@ export async function claimAndRecordGrade(
       (g.objectiveId ? ctx.objectives.find((o) => o.id === g.objectiveId) : null) ??
       (fallbackObjectiveId ? ctx.objectives.find((o) => o.id === fallbackObjectiveId) : null) ??
       null;
-    const freeText = !registered && g.graded.check.objective ? g.graded.check.objective : null;
+    // Ask dock (no registered objectives): key the evidence by lesson + question, as the legacy dock check did.
+    const freeText = registered
+      ? null
+      : (g.graded.check.objective ??
+        (ctx.session.origin === "ask" && ctx.courseId ? `${ctx.scenario.title}: ${g.graded.check.prompt}`.slice(0, 200) : null));
     if (!registered && !freeText) return;
 
     const grade = g.graded.grade;

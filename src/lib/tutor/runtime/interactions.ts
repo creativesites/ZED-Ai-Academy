@@ -144,15 +144,29 @@ function withoutKey(e: TutorEvent): TutorEvent {
 
 /** See the module comment. `turnIdx` makes check ids unique per session. */
 export function prepareAnswerableEvents(events: readonly TutorEvent[], turnIdx: number): PreparedTurnEvents {
-  const out: TutorEvent[] = [];
+  const prepare = createAnswerablePreparer(turnIdx);
+  const client: TutorEvent[] = [];
   const checks: PendingCheck[] = [];
   let ungraded = 0;
-  let n = 0;
   for (const raw of events) {
-    if (!isAnswerableEvent(raw)) {
-      out.push(raw);
-      continue;
-    }
+    const r = prepare(raw);
+    client.push(r.client);
+    if (r.check) checks.push(r.check);
+    if (r.ungraded) ungraded++;
+  }
+  return { client, checks, ungraded };
+}
+
+/**
+ * One event at a time, for streaming (P1-05 × P2-04): every event goes through this BEFORE it is emitted, so no
+ * answer key reaches an SSE frame. Numbering matches prepareAnswerableEvents over the same events in the same order.
+ */
+export function createAnswerablePreparer(
+  turnIdx: number,
+): (raw: TutorEvent) => { client: TutorEvent; check: PendingCheck | null; ungraded: boolean } {
+  let n = 0;
+  return (raw) => {
+    if (!isAnswerableEvent(raw)) return { client: toClientEvent(raw), check: null, ungraded: false };
     const id = checkIdFor(turnIdx, n++);
     let e: TutorEvent = raw;
     if (e.type === "ask_order") {
@@ -160,15 +174,13 @@ export function prepareAnswerableEvents(events: readonly TutorEvent[], turnIdx: 
       e = { ...e, items: shuffleForDisplay(e.items, id), answer: [...e.items] };
     }
     const spec = specFromModelEvent(e);
-    if (!spec) {
-      ungraded++;
-      out.push(withoutKey(e));
-      continue;
-    }
-    out.push({ ...e, checkId: id } as TutorEvent);
-    checks.push({ id, turnIdx, kind: spec.kind, prompt: promptOf(e), objective: objectiveOf(e), spec });
-  }
-  return { client: out.map((e) => toClientEvent(e)), checks, ungraded };
+    if (!spec) return { client: toClientEvent(withoutKey(e)), check: null, ungraded: true };
+    return {
+      client: toClientEvent({ ...e, checkId: id } as TutorEvent),
+      check: { id, turnIdx, kind: spec.kind, prompt: promptOf(e), objective: objectiveOf(e), spec },
+      ungraded: false,
+    };
+  };
 }
 
 /**

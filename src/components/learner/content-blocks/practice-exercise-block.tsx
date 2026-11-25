@@ -369,7 +369,7 @@ export function PracticeExerciseBlock({
                   className="w-full rounded-xl border-2 border-orange-200 bg-gradient-to-r from-orange-50 to-amber-50 text-orange-700 hover:from-orange-100 hover:to-amber-100 py-4 text-sm font-bold"
                 >
                   <Wand2 className="mr-2 h-4 w-4" />
-                  Launch Practice Studio
+                  Open Prompt lab
                 </Button>
               )}
 

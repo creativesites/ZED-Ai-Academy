@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { CheckCircle2, CircleDot, Download, Loader2, RotateCcw, Sparkles, Volume2 } from "lucide-react";
 import Link from "next/link";
 import type { CardItem } from "@/components/tutor/EventPlayer";
@@ -11,7 +11,7 @@ import {
   type TutorReportContent,
 } from "@/lib/tutor/report-model";
 import { toneSegments } from "@/lib/tutor/romanization";
-import { speechLangFor } from "@/lib/tutor/speech-lang";
+import { useTeacherVoice } from "@/components/tutor/voice/use-teacher-voice";
 import { buildStudyNotesMarkdown, slugifyFilename, type ExportTranscriptLine } from "@/lib/tutor/study-export";
 import { saveSessionWordsToDeck } from "@/actions/tutor-learner";
 import styles from "./practice.module.css";
@@ -40,6 +40,10 @@ type ReportCardProps = {
   onStartSprint?: () => void;
   onStartNextScenario?: (scenarioId: string) => void;
   onDone?: () => void;
+  /** Cards page in the learner's academy (see academyHref). Defaults to the platform deck. */
+  deckHref?: string;
+  /** The session persona's TTS voice for "Hear it" (TeacherVoice). */
+  teacherVoice?: string | null;
 };
 
 const OBJECTIVE_STATUS_STYLE: Record<
@@ -74,6 +78,8 @@ export function ReportCard({
   onStartSprint,
   onStartNextScenario,
   onDone,
+  deckHref = "/practice/deck",
+  teacherVoice,
 }: ReportCardProps) {
   const scores = REPORT_SCORE_KEYS.filter((key) => typeof report.scores[key] === "number");
   const objectives = report.objectives ?? [];
@@ -240,7 +246,7 @@ export function ReportCard({
           </h2>
           <ul className="grid gap-2">
             {report.mistakes.map((m, i) => (
-              <MistakeRow key={`${m.said}-${i}`} mistake={m as Mistake} />
+              <MistakeRow key={`${m.said}-${i}`} mistake={m as Mistake} teacherVoice={teacherVoice ?? null} />
             ))}
           </ul>
         </section>
@@ -284,7 +290,7 @@ export function ReportCard({
             </button>
             {deckState === "saved" && (
               <Link
-                href="/practice/deck"
+                href={deckHref}
                 className="text-xs font-semibold text-[var(--accent)] underline underline-offset-4"
               >
                 Review deck →
@@ -322,7 +328,7 @@ export function ReportCard({
             className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-2xl border border-[var(--line-strong)] bg-[var(--soft)] px-5 py-3 text-sm font-semibold text-[var(--ink)] hover:bg-[var(--soft-hover)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus)]"
           >
             <Sparkles className="h-4 w-4 text-[var(--accent)]" aria-hidden="true" />
-            5-min revision sprint
+            5-min revision
           </button>
         )}
         <button
@@ -364,68 +370,18 @@ export function ReportCard({
   );
 }
 
-function MistakeRow({ mistake }: { mistake: Mistake }) {
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const resolvedUrlRef = useRef<string | null>(mistake.audioUrl ?? null);
-  const [status, setStatus] = useState<"idle" | "loading" | "playing">("idle");
+function MistakeRow({ mistake, teacherVoice }: { mistake: Mistake; teacherVoice: string | null }) {
   const han = hasHan(mistake.correct);
-
-  const playBrowserFallback = () => {
-    if (typeof window === "undefined" || !("speechSynthesis" in window)) {
-      setStatus("idle");
-      return;
-    }
-    try {
-      window.speechSynthesis.cancel();
-      const utter = new SpeechSynthesisUtterance(mistake.correct);
-      utter.lang = speechLangFor(mistake.correct, han ? "zh" : null);
-      utter.rate = 0.9;
-      utter.onend = () => setStatus("idle");
-      utter.onerror = () => setStatus("idle");
-      setStatus("playing");
-      window.speechSynthesis.speak(utter);
-    } catch {
-      setStatus("idle");
-    }
-  };
+  // TeacherVoice: the session teacher's server voice (or the line's own audio). No browser speech.
+  const { speak, speakingKey } = useTeacherVoice({ voice: teacherVoice, language: han ? "zh" : null });
+  const [status, setStatus] = useState<"idle" | "loading" | "unavailable">("idle");
+  const playing = speakingKey !== null;
 
   const listen = async () => {
-    if (status !== "idle" || !mistake.correct.trim()) return;
-    let url = resolvedUrlRef.current;
-
-    if (!url) {
-      setStatus("loading");
-      try {
-        const res = await fetch("/api/tutor/tts", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "same-origin",
-          body: JSON.stringify({ text: mistake.correct }),
-        });
-        if (res.ok) {
-          const data = (await res.json().catch(() => null)) as { url?: unknown } | null;
-          if (typeof data?.url === "string" && data.url) {
-            url = data.url;
-            resolvedUrlRef.current = url;
-          }
-        }
-      } catch {
-        url = null;
-      }
-    }
-
-    if (!url) {
-      playBrowserFallback();
-      return;
-    }
-
-    if (!audioRef.current) audioRef.current = new Audio();
-    const el = audioRef.current;
-    el.src = url;
-    el.onended = () => setStatus("idle");
-    el.onerror = () => playBrowserFallback();
-    setStatus("playing");
-    void el.play().catch(() => playBrowserFallback());
+    if (status === "loading" || playing || !mistake.correct.trim()) return;
+    setStatus("loading");
+    const outcome = await speak(mistake.correct, { audioUrl: mistake.audioUrl ?? null, rate: 0.9 });
+    setStatus(outcome === "unavailable" ? "unavailable" : "idle");
   };
 
   return (
@@ -451,16 +407,22 @@ function MistakeRow({ mistake }: { mistake: Mistake }) {
           <button
             type="button"
             onClick={() => void listen()}
-            disabled={status !== "idle"}
+            disabled={status === "loading" || playing}
             aria-label={`Hear correct form: ${mistake.correct}`}
             className="ml-auto inline-flex items-center gap-1 rounded-full border border-[var(--line-strong)] bg-white/80 px-2.5 py-0.5 text-[12px] font-semibold text-[var(--ink)] transition hover:bg-[var(--soft-hover)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus)] disabled:opacity-60"
           >
-            {status === "loading" ? (
+            {status === "loading" && !playing ? (
               <Loader2 className="h-3 w-3 animate-spin" aria-hidden="true" />
             ) : (
               <Volume2 className="h-3 w-3" aria-hidden="true" />
             )}
-            {status === "loading" ? "Loading..." : status === "playing" ? "Playing..." : "Hear it"}
+            {status === "loading" && !playing
+              ? "Loading..."
+              : playing
+                ? "Playing..."
+                : status === "unavailable"
+                  ? "Audio unavailable"
+                  : "Hear it"}
           </button>
         )}
       </div>

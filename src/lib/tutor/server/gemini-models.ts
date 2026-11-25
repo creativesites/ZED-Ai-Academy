@@ -1,5 +1,6 @@
 import "server-only";
-import { aiCall, aiSpeech, type AiMeter } from "@/lib/ai/call";
+import { aiCall, aiSpeech, aiStream, type AiMeter } from "@/lib/ai/call";
+import type { TextRequestInput } from "@/lib/ai/call-core";
 import { modelFor } from "@/lib/ai/models";
 import type { AiContent } from "@/lib/ai/provider";
 import { parsePcmSampleRate, pcmToWav } from "../audio.ts";
@@ -18,15 +19,47 @@ import type { GenContent, TurnGenerateResult } from "./turn-pipeline.ts";
 
 const CALLER_METERS: AiMeter = { by: "caller", reason: "tutor session/demo routes record usage themselves" };
 
-/** Voice and Text turn: structured JSON with the turn schema. Supports inline multimodal audio or work images. */
-export async function generateTurnJson(input: {
+type TurnJsonInput = {
   systemInstruction: string;
   contents: GenContent[];
   audio?: { bytes: Buffer; mimeType: string };
   image?: { bytes: Buffer; mimeType: string };
   cachedContent?: string;
   meter?: AiMeter;
-}): Promise<TurnGenerateResult & { model: string }> {
+};
+
+/** Voice and Text turn: structured JSON with the turn schema. Supports inline multimodal audio or work images. */
+export async function generateTurnJson(input: TurnJsonInput): Promise<TurnGenerateResult & { model: string }> {
+  const result = await aiCall("tutorTurn", turnJsonRequest(input), { meter: input.meter ?? CALLER_METERS });
+  return {
+    text: result.text,
+    totalTokens: result.usage.totalTokens,
+    // P2-06 telemetry: prompt, output and context-cache tokens per turn.
+    usage: {
+      inputTokens: result.usage.inputTokens,
+      outputTokens: result.usage.outputTokens,
+      cachedTokens: result.usage.cachedTokens,
+    },
+    model: result.model,
+  };
+}
+
+/**
+ * The same turn request as `generateTurnJson`, streamed (P1-05). Fallback to another model applies only to opening
+ * the stream. Metering is the caller's (it records usage once the stream ends), unless `meter` is given.
+ */
+export async function streamTurnJson(input: TurnJsonInput): Promise<{
+  model: string;
+  stream: AsyncIterable<{
+    text: string;
+    usage?: { totalTokens?: number; inputTokens?: number; outputTokens?: number; cachedTokens?: number };
+  }>;
+}> {
+  const result = await aiStream("tutorTurn", turnJsonRequest(input), { meter: input.meter ?? CALLER_METERS });
+  return { model: result.model, stream: result.stream };
+}
+
+function turnJsonRequest(input: TurnJsonInput): TextRequestInput {
   const lastTurnText = input.contents[input.contents.length - 1]?.parts?.[0]?.text ?? "";
   const contents: AiContent[] = input.audio
     ? [
@@ -69,31 +102,17 @@ export async function generateTurnJson(input: {
       : input.contents;
 
   const primary = modelFor("tutorTurn");
-  const result = await aiCall(
-    "tutorTurn",
-    (model) => ({
-      contents,
-      // The context cache was created for the primary model only; fallbacks get the inline system instruction.
-      ...(input.cachedContent && model === primary
-        ? { cachedContent: input.cachedContent }
-        : { systemInstruction: input.systemInstruction }),
-      responseJsonSchema: TUTOR_TURN_JSON_SCHEMA,
-      temperature: 0.8,
-      thinking: "minimal",
-      maxOutputTokens: 4096,
-    }),
-    { meter: input.meter ?? CALLER_METERS },
-  );
-  return {
-    text: result.text,
-    totalTokens: result.usage.totalTokens,
-    usage: {
-      inputTokens: result.usage.inputTokens,
-      outputTokens: result.usage.outputTokens,
-      cachedTokens: result.usage.cachedTokens,
-    },
-    model: result.model,
-  };
+  return (model) => ({
+    contents,
+    // The context cache was created for the primary model only; fallbacks get the inline system instruction.
+    ...(input.cachedContent && model === primary
+      ? { cachedContent: input.cachedContent }
+      : { systemInstruction: input.systemInstruction }),
+    responseJsonSchema: TUTOR_TURN_JSON_SCHEMA,
+    temperature: 0.8,
+    thinking: "minimal",
+    maxOutputTokens: 4096,
+  });
 }
 
 const TRANSCRIBE_INSTRUCTION =

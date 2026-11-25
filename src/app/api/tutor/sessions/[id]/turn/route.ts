@@ -1,17 +1,19 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { askTurnAllowed } from "@/lib/tutor/server/ask-server";
 import { loadSessionContext } from "@/lib/tutor/server/session-context";
 import { loadOwnedSession, readJson, sessionIdSchema } from "@/lib/tutor/server/session-store";
 import { runSessionTurn, TurnConflictError } from "@/lib/tutor/server/turn-runner";
 import { sessionLimitReason } from "@/lib/tutor/server/turn-pipeline";
+import { turnResponseBody, turnStreamResponse } from "@/lib/tutor/server/turn-stream-response";
 import { LEARNER_AUDIO_TYPES, LEARNER_IMAGE_TYPES, MAX_IMAGE_BYTES } from "@/lib/tutor/recording";
-import { CONTRACT_VERSION } from "@/lib/tutor/events";
 import { interactionInputSchema, type InteractionInput } from "@/lib/tutor/runtime/interactions";
 
 // POST /api/tutor/sessions/[id]/turn: one Voice, Text, or Multimodal Image exchange.
 // Body: JSON { text }, JSON { interaction: { id, value }, text? } (answer to a graded check, P2-04),
 // or multipart/form-data with an `audio` file (max 2 MB) or `image` file (max 3 MB, optional `text`).
+// POST ...?stream=1: the same turn as Server-Sent Events (see src/lib/tutor/runtime/sse.ts for the wire protocol).
 
 const MAX_AUDIO_BYTES = 2 * 1024 * 1024;
 const ALLOWED_AUDIO_TYPES = new Set(LEARNER_AUDIO_TYPES);
@@ -53,6 +55,10 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
   if (session.mode === "live") {
     return NextResponse.json({ error: "Live sessions send events to /events, not turns" }, { status: 409 });
   }
+  // P1-06: lesson Ask conversations need lesson access on every turn, not only when they were opened.
+  if (!(await askTurnAllowed(session, userId))) {
+    return NextResponse.json({ error: "Access denied", reason: "not_enrolled" }, { status: 403 });
+  }
 
   const input = await readTurnInput(req);
   if (!input.ok) return NextResponse.json({ error: input.error }, { status: input.status });
@@ -74,6 +80,12 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
   const learnerText: string | null = !limit && !input.audio ? (input.text ?? null) : null;
   const learnerAudio = !limit ? input.audio : undefined;
   const learnerImage = !limit ? input.image : undefined;
+  const interaction = !limit ? (input.interaction ?? null) : null;
+
+  // P1-05: ?stream=1 answers the same turn as Server-Sent Events (events as they close, then the same body as below).
+  if (req.nextUrl.searchParams.get("stream") === "1") {
+    return turnStreamResponse({ ctx: sessionContext, idx, learnerText, learnerAudio, learnerImage, interaction });
+  }
 
   try {
     const result = await runSessionTurn({
@@ -84,16 +96,9 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
       learnerImage,
       openingInstruction: "",
       deferTts: true,
-      interaction: !limit ? (input.interaction ?? null) : null,
+      interaction,
     });
-    return NextResponse.json({
-      turnIdx: idx,
-      contractVersion: CONTRACT_VERSION,
-      learnerText: result.learnerText ?? learnerText,
-      events: result.events,
-      ended: result.ended,
-      endReason: result.endReason ?? null,
-    });
+    return NextResponse.json(turnResponseBody(idx, result, learnerText));
   } catch (err) {
     if (err instanceof TurnConflictError) {
       return NextResponse.json({ error: "Another turn was saved at the same time. Try again." }, { status: 409 });

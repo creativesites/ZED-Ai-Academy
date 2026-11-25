@@ -10,7 +10,7 @@ import { synthesizeSpeechWav } from "./gemini-models.ts";
 // go through `aiCall` (src/lib/ai/call.ts) via gemini-models.ts; the Live token is minted by the Gemini-specific
 // src/lib/ai/gemini/live.ts. Nothing here is unit tested (no keys in the build environment).
 
-export { generateReportJson, generateTurnJson, transcribeLearnerAudio } from "./gemini-models.ts";
+export { generateReportJson, generateTurnJson, streamTurnJson, transcribeLearnerAudio } from "./gemini-models.ts";
 export { LIVE_NEW_SESSION_WINDOW_MS, LIVE_TOKEN_TTL_MS };
 
 export const TTS_BUCKET = "tutor-tts-cache";

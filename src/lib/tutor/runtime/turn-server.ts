@@ -76,7 +76,12 @@ export async function prepareRuntimeTurn(input: {
   const prerequisites = directivesEnabled ? await loadPrerequisites(ctx) : {};
   const startedAt = Date.parse(ctx.session.started_at);
   const parts = buildPromptParts({
-    scenario: { ...toPromptScenario(ctx.scenario), objectives: ctx.objectives },
+    // Same scenario layer as sessionSystemPrompt: objectives (P2-01) and the origin's role (ask dock, P1-06).
+    scenario: {
+      ...toPromptScenario(ctx.scenario),
+      objectives: ctx.objectives,
+      ...(ctx.roleNotes ? { roleNotes: ctx.roleNotes } : {}),
+    },
     persona: toPromptPersona(ctx.persona),
     skillPack: ctx.scenario.skill_pack,
     learnerProfile: ctx.learnerProfile,

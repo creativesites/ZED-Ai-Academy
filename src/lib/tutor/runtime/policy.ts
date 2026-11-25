@@ -65,9 +65,13 @@ export function teachingPolicy(state: SessionState, brief: PolicyBrief, flow: Po
   const strategy = state.strategy;
   const objectiveId = state.currentObjectiveId;
   const obj = state.objectives.find((o) => o.id === objectiveId) ?? null;
+  // Light profile for the lesson `ask` dock (open questions the learner drives): only the reactive rules after
+  // graded checks (worked example / prerequisite after misses, confirm a low-confidence correct). No probe, no
+  // recap/wrap-up, no redirect, no stretch, no hint cap and no "time to check" nudges.
+  const light = flow.origin === "ask";
 
   // Time box: ≤90 s left → recap, then wrap up.
-  if (flow.timeLeftMs <= POLICY.wrapUpMs) {
+  if (!light && flow.timeLeftMs <= POLICY.wrapUpMs) {
     return state.lastMove === "recap" || state.lastMove === "wrap_up"
       ? {
           move: "wrap_up",
@@ -86,7 +90,7 @@ export function teachingPolicy(state: SessionState, brief: PolicyBrief, flow: Po
   }
 
   // Off-topic twice → brief answer + redirect.
-  if (state.offTopicStreak >= POLICY.offTopicTurns) {
+  if (!light && state.offTopicStreak >= POLICY.offTopicTurns) {
     return {
       move: "redirect",
       objectiveId,
@@ -151,6 +155,7 @@ export function teachingPolicy(state: SessionState, brief: PolicyBrief, flow: Po
       }, strategy);
     }
     // Correct twice with high confidence and time left → transfer.
+    if (light) return null;
     const confident = (state.confidence ?? POLICY.highConfidence) >= POLICY.highConfidence;
     if (obj.streak >= POLICY.stretchStreak && confident && flow.timeLeftMs > POLICY.stretchNeedsMs) {
       return constrain({
@@ -174,7 +179,8 @@ export function teachingPolicy(state: SessionState, brief: PolicyBrief, flow: Po
   }
 
   // Session start or an unseen objective → probe what the learner knows.
-  if (state.learnerTurns === 0 && flow.origin !== "ask") {
+  if (light) return null;
+  if (state.learnerTurns === 0) {
     return constrain({
       move: "probe",
       objectiveId,

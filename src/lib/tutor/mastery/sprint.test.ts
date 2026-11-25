@@ -148,3 +148,52 @@ describe("isPlanScenarioVisible", () => {
     assert.equal(isPlanScenarioVisible({ companyId: "orgA", visibility: null, courseId: null }, learner), false);
   });
 });
+
+describe("buildDailyPlan with the review scheduler (P2-07)", () => {
+  const weakObjectives = [{ objectiveKey: "k", objectiveText: "Weak legacy", level: 0, courseId: "c1" }];
+  const dueReviews = {
+    available: true,
+    count: 4,
+    label: "2 reviews due · 2 cards due",
+    href: "/academy/a/practice/sprint?courseId=c1",
+    estimatedMinutes: 5,
+    objectives: [{ text: "Equivalent fractions" }, { text: "Ratios" }],
+  };
+
+  it("uses due reviews instead of the 3 weakest when the scheduler is available", () => {
+    const plan = buildDailyPlan({
+      teacherName: "Tinashe",
+      weakObjectives,
+      unfinishedLessons: [],
+      untriedFlows: [],
+      dueReviews,
+    });
+    assert.equal(plan[0].kind, "revision_sprint");
+    assert.equal(plan[0].href, dueReviews.href);
+    assert.equal(plan[0].title, "5-min revision with Tinashe");
+    assert.deepEqual(plan[0].kind === "revision_sprint" ? plan[0].objectiveTexts : [], ["Equivalent fractions", "Ratios"]);
+  });
+
+  it("shows no revision item when the scheduler says nothing is due", () => {
+    const plan = buildDailyPlan({
+      teacherName: "Tinashe",
+      weakObjectives,
+      unfinishedLessons: [],
+      untriedFlows: [],
+      dueReviews: { ...dueReviews, count: 0, objectives: [] },
+    });
+    assert.equal(plan.length, 0);
+  });
+
+  it("falls back to the weakest objectives when the scheduler is unavailable", () => {
+    const plan = buildDailyPlan({
+      teacherName: "Tinashe",
+      weakObjectives,
+      unfinishedLessons: [],
+      untriedFlows: [],
+      dueReviews: { ...dueReviews, available: false },
+    });
+    assert.equal(plan[0].kind, "revision_sprint");
+    assert.match(plan[0].subtitle, /Weak legacy/);
+  });
+});
