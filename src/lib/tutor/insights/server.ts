@@ -57,6 +57,7 @@ export async function loadTenantTutorInsights(input: {
     .from("tutor_sessions")
     .select("id, status, learner_speaking_ms, teacher_speaking_ms, scenario_id")
     .eq("company_id", input.companyId)
+    .neq("origin", "ask") // P1-06: lesson Ask conversations are not teaching sessions
     .order("started_at", { ascending: false })
     .limit(200);
 
