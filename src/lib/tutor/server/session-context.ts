@@ -9,6 +9,7 @@ import { applySnapshot } from "../authoring/versions.ts";
 import { loadScenarioSnapshot } from "../authoring/versions-server.ts";
 import { parseMemory } from "../memory.ts";
 import { withLearnerBrief } from "../learner/memory-server.ts";
+import { loadAskContext } from "./ask-server.ts";
 import { parsePronunciationGlossary, type PronunciationEntry } from "../pronunciation.ts";
 import { profileLanguage } from "../progress.ts";
 import { skillPackLanguage, type SkillPackLanguage } from "../skill-packs.ts";
@@ -80,6 +81,8 @@ export type SessionContext = {
   learnerProfile: PromptLearnerProfile;
   lessonText: string;
   history: HistoryTurn[];
+  /** Origin-specific role for the teacher (the lesson `ask` dock, P1-06). Unset for flow and sprint sessions. */
+  roleNotes?: string | null;
 };
 
 type SprintContextSnapshot = {
@@ -189,6 +192,7 @@ export async function loadSessionContext(
   let scenario: ScenarioRow;
   let persona: PersonaRow;
   let courseId: string | null = null;
+  let roleNotes: string | null = null;
 
   if (session.scenario_id) {
     const { data: scenarioRow, error: scenarioError } = await supabase
@@ -216,6 +220,10 @@ export async function loadSessionContext(
     }
     if (personaError || !personaRow) throw new Error("persona not found for scenario");
     persona = personaRow;
+  } else if (session.origin === "ask") {
+    // Lesson Ask dock (P1-06): no authored flow; scenario and role come from the lesson.
+    const ask = await loadAskContext(supabase, session, (db, companyId) => resolveDefaultPersona(db, companyId));
+    ({ scenario, persona, courseId, roleNotes } = ask);
   } else {
     // Synthetic Revision Sprint session (scenario_id = null).
     const rawSprint =
@@ -355,5 +363,6 @@ export async function loadSessionContext(
     ),
     lessonText: blocksToText(blocks ?? [], { maxChars: LESSON_CONTEXT_MAX_CHARS }),
     history: (turns ?? []).map((t) => ({ idx: t.idx, learner_text: t.learner_text, events: t.events })),
+    roleNotes,
   };
 }
