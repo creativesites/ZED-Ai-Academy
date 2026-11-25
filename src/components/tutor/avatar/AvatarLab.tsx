@@ -117,6 +117,12 @@ function describeTutor(ev: TutorEvent): string {
       return `switch_scene ${ev.scene}`;
     case "award":
       return `award "${ev.title}"`;
+    case "ask_order":
+      return `ask_order "${ev.prompt}" [${ev.items.join(" | ")}]`;
+    case "ask_fill":
+      return `ask_fill "${ev.prompt}"`;
+    case "ask_numeric":
+      return `ask_numeric "${ev.prompt}"${ev.unit ? ` (${ev.unit})` : ""}`;
   }
 }
 

@@ -11,8 +11,13 @@ import {
 } from "../entitlements.ts";
 import { loadWeakMasteryRows } from "../mastery/server.ts";
 import { buildRevisionSprintScenario } from "../mastery/sprint.ts";
+import type { ObjectiveRef } from "../learner/objectives.ts";
+import { loadObjectiveRefsByIds } from "../learner/objectives-server.ts";
+import { planRevisionForLearner } from "../learner/scheduler-server.ts";
+import { legacyLevelFromP } from "../learner/knowledge.ts";
 import type { Mode, SessionOrigin } from "../scenario.ts";
 import { resolveDefaultPersona } from "./session-context.ts";
+import { STAFF_MEMBER_ROLES } from "../../authz/policy.ts";
 
 // Loads the facts for entitlements.ts and applies them. All DB reads use the service client;
 // the authorization decision is made here, from the verified Clerk user id.
@@ -38,6 +43,13 @@ export type ResolvedTutorAccess =
         courseId: string | null;
         courseTitle: string | null;
         focusObjective: string | null;
+        /** Registered objectives the sprint was seeded with (P2-03). */
+        objectives?: Array<{ id: string; code: string | null; text: string }>;
+        /** Set when the review scheduler chose the objectives (P2-07) instead of "3 weakest". */
+        plan?: {
+          source: "scheduler";
+          items: Array<{ key: string; id: string | null; reason: string; retentionCheckpoint: number | null; due: boolean }>;
+        };
         personaId: string;
         teacherName: string;
         scenario: {
@@ -59,10 +71,12 @@ export type ResolveTutorAccessInput = {
   sprint?: boolean;
   courseId?: string;
   focusObjective?: string;
+  /** Registered objective ids to seed a revision sprint with (only honoured for an enrolled course). */
+  objectiveIds?: string[];
   companyId?: string;
 };
 
-const STAFF_ROLES = ["company_admin", "teacher", "instructor"];
+const STAFF_ROLES: readonly string[] = STAFF_MEMBER_ROLES;
 
 export const DEFAULT_TUTOR_SETTINGS = {
   practice_room_enabled: true,
@@ -177,12 +191,39 @@ export async function resolveTutorAccess(input: ResolveTutorAccessInput): Promis
       courseId: courseRow?.id ?? input.courseId ?? null,
       limit: 6,
     });
+    const seeded = await loadSeededSprintObjectives(supabase, {
+      userId: input.userId,
+      companyId,
+      courseId: courseRow?.id ?? null,
+      objectiveIds: input.objectiveIds ?? [],
+      staff,
+    });
+    // P2-07: an unseeded revision is built by the review scheduler (due items, interleaved, prerequisites
+    // first). Falls back to the legacy "3 weakest" selection when the scheduler's columns are not migrated.
+    const plan =
+      seeded.length === 0 && !input.focusObjective
+        ? await planRevisionForLearner({
+            client: supabase,
+            userId: input.userId,
+            companyId,
+            courseId: courseRow?.id ?? input.courseId ?? null,
+          })
+        : null;
+    const planned = plan && plan.objectives.length > 0 ? plan.objectives : null;
+    const plannedRegistered = (planned ?? [])
+      .filter((o) => !!o.objectiveId)
+      .map((o) => ({ id: o.objectiveId as string, code: null, text: o.text }));
     const built = buildRevisionSprintScenario({
       personaId: persona.id,
       teacherName,
-      weakObjectives: weak,
+      weakObjectives: planned
+        ? planned
+            .filter((o) => !o.objectiveId)
+            .map((o) => ({ objectiveText: o.text, level: legacyLevelFromP(o.pEffective) }))
+        : weak,
       courseTitle: courseRow?.title ?? null,
       focusObjective: input.focusObjective ?? null,
+      seededObjectives: planned ? plannedRegistered : seeded,
     });
 
     const now = new Date().toISOString();
@@ -254,6 +295,23 @@ export async function resolveTutorAccess(input: ResolveTutorAccessInput): Promis
         courseId: courseRow?.id ?? input.courseId ?? null,
         courseTitle: courseRow?.title ?? null,
         focusObjective: input.focusObjective ?? null,
+        objectives: planned
+          ? plannedRegistered
+          : seeded.map((o) => ({ id: o.id, code: o.code ?? null, text: o.text })),
+        ...(planned
+          ? {
+              plan: {
+                source: "scheduler" as const,
+                items: planned.map((o) => ({
+                  key: o.objectiveKey,
+                  id: o.objectiveId,
+                  reason: o.reason,
+                  retentionCheckpoint: o.retentionCheckpoint,
+                  due: o.due,
+                })),
+              },
+            }
+          : {}),
         personaId: persona.id,
         teacherName,
         scenario: {
@@ -424,4 +482,31 @@ export function resolveSettings(row: SettingsRow | null): TutorAccessFacts["sett
     allowedModes: (row?.allowed_modes as Mode[] | undefined) ?? DEFAULT_TUTOR_SETTINGS.allowed_modes,
     enabledPersonaIds: row?.enabled_persona_ids ?? DEFAULT_TUTOR_SETTINGS.enabled_persona_ids,
   };
+}
+
+/**
+ * Registered objectives a revision sprint was asked to target (quiz result CTA, P2-03). Only objectives of
+ * the sprint's course in the resolved tenant, and only for learners enrolled in that course (or staff).
+ */
+async function loadSeededSprintObjectives(
+  supabase: ReturnType<typeof createServiceClient>,
+  input: { userId: string; companyId: string; courseId: string | null; objectiveIds: string[]; staff: boolean },
+): Promise<ObjectiveRef[]> {
+  if (!input.courseId || input.objectiveIds.length === 0) return [];
+  if (!input.staff) {
+    const { data: enrollment } = await supabase
+      .from("enrollments")
+      .select("id")
+      .eq("user_id", input.userId)
+      .eq("course_id", input.courseId)
+      .eq("status", "active")
+      .maybeSingle();
+    if (!enrollment) return [];
+  }
+  return loadObjectiveRefsByIds({
+    client: supabase,
+    ids: input.objectiveIds.slice(0, 5),
+    companyId: input.companyId,
+    courseId: input.courseId,
+  });
 }

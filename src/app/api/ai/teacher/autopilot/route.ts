@@ -27,9 +27,10 @@ import {
   loadLessonAuthoringContext,
 } from "@/lib/tutor/authoring/server";
 import { AUTHORING_TEMPLATE_IDS, getAuthoringTemplate } from "@/lib/tutor/authoring/templates";
+import { saveLessonObjectives } from "@/lib/tutor/learner/objectives-server";
 import { parseTutorSessionBlock, sceneFromValue } from "@/lib/tutor/tutor-session-block";
 import type { Json } from "@/types/database";
-import { assertTenantRefs, tenantRefErrorResponse } from "@/lib/tenants/tenant-refs-server";
+import { assertTenantRefs, tenantRefErrorResponse } from "@/lib/authz/refs-server";
 
 const bodySchema = z.object({
   courseId: z.string().uuid(),
@@ -354,6 +355,19 @@ export async function POST(req: NextRequest) {
         if (scenarioErr || !createdScenario) {
           throw new Error(scenarioErr?.message ?? "Failed to save scenario");
         }
+
+        // P2-01: persist the extracted objectives in the course registry and link them to the new flow.
+        // Best effort: a missing registry (migration pending) never fails the Autopilot run.
+        await saveLessonObjectives({
+          companyId: lessonCtx.course.company_id,
+          courseId,
+          lessonId: item.lessonId,
+          userId,
+          objectives: objParsed.objectives.map((o) => ({ text: o.text, evidence: o.evidence })),
+          source: "extracted",
+          scenarioId: createdScenario.id,
+          client: db,
+        }).catch((err: unknown) => console.warn("[autopilot] could not save objectives:", err));
 
         if (attachBlock) {
           const nextPos = (maxPosByLesson.get(item.lessonId) ?? -1) + 1;

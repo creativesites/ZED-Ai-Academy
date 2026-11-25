@@ -1,5 +1,5 @@
 // Pronunciation glossary helpers for TTS: captions keep real spelling while TTS receives
-// phonetic overrides (e.g. ZRA -> "Z R A", Kwacha -> "Kwah-chah", Mwila -> "Mwee-lah").
+// phonetic overrides (e.g. ZRA -> "Z R A", Kwacha -> "Kwah-chah", Maureen -> "Maw-reen").
 // Pure: no I/O or "@/" imports so node:test runs it directly.
 
 export type PronunciationEntry = {

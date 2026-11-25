@@ -3,12 +3,16 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { createServiceClient } from "@/lib/supabase/server";
 import type { Json } from "@/types/database";
-import { parseTutorTurn } from "@/lib/tutor/events";
+import { CONTRACT_VERSION, parseTutorTurn, toClientEvent } from "@/lib/tutor/events";
+import { isSchemaUnavailableError } from "@/lib/tutor/mastery/server";
 import { loadOwnedSession, readJson, sessionIdSchema } from "@/lib/tutor/server/session-store";
 import { MAX_TURNS } from "@/lib/tutor/server/turn-pipeline";
 
 // POST /api/tutor/sessions/[id]/events: Live sessions post their turns in batches, so history and
 // the report have the transcript. Each event is validated; invalid events are dropped, not stored.
+// Live checks are never server-graded (P2-04): Gemini Live tool calls reach the browser directly, so an answer key
+// there is already visible to the learner and anything the browser posts is client-asserted. Live is not taught
+// answer keys at all; any key a client posts anyway is stripped, and Live answers stay teacher judgement.
 
 const MAX_TURNS_PER_CALL = 20;
 const MAX_EVENTS_IN_BODY = 64;
@@ -52,7 +56,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
   let dropped = 0;
   const rows = [...byIdx.values()].map((turn) => {
     const result = parseTutorTurn({ events: turn.events });
-    const kept = result.ok ? result.events : [];
+    const kept = result.ok ? result.events.map((e) => toClientEvent(e)) : [];
     dropped += turn.events.length - kept.length;
     return {
       session_id: session.id,
@@ -63,9 +67,17 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
     };
   });
 
-  const { error } = await createServiceClient()
+  const db = createServiceClient();
+  let { error } = await db
     .from("tutor_turns")
-    .upsert(rows, { onConflict: "session_id,idx" });
+    .upsert(
+      rows.map((row) => ({ ...row, contract_version: CONTRACT_VERSION })),
+      { onConflict: "session_id,idx" },
+    );
+  // Before the contract_version migration is applied, store the turns without it.
+  if (error && isSchemaUnavailableError(error)) {
+    ({ error } = await db.from("tutor_turns").upsert(rows, { onConflict: "session_id,idx" }));
+  }
   if (error) {
     console.error("[tutor] could not save live turns:", error.message);
     return NextResponse.json({ error: "Could not save turns" }, { status: 500 });

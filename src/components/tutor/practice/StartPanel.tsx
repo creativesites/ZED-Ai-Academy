@@ -22,6 +22,9 @@ type StartPanelProps = {
   error: string | null;
   onStart: () => void;
   compact?: boolean;
+  /** Data saver (Lite). The choice is shown and can be changed before the stage loads. */
+  lite?: boolean;
+  onLiteChange?: (next: boolean) => void;
 };
 
 const MIC_LABEL: Record<MicPermission, string> = {
@@ -37,6 +40,8 @@ export function StartPanel({
   error,
   onStart,
   compact = false,
+  lite = false,
+  onLiteChange,
 }: StartPanelProps) {
   const voiceAvailable = !info || info.modes.includes("voice");
   const startMode: "voice" | "text" =
@@ -50,13 +55,13 @@ export function StartPanel({
       <div className="grid gap-0.5">
         <p className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-[0.14em] text-brand-text sm:text-[11px]">
           <Sparkles className="h-3 w-3" aria-hidden="true" />
-          AI Teacher
+          Teaching session
         </p>
         <h1
           id="start-title"
           className="font-heading text-lg font-bold leading-snug text-[var(--ink)] sm:text-2xl"
         >
-          {info ? info.title : "AI Teacher session"}
+          {info ? info.title : "Teaching session"}
         </h1>
         {info && (
           <p className="text-xs font-medium text-[var(--ink-dim)] sm:text-sm">
@@ -117,8 +122,28 @@ export function StartPanel({
       </dl>
 
       <p className="text-[11px] leading-snug text-[var(--ink-dim)]">
-        Switch between Voice, Tap, or Type anytime. You can also toggle 2D/3D teacher view.
+        {lite
+          ? "Switch between Voice, Tap, or Type anytime."
+          : "Switch between Voice, Tap, or Type anytime. You can also toggle 2D/3D teacher view."}
       </p>
+
+      {onLiteChange && (
+        <div className="flex items-center justify-between gap-3 rounded-xl border border-[var(--line)] bg-[var(--soft)] px-3 py-1.5 sm:rounded-2xl">
+          <p className="text-[11px] leading-snug text-[var(--ink-dim)] sm:text-xs">
+            {lite
+              ? "Data saver on: a light teacher drawing and no scene. The voice still plays."
+              : "Data saver off: animated teacher and scene."}
+          </p>
+          <button
+            type="button"
+            onClick={() => onLiteChange(!lite)}
+            aria-pressed={lite}
+            className="min-h-11 shrink-0 rounded-lg px-2 text-xs font-semibold text-[var(--accent)] underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--focus)]"
+          >
+            {lite ? "Turn off" : "Save data"}
+          </button>
+        </div>
+      )}
 
       {error && (
         <p

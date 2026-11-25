@@ -2,6 +2,7 @@ import { auth } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { createServiceClient } from "@/lib/supabase/server";
+import { pinScenarioVersion } from "@/lib/tutor/authoring/versions-server";
 import { isSchemaUnavailableError } from "@/lib/tutor/mastery/server";
 import { applyModePreference, chooseStartMode } from "@/lib/tutor/mode-policy";
 import { resolveTutorAccess } from "@/lib/tutor/server/access";
@@ -21,7 +22,10 @@ import {
 } from "@/lib/tutor/server/session-store";
 import { recordUsage } from "@/lib/tutor/server/usage";
 import { runSessionTurn, sessionSystemPrompt } from "@/lib/tutor/server/turn-runner";
+import { CONTRACT_VERSION } from "@/lib/tutor/events";
 import { buildOpeningWithWarmup } from "@/lib/tutor/warmup";
+import { loadLearnerPreferences } from "@/lib/tutor/learner/preferences-server";
+import { resolvePreferMode } from "@/lib/tutor/learner/preferences";
 
 // POST /api/tutor/sessions: start a ZAI Tutor session.
 // Live mode returns a single-use ephemeral token. Voice and Text mode runs the opening turn server-side.
@@ -40,6 +44,7 @@ const startSchema = z
     sprint: z.boolean().optional(),
     courseId: z.string().uuid().optional(),
     focusObjective: z.string().trim().min(1).max(240).optional(),
+    objectiveIds: z.array(z.string().uuid()).max(5).optional(),
     companyId: z.string().trim().min(1).max(120).optional(),
     micPermission: z.enum(["granted", "denied", "prompt"]),
     rttMs: z.number().min(0).max(60_000).optional(),
@@ -82,6 +87,7 @@ export async function POST(req: NextRequest) {
     sprint: body.sprint,
     courseId: body.courseId,
     focusObjective: body.focusObjective,
+    objectiveIds: body.objectiveIds,
     companyId: body.companyId,
   });
   if (!access.ok) {
@@ -96,7 +102,11 @@ export async function POST(req: NextRequest) {
       liveMinutesLeft: access.liveMinutesLeft,
     }),
     allowedModes: access.allowedModes,
-    preferMode: body.preferMode,
+    // P1-07: the learner's saved voice/text preference applies when the client sent no hint.
+    preferMode: resolvePreferMode(
+      body.preferMode,
+      body.preferMode ? null : (await loadLearnerPreferences(userId)).preferences,
+    ),
   });
 
   const serviceClient = createServiceClient();
@@ -111,17 +121,22 @@ export async function POST(req: NextRequest) {
     status: "active" as const,
   };
 
+  // Pin the flow version this session runs, so editing the flow mid-session does not change it.
+  const scenarioVersion = baseInsert.scenario_id ? await pinScenarioVersion(serviceClient, baseInsert.scenario_id) : null;
+
   let insertRes = await serviceClient
     .from("tutor_sessions")
     .insert(
       access.sprintContext
         ? ({ ...baseInsert, sprint_context: access.sprintContext } as typeof baseInsert)
-        : baseInsert,
+        : scenarioVersion !== null
+          ? ({ ...baseInsert, scenario_version: scenarioVersion } as typeof baseInsert)
+          : baseInsert,
     )
     .select("*")
     .single();
 
-  if (insertRes.error && access.sprintContext && isSchemaUnavailableError(insertRes.error)) {
+  if (insertRes.error && (access.sprintContext || scenarioVersion !== null) && isSchemaUnavailableError(insertRes.error)) {
     insertRes = await serviceClient.from("tutor_sessions").insert(baseInsert).select("*").single();
   }
 
@@ -174,6 +189,7 @@ export async function POST(req: NextRequest) {
       liveToken: minted.token,
       liveModel: minted.liveModel,
       liveTokenExpiresAt: minted.expireTime,
+      contractVersion: CONTRACT_VERSION,
       persona,
       scenario,
     });
@@ -190,6 +206,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       sessionId: session.id,
       mode,
+      contractVersion: CONTRACT_VERSION,
       persona,
       scenario,
       openingEvents: opening.events,

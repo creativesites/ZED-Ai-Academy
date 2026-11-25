@@ -1,15 +1,16 @@
 "use client";
 
-import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ArrowRight, CheckCircle, Mic } from "lucide-react";
 import { Teacher } from "@/components/tutor/avatar/Teacher";
 import { DEFAULT_PERSONA_LOOK } from "@/components/tutor/avatar/types";
+import { useLiteMode } from "@/components/tutor/practice/use-lite-mode";
 import {
   TUTOR_STYLE_LABELS,
   parseTutorSessionBlock,
   type TutorScenarioView,
 } from "@/lib/tutor/tutor-session-block";
+import { academyHref, academySlugFromPath } from "@/lib/tutor/academy-href";
 
 // A tutor_session block in the lesson player. Navigates directly to the dedicated full-page
 // Practice Room route (no cramped modal overlay), passing lessonId and a back URL so the learner
@@ -22,6 +23,7 @@ export function TutorSessionBlock({
   scenario,
   done,
   isGuest = false,
+  academySlug,
 }: {
   content: Record<string, unknown>;
   lessonId?: string;
@@ -30,27 +32,32 @@ export function TutorSessionBlock({
   scenario: TutorScenarioView | undefined;
   done: boolean;
   isGuest?: boolean;
-  onComplete?: (scenarioId: string) => void;
+  /**
+   * Slug of the academy that owns the course (null: platform course). Teacher links are built from the
+   * course, not from the URL: the lesson player is /courses/[slug]/learn for every academy.
+   */
+  academySlug?: string | null;
 }) {
   const pathname = usePathname();
+  // Data saver: the light SVG teacher, so the Rive runtime is never downloaded for this card.
+  const [lite] = useLiteMode();
   const block = parseTutorSessionBlock(content);
 
   if (!block) {
     return (
       <div className="rounded-2xl border border-dashed border-slate-200 p-4 text-sm text-slate-400">
-        This AI Teacher activity is not set up yet.
+        This teaching session is not set up yet.
       </div>
     );
   }
 
   const resolvedOrigin = origin ?? (lessonId ? "lesson" : "practice");
-  const title = block.title || scenario?.title || "AI Teacher";
+  const title = block.title || scenario?.title || "Teaching session";
   const canStart = !!scenario && (resolvedOrigin === "practice" || !!lessonId);
   const persona = scenario?.persona;
   const personaName = persona ? persona.displayName ?? persona.name : null;
 
-  const tenantMatch = /^\/academy\/([^/]+)/.exec(pathname ?? "");
-  const basePath = tenantMatch ? `/academy/${tenantMatch[1]}` : "";
+  const academy = academySlug !== undefined ? academySlug : academySlugFromPath(pathname);
   const returnPath =
     pathname && lessonId && pathname.endsWith("/learn") ? `${pathname}?lesson=${lessonId}` : pathname;
   const qs = new URLSearchParams();
@@ -59,7 +66,7 @@ export function TutorSessionBlock({
   const practiceHref = scenario
     ? isGuest
       ? `/try/${scenario.id}${qs.toString() ? `?${qs.toString()}` : ""}`
-      : `${basePath}/practice/${scenario.id}${qs.toString() ? `?${qs.toString()}` : ""}`
+      : academyHref(academy, `/practice/${scenario.id}${qs.toString() ? `?${qs.toString()}` : ""}`)
     : "#";
 
   return (
@@ -69,14 +76,15 @@ export function TutorSessionBlock({
           <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-gradient-to-b from-[#1a1338] to-[#321b4e] shadow-md sm:h-16 sm:w-16 sm:rounded-2xl">
             <Teacher
               variant="bust"
+              engine={lite ? "placeholder" : undefined}
               persona={persona?.look ?? DEFAULT_PERSONA_LOOK}
               className="h-12 w-12 sm:h-16 sm:w-16"
-              label={personaName ?? "Animated AI teacher"}
+              label={personaName ?? "Your teacher"}
             />
           </div>
           <div className="min-w-0 flex-1">
             <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-cyan-700 sm:text-[11px]">
-              {personaName ? `AI Teacher · ${personaName}` : "AI Teacher"}
+              {personaName ? `Teaching session · ${personaName}` : "Teaching session"}
             </p>
             <h3 className="text-base font-bold leading-snug text-ink sm:text-xl">{title}</h3>
           </div>
@@ -113,14 +121,17 @@ export function TutorSessionBlock({
 
         <div className="flex flex-wrap items-center gap-3">
           {canStart ? (
-            <Link
+            // A plain <a>, not next/link: the session page is a full-screen app (audio unlock, Live) and
+            // in-app navigation between the lesson and the session left learners on "page not found" until a
+            // reload (both forward and on browser Back). A full page load is reliable here.
+            <a
               href={practiceHref}
               className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-brand px-5 text-sm font-bold text-white shadow-sm transition hover:bg-brand-hover sm:h-12 sm:rounded-2xl sm:px-6 sm:text-base"
             >
               <Mic className="h-4 w-4 sm:h-5 sm:w-5" />
-              {done ? "Practice again" : "Start AI Teacher"}
+              {done ? "Go again" : personaName ? `Start with ${personaName}` : "Start session"}
               <ArrowRight className="h-4 w-4" />
-            </Link>
+            </a>
           ) : (
             <button
               type="button"
@@ -128,7 +139,7 @@ export function TutorSessionBlock({
               className="inline-flex h-11 cursor-not-allowed items-center justify-center gap-2 rounded-xl bg-brand/50 px-5 text-sm font-bold text-white sm:h-12 sm:rounded-2xl sm:px-6 sm:text-base"
             >
               <Mic className="h-4 w-4 sm:h-5 sm:w-5" />
-              Start AI Teacher
+              Start session
             </button>
           )}
           {done && (

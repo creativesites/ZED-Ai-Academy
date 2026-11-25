@@ -1,7 +1,10 @@
-import { requireContentAuthor } from "@/lib/tenants/content-author-server";
+import { requireContentAuthor } from "@/lib/authz/content-author-server";
 import { auth } from "@clerk/nextjs/server";
-import { gemini } from "@/lib/ai/gemini";
-import { modelFor } from "@/lib/ai/models";
+import { aiJson } from "@/lib/ai/call";
+import { meterFor } from "@/lib/ai/meter-server";
+import { validCourseBlueprint } from "@/lib/ai/generation/parse";
+import { COURSE_BLUEPRINT_SCHEMA } from "@/lib/ai/generation/schemas";
+import type { AiContent } from "@/lib/ai/provider";
 import { NextRequest } from "next/server";
 
 type SourceFilePayload = {
@@ -66,60 +69,32 @@ Rules:
 ${brief ? `\nCreator Brief:\n${brief}` : ""}
 ${sourceText ? `\nUploaded Source Material:\n${sourceText}` : ""}`;
 
-  const contents =
+  const contents: string | AiContent[] =
     sourceFile?.base64 && sourceFile.mimeType
       ? [
           {
-            inlineData: {
-              mimeType: sourceFile.mimeType,
-              data: sourceFile.base64,
-            },
+            role: "user",
+            parts: [
+              {
+                inlineData: {
+                  mimeType: sourceFile.mimeType,
+                  data: sourceFile.base64,
+                },
+              },
+              { text: prompt },
+            ],
           },
-          { text: prompt },
         ]
       : prompt;
 
   try {
-    const response = await gemini.models.generateContent({
-      model: modelFor("courseBlueprint"),
-      contents,
-      config: {
-        systemInstruction,
-        maxOutputTokens: 1200,
-        responseMimeType: "application/json",
-      },
-    });
-
-    const raw = response.text ?? "";
-    const match = raw.match(/\{[\s\S]*\}/);
-
-    if (!match) {
-      return Response.json({ error: "Invalid blueprint response" }, { status: 500 });
-    }
-
-    const parsed = JSON.parse(match[0]) as {
-      title?: string;
-      description?: string;
-      category?: string;
-      level?: string;
-      price_type?: string;
-      audience?: string;
-      quick_win?: string;
-      capstone?: string;
-      module_outline?: string[];
-    };
-
-    if (
-      !parsed.title ||
-      !parsed.description ||
-      !parsed.category ||
-      !parsed.level ||
-      !parsed.price_type ||
-      !parsed.audience ||
-      !parsed.quick_win ||
-      !parsed.capstone ||
-      !Array.isArray(parsed.module_outline)
-    ) {
+    const { data } = await aiJson(
+      "courseBlueprint",
+      { contents, systemInstruction, responseJsonSchema: COURSE_BLUEPRINT_SCHEMA, maxOutputTokens: 1200 },
+      { meter: await meterFor(userId) },
+    );
+    const parsed = validCourseBlueprint(data);
+    if (!parsed) {
       return Response.json({ error: "Incomplete blueprint returned" }, { status: 500 });
     }
 

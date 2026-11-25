@@ -28,7 +28,7 @@ const swiperOptions = {
 
 const testimonials = [
     {
-        name: "Chanda Mwila",
+        name: "Maureen Chanda",
         role: "MARKETING MANAGER, LUSAKA",
         quote: "I finished the Prompt Engineering course in two weeks and immediately started using it at work. I now produce content in a fraction of the time — it was honestly one of the best investments I have made in my career.",
     },

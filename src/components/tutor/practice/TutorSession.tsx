@@ -8,7 +8,8 @@ import type { AvatarDriver } from "@/components/tutor/avatar/types";
 import type { TeacherStageHandle } from "@/components/tutor/avatar/TeacherStage";
 import type { TeacherEngine } from "@/components/tutor/avatar/Teacher";
 import type { AvatarEvent, PersonaLook } from "@/components/tutor/avatar/types";
-import { EventPlayer, type CardItem, type ClipEvent, type LessonRefEvent, type PlayerUI, type SaySpeechEvent } from "@/components/tutor/EventPlayer";
+import { EventPlayer, type CardItem, type CheckEvent, type ClipEvent, type LessonRefEvent, type PlayerUI, type SaySpeechEvent } from "@/components/tutor/EventPlayer";
+import type { InteractionAnswer } from "./api";
 import { boardFromEvent, choiceReply, revealBoard, type BoardState, type ConfidenceLevel } from "@/lib/tutor/board";
 import type { TutorEvent } from "@/lib/tutor/events";
 import { SCENE_ARTBOARDS, type SceneArtboard } from "@/lib/tutor/rive-driver";
@@ -19,6 +20,7 @@ import { compareResponseToTarget, type ResponseMatchResult } from "@/lib/tutor/r
 import { MAX_SPEAKING_MS, SpeakingTimeAccumulator } from "@/lib/tutor/speaking-time";
 import { deriveTurnInteraction } from "@/lib/tutor/turn-interaction";
 import { personaLookFromVariant } from "@/lib/tutor/tutor-session-block";
+import { academyHref, academySlugFromPath } from "@/lib/tutor/academy-href";
 import { VadTracker } from "@/lib/tutor/vad";
 import {
   detectMicPermission,
@@ -43,7 +45,7 @@ import { TeachingBoard, type ChoiceState } from "./TeachingBoard";
 import { TranscriptDrawer, type TranscriptEntry } from "./TranscriptDrawer";
 import { useLiteMode } from "./use-lite-mode";
 import styles from "./practice.module.css";
-import { TeacherAudio } from "./teacher-audio";
+import { TeacherVoice } from "@/components/tutor/voice/teacher-voice";
 import { useReducedMotion } from "./use-reduced-motion";
 
 // The in-session experience: start screen, the teacher on the stage, Voice (hold to talk) or Text
@@ -58,6 +60,8 @@ export type TutorSessionProps = {
   sprint?: boolean;
   sprintCourseId?: string;
   focusObjective?: string;
+  /** Comma-separated registered objective ids to seed a revision sprint with (P2-03). */
+  sprintObjectiveIds?: string;
   companyId?: string;
   /** Called with the report when the learner taps Done on the report card. */
   onExit?: (report: TutorReportContent) => void;
@@ -84,7 +88,7 @@ export type TutorSessionProps = {
 type Phase = "intro" | "starting" | "live" | "ending" | "report";
 
 type TurnInput =
-  | { kind: "text"; text: string }
+  | { kind: "text"; text: string; interaction?: InteractionAnswer }
   | { kind: "audio"; clip: RecordingResult }
   | { kind: "image"; file: File; text?: string };
 
@@ -99,6 +103,7 @@ export function TutorSession({
   sprint,
   sprintCourseId,
   focusObjective,
+  sprintObjectiveIds,
   companyId,
   onExit,
   doneHref,
@@ -123,6 +128,8 @@ export function TutorSession({
   const [micBlocked, setMicBlocked] = useState(false);
 
   const [teacherName, setTeacherName] = useState(preview?.teacherName ?? "Your teacher");
+  // The persona's TTS voice, so the report card's "Hear it" uses the same TeacherVoice as the session.
+  const [teacherVoice, setTeacherVoice] = useState<string | null>(null);
   const [sceneTitle, setSceneTitle] = useState(preview?.title ?? "Practice session");
   const [goal, setGoal] = useState(preview?.goal ?? "");
   const [maxMinutes, setMaxMinutes] = useState(preview?.maxMinutes ?? 8);
@@ -135,6 +142,9 @@ export function TutorSession({
   // Teaching surface (event contract v2).
   const [board, setBoard] = useState<BoardState | null>(null);
   const [choice, setChoice] = useState<ChoiceState | null>(null);
+  // Contract v3 (P2-04): the turn's answerable check, and whether controls may still be inferred (pre-v3 servers).
+  const [check, setCheck] = useState<CheckEvent | null>(null);
+  const [inferControls, setInferControls] = useState(true);
   const [confidence, setConfidence] = useState<{ prompt?: string } | null>(null);
   const [lessonRefs, setLessonRefs] = useState<LessonRefEvent[]>([]);
   const [clip, setClip] = useState<ClipEvent | null>(null);
@@ -180,7 +190,7 @@ export function TutorSession({
   // Refs hold what the event callbacks and the recorder need without re-creating them.
   const avatarRef = useRef<TeacherStageHandle | null>(null);
   const playerRef = useRef<EventPlayer | null>(null);
-  const audioRef = useRef<TeacherAudio | null>(null);
+  const audioRef = useRef<TeacherVoice | null>(null);
   const ambientRef = useRef<AmbientSoundscape | null>(null);
   const liveClientRef = useRef<GeminiLiveClient | null>(null);
   const recorderRef = useRef<LearnerRecorder | null>(null);
@@ -221,7 +231,7 @@ export function TutorSession({
 
   // Build the player, audio and recorder once, after mount. Cleanup cancels every timer and stream.
   useEffect(() => {
-    const teacherAudio = new TeacherAudio();
+    const teacherAudio = new TeacherVoice();
     const recorder = new LearnerRecorder();
     audioRef.current = teacherAudio;
     recorderRef.current = recorder;
@@ -284,6 +294,7 @@ export function TutorSession({
       },
       onReveal: (index) => setBoard((b) => (b ? revealBoard(b, index) : b)),
       onChoice: (question, options) => setChoice({ question, options }),
+      onCheck: (ev) => setCheck(ev),
       onConfidence: (prompt) => setConfidence({ prompt }),
       onLessonRef: (ref) => setLessonRefs((refs) => [...refs.filter((r) => r.label !== ref.label), ref].slice(-3)),
       onClip: (c) => setClip(c),
@@ -444,6 +455,7 @@ export function TutorSession({
       setTeacherSpeaking(false);
       setListenHint(null);
       setChoice(null);
+      setCheck(null);
       setConfidence(null);
       setError(null);
       setThinking(true);
@@ -486,7 +498,7 @@ export function TutorSession({
       const res = await api.turn(
         sessionId,
         input.kind === "text"
-          ? { kind: "text", text: input.text }
+          ? { kind: "text", text: input.text, ...(input.interaction ? { interaction: input.interaction } : {}) }
           : input.kind === "image"
             ? { kind: "image", file: input.file, text: input.text }
             : { kind: "audio", blob: input.clip.blob, mimeType: input.clip.mimeType },
@@ -627,6 +639,7 @@ export function TutorSession({
       sprint,
       sprintCourseId,
       focusObjective,
+      objectiveIds: sprintObjectiveIds ? sprintObjectiveIds.split(",").filter(Boolean) : undefined,
       companyId,
       micPermission: permission,
       rttMs,
@@ -663,10 +676,12 @@ export function TutorSession({
     setLastLearnerAudioUrl(null);
 
     const setupSessionUi = (started: typeof data) => {
+      setInferControls(!(typeof started.contractVersion === "number" && started.contractVersion >= 3));
       sessionIdRef.current = started.sessionId;
       personaLangRef.current = started.persona.languages?.[0] ?? "en";
       audioRef.current?.setLanguage(started.persona.languages?.[0]);
       audioRef.current?.setTtsVoice(client ? null : started.persona.voiceName ?? null);
+      setTeacherVoice(client ? null : started.persona.voiceName ?? null);
       audioRef.current?.setPronunciationGlossary(started.persona.pronunciationGlossary ?? []);
       audioRef.current?.setMuted(false);
       mutedRef.current = false;
@@ -708,6 +723,7 @@ export function TutorSession({
       setSceneOverride(null);
       setBoard(null);
       setChoice(null);
+      setCheck(null);
       setConfidence(null);
       setLessonRefs([]);
       setClip(null);
@@ -809,7 +825,7 @@ export function TutorSession({
     setPhaseBoth("live");
     await speakEvents(data.openingEvents ?? []);
     if (pendingEndRef.current) void finalize("completed");
-  }, [api, client, lite, origin, scenarioId, lessonId, assignmentId, sprint, sprintCourseId, focusObjective, companyId, setPhaseBoth, speakEvents, finalize]);
+  }, [api, client, lite, origin, scenarioId, lessonId, assignmentId, sprint, sprintCourseId, focusObjective, sprintObjectiveIds, companyId, setPhaseBoth, speakEvents, finalize]);
 
   const changeMode = (next: InputMode) => {
     if (next === modeRef.current) return;
@@ -838,6 +854,7 @@ export function TutorSession({
     audioRef.current?.unlock();
     if (liveClientRef.current && liveActive) {
       setChoice(null);
+      setCheck(null);
       setConfidence(null);
       liveClientRef.current.sendText(text);
       return;
@@ -870,7 +887,20 @@ export function TutorSession({
   const handleChoose = (option: string) => {
     playChoiceChime({ muted: mutedRef.current, volume: volumeRef.current });
     setChoice((c) => (c ? { ...c, picked: option } : c));
-    handleSendText(choiceReply(option));
+    const held = interaction.activeChoice;
+    const idx = held?.options.indexOf(option) ?? -1;
+    if (held?.checkId && idx >= 0) handleAnswer(held.checkId, idx, choiceReply(option));
+    else handleSendText(choiceReply(option));
+  };
+
+  // P2-04: the answer to a server-held check. Live has no held checks (no checkId), so it never gets here.
+  const handleAnswer = (checkId: string, value: InteractionAnswer["value"], text: string) => {
+    audioRef.current?.unlock();
+    if (liveClientRef.current && liveActive) {
+      handleSendText(text);
+      return;
+    }
+    void submitTurn({ kind: "text", text, interaction: { id: checkId, value } });
   };
 
   const handleConfidence = (level: ConfidenceLevel) => {
@@ -1131,13 +1161,12 @@ export function TutorSession({
   const navigateToSprint = useCallback(
     (objectiveText?: string) => {
       if (typeof window === "undefined") return;
-      const match = /^\/academy\/([^/]+)/.exec(window.location.pathname);
-      const base = match ? `/academy/${match[1]}` : "";
       const params = new URLSearchParams();
       if (objectiveText) params.set("focus", objectiveText);
       if (sprintCourseId) params.set("courseId", sprintCourseId);
       const qs = params.toString();
-      window.location.assign(`${base}/practice/sprint${qs ? `?${qs}` : ""}`);
+      const academy = academySlugFromPath(window.location.pathname);
+      window.location.assign(academyHref(academy, `/practice/sprint${qs ? `?${qs}` : ""}`));
     },
     [sprintCourseId],
   );
@@ -1187,6 +1216,8 @@ export function TutorSession({
             starting={phase === "starting"}
             error={error}
             onStart={() => void handleStart()}
+            lite={lite}
+            onLiteChange={setLite}
           />
         </div>
       </div>
@@ -1222,12 +1253,16 @@ export function TutorSession({
                 ? undefined
                 : (nextId) => {
                     if (typeof window === "undefined") return;
-                    const match = /^\/academy\/([^/]+)/.exec(window.location.pathname);
-                    const base = match ? `/academy/${match[1]}` : "";
-                    window.location.assign(`${base}/practice/${nextId}`);
+                    const academy = academySlugFromPath(window.location.pathname);
+                    window.location.assign(academyHref(academy, `/practice/${encodeURIComponent(nextId)}`));
                   }
             }
             onDone={handleDone}
+            teacherVoice={teacherVoice}
+            deckHref={academyHref(
+              academySlugFromPath(typeof window === "undefined" ? null : window.location.pathname),
+              "/practice/deck",
+            )}
           />
         </div>
       </div>
@@ -1246,6 +1281,8 @@ export function TutorSession({
     caption,
     listenHint,
     turnCount,
+    check,
+    inferFromContext: inferControls,
   });
 
   // TeachingBoard displays board content, clips, awards, and lesson references;
@@ -1587,6 +1624,8 @@ export function TutorSession({
             activeChoice={interaction.activeChoice}
             activeOrderChallenge={interaction.activeOrderChallenge}
             activeFillBlank={interaction.activeFillBlank}
+            activeNumeric={interaction.activeNumeric}
+            onAnswer={handleAnswer}
             showConfidence={interaction.showConfidence}
             confidencePrompt={confidence?.prompt}
             preferTextInput={interaction.preferTextInput}

@@ -282,7 +282,7 @@ export default async function LearnPage({ params, searchParams }: PageProps) {
     ? await Promise.all([
         supabase
           .from("practice_scenarios")
-          .select("id, title, goal, style, scene, max_minutes, allowed_modes, ai_personas(name, display_name, rive_variant)")
+          .select("id, title, goal, style, scene, max_minutes, allowed_modes, ai_personas(name, display_name, rive_variant, voice)")
           .in("id", tutorScenarioIds)
           .eq("status", "published"),
         userId

@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { randomUUID } from "crypto";
 import { sendCertificateIssued } from "@/lib/email/emailjs";
 import { pendingRequiredTutorScenarios } from "@/lib/tutor/server/required-tutor-blocks";
-import { getCourseVivaStatus } from "@/lib/tutor/server/viva";
+import { getCourseVivaStatus, recordVivaCertificateIssued } from "@/lib/tutor/server/viva";
 import { REQUIRED_TUTOR_HINT } from "@/lib/tutor/tutor-session-block";
 import { getLessonAccess } from "@/lib/courses/course-auth-server";
 import { BRAND } from "@/lib/brand";
@@ -98,11 +98,12 @@ export async function generateCertificate(courseId: string) {
     }
   }
 
-  // Optional per-course Certificate Viva gate (Phase 3)
+  // Per-course oral check gate (P2-08): issuance requires a pass or a staff approval. Courses that never
+  // required a viva are not blocked; a required viva never passes because of missing config or tables.
   const vivaStatus = await getCourseVivaStatus(courseId, userId);
-  if (vivaStatus.required && !vivaStatus.passed) {
+  if (vivaStatus.state !== "not_required" && !vivaStatus.passed) {
     throw new Error(
-      vivaStatus.reason ?? "You must pass the oral Certificate Viva before receiving your certificate.",
+      vivaStatus.reason ?? "You must pass the oral check before receiving your certificate.",
     );
   }
 
@@ -119,6 +120,8 @@ export async function generateCertificate(courseId: string) {
     .single();
 
   if (error) throw new Error(error.message);
+
+  await recordVivaCertificateIssued({ courseId, userId, status: vivaStatus }).catch(() => undefined);
 
   await supabase
     .from("enrollments")

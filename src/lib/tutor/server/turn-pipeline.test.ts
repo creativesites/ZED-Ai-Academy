@@ -296,3 +296,42 @@ test("Zambian local languages (bem, ny, tog) have localized fallback lines with 
     assert.ok(typeof say.translation === "string" && say.translation.length > 0);
   }
 });
+
+// ---- P2-04 / P2-06 hooks ----
+
+test("answer keys are stored and held as checks but never returned to the client", async () => {
+  const text = JSON.stringify({
+    events: [
+      { type: "say", text: "Check:" },
+      { type: "ask_choice", question: "2+2?", options: ["3", "4"], answer: ["4"], objective: "obj-1" },
+      { type: "ask_numeric", prompt: "g?", value: 9.81 },
+      { type: "ask_choice", question: "Pick", options: ["a", "b"] },
+    ],
+  });
+  const { deps, saved } = stubDeps({ text });
+  const result = await runTutorTurn(input({ idx: 2 }), deps);
+  const clientJson = JSON.stringify(result.events);
+  assert.ok(!/"answer"|"value"|"tolerance"/.test(clientJson), clientJson);
+  assert.equal(result.checks?.length, 2);
+  assert.equal(result.ungradedChecks, 1);
+  const row = saved[0] as Saved & { ungradedChecks?: number; checks?: unknown[] };
+  assert.equal(row.ungradedChecks, 1);
+  assert.equal(row.checks?.length, 2, "keys are handed to storage as held checks");
+  assert.ok(!/"answer"|"value"/.test(JSON.stringify(row.events)), "the turn row never stores keys");
+  assert.match(clientJson, /"checkId":"t2-0"/);
+});
+
+test("context extras: prelude goes first, the teacher note goes last after the learner input", () => {
+  const history: HistoryTurn[] = [{ idx: 0, learner_text: null, events: [{ type: "say", text: "Hi" }] }];
+  const contents = buildContents(history, "My answer", "Open.", { prelude: "BRIEF", teacherNote: "Do a worked example." });
+  assert.equal(contents[0].role, "user");
+  assert.equal(contents[0].parts[0].text, "BRIEF");
+  assert.equal(contents[0].parts[1].text, "(session opening)");
+  const last = contents[contents.length - 1];
+  assert.equal(last.role, "user");
+  assert.equal(last.parts[0].text, "Learner: My answer");
+  assert.match(last.parts[1].text, /^\[Teacher note: from the platform/);
+  assert.match(last.parts[1].text, /worked example/);
+  // No extras: unchanged shape.
+  assert.equal(buildContents(history, "x", "o").at(-1)?.parts.length, 1);
+});

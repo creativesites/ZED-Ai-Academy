@@ -22,30 +22,71 @@ export function NetworkStatusProvider({ children }: { children: React.ReactNode 
   const [isTesting, setIsTesting] = useState<boolean>(false);
   const [testResult, setTestResult] = useState<"success" | "fail" | null>(null);
 
-  // Synchronize initial state on mount
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      setIsOnline(navigator.onLine);
+  // navigator.onLine / the "offline" event give false negatives on many
+  // devices (VPNs, virtual adapters, Wi-Fi hand-offs, some mobile browsers).
+  // Only show the offline screen after a real request to our own server fails,
+  // and keep re-checking quietly so it closes itself when the network is back.
+  const pingServer = async (timeoutMs = 5000): Promise<boolean> => {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      const response = await fetch(`/favicon.ico?t=${Date.now()}`, {
+        method: "HEAD",
+        cache: "no-store",
+        signal: controller.signal,
+      });
+      // Any HTTP response at all means the server is reachable.
+      return response.status > 0;
+    } catch {
+      return false;
+    } finally {
+      clearTimeout(timer);
     }
-  }, []);
+  };
 
   useEffect(() => {
     if (typeof window === "undefined") return;
+    let cancelled = false;
+    let pollTimer: ReturnType<typeof setTimeout> | null = null;
 
-    const handleOnline = () => {
+    const markOnline = () => {
+      if (pollTimer) clearTimeout(pollTimer);
+      pollTimer = null;
       setIsOnline(true);
       setHasNetworkError(false);
       setNetworkErrorMessage(null);
     };
 
-    const handleOffline = () => {
+    // Confirm with two failed pings (a few seconds apart) before showing the
+    // overlay; once shown, keep polling until a ping succeeds.
+    const verifyOffline = async () => {
+      if (await pingServer()) return !cancelled && markOnline();
+      await new Promise((r) => setTimeout(r, 3000));
+      if (cancelled) return;
+      if (await pingServer()) return !cancelled && markOnline();
+      if (cancelled) return;
       setIsOnline(false);
+      const poll = async () => {
+        if (cancelled) return;
+        if (await pingServer()) return !cancelled && markOnline();
+        pollTimer = setTimeout(poll, 5000);
+      };
+      pollTimer = setTimeout(poll, 5000);
     };
+
+    const handleOnline = () => markOnline();
+    const handleOffline = () => {
+      void verifyOffline();
+    };
+
+    if (!navigator.onLine) void verifyOffline();
 
     window.addEventListener("online", handleOnline);
     window.addEventListener("offline", handleOffline);
 
     return () => {
+      cancelled = true;
+      if (pollTimer) clearTimeout(pollTimer);
       window.removeEventListener("online", handleOnline);
       window.removeEventListener("offline", handleOffline);
     };
@@ -65,29 +106,16 @@ export function NetworkStatusProvider({ children }: { children: React.ReactNode 
   const testConnection = async (): Promise<boolean> => {
     setIsTesting(true);
     setTestResult(null);
-    try {
-      // Fetch a tiny image/favicon with cache-busting to bypass network caching
-      const response = await fetch(`/favicon.ico?t=${Date.now()}`, {
-        method: "HEAD",
-        cache: "no-store",
-      });
-      
-      if (response.ok) {
-        setIsOnline(true);
-        setHasNetworkError(false);
-        setNetworkErrorMessage(null);
-        setTestResult("success");
-        setTimeout(() => setTestResult(null), 3000);
-        setIsTesting(false);
-        return true;
-      }
-      throw new Error("Ping failed");
-    } catch (e) {
-      setTestResult("fail");
-      setTimeout(() => setTestResult(null), 3000);
-      setIsTesting(false);
-      return false;
+    const ok = await pingServer();
+    if (ok) {
+      setIsOnline(true);
+      setHasNetworkError(false);
+      setNetworkErrorMessage(null);
     }
+    setTestResult(ok ? "success" : "fail");
+    setTimeout(() => setTestResult(null), 3000);
+    setIsTesting(false);
+    return ok;
   };
 
   return (

@@ -1,10 +1,8 @@
 import "server-only";
 import { createServiceClient } from "@/lib/supabase/server";
 import type { Json } from "@/types/database";
-import { modelFor } from "@/lib/ai/models";
 import { buildSystemPrompt, type TutorPromptMode } from "./prompt.ts";
-import { generateTurnJson, synthesizeCachedSpeech } from "./gemini-calls.ts";
-import { getOrCreatePromptCache } from "./prompt-cache.ts";
+import { generateTurnJson, streamTurnJson, synthesizeCachedSpeech } from "./gemini-calls.ts";
 import { applyPronunciationGlossary } from "../pronunciation.ts";
 import {
   personaPronunciationGlossary,
@@ -15,16 +13,27 @@ import {
   type TutorSessionRow,
 } from "./session-context.ts";
 import { recordUsage } from "./usage.ts";
+import { CONTRACT_VERSION, type TutorEvent } from "../contract/index.ts";
+import { isSchemaUnavailableError } from "../mastery/server";
+import type { InteractionInput } from "../runtime/interactions.ts";
+import { holdChecks } from "../runtime/server.ts";
+import { prepareRuntimeTurn, type RuntimeTurn } from "../runtime/turn-server.ts";
 import {
   DEBUG_RAW_OUTPUT_TYPE,
   fallbackLanguageFor,
   runTutorTurn,
+  type TurnGenerateRequest,
   type TurnPipelineDeps,
+  type TurnPipelineInput,
   type TurnPipelineResult,
+  type TurnUsage,
 } from "./turn-pipeline.ts";
+import { runTutorTurnStream, type TurnStreamChunk, type TurnStreamResult } from "../runtime/turn-stream.ts";
 
 // Wires the real Gemini, TTS, storage, metering and database dependencies into the turn pipeline.
-// Used by the session start route (opening turn) and the turn route.
+// Used by the session start route (opening turn) and the turn route (non-stream and ?stream=1).
+// Both paths go through the Stream F runtime (P2-04/05/06): `prepareRuntimeTurn` before (grading, policy note,
+// context window + brief + summary, shared prefix cache) and `runtime.finish` after (state, evidence, summary).
 
 export class TurnConflictError extends Error {
   constructor(idx: number) {
@@ -33,9 +42,15 @@ export class TurnConflictError extends Error {
   }
 }
 
+/** Single system instruction (prefix + learner memory). Live tokens only; Voice/Text turns use buildPromptParts. */
 export function sessionSystemPrompt(ctx: SessionContext, mode: TutorPromptMode): string {
   return buildSystemPrompt({
-    scenario: toPromptScenario(ctx.scenario),
+    // objectives: registered objectives (P2-01). roleNotes: the origin's role (the lesson `ask` dock, P1-06).
+    scenario: {
+      ...toPromptScenario(ctx.scenario),
+      objectives: ctx.objectives,
+      ...(ctx.roleNotes ? { roleNotes: ctx.roleNotes } : {}),
+    },
     persona: toPromptPersona(ctx.persona),
     skillPack: ctx.scenario.skill_pack,
     learnerProfile: ctx.learnerProfile,
@@ -44,11 +59,7 @@ export function sessionSystemPrompt(ctx: SessionContext, mode: TutorPromptMode):
   });
 }
 
-/**
- * Runs one Voice or Text turn for a session. Stores the turn, synthesizes `say` lines, and ends the
- * session in the database when the pipeline reports that it has ended.
- */
-export async function runSessionTurn(input: {
+export type SessionTurnInput = {
   ctx: SessionContext;
   idx: number;
   learnerText: string | null;
@@ -57,27 +68,30 @@ export async function runSessionTurn(input: {
   openingInstruction: string;
   /** When true, skips blocking server TTS so captions/board/choices return immediately (~1s) while the client fetches cached audio progressively via /api/tutor/tts. */
   deferTts?: boolean;
-}): Promise<TurnPipelineResult> {
+  /** P2-04: the learner's answer to a held check ({ id, value }). Graded server-side. */
+  interaction?: InteractionInput | null;
+};
+
+function modeOf(ctx: SessionContext): "voice" | "text" {
+  return ctx.session.mode === "text" ? "text" : "voice";
+}
+
+/**
+ * The real side effects of a session turn. Shared by the non-stream and the streaming turn, so both store, hold
+ * checks and meter a turn identically.
+ */
+function sessionTurnDeps(input: SessionTurnInput, runtime: RuntimeTurn): TurnPipelineDeps {
   const { ctx } = input;
   const session = ctx.session;
-  const mode = session.mode === "text" ? "text" : "voice";
   const supabase = createServiceClient();
 
-  const deps: TurnPipelineDeps = {
+  return {
     now: () => Date.now(),
     generate: async (req) => {
-      const cachedContent = await getOrCreatePromptCache(modelFor("tutorTurn"), req.systemInstruction);
+      const cachedContent = await runtime.cachedContent();
       const result = await generateTurnJson({ ...req, cachedContent });
       // Fire-and-forget usage metering so it never adds latency to the learner's turn.
-      void recordUsage({
-        companyId: session.company_id,
-        userId: session.user_id,
-        sessionId: session.id,
-        model: result.model,
-        kind: "llm",
-        units: result.totalTokens ?? 0,
-        unit: "tokens",
-      }).catch((err) => console.warn("[tutor] usage log failed:", err));
+      meterTurnTokens(session, result.model, result.totalTokens);
       return result;
     },
     synthesize: async (text, voice) => {
@@ -104,39 +118,131 @@ export async function runSessionTurn(input: {
       const stored: unknown[] = turn.rawOutput
         ? [...turn.events, { type: DEBUG_RAW_OUTPUT_TYPE, raw: turn.rawOutput }]
         : turn.events;
-      const { error } = await supabase.from("tutor_turns").insert({
+      const row = {
         session_id: session.id,
         idx: turn.idx,
         learner_text: turn.learnerText,
         events: stored as unknown as Json,
         latency_ms: turn.latencyMs,
-      });
+      };
+      // P2-04/05/06 telemetry columns (migration 20261125000400); before it is applied, fall back step by step.
+      const telemetry = {
+        policy_move: runtime.policyMove,
+        input_tokens: turn.usage?.inputTokens ?? null,
+        output_tokens: turn.usage?.outputTokens ?? null,
+        cached_tokens: turn.usage?.cachedTokens ?? null,
+        ungraded_checks: turn.ungradedChecks ?? 0,
+      };
+      const turns = supabase.from("tutor_turns") as unknown as {
+        insert: (r: Record<string, unknown>) => PromiseLike<{ error: { code?: string; message: string } | null }>;
+      };
+      let { error } = await turns.insert({ ...row, contract_version: CONTRACT_VERSION, ...telemetry });
+      if (error && isSchemaUnavailableError(error)) {
+        ({ error } = await supabase.from("tutor_turns").insert({ ...row, contract_version: CONTRACT_VERSION }));
+      }
+      // Before the contract_version migration is applied, store the turn without it.
+      if (error && isSchemaUnavailableError(error)) ({ error } = await supabase.from("tutor_turns").insert(row));
       if (error) {
         if (error.code === "23505") throw new TurnConflictError(turn.idx);
         throw new Error(`could not store turn: ${error.message}`);
       }
+      // Answer keys are held server-side, never in the turn row. Not held ⇒ the reply is judged by the teacher.
+      if (turn.checks?.length) await holdChecks(session.id, turn.checks);
     },
   };
+}
 
-  const result = await runTutorTurn(
-    {
-      sessionStartedAtMs: Date.parse(session.started_at),
-      maxMinutes: ctx.scenario.max_minutes,
-      idx: input.idx,
-      learnerText: input.learnerText,
-      learnerAudio: input.learnerAudio,
-      learnerImage: input.learnerImage,
-      openingInstruction: input.openingInstruction,
-      systemInstruction: sessionSystemPrompt(ctx, mode),
-      voice: personaVoiceName(ctx.persona),
-      history: ctx.history,
-      fallbackLanguage: fallbackLanguageFor(ctx.skillLanguage ?? ctx.profileLanguage),
+function meterTurnTokens(session: TutorSessionRow, model: string, totalTokens: number | undefined): void {
+  void recordUsage({
+    companyId: session.company_id,
+    userId: session.user_id,
+    sessionId: session.id,
+    model,
+    kind: "llm",
+    units: totalTokens ?? 0,
+    unit: "tokens",
+  }).catch((err) => console.warn("[tutor] usage log failed:", err));
+}
+
+/** The same pipeline input for both paths: the runtime's prefix, window, prelude and teacher note. */
+function pipelineInput(input: SessionTurnInput, runtime: RuntimeTurn): TurnPipelineInput {
+  const { ctx } = input;
+  return {
+    sessionStartedAtMs: Date.parse(ctx.session.started_at),
+    maxMinutes: ctx.scenario.max_minutes,
+    idx: input.idx,
+    learnerText: runtime.learnerText,
+    learnerAudio: input.learnerAudio,
+    learnerImage: input.learnerImage,
+    openingInstruction: input.openingInstruction,
+    systemInstruction: runtime.systemInstruction,
+    voice: personaVoiceName(ctx.persona),
+    history: runtime.history,
+    context: runtime.context,
+    fallbackLanguage: fallbackLanguageFor(ctx.skillLanguage ?? ctx.profileLanguage),
+  };
+}
+
+function prepareRuntime(input: SessionTurnInput): Promise<RuntimeTurn> {
+  // [Stream F runtime] grading, session state + teaching policy, context window, shared cache (P2-04/05/06).
+  return prepareRuntimeTurn({
+    ctx: input.ctx,
+    mode: modeOf(input.ctx),
+    learnerText: input.learnerText,
+    interaction: input.interaction,
+  });
+}
+
+/**
+ * Runs one Voice or Text turn for a session. Stores the turn, synthesizes `say` lines, and ends the
+ * session in the database when the pipeline reports that it has ended.
+ */
+export async function runSessionTurn(input: SessionTurnInput): Promise<TurnPipelineResult> {
+  const runtime = await prepareRuntime(input);
+  const result = await runTutorTurn(pipelineInput(input, runtime), sessionTurnDeps(input, runtime));
+  await runtime.finish(result);
+  if (result.ended) await endSession(input.ctx.session);
+  return result;
+}
+
+/**
+ * The streaming twin of `runSessionTurn` (P1-05): same runtime, prompt, storage, held checks, TTS and metering;
+ * each event is handed to `onEvent` (keys already stripped) as soon as the model has written it. Usage is metered
+ * once the stream ends (or breaks).
+ */
+export async function runSessionTurnStream(
+  input: SessionTurnInput & { onEvent: (event: TutorEvent) => void },
+): Promise<TurnStreamResult> {
+  const session = input.ctx.session;
+  const runtime = await prepareRuntime(input);
+  const deps = {
+    ...sessionTurnDeps(input, runtime),
+    generateStream: async (req: TurnGenerateRequest) => {
+      const cachedContent = await runtime.cachedContent();
+      const opened = await streamTurnJson({ ...req, cachedContent });
+      return meteredTextStream(opened.stream, (usage) => meterTurnTokens(session, opened.model, usage?.totalTokens));
     },
-    deps,
-  );
-
+  };
+  const result = await runTutorTurnStream(pipelineInput(input, runtime), deps, input.onEvent);
+  await runtime.finish(result);
   if (result.ended) await endSession(session);
   return result;
+}
+
+/** Yields each chunk (text + last usage) and meters the last usage seen once the stream ends, breaks or is abandoned. */
+async function* meteredTextStream(
+  stream: AsyncIterable<{ text: string; usage?: TurnUsage & { totalTokens?: number } }>,
+  report: (usage: (TurnUsage & { totalTokens?: number }) | undefined) => void,
+): AsyncGenerator<TurnStreamChunk> {
+  let usage: (TurnUsage & { totalTokens?: number }) | undefined;
+  try {
+    for await (const chunk of stream) {
+      if (chunk.usage) usage = chunk.usage;
+      yield chunk.usage ? { text: chunk.text, usage: chunk.usage } : { text: chunk.text };
+    }
+  } finally {
+    report(usage);
+  }
 }
 
 /** Marks an active session completed. Leaves other statuses alone. */

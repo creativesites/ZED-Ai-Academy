@@ -1,7 +1,9 @@
 import { auth } from "@clerk/nextjs/server";
 import { createClient } from "@/lib/supabase/server";
-import { gemini } from "@/lib/ai/gemini";
-import { modelFor } from "@/lib/ai/models";
+import { aiCall } from "@/lib/ai/call";
+import { parseModelJson } from "@/lib/ai/json";
+import { validLessonBlocks } from "@/lib/ai/generation/parse";
+import { ZEDAI_TENANT_ID } from "@/lib/tenants/constants";
 import { NextRequest } from "next/server";
 import { getCourseDomainPreset } from "@/lib/course-domain-presets";
 import { canManageCourse } from "@/lib/courses/course-auth-server";
@@ -44,8 +46,8 @@ export async function POST(req: NextRequest) {
 
   const supabase = createClient();
 
-  const { allowed } = await canManageCourse(supabase, courseId, userId);
-  if (!allowed) {
+  const { allowed, course: owned } = await canManageCourse(supabase, courseId, userId);
+  if (!allowed || !owned) {
     return Response.json({ error: "Unauthorized" }, { status: 403 });
   }
 
@@ -126,18 +128,14 @@ Return ONLY a valid JSON object:
 }`;
 
   try {
-    const response = await gemini.models.generateContent({
-      model: modelFor("lessonContent"),
-      contents: prompt,
-      config: { maxOutputTokens: 3500, responseMimeType: "application/json" },
-    });
-
-    const raw = response.text ?? "";
-    const match = raw.match(/\{[\s\S]*\}/);
-    if (!match) return Response.json({ error: "Invalid AI response" }, { status: 500 });
-
-    const { blocks } = JSON.parse(match[0]);
-    if (!Array.isArray(blocks) || blocks.length === 0) {
+    // Block content depends on the block type, so this stays JSON mode (no schema) with the tolerant parser.
+    const response = await aiCall(
+      "lessonContent",
+      { contents: prompt, json: true, maxOutputTokens: 3500 },
+      { meter: { companyId: owned.company_id ?? ZEDAI_TENANT_ID, userId } },
+    );
+    const blocks = validLessonBlocks(parseModelJson(response.text));
+    if (!blocks) {
       return Response.json({ error: "No blocks generated" }, { status: 500 });
     }
 

@@ -93,15 +93,27 @@ export function buildRevisionSprintScenario(input: {
   weakObjectives: ReadonlyArray<Pick<MasteryCandidate, "objectiveText" | "level">>;
   courseTitle?: string | null;
   focusObjective?: string | null;
+  /**
+   * Registered objectives the learner asked to go through (quiz result CTA, P2-03). They come first and
+   * their beats ask the teacher to cite the objective id in note_evidence.
+   */
+  seededObjectives?: ReadonlyArray<{ id: string; text: string }>;
 }): Scenario {
-  const ordered = [...input.weakObjectives]
-    .map((o) => ({
-      objectiveText: o.objectiveText.trim(),
-      level: o.level,
-    }))
+  const seeded = (input.seededObjectives ?? [])
+    .map((o) => ({ objectiveText: o.text.trim(), level: 0, objectiveId: o.id as string | undefined }))
     .filter((o) => o.objectiveText.length > 0);
+  const seededTexts = new Set(seeded.map((o) => o.objectiveText.toLowerCase()));
+  const ordered: Array<{ objectiveText: string; level: number; objectiveId?: string }> = [
+    ...seeded,
+    ...[...input.weakObjectives]
+      .map((o) => ({
+        objectiveText: o.objectiveText.trim(),
+        level: o.level,
+      }))
+      .filter((o) => o.objectiveText.length > 0 && !seededTexts.has(o.objectiveText.toLowerCase())),
+  ];
 
-  if (input.focusObjective?.trim()) {
+  if (seeded.length === 0 && input.focusObjective?.trim()) {
     const focus = input.focusObjective.trim();
     const existingIdx = ordered.findIndex(
       (o) => o.objectiveText.toLowerCase() === focus.toLowerCase(),
@@ -132,7 +144,8 @@ export function buildRevisionSprintScenario(input: {
     goal:
       `Quick 90-second check on "${obj.objectiveText}": ` +
       `show one short worked clue on the board, ask the learner to solve or explain it, ` +
-      `record note_evidence (objective="${obj.objectiveText}"), and resolve any misconception before advancing.`,
+      `record note_evidence (objective="${"objectiveId" in obj && obj.objectiveId ? obj.objectiveId : obj.objectiveText}"), ` +
+      `and resolve any misconception before advancing.`,
     targetItems: [obj.objectiveText],
   }));
 
@@ -171,15 +184,43 @@ export function buildDailyPlan(input: {
   weakObjectives: ReadonlyArray<MasteryCandidate>;
   unfinishedLessons: ReadonlyArray<DailyPlanLessonCandidate>;
   untriedFlows: ReadonlyArray<DailyPlanFlowCandidate>;
+  /**
+   * Scheduler output (P2-07, `loadDueReviews`). When available it replaces the "3 weakest" sprint item: the
+   * revision item appears only when something is due. Absent / unavailable → legacy weak-objective item.
+   */
+  dueReviews?: {
+    available: boolean;
+    count: number;
+    label: string | null;
+    href: string;
+    estimatedMinutes: number;
+    objectives: ReadonlyArray<{ text: string }>;
+  } | null;
 }): DailyPlanItem[] {
   const base = (input.basePath ?? "").replace(/\/$/, "");
   const items: DailyPlanItem[] = [];
 
-  const weak = selectWeakObjectives(
-    input.weakObjectives.filter((o) => o.level <= 2),
-    3,
-  );
-  if (weak.length > 0) {
+  const due = input.dueReviews?.available ? input.dueReviews : null;
+  const weak = due
+    ? []
+    : selectWeakObjectives(
+        input.weakObjectives.filter((o) => o.level <= 2),
+        3,
+      );
+  if (due && due.count > 0) {
+    const minutes = Math.max(1, Math.min(due.estimatedMinutes || 5, 15));
+    const texts = due.objectives.map((o) => o.text).filter((t) => t.trim().length > 0);
+    items.push({
+      id: "daily-revision",
+      kind: "revision_sprint",
+      title: `${minutes}-min revision with ${input.teacherName}`,
+      subtitle: texts.length > 0 ? `${due.label ?? "Reviews due"}, starting with ${texts[0]}` : (due.label ?? "Reviews due"),
+      durationMinutes: minutes,
+      objectiveTexts: texts,
+      ctaLabel: "Start revision",
+      href: due.href,
+    });
+  } else if (weak.length > 0) {
     const firstCourseId = weak.find((w) => w.courseId)?.courseId;
     const sprintHref = firstCourseId
       ? `${base}/practice/sprint?courseId=${encodeURIComponent(firstCourseId)}`
@@ -273,4 +314,33 @@ export function isPlanScenarioVisible(
     default:
       return false;
   }
+}
+
+const OBJECTIVE_ID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** `?objectives=id1,id2` → comma-joined valid uuids (max 5), or undefined. Server re-checks tenant/course. */
+export function parseObjectiveIdsParam(raw: string | string[] | undefined | null): string | undefined {
+  const value = Array.isArray(raw) ? raw.join(",") : (raw ?? "");
+  const ids = Array.from(
+    new Set(
+      value
+        .split(",")
+        .map((s) => s.trim().toLowerCase())
+        .filter((s) => OBJECTIVE_ID_RE.test(s)),
+    ),
+  ).slice(0, 5);
+  return ids.length > 0 ? ids.join(",") : undefined;
+}
+
+/** Revision sprint href seeded with objective ids (quiz result CTA). basePath is "" or "/academy/<slug>". */
+export function revisionSprintHref(input: {
+  basePath?: string | null;
+  courseId: string;
+  objectiveIds: ReadonlyArray<string>;
+}): string {
+  const base = (input.basePath ?? "").replace(/\/$/, "");
+  const ids = parseObjectiveIdsParam(input.objectiveIds.join(","));
+  const params = new URLSearchParams({ courseId: input.courseId });
+  if (ids) params.set("objectives", ids);
+  return `${base}/practice/sprint?${params.toString()}`;
 }

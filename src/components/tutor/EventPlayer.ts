@@ -11,6 +11,8 @@ export type BoardEvent = Extract<TutorEvent, { type: "show_board" }>;
 export type ClipEvent = Extract<TutorEvent, { type: "play_clip" }>;
 export type LessonRefEvent = Extract<TutorEvent, { type: "show_lesson_ref" }>;
 export type EvidenceEvent = Extract<TutorEvent, { type: "note_evidence" }>;
+/** Contract v3 answerable checks (keys already stripped by the server). */
+export type CheckEvent = Extract<TutorEvent, { type: "ask_choice" | "ask_order" | "ask_fill" | "ask_numeric" }>;
 
 export interface PlayerUI {
   onCaption(text: string, romanization?: string, translation?: string): void;
@@ -26,6 +28,8 @@ export interface PlayerUI {
   /** Reveal up to `index`, or the next item when undefined. */
   onReveal?(index?: number): void;
   onChoice?(question: string, options: string[]): void;
+  /** Any answerable check (v3), including ask_choice; carries the server `checkId` when the key is held. */
+  onCheck?(check: CheckEvent): void;
   onConfidence?(prompt?: string): void;
   onLessonRef?(ref: LessonRefEvent): void;
   onClip?(clip: ClipEvent): void;
@@ -228,6 +232,15 @@ export class EventPlayer {
         this.avatar.lookAt(0, 0);
         this.avatar.setListening(true);
         this.ui.onChoice?.(ev.question, ev.options);
+        this.ui.onCheck?.(ev);
+        return true;
+
+      case "ask_order":
+      case "ask_fill":
+      case "ask_numeric":
+        this.avatar.lookAt(0, 0);
+        this.avatar.setListening(true);
+        this.ui.onCheck?.(ev);
         return true;
 
       case "ask_confidence":

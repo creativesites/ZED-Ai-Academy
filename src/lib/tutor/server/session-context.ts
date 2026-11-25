@@ -5,7 +5,13 @@ import type { Database } from "@/types/database";
 import { DEFAULT_TEACHER_NAME } from "../course-teacher.ts";
 import { loadSessionMemoryNotes, loadWeakMasteryRows } from "../mastery/server.ts";
 import { buildRevisionSprintScenario } from "../mastery/sprint.ts";
+import { applySnapshot } from "../authoring/versions.ts";
+import { loadScenarioSnapshot } from "../authoring/versions-server.ts";
+import type { ObjectiveRef } from "../learner/objectives.ts";
+import { loadScenarioObjectiveRefs } from "../learner/objectives-server.ts";
 import { parseMemory } from "../memory.ts";
+import { withLearnerBrief } from "../learner/memory-server.ts";
+import { loadAskContext } from "./ask-server.ts";
 import { parsePronunciationGlossary, type PronunciationEntry } from "../pronunciation.ts";
 import { profileLanguage } from "../progress.ts";
 import { skillPackLanguage, type SkillPackLanguage } from "../skill-packs.ts";
@@ -77,6 +83,10 @@ export type SessionContext = {
   learnerProfile: PromptLearnerProfile;
   lessonText: string;
   history: HistoryTurn[];
+  /** Registered objectives this session teaches (P2-01): listed in the prompt, cited by note_evidence. */
+  objectives: ObjectiveRef[];
+  /** Origin-specific role for the teacher (the lesson `ask` dock, P1-06). Unset for flow and sprint sessions. */
+  roleNotes?: string | null;
 };
 
 type SprintContextSnapshot = {
@@ -84,6 +94,8 @@ type SprintContextSnapshot = {
   courseId?: string | null;
   courseTitle?: string | null;
   focusObjective?: string | null;
+  /** Registered objectives a seeded revision session targets (e.g. from a quiz result). */
+  objectives?: Array<{ id?: unknown; code?: unknown; text?: unknown }> | null;
   personaId?: string | null;
   teacherName?: string | null;
   scenario?: {
@@ -186,6 +198,8 @@ export async function loadSessionContext(
   let scenario: ScenarioRow;
   let persona: PersonaRow;
   let courseId: string | null = null;
+  let objectives: ObjectiveRef[] = [];
+  let roleNotes: string | null = null;
 
   if (session.scenario_id) {
     const { data: scenarioRow, error: scenarioError } = await supabase
@@ -194,14 +208,29 @@ export async function loadSessionContext(
       .eq("id", session.scenario_id)
       .single();
     if (scenarioError || !scenarioRow) throw new Error("scenario not found for session");
-    scenario = scenarioRow;
+    // Run the flow version pinned at session start, not whatever the live row says now (P1-04).
+    // Unpinned sessions, or a missing snapshot, fall back to the live row as before.
+    const snapshot = await loadScenarioSnapshot(supabase, session.scenario_id, session.scenario_version);
+    scenario = applySnapshot(scenarioRow, snapshot);
     courseId = scenario.course_id ?? null;
 
-    const { data: personaRow, error: personaError } = scenario.persona_id
+    let { data: personaRow, error: personaError } = scenario.persona_id
       ? await supabase.from("ai_personas").select("*").eq("id", scenario.persona_id).single()
       : { data: null, error: new Error("scenario has no persona") };
+    // A pinned version may name a persona deleted since; fall back to the flow's current persona.
+    if ((personaError || !personaRow) && scenarioRow.persona_id && scenarioRow.persona_id !== scenario.persona_id) {
+      ({ data: personaRow, error: personaError } = await supabase
+        .from("ai_personas")
+        .select("*")
+        .eq("id", scenarioRow.persona_id)
+        .single());
+    }
     if (personaError || !personaRow) throw new Error("persona not found for scenario");
     persona = personaRow;
+  } else if (session.origin === "ask") {
+    // Lesson Ask dock (P1-06): no authored flow; scenario and role come from the lesson.
+    const ask = await loadAskContext(supabase, session, (db, companyId) => resolveDefaultPersona(db, companyId));
+    ({ scenario, persona, courseId, roleNotes } = ask);
   } else {
     // Synthetic Revision Sprint session (scenario_id = null).
     const rawSprint =
@@ -209,6 +238,7 @@ export async function loadSessionContext(
       sprintFallback ??
       null;
     courseId = rawSprint?.courseId ?? null;
+    objectives = sprintObjectiveRefs(rawSprint?.objectives);
     persona = await resolveDefaultPersona(supabase, session.company_id, rawSprint?.personaId ?? null);
     const teacherName = rawSprint?.teacherName ?? persona.display_name ?? persona.name ?? DEFAULT_TEACHER_NAME;
 
@@ -291,6 +321,9 @@ export async function loadSessionContext(
   const skillLanguage = skillPackLanguage(scenario.skill_pack);
   const language = profileLanguage(skillLanguage, persona.languages);
 
+  const scenarioObjectivesPromise = session.scenario_id
+    ? loadScenarioObjectiveRefs({ client: supabase, scenarioId: session.scenario_id, companyId: session.company_id })
+    : null;
   const [{ data: profile }, { data: blocks }, { data: turns }] = await Promise.all([
     supabase
       .from("learner_language_profiles")
@@ -313,6 +346,8 @@ export async function loadSessionContext(
       .order("idx", { ascending: true }),
   ]);
 
+  if (scenarioObjectivesPromise) objectives = await scenarioObjectivesPromise;
+
   const memory = parseMemory(profile?.memory);
   const memoryNotes = await loadSessionMemoryNotes({
     supabase,
@@ -329,12 +364,27 @@ export async function loadSessionContext(
     courseId,
     skillLanguage,
     profileLanguage: language,
-    learnerProfile: {
-      levelEstimate: profile?.level_estimate ?? scenario.level ?? null,
-      recentMistakes: memory.recentMistakes,
-      memoryNotes,
-    },
+    // [P1-07 learner brief] One call: adds the fenced learner brief from learner_memories; returns the
+    // legacy profile unchanged when the memory schema is unavailable.
+    learnerProfile: await withLearnerBrief(
+      {
+        levelEstimate: profile?.level_estimate ?? scenario.level ?? null,
+        recentMistakes: memory.recentMistakes,
+        memoryNotes,
+      },
+      { supabase, userId: session.user_id, companyId: session.company_id, courseId },
+    ),
     lessonText: blocksToText(blocks ?? [], { maxChars: LESSON_CONTEXT_MAX_CHARS }),
     history: (turns ?? []).map((t) => ({ idx: t.idx, learner_text: t.learner_text, events: t.events })),
+    objectives,
+    roleNotes,
   };
+}
+
+function sprintObjectiveRefs(raw: SprintContextSnapshot["objectives"]): ObjectiveRef[] {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .filter((o): o is { id: string; code?: unknown; text: string } => typeof o?.id === "string" && typeof o?.text === "string")
+    .slice(0, 12)
+    .map((o) => ({ id: o.id, code: typeof o.code === "string" ? o.code : null, text: o.text }));
 }

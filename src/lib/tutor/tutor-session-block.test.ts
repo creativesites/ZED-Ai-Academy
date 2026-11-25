@@ -7,6 +7,7 @@ import {
   scenarioViewFromRow,
   sceneFromValue,
   tutorSessionBlockSchema,
+  voiceNameFromPersonaVoice,
 } from "./tutor-session-block.ts";
 
 const ID = "7a1e0000-0000-4000-8000-000000000101";
@@ -129,6 +130,35 @@ test("scenarioViewFromRow maps a joined row and falls back on unknown values", (
   assert.equal(fallback.maxMinutes, 8);
   assert.deepEqual(fallback.modes, ["voice", "text"]);
   assert.equal(fallback.persona, null);
+});
+
+test("scenarioViewFromRow reads the persona's TTS voice when selected", () => {
+  const row = {
+    id: ID,
+    title: "x",
+    goal: "y",
+    style: null,
+    scene: null,
+    max_minutes: null,
+    allowed_modes: null,
+  };
+  const withVoice = scenarioViewFromRow({
+    ...row,
+    ai_personas: { name: "Tinashe", display_name: null, rive_variant: {}, voice: { provider: "gemini", voiceName: "Puck" } },
+  });
+  assert.equal(withVoice.persona?.voiceName, "Puck");
+  const noVoice = scenarioViewFromRow({ ...row, ai_personas: { name: "T", display_name: null, rive_variant: {} } });
+  assert.equal(noVoice.persona?.voiceName, null);
+});
+
+test("voiceNameFromPersonaVoice accepts only a plain voice name", () => {
+  assert.equal(voiceNameFromPersonaVoice({ voiceName: " Kore " }), "Kore");
+  assert.equal(voiceNameFromPersonaVoice({ voiceName: "" }), null);
+  assert.equal(voiceNameFromPersonaVoice({ voiceName: "<script>" }), null);
+  assert.equal(voiceNameFromPersonaVoice({ voiceName: 3 }), null);
+  assert.equal(voiceNameFromPersonaVoice(["Puck"]), null);
+  assert.equal(voiceNameFromPersonaVoice(null), null);
+  assert.equal(voiceNameFromPersonaVoice("Puck"), null);
 });
 
 test("overlayModes drops live and falls back to voice and text", () => {

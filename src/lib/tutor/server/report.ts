@@ -18,9 +18,15 @@ import {
   type TutorReportContent,
 } from "../report-model.ts";
 import { generateReportJson } from "./gemini-calls.ts";
+import { loose } from "../learner/loose-db.ts";
 import { loadSessionContext, type TutorSessionRow } from "./session-context.ts";
 import { recordUsage } from "./usage.ts";
 import { localDateString } from "../progress.ts";
+import {
+  recordLearnerHabits,
+  saveMisconceptionMemories,
+  summariseSessionMemories,
+} from "../learner/memory-server.ts";
 import { evaluateVivaOutcome } from "../viva.ts";
 
 // Database and model wiring for finalizeSessionCore. The sequencing and the idempotency rules
@@ -38,6 +44,11 @@ export type FinalizeInput = {
   learnerSpeakingMs: number;
   teacherSpeakingMs: number;
   status: "completed" | "abandoned";
+  /**
+   * Schedules work after the response (the route passes next/server `after`). Used for the P1-07 memory
+   * summariser, which runs only for the request that created the report. Omitted ⇒ no summariser.
+   */
+  schedule?: (job: () => Promise<unknown>) => void;
 };
 
 export type FinalizeResult = { report: FinalizedReportPayload; created: boolean };
@@ -222,6 +233,17 @@ export async function finalizeTutorSession(input: FinalizeInput): Promise<Finali
       refinedObjectives = summarizeSessionObjectives(evidence, updated);
       return updated;
     },
+    // P1-07: mistakes become misconception memories (legacy profile memory frozen once this succeeds).
+    saveMisconceptionMemories: (mistakes: LearnerMistake[]) =>
+      saveMisconceptionMemories({
+        companyId: session.company_id,
+        userId: session.user_id,
+        courseId: ctx.courseId,
+        sessionId,
+        mistakes,
+      }),
+    // P1-07: one streak per person across all subjects (learner_habits).
+    recordHabits: (h) => recordLearnerHabits({ userId: session.user_id, today: h.today, practiceMs: h.practiceMs }),
     onSideEffectError: (step, err) => {
       console.error(`[tutor/report] post-claim side effect "${step}" failed for session ${sessionId}:`, err);
     },
@@ -239,6 +261,7 @@ export async function finalizeTutorSession(input: FinalizeInput): Promise<Finali
       scenarioGoal: ctx.scenario.goal,
       courseId: ctx.courseId,
       scenarioId: session.scenario_id,
+      objectives: ctx.objectives,
       skillLanguage: ctx.skillLanguage,
       profileLanguage: ctx.profileLanguage,
       liveModel: modelFor("tutorLive"),
@@ -247,8 +270,30 @@ export async function finalizeTutorSession(input: FinalizeInput): Promise<Finali
     deps,
   );
 
+  if (result.created && input.schedule) {
+    const turns = ctx.history;
+    input.schedule(() =>
+      summariseSessionMemories({
+        companyId: session.company_id,
+        userId: session.user_id,
+        sessionId,
+        courseId: ctx.courseId,
+        turns,
+      }),
+    );
+  }
+
   if (result.created && refinedObjectives && refinedObjectives.length > 0) {
     result.report = { ...result.report, objectives: refinedObjectives };
+    // P2-02: the report was claimed before mastery was written, so its stored objective levels were
+    // provisional. Store the levels read back from the database so the stored and live reports agree.
+    const { error: objectivesError } = await loose(supabase)
+      .from("tutor_reports")
+      .update({ objectives: refinedObjectives })
+      .eq("session_id", sessionId);
+    if (objectivesError && !isSchemaUnavailableError(objectivesError)) {
+      console.warn(`[tutor/report] could not store final objective levels for session ${sessionId}:`, objectivesError.message);
+    }
   }
   if (recommendedNext) {
     result.report = { ...result.report, nextScenario: recommendedNext };

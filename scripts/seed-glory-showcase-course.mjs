@@ -72,7 +72,7 @@ async function run() {
       course_id: COURSE_ID,
       lesson_id: LES.l2,
       persona_id: PERSONA_MWILA_ID,
-      title: "Prompt Makeover Lab with Mwila",
+      title: "Prompt Makeover Lab with Maureen",
       goal: "Transform a vague everyday work request into a crisp, executive-ready R.C.T.F. (Role, Context, Task, Format) prompt in 3 interactive turns using side-by-side board comparisons and quick choices.",
       skill_pack: "general-tutor",
       level: "Beginner · Interactive",
@@ -148,8 +148,8 @@ async function run() {
       course_id: COURSE_ID,
       lesson_id: LES.l6,
       persona_id: PERSONA_MWILA_ID,
-      title: "Executive AI Pitch Roleplay with Mwila",
-      goal: "Roleplay pitching a 2-week AI workflow pilot to Mwila (acting as a sharp Operations Director), defending time saved, Traffic-Light data privacy, and human-in-the-loop review.",
+      title: "Executive AI Pitch Roleplay with Maureen",
+      goal: "Roleplay pitching a 2-week AI workflow pilot to Maureen (acting as a sharp Operations Director), defending time saved, Traffic-Light data privacy, and human-in-the-loop review.",
       skill_pack: "general-tutor",
       level: "Capstone · Roleplay",
       style: "scene",
@@ -191,7 +191,7 @@ async function run() {
       slug: COURSE_SLUG,
       title: "Practical AI & Productivity Mastery: Work 3× Smarter in 60 Minutes",
       description:
-        "A free, open, zero-login showcase course from Glory Academy. Learn the R.C.T.F. prompt formula, build repeatable no-code AI workflows, calculate real ROI with live formula sliders, master AI privacy guardrails, and practice face-to-face with our 3D & 2D AI Teachers.",
+        "A free course from Glory Academy — no sign-up needed. Learn the R.C.T.F. prompt formula, build repeatable no-code AI workflows, calculate the real time and money AI saves you with live sliders, master AI privacy guardrails, and practise face-to-face with friendly AI teachers who talk, write on the board and give you feedback.",
       thumbnail_url:
         "https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&w=1200&q=80",
       category: "AI & Productivity",
@@ -253,7 +253,7 @@ async function run() {
       {
         type: "learning_objectives",
         content: {
-          title: "What You Will Master in This Showcase Course",
+          title: "What You Will Master in This Course",
           objectives: [
             "Explain how Large Language Models actually generate answers — and why clear context beats clever tricks.",
             "Write executive-grade prompts in 30 seconds using the 4-part R.C.T.F. framework.",
@@ -328,7 +328,7 @@ async function run() {
           points: [
             "AI predicts the most likely continuation of your input — vague prompts create generic outputs.",
             "Give AI the same briefing you would give a capable teammate on Day 1.",
-            "Click 'Ask Mwila' in the top bar anytime to ask questions about this lesson without leaving the page.",
+            "Tap the Ask button at the top of any lesson to ask questions about this lesson without leaving the page.",
           ],
         },
       },
@@ -410,9 +410,9 @@ MY ROUGH NOTES:
         type: "tutor_session",
         content: {
           scenarioId: SCEN.promptMakeover,
-          title: "Interactive Lab: Prompt Makeover with Mwila",
+          title: "Interactive Lab: Prompt Makeover with Maureen",
           intro:
-            "Step into the live AI Studio with Mwila (try switching seamlessly between 2D Rive and 3D WebGL in the top bar!). You'll pick a real work task and transform a weak prompt into a sharp R.C.T.F. prompt together.",
+            "Step into the live AI Studio with Maureen. You'll pick a real work task and transform a weak prompt into a sharp R.C.T.F. prompt together.",
           style: "guided_lesson",
           required: false,
         },
@@ -526,9 +526,9 @@ MY ROUGH NOTES:
         type: "tutor_session",
         content: {
           scenarioId: SCEN.roiSandbox,
-          title: "3D Studio Lab: Live Formula Sliders & Workflow Charts with Tinashe",
+          title: "Live Lab: Formula Sliders & Workflow Charts with Tinashe",
           intro:
-            "Launch Tinashe's 3D WebGL classroom (and test seamless 3D ↔ 2D Rive switching!). Tinashe puts a live interactive Formula Sandbox on the board so you can drag sliders for Hours/Week and Hourly Rate, plus switch between Bar, Line, and Donut charts.",
+            "Join Tinashe in the classroom. Tinashe puts a live interactive Formula Sandbox on the board so you can drag sliders for Hours/Week and Hourly Rate, plus switch between Bar, Line, and Donut charts.",
           style: "guided_lesson",
           required: false,
         },
@@ -650,16 +650,16 @@ MY ROUGH NOTES:
             "Privacy & Quality Guardrails (Traffic-Light rule + human sign-off step).",
           ],
           assessment:
-            "Test your pitch live with Mwila in the Executive Pitch Roleplay right below — she will score your clarity, ROI logic, and privacy readiness!",
+            "Test your pitch live with Maureen in the Executive Pitch Roleplay right below — she will score your clarity, ROI logic, and privacy readiness!",
         },
       },
       {
         type: "tutor_session",
         content: {
           scenarioId: SCEN.pitchRoleplay,
-          title: "Capstone Roleplay: Pitch Your AI Workflow to Mwila",
+          title: "Capstone Roleplay: Pitch Your AI Workflow to Maureen",
           intro:
-            "Ready to put it all together? Mwila plays a sharp Operations Director reviewing your AI pilot pitch. Speak or tap your replies, export your Markdown Study Notes at the end, and see your personalized feedback report!",
+            "Ready to put it all together? Maureen plays a sharp Operations Director reviewing your AI pilot pitch. Speak or tap your replies, export your Markdown Study Notes at the end, and see your personalized feedback report!",
           style: "scene",
           required: false,
         },

@@ -8,6 +8,8 @@ export type AiTask =
   | "lessonContent" | "curriculum" | "courseBlueprint" | "quiz" | "practiceExercise" | "practiceScoring" // quality-sensitive generation
   | "teacherAuthoring" // ZAI Teacher Phase 1 objective extraction, flow drafting & revision
   | "tutorTurn" | "tutorReport" // ZAI Tutor text reasoning
+  | "memoryExtract" // post-session learner memory summariser (cheap, async)
+  | "tutorSummary" // rolling in-session summary of turns beyond the context window (cheap, async; P2-06)
   | "tutorLive" | "tutorTts" | "tutorTranscribe" // ZAI Tutor audio models (not text models)
   | "image";
 
@@ -26,6 +28,8 @@ export const DEFAULT_MODELS: Record<AiTask, string> = {
   teacherAuthoring: "gemini-3.8-flash",
   tutorTurn: "gemini-3.8-flash",
   tutorReport: "gemini-3.8-flash",
+  memoryExtract: "gemini-3.5-flash-lite",
+  tutorSummary: "gemini-3.5-flash-lite",
   tutorLive: "gemini-3.8-live",
   tutorTts: "gemini-3.8-flash-lite-tts",
   tutorTranscribe: "gemini-3.5-transcribe",
@@ -50,4 +54,21 @@ export function modelFor(task: AiTask): string {
   const snake = task.replace(/([a-z0-9])([A-Z])/g, "$1_$2").toUpperCase();
   const fallback = NON_TEXT_TASKS.has(task) ? undefined : envValue("GEMINI_MODEL_DEFAULT");
   return envValue(`GEMINI_MODEL_${snake}`) ?? fallback ?? DEFAULT_MODELS[task];
+}
+
+// Backups when the configured model is not available to this key (404), rejects the request (400) or is down
+// (5xx): stable models that support the same structured output and speech. Auth and quota errors are not retried,
+// since another model would fail the same way (see call-core.ts). Override a chain with GEMINI_FALLBACKS_<TASK>
+// (comma-separated; an empty value means no fallback).
+const TEXT_FALLBACKS = ["gemini-3.5-flash-lite", "gemini-2.5-flash"];
+const TTS_FALLBACKS = ["gemini-3.8-flash-tts", "gemini-2.5-flash-preview-tts"];
+
+export function fallbacksFor(task: AiTask): string[] {
+  const snake = task.replace(/([a-z0-9])([A-Z])/g, "$1_$2").toUpperCase();
+  const override = process.env[`GEMINI_FALLBACKS_${snake}`];
+  if (override !== undefined) return override.split(",").map((m) => m.trim()).filter(Boolean);
+  if (task === "tutorTts") return TTS_FALLBACKS;
+  // Transcription has its own fallback (the turn model with a transcription prompt); image and Live have none.
+  if (NON_TEXT_TASKS.has(task)) return [];
+  return TEXT_FALLBACKS;
 }

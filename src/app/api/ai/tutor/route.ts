@@ -1,6 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
 import { createClient } from "@/lib/supabase/server";
-import { gemini } from "@/lib/ai/gemini";
+import { gemini } from "@/lib/ai/gemini/client";
 import { modelFor } from "@/lib/ai/models";
 import { blocksToText } from "@/lib/course-blocks/block-to-text";
 import { getLessonAccess } from "@/lib/courses/course-auth-server";

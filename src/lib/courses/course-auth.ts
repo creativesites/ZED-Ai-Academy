@@ -1,4 +1,5 @@
 import type { CompanyMemberRole, UserRole } from "@/types/database";
+import { canOnCourse } from "../authz/policy.ts";
 
 export type CourseAuthContext = {
   userId: string;
@@ -10,28 +11,19 @@ export type CourseAuthContext = {
   membershipRole?: CompanyMemberRole | string | null;
 };
 
-const TEACHING_ROLES = new Set(["company_admin", "teacher", "instructor"]);
-
 /**
- * Pure authorization evaluator for course authoring/management operations.
- * Enforces strict tenant isolation: a staff member of Academy A cannot manage
- * courses belonging to Academy B.
+ * Course authoring/management decision. The rule lives in `src/lib/authz/policy.ts` (`course.manage`); this keeps
+ * the course module's existing fact shape. A staff member of Academy A cannot manage courses of Academy B.
  */
 export function evaluateCourseManageAccess(ctx: CourseAuthContext): boolean {
-  if (!ctx.userId) return false;
-  if (ctx.profileRole === "super_admin") return true;
-  if (ctx.courseInstructorId && ctx.courseInstructorId === ctx.userId) return true;
-
-  if (ctx.courseCompanyId) {
-    if (ctx.companyAdminId && ctx.companyAdminId === ctx.userId) return true;
-    if (
-      ctx.membershipStatus === "active" &&
-      ctx.membershipRole &&
-      TEACHING_ROLES.has(ctx.membershipRole)
-    ) {
-      return true;
-    }
-  }
-
-  return false;
+  return canOnCourse("course.manage", {
+    userId: ctx.userId,
+    profileRole: ctx.profileRole,
+    courseInstructorId: ctx.courseInstructorId,
+    courseCompanyId: ctx.courseCompanyId,
+    tenantOwnerId: ctx.companyAdminId ?? null,
+    membership: ctx.membershipStatus || ctx.membershipRole
+      ? { role: ctx.membershipRole ?? null, status: ctx.membershipStatus ?? null }
+      : null,
+  });
 }

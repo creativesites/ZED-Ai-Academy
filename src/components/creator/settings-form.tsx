@@ -155,7 +155,7 @@ export function SettingsForm({
     ],
     testimonials: [
       {
-        name: "Mwila Chanda",
+        name: "Maureen Chanda",
         role: "Class of 2026",
         content: `Learning with ${academyName || "CS Learn"} gave me the confidence and practical skills I needed to excel.`,
         rating: 5,

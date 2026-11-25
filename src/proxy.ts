@@ -268,8 +268,10 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
 
 export const config = {
   matcher: [
-    // Skip Next.js internals and all static files, unless found in search params
-    '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|json|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
+    // Skip Next.js internals and all static files, unless found in search params. wasm/riv/glb/audio/video are
+    // static assets too: without them here, signed-out visitors were redirected to sign-in for /rive/rive.wasm
+    // and the animated teacher could not load in the zero-login showcase.
+    '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|json|jpe?g|webp|avif|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest|wasm|riv|glb|gltf|hdr|mp3|wav|ogg|mp4|webm)).*)',
     // Always run for API routes
     '/(api|trpc)(.*)',
   ],

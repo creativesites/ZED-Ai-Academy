@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { canViewTutorSession } from "@/lib/tutor/visibility";
 import { isTenantStaff, loadSession, sessionIdSchema } from "@/lib/tutor/server/session-store";
+import { clientEventsForReplay } from "@/lib/tutor/runtime/interactions";
 
 // GET /api/tutor/sessions/[id]: the session, its turns and its report.
 // The learner always sees their own session. Tenant staff see it only under the privacy rules
@@ -58,7 +59,8 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string
       sharedWithTeacher: session.shared_with_teacher,
       viewer: isOwner ? "learner" : "staff",
     },
-    turns: turns ?? [],
+    // Answer keys never leave the server, including for turns stored before keys moved out of the row (P2-04).
+    turns: (turns ?? []).map((t) => ({ ...t, events: clientEventsForReplay(t.events) })),
     report: report ?? null,
   });
 }

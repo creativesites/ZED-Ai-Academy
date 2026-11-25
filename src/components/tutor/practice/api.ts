@@ -28,8 +28,13 @@ export type TutorScenario = {
   beats?: TutorScenarioBeat[];
 };
 
+/** Answer to a server-held check (contract v3, P2-04): graded on the server, never in the browser. */
+export type InteractionAnswer = { id: string; value: number | string | Array<number | string> };
+
 export type StartResponse = {
   sessionId: string;
+  /** Tutor event contract version the server speaks (3+: controls come from events, never inferred). */
+  contractVersion?: number;
   mode: Mode;
   persona: TutorPersona;
   scenario: TutorScenario;
@@ -43,6 +48,7 @@ export type SyncLiveEventsResponse = { saved: number; dropped: number };
 
 export type TurnResponse = {
   turnIdx: number;
+  contractVersion?: number;
   learnerText: string | null;
   events: TutorEvent[];
   ended: boolean;
@@ -122,6 +128,7 @@ export function startTutorSession(input: TutorStartRequest): Promise<Result<Star
       ...(input.sprint ? { sprint: true } : {}),
       ...(input.sprintCourseId ? { courseId: input.sprintCourseId } : {}),
       ...(input.focusObjective ? { focusObjective: input.focusObjective } : {}),
+      ...(input.objectiveIds?.length ? { objectiveIds: input.objectiveIds } : {}),
       ...(input.companyId ? { companyId: input.companyId } : {}),
       micPermission: input.micPermission,
       ...(input.rttMs !== undefined ? { rttMs: input.rttMs } : {}),
@@ -130,11 +137,15 @@ export function startTutorSession(input: TutorStartRequest): Promise<Result<Star
   });
 }
 
-export function sendTutorText(sessionId: string, text: string): Promise<Result<TurnResponse>> {
+export function sendTutorText(
+  sessionId: string,
+  text: string,
+  interaction?: InteractionAnswer,
+): Promise<Result<TurnResponse>> {
   return call<TurnResponse>(`/api/tutor/sessions/${sessionId}/turn`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ text }),
+    body: JSON.stringify(interaction ? { text, interaction } : { text }),
   });
 }
 
@@ -189,6 +200,8 @@ export type TutorStartRequest = {
   sprint?: boolean;
   sprintCourseId?: string;
   focusObjective?: string;
+  /** Registered objective ids a revision sprint should target (e.g. from a quiz result). */
+  objectiveIds?: string[];
   companyId?: string;
   micPermission: MicPermission;
   rttMs?: number;
@@ -196,7 +209,8 @@ export type TutorStartRequest = {
 };
 
 export type TutorTurnRequest =
-  | { kind: "text"; text: string }
+  /** `interaction`: the answer to a server-held check. Clients without grading (demo, preview) send the text only. */
+  | { kind: "text"; text: string; interaction?: InteractionAnswer }
   | { kind: "audio"; blob: Blob; mimeType: string }
   | { kind: "image"; file: File; text?: string };
 
@@ -214,7 +228,7 @@ export const httpTutorClient: TutorApiClient = {
   start: startTutorSession,
   turn: (sessionId, input) =>
     input.kind === "text"
-      ? sendTutorText(sessionId, input.text)
+      ? sendTutorText(sessionId, input.text, input.interaction)
       : input.kind === "image"
         ? sendTutorImage(sessionId, input.file, input.text)
         : sendTutorAudio(sessionId, input.blob, input.mimeType),

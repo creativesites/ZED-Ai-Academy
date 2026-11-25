@@ -33,6 +33,7 @@ type LooseFilter = PromiseLike<LooseQueryResult> & {
 };
 
 type LooseSupabase = {
+  rpc: (fn: string, args?: Record<string, unknown>) => PromiseLike<LooseQueryResult>;
   from: (table: string) => {
     select: (columns: string) => LooseFilter;
     insert: (rows: unknown) => Promise<{ error: { code?: string; message?: string } | null }>;
@@ -75,13 +76,41 @@ export function isSchemaUnavailableError(
   );
 }
 
-/**
- * Persists raw `learner_evidence` rows and updates rolled-up `learner_mastery`
- * states (+1 correct, 0 partial, -1 misconception, clamped 0..3).
- * Gracefully degrades to returning computed states without failing when the
- * Phase 2 migration has not yet been applied.
- */
-export async function persistSessionMastery(input: {
+const MASTERY_READBACK_COLUMNS =
+  "objective_key, objective_text, level, evidence_count, last_result, last_evidence_at, course_id";
+const MASTERY_V2_COLUMNS = `${MASTERY_READBACK_COLUMNS}, objective_id, p_mastery, status, next_review_at`;
+
+type MasteryV2DbRow = LearnerMasteryDbRow & {
+  objective_id?: string | null;
+  p_mastery?: number | string | null;
+  status?: string | null;
+  next_review_at?: string | null;
+};
+
+function masteryStateFromRow(row: MasteryV2DbRow): MasteryState {
+  const p = row.p_mastery === null || row.p_mastery === undefined ? null : Number(row.p_mastery);
+  return {
+    objectiveKey: row.objective_key,
+    objectiveText: row.objective_text,
+    level: row.level,
+    evidenceCount: row.evidence_count,
+    lastResult: row.last_result,
+    lastEvidenceAt: row.last_evidence_at,
+    ...(row.objective_id !== undefined ? { objectiveId: row.objective_id } : {}),
+    ...(row.p_mastery !== undefined ? { pMastery: Number.isFinite(p) ? p : null } : {}),
+    ...(row.status !== undefined ? { status: row.status } : {}),
+    ...(row.next_review_at !== undefined ? { nextReviewAt: row.next_review_at } : {}),
+  };
+}
+
+/** Last state per objective key, in first-seen order of the keys. */
+function lastPerKey(rows: ReadonlyArray<MasteryV2DbRow>): MasteryState[] {
+  const byKey = new Map<string, MasteryState>();
+  for (const r of rows) byKey.set(r.objective_key, masteryStateFromRow(r));
+  return Array.from(byKey.values());
+}
+
+type PersistMasteryInput = {
   supabase?: SupabaseClient<Database>;
   companyId: string;
   userId: string;
@@ -90,15 +119,83 @@ export async function persistSessionMastery(input: {
   sessionId: string | null;
   evidence: ReadonlyArray<CollectedEvidence>;
   timestampIso?: string;
-}): Promise<MasteryState[]> {
+};
+
+/**
+ * Evidence v2 write path (P2-02): one `record_evidence_batch` call inserts every evidence row and updates
+ * mastery in a single transaction with row locks, applying the Architecture §4.2 rule and dual-writing the
+ * legacy `level`. Returns the mastery rows as stored, or `{ ok: false, missing: true }` when the function
+ * is not deployed yet (migration 20261125000201 pending).
+ */
+async function recordEvidenceViaRpc(
+  supabase: LooseSupabase,
+  input: PersistMasteryInput,
+  nowIso: string,
+): Promise<{ ok: true; states: MasteryState[] } | { ok: false; missing: boolean }> {
+  const items = input.evidence.map((ev) => ({
+    user_id: input.userId,
+    company_id: input.companyId,
+    objective_key: ev.objectiveKey,
+    objective_text: ev.objectiveText,
+    objective_id: ev.objectiveId ?? null,
+    result: ev.result,
+    source: ev.source ?? "teacher_judgement",
+    server_verified: ev.serverVerified ?? false,
+    score: ev.score ?? null,
+    difficulty: ev.difficulty ?? null,
+    course_id: input.courseId,
+    scenario_id: input.scenarioId,
+    session_id: input.sessionId,
+    item_ref: ev.itemRef ?? null,
+    detail: ev.detail,
+    at: nowIso,
+  }));
+  const res = (await supabase.rpc("record_evidence_batch", { p_items: items })) as {
+    data: MasteryV2DbRow[] | null;
+    error: { code?: string; message?: string } | null;
+  };
+  if (res.error) {
+    if (isSchemaUnavailableError(res.error)) return { ok: false, missing: true };
+    console.warn("[tutor/mastery] record_evidence_batch failed:", res.error.message);
+    return { ok: false, missing: false };
+  }
+  return { ok: true, states: lastPerKey(res.data ?? []) };
+}
+
+/**
+ * Persists evidence and returns the learner's mastery for every touched objective as stored in the database.
+ *
+ * Preferred path: `record_evidence_batch` (transactional, weighted rule, P2-02). Before that migration is
+ * applied, falls back to today's path: insert `learner_evidence` rows and upsert rolled-up `learner_mastery`
+ * (+1 correct, 0 partial, -1 misconception, clamped 0..3), then read the rows back. Before the Phase 2 mastery
+ * migration exists at all it returns the computed states without failing.
+ */
+export async function persistSessionMastery(input: PersistMasteryInput): Promise<MasteryState[]> {
   if (input.evidence.length === 0) return [];
   const supabase = (input.supabase ?? createServiceClient()) as unknown as LooseSupabase;
   const nowIso = input.timestampIso ?? new Date().toISOString();
+
+  const rpc = await recordEvidenceViaRpc(supabase, input, nowIso);
+  if (rpc.ok) return rpc.states;
+  if (!rpc.missing) {
+    // The v2 function exists but refused the batch (e.g. an objective outside the tenant). Do not bypass
+    // its checks through the legacy path; report the computed view only.
+    return applyEvidenceBatch(new Map(), input.evidence, nowIso);
+  }
+
+  return persistLegacyMastery(supabase, input, nowIso);
+}
+
+async function persistLegacyMastery(
+  supabase: LooseSupabase,
+  input: PersistMasteryInput,
+  nowIso: string,
+): Promise<MasteryState[]> {
   const keys = Array.from(new Set(input.evidence.map((e) => e.objectiveKey)));
 
   const existingRes = (await supabase
     .from("learner_mastery")
-    .select("objective_key, objective_text, level, evidence_count, last_result, last_evidence_at, course_id")
+    .select(MASTERY_READBACK_COLUMNS)
     .eq("user_id", input.userId)
     .in("objective_key", keys)) as {
     data: LearnerMasteryDbRow[] | null;
@@ -114,14 +211,7 @@ export async function persistSessionMastery(input: {
 
   const existingByKey = new Map<string, MasteryState>();
   for (const row of existingRes.data ?? []) {
-    existingByKey.set(row.objective_key, {
-      objectiveKey: row.objective_key,
-      objectiveText: row.objective_text,
-      level: row.level,
-      evidenceCount: row.evidence_count,
-      lastResult: row.last_result,
-      lastEvidenceAt: row.last_evidence_at,
-    });
+    existingByKey.set(row.objective_key, masteryStateFromRow(row));
   }
 
   const updated = applyEvidenceBatch(existingByKey, input.evidence, nowIso);
@@ -155,15 +245,64 @@ export async function persistSessionMastery(input: {
     last_evidence_at: m.lastEvidenceAt,
   }));
 
-  const upsertRes = await supabase
+  let upsertRes = await supabase
     .from("learner_mastery")
     .upsert(masteryUpserts, { onConflict: "user_id,objective_key" });
-
-  if (upsertRes.error && !isSchemaUnavailableError(upsertRes.error)) {
-    console.warn("[tutor/mastery] could not upsert learner_mastery:", upsertRes.error.message);
+  if (upsertRes.error?.code === "42P10") {
+    // The unique key already moved to (company_id, user_id, objective_key) (D-05).
+    upsertRes = await supabase
+      .from("learner_mastery")
+      .upsert(masteryUpserts, { onConflict: "company_id,user_id,objective_key" });
   }
 
-  return updated;
+  if (upsertRes.error) {
+    if (!isSchemaUnavailableError(upsertRes.error)) {
+      console.warn("[tutor/mastery] could not upsert learner_mastery:", upsertRes.error.message);
+    }
+    return updated;
+  }
+
+  // Read back so callers (session reports) show exactly what is stored.
+  const readBack = (await supabase
+    .from("learner_mastery")
+    .select(MASTERY_READBACK_COLUMNS)
+    .eq("user_id", input.userId)
+    .eq("company_id", input.companyId)
+    .in("objective_key", keys)) as {
+    data: LearnerMasteryDbRow[] | null;
+    error: { code?: string; message?: string } | null;
+  };
+  if (readBack.error || !readBack.data || readBack.data.length === 0) return updated;
+  const stored = new Map(readBack.data.map((r) => [r.objective_key, masteryStateFromRow(r)]));
+  return updated.map((m) => stored.get(m.objectiveKey) ?? m);
+}
+
+/** Reads mastery rows (v2 columns when available) for the given objective keys of one learner in one tenant. */
+export async function loadMasteryStates(input: {
+  supabase?: SupabaseClient<Database>;
+  userId: string;
+  companyId: string;
+  objectiveKeys: ReadonlyArray<string>;
+}): Promise<MasteryState[]> {
+  if (input.objectiveKeys.length === 0) return [];
+  const supabase = (input.supabase ?? createServiceClient()) as unknown as LooseSupabase;
+  const run = (columns: string) =>
+    supabase
+      .from("learner_mastery")
+      .select(columns)
+      .eq("user_id", input.userId)
+      .eq("company_id", input.companyId)
+      .in("objective_key", [...input.objectiveKeys]) as unknown as Promise<{
+      data: MasteryV2DbRow[] | null;
+      error: { code?: string; message?: string } | null;
+    }>;
+  let res = await run(MASTERY_V2_COLUMNS);
+  if (res.error && isSchemaUnavailableError(res.error)) res = await run(MASTERY_READBACK_COLUMNS);
+  if (res.error) {
+    if (!isSchemaUnavailableError(res.error)) console.warn("[tutor/mastery] loadMasteryStates:", res.error.message);
+    return [];
+  }
+  return (res.data ?? []).map(masteryStateFromRow);
 }
 
 /**
@@ -250,12 +389,18 @@ export async function loadDashboardDailyPlan(input: {
 }): Promise<{ teacherName: string; items: DailyPlanItem[] }> {
   const supabase = createClient();
 
-  const weakObjectives = await loadWeakMasteryRows({
-    supabase,
-    userId: input.userId,
-    companyId: input.companyId,
-    limit: 6,
-  });
+  const [weakObjectives, dueReviews] = await Promise.all([
+    loadWeakMasteryRows({
+      supabase,
+      userId: input.userId,
+      companyId: input.companyId,
+      limit: 6,
+    }),
+    // P2-07: the review scheduler replaces "3 weakest" when its columns exist (unavailable → legacy path).
+    import("../learner/scheduler-server").then((m) =>
+      m.loadDueReviews(input.userId, input.companyId ?? null, { basePath: input.basePath, client: supabase }),
+    ),
+  ]);
 
   // 1. Enrolled courses & unfinished lessons
   const { data: enrollmentRows } = await supabase
@@ -516,6 +661,7 @@ export async function loadDashboardDailyPlan(input: {
     weakObjectives,
     unfinishedLessons,
     untriedFlows,
+    dueReviews,
   });
 
   return { teacherName, items };

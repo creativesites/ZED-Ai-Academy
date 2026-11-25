@@ -31,6 +31,9 @@ const ALL_EVENT_TYPES = [
   "advance_step",
   "switch_scene",
   "award",
+  "ask_order",
+  "ask_fill",
+  "ask_numeric",
 ];
 
 test("parseTutorTurn accepts a valid turn with every event kind", () => {

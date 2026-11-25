@@ -52,7 +52,8 @@ export type TutorBlockState = {
   completedScenarioIds: string[];
   /** True for unauthenticated guests on open showcase courses (routes to /try/[scenarioId]). */
   isGuest?: boolean;
-  onComplete: (scenarioId: string) => void;
+  /** Slug of the academy that owns the course (null: platform). Keeps teacher links in the academy. */
+  academySlug?: string | null;
 };
 
 export function BlockRenderer({
@@ -124,6 +125,7 @@ export function BlockRenderer({
           submission={submission}
           onLaunchStudio={onLaunchStudio}
           previewMode={previewMode}
+          isGuest={tutor?.isGuest}
         />
       );
     }
@@ -146,7 +148,7 @@ export function BlockRenderer({
           scenario={scenarioId ? tutor?.scenarios[scenarioId] : undefined}
           done={!!scenarioId && !!tutor?.completedScenarioIds.includes(scenarioId)}
           isGuest={tutor?.isGuest}
-          onComplete={tutor?.onComplete}
+          academySlug={tutor?.academySlug}
         />
       );
     }

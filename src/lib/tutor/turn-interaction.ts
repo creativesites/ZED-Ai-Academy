@@ -1,21 +1,39 @@
 import type { BoardState } from "./board.ts";
+import type { TutorEvent } from "./contract/index.ts";
+
+// Interactive controls for the current teacher turn. Contract v3 turns (P2-04) drive them from answerable events
+// (ask_choice / ask_order / ask_fill / ask_numeric, each with a server `checkId` when the server holds the key);
+// the regex inference below only runs for older turns and clients (`inferFromContext`, default on).
 
 export type ActiveChoice = {
   question: string;
   options: string[];
   picked?: string;
   source: "event" | "inferred";
+  /** Server-held check (v3): the answer is sent as { interaction: { id, value } } and graded server-side. */
+  checkId?: string;
 };
 
 export type ActiveOrderChallenge = {
   prompt: string;
   items: string[];
+  checkId?: string;
 };
 
 export type ActiveFillBlank = {
   template: string;
   wordBank: string[];
+  checkId?: string;
 };
+
+export type ActiveNumeric = {
+  prompt: string;
+  unit?: string;
+  checkId?: string;
+};
+
+/** Answerable v3 events as the browser receives them (keys already stripped by the server). */
+export type AnswerableClientEvent = Extract<TutorEvent, { type: "ask_choice" | "ask_order" | "ask_fill" | "ask_numeric" }>;
 
 export type DynamicQuickAction = {
   label: string;
@@ -31,12 +49,17 @@ export type TurnInteractionInput = {
   caption: { native: string; roman?: string; translation?: string } | null;
   listenHint: { expect?: string; hint?: string } | null;
   turnCount: number;
+  /** Latest answerable event of this turn (v3). Takes precedence over everything inferred. */
+  check?: AnswerableClientEvent | null;
+  /** false for contract v3 sessions: controls come from events only, never from regex inference. Default true. */
+  inferFromContext?: boolean;
 };
 
 export type TurnInteractionState = {
   activeChoice: ActiveChoice | null;
   activeOrderChallenge: ActiveOrderChallenge | null;
   activeFillBlank: ActiveFillBlank | null;
+  activeNumeric: ActiveNumeric | null;
   showConfidence: boolean;
   preferTextInput: boolean;
   quickActions: DynamicQuickAction[];
@@ -164,27 +187,43 @@ function hasUnrevealedBoard(board: BoardState | null): boolean {
  * always sees appropriate, thumb-friendly controls without scrolling or getting stuck.
  */
 export function deriveTurnInteraction(input: TurnInteractionInput): TurnInteractionState {
-  const { choice, confidence, board, whiteboard, caption, listenHint, turnCount } = input;
+  const { choice, confidence, board, whiteboard, caption, listenHint, turnCount, check } = input;
+  const infer = input.inferFromContext !== false;
 
   const spokenText = [caption?.native, caption?.translation].filter(Boolean).join(" ").trim();
 
-  const activeChoice: ActiveChoice | null = choice
-    ? { ...choice, source: "event" }
-    : inferChoiceFromContext(board, caption);
+  const fromEvent = check ? controlsFromCheck(check, choice?.picked) : null;
 
-  const activeOrderChallenge: ActiveOrderChallenge | null =
-    !activeChoice ? inferOrderChallenge(board, spokenText) : null;
+  const activeChoice: ActiveChoice | null = fromEvent
+    ? fromEvent.choice
+    : choice
+      ? { ...choice, source: "event" }
+      : infer
+        ? inferChoiceFromContext(board, caption)
+        : null;
 
-  const activeFillBlank: ActiveFillBlank | null =
-    !activeChoice && !activeOrderChallenge ? inferFillBlank(board, whiteboard, caption) : null;
+  const activeOrderChallenge: ActiveOrderChallenge | null = fromEvent
+    ? fromEvent.order
+    : !activeChoice && infer
+      ? inferOrderChallenge(board, spokenText)
+      : null;
 
-  const showConfidence = !activeChoice && !activeOrderChallenge && !activeFillBlank && Boolean(confidence);
+  const activeFillBlank: ActiveFillBlank | null = fromEvent
+    ? fromEvent.fill
+    : !activeChoice && !activeOrderChallenge && infer
+      ? inferFillBlank(board, whiteboard, caption)
+      : null;
+
+  const activeNumeric: ActiveNumeric | null = fromEvent ? fromEvent.numeric : null;
+
+  const showConfidence =
+    !activeChoice && !activeOrderChallenge && !activeFillBlank && !activeNumeric && Boolean(confidence);
 
   const preferTextInput =
     !activeChoice &&
     !activeOrderChallenge &&
     !showConfidence &&
-    (Boolean(activeFillBlank) || TYPE_PROMPT_RE.test(spokenText));
+    (Boolean(activeFillBlank) || Boolean(activeNumeric) || (infer && TYPE_PROMPT_RE.test(spokenText)));
 
   let quickActions: DynamicQuickAction[];
   if (hasUnrevealedBoard(board)) {
@@ -225,8 +264,50 @@ export function deriveTurnInteraction(input: TurnInteractionInput): TurnInteract
     activeChoice,
     activeOrderChallenge,
     activeFillBlank,
+    activeNumeric,
     showConfidence,
     preferTextInput,
     quickActions,
   };
+}
+
+/** Controls for one answerable event. ask_order without a checkId (Live: no server round trip) is shuffled here. */
+export function controlsFromCheck(
+  check: AnswerableClientEvent,
+  picked?: string,
+): {
+  choice: ActiveChoice | null;
+  order: ActiveOrderChallenge | null;
+  fill: ActiveFillBlank | null;
+  numeric: ActiveNumeric | null;
+} {
+  const none = { choice: null, order: null, fill: null, numeric: null };
+  const checkId = check.checkId;
+  switch (check.type) {
+    case "ask_choice":
+      return {
+        ...none,
+        choice: { question: check.question, options: check.options, source: "event", ...(picked ? { picked } : {}), ...(checkId ? { checkId } : {}) },
+      };
+    case "ask_order":
+      return {
+        ...none,
+        order: { prompt: check.prompt, items: checkId ? check.items : rotateForDisplay(check.items), ...(checkId ? { checkId } : {}) },
+      };
+    case "ask_fill":
+      return { ...none, fill: { template: check.prompt, wordBank: check.options ?? [], ...(checkId ? { checkId } : {}) } };
+    case "ask_numeric":
+      return {
+        ...none,
+        numeric: { prompt: check.prompt, ...(check.unit ? { unit: check.unit } : {}), ...(checkId ? { checkId } : {}) },
+      };
+  }
+}
+
+/** Live sends ask_order items in the correct order (the model's key); never show them that way. */
+function rotateForDisplay(items: readonly string[]): string[] {
+  if (items.length < 2) return [...items];
+  // Reverse, then rotate by one: never the key's order (2 items simply swap).
+  const reversed = [...items].reverse();
+  return items.length > 2 ? [...reversed.slice(1), reversed[0]] : reversed;
 }

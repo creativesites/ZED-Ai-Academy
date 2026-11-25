@@ -12,7 +12,7 @@ export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: { params: Promise<{ domain: string }> }) {
   const { domain } = await params;
-  return { title: `Teacher's Room — ${domain}` };
+  return { title: `Teacher — ${domain}` };
 }
 
 // /academy/[domain]/practice: the Practice Room for one academy. Its tenant library plus the platform packs.
@@ -50,6 +50,7 @@ export default async function TenantPracticePage({ params }: { params: Promise<{
         sessionBasePath={`/academy/${company.slug}/practice`}
         deckHref={`/academy/${company.slug}/practice/deck`}
         historyHref={`/academy/${company.slug}/practice/history`}
+        aboutMeHref={`/academy/${company.slug}/practice/about-me`}
         overview={overview}
         browseHref={`/academy/${company.slug}`}
         browseLabel="Back to the academy"

@@ -5,6 +5,7 @@ import {
   type MasteryState,
   type SessionObjectiveSummary,
 } from "./mastery/evidence.ts";
+import type { ObjectiveRef } from "./learner/objectives.ts";
 import { parseMemory } from "./memory.ts";
 import { nextStreak } from "./progress.ts";
 import {
@@ -63,6 +64,8 @@ export type FinalizeCoreInput = {
   scenarioGoal: string;
   courseId?: string | null;
   scenarioId?: string | null;
+  /** Registered objectives of the session (P2-01), so note_evidence citing an id maps to it. */
+  objectives?: ReadonlyArray<ObjectiveRef>;
   /** Language pack code (zh, es, fr) or null for non-language packs. */
   skillLanguage: string | null;
   /** learner_language_profiles.language key. */
@@ -107,9 +110,19 @@ export type FinalizeCoreDeps<R> = {
   addMistakeVocabulary(mistakes: LearnerMistake[]): Promise<void>;
   /** Optional Phase 2 persistence of `note_evidence` -> `learner_evidence` + `learner_mastery`. */
   persistMastery?(evidence: CollectedEvidence[]): Promise<MasteryState[]>;
+  /**
+   * Optional P1-07 write of this session's mistakes as `learner_memories` (kind=misconception). Returns true
+   * when they were stored there; the legacy `learner_language_profiles.memory` is then left unchanged
+   * (read-only, migrated). Returns false (e.g. table not migrated) to keep today's legacy write.
+   */
+  saveMisconceptionMemories?(mistakes: LearnerMistake[]): Promise<boolean>;
+  /** Optional P1-07 per-person habit update (one streak across all subjects). */
+  recordHabits?(input: { today: string; practiceMs: number }): Promise<void>;
   /** Optional observer called when a post-claim side effect fails, so other side effects still complete. */
-  onSideEffectError?(step: "usage" | "profile" | "vocab" | "mastery", err: unknown): void;
+  onSideEffectError?(step: FinalizeSideEffectStep, err: unknown): void;
 };
+
+export type FinalizeSideEffectStep = "usage" | "memories" | "profile" | "habits" | "vocab" | "mastery";
 
 export type FinalizeCoreResult<R> = { report: R; created: boolean };
 
@@ -133,6 +146,7 @@ export async function finalizeSessionCore<R>(
   const noteEvidence = collectNoteEvidence(
     input.turns.map((t) => ({ eventsJson: t.events })),
     { courseId: input.courseId, scenarioId: input.scenarioId },
+    input.objectives ?? [],
   );
   const preliminaryObjectives = summarizeSessionObjectives(noteEvidence, []);
 
@@ -171,10 +185,7 @@ export async function finalizeSessionCore<R>(
 
   // Winner only: side effects run in isolated guards so a transient error in one (e.g. usage log)
   // never blocks learner streaks, vocabulary SRS, or objective mastery persistence.
-  const runSideEffect = async (
-    step: "usage" | "profile" | "vocab" | "mastery",
-    fn: () => Promise<void>,
-  ) => {
+  const runSideEffect = async (step: FinalizeSideEffectStep, fn: () => Promise<void>) => {
     try {
       await fn();
     } catch (err) {
@@ -206,12 +217,28 @@ export async function finalizeSessionCore<R>(
     }
   });
 
+  let mistakesInMemories = false;
+  if (deps.saveMisconceptionMemories && mistakes.length > 0) {
+    await runSideEffect("memories", async () => {
+      mistakesInMemories = await deps.saveMisconceptionMemories!(mistakes);
+    });
+  }
+
+  // Habits before the legacy profile: a first-time habit row is seeded from the pre-session legacy streaks.
+  if (deps.recordHabits) {
+    await runSideEffect("habits", async () => {
+      await deps.recordHabits!({ today: input.today, practiceMs: learnerMs + teacherMs });
+    });
+  }
+
   await runSideEffect("profile", async () => {
     const previous = await deps.loadProfile();
     const memory = parseMemory(previous?.memory);
-    const recent = [...mistakes, ...memory.recentMistakes]
-      .filter((m, i, all) => all.findIndex((x) => x.said === m.said && x.correct === m.correct) === i)
-      .slice(0, RECENT_MISTAKES_KEPT);
+    const recent = mistakesInMemories
+      ? memory.recentMistakes
+      : [...mistakes, ...memory.recentMistakes]
+          .filter((m, i, all) => all.findIndex((x) => x.said === m.said && x.correct === m.correct) === i)
+          .slice(0, RECENT_MISTAKES_KEPT);
     const streak = nextStreak({
       lastPracticeDate: previous?.last_practice_date ?? null,
       streakDays: previous?.streak_days ?? 0,

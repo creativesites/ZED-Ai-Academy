@@ -1,5 +1,6 @@
 import { eventTypesForPack, liveToolDeclarations, MAX_EVENTS_PER_TURN } from "../events.ts";
 import { SKILL_PACK_SAFETY, skillPackPrompt } from "../skill-packs.ts";
+import { formatObjectivePromptLines, type ObjectiveRef } from "../learner/objectives.ts";
 
 // Layered system prompt (plan section 2.4). Pure: no I/O and no "@/" imports, so it can be tested
 // with node:test. Layers, in order:
@@ -22,6 +23,8 @@ export type PromptScenario = {
   /** Extra role instructions for the teacher in this scenario (the showcase's training simulation). */
   roleNotes?: string | null;
   maxMinutes: number;
+  /** Registered objectives this session teaches (P2-01). Listed as `id: text`; note_evidence cites the id. */
+  objectives?: ObjectiveRef[];
 };
 
 export type PromptPersona = {
@@ -35,6 +38,11 @@ export type PromptLearnerProfile = {
   levelEstimate: string | null;
   recentMistakes: { said: string; correct: string; category: string }[];
   memoryNotes: string[];
+  /**
+   * P1-07 learner brief from `buildLearnerBrief` (already sanitised and fenced in <learner_brief>). When set,
+   * it replaces the legacy recentMistakes/memoryNotes lines, which it supersedes.
+   */
+  brief?: string | null;
 };
 
 export type BuildSystemPromptInput = {
@@ -62,6 +70,13 @@ const TEACHING_TOOLS = `How to use the stage (all subjects):
 - advance_step moves to the next step by id; award marks a met objective (at most twice).
 - Never force voice: support tap/type replies (Next step, Explain simpler, Example, Quiz me) with show_board and ask_choice.`;
 
+/** Answer keys and teacher notes: Voice/Text only. Live is not taught keys (its tool calls reach the browser). */
+const GRADED_CHECKS = `Graded checks (the platform grades the reply; the key is never shown):
+- ask_choice: answer = correct option text(s), copied exactly. ask_order: items in the CORRECT order (shown shuffled).
+- ask_fill: prompt with ___ per blank; answer = one entry per blank, synonyms split by |; options = optional word bank.
+- ask_numeric: value = correct number, tolerance = allowed difference, unit optional. Set objective to the objective id.
+- A [Teacher note] after the learner's message comes from the platform (graded result or suggested move). Follow it unless the learner asked something else; never mention it.`;
+
 function liveContract(skillPack: string): string {
   const tools = liveToolDeclarations(skillPack).map((t) => t.name).join(", ");
   return `Output contract (live voice session):
@@ -87,7 +102,9 @@ function textContract(mode: "voice" | "text", skillPack: string): string {
 - Use show_text for a short written prompt, listen when you need the learner to answer, end_session to finish.
 - At most ${MAX_EVENTS_PER_TURN} events per turn. Usually 2 to 5.
 
-${TEACHING_TOOLS}`;
+${TEACHING_TOOLS}
+
+${GRADED_CHECKS}`;
 }
 
 function scenarioBlock(scenario: PromptScenario): string {
@@ -108,14 +125,25 @@ function scenarioBlock(scenario: PromptScenario): string {
     `Time box: ${scenario.maxMinutes} minutes.`,
     `Steps (advance_step by id):\n${beats}`,
     `Target items to practise: ${targets}`,
+    objectivesLine(scenario),
   ]
     .filter((line): line is string => line !== null)
     .join("\n");
 }
 
+function objectivesLine(scenario: PromptScenario): string | null {
+  const lines = formatObjectivePromptLines(scenario.objectives ?? []);
+  if (lines.length === 0) return null;
+  return `Learning objectives (for note_evidence, set objective to the id before the colon):\n${lines.map((l) => `- ${l}`).join("\n")}`;
+}
+
 function memoryBlock(profile: PromptLearnerProfile): string {
   const lines: string[] = [];
   lines.push(`Estimated level: ${profile.levelEstimate ?? "unknown; start at a comfortable level and adjust"}.`);
+  if (profile.brief && profile.brief.trim()) {
+    lines.push(profile.brief.trim());
+    return lines.join("\n");
+  }
   if (profile.recentMistakes.length) {
     lines.push(
       "Recent mistakes to revisit when natural:\n" +
@@ -144,23 +172,51 @@ function lessonBlock(lessonText: string): string {
   ].join("\n");
 }
 
-export function buildSystemPrompt(input: BuildSystemPromptInput): string {
+/** The per-learner part of the context (memory + brief), outside the cached prefix (P2-06). */
+export function learnerContextBlock(profile: PromptLearnerProfile): string {
+  return `Learner memory:\n${memoryBlock(profile)}`;
+}
+
+/**
+ * Context builder split (P2-06, Architecture §3.5). `prefix` is identical for every learner of a flow version (so
+ * one context cache serves them all): platform rules + contract, skill pack, persona, strategies, scenario and
+ * objectives, lesson content. `learner` (memory + brief) goes into `contents` instead of the system prompt.
+ * Live keeps `buildSystemPrompt` (one system instruction, minted into the token).
+ */
+export function buildPromptParts(
+  input: Omit<BuildSystemPromptInput, "mode"> & { mode: "voice" | "text"; strategies?: string | null },
+): { prefix: string; learner: string } {
+  const layers = promptLayers(input);
+  return {
+    prefix: [
+      layers.platform,
+      layers.skill,
+      layers.persona,
+      ...(input.strategies && input.strategies.trim() ? [input.strategies.trim()] : []),
+      layers.scenario,
+      layers.lesson,
+    ].join("\n\n---\n\n"),
+    learner: layers.memory,
+  };
+}
+
+function promptLayers(input: BuildSystemPromptInput) {
   const contract = input.mode === "live" ? liveContract(input.skillPack) : textContract(input.mode, input.skillPack);
+  return {
+    platform: [PLATFORM_RULES, contract, SKILL_PACK_SAFETY].join("\n\n"),
+    skill: skillPackPrompt(input.skillPack),
+    persona: [
+      `Teacher persona: ${input.persona.displayName ?? input.persona.name}.`,
+      input.persona.personalityPrompt.trim(),
+      `Languages: ${input.persona.languages.join(", ") || "as the scenario needs"}.`,
+    ].join("\n"),
+    scenario: scenarioBlock(input.scenario),
+    memory: learnerContextBlock(input.learnerProfile),
+    lesson: lessonBlock(input.lessonText),
+  };
+}
 
-  const platformLayer = [PLATFORM_RULES, contract, SKILL_PACK_SAFETY].join("\n\n");
-  const skillLayer = skillPackPrompt(input.skillPack);
-  const personaLayer = [
-    `Teacher persona: ${input.persona.displayName ?? input.persona.name}.`,
-    input.persona.personalityPrompt.trim(),
-    `Languages: ${input.persona.languages.join(", ") || "as the scenario needs"}.`,
-  ].join("\n");
-
-  return [
-    platformLayer,
-    skillLayer,
-    personaLayer,
-    scenarioBlock(input.scenario),
-    `Learner memory:\n${memoryBlock(input.learnerProfile)}`,
-    lessonBlock(input.lessonText),
-  ].join("\n\n---\n\n");
+export function buildSystemPrompt(input: BuildSystemPromptInput): string {
+  const layers = promptLayers(input);
+  return [layers.platform, layers.skill, layers.persona, layers.scenario, layers.memory, layers.lesson].join("\n\n---\n\n");
 }

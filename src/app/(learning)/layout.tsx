@@ -1,5 +1,4 @@
 import { auth } from "@clerk/nextjs/server";
-import { redirect } from "next/navigation";
 import { ensureProfile } from "@/lib/supabase/ensure-profile";
 import { requireOnboarding } from "@/lib/require-onboarding";
 import { NotificationBellServer } from "@/components/shared/notification-bell-server";
@@ -10,18 +9,22 @@ import 'swiper/css/free-mode';
 
 export default async function LearningLayout({ children }: { children: React.ReactNode }) {
   const { userId } = await auth();
-  if (!userId) redirect("/sign-in");
 
-  try {
-    await ensureProfile(userId);
-  } catch {
-    // Non-fatal
-  }
+  // Signed-out visitors are allowed through: the learn page decides what a guest may see (published, free
+  // courses and their preview lessons only; anything else sends them to sign-in). Redirecting here blocked the
+  // zero-login showcase entirely.
+  if (userId) {
+    try {
+      await ensureProfile(userId);
+    } catch {
+      // Non-fatal
+    }
 
-  try {
-    await requireOnboarding(userId);
-  } catch {
-    // redirect() throws
+    try {
+      await requireOnboarding(userId);
+    } catch {
+      // redirect() throws
+    }
   }
 
   return (

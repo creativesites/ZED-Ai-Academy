@@ -1,10 +1,12 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { canManageCourse } from "@/lib/courses/course-auth-server";
+import { assertCanManageLesson, canManageCourse } from "@/lib/courses/course-auth-server";
 import { blocksToText } from "@/lib/course-blocks/block-to-text";
-import { gemini } from "@/lib/ai/gemini";
-import { modelFor } from "@/lib/ai/models";
+import { aiJson } from "@/lib/ai/call";
+import { normalizeTutorScenario } from "@/lib/ai/generation/parse";
+import { tutorScenarioSchema } from "@/lib/ai/generation/schemas";
+import { ZEDAI_TENANT_ID } from "@/lib/tenants/constants";
 import { getAuthoringTemplate } from "@/lib/tutor/authoring/templates";
 import { SCENE_ARTBOARDS } from "@/lib/tutor/rive-driver";
 
@@ -29,9 +31,17 @@ export async function POST(req: NextRequest) {
   }
 
   const supabase = createClient();
-  const { allowed } = await canManageCourse(supabase, body.courseId, userId);
-  if (!allowed) {
+  const { allowed, course: owned } = await canManageCourse(supabase, body.courseId, userId);
+  if (!allowed || !owned) {
     return Response.json({ error: "Unauthorized" }, { status: 403 });
+  }
+  if (body.lessonId) {
+    // The lesson's content goes into the prompt: it must belong to the course the caller may manage.
+    try {
+      await assertCanManageLesson(supabase, body.lessonId, userId, body.courseId);
+    } catch {
+      return Response.json({ error: "Unauthorized" }, { status: 403 });
+    }
   }
 
   const { data: course } = await supabase
@@ -104,35 +114,19 @@ Rules:
 - For language-es or language-fr, include natural target-language phrases in "text" and helpful pronunciation notes in "pron".`;
 
   try {
-    const response = await gemini.models.generateContent({
-      model: modelFor("practiceExercise"),
-      contents: prompt,
-      config: {
+    const { data } = await aiJson(
+      "practiceExercise",
+      {
+        contents: prompt,
         systemInstruction,
+        responseJsonSchema: tutorScenarioSchema(SCENE_ARTBOARDS),
         maxOutputTokens: 2048,
-        responseMimeType: "application/json",
       },
-    });
-
-    const raw = response.text?.trim() ?? "";
-    const cleaned = raw.replace(/^```json\s*/i, "").replace(/```$/i, "").trim();
-    const parsed = JSON.parse(cleaned) as Record<string, unknown>;
-
-    const scene =
-      typeof parsed.scene === "string" && (SCENE_ARTBOARDS as readonly string[]).includes(parsed.scene)
-        ? parsed.scene
-        : "Scene_TeaHouse";
+      { meter: { companyId: owned.company_id ?? ZEDAI_TENANT_ID, userId } },
+    );
 
     return Response.json({
-      scenario: {
-        title: typeof parsed.title === "string" ? parsed.title : "Speaking practice",
-        goal: typeof parsed.goal === "string" ? parsed.goal : "Practise the key concepts from this lesson out loud.",
-        level: typeof parsed.level === "string" ? parsed.level : level,
-        max_minutes: typeof parsed.max_minutes === "number" ? Math.min(30, Math.max(2, Math.round(parsed.max_minutes))) : 6,
-        scene,
-        beats: Array.isArray(parsed.beats) ? parsed.beats : [],
-        target_items: Array.isArray(parsed.target_items) ? parsed.target_items : [],
-      },
+      scenario: normalizeTutorScenario(data as Record<string, unknown>, { level, scenes: SCENE_ARTBOARDS }),
     });
   } catch (err) {
     console.error("[generate-tutor-scenario] error:", err);

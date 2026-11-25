@@ -333,7 +333,7 @@ export function MobileBottomNav() {
         label="Mobile navigation"
         tabs={[
           { href: "/",         label: "Home",     icon: Home,     active: pathActive("/") },
-          { href: "/ai-tutor", label: "AI Tutor", icon: Mic,      active: pathActive("/ai-tutor") },
+          { href: "/ai-tutor", label: "AI teacher", icon: Mic,      active: pathActive("/ai-tutor") },
           { href: "/courses",  label: "Courses",  icon: BookOpen, active: pathActive("/courses") },
           { href: "/sign-in",  label: "Sign in",  icon: LogIn,    active: pathActive("/sign-in") },
         ]}

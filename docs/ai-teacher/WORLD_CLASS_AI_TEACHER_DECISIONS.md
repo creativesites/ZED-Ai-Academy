@@ -107,6 +107,12 @@ delete any flow. Proposal:
 | Insights for their courses/classes | ✓ | own classes | ✓ |
 | AI cost data | — | — | ✓ |
 
+**Interim (P1-01, until the owner decides).** `src/lib/authz/policy.ts` encodes today's behaviour as the conservative
+option: course owners (the course's instructor) keep managing and previewing their own courses and flows; tenant staff
+(academy owner, active company_admin/teacher/instructor) keep their current tenant-wide Studio, preview and insights
+powers; super admins may do everything; learners and invited/deactivated members may do nothing. Adopting the matrix
+above is an edit to the `TENANT_POLICY`/`COURSE_POLICY` tables and their tests, not to call sites.
+
 ### D-14 · Certificate viva requires a human route — Proposed
 **Context.** Pass/fail is decided by the AI alone; the gate fails open when misconfigured.
 **Decision.** Outcomes `pass | needs_review | not_yet`; `needs_review` goes to staff; learners can request one human

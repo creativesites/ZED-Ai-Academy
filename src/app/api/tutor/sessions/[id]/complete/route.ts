@@ -1,5 +1,5 @@
 import { auth } from "@clerk/nextjs/server";
-import { NextRequest, NextResponse } from "next/server";
+import { after, NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { finalizeTutorSession } from "@/lib/tutor/server/report";
 import { loadOwnedSession, readJson, sessionIdSchema } from "@/lib/tutor/server/session-store";
@@ -36,6 +36,8 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
       learnerSpeakingMs: parsed.data.learnerSpeakingMs,
       teacherSpeakingMs: parsed.data.teacherSpeakingMs,
       status: parsed.data.status,
+      // P1-07: the post-session memory summariser runs after the response is sent.
+      schedule: (job) => after(job),
     });
     return NextResponse.json({ report: result.report, created: result.created });
   } catch (err) {

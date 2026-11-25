@@ -116,3 +116,46 @@ describe("tutor/turn-interaction", () => {
     assert.equal(res.quickActions[0]?.primary, true);
   });
 });
+
+describe("tutor/turn-interaction v3 (P2-04)", () => {
+  const board = { type: "show_board" as const, kind: "bullets" as const, title: "Steps", items: ["One", "Two"], shown: 2 };
+  const base = { choice: null, confidence: null, board, caption: { native: "Pick one and put these in order." }, listenHint: null, turnCount: 3 };
+
+  it("v3 sessions never infer controls from speech or the board", () => {
+    const res = deriveTurnInteraction({ ...base, inferFromContext: false });
+    assert.equal(res.activeChoice, null);
+    assert.equal(res.activeOrderChallenge, null);
+    assert.equal(res.activeFillBlank, null);
+    // Old turns and clients still infer.
+    assert.equal(deriveTurnInteraction(base).activeChoice?.source, "inferred");
+  });
+
+  it("answerable events drive the controls and carry the server checkId", () => {
+    const order = deriveTurnInteraction({
+      ...base,
+      inferFromContext: false,
+      check: { type: "ask_order", prompt: "Order", items: ["b", "a", "c"], checkId: "t3-1" },
+    });
+    assert.deepEqual(order.activeOrderChallenge, { prompt: "Order", items: ["b", "a", "c"], checkId: "t3-1" });
+    const fill = deriveTurnInteraction({
+      ...base,
+      check: { type: "ask_fill", prompt: "Plants use ___.", options: ["light", "sound"], checkId: "t3-2" },
+    });
+    assert.equal(fill.activeFillBlank?.checkId, "t3-2");
+    assert.deepEqual(fill.activeFillBlank?.wordBank, ["light", "sound"]);
+    assert.equal(fill.preferTextInput, true);
+    const num = deriveTurnInteraction({ ...base, check: { type: "ask_numeric", prompt: "g?", unit: "m/s²", checkId: "t3-3" } });
+    assert.deepEqual(num.activeNumeric, { prompt: "g?", unit: "m/s²", checkId: "t3-3" });
+    assert.equal(num.activeChoice, null);
+    const choice = deriveTurnInteraction({ ...base, check: { type: "ask_choice", question: "q", options: ["x", "y"], checkId: "t3-0" } });
+    assert.equal(choice.activeChoice?.checkId, "t3-0");
+  });
+
+  it("Live ask_order (no checkId, items in key order) is never shown in the key's order", () => {
+    for (const items of [["a", "b"], ["a", "b", "c"], ["a", "b", "c", "d"]]) {
+      const res = deriveTurnInteraction({ ...base, check: { type: "ask_order", prompt: "Order", items } });
+      assert.notDeepEqual(res.activeOrderChallenge?.items, items);
+      assert.deepEqual([...(res.activeOrderChallenge?.items ?? [])].sort(), [...items].sort());
+    }
+  });
+});

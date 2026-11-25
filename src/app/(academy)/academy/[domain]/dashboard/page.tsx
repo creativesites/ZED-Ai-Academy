@@ -2,9 +2,9 @@ import { auth } from "@clerk/nextjs/server";
 import { createClient } from "@/lib/supabase/server";
 import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
-import { 
-  ArrowRight, Award, BookMarked, BookOpen, Clock3, Flame, GraduationCap, 
-  History, Play, Sparkles, Trophy, Users, Layout, Building2, Mic
+import {
+  ArrowRight, Award, BookOpen, Clock3, Flame, GraduationCap,
+  Sparkles, Trophy, Layout, Mic
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -19,8 +19,10 @@ type EnrollmentWithCourse = Enrollment & {
 };
 
 import { TenantNavbar } from "@/components/tenant/TenantNavbar";
-import { DailyPlanCard } from "@/components/tutor/DailyPlanCard";
-import { loadDashboardDailyPlan } from "@/lib/tutor/mastery/server";
+import { TeacherUpNextCard } from "@/components/tutor/TeacherUpNextCard";
+import { loadTeacherUpNext } from "@/lib/tutor/server/up-next";
+import { academyHref, lessonHref } from "@/lib/tutor/academy-href";
+import { ZEDAI_TENANT_ID } from "@/lib/tenants/constants";
 
 export default async function TenantStudentDashboardPage({
   params,
@@ -59,21 +61,14 @@ export default async function TenantStudentDashboardPage({
 
   const firstName = profile?.full_name?.split(" ")[0] ?? "there";
 
-  // 3. Fetch Enrollments & Daily Plan for THIS company
-  const [{ data: enrollmentsData }, dailyPlan] = await Promise.all([
-    supabase
-      .from("enrollments")
-      .select("*, courses(id, slug, title, thumbnail_url, category)")
-      .eq("user_id", userId)
-      .eq("company_id", company.id)
-      .in("status", ["active", "pending_payment"])
-      .order("enrolled_at", { ascending: false }),
-    loadDashboardDailyPlan({
-      userId,
-      companyId: company.id,
-      basePath: `/academy/${company.slug}`,
-    }),
-  ]);
+  // 3. Fetch Enrollments for THIS company
+  const { data: enrollmentsData } = await supabase
+    .from("enrollments")
+    .select("*, courses(id, slug, title, thumbnail_url, category)")
+    .eq("user_id", userId)
+    .eq("company_id", company.id)
+    .in("status", ["active", "pending_payment"])
+    .order("enrolled_at", { ascending: false });
 
   const enrollments = (enrollmentsData ?? []) as EnrollmentWithCourse[];
   const enrolledCourseIds = Array.from(
@@ -97,6 +92,14 @@ export default async function TenantStudentDashboardPage({
       : Promise.resolve({ data: [] }),
     loadLearnerTutorOverview(userId, { kind: "tenant", companyId: company.id }).catch(() => null),
   ]);
+
+  // "Up next with <Teacher>" (P1-09): one card for the teacher's next step, scoped to this academy.
+  const upNextData = await loadTeacherUpNext({
+    userId,
+    companyId: company.id,
+    academySlug: company.slug,
+    overview: tutorOverview,
+  });
 
   const lessonsByCourse = new Map<string, string[]>();
   for (const mod of (modulesRes.data ?? []) as Array<{
@@ -196,14 +199,20 @@ export default async function TenantStudentDashboardPage({
                 className="group h-10 px-4 rounded-xl bg-white/10 hover:bg-white/20 text-white border border-white/15 text-xs font-semibold flex items-center gap-2 transition-all"
               >
                 <Mic className="h-4 w-4 text-amber-300" />
-                <span>Practice with AI Teacher</span>
+                <span>Learn with {upNextData.teacher.name}</span>
               </Link>
             </div>
           </div>
         </section>
 
-        {/* Today with <teacher> Daily Plan */}
-        <DailyPlanCard teacherName={dailyPlan.teacherName} items={dailyPlan.items} />
+        {/* Up next with <Teacher> (replaces the daily plan and the three teacher tiles) */}
+        <TeacherUpNextCard
+          teacher={upNextData.teacher}
+          upNext={upNextData.upNext}
+          teacherHomeHref={academyHref(company.slug, "/practice")}
+          startHref={`/academy/${company.slug}#courses`}
+          academyName={company.name}
+        />
 
         {/* Stats Grid */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
@@ -229,69 +238,6 @@ export default async function TenantStudentDashboardPage({
               <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mt-1">{stat.label}</div>
             </div>
           ))}
-        </div>
-
-        {/* AI Teacher Quick Links Strip */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <Link
-            href={`/academy/${company.slug}/practice`}
-            className="group flex items-center justify-between gap-3 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-brand/40 hover:shadow-md"
-          >
-            <div className="flex items-center gap-3.5">
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-brand-soft text-brand-text">
-                <Mic className="h-5 w-5" />
-              </div>
-              <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Teacher&apos;s Room</p>
-                <p className="text-sm font-black text-ink">
-                  {tutorOverview && tutorOverview.assignments.filter((a) => !a.completed).length > 0
-                    ? `${tutorOverview.assignments.filter((a) => !a.completed).length} assigned scene(s)`
-                    : "Start speaking practice"}
-                </p>
-              </div>
-            </div>
-            <ArrowRight className="h-4 w-4 text-slate-400 transition-transform group-hover:translate-x-0.5 group-hover:text-brand-text" />
-          </Link>
-
-          <Link
-            href={`/academy/${company.slug}/practice/deck`}
-            className="group flex items-center justify-between gap-3 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-amber-300 hover:shadow-md"
-          >
-            <div className="flex items-center gap-3.5">
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-50 text-amber-600">
-                <BookMarked className="h-5 w-5" />
-              </div>
-              <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Vocabulary Deck</p>
-                <p className="text-sm font-black text-ink">
-                  {tutorOverview && tutorOverview.deck.dueNow > 0
-                    ? `${tutorOverview.deck.dueNow} flashcards due`
-                    : "Review flashcards"}
-                </p>
-              </div>
-            </div>
-            <ArrowRight className="h-4 w-4 text-slate-400 transition-transform group-hover:translate-x-0.5 group-hover:text-amber-600" />
-          </Link>
-
-          <Link
-            href={`/academy/${company.slug}/practice/history`}
-            className="group flex items-center justify-between gap-3 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-blue-300 hover:shadow-md"
-          >
-            <div className="flex items-center gap-3.5">
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
-                <History className="h-5 w-5" />
-              </div>
-              <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Speaking Reports</p>
-                <p className="text-sm font-black text-ink">
-                  {tutorOverview && tutorOverview.completedSessionsCount > 0
-                    ? `${tutorOverview.completedSessionsCount} past report${tutorOverview.completedSessionsCount === 1 ? "" : "s"}`
-                    : "View past feedback"}
-                </p>
-              </div>
-            </div>
-            <ArrowRight className="h-4 w-4 text-slate-400 transition-transform group-hover:translate-x-0.5 group-hover:text-blue-600" />
-          </Link>
         </div>
 
         {/* Course List */}
@@ -362,14 +308,24 @@ export default async function TenantStudentDashboardPage({
                                   <div className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
                                   <p className="text-[10px] font-bold uppercase tracking-wider text-amber-700">Awaiting Confirmation</p>
                                 </div>
-                                <a 
-                                  href={`https://wa.me/260979046745?text=${encodeURIComponent(`Hi, I have enrolled in ${course.title} and would like to confirm my payment.`)}`}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                  className="h-9 rounded-xl bg-[#25D366] text-white text-xs font-semibold flex items-center justify-center gap-2 hover:opacity-95 transition-all"
-                                >
-                                  Confirm on WhatsApp
-                                </a>
+                                {company.id === ZEDAI_TENANT_ID ? (
+                                  <a
+                                    href={`https://wa.me/260979046745?text=${encodeURIComponent(`Hi, I have enrolled in ${course.title} and would like to confirm my payment.`)}`}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="h-9 rounded-xl bg-[#25D366] text-white text-xs font-semibold flex items-center justify-center gap-2 hover:opacity-95 transition-all"
+                                  >
+                                    Confirm on WhatsApp
+                                  </a>
+                                ) : (
+                                  // Academies have their own contact details; never send their learners to the platform's number.
+                                  <Link
+                                    href={`/academy/${company.slug}/courses/${course.slug}`}
+                                    className="h-9 rounded-xl bg-ink text-white text-xs font-semibold flex items-center justify-center gap-2 hover:bg-brand transition-all"
+                                  >
+                                    View payment status
+                                  </Link>
+                                )}
                              </div>
                            ) : (
                              <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-100">
@@ -390,7 +346,7 @@ export default async function TenantStudentDashboardPage({
                                   </div>
                                 )}
                                 <Link 
-                                  href={`/courses/${course.slug}/learn`}
+                                  href={lessonHref(course.slug)}
                                   className="h-9 px-4 rounded-xl bg-ink text-white text-xs font-semibold hover:bg-brand transition-all flex items-center gap-1.5"
                                 >
                                   {pct === 0 ? "Start" : pct === 100 ? "Review" : "Continue"} <ArrowRight className="h-3.5 w-3.5" />

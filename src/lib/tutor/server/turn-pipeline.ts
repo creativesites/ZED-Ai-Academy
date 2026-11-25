@@ -1,4 +1,5 @@
 import { parseTutorTurn, type TutorEvent } from "../events.ts";
+import { prepareAnswerableEvents, type PendingCheck } from "../runtime/interactions.ts";
 
 // Voice and Text turn orchestration, with every side effect injected (model call, TTS, storage, clock).
 // Pure: relative imports only, so node:test can run it against stubs. The route wires real deps.
@@ -17,7 +18,9 @@ export type TurnGenerateRequest = {
   image?: { bytes: Buffer; mimeType: string };
 };
 
-export type TurnGenerateResult = { text: string | undefined; totalTokens?: number };
+export type TurnUsage = { inputTokens?: number; outputTokens?: number; cachedTokens?: number };
+
+export type TurnGenerateResult = { text: string | undefined; totalTokens?: number; usage?: TurnUsage };
 
 export type TurnPipelineDeps = {
   now: () => number;
@@ -33,6 +36,11 @@ export type TurnPipelineDeps = {
     events: TutorEvent[];
     latencyMs: number;
     rawOutput?: string;
+    /** P2-04: answer keys to hold server-side (never in the turn row). Persist before the response is sent. */
+    checks?: PendingCheck[];
+    /** P2-04/P2-06 telemetry: answerable events without a usable key, and model token usage. */
+    ungradedChecks?: number;
+    usage?: TurnUsage;
   }) => Promise<void>;
 };
 
@@ -53,7 +61,14 @@ export type TurnPipelineInput = {
   systemInstruction: string;
   voice: string;
   history: HistoryTurn[];
+  /**
+   * Context builder parts outside the cached prefix (P2-06): the per-learner brief and the rolling summary of
+   * turns older than the window go first; the per-turn teacher note (policy directive, grading result) goes last.
+   */
+  context?: ContextExtras;
 };
+
+export type ContextExtras = { prelude?: string | null; teacherNote?: string | null };
 
 export type TurnPipelineResult = {
   idx: number;
@@ -69,6 +84,10 @@ export type TurnPipelineResult = {
   /** True when no valid model event was left, so the fallback events were used. */
   fallback: boolean;
   latencyMs: number;
+  /** Answerable checks the server now holds keys for (P2-04). `events` above never contain their keys. */
+  checks?: PendingCheck[];
+  ungradedChecks?: number;
+  usage?: TurnUsage;
 };
 
 const TIME_UP_SUMMARY = "Time is up for this session.";
@@ -107,6 +126,7 @@ export async function runTutorTurn(input: TurnPipelineInput, deps: TurnPipelineD
     input.history,
     input.learnerText ?? (input.learnerAudio ? "[audio]" : input.learnerImage ? "[shared work image]" : null),
     input.openingInstruction,
+    input.context,
   );
   const response = await deps.generate({
     systemInstruction: input.systemInstruction,
@@ -161,12 +181,27 @@ export async function runTutorTurn(input: TurnPipelineInput, deps: TurnPipelineD
     }),
   );
 
+  // P2-04: answer keys leave the events and become held checks; the turn stores and returns key-free events.
+  const prepared = prepareAnswerableEvents(events, input.idx);
+
   const modelEnded = events.some((e) => e.type === "end_session");
-  await deps.saveTurn({ idx: input.idx, learnerText: resolvedLearnerText, events, latencyMs, rawOutput });
+  await deps.saveTurn({
+    idx: input.idx,
+    learnerText: resolvedLearnerText,
+    events: prepared.client,
+    latencyMs,
+    rawOutput,
+    checks: prepared.checks,
+    ungradedChecks: prepared.ungraded,
+    usage: response.usage,
+  });
 
   return {
     idx: input.idx,
-    events,
+    events: prepared.client,
+    checks: prepared.checks,
+    ungradedChecks: prepared.ungraded,
+    usage: response.usage,
     learnerText: resolvedLearnerText,
     ended: modelEnded,
     endReason: modelEnded ? "model_end" : undefined,
@@ -224,6 +259,7 @@ export function buildContents(
   history: HistoryTurn[],
   learnerText: string | null,
   openingInstruction: string,
+  extras?: ContextExtras,
 ): GenContent[] {
   const contents: GenContent[] = [];
   const push = (role: "user" | "model", text: string) => {
@@ -235,13 +271,23 @@ export function buildContents(
     }
   };
 
+  if (extras?.prelude && extras.prelude.trim()) push("user", extras.prelude.trim());
+
   for (const turn of [...history].sort((a, b) => a.idx - b.idx)) {
     push("user", turn.learner_text && turn.learner_text.trim() ? `Learner: ${turn.learner_text}` : "(session opening)");
     push("model", JSON.stringify({ events: eventsForHistory(turn.events) }));
   }
 
   push("user", learnerText && learnerText.trim() ? `Learner: ${learnerText}` : openingInstruction);
+  if (extras?.teacherNote && extras.teacherNote.trim()) push("user", formatTeacherNote(extras.teacherNote));
   return contents;
+}
+
+/** Header that marks server guidance in `contents`. The system prompt explains it (see prompt.ts). */
+export const TEACHER_NOTE_HEADER = "[Teacher note: from the platform, not the learner. Never read it aloud or mention it.]";
+
+export function formatTeacherNote(note: string): string {
+  return `${TEACHER_NOTE_HEADER}\n${note.trim()}`;
 }
 
 /** Type of the debug entry that storage appends when the model output was unusable. Never sent back to the model. */

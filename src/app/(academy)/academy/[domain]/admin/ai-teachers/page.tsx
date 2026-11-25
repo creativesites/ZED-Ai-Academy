@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Toaster } from "@/components/ui/sonner";
 import { requireTenantAdminPage } from "@/lib/tenants/admin-guard";
 import { TutorStudioHub } from "@/components/tutor/studio/TutorStudioHub";
@@ -42,6 +43,14 @@ export default async function TenantAdminAiTeachersPage({
     <>
       <Toaster />
       <div className="container mx-auto max-w-7xl px-4 py-8 pb-24">
+        <div className="mb-4 flex justify-end">
+          <Link
+            href={`/academy/${company.slug}/admin/ai-teachers/reviews`}
+            className="rounded-full border border-slate-200 px-3 py-1 text-sm font-medium text-ink hover:border-slate-300"
+          >
+            Reviews
+          </Link>
+        </div>
         <TutorStudioHub
           companyId={company.id}
           companyName={company.name}

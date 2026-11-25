@@ -48,7 +48,7 @@ export const SCALE_PERSONA_PRESETS: ReadonlyArray<{
 }> = [
   {
     key: "mwila",
-    label: "Mwila",
+    label: "Maureen",
     look: {
       skinColor: "#6B3E26",
       skinShadeColor: "#4E2B19",
@@ -117,3 +117,19 @@ export const ALL_PERSONA_PRESETS: ReadonlyArray<{
   label: string;
   look: PersonaLook;
 }> = [...PERSONA_PRESETS, ...SCALE_PERSONA_PRESETS];
+
+/**
+ * A preset by its key. Always select personas by key: indexes into the arrays above change meaning when a
+ * preset is added or reordered. Unknown keys fall back to Tinashe, the platform default teacher.
+ */
+export function personaPreset(key: string | null | undefined): {
+  key: AnyPersonaPresetKey;
+  label: string;
+  look: PersonaLook;
+} {
+  return (
+    ALL_PERSONA_PRESETS.find((p) => p.key === key) ??
+    ALL_PERSONA_PRESETS.find((p) => p.key === "tinashe") ??
+    ALL_PERSONA_PRESETS[0]
+  );
+}

@@ -1241,6 +1241,7 @@ export async function getAcademyGradebook(companyId: string): Promise<AcademyGra
       .from("tutor_sessions")
       .select("id, user_id, learner_speaking_ms, status, started_at, scenario_id, shared_with_teacher")
       .eq("company_id", companyId)
+      .neq("origin", "ask") // P1-06: lesson Ask conversations are not speaking practice
       .in("user_id", studentIds);
 
     const sessionRows = tutorSessionsData ?? [];
@@ -1717,6 +1718,7 @@ export async function getMyClassroomProgress(
       )
       .eq("company_id", companyId)
       .eq("user_id", userId)
+      .neq("origin", "ask") // P1-06: lesson Ask conversations are not practice sessions
       .order("started_at", { ascending: false })
       .limit(25);
 

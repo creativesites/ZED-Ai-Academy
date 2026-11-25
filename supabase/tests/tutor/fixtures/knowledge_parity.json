@@ -1,0 +1,842 @@
+{
+  "description": "Parity fixtures for the knowledge rule (Architecture §4.2). Used by src/lib/tutor/learner/knowledge.test.ts and supabase/tests/tutor/knowledge_parity_test.sql. Regenerate only together with a deliberate rule change in BOTH implementations.",
+  "tolerance": 0.000001,
+  "cases": [
+    {
+      "name": "unseen: no evidence",
+      "evidence": [],
+      "expected": {
+        "pMastery": null,
+        "confidence": 0,
+        "evidenceMass": 0,
+        "stabilityDays": 1,
+        "evidenceCount": 0,
+        "evidenceSources": [],
+        "spacedReviews": 0,
+        "status": "unseen",
+        "securedAt": null,
+        "nextReviewAt": null,
+        "legacyLevel": 0
+      }
+    },
+    {
+      "name": "first verified quiz correct",
+      "evidence": [
+        {
+          "source": "quiz",
+          "serverVerified": true,
+          "result": "correct",
+          "score": null,
+          "difficulty": null,
+          "at": "2026-01-01T09:00:00.000Z"
+        }
+      ],
+      "expected": {
+        "pMastery": 0.545,
+        "confidence": 0.283469,
+        "evidenceMass": 1,
+        "stabilityDays": 1,
+        "evidenceCount": 1,
+        "evidenceSources": [
+          "quiz"
+        ],
+        "spacedReviews": 0,
+        "status": "practising",
+        "securedAt": null,
+        "nextReviewAt": "2026-01-01T12:54:01.635Z",
+        "legacyLevel": 2
+      }
+    },
+    {
+      "name": "first verified quiz misconception is learning, not unseen",
+      "evidence": [
+        {
+          "source": "quiz",
+          "serverVerified": true,
+          "result": "misconception",
+          "score": null,
+          "difficulty": null,
+          "at": "2026-01-01T09:00:00.000Z"
+        }
+      ],
+      "expected": {
+        "pMastery": 0.195,
+        "confidence": 0.283469,
+        "evidenceMass": 1,
+        "stabilityDays": 1,
+        "evidenceCount": 1,
+        "evidenceSources": [
+          "quiz"
+        ],
+        "spacedReviews": 0,
+        "status": "learning",
+        "securedAt": null,
+        "nextReviewAt": "2026-01-01T12:54:01.635Z",
+        "legacyLevel": 0
+      }
+    },
+    {
+      "name": "partial via result",
+      "evidence": [
+        {
+          "source": "quiz",
+          "serverVerified": true,
+          "result": "partial",
+          "score": null,
+          "difficulty": null,
+          "at": "2026-01-01T09:00:00.000Z"
+        }
+      ],
+      "expected": {
+        "pMastery": 0.37,
+        "confidence": 0.283469,
+        "evidenceMass": 1,
+        "stabilityDays": 1,
+        "evidenceCount": 1,
+        "evidenceSources": [
+          "quiz"
+        ],
+        "spacedReviews": 0,
+        "status": "learning",
+        "securedAt": null,
+        "nextReviewAt": "2026-01-01T12:54:01.635Z",
+        "legacyLevel": 1
+      }
+    },
+    {
+      "name": "score overrides result",
+      "evidence": [
+        {
+          "source": "quiz",
+          "serverVerified": true,
+          "result": "correct",
+          "score": 0.25,
+          "difficulty": null,
+          "at": "2026-01-01T09:00:00.000Z"
+        }
+      ],
+      "expected": {
+        "pMastery": 0.2825,
+        "confidence": 0.283469,
+        "evidenceMass": 1,
+        "stabilityDays": 1,
+        "evidenceCount": 1,
+        "evidenceSources": [
+          "quiz"
+        ],
+        "spacedReviews": 0,
+        "status": "learning",
+        "securedAt": null,
+        "nextReviewAt": "2026-01-01T12:54:01.635Z",
+        "legacyLevel": 1
+      }
+    },
+    {
+      "name": "legacy_ai unverified is down-weighted",
+      "evidence": [
+        {
+          "source": "legacy_ai",
+          "serverVerified": false,
+          "result": "correct",
+          "score": null,
+          "difficulty": null,
+          "at": "2026-01-01T09:00:00.000Z"
+        }
+      ],
+      "expected": {
+        "pMastery": 0.3588,
+        "confidence": 0.076884,
+        "evidenceMass": 0.24,
+        "stabilityDays": 1,
+        "evidenceCount": 1,
+        "evidenceSources": [],
+        "spacedReviews": 0,
+        "status": "learning",
+        "securedAt": null,
+        "nextReviewAt": "2026-01-01T12:54:01.635Z",
+        "legacyLevel": 1
+      }
+    },
+    {
+      "name": "teacher_judgement unverified",
+      "evidence": [
+        {
+          "source": "teacher_judgement",
+          "serverVerified": false,
+          "result": "correct",
+          "score": null,
+          "difficulty": null,
+          "at": "2026-01-01T09:00:00.000Z"
+        }
+      ],
+      "expected": {
+        "pMastery": 0.3735,
+        "confidence": 0.095163,
+        "evidenceMass": 0.3,
+        "stabilityDays": 1,
+        "evidenceCount": 1,
+        "evidenceSources": [
+          "teacher_judgement"
+        ],
+        "spacedReviews": 0,
+        "status": "learning",
+        "securedAt": null,
+        "nextReviewAt": "2026-01-01T12:54:01.635Z",
+        "legacyLevel": 1
+      }
+    },
+    {
+      "name": "self_report never moves p",
+      "evidence": [
+        {
+          "source": "self_report",
+          "serverVerified": false,
+          "result": "correct",
+          "score": null,
+          "difficulty": null,
+          "at": "2026-01-01T09:00:00.000Z"
+        }
+      ],
+      "expected": {
+        "pMastery": null,
+        "confidence": 0.019801,
+        "evidenceMass": 0.06,
+        "stabilityDays": 1,
+        "evidenceCount": 1,
+        "evidenceSources": [],
+        "spacedReviews": 0,
+        "status": "unseen",
+        "securedAt": null,
+        "nextReviewAt": null,
+        "legacyLevel": 0
+      }
+    },
+    {
+      "name": "difficulty 3 transfer weighs more",
+      "evidence": [
+        {
+          "source": "quiz",
+          "serverVerified": true,
+          "result": "correct",
+          "score": null,
+          "difficulty": 3,
+          "at": "2026-01-01T09:00:00.000Z"
+        }
+      ],
+      "expected": {
+        "pMastery": 0.594,
+        "confidence": 0.32968,
+        "evidenceMass": 1.2,
+        "stabilityDays": 1,
+        "evidenceCount": 1,
+        "evidenceSources": [
+          "quiz"
+        ],
+        "spacedReviews": 0,
+        "status": "practising",
+        "securedAt": null,
+        "nextReviewAt": "2026-01-01T12:54:01.635Z",
+        "legacyLevel": 2
+      }
+    },
+    {
+      "name": "difficulty 1 recall weighs less",
+      "evidence": [
+        {
+          "source": "quiz",
+          "serverVerified": true,
+          "result": "correct",
+          "score": null,
+          "difficulty": 1,
+          "at": "2026-01-01T09:00:00.000Z"
+        }
+      ],
+      "expected": {
+        "pMastery": 0.496,
+        "confidence": 0.234072,
+        "evidenceMass": 0.8,
+        "stabilityDays": 1,
+        "evidenceCount": 1,
+        "evidenceSources": [
+          "quiz"
+        ],
+        "spacedReviews": 0,
+        "status": "practising",
+        "securedAt": null,
+        "nextReviewAt": "2026-01-01T12:54:01.635Z",
+        "legacyLevel": 1
+      }
+    },
+    {
+      "name": "same source massed practice is not secure",
+      "evidence": [
+        {
+          "source": "quiz",
+          "serverVerified": true,
+          "result": "correct",
+          "score": null,
+          "difficulty": null,
+          "at": "2026-01-01T09:00:00.000Z"
+        },
+        {
+          "source": "quiz",
+          "serverVerified": true,
+          "result": "correct",
+          "score": null,
+          "difficulty": null,
+          "at": "2026-01-01T09:14:24.000Z"
+        },
+        {
+          "source": "quiz",
+          "serverVerified": true,
+          "result": "correct",
+          "score": null,
+          "difficulty": null,
+          "at": "2026-01-01T09:28:48.000Z"
+        },
+        {
+          "source": "quiz",
+          "serverVerified": true,
+          "result": "correct",
+          "score": null,
+          "difficulty": null,
+          "at": "2026-01-01T09:43:12.000Z"
+        },
+        {
+          "source": "quiz",
+          "serverVerified": true,
+          "result": "correct",
+          "score": null,
+          "difficulty": null,
+          "at": "2026-01-01T09:57:36.000Z"
+        },
+        {
+          "source": "quiz",
+          "serverVerified": true,
+          "result": "correct",
+          "score": null,
+          "difficulty": null,
+          "at": "2026-01-01T10:12:00.000Z"
+        }
+      ],
+      "expected": {
+        "pMastery": 0.892026,
+        "confidence": 0.864552,
+        "evidenceMass": 5.997501,
+        "stabilityDays": 1,
+        "evidenceCount": 6,
+        "evidenceSources": [
+          "quiz"
+        ],
+        "spacedReviews": 0,
+        "status": "practising",
+        "securedAt": null,
+        "nextReviewAt": "2026-01-01T14:06:01.635Z",
+        "legacyLevel": 3
+      }
+    },
+    {
+      "name": "two sources same day reach secure",
+      "evidence": [
+        {
+          "source": "quiz",
+          "serverVerified": true,
+          "result": "correct",
+          "score": null,
+          "difficulty": null,
+          "at": "2026-01-01T09:00:00.000Z"
+        },
+        {
+          "source": "interaction",
+          "serverVerified": true,
+          "result": "correct",
+          "score": null,
+          "difficulty": null,
+          "at": "2026-01-01T09:14:24.000Z"
+        },
+        {
+          "source": "quiz",
+          "serverVerified": true,
+          "result": "correct",
+          "score": null,
+          "difficulty": null,
+          "at": "2026-01-01T09:28:48.000Z"
+        },
+        {
+          "source": "interaction",
+          "serverVerified": true,
+          "result": "correct",
+          "score": null,
+          "difficulty": null,
+          "at": "2026-01-01T09:43:12.000Z"
+        },
+        {
+          "source": "quiz",
+          "serverVerified": true,
+          "result": "correct",
+          "score": null,
+          "difficulty": null,
+          "at": "2026-01-01T09:57:36.000Z"
+        },
+        {
+          "source": "widget",
+          "serverVerified": true,
+          "result": "correct",
+          "score": null,
+          "difficulty": null,
+          "at": "2026-01-01T10:12:00.000Z"
+        }
+      ],
+      "expected": {
+        "pMastery": 0.892026,
+        "confidence": 0.864552,
+        "evidenceMass": 5.997501,
+        "stabilityDays": 1,
+        "evidenceCount": 6,
+        "evidenceSources": [
+          "interaction",
+          "quiz",
+          "widget"
+        ],
+        "spacedReviews": 0,
+        "status": "secure",
+        "securedAt": "2026-01-01T09:43:12.000Z",
+        "nextReviewAt": "2026-01-01T14:06:01.635Z",
+        "legacyLevel": 3
+      }
+    },
+    {
+      "name": "successful spaced review grows stability",
+      "evidence": [
+        {
+          "source": "quiz",
+          "serverVerified": true,
+          "result": "correct",
+          "score": null,
+          "difficulty": null,
+          "at": "2026-01-01T09:00:00.000Z"
+        },
+        {
+          "source": "quiz",
+          "serverVerified": true,
+          "result": "correct",
+          "score": null,
+          "difficulty": null,
+          "at": "2026-01-02T09:00:00.000Z"
+        },
+        {
+          "source": "quiz",
+          "serverVerified": true,
+          "result": "correct",
+          "score": null,
+          "difficulty": null,
+          "at": "2026-01-04T09:00:00.000Z"
+        },
+        {
+          "source": "quiz",
+          "serverVerified": true,
+          "result": "correct",
+          "score": null,
+          "difficulty": null,
+          "at": "2026-01-09T09:00:00.000Z"
+        }
+      ],
+      "expected": {
+        "pMastery": 0.808047,
+        "confidence": 0.70723,
+        "evidenceMass": 3.685099,
+        "stabilityDays": 15.625,
+        "evidenceCount": 4,
+        "evidenceSources": [
+          "quiz"
+        ],
+        "spacedReviews": 3,
+        "status": "secure",
+        "securedAt": "2026-01-09T09:00:00.000Z",
+        "nextReviewAt": "2026-01-11T21:56:40.554Z",
+        "legacyLevel": 3
+      }
+    },
+    {
+      "name": "failure shrinks stability",
+      "evidence": [
+        {
+          "source": "quiz",
+          "serverVerified": true,
+          "result": "correct",
+          "score": null,
+          "difficulty": null,
+          "at": "2026-01-01T09:00:00.000Z"
+        },
+        {
+          "source": "quiz",
+          "serverVerified": true,
+          "result": "correct",
+          "score": null,
+          "difficulty": null,
+          "at": "2026-01-02T09:00:00.000Z"
+        },
+        {
+          "source": "quiz",
+          "serverVerified": true,
+          "result": "correct",
+          "score": null,
+          "difficulty": null,
+          "at": "2026-01-04T09:00:00.000Z"
+        },
+        {
+          "source": "quiz",
+          "serverVerified": true,
+          "result": "misconception",
+          "score": null,
+          "difficulty": null,
+          "at": "2026-01-11T09:00:00.000Z"
+        }
+      ],
+      "expected": {
+        "pMastery": 0.558047,
+        "confidence": 0.698512,
+        "evidenceMass": 3.597071,
+        "stabilityDays": 3.125,
+        "evidenceCount": 4,
+        "evidenceSources": [
+          "quiz"
+        ],
+        "spacedReviews": 2,
+        "status": "practising",
+        "securedAt": null,
+        "nextReviewAt": "2026-01-11T21:11:20.110Z",
+        "legacyLevel": 2
+      }
+    },
+    {
+      "name": "secure then failures becomes needs_review",
+      "evidence": [
+        {
+          "source": "quiz",
+          "serverVerified": true,
+          "result": "correct",
+          "score": null,
+          "difficulty": null,
+          "at": "2026-01-01T09:00:00.000Z"
+        },
+        {
+          "source": "interaction",
+          "serverVerified": true,
+          "result": "correct",
+          "score": null,
+          "difficulty": null,
+          "at": "2026-01-01T09:14:24.000Z"
+        },
+        {
+          "source": "quiz",
+          "serverVerified": true,
+          "result": "correct",
+          "score": null,
+          "difficulty": null,
+          "at": "2026-01-01T09:28:48.000Z"
+        },
+        {
+          "source": "interaction",
+          "serverVerified": true,
+          "result": "correct",
+          "score": null,
+          "difficulty": null,
+          "at": "2026-01-01T09:43:12.000Z"
+        },
+        {
+          "source": "quiz",
+          "serverVerified": true,
+          "result": "correct",
+          "score": null,
+          "difficulty": null,
+          "at": "2026-01-01T09:57:36.000Z"
+        },
+        {
+          "source": "widget",
+          "serverVerified": true,
+          "result": "correct",
+          "score": null,
+          "difficulty": null,
+          "at": "2026-01-01T10:12:00.000Z"
+        },
+        {
+          "source": "quiz",
+          "serverVerified": true,
+          "result": "misconception",
+          "score": null,
+          "difficulty": null,
+          "at": "2026-01-03T09:00:00.000Z"
+        },
+        {
+          "source": "quiz",
+          "serverVerified": true,
+          "result": "misconception",
+          "score": null,
+          "difficulty": null,
+          "at": "2026-01-03T09:14:24.000Z"
+        }
+      ],
+      "expected": {
+        "pMastery": 0.501765,
+        "confidence": 0.92584,
+        "evidenceMass": 7.804582,
+        "stabilityDays": 1,
+        "evidenceCount": 8,
+        "evidenceSources": [
+          "interaction",
+          "quiz",
+          "widget"
+        ],
+        "spacedReviews": 0,
+        "status": "needs_review",
+        "securedAt": "2026-01-01T09:43:12.000Z",
+        "nextReviewAt": "2026-01-03T13:08:25.635Z",
+        "legacyLevel": 2
+      }
+    },
+    {
+      "name": "mass decays over long gaps",
+      "evidence": [
+        {
+          "source": "quiz",
+          "serverVerified": true,
+          "result": "correct",
+          "score": null,
+          "difficulty": null,
+          "at": "2026-01-01T09:00:00.000Z"
+        },
+        {
+          "source": "quiz",
+          "serverVerified": true,
+          "result": "partial",
+          "score": null,
+          "difficulty": null,
+          "at": "2026-05-01T09:00:00.000Z"
+        }
+      ],
+      "expected": {
+        "pMastery": 0.53375,
+        "confidence": 0.315074,
+        "evidenceMass": 1.135335,
+        "stabilityDays": 1,
+        "evidenceCount": 2,
+        "evidenceSources": [
+          "quiz"
+        ],
+        "spacedReviews": 0,
+        "status": "practising",
+        "securedAt": null,
+        "nextReviewAt": "2026-05-01T12:54:01.635Z",
+        "legacyLevel": 2
+      }
+    },
+    {
+      "name": "unknown difficulty treated as 2",
+      "evidence": [
+        {
+          "source": "quiz",
+          "serverVerified": true,
+          "result": "correct",
+          "score": null,
+          "difficulty": 7,
+          "at": "2026-01-01T09:00:00.000Z"
+        }
+      ],
+      "expected": {
+        "pMastery": 0.545,
+        "confidence": 0.283469,
+        "evidenceMass": 1,
+        "stabilityDays": 1,
+        "evidenceCount": 1,
+        "evidenceSources": [
+          "quiz"
+        ],
+        "spacedReviews": 0,
+        "status": "practising",
+        "securedAt": null,
+        "nextReviewAt": "2026-01-01T12:54:01.635Z",
+        "legacyLevel": 2
+      }
+    }
+  ],
+  "effective": [
+    {
+      "name": "secure state read 0 days later",
+      "evidence": [
+        {
+          "source": "quiz",
+          "serverVerified": true,
+          "result": "correct",
+          "score": null,
+          "difficulty": null,
+          "at": "2026-01-01T09:00:00.000Z"
+        },
+        {
+          "source": "interaction",
+          "serverVerified": true,
+          "result": "correct",
+          "score": null,
+          "difficulty": null,
+          "at": "2026-01-01T09:14:24.000Z"
+        },
+        {
+          "source": "quiz",
+          "serverVerified": true,
+          "result": "correct",
+          "score": null,
+          "difficulty": null,
+          "at": "2026-01-01T09:28:48.000Z"
+        },
+        {
+          "source": "interaction",
+          "serverVerified": true,
+          "result": "correct",
+          "score": null,
+          "difficulty": null,
+          "at": "2026-01-01T09:43:12.000Z"
+        },
+        {
+          "source": "quiz",
+          "serverVerified": true,
+          "result": "correct",
+          "score": null,
+          "difficulty": null,
+          "at": "2026-01-01T09:57:36.000Z"
+        },
+        {
+          "source": "widget",
+          "serverVerified": true,
+          "result": "correct",
+          "score": null,
+          "difficulty": null,
+          "at": "2026-01-01T10:12:00.000Z"
+        }
+      ],
+      "now": "2026-01-01T10:12:00.000Z",
+      "expected": {
+        "pEffective": 0.892026,
+        "status": "secure",
+        "due": false
+      }
+    },
+    {
+      "name": "secure state read 2 days later",
+      "evidence": [
+        {
+          "source": "quiz",
+          "serverVerified": true,
+          "result": "correct",
+          "score": null,
+          "difficulty": null,
+          "at": "2026-01-01T09:00:00.000Z"
+        },
+        {
+          "source": "interaction",
+          "serverVerified": true,
+          "result": "correct",
+          "score": null,
+          "difficulty": null,
+          "at": "2026-01-01T09:14:24.000Z"
+        },
+        {
+          "source": "quiz",
+          "serverVerified": true,
+          "result": "correct",
+          "score": null,
+          "difficulty": null,
+          "at": "2026-01-01T09:28:48.000Z"
+        },
+        {
+          "source": "interaction",
+          "serverVerified": true,
+          "result": "correct",
+          "score": null,
+          "difficulty": null,
+          "at": "2026-01-01T09:43:12.000Z"
+        },
+        {
+          "source": "quiz",
+          "serverVerified": true,
+          "result": "correct",
+          "score": null,
+          "difficulty": null,
+          "at": "2026-01-01T09:57:36.000Z"
+        },
+        {
+          "source": "widget",
+          "serverVerified": true,
+          "result": "correct",
+          "score": null,
+          "difficulty": null,
+          "at": "2026-01-01T10:12:00.000Z"
+        }
+      ],
+      "now": "2026-01-03T10:12:00.000Z",
+      "expected": {
+        "pEffective": 0.120723,
+        "status": "needs_review",
+        "due": true
+      }
+    },
+    {
+      "name": "secure state read 30 days later",
+      "evidence": [
+        {
+          "source": "quiz",
+          "serverVerified": true,
+          "result": "correct",
+          "score": null,
+          "difficulty": null,
+          "at": "2026-01-01T09:00:00.000Z"
+        },
+        {
+          "source": "interaction",
+          "serverVerified": true,
+          "result": "correct",
+          "score": null,
+          "difficulty": null,
+          "at": "2026-01-01T09:14:24.000Z"
+        },
+        {
+          "source": "quiz",
+          "serverVerified": true,
+          "result": "correct",
+          "score": null,
+          "difficulty": null,
+          "at": "2026-01-01T09:28:48.000Z"
+        },
+        {
+          "source": "interaction",
+          "serverVerified": true,
+          "result": "correct",
+          "score": null,
+          "difficulty": null,
+          "at": "2026-01-01T09:43:12.000Z"
+        },
+        {
+          "source": "quiz",
+          "serverVerified": true,
+          "result": "correct",
+          "score": null,
+          "difficulty": null,
+          "at": "2026-01-01T09:57:36.000Z"
+        },
+        {
+          "source": "widget",
+          "serverVerified": true,
+          "result": "correct",
+          "score": null,
+          "difficulty": null,
+          "at": "2026-01-01T10:12:00.000Z"
+        }
+      ],
+      "now": "2026-01-31T10:12:00.000Z",
+      "expected": {
+        "pEffective": 0,
+        "status": "needs_review",
+        "due": true
+      }
+    }
+  ]
+}
