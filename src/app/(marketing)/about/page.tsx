@@ -8,7 +8,7 @@ import { Sparkles, Target, Zap, GraduationCap, Users, ShieldCheck, TrendingUp, P
 
 const testimonials = [
     {
-        name: "Chanda Mwila",
+        name: "Maureen Chanda",
         role: "Marketing Manager, Lusaka",
         img: "https://images.unsplash.com/photo-1666867936058-de34bfd5b320?w=150&q=80",
         quote: "I finished the Prompt Engineering course in two weeks and immediately started using it at work. I now produce content in a fraction of the time.",

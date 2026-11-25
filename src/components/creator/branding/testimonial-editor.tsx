@@ -53,7 +53,7 @@ export function TestimonialEditor({
   const generateDefaultTestimonials = () => {
     const defaults: TestimonialItem[] = [
       {
-        name: "Chanda Mwila",
+        name: "Maureen Chanda",
         role: "Data Analyst & Alum",
         content: `The direct guidance and hands-on exercises at ${academyName || "Zed AI Academy"} helped me transition into a high-paying tech role within 3 months.`,
         rating: 5,
@@ -170,7 +170,7 @@ export function TestimonialEditor({
                   <Input
                     value={t.name}
                     onChange={(e) => updateTestimonial(idx, "name", e.target.value)}
-                    placeholder="e.g. Mwila Chanda"
+                    placeholder="e.g. Maureen Chanda"
                     className="h-10 rounded-xl text-xs font-bold text-slate-800"
                   />
                 </div>

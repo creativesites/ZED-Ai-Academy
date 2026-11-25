@@ -764,7 +764,7 @@ export function PersonaStudio({
                 rows={2}
                 value={draft.pronunciationGlossaryText}
                 onChange={(e) => setDraft((d) => ({ ...d, pronunciationGlossaryText: e.target.value }))}
-                placeholder={"ZRA = Z R A\nKwacha = Kwah-chah\nMwila = Mwee-lah"}
+                placeholder={"ZRA = Z R A\nKwacha = Kwah-chah\nMaureen = Maw-reen"}
                 className="font-mono text-xs"
               />
             </div>

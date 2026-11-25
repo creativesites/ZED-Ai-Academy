@@ -154,7 +154,7 @@ export function SettingsForm({
     ],
     testimonials: [
       {
-        name: "Mwila Chanda",
+        name: "Maureen Chanda",
         role: "Class of 2026",
         content: `Learning with ${academyName || "Zed AI Academy"} gave me the confidence and practical skills I needed to excel.`,
         rating: 5,
