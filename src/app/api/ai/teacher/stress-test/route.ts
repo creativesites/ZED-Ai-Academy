@@ -9,6 +9,7 @@ import {
 } from "@/lib/tutor/authoring/stress-test";
 import { parseTutorTurn } from "@/lib/tutor/events";
 import { generateTurnJson } from "@/lib/tutor/server/gemini-models";
+import { meterFor } from "@/lib/ai/meter-server";
 import { buildSystemPrompt } from "@/lib/tutor/server/prompt";
 import { buildContents } from "@/lib/tutor/server/turn-pipeline";
 
@@ -104,12 +105,13 @@ export async function POST(req: NextRequest) {
     },
   ];
 
+  const meter = await meterFor(userId);
   try {
     const cases = await Promise.all(
       STRESS_TEST_PROBES.map(async (probe) => {
         try {
           const contents = buildContents(simulatedHistory, probe.learnerMessage, "");
-          const generated = await generateTurnJson({ systemInstruction, contents });
+          const generated = await generateTurnJson({ systemInstruction, contents, meter });
           const parsedTurn = parseTutorTurn(generated.text ?? "");
           if (parsedTurn.ok && parsedTurn.events.length > 0) {
             return evaluateStressResponse(probe, parsedTurn.events, false);

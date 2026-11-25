@@ -1,5 +1,5 @@
 import "server-only";
-import { gemini } from "@/lib/ai/gemini/client";
+import { createContextCache } from "@/lib/ai/gemini/client";
 import {
   PROMPT_CACHE_TTL_MS,
   PromptCacheRegistry,
@@ -30,16 +30,10 @@ export async function getOrCreatePromptCache(
   const promise = (async () => {
     try {
       const ttlSeconds = Math.round(PROMPT_CACHE_TTL_MS / 1000);
-      const created = await gemini.caches.create({
-        model,
-        config: {
-          systemInstruction,
-          ttl: `${ttlSeconds}s`,
-        },
-      });
-      if (created?.name) {
-        registry.set(key, created.name, PROMPT_CACHE_TTL_MS);
-        return created.name;
+      const name = await createContextCache(model, systemInstruction, ttlSeconds);
+      if (name) {
+        registry.set(key, name, PROMPT_CACHE_TTL_MS);
+        return name;
       }
       return undefined;
     } catch (err: unknown) {
