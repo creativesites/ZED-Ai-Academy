@@ -73,20 +73,20 @@ function Tab({
       <div
         className={cn(
           "relative flex h-7 w-11 items-center justify-center rounded-[14px] transition-colors duration-200",
-          active ? "bg-[#fd5523]/10" : "bg-transparent"
+          active ? "bg-brand/10" : "bg-transparent"
         )}
       >
         <Icon
           key={active ? "on" : "off"}
           className={cn(
             "h-5 w-5 shrink-0 transition-colors duration-200",
-            active ? "text-[#fd5523]" : "text-slate-400",
+            active ? "text-brand-text" : "text-slate-400",
             burst && "_tab-active-icon"
           )}
         />
         <span
           className={cn(
-            "absolute -bottom-[7px] left-1/2 h-1 w-1 -translate-x-1/2 rounded-full bg-[#fd5523] transition-transform duration-200",
+            "absolute -bottom-[7px] left-1/2 h-1 w-1 -translate-x-1/2 rounded-full bg-brand transition-transform duration-200",
             active ? "scale-100" : "scale-0",
             burst && active && "_dot-show"
           )}
@@ -95,7 +95,7 @@ function Tab({
       <span
         className={cn(
           "max-w-[52px] truncate text-[10px] font-bold tracking-wide transition-colors duration-200",
-          active ? "text-[#fd5523]" : "text-slate-400",
+          active ? "text-brand-text" : "text-slate-400",
           burst && "_tab-active-label"
         )}
       >
@@ -171,7 +171,7 @@ function MoreDrawer({
           "fixed inset-x-0 bottom-[68px] z-[4999] md:hidden",
           "bg-white rounded-t-[20px]",
           "border-t border-slate-200/80",
-          "shadow-[0_-4px_32px_-4px_rgba(6,46,57,0.12)]",
+          "shadow-[0_-4px_32px_-4px_rgba(9,21,43,0.12)]",
           "pb-[env(safe-area-inset-bottom)]",
           "transition-transform duration-[280ms] ease-[cubic-bezier(0.32,0.72,0,1)]",
           open ? "translate-y-0" : "translate-y-full"
@@ -196,19 +196,19 @@ function MoreDrawer({
                   onClick={onClose}
                   className={cn(
                     "flex items-center gap-3 px-4 py-3 transition-colors active:bg-slate-50",
-                    item.active ? "text-[#fd5523]" : "text-slate-700"
+                    item.active ? "text-brand-text" : "text-slate-700"
                   )}
                 >
                   <span
                     className={cn(
                       "flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] transition-colors",
-                      item.active ? "bg-[#fd5523]/10" : "bg-slate-100"
+                      item.active ? "bg-brand/10" : "bg-slate-100"
                     )}
                   >
                     <Icon
                       className={cn(
                         "h-[18px] w-[18px]",
-                        item.active ? "text-[#fd5523]" : "text-slate-500"
+                        item.active ? "text-brand-text" : "text-slate-500"
                       )}
                     />
                   </span>
@@ -216,7 +216,7 @@ function MoreDrawer({
                     {item.label}
                   </span>
                   {item.active && (
-                    <span className="ml-auto h-2 w-2 rounded-full bg-[#fd5523]" />
+                    <span className="ml-auto h-2 w-2 rounded-full bg-brand" />
                   )}
                 </Link>
               </li>
@@ -259,7 +259,7 @@ function NavShell({ tabs, label }: { tabs: TabItem[]; label: string }) {
         className={cn(
           "fixed inset-x-0 bottom-0 z-[5000] md:hidden",
           "bg-white border-t border-slate-200/80",
-          "shadow-[0_-1px_0_0_rgba(0,0,0,0.04),0_-8px_24px_-4px_rgba(6,46,57,0.07)]",
+          "shadow-[0_-1px_0_0_rgba(0,0,0,0.04),0_-8px_24px_-4px_rgba(9,21,43,0.07)]",
           "pb-[env(safe-area-inset-bottom)]"
         )}
       >

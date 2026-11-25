@@ -1,4 +1,4 @@
-# Architecture — Zed AI Academy
+# Architecture — CS Learn
 
 ## Overview
 

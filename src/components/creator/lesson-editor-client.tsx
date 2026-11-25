@@ -151,7 +151,7 @@ type BlockMeta = {
 };
 
 const BLOCK_META: Record<ContentBlockType, BlockMeta> = {
-  text:           { label: "Text",            description: "Headings, paragraphs, lists and links", icon: Type, color: "text-[#fd5523]", bgColor: "bg-[#fff6ee]" },
+  text:           { label: "Text",            description: "Headings, paragraphs, lists and links", icon: Type, color: "text-brand-text", bgColor: "bg-brand-soft" },
   video:          { label: "Video",           description: "Embed a YouTube video", icon: Video, color: "text-red-500", bgColor: "bg-red-50" },
   image:          { label: "Image",           description: "Upload or generate a visual", icon: ImageIcon, color: "text-violet-500", bgColor: "bg-violet-50" },
   before_after:   { label: "Before / After",  description: "Two images side by side", icon: SplitSquareHorizontal, color: "text-pink-500", bgColor: "bg-pink-50" },
@@ -159,7 +159,7 @@ const BLOCK_META: Record<ContentBlockType, BlockMeta> = {
   tool_spotlight: { label: "Tool Spotlight",  description: "Feature a tool with a link", icon: Wrench, color: "text-teal-500", bgColor: "bg-teal-50" },
   resource:       { label: "File / Resource", description: "Downloadable worksheet or PDF", icon: FileText, color: "text-blue-600", bgColor: "bg-blue-50" },
   quiz:           { label: "Quiz",            description: "Scored knowledge check", icon: HelpCircle, color: "text-indigo-600", bgColor: "bg-indigo-50" },
-  ai_prompt:      { label: "Prompt",          description: "Copy-ready prompt for learners", icon: Sparkles, color: "text-[#fd5523]", bgColor: "bg-[#fff6ee]" },
+  ai_prompt:      { label: "Prompt",          description: "Copy-ready prompt for learners", icon: Sparkles, color: "text-brand-text", bgColor: "bg-brand-soft" },
   steps:          { label: "Steps",           description: "Numbered how-to walkthrough", icon: ListOrdered, color: "text-indigo-600", bgColor: "bg-indigo-50" },
   checklist:      { label: "Checklist",       description: "Tickable list for learners", icon: CheckSquare, color: "text-emerald-600", bgColor: "bg-emerald-50" },
   key_takeaway:   { label: "Key Takeaways",   description: "Summary of the main points", icon: Zap, color: "text-amber-600", bgColor: "bg-amber-50" },
@@ -167,7 +167,7 @@ const BLOCK_META: Record<ContentBlockType, BlockMeta> = {
   expert_note:    { label: "Expert Note",     description: "Advanced deep-dive aside", icon: Zap, color: "text-slate-100", bgColor: "bg-slate-800" },
   comparison_table: { label: "Table",         description: "Compare options in a grid", icon: Table, color: "text-violet-600", bgColor: "bg-violet-50" },
   case_study:     { label: "Case Study",      description: "Context, action, result", icon: BookOpen, color: "text-indigo-600", bgColor: "bg-indigo-50" },
-  meeting:        { label: "Live Session",    description: "Link a scheduled live class", icon: Video, color: "text-[#fd5523]", bgColor: "bg-[#fff6ee]" },
+  meeting:        { label: "Live Session",    description: "Link a scheduled live class", icon: Video, color: "text-brand-text", bgColor: "bg-brand-soft" },
   learning_objectives: { label: "Objectives", description: "What learners will be able to do", icon: Target, color: "text-sky-600", bgColor: "bg-sky-50" },
   glossary:       { label: "Glossary",        description: "Key terms and definitions", icon: BookMarked, color: "text-violet-600", bgColor: "bg-violet-50" },
   discussion_prompt: { label: "Discussion",   description: "Question for the class to discuss", icon: MessagesSquare, color: "text-sky-700", bgColor: "bg-sky-50" },
@@ -441,7 +441,7 @@ function SortableBlock({
       style={{ transform: CSS.Transform.toString(transform), transition }}
       className={cn(
         "group rounded-2xl border bg-white transition-shadow",
-        isDragging ? "z-20 border-[#fd5523]/50 shadow-2xl" : "border-slate-200/80 hover:shadow-sm",
+        isDragging ? "z-20 border-brand/50 shadow-2xl" : "border-slate-200/80 hover:shadow-sm",
         isTemp && "opacity-70"
       )}
     >
@@ -464,7 +464,7 @@ function SortableBlock({
           <span className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-lg", meta.bgColor, meta.color)}>
             {isTemp ? <Loader2 className="h-4 w-4 animate-spin" /> : <Icon className="h-4 w-4" />}
           </span>
-          <span className="truncate text-sm font-semibold text-[#062e39]">{meta.label}</span>
+          <span className="truncate text-sm font-semibold text-ink">{meta.label}</span>
           <ChevronDown className={cn("h-4 w-4 shrink-0 text-slate-400 transition-transform", collapsed && "-rotate-90")} />
         </button>
 
@@ -475,7 +475,7 @@ function SortableBlock({
             disabled={isTemp}
             className={cn(
               "inline-flex h-8 items-center gap-1 rounded-lg px-2 text-xs font-semibold transition-colors",
-              showAiAssist ? "bg-[#062e39] text-white" : "text-slate-500 hover:bg-[#fff6ee] hover:text-[#fd5523]"
+              showAiAssist ? "bg-ink text-white" : "text-slate-500 hover:bg-brand-soft hover:text-brand-text"
             )}
           >
             <Sparkles className="h-3.5 w-3.5" />
@@ -487,7 +487,7 @@ function SortableBlock({
           <DropdownMenuTrigger
             aria-label={`${meta.label} block actions`}
             disabled={isTemp}
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-[#062e39] data-[popup-open]:bg-slate-100"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-ink data-[popup-open]:bg-slate-100"
           >
             <MoreHorizontal className="h-4 w-4" />
           </DropdownMenuTrigger>
@@ -516,7 +516,7 @@ function SortableBlock({
       </div>
 
       {showAiAssist && (
-        <div className="mx-2 mb-2 rounded-xl border border-[#fd5523]/20 bg-[#fffaf6] p-3 sm:mx-3">
+        <div className="mx-2 mb-2 rounded-xl border border-brand/20 bg-surface p-3 sm:mx-3">
           <div className="flex gap-2">
             <input
               type="text"
@@ -525,7 +525,7 @@ function SortableBlock({
               placeholder="How should AI change this block?"
               disabled={aiGenerating}
               autoFocus
-              className="h-10 min-w-0 flex-1 rounded-lg border border-slate-200 bg-white px-3 text-sm text-[#062e39] outline-none focus:border-[#fd5523]/50 disabled:opacity-50"
+              className="h-10 min-w-0 flex-1 rounded-lg border border-slate-200 bg-white px-3 text-sm text-ink outline-none focus:border-brand/50 disabled:opacity-50"
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
                   e.preventDefault();
@@ -537,7 +537,7 @@ function SortableBlock({
               type="button"
               onClick={handleAiEdit}
               disabled={aiGenerating || !aiPrompt.trim()}
-              className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-lg bg-[#fd5523] px-3.5 text-xs font-semibold text-white hover:bg-[#ef4a16] disabled:opacity-50"
+              className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-lg bg-brand px-3.5 text-xs font-semibold text-white hover:bg-brand-hover disabled:opacity-50"
             >
               {aiGenerating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
               Apply
@@ -550,7 +550,7 @@ function SortableBlock({
                 type="button"
                 onClick={() => setAiPrompt(s)}
                 disabled={aiGenerating}
-                className="shrink-0 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-600 hover:border-[#fd5523]/40 hover:text-[#fd5523]"
+                className="shrink-0 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-600 hover:border-brand/40 hover:text-brand-text"
               >
                 {s}
               </button>
@@ -603,7 +603,7 @@ function BlockPicker({
       <DialogContent className="flex max-h-[85vh] w-[calc(100vw-1rem)] max-w-[calc(100vw-1rem)] flex-col gap-0 overflow-hidden rounded-2xl p-0 sm:max-w-2xl">
         <DialogHeader className="shrink-0 space-y-3 border-b border-slate-100 p-4 sm:p-5">
           <div className="pr-8 text-left">
-            <DialogTitle className="text-lg font-bold text-[#062e39]">Add a block</DialogTitle>
+            <DialogTitle className="text-lg font-bold text-ink">Add a block</DialogTitle>
             <DialogDescription className="text-sm text-slate-500">
               Lessons are built from blocks. Pick one — you can reorder later.
             </DialogDescription>
@@ -614,7 +614,7 @@ function BlockPicker({
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search blocks…"
-              className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 pl-9 pr-3 text-sm outline-none focus:border-[#fd5523]/40 focus:bg-white"
+              className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 pl-9 pr-3 text-sm outline-none focus:border-brand/40 focus:bg-white"
             />
           </div>
         </DialogHeader>
@@ -640,13 +640,13 @@ function BlockPicker({
                         key={type}
                         type="button"
                         onClick={() => onPick(type)}
-                        className="flex items-center gap-3 rounded-xl border border-slate-200/80 bg-white p-3 text-left transition-colors hover:border-[#fd5523]/40 hover:bg-[#fffaf6] active:scale-[0.99]"
+                        className="flex items-center gap-3 rounded-xl border border-slate-200/80 bg-white p-3 text-left transition-colors hover:border-brand/40 hover:bg-surface active:scale-[0.99]"
                       >
                         <span className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-lg", meta.bgColor, meta.color)}>
                           <Icon className="h-4 w-4" />
                         </span>
                         <span className="min-w-0">
-                          <span className="block text-sm font-semibold text-[#062e39]">{meta.label}</span>
+                          <span className="block text-sm font-semibold text-ink">{meta.label}</span>
                           <span className="block truncate text-xs text-slate-500">{meta.description}</span>
                         </span>
                       </button>
@@ -977,7 +977,7 @@ export function LessonEditorClient({
           <Link
             href={backHref}
             onClick={() => void flushAll()}
-            className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg px-2 text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-[#062e39]"
+            className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg px-2 text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-ink"
             aria-label={`Back to ${courseTitle}`}
           >
             <ArrowLeft className="h-4 w-4" />
@@ -994,7 +994,7 @@ export function LessonEditorClient({
                 href={prevLesson.href}
                 onClick={() => void flushAll()}
                 title={`Previous: ${prevLesson.title}`}
-                className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 hover:text-[#062e39]"
+                className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 hover:text-ink"
               >
                 <ChevronLeft className="h-4 w-4" />
               </Link>
@@ -1006,7 +1006,7 @@ export function LessonEditorClient({
                 href={nextLesson.href}
                 onClick={() => void flushAll()}
                 title={`Next: ${nextLesson.title}`}
-                className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 hover:text-[#062e39]"
+                className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 hover:text-ink"
               >
                 <ChevronRight className="h-4 w-4" />
               </Link>
@@ -1017,7 +1017,7 @@ export function LessonEditorClient({
               <Link
                 href={learnerHref}
                 target="_blank"
-                className="ml-1 hidden h-9 items-center gap-1.5 rounded-lg border border-slate-200 px-3 text-xs font-semibold text-[#062e39] hover:bg-slate-50 sm:inline-flex"
+                className="ml-1 hidden h-9 items-center gap-1.5 rounded-lg border border-slate-200 px-3 text-xs font-semibold text-ink hover:bg-slate-50 sm:inline-flex"
               >
                 <ExternalLink className="h-3.5 w-3.5" />
                 View as learner
@@ -1040,7 +1040,7 @@ export function LessonEditorClient({
               maxLength={200}
               placeholder="Lesson title"
               aria-label="Lesson title"
-              className="field-sizing-content w-full resize-none bg-transparent text-2xl font-bold leading-tight tracking-tight text-[#062e39] outline-none placeholder:text-slate-300 sm:text-3xl"
+              className="field-sizing-content w-full resize-none bg-transparent text-2xl font-bold leading-tight tracking-tight text-ink outline-none placeholder:text-slate-300 sm:text-3xl"
             />
             <div className="mt-3 flex flex-wrap items-center gap-2">
               <button
@@ -1051,14 +1051,14 @@ export function LessonEditorClient({
                 className={cn(
                   "inline-flex h-8 items-center gap-2 rounded-full border px-3 text-xs font-semibold transition-colors",
                   isPreview
-                    ? "border-[#fd5523]/30 bg-[#fff6ee] text-[#fd5523]"
+                    ? "border-brand/30 bg-brand-soft text-brand-text"
                     : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
                 )}
               >
                 <span
                   className={cn(
                     "relative h-4 w-7 rounded-full transition-colors",
-                    isPreview ? "bg-[#fd5523]" : "bg-slate-300"
+                    isPreview ? "bg-brand" : "bg-slate-300"
                   )}
                 >
                   <span
@@ -1076,7 +1076,7 @@ export function LessonEditorClient({
                   setAsideTab("teacher");
                   setMobileView("teacher");
                 }}
-                className="inline-flex h-8 items-center gap-1.5 rounded-full border border-[#fd5523]/30 bg-[#fff6ee] px-3 text-xs font-semibold text-[#fd5523] transition-colors hover:bg-[#ffebdc]"
+                className="inline-flex h-8 items-center gap-1.5 rounded-full border border-brand/30 bg-brand-soft px-3 text-xs font-semibold text-brand-text transition-colors hover:bg-[#ffebdc]"
               >
                 <Mic className="h-3.5 w-3.5" />
                 {hasTutorSession ? "AI Teacher" : "Add an AI teacher"}
@@ -1089,7 +1089,7 @@ export function LessonEditorClient({
 
           {blocks.length === 0 ? (
             <div className="rounded-2xl border-2 border-dashed border-slate-200 bg-white px-5 py-10 text-center">
-              <p className="text-base font-semibold text-[#062e39]">This lesson is empty</p>
+              <p className="text-base font-semibold text-ink">This lesson is empty</p>
               <p className="mx-auto mt-1 max-w-sm text-sm text-slate-500">
                 Start with a block, or let the AI co-author draft the whole lesson for you to edit.
               </p>
@@ -1102,7 +1102,7 @@ export function LessonEditorClient({
                       key={type}
                       type="button"
                       onClick={() => void insertBlock(type, DEFAULT_CONTENT[type], null)}
-                      className="flex flex-col items-center gap-1.5 rounded-xl border border-slate-200 bg-white p-3 text-xs font-semibold text-[#062e39] hover:border-[#fd5523]/40 hover:bg-[#fffaf6]"
+                      className="flex flex-col items-center gap-1.5 rounded-xl border border-slate-200 bg-white p-3 text-xs font-semibold text-ink hover:border-brand/40 hover:bg-surface"
                     >
                       <span className={cn("flex h-9 w-9 items-center justify-center rounded-lg", meta.bgColor, meta.color)}>
                         <Icon className="h-4 w-4" />
@@ -1126,9 +1126,9 @@ export function LessonEditorClient({
                     setAsideTab("ai");
                     setMobileView("ai");
                   }}
-                  className="inline-flex h-10 items-center gap-2 rounded-xl bg-[#062e39] px-4 text-sm font-semibold text-white hover:bg-[#0a4055]"
+                  className="inline-flex h-10 items-center gap-2 rounded-xl bg-ink px-4 text-sm font-semibold text-white hover:bg-ink-hover"
                 >
-                  <Sparkles className="h-4 w-4 text-[#fd8d69]" />
+                  <Sparkles className="h-4 w-4 text-brand-electric" />
                   Draft with AI
                 </button>
               </div>
@@ -1170,7 +1170,7 @@ export function LessonEditorClient({
               <button
                 type="button"
                 onClick={() => openPicker(null)}
-                className="flex h-11 flex-1 items-center justify-center gap-2 rounded-xl border-2 border-dashed border-slate-200 text-sm font-semibold text-slate-500 transition-colors hover:border-[#fd5523]/40 hover:bg-[#fffaf6] hover:text-[#fd5523]"
+                className="flex h-11 flex-1 items-center justify-center gap-2 rounded-xl border-2 border-dashed border-slate-200 text-sm font-semibold text-slate-500 transition-colors hover:border-brand/40 hover:bg-surface hover:text-brand-text"
               >
                 <Plus className="h-4 w-4" />
                 Add block
@@ -1184,7 +1184,7 @@ export function LessonEditorClient({
                     type="button"
                     title={`Add ${meta.label}`}
                     onClick={() => void insertBlock(type, DEFAULT_CONTENT[type], null)}
-                    className={cn("flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white hover:border-[#fd5523]/40", meta.color)}
+                    className={cn("flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white hover:border-brand/40", meta.color)}
                   >
                     <Icon className="h-4 w-4" />
                   </button>
@@ -1197,13 +1197,13 @@ export function LessonEditorClient({
             <Link
               href={nextLesson.href}
               onClick={() => void flushAll()}
-              className="mt-2 flex items-center justify-between gap-3 rounded-2xl border border-slate-200/80 bg-white p-4 transition-colors hover:border-[#fd5523]/40"
+              className="mt-2 flex items-center justify-between gap-3 rounded-2xl border border-slate-200/80 bg-white p-4 transition-colors hover:border-brand/40"
             >
               <span className="min-w-0">
                 <span className="block text-xs text-slate-500">Next lesson</span>
-                <span className="block truncate text-sm font-semibold text-[#062e39]">{nextLesson.title}</span>
+                <span className="block truncate text-sm font-semibold text-ink">{nextLesson.title}</span>
               </span>
-              <ChevronRight className="h-5 w-5 shrink-0 text-[#fd5523]" />
+              <ChevronRight className="h-5 w-5 shrink-0 text-brand-text" />
             </Link>
           )}
         </div>
@@ -1218,15 +1218,15 @@ export function LessonEditorClient({
                 onClick={() => setAsideTab(tab)}
                 className={cn(
                   "flex h-9 items-center justify-center gap-1.5 rounded-lg text-xs font-semibold transition-colors",
-                  asideTab === tab ? "bg-white text-[#062e39] shadow-sm" : "text-slate-500 hover:text-[#062e39]"
+                  asideTab === tab ? "bg-white text-ink shadow-sm" : "text-slate-500 hover:text-ink"
                 )}
               >
                 {tab === "preview" ? (
                   <Eye className="h-3.5 w-3.5" />
                 ) : tab === "ai" ? (
-                  <Sparkles className="h-3.5 w-3.5 text-[#fd5523]" />
+                  <Sparkles className="h-3.5 w-3.5 text-brand-text" />
                 ) : (
-                  <Mic className="h-3.5 w-3.5 text-[#fd5523]" />
+                  <Mic className="h-3.5 w-3.5 text-brand-text" />
                 )}
                 {tab === "preview" ? "Preview" : tab === "ai" ? "Co-author" : "AI Teacher"}
               </button>
@@ -1262,7 +1262,7 @@ export function LessonEditorClient({
               onClick={() => setMobileView(item.id)}
               className={cn(
                 "flex h-12 flex-col items-center justify-center gap-0.5 rounded-xl text-[11px] font-semibold",
-                mobileView === item.id ? "bg-slate-100 text-[#062e39]" : "text-slate-500"
+                mobileView === item.id ? "bg-slate-100 text-ink" : "text-slate-500"
               )}
             >
               <item.icon className="h-4 w-4" />
@@ -1272,7 +1272,7 @@ export function LessonEditorClient({
           <button
             type="button"
             onClick={() => openPicker(null)}
-            className="flex h-12 flex-col items-center justify-center gap-0.5 rounded-xl bg-[#fd5523] text-[11px] font-semibold text-white"
+            className="flex h-12 flex-col items-center justify-center gap-0.5 rounded-xl bg-brand text-[11px] font-semibold text-white"
           >
             <Plus className="h-4 w-4" />
             Add

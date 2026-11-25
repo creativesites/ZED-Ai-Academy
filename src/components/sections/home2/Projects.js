@@ -45,7 +45,7 @@ export default function Projects() {
                                         <h4>Student Success</h4>
                                     </div>
                                     <div className="icon">
-                                        <Trophy className="text-[#fd5523]" size={20} />
+                                        <Trophy className="text-brand-text" size={20} />
                                     </div>
                                 </div>
                                 <h2 className="sec-title__title tg-element-title">Real Projects Built <br/>

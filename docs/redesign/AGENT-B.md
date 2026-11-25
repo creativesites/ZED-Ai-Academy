@@ -1,6 +1,6 @@
 # Agent B — Learner side
 
-You are one of two agents implementing the Zed AI Academy redesign. **You own everything a learner
+You are one of two agents implementing the CS Learn redesign. **You own everything a learner
 sees: sign-in/landing, the "My academies" hub, the student classroom, practice, the public academy
 site and templates, course pages, checkout, join, certificates and focus pages — plus the security
 and routing fixes in those areas.** Agent A builds the design system and shells, and the staff side.

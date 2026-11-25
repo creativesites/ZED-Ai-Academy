@@ -24,7 +24,7 @@ Your task is to generate a comprehensive, highly compelling brand kit and landin
 Output strictly valid JSON with no markdown formatting or commentary.`;
 
       const prompt = `Generate a complete brand kit and landing page content for:
-Academy Name: "${academyName || "Zed AI Academy"}"
+Academy Name: "${academyName || "CS Learn"}"
 Subject Domain / Niche: "${niche || "Professional Skills & Practical Learning"}"
 Target Audience: "${targetAudience || "Ambitious students and professionals in Africa & globally"}"
 Desired Tone / Vibe: "${tone}"

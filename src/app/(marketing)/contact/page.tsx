@@ -43,13 +43,13 @@ export default function ContactPage() {
             <div className="col-xl-6 lg:mb-20 p-10">
               <div className="contact-page__top-content pr-12">
                 <div className="sec-title mb-10">
-                  <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#fff2e9] text-[#fd5523] text-xs font-black uppercase tracking-widest mb-6">
+                  <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-brand-tint text-brand-text text-xs font-black uppercase tracking-widest mb-6">
                     <MessageCircle className="h-3.5 w-3.5" />
                     Get in touch
                   </div>
-                  <h2 className="text-5xl px-6 py-2 font-extrabold text-[#062e39] tracking-tight leading-[1.1] mb-6">
+                  <h2 className="text-5xl px-6 py-2 font-extrabold text-ink tracking-tight leading-[1.1] mb-6">
                     Have a question? <br />
-                    We&apos;re here to <span className="text-[#fd5523]">help you.</span>
+                    We&apos;re here to <span className="text-brand-text">help you.</span>
                   </h2>
                   <p className="text-xl px-6 text-slate-500 leading-relaxed max-w-lg">
                     Whether you have a question about a course, need help choosing the right plan
@@ -60,32 +60,32 @@ export default function ContactPage() {
                 <div className="grid grid-cols-2 gap-8 mb-12">
                   <div className="flex items-start gap-4">
                     <div className="h-12 w-12 rounded-2xl bg-slate-50 flex items-center justify-center shrink-0">
-                      <MapPin className="h-6 w-6 text-[#fd5523]" />
+                      <MapPin className="h-6 w-6 text-brand-text" />
                     </div>
                     <div>
-                      <h4 className="font-bold text-[#062e39]">Location</h4>
+                      <h4 className="font-bold text-ink">Location</h4>
                       <p className="text-sm text-slate-500 mt-1">Lusaka, Zambia 🇿🇲<br />East Park Office Suite</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-4">
                     <div className="h-12 w-12 rounded-2xl bg-slate-50 flex items-center justify-center shrink-0">
-                      <Phone className="h-6 w-6 text-[#fd5523]" />
+                      <Phone className="h-6 w-6 text-brand-text" />
                     </div>
                     <div>
-                      <h4 className="font-bold text-[#062e39]">Phone</h4>
+                      <h4 className="font-bold text-ink">Phone</h4>
                       <p className="text-sm text-slate-500 mt-1">0979 046 745<br />WhatsApp welcome</p>
                     </div>
                   </div>
                 </div>
 
                 <div className="flex gap-4">
-                  <Link href="#" className="h-12 w-12 rounded-2xl bg-[#062e39] text-white flex items-center justify-center hover:bg-[#fd5523] transition-all">
+                  <Link href="#" className="h-12 w-12 rounded-2xl bg-ink text-white flex items-center justify-center hover:bg-brand transition-all">
                     <XIcon className="h-5 w-5" />
                   </Link>
-                  <Link href="#" className="h-12 w-12 rounded-2xl bg-[#062e39] text-white flex items-center justify-center hover:bg-[#fd5523] transition-all">
+                  <Link href="#" className="h-12 w-12 rounded-2xl bg-ink text-white flex items-center justify-center hover:bg-brand transition-all">
                     <Briefcase className="h-5 w-5" />
                   </Link>
-                  <Link href="#" className="h-12 w-12 rounded-2xl bg-[#062e39] text-white flex items-center justify-center hover:bg-[#fd5523] transition-all">
+                  <Link href="#" className="h-12 w-12 rounded-2xl bg-ink text-white flex items-center justify-center hover:bg-brand transition-all">
                     <Camera className="h-5 w-5" />
                   </Link>
                 </div>
@@ -95,20 +95,20 @@ export default function ContactPage() {
             {/* Right — Form */}
             <div className="col-xl-6">
               <div className="bg-white rounded-[3rem] p-10 md:p-12 shadow-2xl shadow-slate-200/50 border border-slate-50 relative overflow-hidden">
-                <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-[#fd5523] to-[#fd8d69]" />
+                <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-brand to-brand-electric" />
 
                 {success ? (
                   <div className="py-20 text-center animate-in zoom-in-95 duration-500">
                     <div className="h-20 w-20 rounded-[2.5rem] bg-green-50 flex items-center justify-center mx-auto mb-8">
                       <CheckCircle2 className="h-10 w-10 text-green-500" />
                     </div>
-                    <h3 className="text-3xl font-bold text-[#062e39] mb-4">Message Sent!</h3>
+                    <h3 className="text-3xl font-bold text-ink mb-4">Message Sent!</h3>
                     <p className="text-slate-500 max-w-xs mx-auto leading-relaxed mb-10">
                       Thanks for reaching out. A member of our team will get back to you within 24 hours.
                     </p>
                     <Button
                       onClick={() => setSuccess(false)}
-                      className="px-10 py-7 rounded-full bg-[#062e39] text-white font-bold"
+                      className="px-10 py-7 rounded-full bg-ink text-white font-bold"
                     >
                       Send Another Message
                     </Button>
@@ -118,17 +118,17 @@ export default function ContactPage() {
                     <div className="grid gap-6 md:grid-cols-2">
                       <div className="space-y-2">
                         <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-1">Full Name</label>
-                        <input name="name" placeholder="John Doe" required className="w-full h-14 rounded-2xl border-2 border-slate-50 bg-slate-50 px-6 text-sm focus:border-[#fd5523]/20 focus:bg-white focus:outline-none transition-all" />
+                        <input name="name" placeholder="John Doe" required className="w-full h-14 rounded-2xl border-2 border-slate-50 bg-slate-50 px-6 text-sm focus:border-brand/20 focus:bg-white focus:outline-none transition-all" />
                       </div>
                       <div className="space-y-2">
                         <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-1">Email Address</label>
-                        <input type="email" name="email" placeholder="john@example.com" required className="w-full h-14 rounded-2xl border-2 border-slate-50 bg-slate-50 px-6 text-sm focus:border-[#fd5523]/20 focus:bg-white focus:outline-none transition-all" />
+                        <input type="email" name="email" placeholder="john@example.com" required className="w-full h-14 rounded-2xl border-2 border-slate-50 bg-slate-50 px-6 text-sm focus:border-brand/20 focus:bg-white focus:outline-none transition-all" />
                       </div>
                     </div>
 
                     <div className="space-y-2">
                       <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-1">Subject</label>
-                      <select name="subject" className="w-full h-14 rounded-2xl border-2 border-slate-50 bg-slate-50 px-6 text-sm focus:border-[#fd5523]/20 focus:bg-white focus:outline-none transition-all appearance-none cursor-pointer">
+                      <select name="subject" className="w-full h-14 rounded-2xl border-2 border-slate-50 bg-slate-50 px-6 text-sm focus:border-brand/20 focus:bg-white focus:outline-none transition-all appearance-none cursor-pointer">
                         <option value="Course Enquiry">Course Enquiry</option>
                         <option value="Team Plan">Team Plan</option>
                         <option value="Technical Support">Technical Support</option>
@@ -139,13 +139,13 @@ export default function ContactPage() {
 
                     <div className="space-y-2">
                       <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-1">Message</label>
-                      <textarea name="message" placeholder="How can we help?" rows={5} required className="w-full rounded-3xl border-2 border-slate-50 bg-slate-50 p-6 text-sm leading-relaxed focus:border-[#fd5523]/20 focus:bg-white focus:outline-none transition-all resize-none" />
+                      <textarea name="message" placeholder="How can we help?" rows={5} required className="w-full rounded-3xl border-2 border-slate-50 bg-slate-50 p-6 text-sm leading-relaxed focus:border-brand/20 focus:bg-white focus:outline-none transition-all resize-none" />
                     </div>
 
                     <Button
                       type="submit"
                       disabled={pending}
-                      className="w-full py-8 rounded-full bg-[#fd5523] text-white font-extrabold text-lg shadow-2xl shadow-[#fd5523]/20 hover:bg-[#ef4a16] transition-all hover:scale-[1.02] active:scale-95 group"
+                      className="w-full py-8 rounded-full bg-brand text-white font-extrabold text-lg shadow-2xl shadow-brand/20 hover:bg-brand-hover transition-all hover:scale-[1.02] active:scale-95 group"
                     >
                       {pending ? <Loader2 className="h-6 w-6 animate-spin" /> : <Send className="h-6 w-6 mr-3 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />}
                       {pending ? "Sending..." : "Send Message"}

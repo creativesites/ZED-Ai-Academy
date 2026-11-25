@@ -164,7 +164,7 @@ function QuestionEditor({
         </div>
 
         <div className="flex flex-col gap-1">
-          <Button onClick={handleSave} disabled={saving} className="h-7 bg-[#062e39] text-xs text-white hover:bg-[#0a4055]">
+          <Button onClick={handleSave} disabled={saving} className="h-7 bg-ink text-xs text-white hover:bg-ink-hover">
             {saving ? <Loader2 className="h-3 w-3 animate-spin" /> : "Save"}
           </Button>
           <button onClick={handleDelete} disabled={deleting} className="p-1 text-slate-400 hover:text-red-500">
@@ -296,7 +296,7 @@ export function QuizBuilder({
       <div className="space-y-3 py-10 text-center">
         <HelpCircle className="mx-auto h-10 w-10 text-slate-400" />
         <p className="text-sm text-slate-500">No quiz for this lesson yet.</p>
-        <Button onClick={handleCreateQuiz} disabled={creating} className="bg-[#fd5523] text-white hover:bg-[#ef4a16]">
+        <Button onClick={handleCreateQuiz} disabled={creating} className="bg-brand text-white hover:bg-brand-hover">
           {creating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
           Create Quiz
         </Button>
@@ -345,7 +345,7 @@ export function QuizBuilder({
           </div>
         </div>
 
-        <Button onClick={handleSaveSettings} disabled={savingSettings} className="h-7 bg-[#062e39] text-xs font-bold text-white hover:bg-[#0a4055]">
+        <Button onClick={handleSaveSettings} disabled={savingSettings} className="h-7 bg-ink text-xs font-bold text-white hover:bg-ink-hover">
           {savingSettings ? <Loader2 className="mr-1 h-3 w-3 animate-spin" /> : null}
           Save Settings
         </Button>
@@ -362,7 +362,7 @@ export function QuizBuilder({
               onClick={handleGenerateQuestions}
               disabled={generating}
               variant="outline"
-              className="h-7 border-[#fd5523]/25 bg-[#fff6ee] text-xs font-semibold text-[#fd5523] hover:bg-[#ffede4]"
+              className="h-7 border-brand/25 bg-brand-soft text-xs font-semibold text-brand-text hover:bg-[#ffede4]"
             >
               {generating ? <Loader2 className="mr-1 h-3 w-3 animate-spin" /> : <Sparkles className="mr-1 h-3 w-3" />}
               AI Generate
@@ -371,7 +371,7 @@ export function QuizBuilder({
               onClick={handleAddQuestion}
               disabled={addingQ}
               variant="outline"
-              className="h-7 border-[#062e39]/15 bg-white text-xs font-semibold text-[#062e39] hover:bg-slate-50"
+              className="h-7 border-ink/15 bg-white text-xs font-semibold text-ink hover:bg-slate-50"
             >
               {addingQ ? <Loader2 className="mr-1 h-3 w-3 animate-spin" /> : <Plus className="mr-1 h-3 w-3" />}
               Add Question

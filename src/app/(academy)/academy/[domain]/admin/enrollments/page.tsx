@@ -115,7 +115,7 @@ export default async function TenantEnrollmentsPage({ params, searchParams }: Pa
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[#062e39]">
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-ink">
               Enrollment Management
             </h1>
             <p className="text-slate-500 mt-1 text-xs sm:text-sm">
@@ -134,7 +134,7 @@ export default async function TenantEnrollmentsPage({ params, searchParams }: Pa
         {/* KPI row */}
         <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4">
           {[
-            { label: "Total Students", value: allCount ?? 0, icon: GraduationCap, accent: "bg-[#fff6ee] text-[#fd5523]" },
+            { label: "Total Students", value: allCount ?? 0, icon: GraduationCap, accent: "bg-brand-soft text-brand-text" },
             { label: "Active Access", value: activeCount ?? 0, icon: CheckCircle2, accent: "bg-green-50 text-green-600" },
             { label: "Pending", value: pendingCount ?? 0, icon: Clock3, accent: "bg-amber-50 text-amber-600" },
             { label: "Revoked", value: revokedCount ?? 0, icon: XCircle, accent: "bg-red-50 text-red-500" },
@@ -143,7 +143,7 @@ export default async function TenantEnrollmentsPage({ params, searchParams }: Pa
               <div className={`mb-2.5 flex h-9 w-9 items-center justify-center rounded-xl ${kpi.accent}`}>
                 <kpi.icon className="h-4 w-4" />
               </div>
-              <p className="text-xl sm:text-2xl font-bold tracking-tight text-[#062e39]">{kpi.value}</p>
+              <p className="text-xl sm:text-2xl font-bold tracking-tight text-ink">{kpi.value}</p>
               <p className="mt-0.5 text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-slate-400">{kpi.label}</p>
             </div>
           ))}
@@ -160,7 +160,7 @@ export default async function TenantEnrollmentsPage({ params, searchParams }: Pa
                   href={`/academy/${company.slug}/admin/enrollments?status=${tab.key}${q ? `&q=${encodeURIComponent(q)}` : ""}${courseFilter ? `&course=${courseFilter}` : ""}`}
                   className={`flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold transition-all ${
                     statusFilter === tab.key
-                      ? "bg-[#062e39] text-white"
+                      ? "bg-ink text-white"
                       : "bg-slate-50 text-slate-600 hover:bg-slate-100"
                   }`}
                 >
@@ -179,12 +179,12 @@ export default async function TenantEnrollmentsPage({ params, searchParams }: Pa
                 name="q"
                 defaultValue={q}
                 placeholder="Search students..."
-                className="h-10 w-full sm:w-52 rounded-xl border border-slate-200 bg-slate-50 px-3.5 text-xs sm:text-sm text-[#062e39] placeholder:text-slate-400 focus:bg-white focus:border-[#fd5523] outline-none transition-all"
+                className="h-10 w-full sm:w-52 rounded-xl border border-slate-200 bg-slate-50 px-3.5 text-xs sm:text-sm text-ink placeholder:text-slate-400 focus:bg-white focus:border-brand outline-none transition-all"
               />
               <select
                 name="course"
                 defaultValue={courseFilter}
-                className="h-10 w-full sm:w-44 rounded-xl border border-slate-200 bg-slate-50 px-3 text-xs sm:text-sm text-[#062e39] focus:bg-white focus:border-[#fd5523] outline-none transition-all"
+                className="h-10 w-full sm:w-44 rounded-xl border border-slate-200 bg-slate-50 px-3 text-xs sm:text-sm text-ink focus:bg-white focus:border-brand outline-none transition-all"
               >
                 <option value="">All Courses</option>
                 {(allCourses ?? []).map((c) => (
@@ -194,7 +194,7 @@ export default async function TenantEnrollmentsPage({ params, searchParams }: Pa
               <div className="flex items-center gap-2">
                 <button
                   type="submit"
-                  className="h-10 flex-1 sm:flex-none px-5 rounded-xl bg-[#062e39] text-white text-xs font-semibold hover:bg-[#0a3a48] transition-all"
+                  className="h-10 flex-1 sm:flex-none px-5 rounded-xl bg-ink text-white text-xs font-semibold hover:bg-[#0a3a48] transition-all"
                 >
                   Filter
                 </button>
@@ -202,7 +202,7 @@ export default async function TenantEnrollmentsPage({ params, searchParams }: Pa
                   <Link
                     href={`/academy/${company.slug}/admin/enrollments`}
                     title="Reset filters"
-                    className="h-10 px-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-500 hover:text-[#fd5523] flex items-center justify-center transition-colors"
+                    className="h-10 px-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-500 hover:text-brand-text flex items-center justify-center transition-colors"
                   >
                     <RotateCcw className="h-4 w-4" />
                   </Link>
@@ -241,7 +241,7 @@ export default async function TenantEnrollmentsPage({ params, searchParams }: Pa
                             {(row.profiles?.full_name ?? row.profiles?.email ?? "?")[0]?.toUpperCase()}
                           </div>
                           <div className="min-w-0">
-                            <p className="font-black text-sm text-[#062e39] truncate">
+                            <p className="font-black text-sm text-ink truncate">
                               {row.profiles?.full_name || "—"}
                             </p>
                             <p className="text-xs text-slate-400 truncate">
@@ -297,7 +297,7 @@ export default async function TenantEnrollmentsPage({ params, searchParams }: Pa
                                 {(row.profiles?.full_name ?? row.profiles?.email ?? "?")[0]?.toUpperCase()}
                               </div>
                               <div>
-                                <p className="font-black text-[#062e39]">{row.profiles?.full_name || "—"}</p>
+                                <p className="font-black text-ink">{row.profiles?.full_name || "—"}</p>
                                 <p className="text-xs text-slate-400">{row.profiles?.email || "—"}</p>
                               </div>
                             </div>

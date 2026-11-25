@@ -35,7 +35,7 @@ export function CaseStudyBlockEditor({
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2 text-[#062e39] mb-2">
+      <div className="flex items-center gap-2 text-ink mb-2">
         <BookOpen className="h-4 w-4 text-indigo-600" />
         <span className="text-xs font-bold uppercase tracking-widest">Case Study Card</span>
       </div>
@@ -62,13 +62,13 @@ export function CaseStudyBlockEditor({
           />
         </div>
         <div className="space-y-1.5">
-          <Label className="text-xs font-bold text-[#fd5523] uppercase">Action</Label>
+          <Label className="text-xs font-bold text-brand-text uppercase">Action</Label>
           <Textarea
             value={data.action}
             onChange={(e) => update({ action: e.target.value })}
             placeholder="What was done..."
             rows={4}
-            className="text-xs bg-[#fffaf6] border-[#fd5523]/20"
+            className="text-xs bg-surface border-brand/20"
           />
         </div>
         <div className="space-y-1.5">

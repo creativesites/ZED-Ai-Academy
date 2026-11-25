@@ -33,7 +33,7 @@ export function RiskAssessmentBlock({ content }: { content: Record<string, unkno
         </div>
         <div>
           <p className="text-[10px] font-black uppercase tracking-[0.22em] text-red-600">Safety & Compliance</p>
-          <h3 className="text-2xl font-bold tracking-tight text-[#062e39]">{title}</h3>
+          <h3 className="text-2xl font-bold tracking-tight text-ink">{title}</h3>
         </div>
       </div>
 
@@ -41,7 +41,7 @@ export function RiskAssessmentBlock({ content }: { content: Record<string, unkno
         {rows.map((row, index) => (
           <div key={`${row.hazard}-${index}`} className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
             <div className="mb-3 flex items-center justify-between gap-3">
-              <p className="text-base font-bold text-[#062e39]">{row.hazard || "Hazard"}</p>
+              <p className="text-base font-bold text-ink">{row.hazard || "Hazard"}</p>
               <span className={`rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] ${getRiskClasses(row.risk)}`}>
                 {row.risk || "Low"}
               </span>

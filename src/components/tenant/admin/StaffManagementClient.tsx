@@ -187,7 +187,7 @@ export function StaffManagementClient({
                 <Key className="h-5 w-5 sm:h-6 sm:w-6" />
               </div>
               <div>
-                <h3 className="text-base sm:text-lg font-black text-[#062e39] tracking-tight">
+                <h3 className="text-base sm:text-lg font-black text-ink tracking-tight">
                   Staff Invitation
                 </h3>
                 <p className="text-xs text-slate-400 font-medium">
@@ -202,17 +202,17 @@ export function StaffManagementClient({
                   <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">
                     Staff Access Code
                   </span>
-                  <div className="text-xl sm:text-2xl font-mono font-black text-[#062e39] tracking-widest mt-0.5 truncate">
+                  <div className="text-xl sm:text-2xl font-mono font-black text-ink tracking-widest mt-0.5 truncate">
                     {teacherCode || "Not generated"}
                   </div>
                 </div>
                 <button
                   onClick={handleRegenerateCode}
                   disabled={isRegenerating}
-                  className="shrink-0 px-3 py-2 rounded-xl bg-white border border-slate-200 text-xs font-bold text-slate-600 hover:text-[#fd5523] flex items-center gap-1.5 transition-all shadow-sm"
+                  className="shrink-0 px-3 py-2 rounded-xl bg-white border border-slate-200 text-xs font-bold text-slate-600 hover:text-brand-text flex items-center gap-1.5 transition-all shadow-sm"
                   title="Generate a new code to invalidate the old one"
                 >
-                  <RefreshCw className={`h-3.5 w-3.5 ${isRegenerating ? "animate-spin text-[#fd5523]" : ""}`} />
+                  <RefreshCw className={`h-3.5 w-3.5 ${isRegenerating ? "animate-spin text-brand-text" : ""}`} />
                   <span>{teacherCode ? "Reset" : "Generate"}</span>
                 </button>
               </div>
@@ -228,7 +228,7 @@ export function StaffManagementClient({
             <button
               onClick={() => copyToClipboard(staffInviteUrl, "staff")}
               disabled={!teacherCode}
-              className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-[#062e39] text-white font-bold text-xs uppercase tracking-wider hover:bg-[#0a4055] transition-all shadow-md active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-ink text-white font-bold text-xs uppercase tracking-wider hover:bg-ink-hover transition-all shadow-md active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {copiedKey === "staff" ? (
                 <>
@@ -253,7 +253,7 @@ export function StaffManagementClient({
                 <GraduationCap className="h-5 w-5 sm:h-6 sm:w-6" />
               </div>
               <div>
-                <h3 className="text-base sm:text-lg font-black text-[#062e39] tracking-tight">
+                <h3 className="text-base sm:text-lg font-black text-ink tracking-tight">
                   Student Self-Join Link
                 </h3>
                 <p className="text-xs text-slate-400 font-medium">
@@ -280,7 +280,7 @@ export function StaffManagementClient({
           <div className="mt-6 pt-4 border-t border-slate-100">
             <button
               onClick={() => copyToClipboard(studentInviteUrl, "student")}
-              className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-[#fd5523] text-white font-bold text-xs uppercase tracking-wider hover:bg-[#ea4817] transition-all shadow-md shadow-[#fd5523]/20 active:scale-95"
+              className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-brand text-white font-bold text-xs uppercase tracking-wider hover:bg-brand-hover transition-all shadow-md shadow-brand/20 active:scale-95"
             >
               {copiedKey === "student" ? (
                 <>
@@ -302,11 +302,11 @@ export function StaffManagementClient({
       <div className="bg-white rounded-2xl sm:rounded-[2.5rem] border border-slate-100 p-5 sm:p-8 shadow-sm">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-slate-100 flex items-center justify-center text-[#062e39] shrink-0">
+            <div className="h-10 w-10 rounded-xl bg-slate-100 flex items-center justify-center text-ink shrink-0">
               <Users className="h-5 w-5" />
             </div>
             <div>
-              <h2 className="text-lg sm:text-xl font-black text-[#062e39] tracking-tight">
+              <h2 className="text-lg sm:text-xl font-black text-ink tracking-tight">
                 Current Staff & Instructors
               </h2>
               <p className="text-xs text-slate-400 font-medium">
@@ -322,7 +322,7 @@ export function StaffManagementClient({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search staff..."
-              className="w-full h-10 pl-10 pr-4 rounded-xl border border-slate-200 bg-slate-50 text-xs font-medium text-[#062e39] placeholder:text-slate-400 focus:bg-white focus:border-[#fd5523] outline-none transition-all"
+              className="w-full h-10 pl-10 pr-4 rounded-xl border border-slate-200 bg-slate-50 text-xs font-medium text-ink placeholder:text-slate-400 focus:bg-white focus:border-brand outline-none transition-all"
             />
           </div>
         </div>
@@ -345,7 +345,7 @@ export function StaffManagementClient({
                   <div key={member.id} className="py-4 space-y-3">
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex items-center gap-3 min-w-0">
-                        <div className="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center text-[#062e39] font-bold overflow-hidden shrink-0">
+                        <div className="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center text-ink font-bold overflow-hidden shrink-0">
                           {profile?.avatar_url ? (
                             <img src={profile.avatar_url} alt="" className="h-full w-full object-cover" />
                           ) : (
@@ -353,7 +353,7 @@ export function StaffManagementClient({
                           )}
                         </div>
                         <div className="min-w-0">
-                          <p className="font-bold text-sm text-[#062e39] truncate">{name}</p>
+                          <p className="font-bold text-sm text-ink truncate">{name}</p>
                           <p className="text-xs text-slate-400 truncate">{email}</p>
                         </div>
                       </div>
@@ -391,7 +391,7 @@ export function StaffManagementClient({
                       <tr key={member.id} className="group hover:bg-slate-50/50 transition-colors">
                         <td className="py-4">
                           <div className="flex items-center gap-3">
-                            <div className="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center text-[#062e39] font-bold overflow-hidden shrink-0">
+                            <div className="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center text-ink font-bold overflow-hidden shrink-0">
                               {profile?.avatar_url ? (
                                 <img src={profile.avatar_url} alt="" className="h-full w-full object-cover" />
                               ) : (
@@ -399,7 +399,7 @@ export function StaffManagementClient({
                               )}
                             </div>
                             <div>
-                              <p className="font-bold text-[#062e39]">{name}</p>
+                              <p className="font-bold text-ink">{name}</p>
                               <p className="text-xs text-slate-400">{email}</p>
                             </div>
                           </div>

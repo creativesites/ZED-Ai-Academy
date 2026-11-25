@@ -342,7 +342,7 @@ export function PersonaStudio({
       {/* Top cast bar */}
       <div className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-base font-bold text-[#062e39]">Your Academy&apos;s Animated AI Teachers</h2>
+          <h2 className="text-base font-bold text-ink">Your Academy&apos;s Animated AI Teachers</h2>
           <p className="text-xs text-slate-500">
             Customize appearance, 3D/Rive scene backdrop, voice, and teaching personality. Used across courses and the Teacher&apos;s Room.
           </p>
@@ -356,14 +356,14 @@ export function PersonaStudio({
             onClick={handleSeedCast}
             className="rounded-xl border-slate-200 text-xs font-bold"
           >
-            {isSeeding ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <Wand2 className="mr-1.5 h-3.5 w-3.5 text-[#fd5523]" />}
+            {isSeeding ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <Wand2 className="mr-1.5 h-3.5 w-3.5 text-brand-text" />}
             Import Starter Cast (5)
           </Button>
           <Button
             type="button"
             size="sm"
             onClick={startNewPersona}
-            className="rounded-xl bg-[#fd5523] text-xs font-bold text-white hover:bg-[#ea4817]"
+            className="rounded-xl bg-brand text-xs font-bold text-white hover:bg-brand-hover"
           >
             <Plus className="mr-1.5 h-3.5 w-3.5" />
             New AI Teacher
@@ -383,7 +383,7 @@ export function PersonaStudio({
                 onClick={() => selectPersona(p)}
                 className={`inline-flex items-center gap-2 rounded-xl border px-3.5 py-2 text-xs font-bold transition-all ${
                   active
-                    ? "border-[#fd5523] bg-[#fff6ee] text-[#fd5523] shadow-sm"
+                    ? "border-brand bg-brand-soft text-brand-text shadow-sm"
                     : "border-slate-200 bg-white text-slate-700 hover:border-slate-300"
                 }`}
               >
@@ -399,7 +399,7 @@ export function PersonaStudio({
             );
           })}
           {selectedId === "new" && (
-            <span className="inline-flex items-center gap-1.5 rounded-xl border border-[#fd5523] bg-[#fff6ee] px-3.5 py-2 text-xs font-bold text-[#fd5523]">
+            <span className="inline-flex items-center gap-1.5 rounded-xl border border-brand bg-brand-soft px-3.5 py-2 text-xs font-bold text-brand-text">
               <Sparkles className="h-3.5 w-3.5" />
               New Teacher Draft
             </span>
@@ -441,7 +441,7 @@ export function PersonaStudio({
           <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
             <div className="mb-2.5 flex items-center justify-between">
               <span className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-500">
-                <Hand className="h-3.5 w-3.5 text-[#fd5523]" />
+                <Hand className="h-3.5 w-3.5 text-brand-text" />
                 Test Gestures & Mood
               </span>
               <div className="flex gap-1.5">
@@ -466,7 +466,7 @@ export function PersonaStudio({
                     stageRef.current?.playGesture(g.gesture);
                     if (g.gesture === "celebrate") stageRef.current?.celebrate();
                   }}
-                  className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:border-[#fd5523]/40 hover:bg-[#fff6ee] hover:text-[#fd5523]"
+                  className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:border-brand/40 hover:bg-brand-soft hover:text-brand-text"
                 >
                   {g.label}
                 </button>
@@ -488,9 +488,9 @@ export function PersonaStudio({
                 variant="outline"
                 size="sm"
                 onClick={applyAcademyBranding}
-                className="h-7 rounded-lg text-[11px] font-bold text-[#062e39]"
+                className="h-7 rounded-lg text-[11px] font-bold text-ink"
               >
-                <Palette className="mr-1 h-3 w-3 text-[#fd5523]" />
+                <Palette className="mr-1 h-3 w-3 text-brand-text" />
                 {brandColor ? `Apply Academy Brand (${brandColor})` : "Apply Academy Brand Colors"}
               </Button>
             </div>
@@ -500,7 +500,7 @@ export function PersonaStudio({
                   key={preset.key}
                   type="button"
                   onClick={() => applyPreset(preset.key)}
-                  className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:border-[#fd5523] hover:bg-[#fff6ee]"
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:border-brand hover:bg-brand-soft"
                 >
                   <span
                     className="h-2.5 w-2.5 rounded-full"
@@ -546,7 +546,7 @@ export function PersonaStudio({
                       onClick={() => toggleLanguage(lang.code)}
                       className={`inline-flex items-center gap-1 rounded-lg border px-2.5 py-1 text-xs font-semibold transition-colors ${
                         selected
-                          ? "border-[#fd5523] bg-[#fff6ee] text-[#fd5523]"
+                          ? "border-brand bg-brand-soft text-brand-text"
                           : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
                       }`}
                     >
@@ -578,7 +578,7 @@ export function PersonaStudio({
           <div className="space-y-3 rounded-2xl border border-slate-100 bg-slate-50/70 p-4">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-500">
-                <Palette className="h-3.5 w-3.5 text-[#fd5523]" />
+                <Palette className="h-3.5 w-3.5 text-brand-text" />
                 3D / Rive Model Styling
               </div>
               <div className="inline-flex rounded-lg border border-slate-200 bg-white p-0.5 text-[11px] font-bold">
@@ -597,7 +597,7 @@ export function PersonaStudio({
                         setDraft((d) => ({ ...d, look: { ...d.look, engine: opt.id } }))
                       }
                       className={`rounded-md px-2.5 py-1 transition-colors ${
-                        active ? "bg-[#062e39] text-white" : "text-slate-600 hover:bg-slate-50"
+                        active ? "bg-ink text-white" : "text-slate-600 hover:bg-slate-50"
                       }`}
                     >
                       {opt.label}
@@ -714,14 +714,14 @@ export function PersonaStudio({
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between gap-2">
                   <Label className="flex items-center gap-1.5 text-xs font-semibold text-slate-700">
-                    <Volume2 className="h-3.5 w-3.5 text-[#fd5523]" />
+                    <Volume2 className="h-3.5 w-3.5 text-brand-text" />
                     Gemini Voice
                   </Label>
                   <button
                     type="button"
                     disabled={testingVoice}
                     onClick={() => void handleTestVoice()}
-                    className="inline-flex items-center gap-1 rounded-full border border-[#fd5523]/30 bg-[#fff2e9] px-2.5 py-0.5 text-[10px] font-bold text-[#c83a10] transition hover:bg-[#ffe5d4] disabled:opacity-50"
+                    className="inline-flex items-center gap-1 rounded-full border border-brand/30 bg-brand-tint px-2.5 py-0.5 text-[10px] font-bold text-brand-hover transition hover:bg-[#ffe5d4] disabled:opacity-50"
                   >
                     {testingVoice ? <Loader2 className="h-3 w-3 animate-spin" /> : <Volume2 className="h-3 w-3" />}
                     {testingVoice ? "Playing..." : "Test voice"}
@@ -751,7 +751,7 @@ export function PersonaStudio({
                   step={0.1}
                   value={draft.speakingRate}
                   onChange={(e) => setDraft((d) => ({ ...d, speakingRate: Number(e.target.value) }))}
-                  className="mt-2.5 w-full accent-[#fd5523]"
+                  className="mt-2.5 w-full accent-brand"
                 />
               </div>
             </div>
@@ -788,7 +788,7 @@ export function PersonaStudio({
                 type="checkbox"
                 checked={draft.isActive}
                 onChange={(e) => setDraft((d) => ({ ...d, isActive: e.target.checked }))}
-                className="h-4 w-4 accent-[#fd5523]"
+                className="h-4 w-4 accent-brand"
               />
               Active (available in courses &amp; the Teacher&apos;s Room)
             </label>
@@ -812,7 +812,7 @@ export function PersonaStudio({
                 size="sm"
                 disabled={isSaving}
                 onClick={handleSave}
-                className="rounded-xl bg-[#062e39] px-5 font-bold text-white hover:bg-[#0a4352]"
+                className="rounded-xl bg-ink px-5 font-bold text-white hover:bg-ink-hover"
               >
                 {isSaving ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <Save className="mr-1.5 h-3.5 w-3.5" />}
                 Save AI Teacher

@@ -246,9 +246,9 @@ export function StudentInviteModal({
       }}
     >
       <DialogContent className="w-[calc(100vw-1.5rem)] max-w-[calc(100vw-1.5rem)] sm:max-w-2xl max-h-[90dvh] flex flex-col gap-0 p-0 overflow-hidden rounded-2xl sm:rounded-3xl border border-slate-200 shadow-2xl">
-        <DialogHeader className="p-5 sm:p-6 bg-[#062e39] text-white shrink-0">
+        <DialogHeader className="p-5 sm:p-6 bg-ink text-white shrink-0">
           <div className="flex items-center gap-3 pr-8">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#fd5523] text-white">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand text-white">
               <Users className="h-4 w-4" />
             </div>
             <div className="text-left">
@@ -275,7 +275,7 @@ export function StudentInviteModal({
               className={cn(
                 "flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all",
                 mode === tab.id
-                  ? "bg-[#062e39] text-white shadow-xs"
+                  ? "bg-ink text-white shadow-xs"
                   : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-100"
               )}
             >
@@ -295,7 +295,7 @@ export function StudentInviteModal({
               <select
                 value={courseId}
                 onChange={(e) => setCourseId(e.target.value)}
-                className="flex h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-[#062e39] outline-none focus:border-[#fd5523]"
+                className="flex h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-ink outline-none focus:border-brand"
               >
                 <option value="all">
                   {mode === "self" ? "Select a course..." : "Academy access only (no specific course)"}
@@ -315,7 +315,7 @@ export function StudentInviteModal({
               <select
                 value={cohortId}
                 onChange={(e) => setCohortId(e.target.value)}
-                className="flex h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-[#062e39] outline-none focus:border-[#fd5523]"
+                className="flex h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-ink outline-none focus:border-brand"
               >
                 <option value="all">No specific class section</option>
                 {cohorts.map((g) => (
@@ -344,7 +344,7 @@ export function StudentInviteModal({
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-[10px] font-black uppercase tracking-wider text-slate-500">
-                    Email Address <span className="text-[#fd5523]">*</span>
+                    Email Address <span className="text-brand-text">*</span>
                   </label>
                   <Input
                     type="email"
@@ -364,7 +364,7 @@ export function StudentInviteModal({
               <Button
                 type="submit"
                 disabled={pending || !singleEmail.trim()}
-                className="h-11 w-full rounded-xl bg-[#fd5523] hover:bg-[#ef4a16] text-white text-xs sm:text-sm font-bold"
+                className="h-11 w-full rounded-xl bg-brand hover:bg-brand-hover text-white text-xs sm:text-sm font-bold"
               >
                 {pending ? (
                   <>
@@ -386,12 +386,12 @@ export function StudentInviteModal({
             <div className="space-y-4">
               <div className="flex items-center justify-between gap-2">
                 <p className="text-xs font-semibold text-slate-600">
-                  Upload a CSV file or paste emails below (supports <code className="text-[#062e39]">full_name,email</code>).
+                  Upload a CSV file or paste emails below (supports <code className="text-ink">full_name,email</code>).
                 </p>
                 <button
                   type="button"
                   onClick={handleDownloadSampleCsv}
-                  className="inline-flex items-center gap-1.5 text-xs font-bold text-[#fd5523] hover:underline shrink-0"
+                  className="inline-flex items-center gap-1.5 text-xs font-bold text-brand-text hover:underline shrink-0"
                 >
                   <Download className="h-3.5 w-3.5" />
                   Sample CSV
@@ -412,12 +412,12 @@ export function StudentInviteModal({
                 className={cn(
                   "flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed p-5 text-center transition-all",
                   isDraggingCsv
-                    ? "border-[#fd5523] bg-[#fff6ee]"
-                    : "border-slate-200 bg-slate-50/70 hover:border-[#fd5523]/50"
+                    ? "border-brand bg-brand-soft"
+                    : "border-slate-200 bg-slate-50/70 hover:border-brand/50"
                 )}
               >
-                <Upload className="h-6 w-6 text-[#fd5523] mb-2" />
-                <span className="text-xs sm:text-sm font-bold text-[#062e39]">
+                <Upload className="h-6 w-6 text-brand-text mb-2" />
+                <span className="text-xs sm:text-sm font-bold text-ink">
                   {csvFileName ? `Loaded: ${csvFileName}` : "Drag & drop CSV here, or click to browse"}
                 </span>
                 <span className="text-[11px] text-slate-400 mt-0.5">
@@ -441,7 +441,7 @@ export function StudentInviteModal({
 
               {(parsedCsv.validRows.length > 0 || parsedCsv.invalidLines.length > 0) && (
                 <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 space-y-2 text-xs">
-                  <div className="flex items-center justify-between font-bold text-[#062e39]">
+                  <div className="flex items-center justify-between font-bold text-ink">
                     <span>{parsedCsv.validRows.length} valid student(s) ready</span>
                     {parsedCsv.invalidLines.length > 0 && (
                       <span className="text-amber-700">
@@ -469,7 +469,7 @@ export function StudentInviteModal({
                 type="button"
                 onClick={handleBulkSubmit}
                 disabled={pending || parsedCsv.validRows.length === 0}
-                className="h-11 w-full rounded-xl bg-[#fd5523] hover:bg-[#ef4a16] text-white text-xs sm:text-sm font-bold"
+                className="h-11 w-full rounded-xl bg-brand hover:bg-brand-hover text-white text-xs sm:text-sm font-bold"
               >
                 {pending ? (
                   <>
@@ -489,9 +489,9 @@ export function StudentInviteModal({
           {/* MODE 3: ADMIN SELF-ENROLL */}
           {mode === "self" && (
             <div className="space-y-4">
-              <div className="rounded-2xl bg-[#fff6ee] border border-[#fd5523]/15 p-4 flex items-start gap-3">
-                <GraduationCap className="h-5 w-5 text-[#fd5523] shrink-0 mt-0.5" />
-                <div className="text-xs text-[#062e39] leading-relaxed">
+              <div className="rounded-2xl bg-brand-soft border border-brand/15 p-4 flex items-start gap-3">
+                <GraduationCap className="h-5 w-5 text-brand-text shrink-0 mt-0.5" />
+                <div className="text-xs text-ink leading-relaxed">
                   <p className="font-bold">Test the student experience yourself</p>
                   <p className="text-slate-600 mt-1">
                     Select a course above to add your own account as an active enrolled learner in this academy.
@@ -503,7 +503,7 @@ export function StudentInviteModal({
                 type="button"
                 onClick={handleSelfEnroll}
                 disabled={pending || courseId === "all"}
-                className="h-11 w-full rounded-xl bg-[#062e39] hover:bg-[#0a4055] text-white text-xs sm:text-sm font-bold"
+                className="h-11 w-full rounded-xl bg-ink hover:bg-ink-hover text-white text-xs sm:text-sm font-bold"
               >
                 {pending ? (
                   <>
@@ -538,7 +538,7 @@ export function StudentInviteModal({
                   type="button"
                   size="sm"
                   onClick={handleCopyLink}
-                  className="h-9 rounded-lg bg-[#062e39] text-white hover:bg-[#0a4055] text-xs font-bold shrink-0"
+                  className="h-9 rounded-lg bg-ink text-white hover:bg-ink-hover text-xs font-bold shrink-0"
                 >
                   {copiedLink ? <Check className="mr-1.5 h-3.5 w-3.5 text-emerald-400" /> : <Copy className="mr-1.5 h-3.5 w-3.5" />}
                   {copiedLink ? "Copied" : "Copy Link"}

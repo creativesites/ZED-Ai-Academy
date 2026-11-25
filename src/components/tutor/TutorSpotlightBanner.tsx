@@ -29,8 +29,8 @@ export function TutorSpotlightBanner({
   const lin = PERSONA_PRESETS[0];
 
   return (
-    <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#062e39] via-[#132842] to-[#2a1745] p-6 text-white shadow-xl sm:p-8">
-      <div className="pointer-events-none absolute -right-12 -top-12 h-56 w-56 rounded-full bg-[#fd5523]/20 blur-3xl" />
+    <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-ink via-[#132842] to-[#2a1745] p-6 text-white shadow-xl sm:p-8">
+      <div className="pointer-events-none absolute -right-12 -top-12 h-56 w-56 rounded-full bg-brand/20 blur-3xl" />
 
       <div className="relative z-10 flex flex-col items-start gap-6 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-4 sm:gap-5">
@@ -56,7 +56,7 @@ export function TutorSpotlightBanner({
                 </span>
               )}
               {typeof dueCardsCount === "number" && dueCardsCount > 0 && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-[#fd5523]/30 px-2.5 py-0.5 text-[10px] font-bold text-orange-100">
+                <span className="inline-flex items-center gap-1 rounded-full bg-brand/30 px-2.5 py-0.5 text-[10px] font-bold text-orange-100">
                   <BookMarked className="h-3 w-3" />
                   {dueCardsCount} flashcards due
                 </span>
@@ -70,7 +70,7 @@ export function TutorSpotlightBanner({
         <div className="flex w-full shrink-0 flex-wrap items-center gap-2.5 sm:w-auto">
           <Link
             href={practiceHref}
-            className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#fd5523] px-5 py-3 text-xs font-black uppercase tracking-wider text-white shadow-lg shadow-[#fd5523]/25 transition-all hover:bg-[#ea4817] sm:flex-initial"
+            className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-brand px-5 py-3 text-xs font-black uppercase tracking-wider text-white shadow-lg shadow-brand/25 transition-all hover:bg-brand-hover sm:flex-initial"
           >
             <Mic className="h-4 w-4" />
             <span>Open Teacher&apos;s Room</span>

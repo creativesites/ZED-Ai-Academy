@@ -28,10 +28,10 @@ const HOURS = Array.from({ length: 14 }, (_, i) => i + 8); // 8 AM to 9 PM
 
 const TYPE_STYLES: Record<string, { badge: string; cardBg: string; border: string; text: string }> = {
   live_session: {
-    badge: "bg-[#fd5523]/10 text-[#fd5523]",
-    cardBg: "bg-[#fff6ee]",
-    border: "border-[#fd5523]/25 hover:border-[#fd5523]",
-    text: "text-[#062e39]",
+    badge: "bg-brand/10 text-brand-text",
+    cardBg: "bg-brand-soft",
+    border: "border-brand/25 hover:border-brand",
+    text: "text-ink",
   },
   workshop: {
     badge: "bg-indigo-50 text-indigo-700",
@@ -101,10 +101,10 @@ export function TimetableCalendar({
           <div className="p-4 border-b border-slate-100 bg-slate-50/60 space-y-3">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-[#fd5523]">
+                <p className="text-[10px] font-black uppercase tracking-widest text-brand-text">
                   {activeDayIdx === todayIdx ? "Today's Schedule" : FULL_DAYS[activeDayIdx]}
                 </p>
-                <p className="text-xs font-bold text-[#062e39] mt-0.5">
+                <p className="text-xs font-bold text-ink mt-0.5">
                   {activeDaySessions.length === 0
                     ? "No classes scheduled"
                     : `${activeDaySessions.length} session${activeDaySessions.length > 1 ? "s" : ""}`}
@@ -114,7 +114,7 @@ export function TimetableCalendar({
                 <button
                   type="button"
                   onClick={() => setActiveDayIdx(todayIdx)}
-                  className="px-3 py-1 rounded-lg bg-[#fff6ee] text-[#fd5523] text-[11px] font-bold hover:bg-[#fd5523] hover:text-white transition-colors"
+                  className="px-3 py-1 rounded-lg bg-brand-soft text-brand-text text-[11px] font-bold hover:bg-brand hover:text-white transition-colors"
                 >
                   Jump to Today
                 </button>
@@ -134,9 +134,9 @@ export function TimetableCalendar({
                     className={cn(
                       "flex flex-col items-center justify-center py-2 rounded-xl transition-all duration-200",
                       isSelected
-                        ? "bg-[#062e39] text-white shadow-sm scale-[1.03]"
+                        ? "bg-ink text-white shadow-sm scale-[1.03]"
                         : isToday
-                        ? "bg-[#fff6ee] text-[#fd5523] border border-[#fd5523]/25"
+                        ? "bg-brand-soft text-brand-text border border-brand/25"
                         : "bg-white text-slate-500 border border-slate-100 hover:bg-slate-50"
                     )}
                   >
@@ -146,7 +146,7 @@ export function TimetableCalendar({
                         "mt-1 h-1.5 w-1.5 rounded-full transition-colors",
                         count > 0
                           ? isSelected
-                            ? "bg-[#fd5523]"
+                            ? "bg-brand"
                             : "bg-emerald-500"
                           : "bg-transparent"
                       )}
@@ -180,7 +180,7 @@ export function TimetableCalendar({
                   >
                     <div className="min-w-0 space-y-1">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="inline-flex items-center gap-1 text-[11px] font-bold text-[#fd5523]">
+                        <span className="inline-flex items-center gap-1 text-[11px] font-bold text-brand-text">
                           <Clock className="h-3 w-3" />
                           {lesson.start_time_only?.slice(0, 5)} – {lesson.end_time_only?.slice(0, 5)}
                         </span>
@@ -220,17 +220,17 @@ export function TimetableCalendar({
                   key={day}
                   className={cn(
                     "p-3.5 text-center border-r border-slate-100 last:border-r-0 transition-colors",
-                    isToday && "bg-[#fff6ee]/60"
+                    isToday && "bg-brand-soft/60"
                   )}
                 >
                   <span
                     className={cn(
                       "text-[11px] font-black uppercase tracking-widest inline-flex items-center gap-1.5",
-                      isToday ? "text-[#fd5523]" : "text-slate-500"
+                      isToday ? "text-brand-text" : "text-slate-500"
                     )}
                   >
                     {day}
-                    {isToday && <span className="h-1.5 w-1.5 rounded-full bg-[#fd5523]" />}
+                    {isToday && <span className="h-1.5 w-1.5 rounded-full bg-brand" />}
                   </span>
                 </div>
               );
@@ -258,7 +258,7 @@ export function TimetableCalendar({
                     key={dayIdx}
                     className={cn(
                       "relative border-r border-slate-100 last:border-r-0 transition-colors",
-                      isToday ? "bg-[#fff6ee]/20" : "hover:bg-slate-50/40"
+                      isToday ? "bg-brand-soft/20" : "hover:bg-slate-50/40"
                     )}
                   >
                     {HOURS.map((hour) => (
@@ -292,7 +292,7 @@ export function TimetableCalendar({
                             <div className="flex flex-col h-full justify-between">
                               <div>
                                 <div className="flex items-center justify-between gap-1 mb-0.5">
-                                  <span className="font-bold text-[10px] text-[#fd5523] tabular-nums">
+                                  <span className="font-bold text-[10px] text-brand-text tabular-nums">
                                     {lesson.start_time_only.slice(0, 5)} – {lesson.end_time_only.slice(0, 5)}
                                   </span>
                                   {liveNow && (
@@ -329,8 +329,8 @@ export function TimetableCalendar({
         <DialogContent className="w-[calc(100vw-1.5rem)] max-w-[calc(100vw-1.5rem)] sm:max-w-md rounded-2xl sm:rounded-3xl p-0 overflow-hidden border border-slate-200 shadow-2xl">
           {selectedSession && (
             <div>
-              <DialogHeader className="p-5 sm:p-6 bg-[#062e39] text-white">
-                <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-[#fd8d69] mb-1">
+              <DialogHeader className="p-5 sm:p-6 bg-ink text-white">
+                <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-brand-electric mb-1">
                   <Sparkles className="h-3.5 w-3.5" />
                   <span>
                     {FULL_DAYS[(Number(selectedSession.day_of_week) || 1) - 1] || "Scheduled Session"}
@@ -345,7 +345,7 @@ export function TimetableCalendar({
                   {selectedSession.title}
                 </DialogTitle>
                 <DialogDescription className="text-xs text-white/75 flex items-center gap-1.5 pt-1">
-                  <Clock className="h-3.5 w-3.5 text-[#fd8d69]" />
+                  <Clock className="h-3.5 w-3.5 text-brand-electric" />
                   {selectedSession.start_time_only?.slice(0, 5)} – {selectedSession.end_time_only?.slice(0, 5)}
                 </DialogDescription>
               </DialogHeader>
@@ -354,7 +354,7 @@ export function TimetableCalendar({
                 {selectedSession.topics_covered ? (
                   <div className="rounded-xl bg-slate-50 border border-slate-100 p-3.5 space-y-1">
                     <p className="text-[10px] font-black uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                      <BookOpen className="h-3.5 w-3.5 text-[#fd5523]" />
+                      <BookOpen className="h-3.5 w-3.5 text-brand-text" />
                       Topics Covered
                     </p>
                     <p className="text-xs sm:text-sm text-slate-700 leading-relaxed">
@@ -371,14 +371,14 @@ export function TimetableCalendar({
                   <div className="flex flex-col sm:flex-row gap-2.5 pt-1">
                     <Link
                       href={liveHref}
-                      className="flex-1 h-10 rounded-xl bg-[#fd5523] hover:bg-[#ef4a16] text-white text-xs font-bold inline-flex items-center justify-center gap-1.5"
+                      className="flex-1 h-10 rounded-xl bg-brand hover:bg-brand-hover text-white text-xs font-bold inline-flex items-center justify-center gap-1.5"
                     >
                       <Video className="h-4 w-4" />
                       <span>Go to Live Room</span>
                     </Link>
                     <Link
                       href={classroomHref}
-                      className="flex-1 h-10 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-[#062e39] text-xs font-bold inline-flex items-center justify-center gap-1.5"
+                      className="flex-1 h-10 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-ink text-xs font-bold inline-flex items-center justify-center gap-1.5"
                     >
                       <Layers className="h-4 w-4" />
                       <span>Manage Schedule</span>
@@ -390,7 +390,7 @@ export function TimetableCalendar({
                   <Button
                     type="button"
                     onClick={() => setSelectedSession(null)}
-                    className="w-full h-10 rounded-xl bg-[#062e39] text-white text-xs font-bold"
+                    className="w-full h-10 rounded-xl bg-ink text-white text-xs font-bold"
                   >
                     Close
                   </Button>

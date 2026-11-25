@@ -34,9 +34,9 @@ export function EnrollmentsToolbarActions({
           type="button"
           variant="outline"
           onClick={() => openWithMode("self")}
-          className="h-10 flex-1 sm:flex-none rounded-xl border-slate-200 bg-white px-3.5 text-xs font-bold text-[#062e39] hover:bg-slate-50"
+          className="h-10 flex-1 sm:flex-none rounded-xl border-slate-200 bg-white px-3.5 text-xs font-bold text-ink hover:bg-slate-50"
         >
-          <UserCheck className="mr-1.5 h-3.5 w-3.5 text-[#fd5523]" />
+          <UserCheck className="mr-1.5 h-3.5 w-3.5 text-brand-text" />
           Self-Enroll
         </Button>
 
@@ -44,16 +44,16 @@ export function EnrollmentsToolbarActions({
           type="button"
           variant="outline"
           onClick={() => openWithMode("bulk")}
-          className="h-10 flex-1 sm:flex-none rounded-xl border-slate-200 bg-white px-3.5 text-xs font-bold text-[#062e39] hover:bg-slate-50"
+          className="h-10 flex-1 sm:flex-none rounded-xl border-slate-200 bg-white px-3.5 text-xs font-bold text-ink hover:bg-slate-50"
         >
-          <FileSpreadsheet className="mr-1.5 h-3.5 w-3.5 text-[#fd5523]" />
+          <FileSpreadsheet className="mr-1.5 h-3.5 w-3.5 text-brand-text" />
           Bulk CSV
         </Button>
 
         <Button
           type="button"
           onClick={() => openWithMode("single")}
-          className="h-10 w-full sm:w-auto rounded-xl bg-[#fd5523] px-4 text-xs font-bold text-white hover:bg-[#ef4a16] shadow-sm"
+          className="h-10 w-full sm:w-auto rounded-xl bg-brand px-4 text-xs font-bold text-white hover:bg-brand-hover shadow-sm"
         >
           <UserPlus className="mr-1.5 h-3.5 w-3.5" />
           Invite Student

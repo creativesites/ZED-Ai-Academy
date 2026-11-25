@@ -3,7 +3,7 @@ import { auth } from "@clerk/nextjs/server";
 import Layout from "@/components/layout/Layout";
 import { AiTutorShowcase } from "@/components/tutor/showcase/AiTutorShowcase";
 
-const TITLE = "AI Tutor — Zed AI Academy";
+const TITLE = "AI Tutor";
 const DESCRIPTION =
   "Practise Mandarin, Spanish, French and English for healthcare out loud with ZAI Tutor, an AI teacher who listens, corrects gently and gives you a report after every session.";
 
@@ -14,7 +14,7 @@ export const metadata: Metadata = {
     title: TITLE,
     description: DESCRIPTION,
     type: "website",
-    siteName: "Zed AI Academy",
+    siteName: "CreativeSites Learn",
   },
   twitter: {
     card: "summary_large_image",

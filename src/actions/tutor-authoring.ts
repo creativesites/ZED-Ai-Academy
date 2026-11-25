@@ -112,7 +112,7 @@ export async function resolveCreatorCompanyContext(): Promise<{
 
   return {
     companyId: zedai?.id ?? ZEDAI_TENANT_ID,
-    companyName: zedai?.name ?? "Zed AI Academy",
+    companyName: zedai?.name ?? "CS Learn",
     companySlug: zedai?.slug ?? "zedai",
     isSuperAdmin,
   };

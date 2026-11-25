@@ -42,12 +42,13 @@ import { AIBrandModal } from "./branding/ai-brand-modal";
 import { FAQEditor } from "./branding/faq-editor";
 import { TestimonialEditor } from "./branding/testimonial-editor";
 import { CURATED_PALETTES, getContrastRatio, BrandPalette } from "./branding/palette-presets";
+import { DEFAULT_PRIMARY_COLOR, BRAND_COLORS, DEFAULT_SECONDARY_COLOR } from "@/lib/brand";
 
 const TEMPLATES = [
-  { id: "modern", name: "Modern Bold", desc: "High-impact typography and prominent imagery.", colors: ["#062e39", "#fd5523", "#ffffff"] },
+  { id: "modern", name: "Modern Bold", desc: "High-impact typography and prominent imagery.", colors: [BRAND_COLORS.navy, BRAND_COLORS.royalBlue, "#ffffff"] },
   { id: "classic", name: "Classic Academic", desc: "Traditional, structured university layout.", colors: ["#78350f", "#fef3c7", "#fdfbf7"] },
   { id: "minimal", name: "Minimalist", desc: "Clean, whitespace-focused and distraction-free.", colors: ["#0f172a", "#f8fafc", "#ffffff"] },
-  { id: "dark_mode", name: "Dark Nebula", desc: "Sleek dark theme with vibrant neon accents.", colors: ["#0a0a0c", "#fd5523", "#1a1a20"] },
+  { id: "dark_mode", name: "Dark Nebula", desc: "Sleek dark theme with vibrant neon accents.", colors: [BRAND_COLORS.midnight, BRAND_COLORS.electricBlue, BRAND_COLORS.navyCard] },
   { id: "corporate", name: "Corporate Pro", desc: "Professional, trust-focused business layout.", colors: ["#1e293b", "#2563eb", "#f1f5f9"] },
   { id: "creative", name: "Creative Studio", desc: "Playful, organic shapes and artistic vibes.", colors: ["#831843", "#d946ef", "#fdf4ff"] },
   { id: "tech", name: "Future Tech", desc: "Cyberpunk-inspired grid and geometric patterns.", colors: ["#020617", "#06b6d4", "#0f172a"] },
@@ -69,19 +70,19 @@ export function SettingsForm({
   academyName?: string;
 }) {
   const [logoUrl, setLogoUrl] = useState(initialData.logo_url || "");
-  const [primaryColor, setPrimaryColor] = useState(initialData.primary_color || "#fd5523");
+  const [primaryColor, setPrimaryColor] = useState(initialData.primary_color || DEFAULT_PRIMARY_COLOR);
   const [homeTemplate, setHomeTemplate] = useState(initialData.home_template || "modern");
 
   const defaultHomeContent = {
-    hero_title: `Welcome to ${academyName || "Zed AI Academy"}`,
+    hero_title: `Welcome to ${academyName || "CS Learn"}`,
     hero_subtitle: "Empowering learners, professionals, and innovators with modern practical skills and certified excellence.",
     hero_image: "",
-    about_title: `About ${academyName || "Zed AI Academy"}`,
-    about_text: `${academyName || "Zed AI Academy"} is dedicated to delivering world-class curriculum, hands-on mentorship, and transformative learning experiences.`,
+    about_title: `About ${academyName || "CS Learn"}`,
+    about_text: `${academyName || "CS Learn"} is dedicated to delivering world-class curriculum, hands-on mentorship, and transformative learning experiences.`,
     about_image: "",
     cta_title: "Start Your Learning Journey Today",
     cta_button: "Enroll Now",
-    secondary_color: "#062e39",
+    secondary_color: DEFAULT_SECONDARY_COLOR,
     features: [],
     tutor_name: "Lead Instructor",
     tutor_bio: "Experienced educator and industry practitioner committed to student success.",
@@ -156,7 +157,7 @@ export function SettingsForm({
       {
         name: "Mwila Chanda",
         role: "Class of 2026",
-        content: `Learning with ${academyName || "Zed AI Academy"} gave me the confidence and practical skills I needed to excel.`,
+        content: `Learning with ${academyName || "CS Learn"} gave me the confidence and practical skills I needed to excel.`,
         rating: 5,
       },
       {
@@ -246,7 +247,7 @@ export function SettingsForm({
           action: "enhance_copy",
           field: fieldKey,
           currentText: currentValue,
-          academyName: academyName || "Zed AI Academy",
+          academyName: academyName || "CS Learn",
           niche: homeContent.hero_subtitle || "Professional and Academic Skills",
           instruction,
         }),
@@ -307,12 +308,12 @@ export function SettingsForm({
           <div>
             <div className="flex items-center gap-2">
               <h2 className="font-black text-slate-900 text-lg sm:text-xl">{academyName || tenantSlug}</h2>
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-[#fff6ee] text-[#fd5523] border border-[#fd5523]/20">
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-brand-soft text-brand-text border border-brand/20">
                 Academy Branding
               </span>
             </div>
             <div className="flex items-center gap-2 text-xs text-slate-400 font-mono mt-0.5">
-              <span>https://zedai.academy/academy/{tenantSlug}</span>
+              <span>https://learn.creativesites.site/academy/{tenantSlug}</span>
               <button
                 type="button"
                 onClick={copyLiveLink}
@@ -341,7 +342,7 @@ export function SettingsForm({
             className={cn(
               "h-11 px-4 rounded-2xl text-xs font-black uppercase tracking-wider transition-all",
               activeTab === "preview"
-                ? "bg-[#062e39] text-white border-transparent"
+                ? "bg-ink text-white border-transparent"
                 : "border-slate-200 text-slate-700 hover:bg-slate-50"
             )}
           >
@@ -376,7 +377,7 @@ export function SettingsForm({
           onClick={() => setActiveTab("brand")}
           className={cn(
             "flex-1 py-3 px-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-2",
-            activeTab === "brand" ? "bg-white text-[#062e39] shadow-sm" : "text-slate-500 hover:text-slate-900"
+            activeTab === "brand" ? "bg-white text-ink shadow-sm" : "text-slate-500 hover:text-slate-900"
           )}
         >
           <Palette className="h-4 w-4" style={{ color: activeTab === "brand" ? primaryColor : undefined }} />
@@ -387,7 +388,7 @@ export function SettingsForm({
           onClick={() => setActiveTab("templates")}
           className={cn(
             "flex-1 py-3 px-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-2",
-            activeTab === "templates" ? "bg-white text-[#062e39] shadow-sm" : "text-slate-500 hover:text-slate-900"
+            activeTab === "templates" ? "bg-white text-ink shadow-sm" : "text-slate-500 hover:text-slate-900"
           )}
         >
           <Layout className="h-4 w-4" style={{ color: activeTab === "templates" ? primaryColor : undefined }} />
@@ -398,7 +399,7 @@ export function SettingsForm({
           onClick={() => setActiveTab("content")}
           className={cn(
             "flex-1 py-3 px-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-2",
-            activeTab === "content" ? "bg-white text-[#062e39] shadow-sm" : "text-slate-500 hover:text-slate-900"
+            activeTab === "content" ? "bg-white text-ink shadow-sm" : "text-slate-500 hover:text-slate-900"
           )}
         >
           <Type className="h-4 w-4" style={{ color: activeTab === "content" ? primaryColor : undefined }} />
@@ -409,7 +410,7 @@ export function SettingsForm({
           onClick={() => setActiveTab("preview")}
           className={cn(
             "flex-1 py-3 px-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-2",
-            activeTab === "preview" ? "bg-white text-[#062e39] shadow-sm" : "text-slate-500 hover:text-slate-900"
+            activeTab === "preview" ? "bg-white text-ink shadow-sm" : "text-slate-500 hover:text-slate-900"
           )}
         >
           <Eye className="h-4 w-4" style={{ color: activeTab === "preview" ? primaryColor : undefined }} />
@@ -426,7 +427,7 @@ export function SettingsForm({
             <div className="p-6 sm:p-8 bg-white rounded-3xl border border-slate-200/80 shadow-sm space-y-4">
               <div className="space-y-1">
                 <Label className="text-sm font-black uppercase tracking-wider text-slate-800 flex items-center gap-2">
-                  <ImageIcon className="h-4 w-4 text-[#fd5523]" /> Academy Logo
+                  <ImageIcon className="h-4 w-4 text-brand-text" /> Academy Logo
                 </Label>
                 <p className="text-xs text-slate-500">
                   This logo appears in your academy header, learner navigation bar, and course certificates.
@@ -451,7 +452,7 @@ export function SettingsForm({
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <div className="space-y-1">
                   <Label className="text-sm font-black uppercase tracking-wider text-slate-800 flex items-center gap-2">
-                    <Palette className="h-4 w-4 text-[#fd5523]" /> Primary Brand Color
+                    <Palette className="h-4 w-4 text-brand-text" /> Primary Brand Color
                   </Label>
                   <p className="text-xs text-slate-500">
                     Defines your primary action buttons, key highlights, badges, and link colors.
@@ -514,7 +515,7 @@ export function SettingsForm({
                       className={cn(
                         "p-3 rounded-2xl border text-left transition-all flex items-center gap-2.5 group",
                         primaryColor === pal.primary
-                          ? "border-[#fd5523] bg-[#fff6ee] shadow-sm"
+                          ? "border-brand bg-brand-soft shadow-sm"
                           : "border-slate-200/80 bg-slate-50 hover:border-slate-300 hover:bg-white"
                       )}
                     >
@@ -539,7 +540,7 @@ export function SettingsForm({
           <div className="space-y-6 animate-in fade-in duration-200">
             <div className="p-6 sm:p-8 bg-white rounded-3xl border border-slate-200/80 shadow-sm space-y-6">
               <div className="space-y-1">
-                <h3 className="text-xl font-black text-[#062e39] uppercase tracking-tight">Select Template Architecture</h3>
+                <h3 className="text-xl font-black text-ink uppercase tracking-tight">Select Template Architecture</h3>
                 <p className="text-xs text-slate-500">
                   Pick a layout vibe that suits your subject domain. You can preview changes anytime in the Live Preview tab.
                 </p>
@@ -554,7 +555,7 @@ export function SettingsForm({
                     className={cn(
                       "group p-5 rounded-3xl border-2 text-left transition-all relative overflow-hidden flex flex-col bg-white",
                       homeTemplate === t.id
-                        ? "border-[#fd5523] shadow-lg shadow-[#fd5523]/10"
+                        ? "border-brand shadow-lg shadow-brand/10"
                         : "border-slate-200/80 hover:border-slate-300"
                     )}
                   >
@@ -563,7 +564,7 @@ export function SettingsForm({
                         className={cn(
                           "h-11 w-11 rounded-2xl flex items-center justify-center transition-all",
                           homeTemplate === t.id
-                            ? "bg-[#fd5523] text-white shadow-md rotate-3"
+                            ? "bg-brand text-white shadow-md rotate-3"
                             : "bg-slate-100 text-slate-500"
                         )}
                       >
@@ -588,13 +589,13 @@ export function SettingsForm({
                       </div>
                     </div>
 
-                    <h4 className="font-black text-[#062e39] text-sm uppercase tracking-tight mb-1">
+                    <h4 className="font-black text-ink text-sm uppercase tracking-tight mb-1">
                       {t.name}
                     </h4>
                     <p className="text-xs text-slate-500 leading-relaxed font-medium">{t.desc}</p>
 
                     {homeTemplate === t.id && (
-                      <div className="absolute top-3 right-3 h-6 w-6 rounded-full bg-[#fd5523] flex items-center justify-center text-white shadow-sm">
+                      <div className="absolute top-3 right-3 h-6 w-6 rounded-full bg-brand flex items-center justify-center text-white shadow-sm">
                         <Check className="h-3.5 w-3.5" />
                       </div>
                     )}
@@ -628,7 +629,7 @@ export function SettingsForm({
                     className={cn(
                       "flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all",
                       contentSection === sec.id
-                        ? "bg-[#062e39] text-white shadow-sm"
+                        ? "bg-ink text-white shadow-sm"
                         : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                     )}
                   >
@@ -644,8 +645,8 @@ export function SettingsForm({
               <div className="p-6 sm:p-8 bg-white rounded-3xl border border-slate-200/80 shadow-sm space-y-5">
                 <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                   <div className="flex items-center gap-2">
-                    <ImageIcon className="h-4 w-4 text-[#fd5523]" />
-                    <h4 className="text-sm font-black text-[#062e39] uppercase">Hero Banner Content</h4>
+                    <ImageIcon className="h-4 w-4 text-brand-text" />
+                    <h4 className="text-sm font-black text-ink uppercase">Hero Banner Content</h4>
                   </div>
                 </div>
 
@@ -659,7 +660,7 @@ export function SettingsForm({
                           handleEnhanceField("hero_title", homeContent.hero_title || "", "make it punchy, high-impact, max 8 words")
                         }
                         disabled={enhancingField === "hero_title"}
-                        className="text-[11px] font-bold text-[#fd5523] hover:underline flex items-center gap-1"
+                        className="text-[11px] font-bold text-brand-text hover:underline flex items-center gap-1"
                       >
                         {enhancingField === "hero_title" ? <Loader2 className="h-3 w-3 animate-spin" /> : <Wand2 className="h-3 w-3" />}
                         <span>AI Enhance</span>
@@ -682,7 +683,7 @@ export function SettingsForm({
                           handleEnhanceField("hero_subtitle", homeContent.hero_subtitle || "", "make it persuasive, clear benefit, max 2 sentences")
                         }
                         disabled={enhancingField === "hero_subtitle"}
-                        className="text-[11px] font-bold text-[#fd5523] hover:underline flex items-center gap-1"
+                        className="text-[11px] font-bold text-brand-text hover:underline flex items-center gap-1"
                       >
                         {enhancingField === "hero_subtitle" ? <Loader2 className="h-3 w-3 animate-spin" /> : <Wand2 className="h-3 w-3" />}
                         <span>AI Enhance</span>
@@ -720,8 +721,8 @@ export function SettingsForm({
               <div className="p-6 sm:p-8 bg-white rounded-3xl border border-slate-200/80 shadow-sm space-y-5">
                 <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                   <div className="flex items-center gap-2">
-                    <FileText className="h-4 w-4 text-[#fd5523]" />
-                    <h4 className="text-sm font-black text-[#062e39] uppercase">Mission & Story</h4>
+                    <FileText className="h-4 w-4 text-brand-text" />
+                    <h4 className="text-sm font-black text-ink uppercase">Mission & Story</h4>
                   </div>
                 </div>
 
@@ -745,7 +746,7 @@ export function SettingsForm({
                           handleEnhanceField("about_text", homeContent.about_text || "", "make it authentic, warm, and inspiring")
                         }
                         disabled={enhancingField === "about_text"}
-                        className="text-[11px] font-bold text-[#fd5523] hover:underline flex items-center gap-1"
+                        className="text-[11px] font-bold text-brand-text hover:underline flex items-center gap-1"
                       >
                         {enhancingField === "about_text" ? <Loader2 className="h-3 w-3 animate-spin" /> : <Wand2 className="h-3 w-3" />}
                         <span>AI Enhance</span>
@@ -779,8 +780,8 @@ export function SettingsForm({
               <div className="p-6 sm:p-8 bg-white rounded-3xl border border-slate-200/80 shadow-sm space-y-5">
                 <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                   <div className="flex items-center gap-2">
-                    <GraduationCap className="h-4 w-4 text-[#fd5523]" />
-                    <h4 className="text-sm font-black text-[#062e39] uppercase">Faculty & Tutor Credentials</h4>
+                    <GraduationCap className="h-4 w-4 text-brand-text" />
+                    <h4 className="text-sm font-black text-ink uppercase">Faculty & Tutor Credentials</h4>
                   </div>
                 </div>
 
@@ -904,8 +905,8 @@ export function SettingsForm({
               <div className="p-6 sm:p-8 bg-white rounded-3xl border border-slate-200/80 shadow-sm space-y-5">
                 <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                   <div className="flex items-center gap-2">
-                    <Rocket className="h-4 w-4 text-[#fd5523]" />
-                    <h4 className="text-sm font-black text-[#062e39] uppercase">Academy Services & Formats</h4>
+                    <Rocket className="h-4 w-4 text-brand-text" />
+                    <h4 className="text-sm font-black text-ink uppercase">Academy Services & Formats</h4>
                   </div>
                   <Button
                     type="button"
@@ -917,7 +918,7 @@ export function SettingsForm({
                       ];
                       updateContent("services", newServices);
                     }}
-                    className="h-8 rounded-lg text-xs font-bold bg-[#062e39] text-white"
+                    className="h-8 rounded-lg text-xs font-bold bg-ink text-white"
                   >
                     <Plus className="h-3.5 w-3.5 mr-1" /> Add Service
                   </Button>
@@ -973,7 +974,7 @@ export function SettingsForm({
                               next[idx].features = [...(next[idx].features || []), "New Feature"];
                               updateContent("services", next);
                             }}
-                            className="text-[10px] font-bold text-[#fd5523] hover:underline"
+                            className="text-[10px] font-bold text-brand-text hover:underline"
                           >
                             + Feature
                           </button>
@@ -1015,8 +1016,8 @@ export function SettingsForm({
               <div className="p-6 sm:p-8 bg-white rounded-3xl border border-slate-200/80 shadow-sm space-y-5">
                 <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                   <div className="flex items-center gap-2">
-                    <Layers className="h-4 w-4 text-[#fd5523]" />
-                    <h4 className="text-sm font-black text-[#062e39] uppercase">Educational Ecosystem Cards</h4>
+                    <Layers className="h-4 w-4 text-brand-text" />
+                    <h4 className="text-sm font-black text-ink uppercase">Educational Ecosystem Cards</h4>
                   </div>
                   <Button
                     type="button"
@@ -1028,7 +1029,7 @@ export function SettingsForm({
                       ];
                       updateContent("ecosystem_cards", newCards);
                     }}
-                    className="h-8 rounded-lg text-xs font-bold bg-[#062e39] text-white"
+                    className="h-8 rounded-lg text-xs font-bold bg-ink text-white"
                   >
                     <Plus className="h-3.5 w-3.5 mr-1" /> Add Card
                   </Button>
@@ -1115,8 +1116,8 @@ export function SettingsForm({
               <div className="p-6 sm:p-8 bg-white rounded-3xl border border-slate-200/80 shadow-sm space-y-5">
                 <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                   <div className="flex items-center gap-2">
-                    <Zap className="h-4 w-4 text-[#fd5523]" />
-                    <h4 className="text-sm font-black text-[#062e39] uppercase">Conversion Call-To-Action</h4>
+                    <Zap className="h-4 w-4 text-brand-text" />
+                    <h4 className="text-sm font-black text-ink uppercase">Conversion Call-To-Action</h4>
                   </div>
                 </div>
 

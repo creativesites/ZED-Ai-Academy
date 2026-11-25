@@ -29,7 +29,7 @@ export function AiPromptBlockEditor({
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2 text-[#fd5523] mb-2">
+      <div className="flex items-center gap-2 text-brand-text mb-2">
         <Sparkles className="h-4 w-4" />
         <span className="text-xs font-bold uppercase tracking-widest">AI Prompt Block</span>
       </div>
@@ -68,8 +68,8 @@ export function AiPromptBlockEditor({
       </div>
 
       {prompt && (
-        <div className="rounded-2xl border-2 border-[#fd5523]/20 bg-[#fff8f5] p-4">
-          <p className="text-[10px] font-black uppercase tracking-widest text-[#fd5523] mb-2">Preview</p>
+        <div className="rounded-2xl border-2 border-brand/20 bg-[#fff8f5] p-4">
+          <p className="text-[10px] font-black uppercase tracking-widest text-brand-text mb-2">Preview</p>
           <pre className="whitespace-pre-wrap text-xs text-slate-700 font-mono">{prompt}</pre>
         </div>
       )}

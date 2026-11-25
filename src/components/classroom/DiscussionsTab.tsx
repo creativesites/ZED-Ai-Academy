@@ -313,7 +313,7 @@ export function DiscussionsTab({
         <div className="flex-1 overflow-y-auto p-3 space-y-1">
           {loadingChannels ? (
             <div className="py-8 text-center text-slate-400">
-              <Loader2 className="h-5 w-5 animate-spin mx-auto text-[#fd5523]" />
+              <Loader2 className="h-5 w-5 animate-spin mx-auto text-brand-text" />
             </div>
           ) : channels.length === 0 ? (
             <p className="text-center text-xs text-slate-400 py-6">No channels available</p>
@@ -328,14 +328,14 @@ export function DiscussionsTab({
                   className={cn(
                     "w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-bold transition-all text-left group",
                     isSelected
-                      ? "bg-white text-[#fd5523] shadow-xs ring-1 ring-slate-200"
+                      ? "bg-white text-brand-text shadow-xs ring-1 ring-slate-200"
                       : "text-slate-600 hover:bg-white/60 hover:text-slate-900"
                   )}
                 >
                   <IconComp
                     className={cn(
                       "h-4 w-4 shrink-0",
-                      isSelected ? "text-[#fd5523]" : "text-slate-400 group-hover:text-slate-600"
+                      isSelected ? "text-brand-text" : "text-slate-400 group-hover:text-slate-600"
                     )}
                   />
                   <div className="min-w-0 flex-1">
@@ -365,7 +365,7 @@ export function DiscussionsTab({
               <button
                 type="button"
                 onClick={() => setIsNewChannelOpen(true)}
-                className="text-[11px] font-bold text-[#fd5523] flex items-center gap-1"
+                className="text-[11px] font-bold text-brand-text flex items-center gap-1"
               >
                 <Plus className="h-3 w-3" /> New Channel
               </button>
@@ -382,11 +382,11 @@ export function DiscussionsTab({
                   className={cn(
                     "min-h-[38px] px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 flex items-center gap-1.5 transition-all",
                     isSelected
-                      ? "bg-[#062e39] text-white shadow-xs"
+                      ? "bg-ink text-white shadow-xs"
                       : "bg-white border border-slate-200/80 text-slate-600 hover:bg-slate-50"
                   )}
                 >
-                  <IconComp className={cn("h-3.5 w-3.5", isSelected ? "text-[#fd5523]" : "text-slate-400")} />
+                  <IconComp className={cn("h-3.5 w-3.5", isSelected ? "text-brand-text" : "text-slate-400")} />
                   <span>{ch.display_name}</span>
                 </button>
               );
@@ -398,8 +398,8 @@ export function DiscussionsTab({
         <div className="px-4 sm:px-6 py-3 sm:py-4 bg-white border-b border-slate-100 flex items-center justify-between shrink-0">
           <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <Hash className="h-4 w-4 text-[#fd5523]" />
-              <h2 className="text-base font-black text-[#062e39] truncate">
+              <Hash className="h-4 w-4 text-brand-text" />
+              <h2 className="text-base font-black text-ink truncate">
                 {activeChannel?.display_name || "Discussions"}
               </h2>
               {activeChannel?.cohort && (
@@ -430,7 +430,7 @@ export function DiscussionsTab({
         >
           {loadingMessages ? (
             <div className="flex flex-col items-center justify-center h-full text-slate-400">
-              <Loader2 className="h-6 w-6 animate-spin mb-2 text-[#fd5523]" />
+              <Loader2 className="h-6 w-6 animate-spin mb-2 text-brand-text" />
               <p className="text-xs font-bold">Syncing messages...</p>
             </div>
           ) : messages.length === 0 ? (
@@ -471,11 +471,11 @@ export function DiscussionsTab({
                   <div className="flex-1 min-w-0 space-y-1">
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center gap-2">
-                        <span className="text-xs font-black text-[#062e39]">
+                        <span className="text-xs font-black text-ink">
                           {msg.user?.full_name || "Academy Member"}
                         </span>
                         {isInstructor && (
-                          <span className="px-1.5 py-0.2 rounded-md bg-[#fd5523]/10 text-[#fd5523] text-[9px] font-black uppercase">
+                          <span className="px-1.5 py-0.2 rounded-md bg-brand/10 text-brand-text text-[9px] font-black uppercase">
                             Instructor
                           </span>
                         )}
@@ -626,14 +626,14 @@ export function DiscussionsTab({
             onChange={(e) => setContent(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder={`Message #${activeChannel?.display_name || "channel"}... (Enter to send)`}
-            className="min-h-[44px] max-h-32 text-xs font-medium rounded-xl border-slate-200 focus:border-[#fd5523] resize-none"
+            className="min-h-[44px] max-h-32 text-xs font-medium rounded-xl border-slate-200 focus:border-brand resize-none"
             rows={1}
           />
 
           <Button
             onClick={handlePost}
             disabled={pending || (!content.trim() && !attachmentFile)}
-            className="h-11 min-h-[44px] px-3.5 sm:px-4 bg-[#fd5523] hover:bg-[#e0481d] text-white rounded-xl shadow-md shadow-[#fd5523]/20 shrink-0 gap-1.5"
+            className="h-11 min-h-[44px] px-3.5 sm:px-4 bg-brand hover:bg-brand-hover text-white rounded-xl shadow-md shadow-brand/20 shrink-0 gap-1.5"
           >
             {pending ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -649,7 +649,7 @@ export function DiscussionsTab({
         <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
           <div className="bg-white rounded-2xl sm:rounded-3xl max-w-md w-full p-4 sm:p-6 shadow-2xl border border-slate-100 animate-in zoom-in-95 duration-200 max-h-[85dvh] overflow-y-auto">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <h3 className="text-base font-black text-[#062e39]">Create Discussion Channel</h3>
+              <h3 className="text-base font-black text-ink">Create Discussion Channel</h3>
               <Button
                 variant="ghost"
                 size="icon"
@@ -717,7 +717,7 @@ export function DiscussionsTab({
                 <Button
                   type="submit"
                   disabled={pending}
-                  className="bg-[#fd5523] hover:bg-[#e0481d] text-white rounded-xl text-xs font-black"
+                  className="bg-brand hover:bg-brand-hover text-white rounded-xl text-xs font-black"
                 >
                   {pending ? "Creating..." : "Create Channel"}
                 </Button>

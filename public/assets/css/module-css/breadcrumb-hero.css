@@ -274,13 +274,13 @@
     font-size: 14px;
     font-weight: 700;
     letter-spacing: 0.02em;
-    box-shadow: 0 8px 30px rgba(253, 85, 35, 0.25);
+    box-shadow: 0 8px 30px rgba(7, 91, 235, 0.25);
     transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .breadcrumb-hero__cta.thm-btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 12px 40px rgba(253, 85, 35, 0.35);
+    box-shadow: 0 12px 40px rgba(7, 91, 235, 0.35);
 }
 
 .breadcrumb-hero__cta.thm-btn i {
@@ -398,7 +398,7 @@
 .breadcrumb-hero__slide-thumb-placeholder {
     width: 100%;
     height: 100%;
-    background: linear-gradient(135deg, rgba(253,85,35,0.15), rgba(6,46,57,0.3));
+    background: linear-gradient(135deg, rgba(7, 91, 235,0.15), rgba(9, 21, 43,0.3));
     display: flex;
     align-items: center;
     justify-content: center;
@@ -406,14 +406,14 @@
 
 .breadcrumb-hero__slide-thumb-placeholder span {
     font-size: 36px;
-    color: rgba(253,85,35,0.5);
+    color: rgba(7, 91, 235,0.5);
 }
 
 .breadcrumb-hero__slide-badge {
     position: absolute;
     top: 10px;
     left: 10px;
-    background: #fd5523;
+    background: var(--logistiq-base);
     color: #fff;
     padding: 3px 10px;
     border-radius: 20px;
@@ -510,7 +510,7 @@
 }
 
 .breadcrumb-hero__slider-dot.active {
-    background: #fd5523;
+    background: var(--logistiq-base);
     width: 24px;
     border-radius: 10px;
 }
@@ -571,7 +571,7 @@
 .breadcrumb-hero__featured-thumb-placeholder {
     width: 100%;
     height: 100%;
-    background: linear-gradient(135deg, rgba(253,85,35,0.15), rgba(6,46,57,0.3));
+    background: linear-gradient(135deg, rgba(7, 91, 235,0.15), rgba(9, 21, 43,0.3));
     display: flex;
     align-items: center;
     justify-content: center;
@@ -579,7 +579,7 @@
 
 .breadcrumb-hero__featured-thumb-placeholder span {
     font-size: 32px;
-    color: rgba(253,85,35,0.5);
+    color: rgba(7, 91, 235,0.5);
 }
 
 .breadcrumb-hero__featured-body {

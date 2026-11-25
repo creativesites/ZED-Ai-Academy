@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { CertificateViewer } from "@/components/certificates/certificate-viewer";
+import { BRAND } from "@/lib/brand";
 
 type PageProps = { params: Promise<{ publicId: string }> };
 
@@ -19,11 +20,11 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     } | null;
   };
 
-  if (!data) return { title: "Certificate Not Found — Zed AI Academy" };
+  if (!data) return { title: "Certificate Not Found" };
 
   return {
-    title: `Verified Certificate — ${data.courses?.title ?? "Course"} | Zed AI Academy`,
-    description: `Official certificate of completion issued to ${data.profiles?.full_name ?? "a learner"} for ${data.courses?.title ?? "a course"} on Zed AI Academy.`,
+    title: `Verified Certificate — ${data.courses?.title ?? "Course"}`,
+    description: `Official certificate of completion issued to ${data.profiles?.full_name ?? "a learner"} for ${data.courses?.title ?? "a course"} on CS Learn.`,
   };
 }
 
@@ -66,7 +67,7 @@ export default async function CertificateVerificationPage({ params }: PageProps)
     companyName = comp?.name ?? null;
   }
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://academy.zedai.org";
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || BRAND.url;
   const verificationUrl = `${appUrl}/certificates/${data.public_id}`;
 
   const certData = {

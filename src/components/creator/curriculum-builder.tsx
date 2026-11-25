@@ -130,7 +130,7 @@ function SortableLesson({
         <span className="w-8 shrink-0 text-xs font-semibold tabular-nums text-slate-400">
           {moduleIndex + 1}.{index + 1}
         </span>
-        <span className="min-w-0 flex-1 truncate text-sm font-medium text-[#062e39]">{lesson.title}</span>
+        <span className="min-w-0 flex-1 truncate text-sm font-medium text-ink">{lesson.title}</span>
         <Loader2 className="h-4 w-4 shrink-0 animate-spin text-slate-400" />
       </li>
     );
@@ -184,7 +184,7 @@ function SortableLesson({
       style={{ transform: CSS.Transform.toString(transform), transition }}
       className={cn(
         "group relative flex items-center gap-1 rounded-xl bg-white pr-1 transition-colors hover:bg-slate-50",
-        isDragging && "z-10 shadow-lg ring-2 ring-[#fd5523]/40",
+        isDragging && "z-10 shadow-lg ring-2 ring-brand/40",
         pending && "opacity-60"
       )}
     >
@@ -206,7 +206,7 @@ function SortableLesson({
           {moduleIndex + 1}.{index + 1}
         </span>
         <span className="min-w-0 flex-1">
-          <span className="block truncate text-sm font-medium text-[#062e39] group-hover:text-[#fd5523]">
+          <span className="block truncate text-sm font-medium text-ink group-hover:text-brand-text">
             {lesson.title}
           </span>
           <span className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5">
@@ -217,7 +217,7 @@ function SortableLesson({
               </span>
             )}
             {lesson.is_preview && (
-              <span className="inline-flex items-center gap-1 text-[11px] font-medium text-[#fd5523]">
+              <span className="inline-flex items-center gap-1 text-[11px] font-medium text-brand-text">
                 <Eye className="h-3 w-3" /> Free preview
               </span>
             )}
@@ -230,7 +230,7 @@ function SortableLesson({
       <DropdownMenu>
         <DropdownMenuTrigger
           aria-label={`Actions for ${lesson.title}`}
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-white hover:text-[#062e39] data-[popup-open]:bg-white data-[popup-open]:text-[#062e39]"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-white hover:text-ink data-[popup-open]:bg-white data-[popup-open]:text-ink"
         >
           <MoreHorizontal className="h-4 w-4" />
         </DropdownMenuTrigger>
@@ -402,7 +402,7 @@ function SortableModule({
       style={{ transform: CSS.Transform.toString(transform), transition }}
       className={cn(
         "rounded-2xl border border-slate-200/80 bg-white transition-shadow",
-        isDragging && "z-20 shadow-xl ring-2 ring-[#fd5523]/30"
+        isDragging && "z-20 shadow-xl ring-2 ring-brand/30"
       )}
     >
       <div className="flex items-center gap-1 p-2 sm:gap-2 sm:p-3">
@@ -424,7 +424,7 @@ function SortableModule({
           onClick={() => onExpandedChange(!expanded)}
           aria-expanded={expanded}
           aria-label={expanded ? "Collapse module" : "Expand module"}
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-[#062e39]"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-ink"
         >
           <ChevronDown className={cn("h-4 w-4 transition-transform", !expanded && "-rotate-90")} />
         </button>
@@ -444,7 +444,7 @@ function SortableModule({
               }}
               autoFocus
               maxLength={200}
-              className="h-9 w-full rounded-lg border border-[#fd5523]/40 bg-white px-2.5 text-[15px] font-semibold text-[#062e39] outline-none ring-4 ring-[#fd5523]/10"
+              className="h-9 w-full rounded-lg border border-brand/40 bg-white px-2.5 text-[15px] font-semibold text-ink outline-none ring-4 ring-brand/10"
             />
           ) : (
             <button
@@ -456,7 +456,7 @@ function SortableModule({
               <span className="block text-[11px] font-semibold uppercase tracking-wider text-slate-400">
                 Module {index + 1}
               </span>
-              <span className="block truncate text-[15px] font-semibold leading-snug text-[#062e39]">{mod.title}</span>
+              <span className="block truncate text-[15px] font-semibold leading-snug text-ink">{mod.title}</span>
             </button>
           )}
         </div>
@@ -471,7 +471,7 @@ function SortableModule({
         <DropdownMenu>
           <DropdownMenuTrigger
             aria-label={`Actions for ${mod.title}`}
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-[#062e39] data-[popup-open]:bg-slate-100"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-ink data-[popup-open]:bg-slate-100"
           >
             <MoreHorizontal className="h-4 w-4" />
           </DropdownMenuTrigger>
@@ -541,8 +541,8 @@ function SortableModule({
           )}
 
           {adding ? (
-            <div className="mt-1 flex items-center gap-2 rounded-xl border border-[#fd5523]/30 bg-[#fffaf6] p-1.5 pl-3">
-              <Plus className="h-4 w-4 shrink-0 text-[#fd5523]" />
+            <div className="mt-1 flex items-center gap-2 rounded-xl border border-brand/30 bg-surface p-1.5 pl-3">
+              <Plus className="h-4 w-4 shrink-0 text-brand-text" />
               <input
                 ref={addInputRef}
                 value={lessonTitle}
@@ -560,13 +560,13 @@ function SortableModule({
                     setLessonTitle("");
                   }
                 }}
-                className="h-9 min-w-0 flex-1 bg-transparent text-sm text-[#062e39] outline-none placeholder:text-slate-400"
+                className="h-9 min-w-0 flex-1 bg-transparent text-sm text-ink outline-none placeholder:text-slate-400"
               />
               <button
                 type="button"
                 onClick={handleAddLesson}
                 disabled={!lessonTitle.trim()}
-                className="h-9 shrink-0 rounded-lg bg-[#062e39] px-3 text-xs font-semibold text-white disabled:opacity-40"
+                className="h-9 shrink-0 rounded-lg bg-ink px-3 text-xs font-semibold text-white disabled:opacity-40"
               >
                 Add
               </button>
@@ -585,7 +585,7 @@ function SortableModule({
             <button
               type="button"
               onClick={() => setAdding(true)}
-              className="mt-1 flex h-10 w-full items-center gap-2 rounded-xl px-3 text-sm font-medium text-slate-500 transition-colors hover:bg-[#fff6ee] hover:text-[#fd5523]"
+              className="mt-1 flex h-10 w-full items-center gap-2 rounded-xl px-3 text-sm font-medium text-slate-500 transition-colors hover:bg-brand-soft hover:text-brand-text"
             >
               <Plus className="h-4 w-4" />
               Add lesson
@@ -691,7 +691,7 @@ export function CurriculumBuilder({
   }
 
   const addModuleForm = addingModule ? (
-    <div className="flex flex-col gap-2 rounded-2xl border border-[#fd5523]/30 bg-white p-2.5">
+    <div className="flex flex-col gap-2 rounded-2xl border border-brand/30 bg-white p-2.5">
       <input
         value={newModuleTitle}
         onChange={(e) => setNewModuleTitle(e.target.value)}
@@ -702,14 +702,14 @@ export function CurriculumBuilder({
           if (e.key === "Enter") handleAddModule();
           if (e.key === "Escape") setAddingModule(false);
         }}
-        className="h-11 w-full min-w-0 rounded-xl bg-slate-50 px-3.5 text-[15px] font-medium text-[#062e39] outline-none ring-[#fd5523]/20 placeholder:text-slate-400 focus:bg-white focus:ring-4"
+        className="h-11 w-full min-w-0 rounded-xl bg-slate-50 px-3.5 text-[15px] font-medium text-ink outline-none ring-brand/20 placeholder:text-slate-400 focus:bg-white focus:ring-4"
       />
       <div className="flex gap-2">
         <button
           type="button"
           onClick={handleAddModule}
           disabled={pending || !newModuleTitle.trim()}
-          className="inline-flex h-10 flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-[#fd5523] px-5 text-sm font-semibold text-white hover:bg-[#ef4a16] disabled:opacity-50"
+          className="inline-flex h-10 flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-brand px-5 text-sm font-semibold text-white hover:bg-brand-hover disabled:opacity-50"
         >
           {pending && <Loader2 className="h-4 w-4 animate-spin" />}
           Add module
@@ -732,9 +732,9 @@ export function CurriculumBuilder({
     return (
       <div className="space-y-4">
         <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white">
-          <div className="bg-gradient-to-br from-[#062e39] to-[#0d4d5e] px-5 py-8 text-center text-white sm:px-10 sm:py-12">
+          <div className="bg-gradient-to-br from-ink to-[#0d4d5e] px-5 py-8 text-center text-white sm:px-10 sm:py-12">
             <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10">
-              <Layers className="h-6 w-6 text-[#fd8d69]" />
+              <Layers className="h-6 w-6 text-brand-electric" />
             </div>
             <h2 className="text-xl font-bold sm:text-2xl">Outline your course</h2>
             <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-white/70">
@@ -743,21 +743,21 @@ export function CurriculumBuilder({
             </p>
           </div>
           <div className="grid gap-3 p-4 sm:grid-cols-2 sm:p-6">
-            <div className="flex flex-col rounded-xl border border-[#fd5523]/25 bg-[#fffaf6] p-4">
-              <Sparkles className="mb-2 h-5 w-5 text-[#fd5523]" />
-              <p className="font-semibold text-[#062e39]">Draft with AI</p>
+            <div className="flex flex-col rounded-xl border border-brand/25 bg-surface p-4">
+              <Sparkles className="mb-2 h-5 w-5 text-brand-text" />
+              <p className="font-semibold text-ink">Draft with AI</p>
               <p className="mb-4 mt-1 flex-1 text-sm text-slate-500">
                 Get a 4-module outline in seconds. Review, remove what you don&apos;t need, then apply.
               </p>
               <AIBlueprintAssistant
                 courseId={courseId}
                 triggerLabel="Generate outline"
-                triggerClassName="h-10 w-full justify-center border-0 bg-[#fd5523] text-sm text-white hover:bg-[#ef4a16]"
+                triggerClassName="h-10 w-full justify-center border-0 bg-brand text-sm text-white hover:bg-brand-hover"
               />
             </div>
             <div className="flex flex-col rounded-xl border border-slate-200 p-4">
-              <Plus className="mb-2 h-5 w-5 text-[#062e39]" />
-              <p className="font-semibold text-[#062e39]">Start from scratch</p>
+              <Plus className="mb-2 h-5 w-5 text-ink" />
+              <p className="font-semibold text-ink">Start from scratch</p>
               <p className="mb-4 mt-1 flex-1 text-sm text-slate-500">
                 Add your first module and type lesson titles one after another.
               </p>
@@ -767,7 +767,7 @@ export function CurriculumBuilder({
                 <button
                   type="button"
                   onClick={() => setAddingModule(true)}
-                  className="h-10 w-full rounded-xl bg-[#062e39] text-sm font-semibold text-white hover:bg-[#0a4055]"
+                  className="h-10 w-full rounded-xl bg-ink text-sm font-semibold text-white hover:bg-ink-hover"
                 >
                   Add first module
                 </button>
@@ -784,8 +784,8 @@ export function CurriculumBuilder({
       {/* Toolbar */}
       <div className="flex flex-wrap items-center gap-2">
         <p className="mr-auto text-sm text-slate-500">
-          <span className="font-semibold text-[#062e39]">{modules.length}</span> module{modules.length === 1 ? "" : "s"} ·{" "}
-          <span className="font-semibold text-[#062e39]">{lessonCount}</span> lesson{lessonCount === 1 ? "" : "s"}
+          <span className="font-semibold text-ink">{modules.length}</span> module{modules.length === 1 ? "" : "s"} ·{" "}
+          <span className="font-semibold text-ink">{lessonCount}</span> lesson{lessonCount === 1 ? "" : "s"}
           {lessonCount > 0 && (
             <>
               {" "}· <span className={cn("font-semibold", builtCount === lessonCount ? "text-emerald-600" : "text-amber-600")}>{builtCount}/{lessonCount}</span> built
@@ -814,7 +814,7 @@ export function CurriculumBuilder({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Find a lesson…"
-            className="h-11 w-full rounded-xl border border-slate-200 bg-white pl-10 pr-3 text-sm text-[#062e39] outline-none ring-[#fd5523]/15 placeholder:text-slate-400 focus:border-[#fd5523]/40 focus:ring-4"
+            className="h-11 w-full rounded-xl border border-slate-200 bg-white pl-10 pr-3 text-sm text-ink outline-none ring-brand/15 placeholder:text-slate-400 focus:border-brand/40 focus:ring-4"
           />
         </div>
       )}
@@ -853,7 +853,7 @@ export function CurriculumBuilder({
         <button
           type="button"
           onClick={() => setAddingModule(true)}
-          className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-slate-200 text-sm font-semibold text-slate-500 transition-colors hover:border-[#fd5523]/40 hover:bg-[#fff6ee]/50 hover:text-[#fd5523]"
+          className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-slate-200 text-sm font-semibold text-slate-500 transition-colors hover:border-brand/40 hover:bg-brand-soft/50 hover:text-brand-text"
         >
           <Plus className="h-4 w-4" />
           Add module

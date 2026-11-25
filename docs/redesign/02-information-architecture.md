@@ -4,7 +4,7 @@
 
 | Concept | Meaning |
 |---|---|
-| **Platform** | Zed AI Academy itself (apex domain). Marketing site, sign-in, the cross-academy "My academies" hub, superadmin. |
+| **Platform** | CS Learn itself (apex domain). Marketing site, sign-in, the cross-academy "My academies" hub, superadmin. |
 | **Academy** (tenant, `companies` row) | A school on the platform at `/academy/{slug}` or `{slug}.{root}`. Zed's own catalogue is the academy `zedai`. |
 | **Learner** | `company_members.role = learner` in an academy. |
 | **Teacher** | `teacher` or `instructor` in an academy. Teaches: courses they author, classes, live sessions, submissions. |

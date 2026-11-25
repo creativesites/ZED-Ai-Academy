@@ -53,10 +53,10 @@ export function PublishButton({ courseId, status, tenantSlug, ready = true, vari
             ? "border border-white/20 bg-white/10 text-white hover:bg-white/20"
             : "border border-slate-200 bg-white text-slate-700 hover:border-red-200 hover:bg-red-50 hover:text-red-600"
           : ready
-            ? "bg-[#fd5523] text-white shadow-sm shadow-[#fd5523]/25 hover:bg-[#ef4a16]"
+            ? "bg-brand text-white shadow-sm shadow-brand/25 hover:bg-brand-hover"
             : variant === "dark"
               ? "bg-white/10 text-white/80 hover:bg-white/15"
-              : "bg-[#062e39] text-white hover:bg-[#0a4055]"
+              : "bg-ink text-white hover:bg-ink-hover"
       )}
     >
       {pending ? (

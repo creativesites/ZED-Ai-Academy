@@ -3,6 +3,7 @@ import { createServiceClient } from "@/lib/supabase/server";
 import { ensureTenantMembership } from "@/actions/tenants";
 import { sendPaymentConfirmation } from "@/lib/email/emailjs";
 import type { OrderStatus } from "@/types/database";
+import { BRAND } from "@/lib/brand";
 
 type InsertOrderParams = {
   userId: string;
@@ -172,7 +173,7 @@ export async function confirmPaidOrder({
     const profile = profileResult.data;
     const course = courseResult.data;
     const firstName = profile.full_name?.split(" ")[0] ?? "there";
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://academy.zedai.org";
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || BRAND.url;
 
     await sendPaymentConfirmation({
       toEmail: profileEmail,

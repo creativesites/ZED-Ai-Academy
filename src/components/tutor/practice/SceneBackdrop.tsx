@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import type { SceneArtboard } from "@/lib/tutor/rive-driver";
 import { useReducedMotion } from "./use-reduced-motion";
+import { BRAND_COLORS } from "@/lib/brand";
 
 // Drifting glyphs on a canvas behind the stage. Decorative: aria-hidden, pointer-events none.
 // Paused when the page is hidden and drawn once, still, when the learner prefers reduced motion.
@@ -60,7 +61,7 @@ export function SceneBackdrop({ className, scene = "Scene_TeaHouse" }: { classNa
 
     const draw = (dt: number) => {
       ctx.clearRect(0, 0, width, height);
-      ctx.fillStyle = "#fd5523";
+      ctx.fillStyle = BRAND_COLORS.royalBlue;
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       for (const p of particles) {

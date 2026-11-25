@@ -89,7 +89,7 @@ export function PracticeExerciseBlock({
                 <p className="mb-1 text-[10px] font-black uppercase tracking-[0.2em] text-emerald-600">
                   Practice Exercise
                 </p>
-                <h3 className="text-xl font-bold tracking-tight text-[#062e39] sm:text-2xl">
+                <h3 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">
                   {title}
                 </h3>
               </div>
@@ -178,7 +178,7 @@ export function PracticeExerciseBlock({
                 <p className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-600 mb-1">
                   Practice Exercise
                 </p>
-                <h3 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight text-[#062e39] leading-tight">
+                <h3 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight text-ink leading-tight">
                   {title}
                 </h3>
               </div>
@@ -284,7 +284,7 @@ export function PracticeExerciseBlock({
                   </div>
                   <div>
                     <span className="text-xl">{getScoreEmoji(score.score)}</span>
-                    <p className="text-lg font-bold text-[#062e39] mt-1">
+                    <p className="text-lg font-bold text-ink mt-1">
                       {score.score >= 90 ? "Outstanding!" : 
                        score.score >= 80 ? "Excellent!" : 
                        score.score >= 60 ? "Good Progress" : 

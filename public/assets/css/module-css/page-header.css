@@ -29,8 +29,8 @@ Page Header
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgb(6, 46, 57);
-    background: linear-gradient(90deg, rgba(6, 46, 57, 1) 13%, rgba(6, 46, 57, 0.8071603641456583) 35%, rgba(6, 46, 57, 0.5550595238095238) 60%, rgba(6, 46, 57, 0.4206057422969187) 100%);
+    background: rgb(9, 21, 43);
+    background: linear-gradient(90deg, rgba(9, 21, 43, 1) 13%, rgba(9, 21, 43, 0.8071603641456583) 35%, rgba(9, 21, 43, 0.5550595238095238) 60%, rgba(9, 21, 43, 0.4206057422969187) 100%);
     content: "";
     z-index: -1;
 }

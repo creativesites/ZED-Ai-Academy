@@ -27,8 +27,8 @@ export function ExpertNoteBlockEditor({
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2 text-[#062e39] mb-2">
-        <Zap className="h-4 w-4 text-[#fd5523]" />
+      <div className="flex items-center gap-2 text-ink mb-2">
+        <Zap className="h-4 w-4 text-brand-text" />
         <span className="text-xs font-bold uppercase tracking-widest">Expert Deep Dive</span>
       </div>
 

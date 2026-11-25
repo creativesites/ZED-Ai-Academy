@@ -54,10 +54,10 @@
 @import url('dark.css');
 
 :root {
-  --logistiq-base: #FD5523;
-  --logistiq-base-rgb: 253, 85, 35;
-  --logistiq-black: #062E39;
-  --logistiq-black-rgb: 6, 46, 57;
+  --logistiq-base: var(--color-brand);
+  --logistiq-base-rgb: 7, 91, 235;
+  --logistiq-black: var(--color-ink);
+  --logistiq-black-rgb: 9, 21, 43;
   --logistiq-gray: #565969;
   --logistiq-gray-rgb: 86, 89, 105;
   --logistiq-white: #ffffff;
@@ -1281,7 +1281,7 @@ animation: spinner 1s infinite linear;
   left: -40px;
   bottom: -20px;
   right: 0;
-  background: var(--logistiq-base);
+  background: #050D20;
   clip-path: polygon(0 0, 100% 0%, 87% 100%, 0% 100%);
   z-index: -1;
   content: "";
@@ -2075,7 +2075,7 @@ Main Header Two
   left: -9999px;
   bottom: 0;
   right: 130px;
-  background: var(--logistiq-base);
+  background: #050D20;
   content: "";
   z-index: -1;
 }
@@ -2086,7 +2086,7 @@ Main Header Two
   left: 0px;
   bottom: 0;
   right: 0;
-  background: var(--logistiq-base);
+  background: #050D20;
   clip-path: polygon(0% 0%, 100% 0, 90% 51%, 100% 100%, 0% 100%);
   content: "";
   z-index: -1;
@@ -5788,7 +5788,7 @@ Main Header Three
   }
 
   .main-header-two {
-      background: var(--logistiq-base);
+      background: #050D20;
       padding: 25px 0px 25px;
   }
 
@@ -5901,7 +5901,7 @@ Main Header Three
   }
 
   .main-header-two {
-      background: var(--logistiq-base);
+      background: #050D20;
       padding: 25px 0px 25px;
   }
 
@@ -6022,7 +6022,7 @@ Main Header Three
   .main-header-two {
       background: white !important;
       padding: 8px 0px 8px !important;
-      border-bottom: 1px solid rgba(6, 46, 57, 0.05);
+      border-bottom: 1px solid rgba(9, 21, 43, 0.05);
   }
 
   .main-header-two__bottom-right {
@@ -6106,7 +6106,7 @@ Main Header Three
 }
 
 .dark-glass-panel {
-  background: rgba(6, 46, 57, 0.8);
+  background: rgba(9, 21, 43, 0.8);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid rgba(255, 255, 255, 0.1);

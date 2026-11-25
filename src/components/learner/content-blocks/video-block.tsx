@@ -67,7 +67,7 @@ export function VideoBlock({
   return (
     <div ref={containerRef} data-lesson-block-id={blockId} className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        {title && <h3 className="text-xl font-bold tracking-tight text-[#062e39]">{title}</h3>}
+        {title && <h3 className="text-xl font-bold tracking-tight text-ink">{title}</h3>}
         {jumpedTo !== null && (
           <span
             aria-live="polite"

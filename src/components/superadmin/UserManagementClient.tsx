@@ -433,7 +433,7 @@ export function UserManagementClient({
               size="sm"
               onClick={handleAddMembership}
               disabled={isSubmitting || !addTenantId}
-              className="w-full bg-[#fd5523] hover:bg-[#ea4817] text-white text-xs font-bold"
+              className="w-full bg-brand hover:bg-brand-hover text-white text-xs font-bold"
             >
               <Plus className="h-3.5 w-3.5 mr-1" />
               <span>Assign Membership</span>

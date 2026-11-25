@@ -123,7 +123,7 @@ export function SharedSections({
                     Institution
                   </div>
                   <div className="text-gray-900 font-black">
-                    {content.tutor_university || "Zed AI Academy Faculty"}
+                    {content.tutor_university || "CS Learn Faculty"}
                   </div>
                 </div>
               </div>

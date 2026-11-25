@@ -1,4 +1,4 @@
-# Zed AI Academy — Redesign Plan (Nov 2026)
+# CS Learn — Redesign Plan (Nov 2026)
 
 This folder is the complete plan for redesigning the **tenant (academy) admin** and the **student
 frontend**, plus the fixes found while surveying them. Two implementation agents work from it in

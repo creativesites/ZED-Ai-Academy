@@ -351,34 +351,34 @@ export function LessonPlayerClient({
     switch (primary.kind) {
       case "enroll":
         return (
-          <Link href={isOpenGuestShowcase ? signInHref : courseHref} className={cn(base, "bg-[#fd5523] text-white hover:bg-[#ef4a16]")}>
+          <Link href={isOpenGuestShowcase ? signInHref : courseHref} className={cn(base, "bg-brand text-white hover:bg-brand-hover")}>
             {isOpenGuestShowcase ? "Sign in to save & earn certificate" : "Enrol to continue"}
           </Link>
         );
       case "certificate":
         return (
-          <button type="button" onClick={handleGetCertificate} disabled={certifying} className={cn(base, "bg-[#fd5523] text-white hover:bg-[#ef4a16]")}>
+          <button type="button" onClick={handleGetCertificate} disabled={certifying} className={cn(base, "bg-brand text-white hover:bg-brand-hover")}>
             {certifying ? <Loader2 className="h-4 w-4 animate-spin" /> : <Award className="h-4 w-4" />}
             Claim certificate
           </button>
         );
       case "view-certificate":
         return (
-          <Link href={`/certificates/${certificate?.public_id}`} className={cn(base, "bg-white text-[#062e39] ring-1 ring-inset ring-slate-200 hover:bg-slate-50")}>
+          <Link href={`/certificates/${certificate?.public_id}`} className={cn(base, "bg-white text-ink ring-1 ring-inset ring-slate-200 hover:bg-slate-50")}>
             <Award className="h-4 w-4" />
             View certificate
           </Link>
         );
       case "next":
         return (
-          <Link href={primary.href} className={cn(base, "bg-[#062e39] text-white hover:bg-[#0a4055]")}>
+          <Link href={primary.href} className={cn(base, "bg-ink text-white hover:bg-ink-hover")}>
             Next lesson
             <ChevronRight className="h-4 w-4" />
           </Link>
         );
       case "quiz":
         return (
-          <a href="#knowledge-check" className={cn(base, "bg-[#062e39] text-white hover:bg-[#0a4055]")}>
+          <a href="#knowledge-check" className={cn(base, "bg-ink text-white hover:bg-ink-hover")}>
             <HelpCircle className="h-4 w-4" />
             Take the quiz
           </a>
@@ -396,7 +396,7 @@ export function LessonPlayerClient({
             type="button"
             onClick={handleMarkComplete}
             disabled={marking || (!isOpenGuestShowcase && pendingRequiredTutor.length > 0)}
-            className={cn(base, "bg-[#fd5523] text-white hover:bg-[#ef4a16]")}
+            className={cn(base, "bg-brand text-white hover:bg-brand-hover")}
           >
             {marking ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
             {nextAllowed ? "Complete & continue" : "Mark complete"}
@@ -434,7 +434,7 @@ export function LessonPlayerClient({
                         done
                           ? "bg-emerald-500 text-white"
                           : active
-                            ? "bg-[#fd5523] text-white"
+                            ? "bg-brand text-white"
                             : locked
                               ? "text-white/30"
                               : "border border-white/20 text-white/50"
@@ -445,7 +445,7 @@ export function LessonPlayerClient({
                     <span className="min-w-0 flex-1">
                       <span className="line-clamp-2 text-[13px] leading-snug">{lesson.title}</span>
                       {isPreview && lesson.is_preview && (
-                        <span className="mt-0.5 inline-flex items-center gap-1 text-[10px] font-semibold text-[#fd8d69]">
+                        <span className="mt-0.5 inline-flex items-center gap-1 text-[10px] font-semibold text-brand-electric">
                           <Eye className="h-3 w-3" /> Free preview
                         </span>
                       )}
@@ -487,7 +487,7 @@ export function LessonPlayerClient({
         {course.company_name ? course.company_name : "Dashboard"}
       </Link>
       <div>
-        <p className="text-[11px] font-semibold uppercase tracking-wider text-[#fd8d69]">{course.category || "Course"}</p>
+        <p className="text-[11px] font-semibold uppercase tracking-wider text-brand-electric">{course.category || "Course"}</p>
         <h2 className="mt-0.5 line-clamp-2 text-base font-bold leading-snug text-white">{course.title}</h2>
       </div>
       {(!isPreview || isOpenGuestShowcase) && (
@@ -500,7 +500,7 @@ export function LessonPlayerClient({
           </div>
           <div className="h-1.5 overflow-hidden rounded-full bg-white/10">
             <div
-              className="h-full rounded-full bg-gradient-to-r from-[#fd5523] to-[#fd8d69] transition-all duration-700"
+              className="h-full rounded-full bg-gradient-to-r from-brand to-brand-electric transition-all duration-700"
               style={{ width: `${progressPct}%` }}
             />
           </div>
@@ -516,7 +516,7 @@ export function LessonPlayerClient({
       {/* ── Desktop sidebar ─────────────────────────────────────────── */}
       <aside
         className={cn(
-          "hidden shrink-0 flex-col bg-[#062e39] transition-[width] duration-300 lg:flex",
+          "hidden shrink-0 flex-col bg-ink transition-[width] duration-300 lg:flex",
           sidebarCollapsed ? "w-0 overflow-hidden" : "w-80"
         )}
       >
@@ -533,7 +533,7 @@ export function LessonPlayerClient({
             className="absolute inset-0 bg-black/50 backdrop-blur-sm"
             onClick={() => setDrawerOpen(false)}
           />
-          <div className="absolute inset-y-0 left-0 flex w-[85vw] max-w-sm flex-col bg-[#062e39] shadow-2xl animate-in slide-in-from-left duration-200">
+          <div className="absolute inset-y-0 left-0 flex w-[85vw] max-w-sm flex-col bg-ink shadow-2xl animate-in slide-in-from-left duration-200">
             <button
               type="button"
               onClick={() => setDrawerOpen(false)}
@@ -554,7 +554,7 @@ export function LessonPlayerClient({
           <button
             type="button"
             onClick={() => setDrawerOpen(true)}
-            className="flex h-10 w-10 items-center justify-center rounded-lg text-[#062e39] hover:bg-slate-100 lg:hidden"
+            className="flex h-10 w-10 items-center justify-center rounded-lg text-ink hover:bg-slate-100 lg:hidden"
             aria-label="Open course outline"
           >
             <Menu className="h-5 w-5" />
@@ -562,7 +562,7 @@ export function LessonPlayerClient({
           <button
             type="button"
             onClick={() => setSidebarCollapsed((v) => !v)}
-            className="hidden h-10 w-10 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 hover:text-[#062e39] lg:flex"
+            className="hidden h-10 w-10 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 hover:text-ink lg:flex"
             aria-label={sidebarCollapsed ? "Show course outline" : "Hide course outline"}
           >
             {sidebarCollapsed ? <PanelLeftOpen className="h-5 w-5" /> : <PanelLeftClose className="h-5 w-5" />}
@@ -572,7 +572,7 @@ export function LessonPlayerClient({
             <p className="truncate text-[11px] text-slate-500">
               {currentModule?.title ?? course.title}
             </p>
-            <p className="truncate text-sm font-semibold text-[#062e39]">
+            <p className="truncate text-sm font-semibold text-ink">
               {currentIdx + 1}/{totalLessons} · {currentLesson?.title ?? "Lesson"}
             </p>
           </div>
@@ -587,7 +587,7 @@ export function LessonPlayerClient({
             <button
               type="button"
               onClick={() => handleOpenStudio()}
-              className="flex h-10 shrink-0 items-center gap-1.5 rounded-lg px-2.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 hover:text-[#062e39]"
+              className="flex h-10 shrink-0 items-center gap-1.5 rounded-lg px-2.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 hover:text-ink"
               aria-label="Practice studio"
             >
               <Code2 className="h-4 w-4" />
@@ -597,9 +597,9 @@ export function LessonPlayerClient({
           <button
             type="button"
             onClick={() => setTutorOpen(true)}
-            className="flex h-10 shrink-0 items-center gap-1.5 rounded-lg bg-[#062e39] px-3 text-xs font-semibold text-white hover:bg-[#0a4055]"
+            className="flex h-10 shrink-0 items-center gap-1.5 rounded-lg bg-ink px-3 text-xs font-semibold text-white hover:bg-ink-hover"
           >
-            <Sparkles className="h-4 w-4 text-[#fd8d69]" />
+            <Sparkles className="h-4 w-4 text-brand-electric" />
             <span className="hidden sm:inline">Ask {teacher.name}</span>
             <span className="sm:hidden">{teacher.name}</span>
           </button>
@@ -608,7 +608,7 @@ export function LessonPlayerClient({
         {/* Mobile progress hairline */}
         {!isPreview && (
           <div className="h-0.5 w-full bg-slate-100 lg:hidden">
-            <div className="h-full bg-[#fd5523] transition-all duration-700" style={{ width: `${progressPct}%` }} />
+            <div className="h-full bg-brand transition-all duration-700" style={{ width: `${progressPct}%` }} />
           </div>
         )}
 
@@ -618,7 +618,7 @@ export function LessonPlayerClient({
             {isOpenGuestShowcase ? (
               <div className="mb-6 flex flex-col gap-3 rounded-2xl border border-emerald-200 bg-emerald-50/70 p-4 sm:flex-row sm:items-center">
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-semibold text-[#062e39]">
+                  <p className="text-sm font-semibold text-ink">
                     Free Open Showcase · No login required
                   </p>
                   <p className="text-xs text-slate-600 sm:text-sm">
@@ -627,20 +627,20 @@ export function LessonPlayerClient({
                 </div>
                 <Link
                   href={signInHref}
-                  className="inline-flex h-10 shrink-0 items-center justify-center rounded-xl bg-[#062e39] px-4 text-xs font-semibold text-white hover:bg-[#0a4055]"
+                  className="inline-flex h-10 shrink-0 items-center justify-center rounded-xl bg-ink px-4 text-xs font-semibold text-white hover:bg-ink-hover"
                 >
                   Sign in to save
                 </Link>
               </div>
             ) : isPreview ? (
-              <div className="mb-6 flex flex-col gap-3 rounded-2xl border border-[#fd5523]/20 bg-[#fff6ee] p-4 sm:flex-row sm:items-center">
+              <div className="mb-6 flex flex-col gap-3 rounded-2xl border border-brand/20 bg-brand-soft p-4 sm:flex-row sm:items-center">
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-semibold text-[#062e39]">You&apos;re watching a free preview</p>
+                  <p className="text-sm font-semibold text-ink">You&apos;re watching a free preview</p>
                   <p className="text-sm text-slate-600">Enrol to unlock every lesson, quizzes and your certificate.</p>
                 </div>
                 <Link
                   href={courseHref}
-                  className="inline-flex h-10 shrink-0 items-center justify-center rounded-xl bg-[#fd5523] px-4 text-sm font-semibold text-white hover:bg-[#ef4a16]"
+                  className="inline-flex h-10 shrink-0 items-center justify-center rounded-xl bg-brand px-4 text-sm font-semibold text-white hover:bg-brand-hover"
                 >
                   View course
                 </Link>
@@ -657,17 +657,17 @@ export function LessonPlayerClient({
             )}
             {isManager && !coursePublished && (
               <div className="mb-6 rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-600">
-                This course is a <span className="font-semibold text-[#062e39]">draft</span> — only you and your team can see it.
+                This course is a <span className="font-semibold text-ink">draft</span> — only you and your team can see it.
               </div>
             )}
 
             {/* Lesson heading */}
             <header className="mb-6 sm:mb-8">
-              <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-[#fd5523]">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-brand-text">
                 Lesson {currentIdx + 1} of {totalLessons}
                 {currentModule ? <span className="text-slate-400"> · {currentModule.title}</span> : null}
               </p>
-              <h1 className="text-2xl font-bold leading-tight tracking-tight text-[#062e39] sm:text-[2rem]">
+              <h1 className="text-2xl font-bold leading-tight tracking-tight text-ink sm:text-[2rem]">
                 {currentLesson?.title ?? "Lesson"}
               </h1>
               {isDone && (!isPreview || isOpenGuestShowcase) && (
@@ -694,7 +694,7 @@ export function LessonPlayerClient({
                     onClick={() => setActiveTab(tab.id)}
                     className={cn(
                       "-mb-px inline-flex items-center gap-1.5 border-b-2 pb-2.5 text-sm font-semibold transition-colors",
-                      activeTab === tab.id ? "border-[#fd5523] text-[#062e39]" : "border-transparent text-slate-500 hover:text-[#062e39]"
+                      activeTab === tab.id ? "border-brand text-ink" : "border-transparent text-slate-500 hover:text-ink"
                     )}
                   >
                     {tab.label}
@@ -855,12 +855,12 @@ export function LessonPlayerClient({
                 <section
                   className={cn(
                     "mt-10 rounded-2xl p-5 sm:p-6",
-                    courseComplete ? "bg-gradient-to-br from-[#062e39] to-[#0d4d5e] text-white" : "border border-slate-200 bg-white"
+                    courseComplete ? "bg-gradient-to-br from-ink to-[#0d4d5e] text-white" : "border border-slate-200 bg-white"
                   )}
                 >
                   {courseComplete ? (
                     <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center">
-                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#fd5523]">
+                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-brand">
                         <Trophy className="h-6 w-6 text-white" />
                       </div>
                       <div className="min-w-0 flex-1">
@@ -878,7 +878,7 @@ export function LessonPlayerClient({
                   ) : isPreview && !isOpenGuestShowcase ? (
                     <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center">
                       <div className="min-w-0 flex-1">
-                        <p className="font-semibold text-[#062e39]">Enjoying the preview?</p>
+                        <p className="font-semibold text-ink">Enjoying the preview?</p>
                         <p className="text-sm text-slate-500">Enrol to unlock all {totalLessons} lessons and earn a certificate.</p>
                       </div>
                       {renderPrimary()}
@@ -886,7 +886,7 @@ export function LessonPlayerClient({
                   ) : (
                     <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center">
                       <div className="min-w-0 flex-1">
-                        <p className="font-semibold text-[#062e39]">
+                        <p className="font-semibold text-ink">
                           {isDone ? "Nice work — lesson complete" : hasQuiz && !quizPassed ? "Pass the quiz to finish" : "Finished this lesson?"}
                         </p>
                         <p className="text-sm text-slate-500">
@@ -927,10 +927,10 @@ export function LessonPlayerClient({
                       href={learnHref(prevAllowed.id)}
                       className="group flex min-w-0 items-center gap-2 rounded-xl border border-slate-200 bg-white p-3 text-left hover:border-slate-300"
                     >
-                      <ChevronLeft className="h-4 w-4 shrink-0 text-slate-400 group-hover:text-[#062e39]" />
+                      <ChevronLeft className="h-4 w-4 shrink-0 text-slate-400 group-hover:text-ink" />
                       <span className="min-w-0">
                         <span className="block text-[11px] text-slate-400">Previous</span>
-                        <span className="block truncate text-sm font-medium text-[#062e39]">{prevAllowed.title}</span>
+                        <span className="block truncate text-sm font-medium text-ink">{prevAllowed.title}</span>
                       </span>
                     </Link>
                   ) : (
@@ -943,9 +943,9 @@ export function LessonPlayerClient({
                     >
                       <span className="min-w-0">
                         <span className="block text-[11px] text-slate-400">Next</span>
-                        <span className="block truncate text-sm font-medium text-[#062e39]">{nextAllowed.title}</span>
+                        <span className="block truncate text-sm font-medium text-ink">{nextAllowed.title}</span>
                       </span>
-                      <ChevronRight className="h-4 w-4 shrink-0 text-slate-400 group-hover:text-[#062e39]" />
+                      <ChevronRight className="h-4 w-4 shrink-0 text-slate-400 group-hover:text-ink" />
                     </Link>
                   ) : (
                     <span />

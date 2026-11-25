@@ -27,7 +27,7 @@ export function ActionCard({ title, actionLabel, type = "action", description, h
       {href ? (
         <Link 
           href={href}
-          className="mt-5 flex h-10 w-full items-center justify-center rounded-xl bg-[#fd5523] text-sm font-bold text-white shadow-sm transition-all hover:bg-[#ef4a16] hover:shadow-lg active:scale-95"
+          className="mt-5 flex h-10 w-full items-center justify-center rounded-xl bg-brand text-sm font-bold text-white shadow-sm transition-all hover:bg-brand-hover hover:shadow-lg active:scale-95"
         >
           {actionLabel}
         </Link>

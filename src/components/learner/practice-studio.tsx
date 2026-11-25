@@ -27,8 +27,8 @@ const TOOLS = [
     icon: Brain,
     label: "Prompt Optimizer",
     desc: "Transform simple ideas into professional-grade prompts.",
-    color: "bg-[#fff6ee] text-[#fd5523] border-[#fd5523]/20",
-    activeColor: "bg-[#fd5523] text-white border-[#fd5523]",
+    color: "bg-brand-soft text-brand-text border-brand/20",
+    activeColor: "bg-brand text-white border-brand",
     category: "optimization",
     fields: [
       { key: "base_prompt", label: "Base Prompt", placeholder: "What do you want to achieve?", multiline: true },
@@ -118,7 +118,7 @@ function renderMarkdown(text: string) {
     if (line.startsWith("```")) {
       if (inCodeBlock) {
         out.push(
-          <div key={key++} className="my-6 overflow-hidden rounded-2xl bg-[#062e39] shadow-xl ring-1 ring-black/5">
+          <div key={key++} className="my-6 overflow-hidden rounded-2xl bg-ink shadow-xl ring-1 ring-black/5">
             {codeLang && <div className="bg-black/20 px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-white/50 border-b border-white/5">{codeLang}</div>}
             <pre className="p-4 overflow-x-auto text-sm text-white/90 font-mono leading-relaxed"><code>{codeContent.trimEnd()}</code></pre>
           </div>
@@ -139,23 +139,23 @@ function renderMarkdown(text: string) {
     }
 
     if (line.startsWith("### ")) {
-      out.push(<h3 key={key++} className="text-xl font-bold text-[#062e39] mt-8 mb-4 tracking-tight">{line.slice(4)}</h3>);
+      out.push(<h3 key={key++} className="text-xl font-bold text-ink mt-8 mb-4 tracking-tight">{line.slice(4)}</h3>);
     } else if (line.startsWith("## ")) {
-      out.push(<h2 key={key++} className="text-2xl font-bold text-[#062e39] mt-10 mb-5 tracking-tight">{line.slice(3)}</h2>);
+      out.push(<h2 key={key++} className="text-2xl font-bold text-ink mt-10 mb-5 tracking-tight">{line.slice(3)}</h2>);
     } else if (line.startsWith("**") && line.endsWith("**")) {
-      out.push(<p key={key++} className="font-bold text-[#062e39] text-base mb-2">{line.slice(2, -2)}</p>);
+      out.push(<p key={key++} className="font-bold text-ink text-base mb-2">{line.slice(2, -2)}</p>);
     } else if (line.match(/^\d+\.\s/)) {
       out.push(<p key={key++} className="text-base text-slate-600 leading-relaxed pl-1 mb-3">{line}</p>);
     } else if (line.startsWith("- ") || line.startsWith("* ")) {
       out.push(
         <div key={key++} className="flex gap-3 text-base text-slate-600 leading-relaxed mb-3">
-          <span className="mt-2.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[#fd5523]" />
+          <span className="mt-2.5 h-1.5 w-1.5 shrink-0 rounded-full bg-brand" />
           <span dangerouslySetInnerHTML={{ __html: line.slice(2).replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>") }} />
         </div>
       );
     } else if (line.startsWith("> ")) {
       out.push(
-        <blockquote key={key++} className="border-l-4 border-[#fd5523] pl-6 py-1 my-6 text-lg italic text-slate-600 bg-[#fff6ee]/50 rounded-r-2xl">
+        <blockquote key={key++} className="border-l-4 border-brand pl-6 py-1 my-6 text-lg italic text-slate-600 bg-brand-soft/50 rounded-r-2xl">
           {line.slice(2)}
         </blockquote>
       );
@@ -166,7 +166,7 @@ function renderMarkdown(text: string) {
         <p
           key={key++}
           className="text-base text-slate-600 leading-relaxed mb-4"
-          dangerouslySetInnerHTML={{ __html: line.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>").replace(/`(.*?)`/g, "<code class='bg-[#fff6ee] px-2 py-0.5 rounded-lg text-[#fd5523] text-sm font-mono'>$1</code>") }}
+          dangerouslySetInnerHTML={{ __html: line.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>").replace(/`(.*?)`/g, "<code class='bg-brand-soft px-2 py-0.5 rounded-lg text-brand-text text-sm font-mono'>$1</code>") }}
         />
       );
     }
@@ -327,19 +327,19 @@ export function PracticeStudio({
             <Menu className="h-5 w-5" />
           </button>
           <div className="hidden sm:flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#062e39] shadow-md">
-              <Sparkles className="h-5 w-5 text-[#fd5523]" />
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-ink shadow-md">
+              <Sparkles className="h-5 w-5 text-brand-text" />
             </div>
             <div>
-              <p className="text-sm font-bold text-[#062e39] leading-none">Practice Studio</p>
+              <p className="text-sm font-bold text-ink leading-none">Practice Studio</p>
               <p className="text-[10px] text-slate-400 truncate max-w-[180px]">{lessonTitle}</p>
             </div>
           </div>
           {/* Mobile title */}
           <div className="sm:hidden">
             <div className="flex items-center gap-2">
-              <Sparkles className="h-5 w-5 text-[#fd5523]" />
-              <span className="text-sm font-bold text-[#062e39] truncate max-w-[150px]">Studio</span>
+              <Sparkles className="h-5 w-5 text-brand-text" />
+              <span className="text-sm font-bold text-ink truncate max-w-[150px]">Studio</span>
             </div>
           </div>
         </div>
@@ -352,7 +352,7 @@ export function PracticeStudio({
               onClick={() => setShowContext(!showContext)}
               className={cn(
                 "rounded-xl font-bold text-[10px] uppercase tracking-wider h-8 px-3",
-                showContext ? "bg-[#fd5523] text-white" : "text-slate-400 hover:text-[#062e39] hover:bg-slate-100"
+                showContext ? "bg-brand text-white" : "text-slate-400 hover:text-ink hover:bg-slate-100"
               )}
             >
               <Info className="h-3.5 w-3.5 mr-1" />
@@ -363,7 +363,7 @@ export function PracticeStudio({
             variant="ghost"
             size="sm"
             onClick={() => setShowHelp(!showHelp)}
-            className="h-8 w-8 p-0 rounded-full text-slate-400 hover:text-[#062e39] hover:bg-slate-100"
+            className="h-8 w-8 p-0 rounded-full text-slate-400 hover:text-ink hover:bg-slate-100"
           >
             <HelpCircle className="h-4 w-4" />
           </Button>
@@ -396,7 +396,7 @@ export function PracticeStudio({
                 <div className="p-4 border-b border-slate-100 flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <CheckCircle className="h-4 w-4 text-emerald-600" />
-                    <h3 className="text-xs font-black uppercase tracking-widest text-[#062e39]">Exercise Brief</h3>
+                    <h3 className="text-xs font-black uppercase tracking-widest text-ink">Exercise Brief</h3>
                   </div>
                   <Button variant="ghost" size="sm" onClick={() => setShowContext(false)} className="md:hidden">
                     <X className="h-4 w-4" />
@@ -433,27 +433,27 @@ export function PracticeStudio({
           <div className="absolute inset-0 z-50 bg-white/95 backdrop-blur-sm p-8 flex items-center justify-center animate-in fade-in duration-300">
             <div className="max-w-lg w-full">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold text-[#062e39]">Studio Guide</h2>
+                <h2 className="text-xl font-bold text-ink">Studio Guide</h2>
                 <Button variant="ghost" onClick={() => setShowHelp(false)} className="rounded-full">
                   <X className="h-5 w-5" />
                 </Button>
               </div>
-              <div className="bg-[#fff6ee] p-6 rounded-[2rem] border-2 border-[#fd5523]/10">
-                <h3 className="text-lg font-bold text-[#062e39] mb-3 flex items-center gap-2">
-                  <Info className="h-4 w-4 text-[#fd5523]" />
+              <div className="bg-brand-soft p-6 rounded-[2rem] border-2 border-brand/10">
+                <h3 className="text-lg font-bold text-ink mb-3 flex items-center gap-2">
+                  <Info className="h-4 w-4 text-brand-text" />
                   How to use {tool.label}
                 </h3>
                 <p className="text-sm text-slate-600 leading-relaxed mb-4">{tool.help}</p>
                 <ul className="space-y-2">
                   {["Autosaves your work as you type", "Use 'Parameters' for fine-tuned MJ control", "Markdown output ready for copy-pasting"].map(t => (
-                    <li key={t} className="flex items-center gap-2 text-xs font-medium text-[#062e39]">
+                    <li key={t} className="flex items-center gap-2 text-xs font-medium text-ink">
                       <Check className="h-3.5 w-3.5 text-green-500" />
                       {t}
                     </li>
                   ))}
                 </ul>
               </div>
-              <Button onClick={() => setShowHelp(false)} className="w-full mt-6 py-6 rounded-2xl bg-[#062e39] text-white font-bold">
+              <Button onClick={() => setShowHelp(false)} className="w-full mt-6 py-6 rounded-2xl bg-ink text-white font-bold">
                 Got it, let's build
               </Button>
             </div>
@@ -485,13 +485,13 @@ export function PracticeStudio({
               <div className="flex p-1 bg-slate-100 rounded-xl">
                 <button 
                   onClick={() => setActiveTab("tools")}
-                  className={cn("flex-1 py-1.5 text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all", activeTab === "tools" ? "bg-white text-[#062e39] shadow-sm" : "text-slate-400")}
+                  className={cn("flex-1 py-1.5 text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all", activeTab === "tools" ? "bg-white text-ink shadow-sm" : "text-slate-400")}
                 >
                   Tools
                 </button>
                 <button 
                   onClick={() => setActiveTab("history")}
-                  className={cn("flex-1 py-1.5 text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all", activeTab === "history" ? "bg-white text-[#062e39] shadow-sm" : "text-slate-400")}
+                  className={cn("flex-1 py-1.5 text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all", activeTab === "history" ? "bg-white text-ink shadow-sm" : "text-slate-400")}
                 >
                   History
                 </button>
@@ -511,18 +511,18 @@ export function PracticeStudio({
                     className={cn(
                       "w-full flex items-start gap-3 rounded-xl p-3 text-left transition-all border-2",
                       active 
-                        ? "bg-[#062e39] border-[#062e39] text-white shadow-lg" 
+                        ? "bg-ink border-ink text-white shadow-lg" 
                         : "bg-white border-slate-50 hover:border-slate-200 text-slate-400"
                     )}
                   >
                     <div className={cn(
                       "h-8 w-8 rounded-lg flex items-center justify-center shrink-0",
-                      active ? "bg-[#fd5523]" : "bg-slate-50"
+                      active ? "bg-brand" : "bg-slate-50"
                     )}>
                       <Icon className={cn("h-4 w-4", active ? "text-white" : "text-slate-400")} />
                     </div>
                     <div className="min-w-0">
-                      <p className={cn("text-xs font-bold leading-tight", active ? "text-white" : "text-[#062e39]")}>{t.label}</p>
+                      <p className={cn("text-xs font-bold leading-tight", active ? "text-white" : "text-ink")}>{t.label}</p>
                       <p className={cn("text-[10px] leading-snug line-clamp-1", active ? "text-white/60" : "text-slate-400")}>{t.desc}</p>
                     </div>
                   </button>
@@ -542,13 +542,13 @@ export function PracticeStudio({
                         setOutput(item.output);
                         if (window.innerWidth < 768) setIsSidebarOpen(false);
                       }}
-                      className="w-full flex items-start gap-2 p-2 rounded-xl border border-slate-100 bg-white hover:border-[#fd5523]/30 hover:bg-[#fff6ee] transition-all text-left"
+                      className="w-full flex items-start gap-2 p-2 rounded-xl border border-slate-100 bg-white hover:border-brand/30 hover:bg-brand-soft transition-all text-left"
                     >
                       <div className="h-6 w-6 rounded-lg bg-slate-50 flex items-center justify-center shrink-0">
                         <HIcon className="h-3.5 w-3.5 text-slate-400" />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="text-xs font-bold text-[#062e39] truncate">{hTool?.label || "Tool"}</p>
+                        <p className="text-xs font-bold text-ink truncate">{hTool?.label || "Tool"}</p>
                         <p className="text-[10px] text-slate-400 truncate">{new Date(item.timestamp).toLocaleTimeString()}</p>
                       </div>
                     </button>
@@ -570,14 +570,14 @@ export function PracticeStudio({
                   <Zap className="h-3 w-3" />
                   {tool.category}
                 </div>
-                <h2 className="text-xl sm:text-2xl font-extrabold text-[#062e39] tracking-tight">{tool.label}</h2>
+                <h2 className="text-xl sm:text-2xl font-extrabold text-ink tracking-tight">{tool.label}</h2>
                 <p className="text-sm text-slate-500 mt-1">{tool.desc}</p>
               </div>
 
               <div className="space-y-4">
                 {tool.fields.map((field, idx) => (
                   <div key={field.key} className="animate-in fade-in slide-in-from-bottom-4 duration-500" style={{ animationDelay: `${idx * 100}ms` }}>
-                    <label className="block text-sm font-bold text-[#062e39] mb-1.5">
+                    <label className="block text-sm font-bold text-ink mb-1.5">
                       {field.label}
                     </label>
                     {"multiline" in field && field.multiline ? (
@@ -586,7 +586,7 @@ export function PracticeStudio({
                         value={inputs[field.key] ?? ""}
                         onChange={(e) => setField(field.key, e.target.value)}
                         placeholder={field.placeholder}
-                        className="w-full resize-none rounded-xl border-2 border-slate-100 bg-slate-50 px-4 py-3 text-sm text-[#062e39] placeholder:text-slate-300 focus:border-[#fd5523]/30 focus:bg-white focus:outline-none transition-all"
+                        className="w-full resize-none rounded-xl border-2 border-slate-100 bg-slate-50 px-4 py-3 text-sm text-ink placeholder:text-slate-300 focus:border-brand/30 focus:bg-white focus:outline-none transition-all"
                       />
                     ) : (
                       <input
@@ -594,7 +594,7 @@ export function PracticeStudio({
                         value={inputs[field.key] ?? ""}
                         onChange={(e) => setField(field.key, e.target.value)}
                         placeholder={field.placeholder}
-                        className="w-full h-12 rounded-xl border-2 border-slate-100 bg-slate-50 px-4 text-sm text-[#062e39] placeholder:text-slate-300 focus:border-[#fd5523]/30 focus:bg-white focus:outline-none transition-all"
+                        className="w-full h-12 rounded-xl border-2 border-slate-100 bg-slate-50 px-4 text-sm text-ink placeholder:text-slate-300 focus:border-brand/30 focus:bg-white focus:outline-none transition-all"
                       />
                     )}
                   </div>
@@ -607,12 +607,12 @@ export function PracticeStudio({
               <Button
                 onClick={handleRun}
                 disabled={loading}
-                className="w-full py-6 rounded-2xl bg-[#fd5523] text-white text-base font-bold hover:bg-[#ef4a16] shadow-xl shadow-[#fd5523]/20 transition-all active:scale-[0.98] group"
+                className="w-full py-6 rounded-2xl bg-brand text-white text-base font-bold hover:bg-brand-hover shadow-xl shadow-brand/20 transition-all active:scale-[0.98] group"
               >
                 {loading ? (
                   <Loader2 className="h-5 w-5 animate-spin mr-3" />
                 ) : (
-                  <Sparkles className="h-5 w-5 text-[#fd8d69] mr-2 group-hover:rotate-12 transition-transform" />
+                  <Sparkles className="h-5 w-5 text-brand-electric mr-2 group-hover:rotate-12 transition-transform" />
                 )}
                 {loading ? "Synthesizing..." : "Generate Output"}
               </Button>
@@ -635,7 +635,7 @@ export function PracticeStudio({
                   </button>
                   <button
                     onClick={handleCopy}
-                    className="flex items-center gap-1 px-3 py-1 rounded-full bg-[#062e39] text-white text-[10px] font-bold hover:bg-[#0a4055] transition-all shadow-md"
+                    className="flex items-center gap-1 px-3 py-1 rounded-full bg-ink text-white text-[10px] font-bold hover:bg-ink-hover transition-all shadow-md"
                   >
                     {copied ? <Check className="h-3 w-3 text-green-400" /> : <Copy className="h-3 w-3" />}
                     <span className="hidden sm:inline">{copied ? "Copied" : "Copy"}</span>
@@ -658,9 +658,9 @@ export function PracticeStudio({
               {!output && !loading ? (
                 <div className="h-full flex flex-col items-center justify-center text-center max-w-xs mx-auto">
                   <div className="h-16 w-16 rounded-2xl bg-white shadow-lg flex items-center justify-center mb-4 animate-bounce duration-[3000ms]">
-                    <Zap className="h-8 w-8 text-[#fd5523]/20" />
+                    <Zap className="h-8 w-8 text-brand-text/20" />
                   </div>
-                  <h3 className="text-lg font-bold text-[#062e39] mb-2">Ready to Build</h3>
+                  <h3 className="text-lg font-bold text-ink mb-2">Ready to Build</h3>
                   <p className="text-sm text-slate-500 mb-6">Fill in the fields and tap Generate.</p>
                   <div className="space-y-2 text-left w-full">
                     <p className="text-[10px] font-bold uppercase tracking-widest text-slate-300">Tips</p>
@@ -670,8 +670,8 @@ export function PracticeStudio({
                       "Combine tools for advanced workflows."
                     ].map((tip, i) => (
                       <div key={i} className="flex items-start gap-2 bg-white p-3 rounded-xl border border-slate-100 shadow-sm">
-                        <div className="h-1.5 w-1.5 rounded-full bg-[#fd5523] mt-1.5 shrink-0" />
-                        <p className="text-xs font-medium text-[#062e39]/70">{tip}</p>
+                        <div className="h-1.5 w-1.5 rounded-full bg-brand mt-1.5 shrink-0" />
+                        <p className="text-xs font-medium text-ink/70">{tip}</p>
                       </div>
                     ))}
                   </div>
@@ -680,20 +680,20 @@ export function PracticeStudio({
                 <div className="h-full flex flex-col items-center justify-center gap-4">
                   <div className="relative">
                     <div className="h-16 w-16 rounded-2xl bg-white shadow-lg flex items-center justify-center">
-                      <Loader2 className="h-6 w-6 animate-spin text-[#fd5523]" />
+                      <Loader2 className="h-6 w-6 animate-spin text-brand-text" />
                     </div>
-                    <div className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-[#fd5523] animate-ping" />
+                    <div className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-brand animate-ping" />
                   </div>
-                  <p className="text-sm font-bold text-[#062e39]">AI is Synthesizing...</p>
+                  <p className="text-sm font-bold text-ink">AI is Synthesizing...</p>
                 </div>
               ) : (
                 <div className="max-w-3xl mx-auto animate-in fade-in duration-500">
                   <div className="bg-white rounded-2xl p-5 sm:p-8 shadow-xl border border-slate-100 relative overflow-hidden">
-                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#fd5523] to-[#fd8d69]" />
+                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-brand to-brand-electric" />
                     {renderMarkdown(output)}
                     {loading && (
-                      <div className="mt-4 flex items-center gap-2 text-[#fd5523] font-bold text-xs animate-pulse">
-                        <div className="h-1.5 w-1.5 rounded-full bg-[#fd5523] animate-ping" />
+                      <div className="mt-4 flex items-center gap-2 text-brand-text font-bold text-xs animate-pulse">
+                        <div className="h-1.5 w-1.5 rounded-full bg-brand animate-ping" />
                         Thinking...
                       </div>
                     )}

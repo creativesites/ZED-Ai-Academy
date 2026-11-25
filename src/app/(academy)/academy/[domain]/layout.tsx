@@ -3,6 +3,7 @@ import { auth } from "@clerk/nextjs/server";
 import { createClient } from "@/lib/supabase/server";
 import { AlertTriangle } from "lucide-react";
 import Link from "next/link";
+import { DEFAULT_PRIMARY_COLOR } from "@/lib/brand";
 
 export default async function TenantLayout({
   children,
@@ -65,7 +66,7 @@ export default async function TenantLayout({
   }
 
   // Inject Custom Styling via CSS variables
-  const primaryColor = tenant.primary_color || "#fd5523";
+  const primaryColor = tenant.primary_color || DEFAULT_PRIMARY_COLOR;
 
   return (
     <div style={{ "--primary-color": primaryColor } as React.CSSProperties} className="tenant-wrapper min-h-screen bg-slate-50">

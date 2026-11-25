@@ -7,6 +7,7 @@ import { NotificationBell } from "@/components/shared/notification-bell";
 import { BookOpen, GraduationCap, Layout, Home, Mic, Search, ShieldCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { usePathname } from "next/navigation";
+import { DEFAULT_PRIMARY_COLOR } from "@/lib/brand";
 
 export function TenantNavbar({ 
   tenant,
@@ -21,7 +22,7 @@ export function TenantNavbar({
   staffRole?: string | null;
 }) {
   const pathname = usePathname();
-  const brandColor = tenant.primary_color || "#fd5523";
+  const brandColor = tenant.primary_color || DEFAULT_PRIMARY_COLOR;
   const isStaff =
     staffRole === "super_admin" ||
     staffRole === "company_admin" ||
@@ -56,7 +57,7 @@ export function TenantNavbar({
             >
               <Home className="h-5 w-5" />
             </div>
-            <span className="font-black text-xl tracking-tight text-[#062e39] hidden sm:block">
+            <span className="font-black text-xl tracking-tight text-ink hidden sm:block">
               {tenant.name}
             </span>
           </Link>
@@ -72,11 +73,11 @@ export function TenantNavbar({
                   className={cn(
                     "flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all",
                     isActive 
-                      ? "bg-white shadow-sm text-[#062e39]" 
+                      ? "bg-white shadow-sm text-ink" 
                       : "text-slate-400 hover:text-slate-600 hover:bg-white/50"
                   )}
                 >
-                  <link.icon className={cn("h-4 w-4", isActive ? "text-[#fd5523]" : "")} style={{ color: isActive ? brandColor : undefined }} />
+                  <link.icon className={cn("h-4 w-4", isActive ? "text-brand-text" : "")} style={{ color: isActive ? brandColor : undefined }} />
                   {link.name}
                 </Link>
               );
@@ -89,9 +90,9 @@ export function TenantNavbar({
           {isStaff && (
             <Link
               href={`/academy/${tenant.slug}/admin`}
-              className="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-xl bg-[#062e39] hover:bg-[#0a4352] text-white text-xs font-bold shadow-xs transition-all shrink-0"
+              className="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-xl bg-ink hover:bg-ink-hover text-white text-xs font-bold shadow-xs transition-all shrink-0"
             >
-              <ShieldCheck className="h-3.5 w-3.5 text-[#fd5523]" />
+              <ShieldCheck className="h-3.5 w-3.5 text-brand-text" />
               <span>{isAdmin ? "Admin Hub" : "Teacher Hub"}</span>
             </Link>
           )}

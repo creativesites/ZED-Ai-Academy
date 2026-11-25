@@ -24,8 +24,9 @@ import { DailyPlanCard } from "@/components/tutor/DailyPlanCard";
 import { TutorSpotlightBanner } from "@/components/tutor/TutorSpotlightBanner";
 import { loadDashboardDailyPlan } from "@/lib/tutor/mastery/server";
 import { loadLearnerTutorOverview } from "@/lib/tutor/server/learner-overview";
+import { DEFAULT_PRIMARY_COLOR } from "@/lib/brand";
 
-export const metadata = { title: "Your Academies — Zed AI Academy" };
+export const metadata = { title: "Your Academies" };
 export const dynamic = "force-dynamic";
 
 type AcademyCardData = {
@@ -220,7 +221,7 @@ export default async function DashboardPage() {
               href="/dashboard/schedule"
               className="flex items-center gap-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200/90 text-xs font-bold uppercase tracking-wider px-4 py-2.5 rounded-xl shadow-sm transition-all hover:scale-105 active:scale-95"
             >
-              <Calendar className="h-4 w-4 text-[#fd5523]" />
+              <Calendar className="h-4 w-4 text-brand-text" />
               <span>School Timetable</span>
             </Link>
 
@@ -236,7 +237,7 @@ export default async function DashboardPage() {
 
             <Link
               href="/launch-your-academy"
-              className="flex items-center gap-2 bg-[#fd5523] hover:bg-[#ea4817] text-white text-xs font-bold uppercase tracking-wider px-4 py-2.5 rounded-xl shadow-md shadow-[#fd5523]/20 transition-all hover:scale-105 active:scale-95"
+              className="flex items-center gap-2 bg-brand hover:bg-brand-hover text-white text-xs font-bold uppercase tracking-wider px-4 py-2.5 rounded-xl shadow-md shadow-brand/20 transition-all hover:scale-105 active:scale-95"
             >
               <PlusCircle className="h-4 w-4" />
               <span>Launch an Academy</span>
@@ -246,7 +247,7 @@ export default async function DashboardPage() {
 
         {/* Active Live Session Banner (Cohort & Academy-Aware) */}
         {activeLiveClass && (
-          <div className="mb-8 p-4 sm:p-5 rounded-2xl sm:rounded-3xl bg-gradient-to-r from-red-600 via-[#fd5523] to-orange-500 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xl shadow-red-500/20">
+          <div className="mb-8 p-4 sm:p-5 rounded-2xl sm:rounded-3xl bg-gradient-to-r from-red-600 via-brand to-orange-500 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xl shadow-red-500/20">
             <div className="flex items-center gap-3">
               <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-2xl bg-white/20 text-white flex items-center justify-center shrink-0">
                 <Video className="h-5 w-5 sm:h-6 sm:w-6" />
@@ -319,12 +320,12 @@ export default async function DashboardPage() {
           <div className="mb-10">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-base font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
-                <BookOpen className="h-4 w-4 text-[#fd5523]" />
+                <BookOpen className="h-4 w-4 text-brand-text" />
                 <span>Continue Learning</span>
               </h2>
               <Link
                 href="/courses"
-                className="text-xs font-bold text-[#fd5523] hover:underline"
+                className="text-xs font-bold text-brand-text hover:underline"
               >
                 Explore courses
               </Link>
@@ -341,13 +342,13 @@ export default async function DashboardPage() {
                   <Link
                     key={enr.id}
                     href={`/courses/${course.slug}/learn`}
-                    className="group flex flex-col justify-between rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-[#fd5523]/40 hover:shadow-md"
+                    className="group flex flex-col justify-between rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-brand/40 hover:shadow-md"
                   >
                     <div>
                       <span className="inline-block rounded-full bg-slate-100 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-slate-600">
                         {course.category || "Course"}
                       </span>
-                      <h3 className="mt-2 line-clamp-2 text-sm font-black text-slate-900 group-hover:text-[#fd5523] transition-colors">
+                      <h3 className="mt-2 line-clamp-2 text-sm font-black text-slate-900 group-hover:text-brand-text transition-colors">
                         {course.title}
                       </h3>
                     </div>
@@ -357,17 +358,17 @@ export default async function DashboardPage() {
                         <>
                           <div className="flex items-center justify-between text-[11px] font-semibold text-slate-500">
                             <span>{done}/{total} lessons</span>
-                            <span className="font-bold text-[#062e39]">{pct}%</span>
+                            <span className="font-bold text-ink">{pct}%</span>
                           </div>
                           <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
                             <div
-                              className={`h-full rounded-full ${pct === 100 ? "bg-emerald-500" : "bg-[#fd5523]"}`}
+                              className={`h-full rounded-full ${pct === 100 ? "bg-emerald-500" : "bg-brand"}`}
                               style={{ width: `${pct}%` }}
                             />
                           </div>
                         </>
                       )}
-                      <div className="flex items-center justify-between pt-1 text-xs font-bold text-[#fd5523]">
+                      <div className="flex items-center justify-between pt-1 text-xs font-bold text-brand-text">
                         <span>{pct === 0 ? "Start course" : pct === 100 ? "Review course" : "Resume lesson"}</span>
                         <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
                       </div>
@@ -383,32 +384,32 @@ export default async function DashboardPage() {
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-base font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
-              <Building2 className="h-4 w-4 text-[#fd5523]" />
+              <Building2 className="h-4 w-4 text-brand-text" />
               <span>Your Academies ({academies.length})</span>
             </h2>
           </div>
 
           {academies.length === 0 ? (
             <div className="bg-white rounded-3xl border border-slate-200/80 p-10 text-center shadow-sm">
-              <div className="h-16 w-16 rounded-2xl bg-orange-50 text-[#fd5523] mx-auto flex items-center justify-center mb-4">
+              <div className="h-16 w-16 rounded-2xl bg-orange-50 text-brand-text mx-auto flex items-center justify-center mb-4">
                 <Building2 className="h-8 w-8" />
               </div>
               <h3 className="text-lg font-bold text-slate-900 mb-1">
                 You haven&apos;t joined any academies yet
               </h3>
               <p className="text-sm text-slate-500 max-w-md mx-auto mb-6">
-                Explore available courses in Zed AI Academy or create your own custom-branded teaching platform.
+                Explore available courses in CS Learn or create your own custom-branded teaching platform.
               </p>
               <div className="flex items-center justify-center gap-3">
                 <Link
                   href="/academy/zedai"
                   className="bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold uppercase tracking-wider px-5 py-2.5 rounded-xl transition-all"
                 >
-                  Visit Zed AI Academy
+                  Visit CS Learn
                 </Link>
                 <Link
                   href="/launch-your-academy"
-                  className="bg-[#fd5523] hover:bg-[#ea4817] text-white text-xs font-bold uppercase tracking-wider px-5 py-2.5 rounded-xl transition-all shadow-md shadow-[#fd5523]/20"
+                  className="bg-brand hover:bg-brand-hover text-white text-xs font-bold uppercase tracking-wider px-5 py-2.5 rounded-xl transition-all shadow-md shadow-brand/20"
                 >
                   Create Your Academy
                 </Link>
@@ -419,7 +420,7 @@ export default async function DashboardPage() {
               {academies.map((academy) => {
                 const isAdmin = academy.role === "company_admin";
                 const isTeacher = academy.role === "teacher";
-                const brandColor = academy.primaryColor || "#fd5523";
+                const brandColor = academy.primaryColor || DEFAULT_PRIMARY_COLOR;
 
                 return (
                   <div
@@ -458,7 +459,7 @@ export default async function DashboardPage() {
                       </div>
 
                       {/* Title & Slug */}
-                      <h3 className="text-lg font-black text-slate-900 tracking-tight group-hover:text-[#fd5523] transition-colors">
+                      <h3 className="text-lg font-black text-slate-900 tracking-tight group-hover:text-brand-text transition-colors">
                         {academy.name}
                       </h3>
                       <p className="text-xs text-slate-400 font-mono mt-0.5">
@@ -503,7 +504,7 @@ export default async function DashboardPage() {
                               href={`/academy/${academy.slug}/classroom?tab=timetable`}
                               className="flex items-center justify-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold uppercase tracking-wider py-2 rounded-xl transition-all"
                             >
-                              <Calendar className="h-3.5 w-3.5 text-[#fd5523]" />
+                              <Calendar className="h-3.5 w-3.5 text-brand-text" />
                               <span>Timetable</span>
                             </Link>
                           </div>
@@ -523,7 +524,7 @@ export default async function DashboardPage() {
                             href={`/academy/${academy.slug}/classroom?tab=timetable`}
                             className="w-full flex items-center justify-center gap-2 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200/80 text-xs font-bold uppercase tracking-wider py-2 rounded-xl transition-all"
                           >
-                            <Calendar className="h-3.5 w-3.5 text-[#fd5523]" />
+                            <Calendar className="h-3.5 w-3.5 text-brand-text" />
                             <span>View School Timetable</span>
                           </Link>
                         </div>

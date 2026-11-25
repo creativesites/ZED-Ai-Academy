@@ -25,7 +25,7 @@ export const DEFAULT_BLOG_POSTS: DefaultBlogPost[] = [
     title: "5 Ways ChatGPT Can Transform Your Workday Right Now",
     excerpt: "From drafting emails to summarising meetings — discover the most immediately useful ChatGPT workflows for Zambian professionals.",
     category: "Productivity",
-    author_name: "Zed AI Team",
+    author_name: "CS Learn Team",
     read_time: "7 min read",
     tags: ["ChatGPT", "Efficiency", "Workplace", "Zambia"],
     card_image_url: "https://images.unsplash.com/photo-1677442135703-1787eea5ce01?w=600&q=80&auto=format&fit=crop",
@@ -53,7 +53,7 @@ export const DEFAULT_BLOG_POSTS: DefaultBlogPost[] = [
     title: "How Zambian Businesses Are Using AI in 2026",
     excerpt: "We spoke with SME owners and corporate teams across Lusaka to find out how AI tools are changing the way Zambia does business.",
     category: "Business",
-    author_name: "Zed AI Team",
+    author_name: "CS Learn Team",
     read_time: "8 min read",
     tags: ["Business", "Strategy", "Automation", "Zambia"],
     card_image_url: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=600&q=80&auto=format&fit=crop",
@@ -69,7 +69,7 @@ export const DEFAULT_BLOG_POSTS: DefaultBlogPost[] = [
       { type: "h2", text: "Financial analysis and reporting" },
       { type: "p", text: "Accountants and financial analysts are using AI to automate report generation, flag anomalies in transaction data, and create forecasting models. What used to take a full day of spreadsheet work can now be done in under an hour." },
       { type: "h2", text: "The road ahead" },
-      { type: "p", text: "The businesses that invest in AI skills today will have a significant competitive advantage tomorrow. The technology is accessible, affordable, and immediately practical. The only barrier is knowledge — and that is exactly what Zed AI Academy is here to solve." }
+      { type: "p", text: "The businesses that invest in AI skills today will have a significant competitive advantage tomorrow. The technology is accessible, affordable, and immediately practical. The only barrier is knowledge — and that is exactly what CS Learn is here to solve." }
     ],
   },
   {
@@ -77,7 +77,7 @@ export const DEFAULT_BLOG_POSTS: DefaultBlogPost[] = [
     title: "From Zero to AI: A Beginner's Guide to Getting Started",
     excerpt: "Never touched an AI tool before? This guide walks you through the first steps, the best free tools and what to learn first.",
     category: "Beginners",
-    author_name: "Zed AI Team",
+    author_name: "CS Learn Team",
     read_time: "10 min read",
     tags: ["Beginners", "Getting Started", "Free Tools", "Learning"],
     card_image_url: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=600&q=80&auto=format&fit=crop",
@@ -95,7 +95,7 @@ export const DEFAULT_BLOG_POSTS: DefaultBlogPost[] = [
       { type: "h2", text: "Common mistakes beginners make" },
       { type: "p", text: "The biggest mistake is writing vague prompts. 'Write something about marketing' will give you generic content. 'Write a 200-word LinkedIn post about how Zambian SMEs can use WhatsApp Business to increase repeat customers' will give you something genuinely useful. Specificity is everything." },
       { type: "h2", text: "Next steps" },
-      { type: "p", text: "Once you are comfortable with basic AI interactions, the next step is learning prompt engineering — the skill of communicating effectively with AI. This is the single most valuable AI skill you can learn, and it is the foundation of every course at Zed AI Academy." }
+      { type: "p", text: "Once you are comfortable with basic AI interactions, the next step is learning prompt engineering — the skill of communicating effectively with AI. This is the single most valuable AI skill you can learn, and it is the foundation of every course at CS Learn." }
     ],
   },
   {
@@ -103,7 +103,7 @@ export const DEFAULT_BLOG_POSTS: DefaultBlogPost[] = [
     title: "Midjourney for Zambian Creatives: A Practical First Look",
     excerpt: "Designers, photographers and marketers — here is how to use Midjourney to elevate your creative output without a design degree.",
     category: "Creative",
-    author_name: "Zed AI Team",
+    author_name: "CS Learn Team",
     read_time: "6 min read",
     tags: ["Midjourney", "Design", "Photography", "Creative AI"],
     card_image_url: "https://images.unsplash.com/photo-1542038784456-1ea8e935640e?w=600&q=80&auto=format&fit=crop",
@@ -127,7 +127,7 @@ export const DEFAULT_BLOG_POSTS: DefaultBlogPost[] = [
     title: "AI for Small Business in Zambia: Where to Start",
     excerpt: "You do not need a big budget or a tech team to use AI. Here are the highest-leverage tools any SME can adopt today.",
     category: "Business",
-    author_name: "Zed AI Team",
+    author_name: "CS Learn Team",
     read_time: "7 min read",
     tags: ["SMEs", "Automation", "Growth", "Zambia"],
     card_image_url: "https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=600&q=80&auto=format&fit=crop",
@@ -151,7 +151,7 @@ export const DEFAULT_BLOG_POSTS: DefaultBlogPost[] = [
     title: "Writing Better Prompts: The Guide Every AI Learner Needs",
     excerpt: "The quality of your prompt determines the quality of your output. Learn the core framework our instructors teach.",
     category: "Prompt Engineering",
-    author_name: "Zed AI Team",
+    author_name: "CS Learn Team",
     read_time: "9 min read",
     tags: ["Prompting", "Frameworks", "ChatGPT", "Learning"],
     card_image_url: "https://images.unsplash.com/photo-1488190211105-8b0e65b80b4e?w=600&q=80&auto=format&fit=crop",

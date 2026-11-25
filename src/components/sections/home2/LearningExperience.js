@@ -7,25 +7,25 @@ export default function LearningExperience() {
             title: "Lesson-Aware AI Coach",
             desc: "Get 24/7 help from our AI Coach that knows exactly what you're learning. Ask questions, get explanations, and master complex concepts instantly.",
             icon: <MessageSquare size={32} />,
-            color: "#fd5523"
+            color: "var(--color-brand-text)"
         },
         {
             title: "Interactive Practice Studio",
             desc: "Don't just watch — do. Our built-in Practice Studio lets you engineer prompts and test AI workflows directly inside the academy.",
             icon: <Terminal size={32} />,
-            color: "#062e39"
+            color: "var(--color-ink)"
         },
         {
             title: "Verified AI Certificates",
             desc: "Prove your skills to employers. Earn digital certificates verified on the blockchain for every course you complete.",
             icon: <Award size={32} />,
-            color: "#fd5523"
+            color: "var(--color-brand-text)"
         },
         {
             title: "Practical Curriculum",
             desc: "Every lesson is built for the Zambian market. Learn how to apply AI to local business challenges and opportunities.",
             icon: <BookOpen size={32} />,
-            color: "#062e39"
+            color: "var(--color-ink)"
         }
     ];
 
@@ -44,7 +44,7 @@ export default function LearningExperience() {
                             <h2 className="sec-title__title tg-element-title">A World-Class <br/> <span>Learning Ecosystem</span></h2>
                         </div>
                         <p className="mt-3" style={{ fontSize: "16px", color: "#666", lineHeight: "1.7" }}>
-                            Zed AI Academy isn't just a collection of videos. We've built a complete 
+                            CS Learn isn't just a collection of videos. We've built a complete 
                             intelligence dock designed to help you master AI through active learning 
                             and hands-on practice.
                         </p>
@@ -84,7 +84,7 @@ export default function LearningExperience() {
                                         }}>
                                             {f.icon}
                                         </div>
-                                        <h3 style={{ fontSize: "18px", fontWeight: "800", color: "#062e39", marginBottom: "15px" }}>{f.title}</h3>
+                                        <h3 style={{ fontSize: "18px", fontWeight: "800", color: "var(--color-ink)", marginBottom: "15px" }}>{f.title}</h3>
                                         <p style={{ fontSize: "14px", color: "#666", lineHeight: "1.6", margin: 0 }}>{f.desc}</p>
                                     </div>
                                 </div>
@@ -97,7 +97,7 @@ export default function LearningExperience() {
                 .experience-card:hover {
                     transform: translateY(-5px);
                     box-shadow: 0 15px 35px rgba(0,0,0,0.05);
-                    border-color: #fd552340 !important;
+                    border-color: rgba(7, 91, 235, 0.25) !important;
                 }
             `}} />
         </section>

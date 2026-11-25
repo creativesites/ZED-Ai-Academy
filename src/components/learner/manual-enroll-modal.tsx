@@ -127,7 +127,7 @@ export function ManualEnrollModal({
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="flex items-center justify-between rounded-t-3xl bg-[#062e39] px-6 py-5">
+            <div className="flex items-center justify-between rounded-t-3xl bg-ink px-6 py-5">
               <div className="flex items-center gap-3">
                 <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/10">
                   <BookOpen className="h-5 w-5 text-white" />
@@ -160,7 +160,7 @@ export function ManualEnrollModal({
                       onChange={(e) => setName(e.target.value)}
                       placeholder="Your full name"
                       required
-                      className="h-11 rounded-xl border-slate-200 bg-white text-[#062e39]"
+                      className="h-11 rounded-xl border-slate-200 bg-white text-ink"
                     />
                   </div>
 
@@ -185,7 +185,7 @@ export function ManualEnrollModal({
                         placeholder="e.g. 0971 234 567"
                         required
                         type="tel"
-                        className="h-11 rounded-xl border-slate-200 bg-white pl-9 text-[#062e39]"
+                        className="h-11 rounded-xl border-slate-200 bg-white pl-9 text-ink"
                       />
                     </div>
                   </div>
@@ -197,21 +197,21 @@ export function ManualEnrollModal({
                       </div>
                     )}
 
-                    <div className="rounded-xl bg-[#fff6ee] px-5 py-4 border border-[#fd5523]/20 space-y-3">
-                      <div className="flex items-center justify-between text-sm pb-3 border-b border-[#fd5523]/10">
+                    <div className="rounded-xl bg-brand-soft px-5 py-4 border border-brand/20 space-y-3">
+                      <div className="flex items-center justify-between text-sm pb-3 border-b border-brand/10">
                         <span className="font-bold text-slate-600 uppercase tracking-widest text-xs">Course Fee</span>
-                        <span className="font-black text-[#fd5523] text-lg">{priceLabel}</span>
+                        <span className="font-black text-brand-text text-lg">{priceLabel}</span>
                       </div>
                       <div className="space-y-2">
-                        <p className="text-xs font-bold text-[#062e39] flex items-center gap-2">
+                        <p className="text-xs font-bold text-ink flex items-center gap-2">
                           <CheckCircle2 className="h-3.5 w-3.5 text-[#25D366]" />
                           1. Send WhatsApp Request below
                         </p>
-                        <p className="text-xs font-bold text-[#062e39] flex items-center gap-2">
+                        <p className="text-xs font-bold text-ink flex items-center gap-2">
                           <CheckCircle2 className="h-3.5 w-3.5 text-[#25D366]" />
                           2. Send payment to MTN / Airtel
                         </p>
-                        <p className="text-xs font-bold text-[#062e39] flex items-center gap-2">
+                        <p className="text-xs font-bold text-ink flex items-center gap-2">
                           <CheckCircle2 className="h-3.5 w-3.5 text-[#25D366]" />
                           3. Admin unlocks full access instantly
                         </p>
@@ -237,7 +237,7 @@ export function ManualEnrollModal({
                       <CheckCircle2 className="h-8 w-8 text-green-600" />
                     </div>
                     <div className="space-y-2">
-                      <h3 className="text-xl font-black text-[#062e39]">Request Sent!</h3>
+                      <h3 className="text-xl font-black text-ink">Request Sent!</h3>
                       <p className="text-sm text-slate-500">
                         We&apos;ve reserved your spot for <strong>{courseTitle}</strong>. You now have access to the first module.
                       </p>
@@ -249,15 +249,15 @@ export function ManualEnrollModal({
                       <div className="flex items-start gap-3">
                         <div className="w-8 h-8 rounded-full bg-yellow-400 flex items-center justify-center shrink-0 text-[10px] font-black">MTN</div>
                         <div>
-                          <p className="text-sm font-bold text-[#062e39]">096 123 4567</p>
-                          <p className="text-xs text-slate-500">Name: Zed AI Academy</p>
+                          <p className="text-sm font-bold text-ink">096 123 4567</p>
+                          <p className="text-xs text-slate-500">Name: CS Learn</p>
                         </div>
                       </div>
 
                       <div className="flex items-start gap-3 pt-2 border-t border-slate-200">
                         <div className="w-8 h-8 rounded-full bg-red-500 text-white flex items-center justify-center shrink-0 text-[10px] font-black">AIRTEL</div>
                         <div>
-                          <p className="text-sm font-bold text-[#062e39]">097 904 6745</p>
+                          <p className="text-sm font-bold text-ink">097 904 6745</p>
                           <p className="text-xs text-slate-500">Name: Winston Zulu</p>
                         </div>
                       </div>
@@ -275,7 +275,7 @@ export function ManualEnrollModal({
 
                     <Button
                       onClick={() => router.push(`/courses/${courseSlug}/learn`)}
-                      className="h-11 w-full rounded-xl bg-[#062e39] font-bold text-white hover:bg-[#0a4055]"
+                      className="h-11 w-full rounded-xl bg-ink font-bold text-white hover:bg-ink-hover"
                     >
                       Start Free Preview →
                     </Button>

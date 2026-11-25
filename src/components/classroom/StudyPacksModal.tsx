@@ -144,14 +144,14 @@ export function StudyPacksModal({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="w-[95vw] sm:max-w-[850px] p-0 rounded-2xl sm:rounded-3xl overflow-hidden border-none shadow-2xl max-h-[85dvh] flex flex-col bg-slate-50">
         {/* Header */}
-        <div className="p-4 sm:p-6 bg-[#062e39] text-white flex items-center justify-between shrink-0">
+        <div className="p-4 sm:p-6 bg-ink text-white flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-2xl bg-[#fd5523]/20 text-[#fd5523] flex items-center justify-center border border-[#fd5523]/30 shrink-0">
+            <div className="h-10 w-10 rounded-2xl bg-brand/20 text-brand-text flex items-center justify-center border border-brand/30 shrink-0">
               <Sparkles className="h-5 w-5" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-[10px] font-black uppercase tracking-widest text-[#fd8d69]">
+                <span className="text-[10px] font-black uppercase tracking-widest text-brand-electric">
                   AI Classroom Intelligence
                 </span>
                 <span className="px-2 py-0.5 rounded-full bg-white/10 text-[9px] font-bold text-sky-200">
@@ -167,7 +167,7 @@ export function StudyPacksModal({
               <Button
                 onClick={() => setIsGeneratingView(true)}
                 size="sm"
-                className="bg-[#fd5523] hover:bg-[#e0481d] text-white text-xs font-black rounded-xl gap-1.5 shadow-md shadow-[#fd5523]/20 min-h-[38px]"
+                className="bg-brand hover:bg-brand-hover text-white text-xs font-black rounded-xl gap-1.5 shadow-md shadow-brand/20 min-h-[38px]"
               >
                 <Plus className="h-3.5 w-3.5" />
                 New AI Pack
@@ -189,7 +189,7 @@ export function StudyPacksModal({
             <div className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-slate-200 shadow-sm space-y-4 sm:space-y-5 animate-in fade-in duration-200">
               <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                 <div>
-                  <h4 className="text-base font-black text-[#062e39]">
+                  <h4 className="text-base font-black text-ink">
                     Generate AI Class Study Pack
                   </h4>
                   <p className="text-xs text-slate-400">
@@ -236,7 +236,7 @@ export function StudyPacksModal({
                             className={cn(
                               "p-2.5 rounded-xl border text-left text-xs font-bold transition-all flex items-center justify-between gap-2",
                               isSelected
-                                ? "bg-[#fd5523]/10 border-[#fd5523] text-[#fd5523]"
+                                ? "bg-brand/10 border-brand text-brand-text"
                                 : "bg-slate-50 border-slate-100 text-slate-600 hover:bg-slate-100"
                             )}
                           >
@@ -255,7 +255,7 @@ export function StudyPacksModal({
                 <Button
                   type="submit"
                   disabled={isGenerating || !topicInput.trim()}
-                  className="w-full bg-[#fd5523] hover:bg-[#e0481d] text-white font-black rounded-xl h-12 shadow-lg shadow-[#fd5523]/20 text-xs"
+                  className="w-full bg-brand hover:bg-brand-hover text-white font-black rounded-xl h-12 shadow-lg shadow-brand/20 text-xs"
                 >
                   {isGenerating ? (
                     <>
@@ -273,22 +273,22 @@ export function StudyPacksModal({
             </div>
           ) : loading ? (
             <div className="py-24 text-center text-slate-400 flex flex-col items-center justify-center">
-              <Loader2 className="h-8 w-8 animate-spin text-[#fd5523] mb-3" />
+              <Loader2 className="h-8 w-8 animate-spin text-brand-text mb-3" />
               <p className="text-xs font-bold uppercase tracking-widest">Loading Study Packs...</p>
             </div>
           ) : studyPacks.length === 0 ? (
             <div className="py-20 text-center rounded-3xl border-2 border-dashed border-slate-200 bg-white p-8">
-              <div className="h-14 w-14 rounded-2xl bg-orange-50 text-[#fd5523] flex items-center justify-center mx-auto mb-3">
+              <div className="h-14 w-14 rounded-2xl bg-orange-50 text-brand-text flex items-center justify-center mx-auto mb-3">
                 <Sparkles className="h-7 w-7" />
               </div>
-              <h3 className="text-base font-black text-[#062e39]">No Study Packs Published Yet</h3>
+              <h3 className="text-base font-black text-ink">No Study Packs Published Yet</h3>
               <p className="text-xs text-slate-500 max-w-sm mx-auto mt-1">
                 Study packs provide high-yield summaries, key concepts, flashcards, and revision quizzes.
               </p>
               {isAdminOrInstructor && (
                 <Button
                   onClick={() => setIsGeneratingView(true)}
-                  className="mt-4 bg-[#fd5523] hover:bg-[#e0481d] text-white text-xs font-bold rounded-xl"
+                  className="mt-4 bg-brand hover:bg-brand-hover text-white text-xs font-bold rounded-xl"
                 >
                   <Sparkles className="h-3.5 w-3.5 mr-1.5" />
                   Generate First Study Pack
@@ -313,11 +313,11 @@ export function StudyPacksModal({
                       className={cn(
                         "px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-2 shrink-0",
                         isCurrent
-                          ? "bg-[#062e39] text-white shadow-md"
+                          ? "bg-ink text-white shadow-md"
                           : "bg-white border border-slate-200/80 text-slate-600 hover:bg-slate-50"
                       )}
                     >
-                      <Layers className="h-3.5 w-3.5 text-[#fd5523]" />
+                      <Layers className="h-3.5 w-3.5 text-brand-text" />
                       <span>{pack.title}</span>
                     </button>
                   );
@@ -332,7 +332,7 @@ export function StudyPacksModal({
                       <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">
                         Class Revision Resource
                       </span>
-                      <h2 className="text-xl font-black text-[#062e39] mt-0.5">
+                      <h2 className="text-xl font-black text-ink mt-0.5">
                         {activePack.title}
                       </h2>
                     </div>
@@ -357,7 +357,7 @@ export function StudyPacksModal({
                       className={cn(
                         "py-2 px-2 rounded-xl text-xs font-bold transition-all min-h-[38px]",
                         activeSubTab === "summary"
-                          ? "bg-white text-[#fd5523] shadow-xs"
+                          ? "bg-white text-brand-text shadow-xs"
                           : "text-slate-500 hover:text-slate-800"
                       )}
                     >
@@ -368,7 +368,7 @@ export function StudyPacksModal({
                       className={cn(
                         "py-2 px-2 rounded-xl text-xs font-bold transition-all min-h-[38px]",
                         activeSubTab === "concepts"
-                          ? "bg-white text-[#fd5523] shadow-xs"
+                          ? "bg-white text-brand-text shadow-xs"
                           : "text-slate-500 hover:text-slate-800"
                       )}
                     >
@@ -379,7 +379,7 @@ export function StudyPacksModal({
                       className={cn(
                         "py-2 px-2 rounded-xl text-xs font-bold transition-all min-h-[38px]",
                         activeSubTab === "flashcards"
-                          ? "bg-white text-[#fd5523] shadow-xs"
+                          ? "bg-white text-brand-text shadow-xs"
                           : "text-slate-500 hover:text-slate-800"
                       )}
                     >
@@ -390,7 +390,7 @@ export function StudyPacksModal({
                       className={cn(
                         "py-2 px-2 rounded-xl text-xs font-bold transition-all min-h-[38px]",
                         activeSubTab === "quiz"
-                          ? "bg-white text-[#fd5523] shadow-xs"
+                          ? "bg-white text-brand-text shadow-xs"
                           : "text-slate-500 hover:text-slate-800"
                       )}
                     >
@@ -413,7 +413,7 @@ export function StudyPacksModal({
                           key={i}
                           className="p-4 rounded-2xl bg-slate-50 border border-slate-100 space-y-1.5"
                         >
-                          <span className="text-xs font-black text-[#062e39] block">
+                          <span className="text-xs font-black text-ink block">
                             {c.term}
                           </span>
                           <p className="text-xs text-slate-600 leading-relaxed">
@@ -431,7 +431,7 @@ export function StudyPacksModal({
                         <div className="space-y-4">
                           <div
                             onClick={() => setIsFlipped((prev) => !prev)}
-                            className="h-64 rounded-3xl p-8 border-2 border-slate-200 bg-gradient-to-br from-slate-50 to-white flex flex-col items-center justify-center text-center cursor-pointer select-none shadow-sm hover:border-[#fd5523]/40 transition-all relative"
+                            className="h-64 rounded-3xl p-8 border-2 border-slate-200 bg-gradient-to-br from-slate-50 to-white flex flex-col items-center justify-center text-center cursor-pointer select-none shadow-sm hover:border-brand/40 transition-all relative"
                           >
                             <span className="absolute top-4 left-5 text-[10px] font-black uppercase tracking-wider text-slate-400">
                               {isFlipped ? "Answer / Takeaway" : "Question / Concept Prompt"}
@@ -440,7 +440,7 @@ export function StudyPacksModal({
                               <RotateCw className="h-3 w-3" /> Tap to Flip
                             </span>
 
-                            <p className="text-base md:text-lg font-black text-[#062e39] max-w-lg leading-relaxed">
+                            <p className="text-base md:text-lg font-black text-ink max-w-lg leading-relaxed">
                               {isFlipped
                                 ? activePack.flashcards[currentCardIndex]?.back
                                 : activePack.flashcards[currentCardIndex]?.front}
@@ -502,7 +502,7 @@ export function StudyPacksModal({
                             key={qIndex}
                             className="p-5 rounded-2xl border border-slate-100 bg-slate-50/50 space-y-3"
                           >
-                            <p className="text-xs font-black text-[#062e39]">
+                            <p className="text-xs font-black text-ink">
                               {qIndex + 1}. {q.question}
                             </p>
 
@@ -530,7 +530,7 @@ export function StudyPacksModal({
                                           ? "bg-red-100/70 border-red-300 text-red-900"
                                           : "bg-white border-slate-100 text-slate-400 opacity-60"
                                         : isChosen
-                                        ? "bg-[#fd5523]/10 border-[#fd5523] text-[#fd5523]"
+                                        ? "bg-brand/10 border-brand text-brand-text"
                                         : "bg-white border-slate-200/80 text-slate-700 hover:border-slate-300"
                                     )}
                                   >

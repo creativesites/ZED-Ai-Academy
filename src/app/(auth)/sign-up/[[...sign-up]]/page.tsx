@@ -2,8 +2,9 @@ import { SignUp } from "@clerk/nextjs";
 import { getSiteAsset } from "@/lib/site-assets";
 import Link from "next/link";
 import { ArrowLeft, Rocket, CheckCircle2, Building2, GraduationCap, Users } from "lucide-react";
+import { BrandLogo } from "@/components/shared/brand-logo";
 
-export const metadata = { title: "Join — Zed AI Academy" };
+export const metadata = { title: "Join" };
 
 export default async function SignUpPage(props: { searchParams: Promise<{ enroll_course?: string; role?: string; tenant?: string }> }) {
   const { enroll_course, role, tenant } = await props.searchParams;
@@ -46,14 +47,14 @@ export default async function SignUpPage(props: { searchParams: Promise<{ enroll
   return (
     <div className="flex min-h-screen bg-white overflow-hidden">
       {/* Left: Branding & Value Proposition */}
-      <div className="relative hidden w-0 flex-1 lg:block bg-[#062e39]">
+      <div className="relative hidden w-0 flex-1 lg:block bg-ink">
         <div className="absolute inset-0 z-0">
           <img
             src={bgImage}
             alt="Background"
             className="h-full w-full object-cover opacity-30 grayscale"
           />
-          <div className="absolute inset-0 bg-gradient-to-br from-[#062e39] via-[#062e39]/80 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-br from-ink via-ink/80 to-transparent" />
         </div>
 
         <div className="relative z-10 flex h-full flex-col justify-between p-16 text-white">
@@ -63,13 +64,13 @@ export default async function SignUpPage(props: { searchParams: Promise<{ enroll
               Back to home
             </Link>
             <div className="mt-20 max-w-xl">
-              <div className="inline-flex items-center gap-2 rounded-full bg-[#fd5523]/20 px-4 py-1 text-xs font-bold uppercase tracking-widest text-[#fd5523] ring-1 ring-[#fd5523]/30">
+              <div className="inline-flex items-center gap-2 rounded-full bg-brand/20 px-4 py-1 text-xs font-bold uppercase tracking-widest text-brand-text ring-1 ring-brand/30">
                 <Rocket className="h-3 w-3" />
                 Join the Academy
               </div>
               <h1 className="mt-8 text-5xl font-extrabold tracking-tight leading-[1.1] text-white">
                 Your transformation <br />
-                <span className="text-[#fd8d69]">starts here.</span>
+                <span className="text-brand-electric">starts here.</span>
               </h1>
               <p className="mt-6 text-xl text-white/60 leading-relaxed">
                 Get access to the AI Coach, Practice Studio, and verified certificates — built for Africa.
@@ -86,7 +87,7 @@ export default async function SignUpPage(props: { searchParams: Promise<{ enroll
                 "Verified certificates for your career",
               ].map((feature) => (
                 <div key={feature} className="flex items-center gap-3 text-white/80 font-medium">
-                  <CheckCircle2 className="h-5 w-5 text-[#fd5523] shrink-0" />
+                  <CheckCircle2 className="h-5 w-5 text-brand-text shrink-0" />
                   <span>{feature}</span>
                 </div>
               ))}
@@ -94,7 +95,7 @@ export default async function SignUpPage(props: { searchParams: Promise<{ enroll
 
             <div className="border-t border-white/10 pt-8">
               <p className="text-sm text-white/40 leading-relaxed">
-                Zed AI Academy is built for professionals in Zambia and across Africa — mobile-first, practical, and career-focused.
+                CreativeSites Learn is built for professionals in Zambia and across Africa — mobile-first, practical, and career-focused.
               </p>
             </div>
           </div>
@@ -106,12 +107,8 @@ export default async function SignUpPage(props: { searchParams: Promise<{ enroll
         <div className="mx-auto w-full max-w-sm lg:w-96 flex items-center justify-center flex-col">
           {/* Logo — visible on all screen sizes */}
           <div className="mb-4 lg:mb-6 flex items-center justify-center flex-col">
-            <img
-              src='images/logo-dark.png'
-              alt="Zed AI Academy"
-              className="h-20 w-auto"
-            />
-            <h2 className="mt-6 text-3xl font-extrabold text-[#062e39] tracking-tight">{roleLabel}</h2>
+            <BrandLogo variant="onLight" priority className="h-20 w-auto" />
+            <h2 className="mt-6 text-3xl font-extrabold text-ink tracking-tight">{roleLabel}</h2>
             <p className="mt-2 text-sm text-slate-500">
               {normalizedRole ? "You can change account details after signing in." : "This keeps learner and tenant-owner permissions separate."}
             </p>
@@ -129,13 +126,13 @@ export default async function SignUpPage(props: { searchParams: Promise<{ enroll
                   <Link
                     key={choice.href}
                     href={href}
-                    className="group flex w-full items-center gap-4 rounded-2xl border border-slate-200 bg-white p-4 text-left transition-all hover:border-[#fd5523]/40 hover:bg-[#fff6ee]"
+                    className="group flex w-full items-center gap-4 rounded-2xl border border-slate-200 bg-white p-4 text-left transition-all hover:border-brand/40 hover:bg-brand-soft"
                   >
-                    <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-slate-50 text-[#fd5523] transition-all group-hover:bg-[#fd5523] group-hover:text-white">
+                    <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-slate-50 text-brand-text transition-all group-hover:bg-brand group-hover:text-white">
                       <Icon className="h-6 w-6" />
                     </span>
                     <span>
-                      <span className="block font-bold text-[#062e39]">{choice.title}</span>
+                      <span className="block font-bold text-ink">{choice.title}</span>
                       <span className="mt-1 block text-xs leading-relaxed text-slate-500">{choice.description}</span>
                     </span>
                   </Link>
@@ -149,16 +146,16 @@ export default async function SignUpPage(props: { searchParams: Promise<{ enroll
                 appearance={{
                   elements: {
                     formButtonPrimary:
-                      "bg-[#fd5523] hover:bg-[#ef4a16] text-sm font-bold uppercase tracking-widest h-12 rounded-xl transition-all shadow-lg shadow-[#fd5523]/20",
+                      "bg-brand hover:bg-brand-hover text-sm font-bold uppercase tracking-widest h-12 rounded-xl transition-all shadow-lg shadow-brand/20",
                     card: "shadow-none border-0",
                     headerTitle: "hidden",
                     headerSubtitle: "hidden",
                     socialButtonsBlockButton:
                       "h-12 rounded-xl border-slate-200 hover:bg-slate-50 text-slate-600 transition-all font-semibold",
                     formFieldInput:
-                      "h-12 rounded-xl border-slate-200 focus:border-[#fd5523]/30 focus:ring-[#fd5523]/20 transition-all",
-                    footerActionLink: "text-[#fd5523] hover:text-[#ef4a16] font-bold",
-                    identityPreviewTextPrimary: "text-[#062e39] font-bold",
+                      "h-12 rounded-xl border-slate-200 focus:border-brand/30 focus:ring-brand/20 transition-all",
+                    footerActionLink: "text-brand-text hover:text-brand-hover font-bold",
+                    identityPreviewTextPrimary: "text-ink font-bold",
                     rootBox: "w-full",
                   },
                   layout: {
@@ -167,7 +164,7 @@ export default async function SignUpPage(props: { searchParams: Promise<{ enroll
                   },
                 } as any}
               />
-              <Link href="/sign-up" className="mt-4 block text-center text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-[#fd5523]">
+              <Link href="/sign-up" className="mt-4 block text-center text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-brand-text">
                 Choose a different account type
               </Link>
             </div>

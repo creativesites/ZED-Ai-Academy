@@ -17,9 +17,9 @@ export function MaterialPreviewDialog({
       <DialogContent className="w-[95vw] sm:max-w-[700px] rounded-2xl sm:rounded-3xl p-0 overflow-hidden border-none shadow-2xl max-h-[85dvh] flex flex-col">
         {material && (
           <div>
-            <div className="p-6 bg-[#062e39] text-white flex items-start justify-between">
+            <div className="p-6 bg-ink text-white flex items-start justify-between">
               <div>
-                <span className="text-[10px] font-black uppercase tracking-widest text-[#fd8d69]">
+                <span className="text-[10px] font-black uppercase tracking-widest text-brand-electric">
                   {getTypeMeta(material.material_type).label} Document
                 </span>
                 <h3 className="text-xl font-black text-white mt-1">{material.title}</h3>
@@ -85,7 +85,7 @@ export function MaterialPreviewDialog({
                   </div>
                 ) : (
                   <div className="p-6 text-center border-2 border-dashed border-slate-200 rounded-2xl bg-slate-50 space-y-3">
-                    <div className="h-12 w-12 rounded-2xl bg-[#fd5523]/10 text-[#fd5523] flex items-center justify-center mx-auto">
+                    <div className="h-12 w-12 rounded-2xl bg-brand/10 text-brand-text flex items-center justify-center mx-auto">
                       <Download className="h-6 w-6" />
                     </div>
                     <p className="text-xs font-bold text-slate-700">
@@ -96,7 +96,7 @@ export function MaterialPreviewDialog({
                       href={material.file_url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#062e39] text-white text-xs font-bold hover:bg-[#fd5523] transition-colors"
+                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-ink text-white text-xs font-bold hover:bg-brand transition-colors"
                     >
                       <ExternalLink className="h-3.5 w-3.5" />
                       Open or Download Resource
@@ -119,7 +119,7 @@ export function MaterialPreviewDialog({
                   href={material.file_url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#fd5523] text-white text-xs font-bold hover:bg-[#ef4a16] shadow-md shadow-[#fd5523]/20"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-brand text-white text-xs font-bold hover:bg-brand-hover shadow-md shadow-brand/20"
                 >
                   <Download className="h-3.5 w-3.5" />
                   Download File

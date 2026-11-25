@@ -131,7 +131,7 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
 
 const FIELD = "rounded-lg border border-white/15 bg-[#0b0718] px-2 py-1.5 text-sm text-slate-100";
 const BTN = "rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-xs font-semibold text-slate-100 transition hover:bg-white/10 disabled:opacity-40";
-const BTN_PRIMARY = "rounded-lg bg-[#fd5523] px-3 py-1.5 text-xs font-bold text-white shadow shadow-[#fd5523]/20 hover:bg-[#ea4817] disabled:opacity-40";
+const BTN_PRIMARY = "rounded-lg bg-brand px-3 py-1.5 text-xs font-bold text-white shadow shadow-brand/20 hover:bg-brand-hover disabled:opacity-40";
 
 export function AvatarLab() {
   const avatarRef = useRef<TeacherStageHandle | null>(null);

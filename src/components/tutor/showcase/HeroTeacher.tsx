@@ -35,7 +35,7 @@ export function HeroTeacher({
   }, [reducedMotion, engine]);
 
   return (
-    <div className="relative aspect-[4/5] w-full max-w-[420px] overflow-hidden rounded-[28px] border border-slate-200 bg-[#fff2e9] shadow-[0_24px_60px_rgba(6,46,57,0.16)]">
+    <div className="relative aspect-[4/5] w-full max-w-[420px] overflow-hidden rounded-[28px] border border-slate-200 bg-brand-tint shadow-[0_24px_60px_rgba(9,21,43,0.16)]">
       <TeacherStage
         ref={ref}
         engine={engine}
@@ -60,7 +60,7 @@ export function HeroTeacher({
             onClick={() => setEngine(opt.id)}
             onPointerEnter={opt.id === "three" ? () => { void import("three"); } : undefined}
             className={`rounded-full px-2.5 py-1 transition-colors ${
-              engine === opt.id ? "bg-[#fd5523] text-white" : "text-white/80 hover:text-white"
+              engine === opt.id ? "bg-brand text-white" : "text-white/80 hover:text-white"
             }`}
           >
             {opt.label}

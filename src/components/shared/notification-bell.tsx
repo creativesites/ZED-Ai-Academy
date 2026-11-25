@@ -126,11 +126,11 @@ export function NotificationBell({
         type="button"
         onClick={toggle}
         aria-label="Notifications"
-        className="relative flex items-center justify-center p-2 rounded-full text-[#062e39] hover:bg-[#fff6ee] transition-colors cursor-pointer border-none bg-transparent"
+        className="relative flex items-center justify-center p-2 rounded-full text-ink hover:bg-brand-soft transition-colors cursor-pointer border-none bg-transparent"
       >
         <Bell className="w-[20px] h-[20px]" />
         {unread > 0 && (
-          <span className="absolute top-[3px] right-[3px] bg-[#fd5523] text-white rounded-full min-w-[16px] h-4 px-1 text-[10px] font-bold flex items-center justify-center">
+          <span className="absolute top-[3px] right-[3px] bg-brand text-white rounded-full min-w-[16px] h-4 px-1 text-[10px] font-bold flex items-center justify-center">
             {unread > 9 ? "9+" : unread}
           </span>
         )}
@@ -140,14 +140,14 @@ export function NotificationBell({
         <>
           <div onClick={() => setOpen(false)} className="fixed inset-0 z-[99]" />
 
-          <div className="absolute right-[-32px] sm:right-0 top-[calc(100%+8px)] w-[300px] sm:w-[350px] max-h-[480px] overflow-y-auto bg-white border border-slate-200/80 rounded-2xl shadow-[0_20px_60px_rgba(6,46,57,0.16)] z-[100] animate-in fade-in slide-in-from-top-1 duration-150">
+          <div className="absolute right-[-32px] sm:right-0 top-[calc(100%+8px)] w-[300px] sm:w-[350px] max-h-[480px] overflow-y-auto bg-white border border-slate-200/80 rounded-2xl shadow-[0_20px_60px_rgba(9,21,43,0.16)] z-[100] animate-in fade-in slide-in-from-top-1 duration-150">
             <div className="flex items-center justify-between px-4 py-3.5 border-b border-slate-100 sticky top-0 bg-white/95 backdrop-blur-sm z-10">
-              <p className="font-bold text-[#062e39] text-sm m-0">Notifications</p>
+              <p className="font-bold text-ink text-sm m-0">Notifications</p>
               <div className="flex items-center gap-2.5">
                 <button
                   type="button"
                   onClick={refresh}
-                  className="text-xs font-bold text-[#fd5523] hover:underline cursor-pointer"
+                  className="text-xs font-bold text-brand-text hover:underline cursor-pointer"
                 >
                   Refresh
                 </button>
@@ -182,15 +182,15 @@ export function NotificationBell({
                     <div
                       key={n.id}
                       className={`flex gap-3 px-4 py-3.5 border-b border-slate-50 transition-colors ${
-                        n.read ? "bg-white" : "bg-[#fffaf6]"
+                        n.read ? "bg-white" : "bg-surface"
                       } ${targetUrl ? "hover:bg-slate-50 cursor-pointer" : ""}`}
                     >
-                      <div className="w-9 h-9 rounded-xl bg-[#fff2e9] text-[#fd5523] flex items-center justify-center shrink-0">
+                      <div className="w-9 h-9 rounded-xl bg-brand-tint text-brand-text flex items-center justify-center shrink-0">
                         <Icon className="h-4 w-4" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <p
-                          className={`text-xs text-[#062e39] m-0 mb-0.5 leading-snug ${
+                          className={`text-xs text-ink m-0 mb-0.5 leading-snug ${
                             n.read ? "font-semibold" : "font-bold"
                           }`}
                         >
@@ -206,7 +206,7 @@ export function NotificationBell({
                         </p>
                       </div>
                       {!n.read && (
-                        <div className="w-2 h-2 rounded-full bg-[#fd5523] shrink-0 mt-1.5" />
+                        <div className="w-2 h-2 rounded-full bg-brand shrink-0 mt-1.5" />
                       )}
                     </div>
                   );

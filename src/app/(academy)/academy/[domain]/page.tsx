@@ -12,6 +12,7 @@ import { TenantTracker } from "@/components/tenant/TenantTracker";
 import type { CSSProperties } from "react";
 import { getCurrentTenantAccess } from "@/lib/tenants/access";
 import TenantHomeNavBar from "@/components/tenant/TenantHomeNavBar";  
+import { DEFAULT_PRIMARY_COLOR } from "@/lib/brand";
 
 
 type TenantHomeContent = {
@@ -57,7 +58,7 @@ export default async function TenantHomePage({ params }: { params: Promise<{ dom
     .eq("company_id", tenant.id)
     .eq("status", "published");
 
-  const brandColor = tenant.primary_color || "#fd5523";
+  const brandColor = tenant.primary_color || DEFAULT_PRIMARY_COLOR;
   const content = (tenant.home_content || {}) as TenantHomeContent;
   const template = tenant.home_template || "modern";
 
@@ -115,7 +116,7 @@ export default async function TenantHomePage({ params }: { params: Promise<{ dom
 
       <footer className="py-20 border-t border-slate-100 text-center">
         <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.5em]">
-          &copy; {new Date().getFullYear()} {tenant.name} &bull; Powered by ZED AI Academy
+          &copy; {new Date().getFullYear()} {tenant.name} &bull; Powered by CS Learn
         </p>
       </footer>
     </div>

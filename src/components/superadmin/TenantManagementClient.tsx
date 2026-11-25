@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { DEFAULT_PRIMARY_COLOR } from "@/lib/brand";
 
 type TenantRow = {
   id: string;
@@ -167,7 +168,7 @@ export function TenantManagementClient({ initialTenants }: { initialTenants: Ten
                       <div className="flex items-center gap-3">
                         <div
                           className="h-10 w-10 rounded-xl flex items-center justify-center text-white font-bold text-base shadow-sm shrink-0"
-                          style={{ backgroundColor: t.primary_color || "#fd5523" }}
+                          style={{ backgroundColor: t.primary_color || DEFAULT_PRIMARY_COLOR }}
                         >
                           {t.logo_url ? (
                             <img src={t.logo_url} alt={t.name} className="h-full w-full object-cover rounded-xl" />

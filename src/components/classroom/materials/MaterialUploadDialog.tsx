@@ -284,7 +284,7 @@ export function MaterialUploadDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="w-[calc(100vw-1.5rem)] max-w-[calc(100vw-1.5rem)] sm:max-w-2xl rounded-2xl p-4 sm:p-6 max-h-[90dvh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-lg sm:text-xl font-bold text-[#062e39]">
+          <DialogTitle className="text-lg sm:text-xl font-bold text-ink">
             {editingMaterial ? "Edit Learning Material" : "Upload Learning Material"}
           </DialogTitle>
         </DialogHeader>
@@ -298,7 +298,7 @@ export function MaterialUploadDialog({
                   className={cn(
                     "p-2.5 rounded-xl text-xs font-bold border transition-all flex items-center justify-center gap-1.5",
                     materialSourceType === "file"
-                      ? "bg-[#fd5523]/10 border-[#fd5523] text-[#fd5523]"
+                      ? "bg-brand/10 border-brand text-brand-text"
                       : "bg-slate-50 border-slate-200 text-slate-600",
                   )}
                 >
@@ -311,7 +311,7 @@ export function MaterialUploadDialog({
                   className={cn(
                     "p-2.5 rounded-xl text-xs font-bold border transition-all flex items-center justify-center gap-1.5",
                     materialSourceType === "link"
-                      ? "bg-[#fd5523]/10 border-[#fd5523] text-[#fd5523]"
+                      ? "bg-brand/10 border-brand text-brand-text"
                       : "bg-slate-50 border-slate-200 text-slate-600",
                   )}
                 >
@@ -324,11 +324,11 @@ export function MaterialUploadDialog({
                 uploadFile ? (
                   <div className="flex items-center justify-between gap-3 rounded-2xl border border-emerald-200 bg-emerald-50/60 p-3.5">
                     <div className="flex items-center gap-3 min-w-0">
-                      <div className="h-10 w-10 rounded-xl bg-white border border-emerald-200 flex items-center justify-center text-[#fd5523] shrink-0">
+                      <div className="h-10 w-10 rounded-xl bg-white border border-emerald-200 flex items-center justify-center text-brand-text shrink-0">
                         <FileText className="h-5 w-5" />
                       </div>
                       <div className="min-w-0">
-                        <p className="text-xs sm:text-sm font-bold text-[#062e39] truncate">{uploadFile.name}</p>
+                        <p className="text-xs sm:text-sm font-bold text-ink truncate">{uploadFile.name}</p>
                         <p className="text-[11px] text-slate-500">{formatBytes(uploadFile.size)}</p>
                       </div>
                     </div>
@@ -356,14 +356,14 @@ export function MaterialUploadDialog({
                     className={cn(
                       "flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed p-6 text-center transition-all",
                       isDraggingFile
-                        ? "border-[#fd5523] bg-[#fff6ee]"
-                        : "border-slate-200 bg-slate-50/70 hover:border-[#fd5523]/50 hover:bg-[#fff6ee]/40",
+                        ? "border-brand bg-brand-soft"
+                        : "border-slate-200 bg-slate-50/70 hover:border-brand/50 hover:bg-brand-soft/40",
                     )}
                   >
-                    <div className="h-11 w-11 rounded-2xl bg-white shadow-xs border border-slate-200/80 flex items-center justify-center text-[#fd5523] mb-2.5">
+                    <div className="h-11 w-11 rounded-2xl bg-white shadow-xs border border-slate-200/80 flex items-center justify-center text-brand-text mb-2.5">
                       <Upload className="h-5 w-5" />
                     </div>
-                    <span className="text-xs sm:text-sm font-bold text-[#062e39]">
+                    <span className="text-xs sm:text-sm font-bold text-ink">
                       Drag &amp; drop your file here, or click to browse
                     </span>
                     <span className="text-[11px] text-slate-400 mt-1">
@@ -379,7 +379,7 @@ export function MaterialUploadDialog({
               ) : (
                 <div className="space-y-1.5">
                   <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                    External Resource URL <span className="text-[#fd5523]">*</span>
+                    External Resource URL <span className="text-brand-text">*</span>
                   </label>
                   <Input
                     value={uploadExternalUrl}
@@ -395,7 +395,7 @@ export function MaterialUploadDialog({
 
           <div className="space-y-1.5">
             <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-              Material Title <span className="text-[#fd5523]">*</span>
+              Material Title <span className="text-brand-text">*</span>
             </label>
             <Input
               value={uploadTitle}
@@ -414,7 +414,7 @@ export function MaterialUploadDialog({
               <select
                 value={uploadCourseId}
                 onChange={(e) => setUploadCourseId(e.target.value)}
-                className="flex h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-[#062e39] outline-none focus:border-[#fd5523]"
+                className="flex h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-ink outline-none focus:border-brand"
               >
                 <option value="all">General Academy Resource</option>
                 {courses.map((c) => (
@@ -432,7 +432,7 @@ export function MaterialUploadDialog({
               <select
                 value={uploadCohortId}
                 onChange={(e) => setUploadCohortId(e.target.value)}
-                className="flex h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-[#062e39] outline-none focus:border-[#fd5523]"
+                className="flex h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-ink outline-none focus:border-brand"
               >
                 <option value="all">All Classes / Sections</option>
                 {cohorts.map((c) => (
@@ -452,7 +452,7 @@ export function MaterialUploadDialog({
               <select
                 value={uploadMaterialType}
                 onChange={(e) => setUploadMaterialType(e.target.value)}
-                className="flex h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-[#062e39] outline-none focus:border-[#fd5523]"
+                className="flex h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-ink outline-none focus:border-brand"
               >
                 <option value="pdf">PDF Document</option>
                 <option value="document">Word / Doc</option>
@@ -471,7 +471,7 @@ export function MaterialUploadDialog({
               <select
                 value={uploadCategory}
                 onChange={(e) => setUploadCategory(e.target.value)}
-                className="flex h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-[#062e39] outline-none focus:border-[#fd5523]"
+                className="flex h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-ink outline-none focus:border-brand"
               >
                 {DOCUMENT_CATEGORIES.filter((c) => c.value !== "all").map((cat) => (
                   <option key={cat.value} value={cat.value}>
@@ -488,7 +488,7 @@ export function MaterialUploadDialog({
               <select
                 value={uploadFolderId}
                 onChange={(e) => setUploadFolderId(e.target.value)}
-                className="flex h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-[#062e39] outline-none focus:border-[#fd5523]"
+                className="flex h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-ink outline-none focus:border-brand"
               >
                 <option value="unfiled">Unfiled</option>
                 {folders.map((f) => (
@@ -556,7 +556,7 @@ export function MaterialUploadDialog({
             <Button
               type="submit"
               disabled={isUploading}
-              className="w-full bg-[#fd5523] hover:bg-[#ef4a16] text-white font-semibold rounded-xl h-10 text-xs sm:text-sm shadow-sm"
+              className="w-full bg-brand hover:bg-brand-hover text-white font-semibold rounded-xl h-10 text-xs sm:text-sm shadow-sm"
             >
               {isUploading ? (
                 <>

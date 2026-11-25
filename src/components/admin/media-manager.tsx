@@ -316,7 +316,7 @@ export function MediaManager({
     <div className="container mx-auto px-4 py-12 max-w-7xl">
       <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-10">
         <div>
-          <h1 className="text-4xl font-bold text-[#062e39] tracking-tight">Media Management</h1>
+          <h1 className="text-4xl font-bold text-ink tracking-tight">Media Management</h1>
           <p className="text-slate-500 mt-2">
             Manage the shared media library, assign marketing page images, and control blog card and hero visuals.
           </p>
@@ -334,15 +334,15 @@ export function MediaManager({
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="mb-8 h-auto flex flex-wrap gap-2 bg-transparent p-0">
-          <TabsTrigger value="library" className="rounded-full border border-slate-200 data-[state=active]:bg-[#062e39] data-[state=active]:text-white px-5 py-2">
+          <TabsTrigger value="library" className="rounded-full border border-slate-200 data-[state=active]:bg-ink data-[state=active]:text-white px-5 py-2">
             <FileImage className="mr-2 h-4 w-4" />
             Media Library
           </TabsTrigger>
-          <TabsTrigger value="pages" className="rounded-full border border-slate-200 data-[state=active]:bg-[#062e39] data-[state=active]:text-white px-5 py-2">
+          <TabsTrigger value="pages" className="rounded-full border border-slate-200 data-[state=active]:bg-ink data-[state=active]:text-white px-5 py-2">
             <LayoutPanelTop className="mr-2 h-4 w-4" />
             Marketing Pages
           </TabsTrigger>
-          <TabsTrigger value="blog" className="rounded-full border border-slate-200 data-[state=active]:bg-[#062e39] data-[state=active]:text-white px-5 py-2">
+          <TabsTrigger value="blog" className="rounded-full border border-slate-200 data-[state=active]:bg-ink data-[state=active]:text-white px-5 py-2">
             <Newspaper className="mr-2 h-4 w-4" />
             Blog Posts
           </TabsTrigger>
@@ -352,7 +352,7 @@ export function MediaManager({
           <Card className="border-0 shadow-lg rounded-[2rem]">
             <CardContent className="p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div>
-                <h2 className="text-xl font-bold text-[#062e39]">Upload New Library Image</h2>
+                <h2 className="text-xl font-bold text-ink">Upload New Library Image</h2>
                 <p className="text-sm text-slate-500">Add reusable images once, then assign them to pages or blog posts.</p>
               </div>
               <label className="cursor-pointer">
@@ -367,7 +367,7 @@ export function MediaManager({
                   }}
                   disabled={isPending}
                 />
-                <div className={`inline-flex items-center gap-2 px-5 h-11 rounded-xl bg-[#062e39] text-white font-bold ${pendingKey === "library-upload" ? "opacity-60 pointer-events-none" : ""}`}>
+                <div className={`inline-flex items-center gap-2 px-5 h-11 rounded-xl bg-ink text-white font-bold ${pendingKey === "library-upload" ? "opacity-60 pointer-events-none" : ""}`}>
                   {pendingKey === "library-upload" ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
                   Upload Image
                 </div>
@@ -386,10 +386,10 @@ export function MediaManager({
                   <div className="p-5 space-y-3">
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
-                        <p className="font-bold text-[#062e39] truncate">{asset.original_name}</p>
+                        <p className="font-bold text-ink truncate">{asset.original_name}</p>
                         <p className="text-xs text-slate-400 truncate">{asset.file_name}</p>
                       </div>
-                      <a href={asset.public_url} target="_blank" rel="noreferrer" className="text-slate-400 hover:text-[#fd5523]">
+                      <a href={asset.public_url} target="_blank" rel="noreferrer" className="text-slate-400 hover:text-brand-text">
                         <ExternalLink className="h-4 w-4" />
                       </a>
                     </div>
@@ -431,12 +431,12 @@ export function MediaManager({
                   <div className="p-6 space-y-4">
                     <div className="flex flex-wrap items-center justify-between gap-4">
                       <div>
-                        <h3 className="text-xl font-bold text-[#062e39]">{slot.label}</h3>
+                        <h3 className="text-xl font-bold text-ink">{slot.label}</h3>
                         <p className="text-sm text-slate-500">{slot.description}</p>
                       </div>
                       <div className="flex items-center gap-2 text-[11px] font-black uppercase tracking-widest text-slate-400">
                         <span className="rounded-full bg-slate-100 px-3 py-1">{slot.page_key}</span>
-                        <span className="rounded-full bg-[#fff6ee] px-3 py-1 text-[#fd5523]">{slot.slot_key}</span>
+                        <span className="rounded-full bg-brand-soft px-3 py-1 text-brand-text">{slot.slot_key}</span>
                       </div>
                     </div>
 
@@ -480,7 +480,7 @@ export function MediaManager({
                             event.target.value = "";
                           }}
                         />
-                        <div className="inline-flex items-center justify-center gap-2 h-11 px-4 rounded-xl bg-[#062e39] text-white font-bold">
+                        <div className="inline-flex items-center justify-center gap-2 h-11 px-4 rounded-xl bg-ink text-white font-bold">
                           <Upload className="h-4 w-4" />
                           Upload
                         </div>
@@ -499,12 +499,12 @@ export function MediaManager({
               <CardContent className="p-6 space-y-6">
                 <div className="flex flex-wrap items-start justify-between gap-4">
                   <div>
-                    <h3 className="text-xl font-bold text-[#062e39]">{post.title}</h3>
+                    <h3 className="text-xl font-bold text-ink">{post.title}</h3>
                     <p className="text-sm text-slate-500">{post.slug}</p>
                   </div>
                   <div className="flex items-center gap-3 text-xs font-black uppercase tracking-widest">
                     <span className="rounded-full bg-slate-100 px-3 py-1 text-slate-500">{post.category}</span>
-                    <span className="rounded-full bg-[#fff6ee] px-3 py-1 text-[#fd5523]">{post.read_time}</span>
+                    <span className="rounded-full bg-brand-soft px-3 py-1 text-brand-text">{post.read_time}</span>
                   </div>
                 </div>
 
@@ -529,7 +529,7 @@ export function MediaManager({
                         </div>
                         <div className="p-4 space-y-3">
                           <div className="flex items-center justify-between">
-                            <p className="text-sm font-bold text-[#062e39] capitalize">{target} image</p>
+                            <p className="text-sm font-bold text-ink capitalize">{target} image</p>
                             <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">
                               {target === "card" ? "Listing" : "Detail"}
                             </span>
@@ -573,7 +573,7 @@ export function MediaManager({
                                   event.target.value = "";
                                 }}
                               />
-                              <div className="inline-flex items-center justify-center gap-2 h-11 px-4 rounded-xl bg-[#062e39] text-white font-bold">
+                              <div className="inline-flex items-center justify-center gap-2 h-11 px-4 rounded-xl bg-ink text-white font-bold">
                                 <Upload className="h-4 w-4" />
                                 Upload
                               </div>
@@ -591,7 +591,7 @@ export function MediaManager({
       </Tabs>
 
       {(isPending || pendingKey) && (
-        <div className="fixed bottom-6 right-6 rounded-full bg-[#062e39] text-white px-4 py-3 shadow-2xl flex items-center gap-2">
+        <div className="fixed bottom-6 right-6 rounded-full bg-ink text-white px-4 py-3 shadow-2xl flex items-center gap-2">
           <RefreshCw className="h-4 w-4 animate-spin" />
           <span className="text-sm font-bold">Saving changes…</span>
         </div>

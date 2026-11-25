@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Settings, BookOpen, GraduationCap, ShieldCheck } from "lucide-react";
 import { updateOnboardingCourse } from "./_actions";
 
-export const metadata = { title: "Platform Settings — Zed AI Academy" };
+export const metadata = { title: "Platform Settings" };
 
 export default async function AdminSettingsPage() {
   const { userId } = await auth();
@@ -38,11 +38,11 @@ export default async function AdminSettingsPage() {
     <div className="container" style={{ paddingTop: "60px", paddingBottom: "120px" }}>
       <div className="mb-10 flex flex-col justify-between gap-5 md:flex-row md:items-end">
         <div>
-          <div className="marketing-kicker bg-[#fff6ee] text-[#fd5523]" style={{ display: "inline-flex", marginBottom: "16px" }}>
+          <div className="marketing-kicker bg-brand-soft text-brand-text" style={{ display: "inline-flex", marginBottom: "16px" }}>
             <Settings style={{ width: "14px", height: "14px", marginRight: "8px" }} />
             Configuration
           </div>
-          <h1 className="text-4xl font-bold tracking-tight text-[#062e39]">Platform Settings</h1>
+          <h1 className="text-4xl font-bold tracking-tight text-ink">Platform Settings</h1>
           <p className="mt-2 text-slate-500">Configure global onboarding behavior and platform defaults.</p>
         </div>
       </div>
@@ -51,11 +51,11 @@ export default async function AdminSettingsPage() {
         {/* Onboarding Settings */}
         <section className="marketing-card rounded-[2.5rem] border-0 p-8">
           <div className="mb-6 flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#fff6ee] text-[#fd5523]">
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-brand-soft text-brand-text">
               <GraduationCap className="h-5 w-5" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-[#062e39]">Onboarding Flow</h2>
+              <h2 className="text-xl font-bold text-ink">Onboarding Flow</h2>
               <p className="text-sm text-slate-500">Configure what happens when a new user joins.</p>
             </div>
           </div>
@@ -71,7 +71,7 @@ export default async function AdminSettingsPage() {
               <select 
                 name="courseId" 
                 defaultValue={onboardingCourseId}
-                className="h-14 w-full rounded-2xl border border-slate-200 bg-white px-4 outline-none focus:border-[#fd5523] transition-all"
+                className="h-14 w-full rounded-2xl border border-slate-200 bg-white px-4 outline-none focus:border-brand transition-all"
               >
                 <option value="00000000-0000-0000-0000-000000000000">None (No auto-enrollment)</option>
                 {courses?.map((course) => (
@@ -81,7 +81,7 @@ export default async function AdminSettingsPage() {
             </label>
 
             <div className="pt-4">
-              <Button type="submit" className="h-14 px-8 rounded-2xl bg-[#062e39] text-white font-bold">
+              <Button type="submit" className="h-14 px-8 rounded-2xl bg-ink text-white font-bold">
                 Save Settings
               </Button>
             </div>

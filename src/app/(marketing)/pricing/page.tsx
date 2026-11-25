@@ -8,7 +8,7 @@ import { PlanEnrollModal } from "@/components/pricing/PlanEnrollModal";
 import { currentUser } from "@clerk/nextjs/server";
 
 export const metadata: Metadata = {
-  title: "Pricing — Zed AI Academy",
+  title: "Pricing",
   description: "Simple, transparent pricing for individuals and teams.",
 };
 
@@ -119,11 +119,11 @@ export default async function PricingPage() {
         {/* Individual plans */}
         <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:px-8">
           <div className="mb-12 flex items-center gap-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-[1.2rem] bg-[#fff2e9] shadow-lg shadow-[#fd5523]/5">
-              <User className="h-6 w-6 text-[#fd5523]" />
+            <div className="flex h-12 w-12 items-center justify-center rounded-[1.2rem] bg-brand-tint shadow-lg shadow-brand/5">
+              <User className="h-6 w-6 text-brand-text" />
             </div>
             <div>
-              <h2 className="text-3xl font-extrabold text-[#062e39] tracking-tight">Individual Plans</h2>
+              <h2 className="text-3xl font-extrabold text-ink tracking-tight">Individual Plans</h2>
               <p className="text-slate-500 font-medium">For learners growing their AI skills.</p>
             </div>
           </div>
@@ -133,15 +133,15 @@ export default async function PricingPage() {
               <div
                 key={plan.name}
                 className={`relative flex flex-col rounded-[2.5rem] border p-6 sm:p-10 transition-all duration-300 hover:scale-[1.02] min-w-0 ${plan.highlight
-                    ? "border-[#fd5523]/60 bg-gradient-to-br from-[#062e39] to-[#0a4055] text-white shadow-2xl shadow-[#062e39]/20"
-                    : "border-slate-100 bg-white shadow-[0_24px_60px_rgba(6,46,57,0.06)]"
+                    ? "border-brand/60 bg-gradient-to-br from-ink to-ink-hover text-white shadow-2xl shadow-ink/20"
+                    : "border-slate-100 bg-white shadow-[0_24px_60px_rgba(9,21,43,0.06)]"
                   }`}
               >
                 {plan.badge && (
                   <span
                     className={`absolute -top-4 left-1/2 -translate-x-1/2 rounded-full px-4 sm:px-6 py-1.5 text-[10px] font-black uppercase tracking-[0.2em] shadow-xl whitespace-nowrap ${plan.highlight
-                        ? "bg-[#fd5523] text-white"
-                        : "bg-[#062e39] text-white"
+                        ? "bg-brand text-white"
+                        : "bg-ink text-white"
                       }`}
                   >
                     {plan.badge}
@@ -150,14 +150,14 @@ export default async function PricingPage() {
 
                 <div className="mb-8">
                   <p
-                    className={`mb-2 text-xs font-black uppercase tracking-[0.2em] ${plan.highlight ? "text-[#fd8d69]" : "text-slate-400"
+                    className={`mb-2 text-xs font-black uppercase tracking-[0.2em] ${plan.highlight ? "text-brand-electric" : "text-slate-400"
                       }`}
                   >
                     {plan.name}
                   </p>
                   <div className="flex items-baseline gap-2 flex-wrap">
                     <span
-                      className={`text-3xl font-black tracking-tighter break-words ${plan.highlight ? "text-white" : "text-[#062e39]"
+                      className={`text-3xl font-black tracking-tighter break-words ${plan.highlight ? "text-white" : "text-ink"
                         }`}
                     >
                       {plan.priceLabel}
@@ -171,7 +171,7 @@ export default async function PricingPage() {
                   {plan.savings && (
                     <p
                       className={`mt-3 inline-block rounded-full px-3 py-1 text-xs font-bold ${plan.highlight
-                          ? "bg-white/10 text-[#fd8d69]"
+                          ? "bg-white/10 text-brand-electric"
                           : "bg-green-50 text-green-600"
                         }`}
                     >
@@ -190,11 +190,11 @@ export default async function PricingPage() {
                   {plan.features.map((f) => (
                     <li key={f} className="flex items-start gap-3 text-sm font-medium">
                       <div
-                        className={`mt-0.5 h-5 w-5 rounded-full flex items-center justify-center shrink-0 ${plan.highlight ? "bg-[#fd5523]/20" : "bg-slate-50"
+                        className={`mt-0.5 h-5 w-5 rounded-full flex items-center justify-center shrink-0 ${plan.highlight ? "bg-brand/20" : "bg-slate-50"
                           }`}
                       >
                         <Check
-                          className={`h-3 w-3 ${plan.highlight ? "text-[#fd5523]" : "text-[#fd5523]"
+                          className={`h-3 w-3 ${plan.highlight ? "text-brand-text" : "text-brand-text"
                             }`}
                         />
                       </div>
@@ -217,7 +217,7 @@ export default async function PricingPage() {
 
           <p className="mt-12 text-center text-sm font-medium text-slate-400 pt-12">
             Individual course purchases also available — buy once, own forever.{" "}
-            <Link href="/academy/zedai" className="text-[#fd5523] font-bold hover:underline">
+            <Link href="/academy/zedai" className="text-brand-text font-bold hover:underline">
               Browse flagship courses →
             </Link>
           </p>
@@ -231,11 +231,11 @@ export default async function PricingPage() {
           className="mx-auto max-w-6xl px-4 py-24 sm:px-6 lg:px-8"
         >
           <div className="mb-16 flex items-center gap-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-[1.2rem] bg-[#fff2e9] shadow-lg shadow-[#fd5523]/5">
-              <Building2 className="h-6 w-6 text-[#062e39]" />
+            <div className="flex h-12 w-12 items-center justify-center rounded-[1.2rem] bg-brand-tint shadow-lg shadow-brand/5">
+              <Building2 className="h-6 w-6 text-ink" />
             </div>
             <div>
-              <h2 className="text-3xl font-extrabold text-[#062e39] tracking-tight">Team & Company Plans</h2>
+              <h2 className="text-3xl font-extrabold text-ink tracking-tight">Team & Company Plans</h2>
               <p className="text-slate-500 font-medium">
                 Train your whole team. Volume discounts start at 5 seats.
               </p>
@@ -251,10 +251,10 @@ export default async function PricingPage() {
               {TEAM_TIERS.map((tier) => (
                 <div
                   key={tier.seats}
-                  className="flex items-center justify-between rounded-[2rem] border-2 border-slate-50 bg-white p-4 sm:p-6 shadow-sm hover:border-[#fd5523]/10 transition-all gap-3"
+                  className="flex items-center justify-between rounded-[2rem] border-2 border-slate-50 bg-white p-4 sm:p-6 shadow-sm hover:border-brand/10 transition-all gap-3"
                 >
                   <div className="min-w-0">
-                    <p className="text-base sm:text-lg font-bold text-[#062e39] break-words">{tier.seats}</p>
+                    <p className="text-base sm:text-lg font-bold text-ink break-words">{tier.seats}</p>
                     {tier.saving && (
                       <p className="text-xs font-black uppercase text-green-600 mt-1">{tier.saving}</p>
                     )}
@@ -262,13 +262,13 @@ export default async function PricingPage() {
                   <div className="text-right shrink-0">
                     {tier.pricePerSeat ? (
                       <>
-                        <p className="text-xl sm:text-2xl font-black text-[#062e39]">
+                        <p className="text-xl sm:text-2xl font-black text-ink">
                           ZMW {tier.pricePerSeat}
                         </p>
                         <p className="text-[10px] font-bold uppercase text-slate-400">per seat / month</p>
                       </>
                     ) : (
-                      <p className="text-sm font-black uppercase text-[#fd5523]">
+                      <p className="text-sm font-black uppercase text-brand-text">
                         Custom Quote
                       </p>
                     )}
@@ -285,7 +285,7 @@ export default async function PricingPage() {
                 />
                 <Button
                   variant="outline"
-                  className="w-full rounded-full h-12 border-slate-200 text-[#062e39] font-bold hover:bg-slate-50"
+                  className="w-full rounded-full h-12 border-slate-200 text-ink font-bold hover:bg-slate-50"
                   render={<Link href="mailto:creativesites263@gmail.com" />}
                 >
                   <Mail className="mr-2 h-4 w-4" />
@@ -295,25 +295,25 @@ export default async function PricingPage() {
             </div>
 
             {/* Features */}
-            <div className="rounded-[3rem] border-2 border-[#fd5523]/5 bg-[#fffbf8] p-8 sm:p-12 relative overflow-hidden">
+            <div className="rounded-[3rem] border-2 border-brand/5 bg-[#fffbf8] p-8 sm:p-12 relative overflow-hidden">
               <div className="absolute top-0 right-0 p-8 opacity-5">
-                <Building2 className="h-32 w-32 text-[#fd5523]" />
+                <Building2 className="h-32 w-32 text-brand-text" />
               </div>
-              <h3 className="mb-8 text-2xl font-bold text-[#062e39] tracking-tight">
-                Everything your team needs to <span className="text-[#fd5523]">succeed.</span>
+              <h3 className="mb-8 text-2xl font-bold text-ink tracking-tight">
+                Everything your team needs to <span className="text-brand-text">succeed.</span>
               </h3>
               <ul className="grid gap-6 sm:grid-cols-2 relative z-10">
                 {TEAM_FEATURES.map((f) => (
                   <li key={f} className="flex items-start gap-3 text-sm font-medium">
-                    <Check className="mt-0.5 h-4 w-4 shrink-0 text-[#fd5523]" />
+                    <Check className="mt-0.5 h-4 w-4 shrink-0 text-brand-text" />
                     <span className="text-slate-600">{f}</span>
                   </li>
                 ))}
               </ul>
 
-              <div className="mt-10 rounded-[2rem] bg-white p-6 sm:p-8 shadow-xl shadow-[#fd5523]/5 border border-[#fd5523]/10 relative z-10">
-                <p className="font-bold text-[#062e39] flex items-center gap-2 mb-2">
-                  <Zap className="h-4 w-4 text-[#fd5523]" />
+              <div className="mt-10 rounded-[2rem] bg-white p-6 sm:p-8 shadow-xl shadow-brand/5 border border-brand/10 relative z-10">
+                <p className="font-bold text-ink flex items-center gap-2 mb-2">
+                  <Zap className="h-4 w-4 text-brand-text" />
                   Need an invoice in ZMW?
                 </p>
                 <p className="text-sm text-slate-500 leading-relaxed">
@@ -327,11 +327,11 @@ export default async function PricingPage() {
 
         {/* Hero */}
         <section className="px-4 sm:px-6 lg:px-8 mb-16">
-          <div className="mx-auto max-w-6xl overflow-hidden rounded-[3rem] border border-slate-200 bg-[#062e39] px-6 py-20 text-center text-white shadow-[0_24px_80px_rgba(6,46,57,0.2)] sm:px-8 sm:py-24 relative">
+          <div className="mx-auto max-w-6xl overflow-hidden rounded-[3rem] border border-slate-200 bg-ink px-6 py-20 text-center text-white shadow-[0_24px_80px_rgba(9,21,43,0.2)] sm:px-8 sm:py-24 relative">
             <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]" />
             <div className="mx-auto max-w-3xl relative z-10">
               <h1 className="text-5xl font-extrabold tracking-tight text-white sm:text-6xl mb-6">
-                Simple, transparent <span className="text-[#fd5523]">pricing.</span>
+                Simple, transparent <span className="text-brand-text">pricing.</span>
               </h1>
               <p className="text-xl leading-relaxed text-white/70 max-w-2xl mx-auto">
                 All prices in Zambian Kwacha. Pay securely with MTN MoMo, Airtel Money, or card.
@@ -342,19 +342,19 @@ export default async function PricingPage() {
 
         {/* FAQ */}
         <section className="mx-auto max-w-4xl px-4 py-24 sm:px-6 lg:px-8 bg-white rounded-[4rem] shadow-2xl shadow-slate-200/50">
-          <h2 className="mb-12 text-center text-4xl font-extrabold text-[#062e39] tracking-tight">
+          <h2 className="mb-12 text-center text-4xl font-extrabold text-ink tracking-tight">
             Frequently Asked Questions
           </h2>
           <div className="space-y-6">
             {FAQS.map((faq) => (
               <details
                 key={faq.q}
-                className="group rounded-[2rem] border-2 border-slate-50 bg-slate-50/30 transition-all hover:bg-white hover:border-[#fd5523]/10"
+                className="group rounded-[2rem] border-2 border-slate-50 bg-slate-50/30 transition-all hover:bg-white hover:border-brand/10"
               >
-                <summary className="flex cursor-pointer select-none items-center justify-between px-8 py-6 text-base font-bold text-[#062e39] list-none">
+                <summary className="flex cursor-pointer select-none items-center justify-between px-8 py-6 text-base font-bold text-ink list-none">
                   {faq.q}
                   <div className="h-8 w-8 rounded-full bg-white flex items-center justify-center shadow-sm text-slate-300 group-open:rotate-45 transition-transform">
-                    <Zap className="h-4 w-4 group-open:text-[#fd5523]" />
+                    <Zap className="h-4 w-4 group-open:text-brand-text" />
                   </div>
                 </summary>
                 <div className="px-8 pb-8 text-base text-slate-500 leading-relaxed border-t border-slate-50 pt-4">
@@ -367,18 +367,18 @@ export default async function PricingPage() {
 
         {/* Bottom CTA */}
         <section className="px-4 py-24 text-center sm:px-6 lg:px-8">
-          <div className="mx-auto max-w-6xl rounded-[3rem] bg-[#062e39] px-8 py-24 text-white relative overflow-hidden">
+          <div className="mx-auto max-w-6xl rounded-[3rem] bg-ink px-8 py-24 text-white relative overflow-hidden">
             <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]" />
             <div className="mx-auto max-w-2xl relative z-10">
               <h2 className="text-4xl font-extrabold tracking-tight mb-4">Ready to upskill your team?</h2>
               <p className="text-xl text-white/60 mb-10 leading-relaxed">
-                Join Zambian companies using Zed AI Academy to build practical AI
+                Join Zambian companies using CS Learn to build practical AI
                 capabilities.
               </p>
               <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-center mt-4">
                 <Button
                   size="lg"
-                  className="w-full sm:w-auto px-10 py-8 rounded-full bg-[#fd5523] text-white hover:bg-[#ef4a16] font-bold text-lg shadow-2xl shadow-[#fd5523]/20"
+                  className="w-full sm:w-auto px-10 py-8 rounded-full bg-brand text-white hover:bg-brand-hover font-bold text-lg shadow-2xl shadow-brand/20"
                   render={<Link href="/sign-up" />}
                 >
                   Get started free
@@ -386,7 +386,7 @@ export default async function PricingPage() {
                 <Button
                   size="lg"
                   variant="outline"
-                  className="w-full sm:w-auto px-10 py-8 rounded-full bg-[#062e39] border-white/20 text-white hover:bg-white/10 hover:text-white font-bold text-lg"
+                  className="w-full sm:w-auto px-10 py-8 rounded-full bg-ink border-white/20 text-white hover:bg-white/10 hover:text-white font-bold text-lg"
                   render={<Link href="/academy/zedai" />}
                 >
                   Browse flagship courses

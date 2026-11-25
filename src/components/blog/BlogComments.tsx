@@ -136,7 +136,7 @@ export function BlogComments({
   if (loading)
     return (
       <div className="py-24 text-center">
-        <Loader2 className="h-8 w-8 animate-spin text-[#fd5523] mx-auto mb-4" />
+        <Loader2 className="h-8 w-8 animate-spin text-brand-text mx-auto mb-4" />
         <p className="text-xs font-bold uppercase tracking-widest text-slate-300">
           Loading community…
         </p>
@@ -148,11 +148,11 @@ export function BlogComments({
       {/* ── Header ──────────────────────────────────── */}
       <div className="flex items-center justify-between mb-12">
         <div className="flex items-center gap-4">
-          <div className="h-12 w-12 rounded-2xl bg-[#fff2e9] flex items-center justify-center">
-            <MessageSquare className="h-6 w-6 text-[#fd5523]" />
+          <div className="h-12 w-12 rounded-2xl bg-brand-tint flex items-center justify-center">
+            <MessageSquare className="h-6 w-6 text-brand-text" />
           </div>
           <div>
-            <h2 className="text-3xl font-extrabold text-[#062e39] tracking-tight">
+            <h2 className="text-3xl font-extrabold text-ink tracking-tight">
               Community{" "}
               <span className="text-slate-300 ml-1 text-2xl">({comments.length})</span>
             </h2>
@@ -186,13 +186,13 @@ export function BlogComments({
       )}
 
       {/* ── Comment Form ────────────────────────────── */}
-      <div className="bg-[#fffbf8] rounded-[2.5rem] border-2 border-[#fd5523]/5 p-8 sm:p-10 mb-16 shadow-sm">
+      <div className="bg-[#fffbf8] rounded-[2.5rem] border-2 border-brand/5 p-8 sm:p-10 mb-16 shadow-sm">
         {/* Reply indicator */}
         {replyingToComment && (
           <div className="flex items-start gap-3 mb-6 p-4 rounded-2xl bg-white border border-slate-100">
-            <Reply className="h-4 w-4 text-[#fd5523] mt-0.5 shrink-0" />
+            <Reply className="h-4 w-4 text-brand-text mt-0.5 shrink-0" />
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-black uppercase tracking-widest text-[#fd5523] mb-1">
+              <p className="text-xs font-black uppercase tracking-widest text-brand-text mb-1">
                 Replying to {replyingToComment.profiles?.full_name || replyingToComment.name || "someone"}
               </p>
               <p className="text-sm text-slate-400 truncate">&ldquo;{replyingToComment.content.slice(0, 100)}&rdquo;</p>
@@ -208,7 +208,7 @@ export function BlogComments({
 
         {!replyingToComment && (
           <>
-            <h3 className="text-xl font-bold text-[#062e39] mb-1">Share your thoughts</h3>
+            <h3 className="text-xl font-bold text-ink mb-1">Share your thoughts</h3>
             <p className="text-sm text-slate-400 mb-8">
               {userId
                 ? `Posting as ${userName || "a signed-in member"} — your name will appear automatically.`
@@ -231,7 +231,7 @@ export function BlogComments({
                   placeholder="Enter your name"
                   required
                   minLength={2}
-                  className="w-full h-12 rounded-2xl border-2 border-white bg-white px-5 text-sm text-[#062e39] placeholder:text-slate-300 focus:border-[#fd5523]/20 focus:outline-none focus:ring-4 focus:ring-[#fd5523]/5 transition-all"
+                  className="w-full h-12 rounded-2xl border-2 border-white bg-white px-5 text-sm text-ink placeholder:text-slate-300 focus:border-brand/20 focus:outline-none focus:ring-4 focus:ring-brand/5 transition-all"
                 />
               </div>
               <div className="space-y-1.5">
@@ -245,7 +245,7 @@ export function BlogComments({
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@example.com"
                   required
-                  className="w-full h-12 rounded-2xl border-2 border-white bg-white px-5 text-sm text-[#062e39] placeholder:text-slate-300 focus:border-[#fd5523]/20 focus:outline-none focus:ring-4 focus:ring-[#fd5523]/5 transition-all"
+                  className="w-full h-12 rounded-2xl border-2 border-white bg-white px-5 text-sm text-ink placeholder:text-slate-300 focus:border-brand/20 focus:outline-none focus:ring-4 focus:ring-brand/5 transition-all"
                 />
               </div>
             </div>
@@ -264,7 +264,7 @@ export function BlogComments({
               required
               minLength={3}
               maxLength={2000}
-              className="w-full rounded-3xl border-2 border-white bg-white p-6 text-sm leading-relaxed text-[#062e39] placeholder:text-slate-300 focus:border-[#fd5523]/20 focus:outline-none focus:ring-4 focus:ring-[#fd5523]/5 transition-all resize-none"
+              className="w-full rounded-3xl border-2 border-white bg-white p-6 text-sm leading-relaxed text-ink placeholder:text-slate-300 focus:border-brand/20 focus:outline-none focus:ring-4 focus:ring-brand/5 transition-all resize-none"
             />
             <div className="flex items-center justify-between px-2">
               <p className="text-[10px] text-slate-300">
@@ -286,7 +286,7 @@ export function BlogComments({
             <button
               type="submit"
               disabled={pending || !content.trim()}
-              className="inline-flex items-center gap-2.5 px-8 py-4 rounded-full bg-[#fd5523] text-white font-bold text-sm shadow-xl shadow-[#fd5523]/20 hover:bg-[#ef4a16] disabled:opacity-40 disabled:cursor-not-allowed transition-all hover:scale-[1.03] active:scale-95"
+              className="inline-flex items-center gap-2.5 px-8 py-4 rounded-full bg-brand text-white font-bold text-sm shadow-xl shadow-brand/20 hover:bg-brand-hover disabled:opacity-40 disabled:cursor-not-allowed transition-all hover:scale-[1.03] active:scale-95"
             >
               {pending ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -366,10 +366,10 @@ function CommentItem({
             <img
               src={comment.profiles.avatar_url}
               alt={displayName}
-              className="h-12 w-12 rounded-2xl object-cover ring-4 ring-[#fff2e9]"
+              className="h-12 w-12 rounded-2xl object-cover ring-4 ring-brand-tint"
             />
           ) : (
-            <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-[#fff2e9] to-[#fde3d5] flex items-center justify-center text-[#fd5523] font-black text-lg ring-4 ring-slate-50">
+            <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-brand-tint to-[#fde3d5] flex items-center justify-center text-brand-text font-black text-lg ring-4 ring-slate-50">
               {initial}
             </div>
           )}
@@ -379,9 +379,9 @@ function CommentItem({
         <div className="flex-1 min-w-0">
           {/* Meta row */}
           <div className="flex items-center gap-3 mb-2">
-            <h4 className="font-extrabold text-[#062e39] text-[15px]">{displayName}</h4>
+            <h4 className="font-extrabold text-ink text-[15px]">{displayName}</h4>
             {comment.user_id && (
-              <span className="px-2 py-0.5 rounded-md bg-[#fff2e9] text-[#fd5523] text-[9px] font-black uppercase tracking-widest">
+              <span className="px-2 py-0.5 rounded-md bg-brand-tint text-brand-text text-[9px] font-black uppercase tracking-widest">
                 Member
               </span>
             )}
@@ -400,7 +400,7 @@ function CommentItem({
           <div className="flex items-center gap-2">
             <button
               onClick={() => onReply(comment.id)}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-slate-50 text-slate-500 text-[11px] font-bold uppercase tracking-wider hover:bg-[#fd5523] hover:text-white transition-all"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-slate-50 text-slate-500 text-[11px] font-bold uppercase tracking-wider hover:bg-brand hover:text-white transition-all"
             >
               <Reply className="h-3.5 w-3.5" />
               Reply
@@ -408,7 +408,7 @@ function CommentItem({
             {replies.length > 0 && (
               <button
                 onClick={() => setShowReplies(!showReplies)}
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-slate-400 text-[11px] font-bold uppercase tracking-wider hover:text-[#062e39] transition-colors"
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-slate-400 text-[11px] font-bold uppercase tracking-wider hover:text-ink transition-colors"
               >
                 {showReplies ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
                 {replies.length} {replies.length === 1 ? "reply" : "replies"}
@@ -448,16 +448,16 @@ function CommentItem({
                           className="h-9 w-9 rounded-xl object-cover ring-2 ring-white"
                         />
                       ) : (
-                        <div className="h-9 w-9 rounded-xl bg-slate-50 flex items-center justify-center text-[#fd5523] font-bold text-xs ring-2 ring-white">
+                        <div className="h-9 w-9 rounded-xl bg-slate-50 flex items-center justify-center text-brand-text font-bold text-xs ring-2 ring-white">
                           {rInitial}
                         </div>
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
-                        <h5 className="text-sm font-extrabold text-[#062e39]">{rName}</h5>
+                        <h5 className="text-sm font-extrabold text-ink">{rName}</h5>
                         {reply.user_id && (
-                          <span className="px-1.5 py-0.5 rounded bg-[#fff2e9] text-[#fd5523] text-[8px] font-black uppercase tracking-widest">
+                          <span className="px-1.5 py-0.5 rounded bg-brand-tint text-brand-text text-[8px] font-black uppercase tracking-widest">
                             Member
                           </span>
                         )}

@@ -110,12 +110,12 @@ export function LiveSessionBookingUI({ serviceId, courseId, lessonId, onSuccess,
     return (
       <div className="flex flex-col items-center justify-center py-20 text-center">
         <div className="relative">
-          <Loader2 className="h-10 w-10 animate-spin text-[#fd5523]" />
+          <Loader2 className="h-10 w-10 animate-spin text-brand-text" />
           <div className="absolute inset-0 animate-ping opacity-20">
-            <Loader2 className="h-10 w-10 text-[#fd5523]" />
+            <Loader2 className="h-10 w-10 text-brand-text" />
           </div>
         </div>
-        <p className="mt-4 text-sm font-bold text-[#062e39] uppercase tracking-widest">Loading availability...</p>
+        <p className="mt-4 text-sm font-bold text-ink uppercase tracking-widest">Loading availability...</p>
       </div>
     );
   }
@@ -154,15 +154,15 @@ export function LiveSessionBookingUI({ serviceId, courseId, lessonId, onSuccess,
           className={cn(
             "relative h-10 w-10 rounded-full text-sm font-bold transition-all flex items-center justify-center",
             isAvailable 
-              ? "text-[#062e39] hover:bg-[#fd5523]/10 hover:text-[#fd5523] cursor-pointer" 
+              ? "text-ink hover:bg-brand/10 hover:text-brand-text cursor-pointer" 
               : "text-slate-200 cursor-not-allowed",
-            isSelected && "bg-[#fd5523] text-white hover:bg-[#fd5523] hover:text-white ring-4 ring-[#fd5523]/10",
-            isToday && !isSelected && "border-2 border-[#fd5523]/30 text-[#fd5523]"
+            isSelected && "bg-brand text-white hover:bg-brand hover:text-white ring-4 ring-brand/10",
+            isToday && !isSelected && "border-2 border-brand/30 text-brand-text"
           )}
         >
           {d}
           {isAvailable && !isSelected && (
-            <div className="absolute bottom-1 h-1 w-1 rounded-full bg-[#fd5523]" />
+            <div className="absolute bottom-1 h-1 w-1 rounded-full bg-brand" />
           )}
         </button>
       );
@@ -171,7 +171,7 @@ export function LiveSessionBookingUI({ serviceId, courseId, lessonId, onSuccess,
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h3 className="font-bold text-[#062e39]">{monthName} {year}</h3>
+          <h3 className="font-bold text-ink">{monthName} {year}</h3>
           <div className="flex gap-1">
             <Button 
               variant="ghost" 
@@ -218,10 +218,10 @@ export function LiveSessionBookingUI({ serviceId, courseId, lessonId, onSuccess,
               </Button>
             )}
             <div>
-              <p className="text-[10px] font-black uppercase tracking-widest text-[#fd5523]">
+              <p className="text-[10px] font-black uppercase tracking-widest text-brand-text">
                 {step === "date" ? "Step 1 of 3" : step === "time" ? "Step 2 of 3" : "Step 3 of 3"}
               </p>
-              <h2 className="text-sm font-bold text-[#062e39]">
+              <h2 className="text-sm font-bold text-ink">
                 {step === "date" ? "Select a Date" : step === "time" ? "Select a Time" : "Confirm Booking"}
               </h2>
             </div>
@@ -239,11 +239,11 @@ export function LiveSessionBookingUI({ serviceId, courseId, lessonId, onSuccess,
         {step === "date" && (
           <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="flex items-center gap-4 p-4 rounded-2xl bg-white border border-slate-100 shadow-sm">
-              <div className="h-12 w-12 flex items-center justify-center rounded-xl bg-[#fff6ee] text-[#fd5523]">
+              <div className="h-12 w-12 flex items-center justify-center rounded-xl bg-brand-soft text-brand-text">
                 <Clock3 className="h-6 w-6" />
               </div>
               <div>
-                <h4 className="font-bold text-[#062e39]">{service.title}</h4>
+                <h4 className="font-bold text-ink">{service.title}</h4>
                 <p className="text-xs text-slate-500">{service.duration_minutes} min • Zoom Session</p>
               </div>
             </div>
@@ -254,7 +254,7 @@ export function LiveSessionBookingUI({ serviceId, courseId, lessonId, onSuccess,
         {step === "time" && (
           <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="text-center">
-              <h3 className="text-lg font-bold text-[#062e39]">
+              <h3 className="text-lg font-bold text-ink">
                 {new Date(selectedDate!).toLocaleDateString('default', { weekday: 'long', month: 'long', day: 'numeric' })}
               </h3>
               <p className="text-xs text-slate-500 mt-1">Available slots for this day</p>
@@ -264,10 +264,10 @@ export function LiveSessionBookingUI({ serviceId, courseId, lessonId, onSuccess,
                 <button
                   key={slot.starts_at}
                   onClick={() => handleSlotSelect(slot)}
-                  className="group flex items-center justify-between p-4 rounded-xl border border-slate-200 bg-white hover:border-[#fd5523] hover:bg-[#fff6ee] transition-all"
+                  className="group flex items-center justify-between p-4 rounded-xl border border-slate-200 bg-white hover:border-brand hover:bg-brand-soft transition-all"
                 >
-                  <span className="font-bold text-[#062e39] group-hover:text-[#fd5523]">{slot.label}</span>
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-50 group-hover:bg-[#fd5523] group-hover:text-white transition-all">
+                  <span className="font-bold text-ink group-hover:text-brand-text">{slot.label}</span>
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-50 group-hover:bg-brand group-hover:text-white transition-all">
                     <ChevronRight className="h-4 w-4" />
                   </div>
                 </button>
@@ -288,7 +288,7 @@ export function LiveSessionBookingUI({ serviceId, courseId, lessonId, onSuccess,
                     <CalendarIcon className="h-4 w-4" />
                   </div>
                   <div>
-                    <p className="text-xs font-bold text-[#062e39]">
+                    <p className="text-xs font-bold text-ink">
                       {new Date(selectedSlot!.starts_at).toLocaleDateString('default', { weekday: 'long', month: 'short', day: 'numeric' })}
                     </p>
                     <p className="text-[10px] text-slate-500">Scheduled Date</p>
@@ -299,7 +299,7 @@ export function LiveSessionBookingUI({ serviceId, courseId, lessonId, onSuccess,
                     <Clock3 className="h-4 w-4" />
                   </div>
                   <div>
-                    <p className="text-xs font-bold text-[#062e39]">{selectedSlot!.label}</p>
+                    <p className="text-xs font-bold text-ink">{selectedSlot!.label}</p>
                     <p className="text-[10px] text-slate-500">{service.duration_minutes} Minute Session</p>
                   </div>
                 </div>
@@ -308,7 +308,7 @@ export function LiveSessionBookingUI({ serviceId, courseId, lessonId, onSuccess,
                     <MapPin className="h-4 w-4" />
                   </div>
                   <div>
-                    <p className="text-xs font-bold text-[#062e39]">Zoom Meeting</p>
+                    <p className="text-xs font-bold text-ink">Zoom Meeting</p>
                     <p className="text-[10px] text-slate-500">Virtual Training</p>
                   </div>
                 </div>
@@ -321,14 +321,14 @@ export function LiveSessionBookingUI({ serviceId, courseId, lessonId, onSuccess,
                 name="learner_notes"
                 rows={4}
                 placeholder="What would you like to focus on during this session?"
-                className="w-full rounded-xl border-2 border-slate-100 bg-white p-4 text-sm outline-none focus:border-[#fd5523] focus:ring-4 focus:ring-[#fd5523]/5 transition-all"
+                className="w-full rounded-xl border-2 border-slate-100 bg-white p-4 text-sm outline-none focus:border-brand focus:ring-4 focus:ring-brand/5 transition-all"
               />
             </div>
 
             <Button 
               type="submit" 
               disabled={submitting}
-              className="w-full h-14 rounded-2xl bg-[#fd5523] text-white font-bold text-lg shadow-lg shadow-[#fd5523]/20 hover:scale-[1.02] active:scale-[0.98] transition-all"
+              className="w-full h-14 rounded-2xl bg-brand text-white font-bold text-lg shadow-lg shadow-brand/20 hover:scale-[1.02] active:scale-[0.98] transition-all"
             >
               {submitting ? (
                 <>
@@ -354,7 +354,7 @@ export function LiveSessionBookingUI({ serviceId, courseId, lessonId, onSuccess,
               </div>
             </div>
             
-            <h2 className="text-3xl font-bold tracking-tight text-[#062e39]">Booking Requested!</h2>
+            <h2 className="text-3xl font-bold tracking-tight text-ink">Booking Requested!</h2>
             <p className="mt-4 max-w-xs text-slate-600 leading-relaxed">
               We've sent your request to the instructor. You'll receive a notification once the slot is confirmed.
             </p>
@@ -362,15 +362,15 @@ export function LiveSessionBookingUI({ serviceId, courseId, lessonId, onSuccess,
             <div className="mt-10 w-full rounded-[2rem] bg-slate-50 p-6 space-y-4">
               <div className="flex justify-between items-center text-sm">
                 <span className="text-slate-500 font-medium">Session</span>
-                <span className="font-bold text-[#062e39]">{service.title}</span>
+                <span className="font-bold text-ink">{service.title}</span>
               </div>
               <div className="flex justify-between items-center text-sm">
                 <span className="text-slate-500 font-medium">Time</span>
-                <span className="font-bold text-[#062e39]">{selectedSlot?.label}</span>
+                <span className="font-bold text-ink">{selectedSlot?.label}</span>
               </div>
               <div className="flex justify-between items-center text-sm">
                 <span className="text-slate-500 font-medium">Date</span>
-                <span className="font-bold text-[#062e39]">
+                <span className="font-bold text-ink">
                   {new Date(selectedSlot!.starts_at).toLocaleDateString('default', { month: 'short', day: 'numeric', year: 'numeric' })}
                 </span>
               </div>
@@ -387,13 +387,13 @@ export function LiveSessionBookingUI({ serviceId, courseId, lessonId, onSuccess,
                       title: service.title,
                       startsAt: selectedSlot.starts_at,
                       endsAt: selectedSlot.ends_at,
-                      description: "Zed AI Academy Live Session",
+                      description: "CS Learn Live Session",
                     });
                     window.open(url, "_blank");
                   }}
-                  className="w-full h-11 rounded-xl border-slate-200 text-slate-700 hover:border-[#fd5523] text-xs font-bold gap-2"
+                  className="w-full h-11 rounded-xl border-slate-200 text-slate-700 hover:border-brand text-xs font-bold gap-2"
                 >
-                  <CalendarIcon className="h-4 w-4 text-[#fd5523]" />
+                  <CalendarIcon className="h-4 w-4 text-brand-text" />
                   Add to Google Calendar
                 </Button>
 
@@ -406,19 +406,19 @@ export function LiveSessionBookingUI({ serviceId, courseId, lessonId, onSuccess,
                       title: service.title,
                       startsAt: selectedSlot.starts_at,
                       endsAt: selectedSlot.ends_at,
-                      description: "Zed AI Academy Live Session",
+                      description: "CS Learn Live Session",
                     });
                   }}
-                  className="w-full h-11 rounded-xl border-slate-200 text-slate-700 hover:border-[#fd5523] text-xs font-bold gap-2"
+                  className="w-full h-11 rounded-xl border-slate-200 text-slate-700 hover:border-brand text-xs font-bold gap-2"
                 >
-                  <CalendarIcon className="h-4 w-4 text-[#fd5523]" />
+                  <CalendarIcon className="h-4 w-4 text-brand-text" />
                   Download .ics Calendar File
                 </Button>
               </div>
             )}
 
             <Button 
-              className="mt-6 w-full h-12 rounded-xl bg-[#062e39] text-white font-bold"
+              className="mt-6 w-full h-12 rounded-xl bg-ink text-white font-bold"
               onClick={onClose}
             >
               Back to Lesson

@@ -61,16 +61,16 @@ export function AiTutorShowcase({ signedIn }: { signedIn: boolean }) {
   const talkGated = mode === "talk" && !signedIn;
 
   return (
-    <div className="bg-[#fffaf6] text-[#062e39]">
+    <div className="bg-surface text-ink">
       {/* Hero */}
       <section className="mx-auto grid max-w-6xl items-center gap-10 px-4 pb-16 pt-28 sm:px-6 md:pt-32 lg:grid-cols-[1.05fr_0.95fr] lg:gap-14 lg:px-8">
         <div>
-          <p className="inline-flex items-center gap-2 rounded-full border border-[#fd5523]/25 bg-[#fff2e9] px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-[#fd5523]">
+          <p className="inline-flex items-center gap-2 rounded-full border border-brand/25 bg-brand-tint px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-brand-text">
             <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
             ZAI Tutor
           </p>
           <h1 className="mt-5 text-4xl font-extrabold leading-[1.08] tracking-tight sm:text-5xl lg:text-6xl">
-            Meet your <span className="text-[#fd5523]">AI teacher</span>
+            Meet your <span className="text-brand-text">AI teacher</span>
           </h1>
           <p className="mt-5 max-w-xl text-base leading-7 text-slate-600 sm:text-lg">
             Practise out loud with a teacher who listens, corrects gently, shows you the tones and remembers what you
@@ -80,7 +80,7 @@ export function AiTutorShowcase({ signedIn }: { signedIn: boolean }) {
             <a
               href="#demo"
               onClick={() => setMode("watch")}
-              className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-[#fd5523] px-6 text-sm font-semibold text-white shadow-[0_16px_34px_rgba(253,85,35,0.3)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#ef4a16]"
+              className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-brand px-6 text-sm font-semibold text-white shadow-[0_16px_34px_rgba(7,91,235,0.3)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-brand-hover"
             >
               <Play className="h-4 w-4" aria-hidden="true" />
               Watch the demo
@@ -88,7 +88,7 @@ export function AiTutorShowcase({ signedIn }: { signedIn: boolean }) {
             <a
               href="#demo"
               onClick={() => setMode("talk")}
-              className="inline-flex h-12 items-center justify-center gap-2 rounded-full border border-slate-300 bg-white px-6 text-sm font-semibold text-[#062e39] transition-all duration-200 hover:-translate-y-0.5 hover:border-[#062e39]"
+              className="inline-flex h-12 items-center justify-center gap-2 rounded-full border border-slate-300 bg-white px-6 text-sm font-semibold text-ink transition-all duration-200 hover:-translate-y-0.5 hover:border-ink"
             >
               <Mic className="h-4 w-4" aria-hidden="true" />
               Talk to her
@@ -121,8 +121,8 @@ export function AiTutorShowcase({ signedIn }: { signedIn: boolean }) {
                 type="button"
                 aria-pressed={selected}
                 onClick={() => setScenarioKey(s.key)}
-                className={`group flex flex-col rounded-[24px] border bg-white p-4 text-left shadow-[0_18px_40px_rgba(6,46,57,0.08)] transition-all duration-200 hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#fd5523] ${
-                  selected ? "border-[#fd5523] ring-2 ring-[#fd5523]/20" : "border-slate-200"
+                className={`group flex flex-col rounded-[24px] border bg-white p-4 text-left shadow-[0_18px_40px_rgba(9,21,43,0.08)] transition-all duration-200 hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand ${
+                  selected ? "border-brand ring-2 ring-brand/20" : "border-slate-200"
                 }`}
               >
                 <div
@@ -130,11 +130,11 @@ export function AiTutorShowcase({ signedIn }: { signedIn: boolean }) {
                   style={{ background: `linear-gradient(160deg, ${s.thumb.from} 0%, ${s.thumb.to} 100%)` }}
                   aria-hidden="true"
                 >
-                  <span className="absolute bottom-2 left-3 rounded-full bg-white/85 px-2.5 py-1 text-[11px] font-semibold text-[#062e39]">
+                  <span className="absolute bottom-2 left-3 rounded-full bg-white/85 px-2.5 py-1 text-[11px] font-semibold text-ink">
                     {c.place}
                   </span>
                 </div>
-                <p className="mt-4 text-xs font-semibold uppercase tracking-[0.14em] text-[#fd5523]">{c.label}</p>
+                <p className="mt-4 text-xs font-semibold uppercase tracking-[0.14em] text-brand-text">{c.label}</p>
                 <h3 className="mt-1 text-lg font-bold leading-snug">{s.title}</h3>
                 <p className="mt-2 flex-1 text-sm leading-6 text-slate-600">{s.blurb}</p>
                 <span className="mt-4 inline-flex w-fit rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
@@ -167,7 +167,7 @@ export function AiTutorShowcase({ signedIn }: { signedIn: boolean }) {
           </div>
         </div>
 
-        <div className="relative mt-6 min-h-[620px] overflow-hidden rounded-[32px] border border-slate-200 bg-white shadow-[0_30px_70px_rgba(6,46,57,0.12)]">
+        <div className="relative mt-6 min-h-[620px] overflow-hidden rounded-[32px] border border-slate-200 bg-white shadow-[0_30px_70px_rgba(9,21,43,0.12)]">
           {talkGated ? (
             <SignInGate />
           ) : (
@@ -206,9 +206,9 @@ export function AiTutorShowcase({ signedIn }: { signedIn: boolean }) {
 
         <div className="mt-8 grid gap-4 md:grid-cols-3">
           {MODE_CARDS.map(({ icon: Icon, title, body, badge }) => (
-            <article key={title} className="rounded-[24px] border border-slate-200 bg-white p-6 shadow-[0_18px_40px_rgba(6,46,57,0.06)]">
+            <article key={title} className="rounded-[24px] border border-slate-200 bg-white p-6 shadow-[0_18px_40px_rgba(9,21,43,0.06)]">
               <div className="flex items-center justify-between">
-                <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#fff2e9] text-[#fd5523]">
+                <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-brand-tint text-brand-text">
                   <Icon className="h-5 w-5" aria-hidden="true" />
                 </span>
                 {badge ? (
@@ -222,7 +222,7 @@ export function AiTutorShowcase({ signedIn }: { signedIn: boolean }) {
         </div>
 
         <div className="mt-4 grid gap-4 md:grid-cols-2">
-          <article className="rounded-[24px] border border-slate-200 bg-white p-6 shadow-[0_18px_40px_rgba(6,46,57,0.06)]">
+          <article className="rounded-[24px] border border-slate-200 bg-white p-6 shadow-[0_18px_40px_rgba(9,21,43,0.06)]">
             <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#e9f8f2] text-[#15805f]">
               <Hand className="h-5 w-5" aria-hidden="true" />
             </span>
@@ -232,7 +232,7 @@ export function AiTutorShowcase({ signedIn }: { signedIn: boolean }) {
               tone as a contour, so you can see the rise and the dip.
             </p>
           </article>
-          <article className="rounded-[24px] border border-slate-200 bg-white p-6 shadow-[0_18px_40px_rgba(6,46,57,0.06)]">
+          <article className="rounded-[24px] border border-slate-200 bg-white p-6 shadow-[0_18px_40px_rgba(9,21,43,0.06)]">
             <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#eef0ff] text-[#3b47b8]">
               <FileText className="h-5 w-5" aria-hidden="true" />
             </span>
@@ -247,45 +247,45 @@ export function AiTutorShowcase({ signedIn }: { signedIn: boolean }) {
 
       {/* For academies */}
       <section aria-labelledby="academy-heading" className="mx-auto max-w-6xl px-4 pb-20 sm:px-6 lg:px-8">
-        <div className="rounded-[32px] border border-[#fd5523]/15 bg-gradient-to-br from-[#fff2e9] via-white to-[#e9f8f2] p-6 shadow-[0_30px_70px_rgba(6,46,57,0.08)] sm:p-10">
+        <div className="rounded-[32px] border border-brand/15 bg-gradient-to-br from-brand-tint via-white to-[#e9f8f2] p-6 shadow-[0_30px_70px_rgba(9,21,43,0.08)] sm:p-10">
           <div className="grid gap-8 lg:grid-cols-[1fr_0.9fr] lg:items-center">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#fd5523]">For academies</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-text">For academies</p>
               <h2 id="academy-heading" className="mt-3 text-3xl font-extrabold tracking-tight sm:text-4xl">
                 Tutor-led speaking practice, inside your courses
               </h2>
               <ul className="mt-6 space-y-4 text-sm leading-6 text-slate-600">
                 <li className="flex gap-3">
-                  <BookOpen className="mt-1 h-5 w-5 shrink-0 text-[#fd5523]" aria-hidden="true" />
+                  <BookOpen className="mt-1 h-5 w-5 shrink-0 text-brand-text" aria-hidden="true" />
                   <span>
-                    <strong className="text-[#062e39]">Tutor-led lessons.</strong> Attach a teacher scene to a lesson so
+                    <strong className="text-ink">Tutor-led lessons.</strong> Attach a teacher scene to a lesson so
                     learners practise what they just read.
                   </span>
                 </li>
                 <li className="flex gap-3">
-                  <Mic className="mt-1 h-5 w-5 shrink-0 text-[#fd5523]" aria-hidden="true" />
+                  <Mic className="mt-1 h-5 w-5 shrink-0 text-brand-text" aria-hidden="true" />
                   <span>
-                    <strong className="text-[#062e39]">A free Practice Room.</strong> Every learner gets a monthly allowance
+                    <strong className="text-ink">A free Practice Room.</strong> Every learner gets a monthly allowance
                     of free practice minutes.
                   </span>
                 </li>
                 <li className="flex gap-3">
-                  <ClipboardList className="mt-1 h-5 w-5 shrink-0 text-[#fd5523]" aria-hidden="true" />
+                  <ClipboardList className="mt-1 h-5 w-5 shrink-0 text-brand-text" aria-hidden="true" />
                   <span>
-                    <strong className="text-[#062e39]">A teacher gradebook.</strong> Staff see the reports from lesson and
+                    <strong className="text-ink">A teacher gradebook.</strong> Staff see the reports from lesson and
                     assignment sessions in one place.
                   </span>
                 </li>
               </ul>
             </div>
-            <div className="rounded-[24px] border border-slate-200 bg-white p-6 shadow-[0_18px_40px_rgba(6,46,57,0.06)]">
+            <div className="rounded-[24px] border border-slate-200 bg-white p-6 shadow-[0_18px_40px_rgba(9,21,43,0.06)]">
               <p className="text-base leading-7 text-slate-600">
                 Want the tutor in your academy? We will set up a scene for your courses and walk your team through the
                 gradebook.
               </p>
               <Link
                 href="/contact"
-                className="mt-6 inline-flex h-12 w-full items-center justify-center gap-2 rounded-full bg-[#fd5523] px-6 text-sm font-semibold text-white transition-colors hover:bg-[#ef4a16] sm:w-auto"
+                className="mt-6 inline-flex h-12 w-full items-center justify-center gap-2 rounded-full bg-brand px-6 text-sm font-semibold text-white transition-colors hover:bg-brand-hover sm:w-auto"
               >
                 Talk to our team
                 <ArrowRight className="h-4 w-4" aria-hidden="true" />
@@ -305,7 +305,7 @@ function ModeButton({ active, onClick, children }: { active: boolean; onClick: (
       aria-pressed={active}
       onClick={onClick}
       className={`inline-flex flex-1 items-center justify-center gap-2 rounded-full px-4 py-2.5 text-sm font-semibold transition-colors sm:flex-none ${
-        active ? "bg-[#fd5523] text-white shadow-sm" : "text-slate-600 hover:text-[#062e39]"
+        active ? "bg-brand text-white shadow-sm" : "text-slate-600 hover:text-ink"
       }`}
     >
       {children}
@@ -316,8 +316,8 @@ function ModeButton({ active, onClick, children }: { active: boolean; onClick: (
 function SignInGate() {
   const back = encodeURIComponent("/ai-tutor");
   return (
-    <div className="flex min-h-[620px] flex-col items-center justify-center gap-5 bg-gradient-to-b from-[#fffaf6] to-[#fff1e6] px-6 py-12 text-center text-[#062e39]">
-      <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#fff2e9] text-[#fd5523]">
+    <div className="flex min-h-[620px] flex-col items-center justify-center gap-5 bg-gradient-to-b from-surface to-[#fff1e6] px-6 py-12 text-center text-ink">
+      <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-tint text-brand-text">
         <Lock className="h-6 w-6" aria-hidden="true" />
       </span>
       <div className="max-w-md">
@@ -330,13 +330,13 @@ function SignInGate() {
       <div className="flex w-full max-w-xs flex-col gap-3 sm:flex-row sm:justify-center">
         <Link
           href={`/sign-in?redirect_url=${back}`}
-          className="inline-flex h-11 items-center justify-center rounded-full bg-[#fd5523] px-6 text-sm font-bold text-white shadow-[0_14px_30px_rgba(253,85,35,0.28)] hover:bg-[#ef4a16]"
+          className="inline-flex h-11 items-center justify-center rounded-full bg-brand px-6 text-sm font-bold text-white shadow-[0_14px_30px_rgba(7,91,235,0.28)] hover:bg-brand-hover"
         >
           Sign in
         </Link>
         <Link
           href={`/sign-up?redirect_url=${back}`}
-          className="inline-flex h-11 items-center justify-center rounded-full border border-slate-300 bg-white px-6 text-sm font-semibold text-[#062e39] hover:border-[#062e39]"
+          className="inline-flex h-11 items-center justify-center rounded-full border border-slate-300 bg-white px-6 text-sm font-semibold text-ink hover:border-ink"
         >
           Create a free account
         </Link>

@@ -55,7 +55,7 @@ export function UserNav({ user }: { user: User }) {
           render={<Link href="/dashboard/schedule" />}
           className="flex items-center gap-2 cursor-pointer hover:bg-muted"
         >
-          <Calendar className="h-4 w-4 text-[#fd5523]" />
+          <Calendar className="h-4 w-4 text-brand-text" />
           School Timetable
         </DropdownMenuItem>
         <DropdownMenuItem

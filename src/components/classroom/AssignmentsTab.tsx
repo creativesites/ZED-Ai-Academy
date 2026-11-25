@@ -170,7 +170,7 @@ export function AssignmentsTab({
           <div className="flex flex-wrap items-center gap-1.5 text-[11px] font-semibold text-slate-400 mb-1">
             <span>Classroom</span>
             <span>•</span>
-            <span className="text-[#fd5523] uppercase tracking-wider">
+            <span className="text-brand-text uppercase tracking-wider">
               {selectedAssignment?.cohort?.name || "All Cohorts"}
             </span>
             {selectedAssignment?.course && (
@@ -182,7 +182,7 @@ export function AssignmentsTab({
               </>
             )}
           </div>
-          <h2 className="text-lg sm:text-xl font-bold text-[#062e39] tracking-tight">
+          <h2 className="text-lg sm:text-xl font-bold text-ink tracking-tight">
             Assignments &amp; Tasks
           </h2>
           <p className="text-xs text-slate-500 mt-0.5">
@@ -199,7 +199,7 @@ export function AssignmentsTab({
           {isAdminOrInstructor && (
             <Button
               onClick={() => setIsCreateOpen(true)}
-              className="bg-[#fd5523] hover:bg-[#e0481d] text-white rounded-xl text-xs font-semibold px-4 h-9 shadow-xs gap-1.5"
+              className="bg-brand hover:bg-brand-hover text-white rounded-xl text-xs font-semibold px-4 h-9 shadow-xs gap-1.5"
             >
               <Plus className="h-3.5 w-3.5" />
               New Assignment
@@ -218,7 +218,7 @@ export function AssignmentsTab({
                 className={cn(
                   "flex-1 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all min-h-[40px]",
                   activeListTab === "todo"
-                    ? "bg-white text-[#062e39] shadow-sm"
+                    ? "bg-white text-ink shadow-sm"
                     : "text-slate-500 hover:text-slate-900",
                 )}
               >
@@ -229,7 +229,7 @@ export function AssignmentsTab({
                 className={cn(
                   "flex-1 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all min-h-[40px]",
                   activeListTab === "past"
-                    ? "bg-white text-[#062e39] shadow-sm"
+                    ? "bg-white text-ink shadow-sm"
                     : "text-slate-500 hover:text-slate-900",
                 )}
               >
@@ -251,7 +251,7 @@ export function AssignmentsTab({
                 <select
                   value={selectedCourseFilter}
                   onChange={(e) => setSelectedCourseFilter(e.target.value)}
-                  className="h-10 rounded-xl border border-slate-200 bg-slate-50 px-3 text-xs font-semibold text-[#062e39] outline-none focus:border-[#fd5523] sm:max-w-[160px]"
+                  className="h-10 rounded-xl border border-slate-200 bg-slate-50 px-3 text-xs font-semibold text-ink outline-none focus:border-brand sm:max-w-[160px]"
                 >
                   <option value="all">All Courses</option>
                   {courses.map((c) => (
@@ -266,7 +266,7 @@ export function AssignmentsTab({
             <div className="space-y-4 sm:space-y-5 pt-1 max-h-[calc(100vh-320px)] overflow-y-auto pr-1">
               {loading ? (
                 <div className="py-16 text-center text-slate-400">
-                  <Loader2 className="h-6 w-6 animate-spin mx-auto text-[#fd5523] mb-2" />
+                  <Loader2 className="h-6 w-6 animate-spin mx-auto text-brand-text mb-2" />
                   <p className="text-xs font-bold">Loading assignments...</p>
                 </div>
               ) : filteredAssignments.length === 0 ? (

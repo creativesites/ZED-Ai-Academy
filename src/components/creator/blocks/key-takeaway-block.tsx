@@ -45,7 +45,7 @@ export function KeyTakeawayBlockEditor({
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2 text-[#fd5523] mb-2">
+      <div className="flex items-center gap-2 text-brand-text mb-2">
         <Zap className="h-4 w-4" />
         <span className="text-xs font-bold uppercase tracking-widest">Key Takeaways Block</span>
       </div>
@@ -63,7 +63,7 @@ export function KeyTakeawayBlockEditor({
       <div className="space-y-2">
         {points.map((point, i) => (
           <div key={i} className="flex items-center gap-3">
-            <div className="h-5 w-5 shrink-0 text-[#fd5523]">
+            <div className="h-5 w-5 shrink-0 text-brand-text">
               <svg viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
             </div>
             <Input
@@ -85,14 +85,14 @@ export function KeyTakeawayBlockEditor({
       <Button
         onClick={addPoint}
         variant="outline"
-        className="w-full border-dashed border-slate-300 text-slate-500 hover:border-[#fd5523] hover:text-[#fd5523]"
+        className="w-full border-dashed border-slate-300 text-slate-500 hover:border-brand hover:text-brand-text"
       >
         <Plus className="mr-2 h-4 w-4" />
         Add Takeaway
       </Button>
 
-      <div className="rounded-2xl bg-[#062e39] p-4 mt-2">
-        <p className="text-[10px] font-black uppercase tracking-widest text-[#fd5523] mb-2">Preview</p>
+      <div className="rounded-2xl bg-ink p-4 mt-2">
+        <p className="text-[10px] font-black uppercase tracking-widest text-brand-text mb-2">Preview</p>
         <ul className="space-y-1">
           {points.filter(Boolean).map((p, i) => (
             <li key={i} className="text-xs text-white/70">✓ {p}</li>

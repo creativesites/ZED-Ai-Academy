@@ -16,6 +16,7 @@ import {
 import { evaluateFormulaExpression, parseInteractiveFormula, type InteractiveFormula } from "@/lib/tutor/formula-sandbox";
 import { dispatchLessonSeek } from "@/lib/tutor/lesson-seek";
 import styles from "./practice.module.css";
+import { BRAND_COLORS } from "@/lib/brand";
 
 // The teaching surface beside the teacher (event contract v2): board content revealed step by step,
 // multiple-choice and confidence checks, links back to the lesson, a video clip, and award toasts.
@@ -218,10 +219,10 @@ function BoardContent({
       <div className="flex items-start justify-between gap-2">
         {board.title ? (
           <h3 className="flex items-center gap-1.5 font-heading text-sm font-semibold leading-snug text-[var(--ink)] sm:text-base">
-            {board.kind === "chart" && <BarChart3 className="h-4 w-4 text-[#fd5523]" aria-hidden="true" />}
-            {board.kind === "diagram" && <GitBranch className="h-4 w-4 text-[#fd5523]" aria-hidden="true" />}
-            {board.kind === "compare" && <Scale className="h-4 w-4 text-[#fd5523]" aria-hidden="true" />}
-            {board.kind === "code" && <Terminal className="h-4 w-4 text-[#fd5523]" aria-hidden="true" />}
+            {board.kind === "chart" && <BarChart3 className="h-4 w-4 text-brand-text" aria-hidden="true" />}
+            {board.kind === "diagram" && <GitBranch className="h-4 w-4 text-brand-text" aria-hidden="true" />}
+            {board.kind === "compare" && <Scale className="h-4 w-4 text-brand-text" aria-hidden="true" />}
+            {board.kind === "code" && <Terminal className="h-4 w-4 text-brand-text" aria-hidden="true" />}
             {board.title}
           </h3>
         ) : (
@@ -244,7 +245,7 @@ function BoardContent({
             className={`inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-bold transition ${
               isSaved
                 ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                : "border-[var(--line-strong)] bg-[var(--soft)] text-[var(--ink-dim)] hover:border-[#fd5523]/40 hover:bg-[#fff2e9] hover:text-[#fd5523]"
+                : "border-[var(--line-strong)] bg-[var(--soft)] text-[var(--ink-dim)] hover:border-brand/40 hover:bg-brand-tint hover:text-brand-text"
             }`}
           >
             {isSaved ? (
@@ -329,7 +330,7 @@ function BoardContent({
                     onClick={() => setSelectedCodeLine(isSelected ? null : lineNum)}
                     className={`flex w-full items-start gap-2.5 rounded px-1.5 py-0.5 text-left transition ${
                       isSelected
-                        ? "bg-[#fd5523]/25 text-white ring-1 ring-[#fd5523]/60"
+                        ? "bg-brand/25 text-white ring-1 ring-brand/60"
                         : onInteract
                           ? "hover:bg-white/10"
                           : ""
@@ -363,7 +364,7 @@ function BoardContent({
                       onInteract(`I'm looking at line ${selectedCodeLine}: "${lineText}"`);
                       setSelectedCodeLine(null);
                     }}
-                    className="rounded-full bg-[#fd5523] px-2.5 py-1 text-[11px] font-bold text-white hover:bg-[#ea4817] disabled:opacity-50"
+                    className="rounded-full bg-brand px-2.5 py-1 text-[11px] font-bold text-white hover:bg-brand-hover disabled:opacity-50"
                   >
                     Select line {selectedCodeLine}
                   </button>
@@ -374,7 +375,7 @@ function BoardContent({
                       onInteract(`Can you explain line ${selectedCodeLine}?`);
                       setSelectedCodeLine(null);
                     }}
-                    className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-bold text-[#062e39] hover:bg-slate-50 disabled:opacity-50"
+                    className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-bold text-ink hover:bg-slate-50 disabled:opacity-50"
                   >
                     Explain line
                   </button>
@@ -393,9 +394,9 @@ function BoardContent({
                 type="button"
                 disabled={!onInteract || disabled}
                 onClick={() => onInteract?.(`Can you explain this step: "${node.label}"?`)}
-                className="flex w-full items-center gap-2.5 rounded-xl border border-slate-200 bg-gradient-to-r from-[#fffaf6] to-white px-3 py-2 text-left text-xs font-semibold text-[#062e39] shadow-xs transition hover:border-[#fd5523]/60 hover:bg-[#fff2e9]/60 disabled:cursor-default sm:text-sm"
+                className="flex w-full items-center gap-2.5 rounded-xl border border-slate-200 bg-gradient-to-r from-surface to-white px-3 py-2 text-left text-xs font-semibold text-ink shadow-xs transition hover:border-brand/60 hover:bg-brand-tint/60 disabled:cursor-default sm:text-sm"
               >
-                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#fd5523] text-[10px] font-extrabold text-white">
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand text-[10px] font-extrabold text-white">
                   {i + 1}
                 </span>
                 <span className="flex-1 leading-snug">{node.label}</span>
@@ -432,7 +433,7 @@ function BoardContent({
               <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-2.5 text-slate-700">
                 {pair.left}
               </div>
-              <div className="rounded-xl border border-emerald-200 bg-emerald-50/60 p-2.5 font-medium text-[#062e39]">
+              <div className="rounded-xl border border-emerald-200 bg-emerald-50/60 p-2.5 font-medium text-ink">
                 {pair.right}
               </div>
             </div>
@@ -582,7 +583,7 @@ function FormulaSandboxWidget({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="inline-flex items-center gap-1.5 rounded-full border border-[#fd5523]/30 bg-[#fff2e9] px-3 py-1 text-[11px] font-bold text-[#c83a10] transition hover:bg-[#ffe5d4]"
+        className="inline-flex items-center gap-1.5 rounded-full border border-brand/30 bg-brand-tint px-3 py-1 text-[11px] font-bold text-brand-hover transition hover:bg-[#ffe5d4]"
       >
         <SlidersHorizontal className="h-3 w-3" aria-hidden="true" />
         Try interactive sliders
@@ -606,9 +607,9 @@ function FormulaSandboxWidget({
           const val = activeValues[v.name];
           return (
             <label key={v.name} className="block space-y-0.5 text-xs">
-              <div className="flex items-center justify-between font-semibold text-[#062e39]">
+              <div className="flex items-center justify-between font-semibold text-ink">
                 <span>{v.name}</span>
-                <span className="font-mono text-[#fd5523]">{val}</span>
+                <span className="font-mono text-brand-text">{val}</span>
               </div>
               <input
                 type="range"
@@ -619,7 +620,7 @@ function FormulaSandboxWidget({
                 onChange={(e) =>
                   setValues((prev) => ({ ...prev, [v.name]: Number(e.target.value) }))
                 }
-                className="h-1.5 w-full cursor-pointer accent-[#fd5523]"
+                className="h-1.5 w-full cursor-pointer accent-brand"
               />
             </label>
           );
@@ -637,7 +638,7 @@ function FormulaSandboxWidget({
               `In the sandbox with ${summary}, I got ${formula.outputName} = ${formattedResult}. What does this result tell us?`,
             );
           }}
-          className="w-full rounded-lg bg-[#062e39] px-3 py-1.5 text-[11px] font-bold text-white transition hover:bg-[#0a4352] disabled:opacity-50"
+          className="w-full rounded-lg bg-ink px-3 py-1.5 text-[11px] font-bold text-white transition hover:bg-ink-hover disabled:opacity-50"
         >
           Ask teacher about this case →
         </button>
@@ -646,7 +647,7 @@ function FormulaSandboxWidget({
   );
 }
 
-const CHART_COLORS = ["#fd5523", "#15805f", "#2563eb", "#f59e0b", "#7c3aed", "#ec4899"];
+const CHART_COLORS = [BRAND_COLORS.royalBlue, BRAND_COLORS.electricBlue, BRAND_COLORS.purple, BRAND_COLORS.orange, "#15805f", BRAND_COLORS.magenta];
 
 function InteractiveChartWidget({
   data,
@@ -681,7 +682,7 @@ function InteractiveChartWidget({
             onClick={() => setView(id)}
             className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold transition ${
               view === id
-                ? "bg-[#062e39] text-white"
+                ? "bg-ink text-white"
                 : "bg-slate-100 text-slate-600 hover:bg-slate-200"
             }`}
           >
@@ -702,7 +703,7 @@ function InteractiveChartWidget({
               className="group block w-full space-y-1 rounded-xl p-1.5 text-left transition hover:bg-slate-50 disabled:cursor-default"
             >
               <div className="flex items-center justify-between gap-2 text-xs">
-                <span className="font-semibold text-[#062e39] group-hover:text-[#fd5523]">{bar.label}</span>
+                <span className="font-semibold text-ink group-hover:text-brand-text">{bar.label}</span>
                 <span className="font-mono font-bold text-slate-600">{bar.displayValue}</span>
               </div>
               <div className="h-2.5 w-full overflow-hidden rounded-full bg-slate-100">
@@ -726,7 +727,7 @@ function InteractiveChartWidget({
             {data.length > 1 && (
               <polyline
                 fill="none"
-                stroke="#fd5523"
+                stroke={BRAND_COLORS.royalBlue}
                 strokeWidth="2.5"
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -744,8 +745,8 @@ function InteractiveChartWidget({
               const y = 96 - (d.pct / 100) * 76;
               return (
                 <g key={`${d.label}-${i}`}>
-                  <circle cx={x} cy={y} r="4.5" fill="#062e39" stroke="#ffffff" strokeWidth="1.5" />
-                  <text x={x} y={y - 9} textAnchor="middle" fontSize="9" fontWeight="700" fill="#062e39">
+                  <circle cx={x} cy={y} r="4.5" fill={BRAND_COLORS.navy} stroke="#ffffff" strokeWidth="1.5" />
+                  <text x={x} y={y - 9} textAnchor="middle" fontSize="9" fontWeight="700" fill={BRAND_COLORS.navy}>
                     {d.displayValue}
                   </text>
                   <text x={x} y={114} textAnchor="middle" fontSize="9" fill="#64748b">
@@ -794,7 +795,7 @@ function InteractiveChartWidget({
                     className="h-2.5 w-2.5 shrink-0 rounded-full"
                     style={{ backgroundColor: CHART_COLORS[i % CHART_COLORS.length] }}
                   />
-                  <span className="font-semibold text-[#062e39]">{d.label}</span>
+                  <span className="font-semibold text-ink">{d.label}</span>
                   <span className="font-mono text-slate-500">
                     {d.displayValue} ({share}%)
                   </span>

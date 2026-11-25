@@ -160,10 +160,10 @@ export function CourseBlueprintAssistant({
   }
 
   return (
-    <section className="rounded-2xl sm:rounded-3xl bg-gradient-to-br from-[#062e39] to-[#0b3f4d] p-5 sm:p-7 text-white shadow-lg border border-white/10">
+    <section className="rounded-2xl sm:rounded-3xl bg-gradient-to-br from-ink to-[#0b3f4d] p-5 sm:p-7 text-white shadow-lg border border-white/10">
       {/* Mode Switcher */}
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3 border-b border-white/10 pb-4">
-        <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-[#fd8d69]">
+        <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-brand-electric">
           <Sparkles className="h-3.5 w-3.5" />
           Course Starter Assistant
         </div>
@@ -177,7 +177,7 @@ export function CourseBlueprintAssistant({
             }}
             className={cn(
               "px-3 py-1.5 rounded-lg text-xs font-bold transition-all",
-              mode === "idea" ? "bg-[#fd5523] text-white" : "text-white/70 hover:text-white"
+              mode === "idea" ? "bg-brand text-white" : "text-white/70 hover:text-white"
             )}
           >
             From Idea
@@ -190,7 +190,7 @@ export function CourseBlueprintAssistant({
             }}
             className={cn(
               "px-3 py-1.5 rounded-lg text-xs font-bold transition-all",
-              mode === "materials" ? "bg-[#fd5523] text-white" : "text-white/70 hover:text-white"
+              mode === "materials" ? "bg-brand text-white" : "text-white/70 hover:text-white"
             )}
           >
             From Materials
@@ -215,7 +215,7 @@ export function CourseBlueprintAssistant({
                 value={brief}
                 onChange={(event) => setBrief(event.target.value)}
                 rows={4}
-                className="resize-none rounded-xl border-white/15 bg-white/10 p-3.5 text-sm font-medium text-white placeholder:text-white/40 focus:border-[#fd8d69] focus:ring-[#fd8d69]/20"
+                className="resize-none rounded-xl border-white/15 bg-white/10 p-3.5 text-sm font-medium text-white placeholder:text-white/40 focus:border-brand-electric focus:ring-brand-electric/20"
                 placeholder="Example: AI course for law firms to speed up document review and summarize case files."
               />
             </>
@@ -233,7 +233,7 @@ export function CourseBlueprintAssistant({
               {uploadedFile ? (
                 <div className="flex items-center justify-between gap-3 rounded-xl border border-white/15 bg-white/10 px-4 py-3">
                   <div className="flex items-center gap-2.5 min-w-0">
-                    <FileText className="h-4 w-4 text-[#fd8d69] shrink-0" />
+                    <FileText className="h-4 w-4 text-brand-electric shrink-0" />
                     <span className="text-xs sm:text-sm font-semibold truncate">
                       {uploadedFile.name}
                     </span>
@@ -248,8 +248,8 @@ export function CourseBlueprintAssistant({
                   </button>
                 </div>
               ) : (
-                <label className="flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-white/20 bg-white/5 p-5 text-center transition-colors hover:border-[#fd8d69]/60 hover:bg-white/10">
-                  <Upload className="h-6 w-6 text-[#fd8d69] mb-2" />
+                <label className="flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-white/20 bg-white/5 p-5 text-center transition-colors hover:border-brand-electric/60 hover:bg-white/10">
+                  <Upload className="h-6 w-6 text-brand-electric mb-2" />
                   <span className="text-xs sm:text-sm font-bold text-white">
                     Upload PDF, Markdown, or Text file
                   </span>
@@ -269,7 +269,7 @@ export function CourseBlueprintAssistant({
                 value={sourceNotes}
                 onChange={(event) => setSourceNotes(event.target.value)}
                 rows={3}
-                className="resize-none rounded-xl border-white/15 bg-white/10 p-3.5 text-sm font-medium text-white placeholder:text-white/40 focus:border-[#fd8d69]"
+                className="resize-none rounded-xl border-white/15 bg-white/10 p-3.5 text-sm font-medium text-white placeholder:text-white/40 focus:border-brand-electric"
                 placeholder="Or paste syllabus outline, lesson notes, or reference text here..."
               />
             </>
@@ -290,7 +290,7 @@ export function CourseBlueprintAssistant({
                 disabled={loading}
                 className="h-10 rounded-xl border-white/25 bg-white/10 px-4 text-xs sm:text-sm font-bold text-white hover:bg-white/20"
               >
-                <BookOpen className="mr-1.5 h-4 w-4 text-[#fd8d69]" />
+                <BookOpen className="mr-1.5 h-4 w-4 text-brand-electric" />
                 Use as Reference Only
               </Button>
             )}
@@ -299,7 +299,7 @@ export function CourseBlueprintAssistant({
               type="button"
               onClick={handleGenerate}
               disabled={loading || (mode === "idea" && !brief.trim())}
-              className="h-10 rounded-xl bg-[#fd5523] px-5 text-xs sm:text-sm font-bold text-white shadow-md hover:bg-[#ef4a16] disabled:opacity-60"
+              className="h-10 rounded-xl bg-brand px-5 text-xs sm:text-sm font-bold text-white shadow-md hover:bg-brand-hover disabled:opacity-60"
             >
               {loading ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -313,7 +313,7 @@ export function CourseBlueprintAssistant({
               <Button
                 type="button"
                 onClick={() => onApply(blueprint)}
-                className="h-10 rounded-xl bg-white px-5 text-xs sm:text-sm font-bold text-[#062e39] hover:bg-slate-100"
+                className="h-10 rounded-xl bg-white px-5 text-xs sm:text-sm font-bold text-ink hover:bg-slate-100"
               >
                 <Check className="mr-1.5 h-4 w-4 text-emerald-600" />
                 Apply to Form
@@ -326,7 +326,7 @@ export function CourseBlueprintAssistant({
           {blueprint ? (
             <div className="space-y-4">
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-widest text-[#fd8d69]">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-brand-electric">
                   Proposed Course
                 </p>
                 <h3 className="mt-1 text-base sm:text-lg font-bold leading-snug">{blueprint.title}</h3>
@@ -357,7 +357,7 @@ export function CourseBlueprintAssistant({
                         key={item}
                         className="flex items-center gap-2.5 rounded-lg bg-white/5 px-3 py-2 text-xs font-medium text-white/90"
                       >
-                        <span className="text-[#fd8d69] font-bold shrink-0">0{i + 1}</span>
+                        <span className="text-brand-electric font-bold shrink-0">0{i + 1}</span>
                         <span className="truncate">{item}</span>
                       </div>
                     ))}
@@ -378,7 +378,7 @@ export function CourseBlueprintAssistant({
                   "Grounded 4-module outline ready to review",
                 ].map((text) => (
                   <li key={text} className="flex items-center gap-2.5 text-xs sm:text-sm text-white/80">
-                    <span className="h-1.5 w-1.5 rounded-full bg-[#fd8d69] shrink-0" />
+                    <span className="h-1.5 w-1.5 rounded-full bg-brand-electric shrink-0" />
                     {text}
                   </li>
                 ))}

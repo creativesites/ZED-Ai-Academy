@@ -1273,7 +1273,7 @@ export function TutorSession({
             <div className="min-w-0">
               <p className="truncate text-xs font-bold text-[var(--ink)] sm:text-sm">{sceneTitle}</p>
               <div className="flex items-center gap-1.5 text-[10px] font-semibold text-[var(--ink-dim)]">
-                <span className="inline-flex items-center gap-0.5 text-[#fd5523]">
+                <span className="inline-flex items-center gap-0.5 text-brand-text">
                   <Sparkles className="h-2.5 w-2.5" aria-hidden="true" />
                   {currentStepLabel ? currentStepLabel : `Turn ${turnCount + 1}`}
                 </span>
@@ -1290,12 +1290,12 @@ export function TutorSession({
               onClick={() => setTranscriptOpen(true)}
               title="Open transcript & study notes"
               aria-label="Open transcript and study notes"
-              className="inline-flex h-8 items-center gap-1 rounded-full border border-[var(--line-strong)] bg-white px-2 text-[11px] font-bold text-[var(--ink)] transition hover:border-[#fd5523]/40 hover:bg-[#fff2e9] hover:text-[#fd5523] sm:px-2.5"
+              className="inline-flex h-8 items-center gap-1 rounded-full border border-[var(--line-strong)] bg-white px-2 text-[11px] font-bold text-[var(--ink)] transition hover:border-brand/40 hover:bg-brand-tint hover:text-brand-text sm:px-2.5"
             >
-              <MessageSquareText className="h-3.5 w-3.5 text-[#fd5523]" aria-hidden="true" />
+              <MessageSquareText className="h-3.5 w-3.5 text-brand-text" aria-hidden="true" />
               <span className="hidden md:inline">Notes</span>
               {transcript.length > 0 && (
-                <span className="rounded-full bg-[#fff2e9] px-1.5 text-[10px] font-extrabold text-[#c83a10]">
+                <span className="rounded-full bg-brand-tint px-1.5 text-[10px] font-extrabold text-brand-hover">
                   {transcript.length}
                 </span>
               )}
@@ -1309,7 +1309,7 @@ export function TutorSession({
               aria-label={`Speaking speed ${playbackRate}x. Tap to change.`}
               className="inline-flex h-8 items-center gap-1 rounded-full border border-[var(--line-strong)] bg-white px-2 text-[11px] font-bold text-[var(--ink)] transition hover:bg-[var(--soft-hover)] sm:px-2.5"
             >
-              <Gauge className="h-3.5 w-3.5 text-[#fd5523]" aria-hidden="true" />
+              <Gauge className="h-3.5 w-3.5 text-brand-text" aria-hidden="true" />
               <span>{playbackRate === 1 ? "1×" : `${playbackRate}×`}</span>
             </button>
 
@@ -1355,7 +1355,7 @@ export function TutorSession({
                 value={muted ? 0 : volume}
                 onChange={(e) => handleVolumeChange(Number(e.target.value))}
                 aria-label="Teacher volume"
-                className="hidden h-1.5 w-16 cursor-pointer accent-[#fd5523] sm:block"
+                className="hidden h-1.5 w-16 cursor-pointer accent-brand sm:block"
               />
               <button
                 type="button"
@@ -1377,7 +1377,7 @@ export function TutorSession({
                     value={muted ? 0 : volume}
                     onChange={(e) => handleVolumeChange(Number(e.target.value))}
                     aria-label="Teacher volume"
-                    className="h-1.5 flex-1 cursor-pointer accent-[#fd5523]"
+                    className="h-1.5 flex-1 cursor-pointer accent-brand"
                   />
                   <Volume2 className="h-3.5 w-3.5 shrink-0 text-[var(--ink)]" aria-hidden="true" />
                 </div>
@@ -1398,7 +1398,7 @@ export function TutorSession({
                   title="2D Rive animated teacher"
                   className={`h-7 rounded-full px-2 transition-colors ${
                     avatarMode === "rive"
-                      ? "bg-[#062e39] text-white shadow-xs"
+                      ? "bg-ink text-white shadow-xs"
                       : "text-[var(--ink-dim)] hover:text-[var(--ink)]"
                   }`}
                 >
@@ -1417,7 +1417,7 @@ export function TutorSession({
                   title="3D WebGL studio teacher"
                   className={`h-7 rounded-full px-2 transition-colors ${
                     avatarMode === "three"
-                      ? "bg-[#fd5523] text-white shadow-xs"
+                      ? "bg-brand text-white shadow-xs"
                       : "text-[var(--ink-dim)] hover:text-[var(--ink)]"
                   }`}
                 >
@@ -1473,7 +1473,7 @@ export function TutorSession({
                       done
                         ? "bg-[#15805f]"
                         : current
-                          ? "bg-[#fd5523]"
+                          ? "bg-brand"
                           : "bg-slate-200"
                     }`}
                   />
@@ -1487,7 +1487,7 @@ export function TutorSession({
         ) : (
           <div className="h-1 w-full bg-slate-200/70" aria-hidden="true">
             <div
-              className="h-full bg-gradient-to-r from-[#fd5523] to-[#15805f] transition-[width] duration-500 ease-out"
+              className="h-full bg-gradient-to-r from-brand to-[#15805f] transition-[width] duration-500 ease-out"
               style={{ width: `${progressPct}%` }}
             />
           </div>
@@ -1549,7 +1549,7 @@ export function TutorSession({
       </main>
 
       {/* Bottom Sticky Dynamic Action Dock — NEVER requires scrolling to access */}
-      <footer className="relative z-20 shrink-0 border-t border-[var(--line)] bg-white/92 px-3 pb-[max(10px,env(safe-area-inset-bottom))] pt-2.5 shadow-[0_-8px_28px_rgba(6,46,57,0.08)] backdrop-blur-md sm:px-4">
+      <footer className="relative z-20 shrink-0 border-t border-[var(--line)] bg-white/92 px-3 pb-[max(10px,env(safe-area-inset-bottom))] pt-2.5 shadow-[0_-8px_28px_rgba(9,21,43,0.08)] backdrop-blur-md sm:px-4">
         <div className="mx-auto w-full max-w-[760px]">
           <Composer
             mode={mode}

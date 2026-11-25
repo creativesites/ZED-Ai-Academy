@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { auth } from "@clerk/nextjs/server";
 import { SignInButton, SignUpButton, UserButton, OrganizationSwitcher } from "@clerk/nextjs";
-import { ArrowRight, BrainCircuit, LayoutDashboard, Mail, MapPin, Menu, Phone, Rocket, Sparkles } from "lucide-react";
+import { ArrowRight, LayoutDashboard, Mail, MapPin, Menu, Phone, Rocket, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -11,6 +11,8 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { createServiceClient } from "@/lib/supabase/server";
+import { BRAND } from "@/lib/brand";
+import { BrandLogo } from "@/components/shared/brand-logo";
 
 const NAV_LINKS = [
   { href: "/", label: "Home" },
@@ -22,14 +24,7 @@ const NAV_LINKS = [
 function BrandLockup() {
   return (
     <Link href="/" className="group flex items-center gap-3">
-      <div className="relative flex h-11 w-11 items-center justify-center rounded-2xl bg-[#fd5523] text-white shadow-[0_16px_34px_rgba(253,85,35,0.3)]">
-        <span className="absolute inset-0 rounded-2xl border border-white/20" />
-        <BrainCircuit className="h-5 w-5 transition-transform duration-300 group-hover:scale-110" />
-      </div>
-      <div className="flex flex-col leading-none">
-        <span className="text-sm font-semibold uppercase tracking-[0.24em] text-[#fd5523]">Zed AI</span>
-        <span className="text-lg font-semibold tracking-[-0.04em] text-[#062e39]">Academy</span>
-      </div>
+      <BrandLogo variant="onLight" priority className="h-11 w-auto transition-transform duration-300 group-hover:scale-[1.02]" />
     </Link>
   );
 }
@@ -57,27 +52,27 @@ export async function Navbar() {
 
   return (
     <header className="fixed inset-x-0 top-0 z-50">
-      <div className="hidden border-b border-white/10 bg-[#062e39] text-white md:block">
+      <div className="hidden border-b border-white/10 bg-ink text-white md:block">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-3 text-sm lg:px-8">
           <div className="flex flex-wrap items-center gap-6 text-white/75">
             <span className="inline-flex items-center gap-2">
-              <MapPin className="h-4 w-4 text-[#fd5523]" />
+              <MapPin className="h-4 w-4 text-brand-text" />
               Zambia-first AI learning for modern teams
             </span>
-            <a href="mailto:hello@zedaiacademy.com" className="inline-flex items-center gap-2 hover:text-white">
-              <Mail className="h-4 w-4 text-[#fd5523]" />
-              hello@zedaiacademy.com
+            <a href={`mailto:${BRAND.supportEmail}`} className="inline-flex items-center gap-2 hover:text-white">
+              <Mail className="h-4 w-4 text-brand-text" />
+              {BRAND.supportEmail}
             </a>
           </div>
 
           <div className="flex items-center gap-5 text-white/75">
             <a href="tel:+260977000000" className="inline-flex items-center gap-2 hover:text-white">
-              <Phone className="h-4 w-4 text-[#fd5523]" />
+              <Phone className="h-4 w-4 text-brand-text" />
               Talk to admissions
             </a>
             <Link href="/pricing#teams" className="inline-flex items-center gap-2 font-medium text-white">
               Team cohorts
-              <ArrowRight className="h-4 w-4 text-[#fd5523]" />
+              <ArrowRight className="h-4 w-4 text-brand-text" />
             </Link>
           </div>
         </div>
@@ -93,7 +88,7 @@ export async function Navbar() {
                 <Link
                   key={href}
                   href={href}
-                  className="rounded-full px-4 py-2 text-sm font-medium text-slate-600 transition-all hover:bg-[#062e39] hover:text-white"
+                  className="rounded-full px-4 py-2 text-sm font-medium text-slate-600 transition-all hover:bg-ink hover:text-white"
                 >
                   {label}
                 </Link>
@@ -106,7 +101,7 @@ export async function Navbar() {
                   {needsAcademyLaunch && (
                     <Link
                       href="/launch-your-academy"
-                      className="inline-flex items-center gap-2 rounded-full border border-[#fd5523]/40 bg-[#fd5523]/10 px-4 py-2 text-sm font-semibold text-[#fd5523] transition-colors hover:bg-[#fd5523] hover:text-white"
+                      className="inline-flex items-center gap-2 rounded-full border border-brand/40 bg-brand/10 px-4 py-2 text-sm font-semibold text-brand-text transition-colors hover:bg-brand hover:text-white"
                     >
                       <Rocket className="h-4 w-4" />
                       Open your academy
@@ -114,16 +109,16 @@ export async function Navbar() {
                   )}
                   <Link
                     href={isAdmin ? "/creator/courses" : "/dashboard"}
-                    className="inline-flex items-center gap-2 rounded-full bg-[#062e39] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#0a4055]"
+                    className="inline-flex items-center gap-2 rounded-full bg-ink px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-ink-hover"
                   >
-                    <LayoutDashboard className="h-4 w-4 text-[#fd5523]" />
+                    <LayoutDashboard className="h-4 w-4 text-brand-text" />
                     Dashboard
                   </Link>
                   {!isLearner && (
                     <OrganizationSwitcher 
                       appearance={{
                         elements: {
-                          organizationSwitcherTrigger: "rounded-full bg-slate-50 border border-slate-200 px-3 py-1.5 text-xs font-semibold text-[#062e39]",
+                          organizationSwitcherTrigger: "rounded-full bg-slate-50 border border-slate-200 px-3 py-1.5 text-xs font-semibold text-ink",
                         }
                       }}
                     />
@@ -135,13 +130,13 @@ export async function Navbar() {
                   <SignInButton mode="redirect">
                     <Button
                       variant="ghost"
-                      className="rounded-full px-5 text-sm font-medium text-slate-600 hover:bg-[#fff6ee] hover:text-[#062e39]"
+                      className="rounded-full px-5 text-sm font-medium text-slate-600 hover:bg-brand-soft hover:text-ink"
                     >
                       Sign in
                     </Button>
                   </SignInButton>
                   <SignUpButton mode="redirect">
-                    <Button className="rounded-full bg-[#fd5523] px-5 text-sm font-semibold text-white hover:bg-[#ef4a16]">
+                    <Button className="rounded-full bg-brand px-5 text-sm font-semibold text-white hover:bg-brand-hover">
                       Start free
                     </Button>
                   </SignUpButton>
@@ -151,11 +146,11 @@ export async function Navbar() {
 
             <div className="lg:hidden">
               <Sheet>
-                <SheetTrigger render={<Button variant="ghost" size="icon" className="rounded-full text-[#062e39]" />}>
+                <SheetTrigger render={<Button variant="ghost" size="icon" className="rounded-full text-ink" />}>
                   <Menu className="h-6 w-6" />
                   <span className="sr-only">Open navigation</span>
                 </SheetTrigger>
-                <SheetContent side="right" className="w-[320px] border-l border-slate-200 bg-[#fffaf6] p-0">
+                <SheetContent side="right" className="w-[320px] border-l border-slate-200 bg-surface p-0">
                   <div className="flex h-full flex-col">
                     <SheetHeader className="border-b border-slate-200 px-6 py-5 text-left">
                       <SheetTitle>
@@ -168,20 +163,20 @@ export async function Navbar() {
                         <Link
                           key={href}
                           href={href}
-                          className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-base font-medium text-[#062e39] shadow-sm"
+                          className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-base font-medium text-ink shadow-sm"
                         >
                           {label}
                         </Link>
                       ))}
 
-                      <div className="rounded-[1.75rem] bg-[#062e39] p-5 text-white">
-                        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#fd8d69]">Need a team plan?</p>
+                      <div className="rounded-[1.75rem] bg-ink p-5 text-white">
+                        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-brand-electric">Need a team plan?</p>
                         <p className="mt-3 text-sm leading-6 text-white/75">
                           We help companies roll out practical AI training across operations, marketing, and product teams.
                         </p>
                         <Link href="/pricing#teams" className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-white">
                           See team pricing
-                          <ArrowRight className="h-4 w-4 text-[#fd5523]" />
+                          <ArrowRight className="h-4 w-4 text-brand-text" />
                         </Link>
                       </div>
                     </div>
@@ -192,7 +187,7 @@ export async function Navbar() {
                           {needsAcademyLaunch && (
                             <Link
                               href="/launch-your-academy"
-                              className="flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#fd5523] to-[#ff7a45] px-4 py-3 text-base font-semibold text-white shadow-lg shadow-[#fd5523]/25"
+                              className="flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-brand to-[#ff7a45] px-4 py-3 text-base font-semibold text-white shadow-lg shadow-brand/25"
                             >
                               <Rocket className="h-5 w-5" />
                               Open your academy
@@ -200,9 +195,9 @@ export async function Navbar() {
                           )}
                           <Link
                             href={isAdmin ? "/creator/courses" : "/dashboard"}
-                            className="flex items-center gap-2 rounded-2xl border border-[#062e39] bg-[#062e39] px-4 py-3 text-base font-medium text-white"
+                            className="flex items-center gap-2 rounded-2xl border border-ink bg-ink px-4 py-3 text-base font-medium text-white"
                           >
-                            <LayoutDashboard className="h-5 w-5 text-[#fd5523]" />
+                            <LayoutDashboard className="h-5 w-5 text-brand-text" />
                             Dashboard
                           </Link>
                           {!isLearner && (
@@ -224,7 +219,7 @@ export async function Navbar() {
                             </Button>
                           </SignInButton>
                           <SignUpButton mode="redirect">
-                            <Button className="h-12 rounded-full bg-[#fd5523] text-base font-semibold text-white hover:bg-[#ef4a16]">
+                            <Button className="h-12 rounded-full bg-brand text-base font-semibold text-white hover:bg-brand-hover">
                               Start free
                             </Button>
                           </SignUpButton>

@@ -26,7 +26,7 @@ export default function VideoModal({ isOpen, onClose, videoId, channel = "youtub
         <DialogTitle className="sr-only">Video Player</DialogTitle>
         <button 
           onClick={onClose}
-          className="absolute -top-10 right-0 md:-right-10 text-white hover:text-[#fd5523] transition-all hover:scale-110 p-2 z-[60] bg-black/20 rounded-full backdrop-blur-sm"
+          className="absolute -top-10 right-0 md:-right-10 text-white hover:text-brand-text transition-all hover:scale-110 p-2 z-[60] bg-black/20 rounded-full backdrop-blur-sm"
           aria-label="Close video"
         >
           <X className="h-8 w-8" />

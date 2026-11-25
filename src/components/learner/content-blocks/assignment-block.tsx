@@ -22,7 +22,7 @@ export function AssignmentBlock({ content }: { content: Record<string, unknown> 
           </div>
           <div>
             <p className="text-[10px] font-black uppercase tracking-[0.22em] text-emerald-600">Assignment</p>
-            <h3 className="text-2xl font-bold tracking-tight text-[#062e39]">{title}</h3>
+            <h3 className="text-2xl font-bold tracking-tight text-ink">{title}</h3>
           </div>
         </div>
         {estimatedMinutes ? (

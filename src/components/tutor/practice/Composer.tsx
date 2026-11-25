@@ -311,7 +311,7 @@ export function Composer(props: ComposerProps) {
                 type="button"
                 onClick={playSelfRecording}
                 title="Hear your own recording"
-                className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[10px] font-bold text-slate-600 transition hover:border-[#fd5523]/40 hover:text-[#fd5523]"
+                className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[10px] font-bold text-slate-600 transition hover:border-brand/40 hover:text-brand-text"
               >
                 <Play className="h-2.5 w-2.5 fill-current" aria-hidden="true" />
                 {playingSelf ? "Stop" : "You"}
@@ -345,7 +345,7 @@ export function Composer(props: ComposerProps) {
                 type="button"
                 onClick={playSelfRecording}
                 title="Compare your recording"
-                className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[10px] font-bold text-slate-700 hover:border-[#fd5523]/40 hover:text-[#fd5523]"
+                className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[10px] font-bold text-slate-700 hover:border-brand/40 hover:text-brand-text"
               >
                 <Play className="h-2.5 w-2.5 fill-current" aria-hidden="true" />
                 {playingSelf ? "Stop" : "Hear yourself"}
@@ -395,7 +395,7 @@ export function Composer(props: ComposerProps) {
       {activeChoice && (
         <div className="grid gap-1.5">
           <div className="flex items-center justify-between gap-2">
-            <p className="inline-flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider text-[#fd5523]">
+            <p className="inline-flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider text-brand-text">
               <Sparkles className="h-3 w-3" aria-hidden="true" />
               {activeChoice.question}
             </p>
@@ -425,14 +425,14 @@ export function Composer(props: ComposerProps) {
                   className={`flex min-h-10 items-center gap-2.5 rounded-xl border px-3 py-2 text-left text-xs font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus)] disabled:cursor-not-allowed sm:text-[13px] ${
                     picked
                       ? "border-[#0f766e] bg-[#ecfdf5] text-[#064e3b] shadow-xs"
-                      : "border-[var(--line-strong)] bg-white text-[var(--ink)] hover:border-[#fd5523]/60 hover:bg-[#fff6ee] disabled:opacity-55"
+                      : "border-[var(--line-strong)] bg-white text-[var(--ink)] hover:border-brand/60 hover:bg-brand-soft disabled:opacity-55"
                   }`}
                 >
                   <span
                     className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-extrabold ${
                       picked
                         ? "bg-[#0f766e] text-white"
-                        : "bg-[#fff2e9] text-[#fd5523]"
+                        : "bg-brand-tint text-brand-text"
                     }`}
                   >
                     {picked ? <Check className="h-3 w-3" /> : letter}
@@ -449,7 +449,7 @@ export function Composer(props: ComposerProps) {
       {activeOrderChallenge && (
         <div className="grid gap-1.5">
           <div className="flex items-center justify-between gap-2">
-            <p className="inline-flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider text-[#fd5523]">
+            <p className="inline-flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider text-brand-text">
               <ListOrdered className="h-3.5 w-3.5" aria-hidden="true" />
               {activeOrderChallenge.prompt}
             </p>
@@ -485,7 +485,7 @@ export function Composer(props: ComposerProps) {
                   className={`flex min-h-9 items-center gap-2 rounded-xl border px-3 py-1.5 text-left text-xs font-semibold transition ${
                     selected
                       ? "border-[#0f766e] bg-[#ecfdf5] text-[#064e3b]"
-                      : "border-[var(--line-strong)] bg-white text-[var(--ink)] hover:border-[#fd5523]/50 hover:bg-[#fff6ee]"
+                      : "border-[var(--line-strong)] bg-white text-[var(--ink)] hover:border-brand/50 hover:bg-brand-soft"
                   }`}
                 >
                   <span
@@ -521,7 +521,7 @@ export function Composer(props: ComposerProps) {
           <p className="text-[11px] font-bold uppercase tracking-wider text-amber-800">
             Fill in the blank
           </p>
-          <p className="text-xs font-medium leading-snug text-[#062e39] sm:text-[13px]">
+          <p className="text-xs font-medium leading-snug text-ink sm:text-[13px]">
             {activeFillBlank.template}
           </p>
           {activeFillBlank.wordBank.length > 0 && (
@@ -532,7 +532,7 @@ export function Composer(props: ComposerProps) {
                   type="button"
                   disabled={!canType}
                   onClick={() => onSendText(word)}
-                  className="rounded-full border border-amber-300 bg-white px-2.5 py-1 text-xs font-bold text-[#062e39] shadow-xs transition hover:border-[#fd5523] hover:bg-[#fff2e9] hover:text-[#fd5523] disabled:opacity-45"
+                  className="rounded-full border border-amber-300 bg-white px-2.5 py-1 text-xs font-bold text-ink shadow-xs transition hover:border-brand hover:bg-brand-tint hover:text-brand-text disabled:opacity-45"
                 >
                   {word}
                 </button>
@@ -566,7 +566,7 @@ export function Composer(props: ComposerProps) {
                   type="button"
                   disabled={!canType}
                   onClick={() => onConfidence(lvl)}
-                  className="flex flex-col items-center justify-center rounded-xl border border-[var(--line-strong)] bg-white px-2 py-2 text-center transition hover:border-[#fd5523]/60 hover:bg-[#fff6ee] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus)] disabled:opacity-55"
+                  className="flex flex-col items-center justify-center rounded-xl border border-[var(--line-strong)] bg-white px-2 py-2 text-center transition hover:border-brand/60 hover:bg-brand-soft focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus)] disabled:opacity-55"
                 >
                   <span className="text-base leading-none" aria-hidden="true">
                     {meta.emoji}
@@ -584,7 +584,7 @@ export function Composer(props: ComposerProps) {
       {pasteWorkOpen && (
         <div className="grid gap-1.5 rounded-2xl border border-slate-200 bg-slate-50/90 p-2.5">
           <div className="flex items-center justify-between gap-2">
-            <span className="text-[11px] font-bold text-[#062e39]">
+            <span className="text-[11px] font-bold text-ink">
               Paste your draft, code, or problem for {teacherName} to review
             </span>
             <button
@@ -602,7 +602,7 @@ export function Composer(props: ComposerProps) {
             onChange={(e) => setPasteDraft(e.target.value)}
             maxLength={950}
             placeholder="Paste an email draft, code snippet, formula attempt, or notes..."
-            className="w-full resize-none rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-[#062e39] placeholder:text-slate-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#fd5523]"
+            className="w-full resize-none rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-ink placeholder:text-slate-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand"
           />
           <div className="flex justify-end gap-1.5">
             <button
@@ -637,7 +637,7 @@ export function Composer(props: ComposerProps) {
         </p>
       )}
       {pendingImage && onSendImage && (
-        <div className="flex flex-wrap items-center gap-2.5 rounded-2xl border border-[#fd5523]/30 bg-[#fffaf6] p-2.5">
+        <div className="flex flex-wrap items-center gap-2.5 rounded-2xl border border-brand/30 bg-surface p-2.5">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={pendingImage.previewUrl}
@@ -651,7 +651,7 @@ export function Composer(props: ComposerProps) {
               onChange={(e) => setImageCaption(e.target.value)}
               maxLength={300}
               placeholder="Optional note (e.g. Check step 2 of my calculation)"
-              className="h-8 w-full rounded-lg border border-slate-200 bg-white px-2.5 text-xs text-[#062e39] placeholder:text-slate-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#fd5523]"
+              className="h-8 w-full rounded-lg border border-slate-200 bg-white px-2.5 text-xs text-ink placeholder:text-slate-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand"
             />
             <div className="flex items-center justify-end gap-1.5">
               <button
@@ -693,8 +693,8 @@ export function Composer(props: ComposerProps) {
               onClick={() => onSendText(q.text)}
               className={`shrink-0 whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-semibold shadow-xs transition disabled:opacity-45 ${
                 q.primary
-                  ? "border-[#fd5523]/40 bg-[#fff2e9] text-[#c83a10] hover:bg-[#ffe5d4]"
-                  : "border-[var(--line-strong)] bg-white/95 text-[var(--ink)] hover:border-[#fd5523]/50 hover:bg-[#fff6ee] hover:text-[#fd5523]"
+                  ? "border-brand/40 bg-brand-tint text-brand-hover hover:bg-[#ffe5d4]"
+                  : "border-[var(--line-strong)] bg-white/95 text-[var(--ink)] hover:border-brand/50 hover:bg-brand-soft hover:text-brand-text"
               }`}
             >
               {q.label}
@@ -713,7 +713,7 @@ export function Composer(props: ComposerProps) {
                 type="button"
                 disabled={!canType}
                 onClick={() => imageInputRef.current?.click()}
-                className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full border border-dashed border-slate-300 bg-white/90 px-2.5 py-1.5 text-xs font-semibold text-slate-600 transition hover:border-[#fd5523]/60 hover:bg-[#fff6ee] hover:text-[#fd5523] disabled:opacity-45"
+                className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full border border-dashed border-slate-300 bg-white/90 px-2.5 py-1.5 text-xs font-semibold text-slate-600 transition hover:border-brand/60 hover:bg-brand-soft hover:text-brand-text disabled:opacity-45"
               >
                 <Camera className="h-3 w-3" aria-hidden="true" />
                 Show work
@@ -724,7 +724,7 @@ export function Composer(props: ComposerProps) {
             type="button"
             disabled={!canType}
             onClick={() => setPasteWorkOpen((o) => !o)}
-            className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full border border-dashed border-slate-300 bg-white/90 px-2.5 py-1.5 text-xs font-semibold text-slate-600 transition hover:border-[#fd5523]/60 hover:bg-[#fff6ee] hover:text-[#fd5523] disabled:opacity-45"
+            className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full border border-dashed border-slate-300 bg-white/90 px-2.5 py-1.5 text-xs font-semibold text-slate-600 transition hover:border-brand/60 hover:bg-brand-soft hover:text-brand-text disabled:opacity-45"
           >
             <ClipboardPaste className="h-3 w-3" aria-hidden="true" />
             Paste work
@@ -797,7 +797,7 @@ export function Composer(props: ComposerProps) {
                   className={`inline-block h-2.5 w-2.5 shrink-0 rounded-full ${
                     handsFreeListening
                       ? handsFreeSpeechDetected
-                        ? "animate-ping bg-[#fd5523]"
+                        ? "animate-ping bg-brand"
                         : "animate-pulse bg-emerald-600"
                       : "bg-slate-400"
                   }`}
@@ -848,7 +848,7 @@ export function Composer(props: ComposerProps) {
               onPointerCancel={onPointerUp}
               onLostPointerCapture={() => recording && onHoldEnd()}
               onContextMenu={(e) => e.preventDefault()}
-              className={`${styles.holdButton} ${styles.primaryButton} flex h-11 min-w-0 flex-1 items-center justify-center gap-2 rounded-full px-3.5 text-sm font-bold shadow-[0_10px_24px_rgba(253,85,35,0.26)] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus)] disabled:opacity-50 data-[active=true]:bg-[#ff7a8a] data-[active=true]:text-[#2a0b10] sm:h-12 sm:gap-2.5 sm:px-4 sm:text-[15px]`}
+              className={`${styles.holdButton} ${styles.primaryButton} flex h-11 min-w-0 flex-1 items-center justify-center gap-2 rounded-full px-3.5 text-sm font-bold shadow-[0_10px_24px_rgba(7,91,235,0.26)] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus)] disabled:opacity-50 data-[active=true]:bg-[#ff7a8a] data-[active=true]:text-[#2a0b10] sm:h-12 sm:gap-2.5 sm:px-4 sm:text-[15px]`}
             >
               <span className={`${styles.micDot} inline-block h-5 w-5 flex-none rounded-full sm:h-6 sm:w-6`} aria-hidden="true" />
               <span className="flex h-5 items-center gap-0.5 sm:gap-1" aria-hidden="true">
@@ -891,7 +891,7 @@ export function Composer(props: ComposerProps) {
                 aria-label="Switch to typing"
                 className="flex h-11 shrink-0 items-center gap-1 rounded-full border border-[var(--line-strong)] bg-white px-3 text-xs font-bold text-[var(--ink)] shadow-xs transition hover:bg-[var(--soft-hover)] sm:h-12 sm:px-3.5"
               >
-                <Keyboard className="h-4 w-4 text-[#fd5523]" aria-hidden="true" />
+                <Keyboard className="h-4 w-4 text-brand-text" aria-hidden="true" />
                 <span className="hidden sm:inline">Type</span>
               </button>
             )}
@@ -904,7 +904,7 @@ export function Composer(props: ComposerProps) {
                 onClick={() => onModeChange("voice")}
                 title="Switch to voice"
                 aria-label="Switch to voice"
-                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[var(--line-strong)] bg-white text-[var(--ink)] shadow-xs transition hover:border-[#fd5523]/50 hover:bg-[#fff6ee] hover:text-[#fd5523]"
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[var(--line-strong)] bg-white text-[var(--ink)] shadow-xs transition hover:border-brand/50 hover:bg-brand-soft hover:text-brand-text"
               >
                 <Mic className="h-4 w-4" aria-hidden="true" />
               </button>

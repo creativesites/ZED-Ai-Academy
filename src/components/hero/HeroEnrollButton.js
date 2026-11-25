@@ -101,7 +101,7 @@ export function HeroEnrollButton({
         padding: compact ? "8px 16px" : "10px 20px",
         borderRadius: "100px",
         border: "none",
-        background: isFree ? "#16a34a" : "#fd5523",
+        background: isFree ? "#16a34a" : "var(--color-brand)",
         color: "#fff",
         fontSize: compact ? "12px" : "13px",
         fontWeight: 700,
@@ -111,7 +111,7 @@ export function HeroEnrollButton({
         whiteSpace: "nowrap",
         boxShadow: isFree
           ? "0 4px 14px rgba(22,163,74,0.3)"
-          : "0 4px 14px rgba(253,85,35,0.3)",
+          : "0 4px 14px rgba(7, 91, 235,0.3)",
       }}
     >
       {enrolling ? (

@@ -65,7 +65,7 @@ export async function POST(req: NextRequest) {
   const style = body.style || template?.style || "scene";
   const level = body.level || course?.level || "A1";
 
-  const systemInstruction = `You are an expert language and interactive tutor curriculum designer for Zed AI Academy.
+  const systemInstruction = `You are an expert language and interactive tutor curriculum designer for CS Learn.
 You design short, engaging, spoken practice scenarios for an animated 3D/Rive AI teacher.
 Return ONLY valid JSON matching the requested schema. No markdown fences or extra commentary.`;
 

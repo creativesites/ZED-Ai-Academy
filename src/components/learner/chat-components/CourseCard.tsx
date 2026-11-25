@@ -67,7 +67,7 @@ export function CourseCard({
           )}
         </div>
 
-        <h4 className="line-clamp-1 text-base font-bold text-slate-900 group-hover:text-[#fd5523] transition-colors">{title}</h4>
+        <h4 className="line-clamp-1 text-base font-bold text-slate-900 group-hover:text-brand-text transition-colors">{title}</h4>
         {description && (
           <p className="mt-2 line-clamp-2 text-xs leading-relaxed text-slate-500">
             {description}
@@ -86,7 +86,7 @@ export function CourseCard({
           
           <Link 
             href={`/courses/${slug}`}
-            className="flex items-center gap-1 text-xs font-bold text-[#fd5523] hover:underline"
+            className="flex items-center gap-1 text-xs font-bold text-brand-text hover:underline"
           >
             Explore Course
             <ChevronRight className="h-3 w-3" />

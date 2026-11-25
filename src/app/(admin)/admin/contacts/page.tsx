@@ -28,8 +28,8 @@ export default async function ContactEntriesPage() {
   return (
     <div className="container py-20">
       <div className="mb-12">
-        <Link href="/admin" className="text-sm font-bold text-[#fd5523] hover:underline mb-4 block">← Back to Dashboard</Link>
-        <h1 className="text-4xl font-extrabold text-[#062e39] tracking-tight">Contact Entries</h1>
+        <Link href="/admin" className="text-sm font-bold text-brand-text hover:underline mb-4 block">← Back to Dashboard</Link>
+        <h1 className="text-4xl font-extrabold text-ink tracking-tight">Contact Entries</h1>
         <p className="text-slate-500 mt-2">Manage inquiries from the contact page.</p>
       </div>
 
@@ -41,14 +41,14 @@ export default async function ContactEntriesPage() {
           </div>
         ) : (
           entries.map((entry) => (
-            <div key={entry.id} className="bg-white rounded-[2.5rem] border-2 border-slate-50 p-8 shadow-sm hover:border-[#fd5523]/20 transition-all group">
+            <div key={entry.id} className="bg-white rounded-[2.5rem] border-2 border-slate-50 p-8 shadow-sm hover:border-brand/20 transition-all group">
                <div className="flex flex-wrap items-start justify-between gap-6 mb-6">
                   <div className="flex gap-4">
-                     <div className="h-14 w-14 rounded-2xl bg-[#fff2e9] flex items-center justify-center text-[#fd5523] shrink-0 group-hover:scale-110 transition-transform">
+                     <div className="h-14 w-14 rounded-2xl bg-brand-tint flex items-center justify-center text-brand-text shrink-0 group-hover:scale-110 transition-transform">
                         <User className="h-6 w-6" />
                      </div>
                      <div>
-                        <h3 className="text-xl font-bold text-[#062e39]">{entry.name}</h3>
+                        <h3 className="text-xl font-bold text-ink">{entry.name}</h3>
                         <div className="flex items-center gap-3 mt-1">
                            <div className="flex items-center gap-1.5 text-xs font-bold text-slate-400">
                               <Mail className="h-3 w-3" />
@@ -77,8 +77,8 @@ export default async function ContactEntriesPage() {
 
                <div className="flex items-center gap-3">
                   <Link 
-                    href={`mailto:${entry.email}?subject=Re: ${entry.subject || "Zed AI Academy Inquiry"}`}
-                    className="flex items-center gap-2 px-6 py-3 rounded-full bg-[#062e39] text-white text-xs font-bold hover:bg-[#fd5523] transition-all"
+                    href={`mailto:${entry.email}?subject=Re: ${entry.subject || "CS Learn Inquiry"}`}
+                    className="flex items-center gap-2 px-6 py-3 rounded-full bg-ink text-white text-xs font-bold hover:bg-brand transition-all"
                   >
                     <Mail className="h-4 w-4" />
                     Reply via Email

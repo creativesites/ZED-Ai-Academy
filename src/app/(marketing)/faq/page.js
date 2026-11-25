@@ -106,7 +106,7 @@ export default function FaqPage() {
               Main FAQ accordion
             ──────────────────────────────────────────*/}
             <section className="faq-one faq-one--faq">
-                 <div className="shape1 float-bob-x"><img src="images/logo-dark.png" style={{width:'24rem', opacity: '0.1', marginTop: '5rem'}} alt=""/></div>
+                 <div className="shape1 float-bob-x"><img src="/brand/cs-learn-emblem.png" style={{width:'24rem', opacity: '0.1', marginTop: '5rem'}} alt=""/></div>
                 <div className="container">
                     <div className="row">
 
@@ -131,7 +131,7 @@ export default function FaqPage() {
 
                                     {FAQ_SECTIONS.map((section, sIdx) => (
                                         <div key={sIdx} style={{ marginBottom: '30px' }}>
-                                            <h4 style={{ fontWeight: 700, marginBottom: '12px', color: '#062e39', fontSize: '15px', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                                            <h4 style={{ fontWeight: 700, marginBottom: '12px', color: "var(--color-ink)", fontSize: '15px', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                                                 {section.heading}
                                             </h4>
                                             <div className="accrodion-grp faq-one-accrodion">
@@ -177,7 +177,7 @@ export default function FaqPage() {
                             {/*Still have a question box*/}
                             <div style={{
                                 marginTop: '30px',
-                                background: '#062e39',
+                                background: "var(--color-ink)",
                                 borderRadius: '16px',
                                 padding: '30px',
                                 color: '#fff',

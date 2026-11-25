@@ -19,6 +19,7 @@ import type { TutorEvent } from "@/lib/tutor/events";
 import type { SceneArtboard } from "@/lib/tutor/rive-driver";
 import type { TutorPersonaLook } from "@/lib/tutor/tutor-session-block";
 import type { TutorReportContent } from "@/lib/tutor/report-model";
+import { DEFAULT_PRIMARY_COLOR } from "@/lib/brand";
 
 type PublicTryExperienceProps = {
   scenarioId: string;
@@ -143,11 +144,11 @@ export function PublicTryExperience(props: PublicTryExperienceProps) {
   const joinHref = props.academy.slug
     ? `/academy/${props.academy.slug}`
     : "/sign-up";
-  const brandColor = props.academy.primaryColor || "#fd5523";
+  const brandColor = props.academy.primaryColor || DEFAULT_PRIMARY_COLOR;
 
   if (completedReport) {
     return (
-      <div className="flex min-h-[100dvh] flex-col items-center justify-center bg-gradient-to-b from-[#fffaf6] to-[#fff1e6] px-4 py-10">
+      <div className="flex min-h-[100dvh] flex-col items-center justify-center bg-gradient-to-b from-surface to-[#fff1e6] px-4 py-10">
         <div className="w-full max-w-lg space-y-6 rounded-3xl border border-slate-200 bg-white p-6 text-center shadow-xl sm:p-8">
           <div
             className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl text-white shadow-md"
@@ -156,14 +157,14 @@ export function PublicTryExperience(props: PublicTryExperienceProps) {
             <CheckCircle2 className="h-7 w-7" />
           </div>
           <div className="space-y-2">
-            <p className="text-xs font-extrabold uppercase tracking-widest text-[#fd5523]">
+            <p className="text-xs font-extrabold uppercase tracking-widest text-brand-text">
               Mini-Lesson Complete
             </p>
-            <h1 className="font-heading text-2xl font-black text-[#062e39]">
+            <h1 className="font-heading text-2xl font-black text-ink">
               Loved learning with {props.personaName}?
             </h1>
             <p className="text-sm leading-relaxed text-slate-600">
-              Join <strong className="text-[#062e39]">{props.academy.name}</strong> to unlock full interactive
+              Join <strong className="text-ink">{props.academy.name}</strong> to unlock full interactive
               lessons, your personal Study Deck, progress tracking, and certificates.
             </p>
           </div>
@@ -190,7 +191,7 @@ export function PublicTryExperience(props: PublicTryExperienceProps) {
             <button
               type="button"
               onClick={() => setCompletedReport(null)}
-              className="inline-flex h-12 items-center justify-center rounded-2xl border border-slate-200 bg-white px-5 text-sm font-bold text-[#062e39] hover:bg-slate-50"
+              className="inline-flex h-12 items-center justify-center rounded-2xl border border-slate-200 bg-white px-5 text-sm font-bold text-ink hover:bg-slate-50"
             >
               Try again
             </button>
@@ -201,14 +202,14 @@ export function PublicTryExperience(props: PublicTryExperienceProps) {
   }
 
   return (
-    <div className="flex min-h-[100dvh] flex-col bg-[#fffaf6]">
+    <div className="flex min-h-[100dvh] flex-col bg-surface">
       {/* Branded Academy Mini-Lesson Conversion Bar */}
       <div className="flex shrink-0 items-center justify-between gap-3 border-b border-slate-200/80 bg-white px-3 py-2 sm:px-5">
         <div className="flex min-w-0 items-center gap-2.5">
           {props.backUrl && (
             <Link
               href={props.backUrl}
-              className="inline-flex h-8 shrink-0 items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-3 text-xs font-bold text-[#062e39] transition hover:bg-slate-100"
+              className="inline-flex h-8 shrink-0 items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-3 text-xs font-bold text-ink transition hover:bg-slate-100"
             >
               <ArrowLeft className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Back to Lesson</span>
@@ -230,7 +231,7 @@ export function PublicTryExperience(props: PublicTryExperienceProps) {
             </span>
           )}
           <div className="min-w-0">
-            <p className="truncate text-xs font-extrabold text-[#062e39] sm:text-sm">
+            <p className="truncate text-xs font-extrabold text-ink sm:text-sm">
               {props.academy.name}
             </p>
             <p className="truncate text-[10px] font-semibold text-slate-500">

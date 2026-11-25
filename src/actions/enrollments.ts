@@ -6,6 +6,7 @@ import { currentUser } from "@clerk/nextjs/server";
 import { createClient } from "@/lib/supabase/server";
 import { sendEnrollmentConfirmation } from "@/lib/email/emailjs";
 import { ensureTenantMembership } from "@/actions/tenants";
+import { BRAND } from "@/lib/brand";
 
 export type ManualEnrollResult =
   | { success: true; enrollmentId: string; courseTitle: string; priceLabel: string }
@@ -136,7 +137,7 @@ export async function enrollFree(courseId: string, courseSlug: string) {
 
   if (email) {
     const firstName = clerkUser.firstName ?? clerkUser.fullName?.split(" ")[0] ?? "there";
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://academy.zedai.org";
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || BRAND.url;
     sendEnrollmentConfirmation({
       toEmail: email,
       toName: firstName,

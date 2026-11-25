@@ -76,11 +76,11 @@ export default function OnboardingPage() {
                 onClick={() => setSelectedRole("student")}
                 className={`p-4 rounded-2xl border-2 text-left transition-all flex items-center gap-4 ${
                   selectedRole === "student" 
-                    ? "border-[#fd5523] bg-[#fd5523]/5" 
+                    ? "border-brand bg-brand/5" 
                     : "border-slate-100 hover:border-slate-200"
                 }`}
               >
-                <div className={`p-2 rounded-xl ${selectedRole === "student" ? "bg-[#fd5523] text-white" : "bg-slate-100 text-slate-500"}`}>
+                <div className={`p-2 rounded-xl ${selectedRole === "student" ? "bg-brand text-white" : "bg-slate-100 text-slate-500"}`}>
                   <GraduationCap className="h-6 w-6" />
                 </div>
                 <div>
@@ -94,11 +94,11 @@ export default function OnboardingPage() {
                 onClick={() => setSelectedRole("teacher")}
                 className={`p-4 rounded-2xl border-2 text-left transition-all flex items-center gap-4 ${
                   selectedRole === "teacher" 
-                    ? "border-[#fd5523] bg-[#fd5523]/5" 
+                    ? "border-brand bg-brand/5" 
                     : "border-slate-100 hover:border-slate-200"
                 }`}
               >
-                <div className={`p-2 rounded-xl ${selectedRole === "teacher" ? "bg-[#fd5523] text-white" : "bg-slate-100 text-slate-500"}`}>
+                <div className={`p-2 rounded-xl ${selectedRole === "teacher" ? "bg-brand text-white" : "bg-slate-100 text-slate-500"}`}>
                   <Users className="h-6 w-6" />
                 </div>
                 <div>
@@ -112,11 +112,11 @@ export default function OnboardingPage() {
                 onClick={() => setSelectedRole("company_admin")}
                 className={`p-4 rounded-2xl border-2 text-left transition-all flex items-center gap-4 md:col-span-2 ${
                   isTenantOwner
-                    ? "border-[#fd5523] bg-[#fd5523]/5" 
+                    ? "border-brand bg-brand/5" 
                     : "border-slate-100 hover:border-slate-200"
                 }`}
               >
-                <div className={`p-2 rounded-xl ${isTenantOwner ? "bg-[#fd5523] text-white" : "bg-slate-100 text-slate-500"}`}>
+                <div className={`p-2 rounded-xl ${isTenantOwner ? "bg-brand text-white" : "bg-slate-100 text-slate-500"}`}>
                   <Building2 className="h-6 w-6" />
                 </div>
                 <div>
@@ -138,7 +138,7 @@ export default function OnboardingPage() {
               required
               defaultValue={user?.fullName || ""}
               placeholder="e.g. John Doe"
-              className="h-14 w-full rounded-2xl border border-slate-200 pl-12 pr-4 outline-none focus:border-[#fd5523] focus:ring-4 focus:ring-[#fd5523]/5 transition-all bg-slate-50/50"
+              className="h-14 w-full rounded-2xl border border-slate-200 pl-12 pr-4 outline-none focus:border-brand focus:ring-4 focus:ring-brand/5 transition-all bg-slate-50/50"
             />
           </div>
         </div>
@@ -155,7 +155,7 @@ export default function OnboardingPage() {
                 value={teacherCode}
                 onChange={(e) => setTeacherCode(e.target.value.replace(/\D/g, ""))}
                 placeholder="4-digit access code"
-                className="h-14 w-full rounded-2xl border border-slate-200 pl-12 pr-4 outline-none focus:border-[#fd5523] focus:ring-4 focus:ring-[#fd5523]/5 transition-all bg-slate-50/50 font-mono tracking-[0.5em] text-lg"
+                className="h-14 w-full rounded-2xl border border-slate-200 pl-12 pr-4 outline-none focus:border-brand focus:ring-4 focus:ring-brand/5 transition-all bg-slate-50/50 font-mono tracking-[0.5em] text-lg"
               />
             </div>
             <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest px-1">Ask your academy admin for the staff access code.</p>
@@ -172,7 +172,7 @@ export default function OnboardingPage() {
               <button 
                 type="button"
                 onClick={() => setShowOrgCreate(!showOrgCreate)}
-                className="text-sm font-bold text-[#fd5523] hover:underline flex items-center gap-1"
+                className="text-sm font-bold text-brand-text hover:underline flex items-center gap-1"
               >
                 {showOrgCreate ? "Cancel" : "Create Academy"}
               </button>
@@ -194,8 +194,8 @@ export default function OnboardingPage() {
           </div>
         )}
 
-        <div className="rounded-2xl bg-[#fff6ee] p-4 flex items-start gap-3 border border-[#fd5523]/10">
-          <div className="mt-0.5 h-2 w-2 shrink-0 rounded-full bg-[#fd5523]" />
+        <div className="rounded-2xl bg-brand-soft p-4 flex items-start gap-3 border border-brand/10">
+          <div className="mt-0.5 h-2 w-2 shrink-0 rounded-full bg-brand" />
           <p className="text-xs text-slate-600 leading-relaxed">
             {isTenantOwner 
               ? "As a tenant owner, you'll be able to create courses, manage enrollments, and access the academy studio."
@@ -210,7 +210,7 @@ export default function OnboardingPage() {
         <Button
           type="submit"
           disabled={loading || (isTenantOwner && !hasOrg)}
-          className="w-full h-14 rounded-2xl bg-[#fd5523] text-white font-bold text-lg shadow-lg shadow-[#fd5523]/20 hover:scale-[1.02] active:scale-[0.98] transition-all"
+          className="w-full h-14 rounded-2xl bg-brand text-white font-bold text-lg shadow-lg shadow-brand/20 hover:scale-[1.02] active:scale-[0.98] transition-all"
         >
           {loading ? (
             <>

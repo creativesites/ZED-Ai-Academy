@@ -375,7 +375,7 @@ export function AiTutor({
                 <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#0f766e]">
                   {teacherName} · AI teacher
                 </p>
-                <h2 className="mt-0.5 line-clamp-1 text-sm font-bold text-[#062e39]">{lessonTitle}</h2>
+                <h2 className="mt-0.5 line-clamp-1 text-sm font-bold text-ink">{lessonTitle}</h2>
                 <p className="mt-0.5 line-clamp-1 text-[11px] text-slate-600">{courseTitle}</p>
               </div>
             </div>
@@ -388,14 +388,14 @@ export function AiTutor({
                     localStorage.removeItem(storageKey);
                   }
                 }}
-                className="shrink-0 rounded-full px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-600 transition-colors hover:bg-white hover:text-[#062e39]"
+                className="shrink-0 rounded-full px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-600 transition-colors hover:bg-white hover:text-ink"
               >
                 Clear
               </button>
               <button
                 type="button"
                 onClick={onClose}
-                className="shrink-0 rounded-full p-2 text-slate-600 transition-colors hover:bg-white hover:text-[#062e39]"
+                className="shrink-0 rounded-full p-2 text-slate-600 transition-colors hover:bg-white hover:text-ink"
                 aria-label={`Close ${teacherName}`}
               >
                 <X className="h-4 w-4" />
@@ -468,9 +468,9 @@ export function AiTutor({
                   type="button"
                   onClick={() => void sendMessage(sp.body)}
                   disabled={isStreaming}
-                  className="group rounded-2xl border-2 border-slate-100 bg-white p-3 text-left transition-all hover:border-[#fd5523]/30 hover:shadow-md disabled:opacity-50"
+                  className="group rounded-2xl border-2 border-slate-100 bg-white p-3 text-left transition-all hover:border-brand/30 hover:shadow-md disabled:opacity-50"
                 >
-                  <p className="mb-1 text-[10px] font-bold uppercase tracking-widest text-[#fd5523]">{sp.label}</p>
+                  <p className="mb-1 text-[10px] font-bold uppercase tracking-widest text-brand-text">{sp.label}</p>
                   <p className="text-[12px] leading-snug text-slate-600">{sp.body}</p>
                 </button>
               ))}
@@ -487,8 +487,8 @@ export function AiTutor({
               {/* <div className={`
                 mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-bold
                 ${msg.role === "user"
-                  ? "bg-[#fd5523] text-white"
-                  : "bg-[#062e39] text-white"
+                  ? "bg-brand text-white"
+                  : "bg-ink text-white"
                 }
               `}>
                 {msg.role === "user" ? "You" : <Sparkles className="h-3.5 w-3.5" />}
@@ -498,7 +498,7 @@ export function AiTutor({
               <div className={`
                 max-w-[95%] rounded-[1.8rem] px-4 py-4 text-sm leading-relaxed shadow-sm
                 ${msg.role === "user"
-                  ? "rounded-tr-sm bg-[#fd5523] text-white"
+                  ? "rounded-tr-sm bg-brand text-white"
                   : "rounded-tl-sm border border-slate-100 bg-white text-slate-700"
                 }
               `}>
@@ -548,7 +548,7 @@ export function AiTutor({
                             onClick={() =>
                               void sendMessage(messages[i - 1].content, { replaceLastAssistant: true })
                             }
-                            className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400 hover:text-[#fd5523] transition-colors"
+                            className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400 hover:text-brand-text transition-colors"
                           >
                             <History className="h-3 w-3" />
                             Regenerate
@@ -583,7 +583,7 @@ export function AiTutor({
               className="
                 min-h-[52px] max-h-[120px] flex-1 resize-none rounded-2xl border border-slate-200 bg-slate-50
                 px-4 py-3 text-sm text-slate-900 placeholder-slate-400
-                focus:border-[#fd5523]/40 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#fd5523]/15
+                focus:border-brand/40 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand/15
                 transition-all
               "
             />
@@ -596,7 +596,7 @@ export function AiTutor({
               className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border transition-all disabled:opacity-40 ${
                 dictating
                   ? "border-rose-300 bg-rose-50 text-rose-600 animate-pulse"
-                  : "border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 hover:text-[#062e39]"
+                  : "border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 hover:text-ink"
               }`}
             >
               {dictating ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
@@ -607,8 +607,8 @@ export function AiTutor({
               disabled={!input.trim() || isStreaming}
               className="
                 flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl
-                bg-[#fd5523] text-white shadow-md shadow-[#fd5523]/25
-                transition-all hover:bg-[#ef4a16] hover:scale-105 active:scale-95
+                bg-brand text-white shadow-md shadow-brand/25
+                transition-all hover:bg-brand-hover hover:scale-105 active:scale-95
                 disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none disabled:hover:scale-100
               "
             >

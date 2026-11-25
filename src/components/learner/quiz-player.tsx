@@ -177,7 +177,7 @@ export function QuizPlayer({
       {/* Header / Meta */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-[2rem] bg-slate-50/50 border border-slate-100 p-6 md:p-8">
         <div>
-          <h3 className="text-xl font-bold text-[#062e39] tracking-tight">{quiz.title ?? "Knowledge Check"}</h3>
+          <h3 className="text-xl font-bold text-ink tracking-tight">{quiz.title ?? "Knowledge Check"}</h3>
           <p className="text-sm font-medium text-slate-500 mt-1">
             {questions.length} question{questions.length !== 1 ? "s" : ""} • {quiz.pass_threshold}% to pass
             {attemptsRemaining !== null && !result?.passed && (
@@ -214,10 +214,10 @@ export function QuizPlayer({
               style={{ animationDelay: `${qIdx * 100}ms` }}
             >
               <div className="flex items-start gap-4">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-[10px] font-black text-slate-400 group-hover:bg-[#062e39] group-hover:text-white transition-colors">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-[10px] font-black text-slate-400 group-hover:bg-ink group-hover:text-white transition-colors">
                   0{qIdx + 1}
                 </div>
-                <p className="text-lg font-bold text-[#062e39] leading-snug pt-0.5">{q.question}</p>
+                <p className="text-lg font-bold text-ink leading-snug pt-0.5">{q.question}</p>
               </div>
 
               <div className="grid gap-3">
@@ -241,7 +241,7 @@ export function QuizPlayer({
                               ? "border-red-500 bg-red-50 text-red-900"
                               : "border-slate-100 bg-slate-50/50 opacity-60"
                           : isSelected
-                            ? "border-[#062e39] bg-[#062e39] text-white shadow-xl shadow-[#062e39]/10 translate-x-1"
+                            ? "border-ink bg-ink text-white shadow-xl shadow-ink/10 translate-x-1"
                             : "border-slate-100 bg-white text-slate-700 hover:border-slate-200 hover:bg-slate-50 hover:shadow-md"
                       )}
                     >
@@ -288,7 +288,7 @@ export function QuizPlayer({
         {submitted && result ? (
           <div className={cn(
             "rounded-[2.5rem] p-10 text-center shadow-2xl animate-in zoom-in duration-500",
-            result.passed ? "bg-green-600 text-white" : "bg-[#062e39] text-white"
+            result.passed ? "bg-green-600 text-white" : "bg-ink text-white"
           )}>
             {result.passed ? (
               <>
@@ -320,7 +320,7 @@ export function QuizPlayer({
                 </p>
                 {!outOfAttempts && <Button 
                   onClick={handleRetry} 
-                  className="rounded-2xl bg-[#fd5523] px-10 py-7 text-lg font-bold text-white hover:bg-[#ef4a16] shadow-xl shadow-[#fd5523]/20"
+                  className="rounded-2xl bg-brand px-10 py-7 text-lg font-bold text-white hover:bg-brand-hover shadow-xl shadow-brand/20"
                 >
                   <RotateCcw className="mr-2 h-5 w-5" />
                   Try Again
@@ -332,7 +332,7 @@ export function QuizPlayer({
           <Button 
             onClick={handleSubmit} 
             disabled={submitting || disabled || outOfAttempts} 
-            className="w-full rounded-[2rem] bg-[#062e39] py-8 text-xl font-bold text-white hover:bg-[#0a4055] transition-all hover:scale-[1.01] active:scale-95 shadow-xl"
+            className="w-full rounded-[2rem] bg-ink py-8 text-xl font-bold text-white hover:bg-ink-hover transition-all hover:scale-[1.01] active:scale-95 shadow-xl"
           >
             {submitting ? (
               <Loader2 className="mr-3 h-6 w-6 animate-spin" />

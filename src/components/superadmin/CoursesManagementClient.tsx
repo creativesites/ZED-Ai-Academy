@@ -89,7 +89,7 @@ export function CoursesManagementClient({
             className="bg-slate-900 border border-slate-800 rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-300 focus:outline-none focus:border-slate-700"
           >
             <option value="all">All Academies</option>
-            <option value={ZEDAI_TENANT_ID}>Zed AI Academy (Platform Core)</option>
+            <option value={ZEDAI_TENANT_ID}>CS Learn (Platform Core)</option>
             {tenants
               .filter((t) => t.id !== ZEDAI_TENANT_ID)
               .map((t) => (

@@ -66,7 +66,7 @@ export function StudentProgressTab({
   if (loading) {
     return (
       <div className="py-24 text-center text-slate-400 flex flex-col items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-[#fd5523] mb-3" />
+        <Loader2 className="h-8 w-8 animate-spin text-brand-text mb-3" />
         <p className="text-xs font-bold uppercase tracking-widest">Compiling Academic Record...</p>
       </div>
     );
@@ -83,11 +83,11 @@ export function StudentProgressTab({
   return (
     <div className="p-3 sm:p-5 md:p-6 space-y-4 sm:space-y-5 animate-in fade-in duration-300">
       {/* 1. Header Banner & High-Yield Metric Cards */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#062e39] via-[#094150] to-[#062e39] p-4 sm:p-6 text-white shadow-sm">
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-ink via-[#094150] to-ink p-4 sm:p-6 text-white shadow-sm">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 relative z-10">
           <div className="min-w-0">
             <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/10 text-sky-200 text-[10px] font-bold uppercase tracking-wider mb-1.5 border border-white/10">
-              <GraduationCap className="h-3.5 w-3.5 text-[#fd5523]" />
+              <GraduationCap className="h-3.5 w-3.5 text-brand-text" />
               Academic Transcript &amp; Performance
             </span>
             <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-white">Your Learning Journey</h2>
@@ -99,7 +99,7 @@ export function StudentProgressTab({
           {progress.nextLesson && (
             <Link
               href={`/courses/${progress.nextLesson.course_slug}/learn`}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 h-9 rounded-xl bg-[#fd5523] hover:bg-[#e0481d] text-white text-xs font-semibold shadow-xs transition-all shrink-0 max-w-full"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 h-9 rounded-xl bg-brand hover:bg-brand-hover text-white text-xs font-semibold shadow-xs transition-all shrink-0 max-w-full"
             >
               <BookOpen className="h-3.5 w-3.5 shrink-0" />
               <span className="truncate">Resume: {progress.nextLesson.title}</span>
@@ -120,7 +120,7 @@ export function StudentProgressTab({
                 ({progress.completedLessons}/{progress.totalLessons} lessons)
               </span>
             </div>
-            <Progress value={progress.completionPercent} className="h-1.5 mt-2 bg-white/10 [&>div]:bg-[#fd5523]" />
+            <Progress value={progress.completionPercent} className="h-1.5 mt-2 bg-white/10 [&>div]:bg-brand" />
           </div>
 
           <div className="p-3.5 sm:p-4 rounded-xl sm:rounded-2xl bg-white/5 backdrop-blur-sm border border-white/10">
@@ -190,7 +190,7 @@ export function StudentProgressTab({
           className={cn(
             "min-h-[44px] shrink-0 whitespace-nowrap px-3.5 sm:px-4 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-2",
             activeSubTab === "assignments"
-              ? "bg-[#062e39] text-white shadow-sm"
+              ? "bg-ink text-white shadow-sm"
               : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
           )}
         >
@@ -203,7 +203,7 @@ export function StudentProgressTab({
           className={cn(
             "min-h-[44px] shrink-0 whitespace-nowrap px-3.5 sm:px-4 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-2",
             activeSubTab === "quizzes"
-              ? "bg-[#062e39] text-white shadow-sm"
+              ? "bg-ink text-white shadow-sm"
               : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
           )}
         >
@@ -216,7 +216,7 @@ export function StudentProgressTab({
           className={cn(
             "min-h-[44px] shrink-0 whitespace-nowrap px-3.5 sm:px-4 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-2",
             activeSubTab === "speaking"
-              ? "bg-[#062e39] text-white shadow-sm"
+              ? "bg-ink text-white shadow-sm"
               : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
           )}
         >
@@ -229,7 +229,7 @@ export function StudentProgressTab({
           className={cn(
             "min-h-[44px] shrink-0 whitespace-nowrap px-3.5 sm:px-4 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-2",
             activeSubTab === "attendance"
-              ? "bg-[#062e39] text-white shadow-sm"
+              ? "bg-ink text-white shadow-sm"
               : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
           )}
         >
@@ -242,7 +242,7 @@ export function StudentProgressTab({
           className={cn(
             "min-h-[44px] shrink-0 whitespace-nowrap px-3.5 sm:px-4 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-2",
             activeSubTab === "certificates"
-              ? "bg-[#062e39] text-white shadow-sm"
+              ? "bg-ink text-white shadow-sm"
               : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
           )}
         >
@@ -272,7 +272,7 @@ export function StudentProgressTab({
                       <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">
                         Coursework Submission
                       </span>
-                      <h4 className="text-sm font-black text-[#062e39] mt-0.5 break-words">{item.title}</h4>
+                      <h4 className="text-sm font-black text-ink mt-0.5 break-words">{item.title}</h4>
                     </div>
 
                     <div className="sm:text-right shrink-0">
@@ -334,7 +334,7 @@ export function StudentProgressTab({
                     <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">
                       Lesson Assessment
                     </span>
-                    <h4 className="text-sm font-black text-[#062e39] break-words">{quiz.title}</h4>
+                    <h4 className="text-sm font-black text-ink break-words">{quiz.title}</h4>
                     <span className="text-[10px] text-slate-400 block font-medium">
                       Completed on {new Date(quiz.taken_at).toLocaleDateString()}
                     </span>
@@ -384,7 +384,7 @@ export function StudentProgressTab({
                       <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">
                         {sess.origin} · {sess.mode}
                       </span>
-                      <h4 className="text-sm font-black text-[#062e39] mt-0.5 break-words">
+                      <h4 className="text-sm font-black text-ink mt-0.5 break-words">
                         {sess.scenario_title}
                       </h4>
                     </div>
@@ -510,7 +510,7 @@ export function StudentProgressTab({
                         <span className="text-[10px] font-black uppercase tracking-wider text-amber-800">
                           Verified Credential
                         </span>
-                        <h4 className="text-sm font-black text-[#062e39] truncate">{cert.course_title}</h4>
+                        <h4 className="text-sm font-black text-ink truncate">{cert.course_title}</h4>
                       </div>
                     </div>
                   </div>
@@ -525,7 +525,7 @@ export function StudentProgressTab({
                       href={cert.file_url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 min-h-[44px] rounded-xl bg-[#062e39] text-white text-xs font-bold hover:bg-[#fd5523] transition-colors"
+                      className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 min-h-[44px] rounded-xl bg-ink text-white text-xs font-bold hover:bg-brand transition-colors"
                     >
                       <Download className="h-3.5 w-3.5" />
                       Download Official Certificate

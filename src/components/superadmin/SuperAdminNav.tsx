@@ -4,7 +4,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { UserButton } from "@clerk/nextjs";
 import {
-  ShieldAlert,
   Building2,
   Users,
   BookOpen,
@@ -14,6 +13,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { BrandLogo } from "@/components/shared/brand-logo";
 
 const NAV_ITEMS = [
   { name: "Overview", href: "/superadmin", icon: LayoutDashboard },
@@ -34,13 +34,11 @@ export function SuperAdminNav({ adminName }: { adminName: string }) {
         {/* Brand & Badge */}
         <div className="flex items-center gap-6">
           <Link href="/superadmin" className="flex items-center gap-2.5 group">
-            <div className="h-9 w-9 rounded-xl bg-gradient-to-tr from-[#fd5523] to-amber-500 flex items-center justify-center text-white shadow-md shadow-[#fd5523]/20">
-              <ShieldAlert className="h-5 w-5" />
-            </div>
+            <BrandLogo variant="emblemOnDark" decorative className="h-9 w-auto" />
             <div>
               <div className="flex items-center gap-2">
-                <span className="font-extrabold text-base tracking-tight text-white group-hover:text-amber-400 transition-colors">
-                  Zed AI Control
+                <span className="font-extrabold text-base tracking-tight text-white group-hover:text-brand-gold transition-colors">
+                  CS Learn Control
                 </span>
                 <span className="text-[10px] uppercase tracking-widest font-black px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 border border-red-500/30">
                   Super Admin
@@ -116,7 +114,7 @@ export function SuperAdminNav({ adminName }: { adminName: string }) {
               href={item.href}
               className={cn(
                 "flex flex-col items-center gap-1 p-1 text-[10px] font-medium transition-all",
-                isActive ? "text-[#fd5523]" : "text-slate-400"
+                isActive ? "text-brand-text" : "text-slate-400"
               )}
             >
               <Icon className="h-4 w-4" />

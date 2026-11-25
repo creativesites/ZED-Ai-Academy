@@ -1,6 +1,13 @@
 @AGENTS.md
 
-# Zed AI Academy — Claude Context
+# CS Learn (CreativeSites Learn) — Claude Context
+
+## Brand & domain
+- Product: **CS Learn** (compact UI) / **CreativeSites Learn** (formal) by **CreativeSites**. Tagline: LEARN • PRACTICE • BUILD • GROW.
+- Production domain: **https://learn.creativesites.site**
+- Brand source of truth: `src/lib/brand.ts` (names, URL, logos, hex) + tokens in `src/app/globals.css`. Logos via `<BrandLogo />` (`src/components/shared/brand-logo.tsx`). Full guide: `docs/BRAND.md`.
+- Never hard-code brand hex in classNames; use tokens (`bg-brand`, `text-brand-text`, `text-ink`, `bg-navy`…).
+- Legacy identifiers keep the old name on purpose (repo name, `zedai` tenant slug, `ZEDAI_TENANT_ID`, `/academy/zedai`).
 
 ## What this project is
 A full-stack Next.js platform for creating and selling AI courses — targeting both individual learners (B2C) and companies (B2B). Built solo by the founder.
@@ -36,6 +43,7 @@ src/
     payments/           # Payment gateway abstraction layer
   types/                # Shared TypeScript types (generate from Supabase schema)
 docs/
+  BRAND.md
   ARCHITECTURE.md
   FEATURES.md
   DATABASE.md

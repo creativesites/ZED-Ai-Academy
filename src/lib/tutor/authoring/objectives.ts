@@ -276,7 +276,7 @@ export function buildObjectivesPrompt(input: {
   lessonTitle: string;
   materialText: string;
 }): { systemInstruction: string; prompt: string } {
-  const systemInstruction = `You are an expert instructional designer for Zed AI Academy.
+  const systemInstruction = `You are an expert instructional designer for CS Learn.
 Extract 2 to 5 clear, measurable learning objectives from the lesson material provided.
 Rules:
 - Every objective "text" MUST start with "Learner can " and state one concrete, observable skill or understanding from the lesson.

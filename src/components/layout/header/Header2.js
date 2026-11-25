@@ -9,6 +9,7 @@ import MobileMenu from "../MobileMenu"
 import { LaunchAcademyCTA } from "@/components/layout/LaunchAcademyCTA"
 import { Search, Menu as MenuIcon, Sparkles } from "lucide-react";
 import { useProfileNav } from "@/hooks/use-profile-nav";
+import { BrandLogo } from "@/components/shared/brand-logo"
 
 function AuthButtons({ notificationBell }) {
     const { isSignedIn, isLoaded, userId, getToken, orgId, orgRole, orgSlug } = useAuth()
@@ -105,8 +106,8 @@ function AuthButtons({ notificationBell }) {
 }
 
 export default function Header2({ scroll, handlePopup, handleSidebar, handleMobileMenu, notificationBell }) {
-    const [logoImg, setLogoImg] = useState("/images/zed-ai-logo2.png");
-    const [logoImg1, setLogoImg1] = useState("/images/zed-ai-logo.png");
+    const [logoImg, setLogoImg] = useState("/brand/cs-learn-logo-on-dark.png");
+    const [logoImg1, setLogoImg1] = useState("/brand/cs-learn-logo-on-dark.png");
 
     useEffect(() => {
         getSiteAsset("home_hero", logoImg).then(setLogoImg);
@@ -120,20 +121,20 @@ export default function Header2({ scroll, handlePopup, handleSidebar, handleMobi
                         <ul className="flex items-center gap-8">
                             <li className="flex items-center gap-2">
                                 <div className="h-8 w-8 rounded-lg bg-slate-50 flex items-center justify-center">
-                                    <span className="icon-email text-[#fd5523]"></span>
+                                    <span className="icon-email text-brand-text"></span>
                                 </div>
                                 <div className="text-box">
                                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-1">Email Us</p>
-                                    <Link href="mailto:creativesites263@gmail.com" className="text-xs font-bold text-[#062e39] hover:text-[#fd5523]">creativesites263@gmail.com</Link>
+                                    <Link href="mailto:creativesites263@gmail.com" className="text-xs font-bold text-ink hover:text-brand-text">creativesites263@gmail.com</Link>
                                 </div>
                             </li>
                             <li className="flex items-center gap-2">
                                 <div className="h-8 w-8 rounded-lg bg-slate-50 flex items-center justify-center">
-                                    <span className="icon-phone2 text-[#fd5523]"></span>
+                                    <span className="icon-phone2 text-brand-text"></span>
                                 </div>
                                 <div className="text-box">
                                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-1">Admissions</p>
-                                    <Link href="tel:+260979046745" className="text-xs font-bold text-[#062e39] hover:text-[#fd5523]">0979 046 745</Link>
+                                    <Link href="tel:+260979046745" className="text-xs font-bold text-ink hover:text-brand-text">0979 046 745</Link>
                                 </div>
                             </li>
                         </ul>
@@ -141,11 +142,11 @@ export default function Header2({ scroll, handlePopup, handleSidebar, handleMobi
                 </div>
                 <div className="main-header-two__top-right">
                     <div className="flex items-center gap-4">
-                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-300">Zambia&apos;s AI Academy</p>
-                        <div className="h-1 w-1 rounded-full bg-[#fd5523]" />
+                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Learn • Practice • Build • Grow</p>
+                        <div className="h-1 w-1 rounded-full bg-brand" />
                         <ul className="flex gap-4">
-                            <li><Link href="https://x.com/zed_ai_academy" className="text-slate-400 hover:text-[#fd5523] transition-colors"><span className="icon-twitter1"></span></Link></li>
-                            <li><Link href="https://www.linkedin.com/in/winston-tinashe-5939b91b6/" className="text-slate-400 hover:text-[#fd5523] transition-colors"><span className="icon-linkedin"></span></Link></li>
+                            <li><Link href="https://x.com/zed_ai_academy" className="text-slate-400 hover:text-brand-text transition-colors"><span className="icon-twitter1"></span></Link></li>
+                            <li><Link href="https://www.linkedin.com/in/winston-tinashe-5939b91b6/" className="text-slate-400 hover:text-brand-text transition-colors"><span className="icon-linkedin"></span></Link></li>
                         </ul>
                     </div>
                 </div>
@@ -160,7 +161,7 @@ export default function Header2({ scroll, handlePopup, handleSidebar, handleMobi
                 <div className="main-header-two__bottom-left">
                     <div className="main-header-two__menu">
                         <div className="main-menu__main-menu-box flex items-center gap-6">
-                            <button className="lg:hidden text-[#062e39] hover:text-[#fd5523] transition-colors" onClick={handleMobileMenu}>
+                            <button className="lg:hidden text-ink hover:text-brand-text transition-colors" onClick={handleMobileMenu}>
                                 <MenuIcon className="h-5 w-5 md:h-6 md:w-6" />
                             </button>
                             <Menu />
@@ -170,14 +171,14 @@ export default function Header2({ scroll, handlePopup, handleSidebar, handleMobi
                 <div className="main-header-two__bottom-right flex items-center">
                     {/* <button 
                         onClick={handlePopup} 
-                        className="h-7 w-7 md:h-8 md:w-8 flex items-center justify-center rounded-xl md:rounded-2xl bg-slate-50 text-[#062e39] hover:bg-[#fd5523] hover:text-white transition-all shadow-sm"
+                        className="h-7 w-7 md:h-8 md:w-8 flex items-center justify-center rounded-xl md:rounded-2xl bg-slate-50 text-ink hover:bg-brand hover:text-white transition-all shadow-sm"
                     >
                         <Search className="h-4 w-4 md:h-5 md:w-5" />
                     </button> */}
                     
                     <button 
                         onClick={handleSidebar}
-                        className="h-7 w-7 md:h-8 md:w-8 flex items-center justify-center rounded-xl md:rounded-2xl bg-[#062e39] text-white hover:bg-[#fd5523] transition-all ml-2 md:ml-3 shadow-xl shadow-[#062e39]/10"
+                        className="h-7 w-7 md:h-8 md:w-8 flex items-center justify-center rounded-xl md:rounded-2xl bg-ink text-white hover:bg-brand transition-all ml-2 md:ml-3 shadow-xl shadow-ink/10"
                     >
                         <MenuIcon className="h-4 w-4 md:h-5 md:w-5" />
                     </button>
@@ -198,11 +199,7 @@ export default function Header2({ scroll, handlePopup, handleSidebar, handleMobi
                                 <div className="main-header-two__inner">
                                     <div className="logo-box-two lg:py-6">
                                         <Link href="/">
-                                            <img 
-                                                src="/images/zed-ai-logo2.png" 
-                                                className="w-[140px] xs:w-[160px] lg:w-[240px] transition-transform hover:scale-105 duration-500" 
-                                                alt="Zed AI Academy" 
-                                            />
+                                            <BrandLogo variant="onDark" priority className="my-1.5 h-auto w-[164px] xs:w-[180px] lg:my-0 lg:w-[240px] transition-transform hover:scale-105 duration-500" />
                                         </Link>
                                     </div>
                                     <div className="hidden lg:block">
@@ -224,11 +221,7 @@ export default function Header2({ scroll, handlePopup, handleSidebar, handleMobi
                                 <div className="main-header-two__inner flex items-center justify-between">
                                     <div className="logo-box-two py-2">
                                         <Link href="/">
-                                            <img 
-                                                src="/images/zed-ai-logo.png" 
-                                                className="w-[120px] md:w-[200px]" 
-                                                alt="Zed AI Academy" 
-                                            />
+                                            <BrandLogo variant="onDark" className="h-auto w-[120px] md:w-[200px]" />
                                         </Link>
                                     </div>
                                     <div className="flex items-center gap-6 pr-3">

@@ -28,7 +28,7 @@ Replaces the current picker (`app/(learner)/dashboard/page.tsx`, emoji heading, 
   progress", next class (if any), primary button "Open classroom" (learners) / "Open admin" (staff),
   secondary "Open classroom" for staff who are also learners.
 - **Live now / next up** strip at top if any class across academies starts within 2 hours.
-- Empty (no academies): "You're not in any academy yet" + Browse Zed AI courses (→ `/academy/zedai`)
+- Empty (no academies): "You're not in any academy yet" + Browse CS Learn courses (→ `/academy/zedai`)
   + "Have an invite link? Paste it" input + "Launch your own academy".
 - Remove `TutorSpotlightBanner` from here unless the other session wants it; if kept, place below
   academies (coordinate in HANDOFF).
@@ -44,7 +44,7 @@ Replaces the current picker (`app/(learner)/dashboard/page.tsx`, emoji heading, 
 
 ### 3.1 Public header + footer
 Per [02 §3.3](02-information-architecture.md). Footer: academy name, support email/WhatsApp from
-settings (D4), "Powered by Zed AI Academy". No platform marketing links, no personal details.
+settings (D4), "Powered by CS Learn". No platform marketing links, no personal details.
 
 ### 3.2 Home — templates rebuilt on one section system
 Today: 8 templates in `lib/templates/home/*` with legacy classes, fake stats, and dead `#courses`.

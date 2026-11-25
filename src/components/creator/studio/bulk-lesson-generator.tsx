@@ -87,13 +87,13 @@ export function BulkLessonGenerator({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="flex w-full items-center gap-3 rounded-2xl border border-[#fd5523]/25 bg-gradient-to-r from-[#fff6ee] to-white p-3 text-left transition-colors hover:border-[#fd5523]/50"
+        className="flex w-full items-center gap-3 rounded-2xl border border-brand/25 bg-gradient-to-r from-brand-soft to-white p-3 text-left transition-colors hover:border-brand/50"
       >
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#fd5523] text-white">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand text-white">
           <Sparkles className="h-4 w-4" />
         </span>
         <span className="min-w-0 flex-1">
-          <span className="block text-sm font-semibold text-[#062e39]">
+          <span className="block text-sm font-semibold text-ink">
             Draft {emptyLessons.length} empty lesson{emptyLessons.length === 1 ? "" : "s"} with AI
           </span>
           <span className="block truncate text-xs text-slate-500">
@@ -105,7 +105,7 @@ export function BulkLessonGenerator({
       <Dialog open={open} onOpenChange={(next) => !running && setOpen(next)}>
         <DialogContent className="w-[calc(100vw-1rem)] max-w-lg rounded-2xl p-0">
           <DialogHeader className="border-b border-slate-100 p-5 text-left">
-            <DialogTitle className="text-lg font-bold text-[#062e39]">Draft lessons with AI</DialogTitle>
+            <DialogTitle className="text-lg font-bold text-ink">Draft lessons with AI</DialogTitle>
             <DialogDescription className="text-sm text-slate-500">
               {emptyLessons.length} lesson{emptyLessons.length === 1 ? "" : "s"} will be drafted one at a time. Existing
               content is never touched.
@@ -116,15 +116,15 @@ export function BulkLessonGenerator({
             <div className="space-y-3 p-5">
               <div className="flex items-center justify-between text-sm">
                 <span className="flex min-w-0 items-center gap-2 text-slate-600">
-                  <Loader2 className="h-4 w-4 shrink-0 animate-spin text-[#fd5523]" />
+                  <Loader2 className="h-4 w-4 shrink-0 animate-spin text-brand-text" />
                   <span className="truncate">{current}</span>
                 </span>
-                <span className="shrink-0 font-semibold tabular-nums text-[#062e39]">
+                <span className="shrink-0 font-semibold tabular-nums text-ink">
                   {done}/{emptyLessons.length}
                 </span>
               </div>
               <div className="h-2 overflow-hidden rounded-full bg-slate-100">
-                <div className="h-full rounded-full bg-[#fd5523] transition-all" style={{ width: `${pct}%` }} />
+                <div className="h-full rounded-full bg-brand transition-all" style={{ width: `${pct}%` }} />
               </div>
               <button
                 type="button"
@@ -143,7 +143,7 @@ export function BulkLessonGenerator({
                 <select
                   value={preset}
                   onChange={(e) => setPreset(e.target.value as CourseDomainPresetId)}
-                  className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-[#062e39] outline-none focus:border-[#fd5523]/50"
+                  className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-ink outline-none focus:border-brand/50"
                 >
                   {COURSE_DOMAIN_PRESETS.map((p) => (
                     <option key={p.id} value={p.id}>
@@ -160,7 +160,7 @@ export function BulkLessonGenerator({
                   rows={3}
                   maxLength={1000}
                   placeholder="e.g. Learners are small-business owners in Lusaka; use local examples and simple English."
-                  className="w-full resize-none rounded-xl border border-slate-200 bg-white p-3 text-sm text-[#062e39] outline-none focus:border-[#fd5523]/50"
+                  className="w-full resize-none rounded-xl border border-slate-200 bg-white p-3 text-sm text-ink outline-none focus:border-brand/50"
                 />
               </label>
               <ul className="max-h-36 space-y-1 overflow-y-auto rounded-xl bg-slate-50 p-3 text-xs text-slate-600">
@@ -171,7 +171,7 @@ export function BulkLessonGenerator({
               <button
                 type="button"
                 onClick={run}
-                className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-[#fd5523] text-sm font-semibold text-white hover:bg-[#ef4a16]"
+                className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-brand text-sm font-semibold text-white hover:bg-brand-hover"
               >
                 <Sparkles className="h-4 w-4" />
                 Draft {emptyLessons.length} lesson{emptyLessons.length === 1 ? "" : "s"}

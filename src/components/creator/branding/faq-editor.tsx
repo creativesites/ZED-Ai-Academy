@@ -72,7 +72,7 @@ export function FAQEditor({ faqs = [], onChange, academyName }: FAQEditorProps) 
             <HelpCircle className="h-4 w-4" />
           </div>
           <div>
-            <h4 className="text-sm font-black text-[#062e39] uppercase tracking-wide">Frequently Asked Questions</h4>
+            <h4 className="text-sm font-black text-ink uppercase tracking-wide">Frequently Asked Questions</h4>
             <p className="text-[11px] text-slate-400">Reassure prospective students and reduce inquiries.</p>
           </div>
         </div>
@@ -93,7 +93,7 @@ export function FAQEditor({ faqs = [], onChange, academyName }: FAQEditorProps) 
             type="button"
             size="sm"
             onClick={addFAQ}
-            className="rounded-xl text-xs font-bold bg-[#062e39] text-white hover:bg-slate-800"
+            className="rounded-xl text-xs font-bold bg-ink text-white hover:bg-slate-800"
           >
             <Plus className="h-3.5 w-3.5 mr-1" /> Add Question
           </Button>
@@ -112,7 +112,7 @@ export function FAQEditor({ faqs = [], onChange, academyName }: FAQEditorProps) 
             variant="outline"
             size="sm"
             onClick={generateDefaultFAQs}
-            className="rounded-xl text-xs font-bold text-[#fd5523] border-[#fd5523]/30 bg-white"
+            className="rounded-xl text-xs font-bold text-brand-text border-brand/30 bg-white"
           >
             Add Starter FAQs
           </Button>

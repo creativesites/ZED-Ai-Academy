@@ -11,6 +11,16 @@ export interface BrandPalette {
 
 export const CURATED_PALETTES: BrandPalette[] = [
   {
+    id: "cs-learn-navy",
+    name: "CS Learn Navy",
+    vibe: "Premium, modern, technology-driven",
+    primary: "#075BEB",
+    secondary: "#09152B",
+    accent: "#FFC400",
+    surface: "#F5F7FC",
+    text: "#172033",
+  },
+  {
     id: "zambia-copper",
     name: "Copper & Heritage",
     vibe: "Warm, energetic, rooted in African innovation",

@@ -9,6 +9,7 @@ import { pendingRequiredTutorScenarios } from "@/lib/tutor/server/required-tutor
 import { getCourseVivaStatus } from "@/lib/tutor/server/viva";
 import { REQUIRED_TUTOR_HINT } from "@/lib/tutor/tutor-session-block";
 import { getLessonAccess } from "@/lib/courses/course-auth-server";
+import { BRAND } from "@/lib/brand";
 
 type LessonRow = { id: string };
 type ProgressRow = { lesson_id: string; completed: boolean };
@@ -137,7 +138,7 @@ export async function generateCertificate(courseId: string) {
 
   if (email && courseResult.data) {
     const firstName = clerkUser?.firstName ?? clerkUser?.fullName?.split(" ")[0] ?? "there";
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://academy.zedai.org";
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || BRAND.url;
     sendCertificateIssued({
       toEmail: email,
       toName: firstName,

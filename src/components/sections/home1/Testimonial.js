@@ -35,7 +35,7 @@ const testimonials = [
     {
         name: "Bwalya Tembo",
         role: "ENTREPRENEUR, NDOLA",
-        quote: "The AI for Business course changed how I run my company. I use AI to draft proposals, respond to emails and analyse my sales data. Zed AI Academy made it so easy to learn — no tech background needed.",
+        quote: "The AI for Business course changed how I run my company. I use AI to draft proposals, respond to emails and analyse my sales data. CS Learn made it so easy to learn — no tech background needed.",
     },
     {
         name: "Natasha Phiri",

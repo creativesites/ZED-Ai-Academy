@@ -63,41 +63,41 @@ export default async function LiveSessionStudioPage({ params }: PageProps) {
     <main className="container" style={{ paddingTop: "60px", paddingBottom: "120px" }}>
       <div className="mb-8 flex flex-col justify-between gap-5 md:flex-row md:items-end">
         <div>
-          <p className="text-xs font-black uppercase tracking-[0.25em] text-[#fd5523]">Live Session Studio</p>
-          <h1 className="mt-3 text-4xl font-bold tracking-tight text-[#062e39]">
+          <p className="text-xs font-black uppercase tracking-[0.25em] text-brand-text">Live Session Studio</p>
+          <h1 className="mt-3 text-4xl font-bold tracking-tight text-ink">
             {booking.live_session_services?.title ?? "Live Session"}
           </h1>
           {booking.live_session_services?.description && (
             <p className="mt-3 max-w-2xl text-slate-500">{booking.live_session_services.description}</p>
           )}
         </div>
-        <Link href="/dashboard" className="text-sm font-bold text-[#062e39] hover:text-[#fd5523]">
+        <Link href="/dashboard" className="text-sm font-bold text-ink hover:text-brand-text">
           Back to dashboard
         </Link>
       </div>
 
       <div className="grid gap-8 lg:grid-cols-[0.75fr_1.25fr]">
         <aside className="space-y-5">
-          <div className="rounded-[2rem] bg-[#062e39] p-6 text-white shadow-xl border border-white/10">
-            <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10 text-[#fd5523]">
+          <div className="rounded-[2rem] bg-ink p-6 text-white shadow-xl border border-white/10">
+            <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10 text-brand-text">
               <Video className="h-6 w-6" />
             </div>
-            <p className="text-xs font-black uppercase tracking-widest text-[#fd8d69]">Status</p>
+            <p className="text-xs font-black uppercase tracking-widest text-brand-electric">Status</p>
             <p className="mt-2 text-2xl font-bold capitalize">{booking.status.replace(/_/g, " ")}</p>
           </div>
 
           <div className="rounded-[2rem] border border-slate-100 bg-white p-6 shadow-xl shadow-slate-200/50">
             <div className="space-y-4">
               <div className="flex gap-3">
-                <CalendarDays className="mt-0.5 h-5 w-5 text-[#fd5523]" />
+                <CalendarDays className="mt-0.5 h-5 w-5 text-brand-text" />
                 <p className="text-sm font-semibold text-slate-700">{formatDateTime(booking.starts_at, booking.ends_at, booking.timezone)}</p>
               </div>
               <div className="flex gap-3">
-                <Clock3 className="mt-0.5 h-5 w-5 text-[#fd5523]" />
+                <Clock3 className="mt-0.5 h-5 w-5 text-brand-text" />
                 <p className="text-sm font-semibold text-slate-700">{booking.timezone}</p>
               </div>
               <div className="flex gap-3">
-                <Users className="mt-0.5 h-5 w-5 text-[#fd5523]" />
+                <Users className="mt-0.5 h-5 w-5 text-brand-text" />
                 <p className="text-sm font-semibold text-slate-700">1-on-1 Private Session</p>
               </div>
             </div>

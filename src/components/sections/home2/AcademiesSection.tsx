@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import { Building2, BookOpen, ArrowRight, PlusCircle, Sparkles, ShieldCheck } from "lucide-react";
+import { DEFAULT_PRIMARY_COLOR } from "@/lib/brand";
 
 export default async function AcademiesSection() {
   const supabase = createClient();
@@ -34,15 +35,15 @@ export default async function AcademiesSection() {
         
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto mb-16">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-orange-50 text-[#fd5523] border border-orange-200/60 text-xs font-black uppercase tracking-wider mb-4">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-orange-50 text-brand-text border border-orange-200/60 text-xs font-black uppercase tracking-wider mb-4">
             <Sparkles className="h-3.5 w-3.5" />
             <span>Multi-Tenant Network</span>
           </div>
           <h2 className="text-3xl sm:text-5xl font-black text-slate-900 tracking-tight leading-tight uppercase">
-            Featured <span className="text-[#fd5523]">Academies</span>
+            Featured <span className="text-brand-text">Academies</span>
           </h2>
           <p className="mt-4 text-slate-600 text-sm sm:text-base leading-relaxed">
-            Explore independent AI learning portals and teaching studios powered by Zed AI Academy. 
+            Explore independent AI learning portals and teaching studios powered by CS Learn. 
             Each academy features custom curricula, certified instructors, and dedicated classrooms.
           </p>
         </div>
@@ -51,7 +52,7 @@ export default async function AcademiesSection() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {companies.map((tenant) => {
             const courseCount = courseCountsMap.get(tenant.id) ?? 0;
-            const brandColor = tenant.primary_color || "#fd5523";
+            const brandColor = tenant.primary_color || DEFAULT_PRIMARY_COLOR;
             const isPlatform = tenant.slug === "zedai";
 
             return (
@@ -84,7 +85,7 @@ export default async function AcademiesSection() {
                     )}
                   </div>
 
-                  <h3 className="text-lg font-black text-slate-900 tracking-tight group-hover:text-[#fd5523] transition-colors">
+                  <h3 className="text-lg font-black text-slate-900 tracking-tight group-hover:text-brand-text transition-colors">
                     {tenant.name}
                   </h3>
                   <p className="text-xs text-slate-400 font-mono mt-0.5">
@@ -114,7 +115,7 @@ export default async function AcademiesSection() {
           {/* Launch Your Own Academy CTA Card */}
           <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white rounded-[2rem] p-6 shadow-xl flex flex-col justify-between border border-slate-700/60 group hover:-translate-y-1 transition-all">
             <div>
-              <div className="h-14 w-14 rounded-2xl bg-white/10 text-[#fd5523] flex items-center justify-center mb-5 border border-white/10">
+              <div className="h-14 w-14 rounded-2xl bg-white/10 text-brand-text flex items-center justify-center mb-5 border border-white/10">
                 <PlusCircle className="h-7 w-7" />
               </div>
 
@@ -129,7 +130,7 @@ export default async function AcademiesSection() {
             <div className="mt-6 pt-4 border-t border-white/10">
               <Link
                 href="/launch-your-academy"
-                className="w-full flex items-center justify-center gap-2 bg-[#fd5523] hover:bg-[#ea4817] text-white font-bold text-xs uppercase tracking-wider py-3 rounded-xl shadow-lg shadow-[#fd5523]/30 transition-all hover:scale-105 active:scale-95"
+                className="w-full flex items-center justify-center gap-2 bg-brand hover:bg-brand-hover text-white font-bold text-xs uppercase tracking-wider py-3 rounded-xl shadow-lg shadow-brand/30 transition-all hover:scale-105 active:scale-95"
               >
                 <span>Launch Academy</span>
                 <ArrowRight className="h-3.5 w-3.5" />

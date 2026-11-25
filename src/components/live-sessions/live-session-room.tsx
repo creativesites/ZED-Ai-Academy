@@ -171,10 +171,10 @@ export function LiveSessionRoom({
 
   if (loading) {
     return (
-      <div className="flex h-[550px] w-full flex-col items-center justify-center rounded-[2.5rem] bg-[#062e39] text-white p-8 shadow-2xl border border-white/10">
+      <div className="flex h-[550px] w-full flex-col items-center justify-center rounded-[2.5rem] bg-ink text-white p-8 shadow-2xl border border-white/10">
         <div className="relative mb-6">
-          <div className="absolute -inset-4 bg-[#fd5523]/20 rounded-full blur-xl animate-pulse" />
-          <div className="relative flex h-20 w-20 items-center justify-center rounded-3xl bg-[#fff6ee] text-[#fd5523] shadow-inner">
+          <div className="absolute -inset-4 bg-brand/20 rounded-full blur-xl animate-pulse" />
+          <div className="relative flex h-20 w-20 items-center justify-center rounded-3xl bg-brand-soft text-brand-text shadow-inner">
             <Loader2 className="h-10 w-10 animate-spin" />
           </div>
         </div>
@@ -190,11 +190,11 @@ export function LiveSessionRoom({
         <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-red-50 text-red-500">
           <Video className="h-8 w-8" />
         </div>
-        <h3 className="text-2xl font-bold text-[#062e39]">Room Connection Failed</h3>
+        <h3 className="text-2xl font-bold text-ink">Room Connection Failed</h3>
         <p className="mt-2 max-w-md text-sm text-slate-500">{error}</p>
         <Button
           onClick={() => window.location.reload()}
-          className="mt-6 rounded-xl bg-[#fd5523] px-6 text-white hover:bg-[#ef4a16]"
+          className="mt-6 rounded-xl bg-brand px-6 text-white hover:bg-brand-hover"
         >
           Retry Connection
         </Button>
@@ -203,9 +203,9 @@ export function LiveSessionRoom({
   }
 
   return (
-    <div className="flex flex-col w-full h-[650px] lg:h-[720px] bg-[#062e39] rounded-[2.5rem] shadow-2xl overflow-hidden border border-white/10 relative">
+    <div className="flex flex-col w-full h-[650px] lg:h-[720px] bg-ink rounded-[2.5rem] shadow-2xl overflow-hidden border border-white/10 relative">
       {/* Studio Header Bar */}
-      <div className="flex items-center justify-between px-6 py-4 bg-[#062e39]/90 backdrop-blur-md border-b border-white/10 z-20 shrink-0">
+      <div className="flex items-center justify-between px-6 py-4 bg-ink/90 backdrop-blur-md border-b border-white/10 z-20 shrink-0">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20">
             <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
@@ -213,7 +213,7 @@ export function LiveSessionRoom({
           </div>
 
           <div className="hidden sm:flex items-center gap-2 text-xs font-bold text-slate-300">
-            <Clock className="h-3.5 w-3.5 text-[#fd5523]" />
+            <Clock className="h-3.5 w-3.5 text-brand-text" />
             <span className="font-mono text-white">{formatDuration(sessionSeconds)}</span>
           </div>
 
@@ -248,7 +248,7 @@ export function LiveSessionRoom({
             onClick={() => setActivePanel(activePanel === "notes" ? "none" : "notes")}
             className={cn(
               "text-xs rounded-xl gap-1.5",
-              activePanel === "notes" ? "bg-[#fd5523] text-white" : "text-slate-300 hover:text-white hover:bg-white/10"
+              activePanel === "notes" ? "bg-brand text-white" : "text-slate-300 hover:text-white hover:bg-white/10"
             )}
           >
             <FileText className="h-3.5 w-3.5" />
@@ -261,7 +261,7 @@ export function LiveSessionRoom({
             onClick={() => setActivePanel(activePanel === "qa" ? "none" : "qa")}
             className={cn(
               "text-xs rounded-xl gap-1.5 relative",
-              activePanel === "qa" ? "bg-[#fd5523] text-white" : "text-slate-300 hover:text-white hover:bg-white/10"
+              activePanel === "qa" ? "bg-brand text-white" : "text-slate-300 hover:text-white hover:bg-white/10"
             )}
           >
             <HelpCircle className="h-3.5 w-3.5" />
@@ -318,7 +318,7 @@ export function LiveSessionRoom({
                 disableInviteFunctions: true,
                 enableWelcomePage: false,
                 prejoinPageEnabled: false,
-                backgroundColor: "#062e39",
+                backgroundColor: "var(--color-ink)",
               }}
               interfaceConfigOverwrite={{
                 TOOLBAR_BUTTONS: [
@@ -348,8 +348,8 @@ export function LiveSessionRoom({
                 iframeRef.style.width = "100%";
               }}
               spinner={() => (
-                <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-slate-400 bg-[#062e39]">
-                  <Loader2 className="h-8 w-8 animate-spin text-[#fd5523]" />
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-slate-400 bg-ink">
+                  <Loader2 className="h-8 w-8 animate-spin text-brand-text" />
                   <p className="text-xs font-bold uppercase tracking-widest">Connecting to Studio...</p>
                 </div>
               )}
@@ -359,10 +359,10 @@ export function LiveSessionRoom({
 
         {/* Live Notes Side Panel */}
         {activePanel === "notes" && (
-          <div className="w-80 lg:w-96 bg-[#062e39]/95 backdrop-blur-xl border-l border-white/10 flex flex-col p-4 shadow-2xl z-20">
+          <div className="w-80 lg:w-96 bg-ink/95 backdrop-blur-xl border-l border-white/10 flex flex-col p-4 shadow-2xl z-20">
             <div className="flex items-center justify-between pb-3 border-b border-white/10 mb-3">
               <div className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-white">
-                <FileText className="h-4 w-4 text-[#fd5523]" />
+                <FileText className="h-4 w-4 text-brand-text" />
                 <span>Shared Lesson Notes</span>
               </div>
               <Button
@@ -378,7 +378,7 @@ export function LiveSessionRoom({
               value={sharedNotes}
               onChange={(e) => setSharedNotes(e.target.value)}
               placeholder="Type lesson notes, code snippets, or reference links..."
-              className="flex-1 w-full bg-black/40 border border-white/10 rounded-2xl p-3 text-xs font-mono text-emerald-300 focus:outline-none focus:border-[#fd5523] resize-none leading-relaxed"
+              className="flex-1 w-full bg-black/40 border border-white/10 rounded-2xl p-3 text-xs font-mono text-emerald-300 focus:outline-none focus:border-brand resize-none leading-relaxed"
             />
             <p className="mt-2 text-[10px] text-slate-400 font-medium text-center">
               Notes are visible to all participants during this active session.
@@ -388,10 +388,10 @@ export function LiveSessionRoom({
 
         {/* Live Q&A Queue Side Panel */}
         {activePanel === "qa" && (
-          <div className="w-80 lg:w-96 bg-[#062e39]/95 backdrop-blur-xl border-l border-white/10 flex flex-col p-4 shadow-2xl z-20">
+          <div className="w-80 lg:w-96 bg-ink/95 backdrop-blur-xl border-l border-white/10 flex flex-col p-4 shadow-2xl z-20">
             <div className="flex items-center justify-between pb-3 border-b border-white/10 mb-3">
               <div className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-white">
-                <HelpCircle className="h-4 w-4 text-[#fd5523]" />
+                <HelpCircle className="h-4 w-4 text-brand-text" />
                 <span>Q&A Queue</span>
               </div>
               <Button
@@ -410,9 +410,9 @@ export function LiveSessionRoom({
                 value={newQuestionInput}
                 onChange={(e) => setNewQuestionInput(e.target.value)}
                 placeholder="Ask a question..."
-                className="flex-1 h-10 px-3 rounded-xl bg-black/40 border border-white/10 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-[#fd5523]"
+                className="flex-1 h-10 px-3 rounded-xl bg-black/40 border border-white/10 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-brand"
               />
-              <Button type="submit" size="sm" className="rounded-xl bg-[#fd5523] text-white h-10 px-3">
+              <Button type="submit" size="sm" className="rounded-xl bg-brand text-white h-10 px-3">
                 <Send className="h-3.5 w-3.5" />
               </Button>
             </form>
@@ -442,7 +442,7 @@ export function LiveSessionRoom({
                       <button
                         type="button"
                         onClick={() => toggleAnswered(q.id)}
-                        className="text-[10px] font-bold text-[#fd8d69] hover:underline"
+                        className="text-[10px] font-bold text-brand-electric hover:underline"
                       >
                         {q.isAnswered ? "Mark Unanswered" : "Mark Answered"}
                       </button>

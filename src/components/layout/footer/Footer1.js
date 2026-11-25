@@ -1,4 +1,5 @@
 import Link from "next/link"
+import { BrandLogo } from "@/components/shared/brand-logo"
 
 export default function Footer1() {
     return (
@@ -19,7 +20,7 @@ export default function Footer1() {
                                 <div className="footer-widget__single footer-one__about">
                                     <div className="footer-one__about-logo">
                                         <Link href="/">
-                                            <img src="/images/zed-ai-logo.png" alt="Zed AI Academy" />
+                                            <BrandLogo variant="onDark" className="h-auto w-[220px]" />
                                         </Link>
                                     </div>
                                     <p className="footer-one__about-text">
@@ -78,7 +79,6 @@ export default function Footer1() {
                                                 </div>
                                                 <div className="text-box">
                                                     <p><Link href="mailto:creativesites263@gmail.com">creativesites263@gmail.com</Link></p>
-                                                    {/* <p><Link href="mailto:teams@zedaiacademy.com">teams@zedaiacademy.com</Link></p> */}
                                                 </div>
                                             </li>
                                             <li>
@@ -129,7 +129,7 @@ export default function Footer1() {
                 <div className="container">
                     <div className="footer-one__bottom-inner">
                         <div className="footer-one__bottom-text">
-                            <p>© Copyright 2026 <Link href="/">Zed AI Academy.</Link> All Rights Reserved.</p>
+                            <p>© Copyright {new Date().getFullYear()} <Link href="/">CreativeSites Learn.</Link> All Rights Reserved.</p>
                         </div>
                         <div className="footer-one__social-links">
                             <ul>

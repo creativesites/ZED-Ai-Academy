@@ -70,8 +70,8 @@ export function ZoomMeeting({
         
         {loading && (
           <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900 z-10 pointer-events-none">
-            <div className="h-12 w-12 rounded-2xl bg-[#fd5523]/10 flex items-center justify-center mb-4">
-              <div className="h-6 w-6 border-4 border-[#fd5523] border-t-transparent rounded-full animate-spin" />
+            <div className="h-12 w-12 rounded-2xl bg-brand/10 flex items-center justify-center mb-4">
+              <div className="h-6 w-6 border-4 border-brand border-t-transparent rounded-full animate-spin" />
             </div>
             <p className="text-sm font-bold text-white tracking-widest uppercase">Initializing Live Stream...</p>
           </div>

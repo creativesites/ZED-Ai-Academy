@@ -6,6 +6,7 @@ import { Key, ArrowRight, ShieldCheck, GraduationCap, Loader2, Sparkles } from "
 import { validateAndJoinStaff } from "@/actions/tenants";
 import { toast } from "sonner";
 import Link from "next/link";
+import { DEFAULT_PRIMARY_COLOR } from "@/lib/brand";
 
 interface JoinClientProps {
   company: {
@@ -34,7 +35,7 @@ export function JoinClient({
   const [code, setCode] = useState(initialCode);
   const [loading, setLoading] = useState(false);
 
-  const brandColor = company.primary_color || "#fd5523";
+  const brandColor = company.primary_color || DEFAULT_PRIMARY_COLOR;
 
   const handleTeacherJoin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -76,11 +77,11 @@ export function JoinClient({
         </div>
 
         <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-slate-100 text-slate-600 text-xs font-black uppercase tracking-wider mb-3">
-          <Sparkles className="h-3.5 w-3.5 text-[#fd5523]" />
+          <Sparkles className="h-3.5 w-3.5 text-brand-text" />
           <span>Academy Invitation</span>
         </div>
 
-        <h1 className="text-2xl sm:text-3xl font-black text-[#062e39] tracking-tight leading-tight mb-2">
+        <h1 className="text-2xl sm:text-3xl font-black text-ink tracking-tight leading-tight mb-2">
           Join {company.name}
         </h1>
 
@@ -104,7 +105,7 @@ export function JoinClient({
 
             <Link
               href={`/sign-in?redirect_url=/academy/${company.slug}/join?role=${role}${code ? `&code=${code}` : ""}`}
-              className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl border-2 border-slate-100 text-[#062e39] font-bold text-xs uppercase tracking-wider hover:bg-slate-50 transition-all"
+              className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl border-2 border-slate-100 text-ink font-bold text-xs uppercase tracking-wider hover:bg-slate-50 transition-all"
             >
               <span>Already have an account? Sign In</span>
             </Link>
@@ -140,7 +141,7 @@ export function JoinClient({
                   onChange={(e) => setCode(e.target.value)}
                   placeholder="Enter 6-digit staff code"
                   required
-                  className="w-full h-14 px-4 rounded-2xl border-2 border-slate-200 text-lg font-mono font-bold tracking-widest text-[#062e39] focus:outline-none focus:border-[#fd5523] transition-all"
+                  className="w-full h-14 px-4 rounded-2xl border-2 border-slate-200 text-lg font-mono font-bold tracking-widest text-ink focus:outline-none focus:border-brand transition-all"
                 />
                 <Key className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-300" />
               </div>

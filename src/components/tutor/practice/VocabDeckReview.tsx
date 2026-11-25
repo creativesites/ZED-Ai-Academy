@@ -505,12 +505,12 @@ export function VocabDeckReview({
           <div>
             <Link
               href={backHref}
-              className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-[#fd5523]"
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-brand-text"
             >
               <ArrowLeft className="h-3.5 w-3.5" />
               {backLabel}
             </Link>
-            <h1 className="mt-1.5 font-heading text-2xl font-black tracking-tight text-[#062e39] sm:text-3xl">
+            <h1 className="mt-1.5 font-heading text-2xl font-black tracking-tight text-ink sm:text-3xl">
               Study Deck &amp; Active Recall
             </h1>
             <p className="mt-0.5 text-xs text-slate-500">
@@ -521,7 +521,7 @@ export function VocabDeckReview({
           <Button
             type="button"
             onClick={() => setAddOpen(true)}
-            className="h-10 rounded-xl bg-[#fd5523] px-4 text-xs font-bold text-white hover:bg-[#ea4817]"
+            className="h-10 rounded-xl bg-brand px-4 text-xs font-bold text-white hover:bg-brand-hover"
           >
             <Plus className="mr-1.5 h-4 w-4" />
             Add Study Card
@@ -531,10 +531,10 @@ export function VocabDeckReview({
         {/* Summary Strip */}
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {[
-            { label: "Due Now", value: summary.dueNow, accent: "text-[#fd5523]" },
+            { label: "Due Now", value: summary.dueNow, accent: "text-brand-text" },
             { label: "Reviewed Today", value: reviewedCount, accent: "text-blue-600" },
             { label: "Mastered", value: summary.mastered, accent: "text-emerald-600" },
-            { label: "Total Cards", value: summary.total, accent: "text-[#062e39]" },
+            { label: "Total Cards", value: summary.total, accent: "text-ink" },
           ].map((s) => (
             <div key={s.label} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
               <p className={`text-2xl font-black ${s.accent}`}>{s.value}</p>
@@ -556,7 +556,7 @@ export function VocabDeckReview({
               }}
               className={`rounded-full px-3.5 py-1.5 text-xs font-bold transition-colors ${
                 langFilter === "all"
-                  ? "bg-[#062e39] text-white"
+                  ? "bg-ink text-white"
                   : "border border-slate-200 bg-white text-slate-600 hover:bg-slate-100"
               }`}
             >
@@ -572,7 +572,7 @@ export function VocabDeckReview({
                 }}
                 className={`rounded-full px-3.5 py-1.5 text-xs font-bold transition-colors ${
                   langFilter === lang
-                    ? "bg-[#fd5523] text-white"
+                    ? "bg-brand text-white"
                     : "border border-slate-200 bg-white text-slate-600 hover:bg-slate-100"
                 }`}
               >
@@ -585,7 +585,7 @@ export function VocabDeckReview({
         {/* Active Review Stage with Animated Teacher Coach */}
         <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-lg">
           {/* Teacher Coach Bar */}
-          <div className="flex items-center gap-4 bg-gradient-to-r from-[#062e39] via-[#132842] to-[#2a1745] px-5 py-4 text-white">
+          <div className="flex items-center gap-4 bg-gradient-to-r from-ink via-[#132842] to-[#2a1745] px-5 py-4 text-white">
             <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-white/15 bg-black/25">
               <Teacher
                 ref={avatarRef}
@@ -610,7 +610,7 @@ export function VocabDeckReview({
                 <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
                   <CheckCircle2 className="h-7 w-7" />
                 </div>
-                <h2 className="text-xl font-black text-[#062e39]">
+                <h2 className="text-xl font-black text-ink">
                   {summary.total === 0 ? "Your study deck is empty" : "All caught up for now!"}
                 </h2>
                 <p className="mx-auto max-w-md text-sm text-slate-500">
@@ -622,16 +622,16 @@ export function VocabDeckReview({
                   <Button
                     type="button"
                     onClick={() => setAddOpen(true)}
-                    className="rounded-xl bg-[#fd5523] font-bold text-white hover:bg-[#ea4817]"
+                    className="rounded-xl bg-brand font-bold text-white hover:bg-brand-hover"
                   >
                     <Plus className="mr-1.5 h-4 w-4" />
                     Add Study Card
                   </Button>
                   <Link
                     href={backHref}
-                    className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-xs font-bold text-[#062e39] hover:bg-slate-50"
+                    className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-xs font-bold text-ink hover:bg-slate-50"
                   >
-                    <Sparkles className="h-3.5 w-3.5 text-[#fd5523]" />
+                    <Sparkles className="h-3.5 w-3.5 text-brand-text" />
                     Open AI Teacher Room
                   </Link>
                 </div>
@@ -655,7 +655,7 @@ export function VocabDeckReview({
                 {/* Front: Term + Audio */}
                 <div className="space-y-3 py-2">
                   <h2
-                    className={`font-bold tracking-tight text-[#062e39] ${
+                    className={`font-bold tracking-tight text-ink ${
                       activeCard.term.length > 32
                         ? "mx-auto max-w-xl font-heading text-xl leading-snug sm:text-2xl"
                         : "font-serif text-3xl sm:text-5xl"
@@ -674,7 +674,7 @@ export function VocabDeckReview({
                       }
                       className="rounded-full border-slate-200 text-xs font-bold"
                     >
-                      <Volume2 className="mr-1.5 h-3.5 w-3.5 text-[#fd5523]" />
+                      <Volume2 className="mr-1.5 h-3.5 w-3.5 text-brand-text" />
                       Listen
                     </Button>
                     <Button
@@ -707,8 +707,8 @@ export function VocabDeckReview({
                         title={listeningVoice ? "Stop listening" : "Speak your recall out loud"}
                         className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border transition ${
                           listeningVoice
-                            ? "animate-pulse border-[#fd5523] bg-[#fd5523] text-white"
-                            : "border-slate-200 bg-white text-[#062e39] hover:border-[#fd5523]/50 hover:bg-[#fff2e9]"
+                            ? "animate-pulse border-brand bg-brand text-white"
+                            : "border-slate-200 bg-white text-ink hover:border-brand/50 hover:bg-brand-tint"
                         }`}
                         aria-label={listeningVoice ? "Stop voice recall" : "Speak your recall"}
                       >
@@ -723,7 +723,7 @@ export function VocabDeckReview({
                       <Button
                         type="submit"
                         disabled={!recallDraft.trim()}
-                        className="h-11 shrink-0 rounded-xl bg-[#fd5523] px-4 text-xs font-bold text-white hover:bg-[#ea4817]"
+                        className="h-11 shrink-0 rounded-xl bg-brand px-4 text-xs font-bold text-white hover:bg-brand-hover"
                       >
                         Check
                       </Button>
@@ -732,7 +732,7 @@ export function VocabDeckReview({
                       type="button"
                       variant="outline"
                       onClick={() => setRevealed(true)}
-                      className="h-10 rounded-xl border-slate-200 px-6 text-xs font-bold text-[#062e39]"
+                      className="h-10 rounded-xl border-slate-200 px-6 text-xs font-bold text-ink"
                     >
                       <Eye className="mr-1.5 h-3.5 w-3.5" />
                       Reveal Answer (Space)
@@ -773,7 +773,7 @@ export function VocabDeckReview({
 
                     <div className="space-y-1">
                       {activeCard.pron && (
-                        <p className="font-mono text-base font-semibold text-[#fd5523]">
+                        <p className="font-mono text-base font-semibold text-brand-text">
                           {activeCard.pron}
                         </p>
                       )}
@@ -800,7 +800,7 @@ export function VocabDeckReview({
                             disabled={isPending}
                             onClick={() => handleRate(opt.q)}
                             className={`flex flex-col items-center justify-center rounded-2xl border px-3 py-3 text-center transition-all ${opt.cls} ${
-                              isSuggested ? "ring-2 ring-[#fd5523] ring-offset-2" : ""
+                              isSuggested ? "ring-2 ring-brand ring-offset-2" : ""
                             }`}
                           >
                             <span className="text-sm font-black">
@@ -838,8 +838,8 @@ export function VocabDeckReview({
                   >
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className="font-serif text-lg font-bold text-[#062e39]">{c.term}</span>
-                        {c.pron && <span className="font-mono text-xs text-[#fd5523]">{c.pron}</span>}
+                        <span className="font-serif text-lg font-bold text-ink">{c.term}</span>
+                        {c.pron && <span className="font-mono text-xs text-brand-text">{c.pron}</span>}
                       </div>
                       <p className="truncate text-xs text-slate-600">{c.meaning || "—"}</p>
                       <div className="mt-1.5 flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider">
@@ -849,7 +849,7 @@ export function VocabDeckReview({
                             mastered
                               ? "text-emerald-600"
                               : due
-                                ? "text-[#fd5523]"
+                                ? "text-brand-text"
                                 : "text-blue-600"
                           }
                         >
@@ -866,7 +866,7 @@ export function VocabDeckReview({
                       <button
                         type="button"
                         onClick={() => speakTerm(c.term, c.language, 1.0, avatarRef.current)}
-                        className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-[#fd5523]"
+                        className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-brand-text"
                         aria-label={`Listen to ${c.term}`}
                       >
                         <Volume2 className="h-4 w-4" />
@@ -893,8 +893,8 @@ export function VocabDeckReview({
       <Dialog open={addOpen} onOpenChange={setAddOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 font-black text-[#062e39]">
-              <Flame className="h-5 w-5 text-[#fd5523]" />
+            <DialogTitle className="flex items-center gap-2 font-black text-ink">
+              <Flame className="h-5 w-5 text-brand-text" />
               Add Study Card
             </DialogTitle>
             <DialogDescription>
@@ -951,7 +951,7 @@ export function VocabDeckReview({
               <Button
                 type="submit"
                 disabled={isPending}
-                className="rounded-xl bg-[#062e39] font-bold text-white hover:bg-[#0a4352]"
+                className="rounded-xl bg-ink font-bold text-white hover:bg-ink-hover"
               >
                 {isPending ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <RotateCcw className="mr-1.5 h-4 w-4" />}
                 Save to Deck

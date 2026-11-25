@@ -135,7 +135,7 @@ export function ReportCard({
                     aria-valuetext={`${value} out of 100, guidance`}
                     className="h-2 overflow-hidden rounded-full bg-[var(--soft-hover)]"
                   >
-                    <div className="h-full rounded-full bg-gradient-to-r from-[#fd5523] to-[#15805f]" style={{ width: `${value}%` }} />
+                    <div className="h-full rounded-full bg-gradient-to-r from-brand to-[#15805f]" style={{ width: `${value}%` }} />
                   </div>
                 </li>
               );
@@ -347,7 +347,7 @@ export function ReportCard({
           }}
           className="inline-flex items-center justify-center gap-1.5 rounded-2xl border border-[var(--line-strong)] bg-white px-4 py-3 text-sm font-semibold text-[var(--ink)] hover:bg-[var(--soft-hover)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus)]"
         >
-          <Download className="h-4 w-4 text-[#fd5523]" aria-hidden="true" />
+          <Download className="h-4 w-4 text-brand-text" aria-hidden="true" />
           Download notes
         </button>
         {onDone && (

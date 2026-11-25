@@ -20,6 +20,7 @@ import {
 import type { Metadata } from "next";
 import TenantHomeNavBar from "@/components/tenant/TenantHomeNavBar";
 import { getCurrentTenantAccess, isTeachingRole } from "@/lib/tenants/access";
+import { DEFAULT_PRIMARY_COLOR } from "@/lib/brand";
 
 type PageProps = {
   params: Promise<{ domain: string; slug: string }>;
@@ -149,7 +150,7 @@ export default async function TenantCourseDetailPage({ params, searchParams }: P
   const firstPreviewLesson = modules.flatMap((m) => m.lessons).find((l) => l.is_preview) ?? null;
   const progressPct = totalLessons > 0 ? Math.round((completedCount / totalLessons) * 100) : 0;
 
-  const brandColor = tenant.primary_color || "#fd5523";
+  const brandColor = tenant.primary_color || DEFAULT_PRIMARY_COLOR;
   const isFree = course.price_type === "free";
   const priceDisplay = formatPrice(course.price_type, course.price_amount);
 

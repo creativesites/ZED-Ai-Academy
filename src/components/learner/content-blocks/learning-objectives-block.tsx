@@ -13,12 +13,12 @@ export function LearningObjectivesBlock({ content }: { content: Record<string, u
   return (
     <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm">
       <div className="mb-5 flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#fff6ee] text-[#fd5523]">
+        <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-brand-soft text-brand-text">
           <Target className="h-5 w-5" />
         </div>
         <div>
-          <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[#fd5523]">Learning Path</p>
-          <h3 className="text-2xl font-bold tracking-tight text-[#062e39]">{title}</h3>
+          <p className="text-[10px] font-black uppercase tracking-[0.22em] text-brand-text">Learning Path</p>
+          <h3 className="text-2xl font-bold tracking-tight text-ink">{title}</h3>
         </div>
       </div>
 

@@ -1,6 +1,7 @@
 import Menu from "../Menu"
 import Link from "next/link"
 import MobileMenu from "../MobileMenu"
+import { BrandLogo } from "@/components/shared/brand-logo"
 export default function Header3({ scroll, handlePopup, handleMobileMenu  }) {
     return (
         <>
@@ -77,8 +78,7 @@ export default function Header3({ scroll, handlePopup, handleMobileMenu  }) {
                                 <div className="main-header-three__bottom-inner">
                                     <div className="main-header-three__bottom-left">
                                         <div className="logo-box">
-                                            <Link href="/"><img src="/images/zed-ai-logo.png" className="w-[200px]"
-                                                    alt="Zed AI Academy"/></Link>
+                                            <Link href="/"><BrandLogo variant="onDark" priority className="h-auto w-[200px]" /></Link>
                                         </div>
                                     </div>
 
@@ -186,8 +186,7 @@ export default function Header3({ scroll, handlePopup, handleMobileMenu  }) {
                                 <div className="main-header-three__bottom-inner">
                                     <div className="main-header-three__bottom-left">
                                         <div className="logo-box">
-                                            <Link href="/"><img src="/images/zed-ai-logo.png" className="w-[200px]"
-                                                    alt="Zed AI Academy"/></Link>
+                                            <Link href="/"><BrandLogo variant="onDark" priority className="h-auto w-[200px]" /></Link>
                                         </div>
                                     </div>
 

@@ -48,7 +48,7 @@ export function StartPanel({
       className={`${styles.glass} mx-auto grid w-full max-w-[500px] gap-3 rounded-2xl p-4 sm:gap-4 sm:rounded-[26px] ${compact ? "sm:p-5" : "sm:p-6"}`}
     >
       <div className="grid gap-0.5">
-        <p className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-[0.14em] text-[#fd5523] sm:text-[11px]">
+        <p className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-[0.14em] text-brand-text sm:text-[11px]">
           <Sparkles className="h-3 w-3" aria-hidden="true" />
           AI Teacher
         </p>
@@ -134,7 +134,7 @@ export function StartPanel({
         onClick={onStart}
         disabled={starting}
         aria-busy={starting}
-        className={`${styles.primaryButton} rounded-xl px-4 py-3 text-sm font-bold shadow-[0_10px_24px_rgba(253,85,35,0.26)] transition-transform hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus)] disabled:opacity-60 disabled:hover:translate-y-0 sm:rounded-2xl sm:py-3.5 sm:text-[15px]`}
+        className={`${styles.primaryButton} rounded-xl px-4 py-3 text-sm font-bold shadow-[0_10px_24px_rgba(7,91,235,0.26)] transition-transform hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus)] disabled:opacity-60 disabled:hover:translate-y-0 sm:rounded-2xl sm:py-3.5 sm:text-[15px]`}
       >
         {starting
           ? "Connecting to your teacher..."

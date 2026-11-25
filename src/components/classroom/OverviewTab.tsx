@@ -160,12 +160,12 @@ export function OverviewTab({
   return (
     <div className="space-y-4 sm:space-y-5 animate-in fade-in duration-300">
       {/* 1. Header Banner & Live Classroom Status */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#062e39] via-[#094150] to-[#062e39] p-4 sm:p-5 md:p-6 text-white shadow-sm">
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-ink via-[#094150] to-ink p-4 sm:p-5 md:p-6 text-white shadow-sm">
         <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div className="space-y-1.5 max-w-2xl min-w-0">
             <div className="flex flex-wrap items-center gap-1.5">
               <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-white/10 text-sky-200 text-[10px] font-bold uppercase tracking-wider border border-white/10 max-w-full truncate">
-                <GraduationCap className="h-3 w-3 text-[#fd5523] shrink-0" />
+                <GraduationCap className="h-3 w-3 text-brand-text shrink-0" />
                 <span className="truncate">{selectedCohort?.name || "All Classes"}</span>
               </span>
 
@@ -215,7 +215,7 @@ export function OverviewTab({
             ) : isAdminOrInstructor ? (
               <Button
                 onClick={() => onNavigateTab("session")}
-                className="flex-1 sm:flex-none bg-[#fd5523] hover:bg-[#e0481d] text-white font-semibold text-xs h-9 px-3.5 rounded-xl shadow-xs gap-1.5 justify-center cursor-pointer"
+                className="flex-1 sm:flex-none bg-brand hover:bg-brand-hover text-white font-semibold text-xs h-9 px-3.5 rounded-xl shadow-xs gap-1.5 justify-center cursor-pointer"
               >
                 <Video className="h-3.5 w-3.5 shrink-0" />
                 <span>Start Live</span>
@@ -231,7 +231,7 @@ export function OverviewTab({
                 }
                 className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 h-9 px-3.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-semibold transition-all border border-white/15"
               >
-                <BookOpen className="h-3.5 w-3.5 text-[#fd5523] shrink-0" />
+                <BookOpen className="h-3.5 w-3.5 text-brand-text shrink-0" />
                 <span>Course Player</span>
                 <ArrowRight className="h-3 w-3 shrink-0" />
               </Link>
@@ -281,7 +281,7 @@ export function OverviewTab({
                   <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
                     Cohort Roster
                   </span>
-                  <p className="text-base sm:text-lg font-bold text-[#062e39] mt-0.5 truncate">
+                  <p className="text-base sm:text-lg font-bold text-ink mt-0.5 truncate">
                     {instructorStats.activeStudentsCount} Enrolled Learners
                   </p>
                 </div>
@@ -296,7 +296,7 @@ export function OverviewTab({
                   <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
                     Class Library
                   </span>
-                  <p className="text-base sm:text-lg font-bold text-[#062e39] mt-0.5 truncate">
+                  <p className="text-base sm:text-lg font-bold text-ink mt-0.5 truncate">
                     {instructorStats.materialsCount} Documents &amp; Handouts
                   </p>
                 </div>
@@ -311,7 +311,7 @@ export function OverviewTab({
                   <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
                     Virtual Classroom
                   </span>
-                  <p className="text-base sm:text-lg font-bold text-[#062e39] mt-0.5 truncate">
+                  <p className="text-base sm:text-lg font-bold text-ink mt-0.5 truncate">
                     {sessionState.is_session_active ? "Session Running" : "Classroom Ready"}
                   </p>
                 </div>
@@ -327,7 +327,7 @@ export function OverviewTab({
                 <h3 className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
                   Faculty Quick Actions
                 </h3>
-                <p className="text-xs sm:text-sm font-bold text-[#062e39] mt-0.5">
+                <p className="text-xs sm:text-sm font-bold text-ink mt-0.5">
                   Classroom Tools
                 </p>
               </div>
@@ -429,14 +429,14 @@ export function OverviewTab({
       {!isAdminOrInstructor && studentProgress?.nextLesson && (
         <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-orange-500/10 via-amber-500/5 to-white border border-orange-200/70 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3.5">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="h-10 w-10 rounded-xl bg-[#fd5523] text-white flex items-center justify-center shrink-0 shadow-xs">
+            <div className="h-10 w-10 rounded-xl bg-brand text-white flex items-center justify-center shrink-0 shadow-xs">
               <BookOpen className="h-5 w-5" />
             </div>
             <div className="min-w-0">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-[#fd5523] block leading-tight">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-brand-text block leading-tight">
                 Up Next In Your Curriculum
               </span>
-              <h3 className="text-sm sm:text-base font-bold text-[#062e39] mt-0.5 truncate">
+              <h3 className="text-sm sm:text-base font-bold text-ink mt-0.5 truncate">
                 {studentProgress.nextLesson.title}
               </h3>
               <p className="text-xs text-slate-500 truncate">
@@ -447,7 +447,7 @@ export function OverviewTab({
 
           <Link
             href={`/courses/${studentProgress.nextLesson.course_slug}/learn`}
-            className="inline-flex items-center justify-center gap-1.5 px-4 h-9 rounded-xl bg-[#fd5523] hover:bg-[#e0481d] text-white text-xs font-semibold shadow-xs transition-all w-full sm:w-auto shrink-0"
+            className="inline-flex items-center justify-center gap-1.5 px-4 h-9 rounded-xl bg-brand hover:bg-brand-hover text-white text-xs font-semibold shadow-xs transition-all w-full sm:w-auto shrink-0"
           >
             Resume Lesson
             <ArrowRight className="h-3.5 w-3.5" />
@@ -460,12 +460,12 @@ export function OverviewTab({
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
             <div className="flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-[#fd5523]" />
+              <span className="h-2 w-2 rounded-full bg-brand" />
               <h3 className="text-[10px] sm:text-xs font-black uppercase tracking-wider text-slate-400">
                 Next Scheduled Class
               </h3>
             </div>
-            <p className="text-sm sm:text-base font-black text-[#062e39] mt-0.5">
+            <p className="text-sm sm:text-base font-black text-ink mt-0.5">
               Live Lesson &amp; Workshop Timetable
             </p>
           </div>
@@ -474,7 +474,7 @@ export function OverviewTab({
             variant="ghost"
             size="sm"
             onClick={() => onNavigateTab("timetable")}
-            className="text-xs font-black text-[#fd5523] hover:text-[#e0481d] w-fit p-0 h-auto cursor-pointer"
+            className="text-xs font-black text-brand-text hover:text-brand-hover w-fit p-0 h-auto cursor-pointer"
           >
             Full Timetable Calendar <ChevronRight className="h-3.5 w-3.5 ml-1" />
           </Button>
@@ -484,7 +484,7 @@ export function OverviewTab({
           <div className="p-3.5 sm:p-5 rounded-xl sm:rounded-2xl bg-slate-50 border border-slate-200/80 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 sm:gap-5">
             <div className="space-y-1.5 max-w-xl min-w-0 w-full">
               <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#062e39] text-white text-[10px] sm:text-[11px] font-black">
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-ink text-white text-[10px] sm:text-[11px] font-black">
                   <Clock className="h-3 w-3 text-sky-400" />
                   {nextScheduleInfo.dayStr} at {nextScheduleInfo.timeStr}
                 </span>
@@ -500,7 +500,7 @@ export function OverviewTab({
                 )}
               </div>
 
-              <h4 className="text-sm sm:text-base font-black text-[#062e39] truncate">
+              <h4 className="text-sm sm:text-base font-black text-ink truncate">
                 {nextScheduleInfo.schedule.title}
               </h4>
 
@@ -519,7 +519,7 @@ export function OverviewTab({
             <div className="flex flex-wrap items-center gap-2 w-full md:w-auto shrink-0">
               <Button
                 onClick={() => onNavigateTab("session")}
-                className="bg-[#fd5523] hover:bg-[#e0481d] text-white font-semibold text-xs rounded-xl shadow-xs gap-1.5 h-9 px-3.5 flex-1 sm:flex-none justify-center cursor-pointer"
+                className="bg-brand hover:bg-brand-hover text-white font-semibold text-xs rounded-xl shadow-xs gap-1.5 h-9 px-3.5 flex-1 sm:flex-none justify-center cursor-pointer"
               >
                 <Video className="h-3.5 w-3.5 shrink-0" />
                 <span>Join Room</span>
@@ -569,7 +569,7 @@ export function OverviewTab({
                   <h3 className="text-[10px] sm:text-xs font-black uppercase tracking-wider text-slate-400">
                     Your Academic Progress
                   </h3>
-                  <p className="text-base sm:text-lg font-black text-[#062e39] mt-0.5">
+                  <p className="text-base sm:text-lg font-black text-ink mt-0.5">
                     {studentProgress ? `${studentProgress.completionPercent}% Coursework Completed` : "Curriculum Tracking"}
                   </p>
                 </div>
@@ -578,9 +578,9 @@ export function OverviewTab({
                   variant="outline"
                   size="sm"
                   onClick={() => onNavigateTab("progress")}
-                  className="border-slate-200 hover:bg-slate-50 text-xs font-semibold text-[#062e39] rounded-xl gap-1.5 w-full sm:w-auto h-9 px-3.5 justify-center cursor-pointer"
+                  className="border-slate-200 hover:bg-slate-50 text-xs font-semibold text-ink rounded-xl gap-1.5 w-full sm:w-auto h-9 px-3.5 justify-center cursor-pointer"
                 >
-                  <Award className="h-3.5 w-3.5 text-[#fd5523] shrink-0" />
+                  <Award className="h-3.5 w-3.5 text-brand-text shrink-0" />
                   <span>Transcript &amp; Grades</span>
                   <ChevronRight className="h-3.5 w-3.5 shrink-0" />
                 </Button>
@@ -596,7 +596,7 @@ export function OverviewTab({
                 </div>
                 <Progress
                   value={studentProgress?.completionPercent || 0}
-                  className="h-2.5 bg-slate-100 [&>div]:bg-gradient-to-r [&>div]:from-[#fd5523] [&>div]:to-amber-500"
+                  className="h-2.5 bg-slate-100 [&>div]:bg-gradient-to-r [&>div]:from-brand [&>div]:to-amber-500"
                 />
               </div>
 
@@ -607,7 +607,7 @@ export function OverviewTab({
                     Quiz Average
                   </span>
                   <div className="flex items-baseline gap-1 mt-0 sm:mt-0.5">
-                    <span className="text-sm sm:text-base font-black text-[#062e39]">
+                    <span className="text-sm sm:text-base font-black text-ink">
                       {studentProgress?.avgQuizScore || 0}%
                     </span>
                     <span className="text-[10px] text-slate-400">
@@ -621,7 +621,7 @@ export function OverviewTab({
                     Coursework Score
                   </span>
                   <div className="flex items-baseline gap-1 mt-0 sm:mt-0.5">
-                    <span className="text-sm sm:text-base font-black text-[#062e39]">
+                    <span className="text-sm sm:text-base font-black text-ink">
                       {studentProgress?.avgAssignmentScore ? `${studentProgress.avgAssignmentScore} pts` : "—"}
                     </span>
                     <span className="text-[10px] text-slate-400">
@@ -654,13 +654,13 @@ export function OverviewTab({
                 <h3 className="text-[10px] sm:text-xs font-black uppercase tracking-wider text-slate-400">
                   Coursework &amp; Tasks
                 </h3>
-                <p className="text-sm sm:text-base font-black text-[#062e39]">Assignments Due Soon</p>
+                <p className="text-sm sm:text-base font-black text-ink">Assignments Due Soon</p>
               </div>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => onNavigateTab("assignments")}
-                className="text-xs font-black text-[#fd5523] hover:text-[#e0481d] cursor-pointer"
+                className="text-xs font-black text-brand-text hover:text-brand-hover cursor-pointer"
               >
                 View All <ChevronRight className="h-3.5 w-3.5 ml-0.5" />
               </Button>
@@ -697,7 +697,7 @@ export function OverviewTab({
                           <FileText className="h-4.5 w-4.5 sm:h-5 sm:w-5" />
                         </div>
                         <div className="min-w-0">
-                          <h4 className="text-xs font-black text-[#062e39] group-hover:text-[#fd5523] transition-colors truncate">
+                          <h4 className="text-xs font-black text-ink group-hover:text-brand-text transition-colors truncate">
                             {a.title}
                           </h4>
                           <p className="text-[10px] text-slate-400 truncate">
@@ -735,13 +735,13 @@ export function OverviewTab({
                 <h3 className="text-[10px] sm:text-xs font-black uppercase tracking-wider text-slate-400">
                   Noticeboard Broadcasts
                 </h3>
-                <p className="text-sm sm:text-base font-black text-[#062e39]">Class Announcements</p>
+                <p className="text-sm sm:text-base font-black text-ink">Class Announcements</p>
               </div>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => onNavigateTab("noticeboard")}
-                className="text-xs font-black text-[#fd5523] hover:text-[#e0481d] cursor-pointer"
+                className="text-xs font-black text-brand-text hover:text-brand-hover cursor-pointer"
               >
                 View All <ChevronRight className="h-3.5 w-3.5 ml-0.5" />
               </Button>
@@ -761,14 +761,14 @@ export function OverviewTab({
                     className="p-3.5 sm:p-4 rounded-xl sm:rounded-2xl border border-slate-100 hover:border-slate-200 hover:bg-slate-50/50 transition-all space-y-1 cursor-pointer"
                   >
                     <div className="flex items-center justify-between gap-2">
-                      <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-[#fd5523]">
+                      <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-brand-text">
                         {notice.priority === "urgent" ? "🚨 Urgent Alert" : "📢 Notice"}
                       </span>
                       <span className="text-[10px] text-slate-400 font-medium">
                         {new Date(notice.created_at).toLocaleDateString([], { month: "short", day: "numeric" })}
                       </span>
                     </div>
-                    <h4 className="text-xs font-black text-[#062e39] truncate">{notice.title}</h4>
+                    <h4 className="text-xs font-black text-ink truncate">{notice.title}</h4>
                     <p className="text-xs text-slate-600 line-clamp-2 font-medium">
                       {notice.content}
                     </p>
@@ -789,7 +789,7 @@ export function OverviewTab({
                   <h3 className="text-[10px] sm:text-xs font-black uppercase tracking-wider text-slate-400">
                     Cohort Faculty Lead
                   </h3>
-                  <p className="text-xs sm:text-sm font-black text-[#062e39]">Assigned Instructor</p>
+                  <p className="text-xs sm:text-sm font-black text-ink">Assigned Instructor</p>
                 </div>
                 <span className="text-[9px] sm:text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">
                   Active
@@ -799,18 +799,18 @@ export function OverviewTab({
               <div className="flex items-center gap-3 pt-0.5">
                 <Avatar className="h-10 w-10 sm:h-12 sm:w-12 border-2 border-slate-100">
                   <AvatarImage src={assignedInstructor.avatar_url || ""} />
-                  <AvatarFallback className="bg-[#062e39] text-white font-black text-xs sm:text-sm">
+                  <AvatarFallback className="bg-ink text-white font-black text-xs sm:text-sm">
                     {assignedInstructor.full_name?.charAt(0) || "T"}
                   </AvatarFallback>
                 </Avatar>
                 <div className="min-w-0 flex-1">
-                  <h4 className="text-xs sm:text-sm font-black text-[#062e39] truncate">
+                  <h4 className="text-xs sm:text-sm font-black text-ink truncate">
                     {assignedInstructor.full_name || "Lead Instructor"}
                   </h4>
                   <p className="text-[10px] sm:text-[11px] text-slate-400 truncate">
                     {assignedInstructor.email || "Faculty Mentor"}
                   </p>
-                  <span className="text-[10px] text-[#fd5523] font-bold block mt-0.5">
+                  <span className="text-[10px] text-brand-text font-bold block mt-0.5">
                     Course Instructor &amp; Evaluator
                   </span>
                 </div>
@@ -819,9 +819,9 @@ export function OverviewTab({
               <Button
                 onClick={() => onNavigateTab("discussions")}
                 variant="outline"
-                className="w-full border-slate-200 text-[#062e39] hover:bg-slate-50 text-xs font-bold rounded-xl gap-2 mt-2 min-h-[42px] justify-center cursor-pointer"
+                className="w-full border-slate-200 text-ink hover:bg-slate-50 text-xs font-bold rounded-xl gap-2 mt-2 min-h-[42px] justify-center cursor-pointer"
               >
-                <MessageSquare className="h-3.5 w-3.5 text-[#fd5523]" />
+                <MessageSquare className="h-3.5 w-3.5 text-brand-text" />
                 Ask Question in Lounge
               </Button>
             </div>
@@ -834,13 +834,13 @@ export function OverviewTab({
                 <h3 className="text-[10px] sm:text-xs font-black uppercase tracking-wider text-slate-400">
                   Documents &amp; Handouts
                 </h3>
-                <p className="text-xs sm:text-sm font-black text-[#062e39]">Recently Added</p>
+                <p className="text-xs sm:text-sm font-black text-ink">Recently Added</p>
               </div>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => onNavigateTab("materials")}
-                className="text-xs font-black text-[#fd5523] hover:text-[#e0481d] cursor-pointer"
+                className="text-xs font-black text-brand-text hover:text-brand-hover cursor-pointer"
               >
                 Browse <FolderOpen className="h-3.5 w-3.5 ml-1" />
               </Button>
@@ -880,11 +880,11 @@ export function OverviewTab({
           {/* AI Study Packs Card */}
           <div className="p-4 sm:p-6 rounded-2xl sm:rounded-3xl bg-gradient-to-br from-orange-500/10 via-amber-500/5 to-white border border-orange-200/60 shadow-sm space-y-2.5 sm:space-y-3">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-[#fd5523]">
+              <div className="flex items-center gap-2 text-brand-text">
                 <Sparkles className="h-4.5 w-4.5 sm:h-5 sm:w-5" />
-                <h4 className="text-xs sm:text-sm font-black text-[#062e39]">AI Study Packs</h4>
+                <h4 className="text-xs sm:text-sm font-black text-ink">AI Study Packs</h4>
               </div>
-              <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-[#fd5523] bg-orange-100/60 px-2 py-0.5 rounded-full">
+              <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-brand-text bg-orange-100/60 px-2 py-0.5 rounded-full">
                 Interactive
               </span>
             </div>
@@ -893,7 +893,7 @@ export function OverviewTab({
             </p>
             <Button
               onClick={() => setIsStudyPacksModalOpen(true)}
-              className="w-full bg-[#fd5523] hover:bg-[#e0481d] text-white font-bold text-xs rounded-xl shadow-md shadow-[#fd5523]/20 gap-1.5 min-h-[42px] justify-center cursor-pointer"
+              className="w-full bg-brand hover:bg-brand-hover text-white font-bold text-xs rounded-xl shadow-md shadow-brand/20 gap-1.5 min-h-[42px] justify-center cursor-pointer"
             >
               <Sparkles className="h-3.5 w-3.5" />
               {isAdminOrInstructor ? "Manage Study Packs" : "Study & Practice Now"}

@@ -61,7 +61,7 @@ function getGoogleCalendarUrl(lesson: ScheduleItem, companySlug: string) {
       typeof window !== "undefined" ? window.location.origin : ""
     }/academy/${companySlug}/classroom?tab=session`
   );
-  const location = encodeURIComponent("Zed AI Academy - Classroom");
+  const location = encodeURIComponent("CS Learn - Classroom");
 
   let startIso = "";
   let endIso = "";
@@ -98,7 +98,7 @@ function downloadIcsFile(lesson: ScheduleItem, companySlug: string) {
   const icsContent = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "PRODID:-//Zed AI Academy//Timetable//EN",
+    "PRODID:-//CreativeSites//CS Learn Timetable//EN",
     "CALSCALE:GREGORIAN",
     "BEGIN:VEVENT",
     `SUMMARY:${title}`,
@@ -172,8 +172,8 @@ export function LearnerScheduleClient({
     <div className="space-y-8">
       {/* ── Active Live Class Banner ─────────────────────────────────── */}
       {activeNowSession && activeNowSession.companies && (
-        <div className="relative overflow-hidden rounded-[2.5rem] bg-gradient-to-r from-[#062e39] via-[#083d4c] to-[#0a485a] p-6 sm:p-10 text-white shadow-2xl border border-emerald-500/30 animate-in fade-in slide-in-from-top-4 duration-500">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(253,85,35,0.15),transparent_50%)]" />
+        <div className="relative overflow-hidden rounded-[2.5rem] bg-gradient-to-r from-ink via-[#083d4c] to-[#0a485a] p-6 sm:p-10 text-white shadow-2xl border border-emerald-500/30 animate-in fade-in slide-in-from-top-4 duration-500">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(7,91,235,0.15),transparent_50%)]" />
 
           <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div className="space-y-3">
@@ -199,7 +199,7 @@ export function LearnerScheduleClient({
             <div className="flex items-center gap-3">
               <Link
                 href={`/academy/${activeNowSession.companies.slug}/classroom?tab=session&scheduleId=${activeNowSession.id}`}
-                className="inline-flex items-center gap-2 rounded-2xl bg-[#fd5523] px-8 py-5 text-sm sm:text-base font-black text-white hover:bg-[#ef4a16] shadow-xl shadow-[#fd5523]/30 transition-all hover:scale-105 active:scale-95"
+                className="inline-flex items-center gap-2 rounded-2xl bg-brand px-8 py-5 text-sm sm:text-base font-black text-white hover:bg-brand-hover shadow-xl shadow-brand/30 transition-all hover:scale-105 active:scale-95"
               >
                 <Video className="h-5 w-5" />
                 Join Live Classroom
@@ -212,8 +212,8 @@ export function LearnerScheduleClient({
       {/* ── Filter Bar ─────────────────────────────────────────────── */}
       <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-white p-4 shadow-sm border border-slate-100">
         <div className="flex items-center gap-2">
-          <Filter className="h-4 w-4 text-[#fd5523]" />
-          <span className="text-xs font-black uppercase tracking-wider text-[#062e39]">
+          <Filter className="h-4 w-4 text-brand-text" />
+          <span className="text-xs font-black uppercase tracking-wider text-ink">
             Filter by Academy:
           </span>
         </div>
@@ -224,7 +224,7 @@ export function LearnerScheduleClient({
             className={cn(
               "rounded-xl px-4 py-2 text-xs font-bold transition-all",
               selectedCompanyId === "all"
-                ? "bg-[#062e39] text-white shadow-sm"
+                ? "bg-ink text-white shadow-sm"
                 : "bg-slate-50 text-slate-600 hover:bg-slate-100"
             )}
           >
@@ -237,7 +237,7 @@ export function LearnerScheduleClient({
               className={cn(
                 "rounded-xl px-4 py-2 text-xs font-bold transition-all",
                 selectedCompanyId === c.id
-                  ? "bg-[#fd5523] text-white shadow-sm"
+                  ? "bg-brand text-white shadow-sm"
                   : "bg-slate-50 text-slate-600 hover:bg-slate-100"
               )}
             >
@@ -256,7 +256,7 @@ export function LearnerScheduleClient({
           return (
             <div key={day} className="space-y-4">
               <div className="flex items-center gap-3">
-                <span className="rounded-full bg-[#062e39] px-4 py-1 text-xs font-black uppercase tracking-[0.2em] text-white shadow-sm">
+                <span className="rounded-full bg-ink px-4 py-1 text-xs font-black uppercase tracking-[0.2em] text-white shadow-sm">
                   {day}
                 </span>
                 <span className="text-xs font-bold text-slate-400">
@@ -268,7 +268,7 @@ export function LearnerScheduleClient({
               <div className="grid gap-4 sm:grid-cols-1">
                 {lessons.map((lesson) => {
                   const companySlug = lesson.companies?.slug || "academy";
-                  const companyName = lesson.companies?.name || "Zed AI Academy";
+                  const companyName = lesson.companies?.name || "CS Learn";
                   const isLive = Boolean(lesson.companies?.is_session_active);
 
                   return (
@@ -287,7 +287,7 @@ export function LearnerScheduleClient({
                               "flex h-16 w-16 sm:h-20 sm:w-20 shrink-0 flex-col items-center justify-center rounded-2xl border-2 transition-all shadow-inner",
                               isLive
                                 ? "border-emerald-400 bg-emerald-500 text-white"
-                                : "border-[#fd5523]/10 bg-[#fd5523]/5 text-[#fd5523] group-hover:bg-[#fd5523] group-hover:text-white"
+                                : "border-brand/10 bg-brand/5 text-brand-text group-hover:bg-brand group-hover:text-white"
                             )}
                           >
                             <Clock className="h-5 w-5 mb-0.5" />
@@ -312,13 +312,13 @@ export function LearnerScheduleClient({
                               )}
                             </div>
 
-                            <h3 className="text-xl sm:text-2xl font-black text-[#062e39] tracking-tight group-hover:text-[#fd5523] transition-colors">
+                            <h3 className="text-xl sm:text-2xl font-black text-ink tracking-tight group-hover:text-brand-text transition-colors">
                               {lesson.title}
                             </h3>
 
                             <div className="flex flex-wrap items-center gap-4 text-xs font-semibold text-slate-500">
                               <span className="flex items-center gap-1.5">
-                                <Clock className="h-3.5 w-3.5 text-[#fd5523]" />
+                                <Clock className="h-3.5 w-3.5 text-brand-text" />
                                 {lesson.start_time_only?.slice(0, 5)} —{" "}
                                 {lesson.end_time_only?.slice(0, 5) || "11:00"}
                               </span>
@@ -346,7 +346,7 @@ export function LearnerScheduleClient({
                               "inline-flex items-center gap-2 rounded-xl px-5 py-3 text-xs font-black uppercase tracking-wider transition-all shadow-md",
                               isLive
                                 ? "bg-emerald-600 text-white hover:bg-emerald-700 shadow-emerald-500/20"
-                                : "bg-[#062e39] text-white hover:bg-[#fd5523]"
+                                : "bg-ink text-white hover:bg-brand"
                             )}
                           >
                             <Video className="h-4 w-4" />
@@ -360,7 +360,7 @@ export function LearnerScheduleClient({
                             className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-3 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-all shadow-xs"
                             title="Add to Google Calendar"
                           >
-                            <Calendar className="h-4 w-4 text-[#fd5523]" />
+                            <Calendar className="h-4 w-4 text-brand-text" />
                             <span className="hidden sm:inline">Google Cal</span>
                           </a>
 
@@ -387,7 +387,7 @@ export function LearnerScheduleClient({
                             title="Remind me"
                           >
                             {remindingId === lesson.id ? (
-                              <Loader2 className="h-4 w-4 animate-spin text-[#fd5523]" />
+                              <Loader2 className="h-4 w-4 animate-spin text-brand-text" />
                             ) : remindedIds[lesson.id] ? (
                               <Check className="h-4 w-4 text-emerald-600" />
                             ) : (
@@ -409,10 +409,10 @@ export function LearnerScheduleClient({
 
         {filteredSchedules.length === 0 && (
           <div className="rounded-[2.5rem] border-2 border-dashed border-slate-200 bg-white p-12 text-center">
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#fff6ee] text-[#fd5523]">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-brand-soft text-brand-text">
               <CalendarDays className="h-8 w-8" />
             </div>
-            <h3 className="text-xl font-bold text-[#062e39]">No Classes Scheduled Yet</h3>
+            <h3 className="text-xl font-bold text-ink">No Classes Scheduled Yet</h3>
             <p className="mt-2 text-sm text-slate-500 max-w-sm mx-auto">
               Your instructors will publish recurring weekly live classes and workshops here.
             </p>

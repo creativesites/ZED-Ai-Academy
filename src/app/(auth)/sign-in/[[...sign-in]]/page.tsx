@@ -3,8 +3,9 @@ import { getSiteAsset } from "@/lib/site-assets";
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import { ArrowLeft, CheckCircle2 } from "lucide-react";
+import { BRAND, BRAND_LOGOS } from "@/lib/brand";
 
-export const metadata = { title: "Sign In — Zed AI Academy" };
+export const metadata = { title: "Sign In" };
 
 function extractAcademySlugFromRedirect(redirectUrl?: string): string | null {
   if (!redirectUrl) return null;
@@ -25,7 +26,6 @@ export default async function SignInPage(props: {
 }) {
   const { redirect_url } = await props.searchParams;
   const bgImage = await getSiteAsset("auth_bg", "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200&q=80&auto=format&fit=crop");
-  const defaultLogoUrl = await getSiteAsset("site_logo", "/images/logo-dark.png");
 
   const academySlug = extractAcademySlugFromRedirect(redirect_url);
   let tenant: { name: string; logo_url: string | null } | null = null;
@@ -39,20 +39,21 @@ export default async function SignInPage(props: {
     tenant = data;
   }
 
-  const displayLogo = tenant?.logo_url || defaultLogoUrl || "/images/logo-dark.png";
-  const displayAlt = tenant?.name || "Zed AI Academy";
+  // Platform sign-in always shows the CS Learn logo; tenant sign-ins show the academy logo.
+  const displayLogo = tenant?.logo_url || BRAND_LOGOS.onLight.src;
+  const displayAlt = tenant?.name || BRAND.fullName;
 
   return (
     <div className="flex min-h-screen bg-white overflow-hidden">
       {/* Left: Branding */}
-      <div className="relative hidden w-0 flex-1 lg:block bg-[#062e39]">
+      <div className="relative hidden w-0 flex-1 lg:block bg-ink">
         <div className="absolute inset-0 z-0">
           <img
             src={bgImage}
             alt="Background"
             className="h-full w-full object-cover opacity-30 grayscale"
           />
-          <div className="absolute inset-0 bg-gradient-to-br from-[#062e39] via-[#062e39]/80 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-br from-ink via-ink/80 to-transparent" />
         </div>
 
         <div className="relative z-10 flex h-full flex-col justify-between p-16 text-white">
@@ -63,7 +64,7 @@ export default async function SignInPage(props: {
             </Link>
             <div className="mt-20 max-w-xl">
               <h1 className="text-5xl font-extrabold tracking-tight leading-[1.1] text-white">
-                Master AI workflows that <span className="text-[#fd8d69]">actually ship.</span>
+                Master AI workflows that <span className="text-brand-electric">actually ship.</span>
               </h1>
               <p className="mt-6 text-xl text-white/60 leading-relaxed">
                 Hands-on AI courses built for professionals. Learn tools, build workflows, and get verified.
@@ -80,7 +81,7 @@ export default async function SignInPage(props: {
                 "Verified certificates for your career",
               ].map((feature) => (
                 <div key={feature} className="flex items-center gap-3 text-white/80 font-medium">
-                  <CheckCircle2 className="h-5 w-5 text-[#fd5523] shrink-0" />
+                  <CheckCircle2 className="h-5 w-5 text-brand-text shrink-0" />
                   <span>{feature}</span>
                 </div>
               ))}
@@ -99,7 +100,7 @@ export default async function SignInPage(props: {
               alt={displayAlt}
               className="h-20 w-auto object-contain"
             />
-            <h2 className="mt-6 text-3xl font-extrabold text-[#062e39] tracking-tight">Welcome back</h2>
+            <h2 className="mt-6 text-3xl font-extrabold text-ink tracking-tight">Welcome back</h2>
             <p className="mt-2 text-sm text-slate-500">
               Pick up where you left off in your AI journey.
             </p>
@@ -110,16 +111,16 @@ export default async function SignInPage(props: {
               appearance={{
                 elements: {
                   formButtonPrimary:
-                    "bg-[#fd5523] hover:bg-[#ef4a16] text-sm font-bold uppercase tracking-widest h-12 rounded-xl transition-all shadow-lg shadow-[#fd5523]/20",
+                    "bg-brand hover:bg-brand-hover text-sm font-bold uppercase tracking-widest h-12 rounded-xl transition-all shadow-lg shadow-brand/20",
                   // card: "shadow-none border-0 p-0",
                   headerTitle: "hidden",
                   headerSubtitle: "hidden",
                   // socialButtonsBlockButton:
                   //   "h-12 rounded-xl border-slate-200 hover:bg-slate-50 text-slate-600 transition-all font-semibold",
                   formFieldInput:
-                    "h-12 rounded-xl border-slate-200 focus:border-[#fd5523]/30 focus:ring-[#fd5523]/20 transition-all",
-                  footerActionLink: "text-[#fd5523] hover:text-[#ef4a16] font-bold",
-                  identityPreviewTextPrimary: "text-[#062e39] font-bold",
+                    "h-12 rounded-xl border-slate-200 focus:border-brand/30 focus:ring-brand/20 transition-all",
+                  footerActionLink: "text-brand-text hover:text-brand-hover font-bold",
+                  identityPreviewTextPrimary: "text-ink font-bold",
                   rootBox: "w-full",
                 },
               }}

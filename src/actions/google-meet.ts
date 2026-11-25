@@ -42,7 +42,7 @@ export async function createMeetSpace() {
 
     const event = {
       summary: 'AI Academy Teaching Session',
-      description: 'Live studio session for ZED AI Academy.',
+      description: 'Live studio session for CS Learn.',
       start: {
         dateTime: now.toISOString(),
         timeZone: 'UTC',

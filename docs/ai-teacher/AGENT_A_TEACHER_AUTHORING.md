@@ -1,6 +1,6 @@
 # Agent A brief: AI co-author for teachers (ZAI Teacher, Phase 1)
 
-You are implementing Phase 1 of the ZAI Teacher in the Zed AI Academy repo (Next.js 16 App Router, TypeScript,
+You are implementing Phase 1 of the ZAI Teacher in the CS Learn repo (Next.js 16 App Router, TypeScript,
 Tailwind v4 + shadcn/ui, Clerk auth, Supabase with RLS, Gemini via `@google/genai`). Read these first:
 
 - `docs/ai-teacher/NEXT_PHASES_PLAN.md` (the plan, current state, and which files are yours)

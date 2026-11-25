@@ -55,7 +55,7 @@ test("live mode instructs tool functions and does not ask for JSON", () => {
 test("layers appear in plan order: platform, skill pack, persona, scenario, memory, lesson", () => {
   const prompt = buildSystemPrompt(input());
   const order = [
-    "You are an AI teacher on Zed AI Academy",
+    "You are an AI teacher on CS Learn",
     "Skill pack: Mandarin Chinese",
     "Teacher persona: Lín Lǎoshī",
     "Scenario: Greetings at the tea house",

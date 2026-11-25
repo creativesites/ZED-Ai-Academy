@@ -42,11 +42,11 @@ export function CourseAIReview({ courseId }: { courseId: string }) {
     <div className="rounded-2xl sm:rounded-[2rem] border border-slate-200/80 bg-white p-5 sm:p-6 md:p-8 shadow-sm space-y-5">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#fff6ee] text-[#fd5523]">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-soft text-brand-text">
             <Sparkles className="h-5 w-5" />
           </div>
           <div>
-            <h3 className="text-base sm:text-lg font-bold text-[#062e39]">
+            <h3 className="text-base sm:text-lg font-bold text-ink">
               AI Curriculum Review
             </h3>
             <p className="text-xs sm:text-sm text-slate-500">
@@ -59,7 +59,7 @@ export function CourseAIReview({ courseId }: { courseId: string }) {
           type="button"
           onClick={handleRunReview}
           disabled={loading}
-          className="h-10 w-full sm:w-auto rounded-xl bg-[#062e39] px-5 text-xs sm:text-sm font-bold text-white hover:bg-[#0a4055]"
+          className="h-10 w-full sm:w-auto rounded-xl bg-ink px-5 text-xs sm:text-sm font-bold text-white hover:bg-ink-hover"
         >
           {loading ? (
             <>
@@ -68,7 +68,7 @@ export function CourseAIReview({ courseId }: { courseId: string }) {
             </>
           ) : (
             <>
-              <Sparkles className="mr-2 h-4 w-4 text-[#fd8d69]" />
+              <Sparkles className="mr-2 h-4 w-4 text-brand-electric" />
               {review ? "Re-run Review" : "Analyze Curriculum"}
             </>
           )}
@@ -83,7 +83,7 @@ export function CourseAIReview({ courseId }: { courseId: string }) {
               <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">
                 Design Score
               </span>
-              <p className="text-2xl font-black text-[#fd5523]">{review.overall_score}/100</p>
+              <p className="text-2xl font-black text-brand-text">{review.overall_score}/100</p>
             </div>
           </div>
 
@@ -119,8 +119,8 @@ export function CourseAIReview({ courseId }: { courseId: string }) {
 
           {review.sequencing_suggestions?.length > 0 && (
             <div className="rounded-2xl border border-slate-200/80 bg-slate-50/60 p-4 space-y-2">
-              <div className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-[#062e39]">
-                <TrendingUp className="h-4 w-4 text-[#fd5523]" />
+              <div className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-ink">
+                <TrendingUp className="h-4 w-4 text-brand-text" />
                 Sequencing & Pacing
               </div>
               <ul className="space-y-1.5 text-xs sm:text-sm text-slate-700">
@@ -142,10 +142,10 @@ export function CourseAIReview({ courseId }: { courseId: string }) {
                     key={`${lesson.module_title}-${lesson.lesson_title}`}
                     className="rounded-xl border border-slate-200 bg-white p-3.5 space-y-1"
                   >
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-[#fd5523]">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-brand-text">
                       {lesson.module_title}
                     </p>
-                    <p className="text-sm font-bold text-[#062e39] flex items-center gap-1.5">
+                    <p className="text-sm font-bold text-ink flex items-center gap-1.5">
                       <ArrowRight className="h-3.5 w-3.5 text-slate-400 shrink-0" />
                       <span>{lesson.lesson_title}</span>
                     </p>

@@ -15,7 +15,7 @@ Companion documents: [Product vision](WORLD_CLASS_AI_TEACHER_PRODUCT_VISION.md) 
 
 ## 0. Executive summary
 
-Zed AI Academy already has more AI-teacher capability than most commercial platforms: a typed event contract that
+CS Learn already has more AI-teacher capability than most commercial platforms: a typed event contract that
 drives a speaking avatar and a teaching board, three conversational modes (Gemini Live, voice turns, text turns),
 per-objective evidence and mastery, report cards, revision sprints, a daily plan, AI-assisted authoring with
 objectives → storyboard → test-as-student, Course Autopilot, Certificate Viva, teacher insights and misconception

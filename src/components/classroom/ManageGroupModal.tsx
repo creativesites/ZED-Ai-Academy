@@ -74,14 +74,14 @@ export function ManageGroupModal({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger render={(props) => (
-        <Button {...props} variant="outline" size="sm" className="rounded-lg text-xs font-bold h-8 border-slate-200 text-slate-600 hover:text-[#062e39]">
+        <Button {...props} variant="outline" size="sm" className="rounded-lg text-xs font-bold h-8 border-slate-200 text-slate-600 hover:text-ink">
           Manage
         </Button>
       )} />
       <DialogContent className="rounded-2xl sm:rounded-3xl border-slate-100 p-0 overflow-hidden w-[95vw] sm:max-w-xl max-h-[85dvh] flex flex-col">
         <div className="p-4 sm:p-6 bg-slate-50 border-b border-slate-100 shrink-0">
           <DialogHeader>
-            <DialogTitle className="text-lg sm:text-xl font-black text-[#062e39]">Manage {group.name}</DialogTitle>
+            <DialogTitle className="text-lg sm:text-xl font-black text-ink">Manage {group.name}</DialogTitle>
           </DialogHeader>
           <p className="text-xs sm:text-sm font-medium text-slate-500 mt-1 sm:mt-2">Add or remove students from this cohort.</p>
         </div>
@@ -89,7 +89,7 @@ export function ManageGroupModal({
         <div className="p-4 sm:p-6 overflow-y-auto flex-1 bg-white space-y-6 sm:space-y-8">
           {loading ? (
             <div className="flex flex-col items-center justify-center py-10 text-slate-400">
-              <Loader2 className="h-8 w-8 animate-spin mb-4 text-[#fd5523]" />
+              <Loader2 className="h-8 w-8 animate-spin mb-4 text-brand-text" />
               <p className="text-[10px] font-black uppercase tracking-widest">Loading Students...</p>
             </div>
           ) : (
@@ -116,7 +116,7 @@ export function ManageGroupModal({
                             )}
                           </div>
                           <div>
-                            <div className="text-sm font-bold text-[#062e39]">{member.full_name || "Unknown Student"}</div>
+                            <div className="text-sm font-bold text-ink">{member.full_name || "Unknown Student"}</div>
                             <div className="text-xs font-medium text-slate-500">{member.email}</div>
                           </div>
                         </div>
@@ -157,7 +157,7 @@ export function ManageGroupModal({
                             )}
                           </div>
                           <div>
-                            <div className="text-sm font-bold text-[#062e39]">{student.full_name || "Unknown Student"}</div>
+                            <div className="text-sm font-bold text-ink">{student.full_name || "Unknown Student"}</div>
                             <div className="text-xs font-medium text-slate-500">{student.email}</div>
                           </div>
                         </div>
@@ -166,7 +166,7 @@ export function ManageGroupModal({
                           size="icon"
                           disabled={pending}
                           onClick={() => handleAdd(student.id)}
-                          className="h-8 w-8 text-slate-400 hover:text-[#fd5523] hover:bg-[#fd5523]/10 rounded-lg"
+                          className="h-8 w-8 text-slate-400 hover:text-brand-text hover:bg-brand/10 rounded-lg"
                         >
                           <UserPlus className="h-4 w-4" />
                         </Button>

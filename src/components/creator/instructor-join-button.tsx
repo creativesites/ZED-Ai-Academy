@@ -31,7 +31,7 @@ export function InstructorJoinButton({
   const effectiveRoomName =
     roomName && roomName !== bookingId
       ? roomName
-      : `zed-session-${bookingId}`;
+      : `cs-learn-session-${bookingId}`;
 
   function copyRoomId() {
     navigator.clipboard.writeText(effectiveRoomName).then(() => {
@@ -45,7 +45,7 @@ export function InstructorJoinButton({
 
   if (joined) {
     return (
-      <div className="fixed inset-0 z-50 flex flex-col bg-[#062e39]">
+      <div className="fixed inset-0 z-50 flex flex-col bg-ink">
         <LiveSessionRoom
           bookingId={bookingId}
           roomName={effectiveRoomName}
@@ -66,7 +66,7 @@ export function InstructorJoinButton({
         className={cn(
           "rounded-xl gap-2 h-auto px-4 py-2 text-xs font-bold text-white transition-all active:scale-95",
           isConfirmed
-            ? "bg-[#fd5523] hover:bg-[#ef4a16] shadow-lg shadow-[#fd5523]/20"
+            ? "bg-brand hover:bg-brand-hover shadow-lg shadow-brand/20"
             : "bg-slate-600 hover:bg-slate-500"
         )}
       >

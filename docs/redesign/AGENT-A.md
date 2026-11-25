@@ -1,6 +1,6 @@
 # Agent A — Foundations + Staff side
 
-You are one of two agents implementing the Zed AI Academy redesign. **You build the design system
+You are one of two agents implementing the CS Learn redesign. **You build the design system
 and shells everyone uses, then redesign the academy admin (staff side) and fold the old `/creator`
 admin into it.** Agent B does the learner side in parallel. You coordinate only through
 [HANDOFF.md](HANDOFF.md).

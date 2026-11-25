@@ -298,11 +298,11 @@ export function CourseTutorTab({
       {/* Header Card */}
       <div className="flex flex-col gap-4 rounded-3xl border border-slate-200/80 bg-white p-6 shadow-sm md:flex-row md:items-center md:justify-between">
         <div className="space-y-1">
-          <div className="inline-flex items-center gap-1.5 rounded-full bg-[#fff6ee] px-3 py-1 text-[10px] font-black uppercase tracking-widest text-[#fd5523]">
+          <div className="inline-flex items-center gap-1.5 rounded-full bg-brand-soft px-3 py-1 text-[10px] font-black uppercase tracking-widest text-brand-text">
             <Sparkles className="h-3.5 w-3.5" />
             Animated AI Teacher
           </div>
-          <h2 className="text-xl font-black text-[#062e39]">AI Teacher Flows</h2>
+          <h2 className="text-xl font-black text-ink">AI Teacher Flows</h2>
           <p className="max-w-2xl text-xs text-slate-500 sm:text-sm">
             Create interactive role-plays, guided lessons, or oral checks for this course. Published flows appear in your Lesson Studio &quot;AI Teacher&quot; blocks.
           </p>
@@ -323,7 +323,7 @@ export function CourseTutorTab({
           )}
           <Link
             href={manageTeachersHref}
-            className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 px-3.5 text-xs font-bold text-[#062e39] hover:bg-slate-100"
+            className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 px-3.5 text-xs font-bold text-ink hover:bg-slate-100"
           >
             Customize AI Teachers
             <ExternalLink className="h-3.5 w-3.5 opacity-60" />
@@ -334,7 +334,7 @@ export function CourseTutorTab({
               setEditingScenario(null);
               setEditorOpen(true);
             }}
-            className="h-10 rounded-xl bg-[#fd5523] px-4 text-xs font-bold text-white hover:bg-[#ea4817]"
+            className="h-10 rounded-xl bg-brand px-4 text-xs font-bold text-white hover:bg-brand-hover"
           >
             <Plus className="mr-1.5 h-4 w-4" />
             New AI Teacher Flow
@@ -348,10 +348,10 @@ export function CourseTutorTab({
         <div className="space-y-3 rounded-3xl border border-slate-200/80 bg-white p-5 shadow-sm">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-[#fd5523]">
+              <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-brand-text">
                 <Zap className="h-3.5 w-3.5" /> Course Autopilot
               </span>
-              <h3 className="mt-1 text-base font-bold text-[#062e39]">
+              <h3 className="mt-1 text-base font-bold text-ink">
                 Auto-add AI Teachers to lessons
               </h3>
               <p className="text-xs text-slate-500">
@@ -364,7 +364,7 @@ export function CourseTutorTab({
             <select
               value={autopilotTemplate}
               onChange={(e) => setAutopilotTemplate(e.target.value as AuthoringTemplateId | "auto")}
-              className="h-9 rounded-xl border border-slate-200 bg-white px-2.5 text-xs font-semibold text-[#062e39]"
+              className="h-9 rounded-xl border border-slate-200 bg-white px-2.5 text-xs font-semibold text-ink"
             >
               <option value="auto">Auto template per lesson</option>
               {AUTHORING_TEMPLATES.map((t) => (
@@ -376,7 +376,7 @@ export function CourseTutorTab({
             <select
               value={autopilotPersonaId}
               onChange={(e) => setAutopilotPersonaId(e.target.value)}
-              className="h-9 rounded-xl border border-slate-200 bg-white px-2.5 text-xs font-semibold text-[#062e39]"
+              className="h-9 rounded-xl border border-slate-200 bg-white px-2.5 text-xs font-semibold text-ink"
             >
               <option value="">Default course teacher</option>
               {personas.map((p) => (
@@ -392,7 +392,7 @@ export function CourseTutorTab({
               type="checkbox"
               checked={autopilotAutoPublish}
               onChange={(e) => setAutopilotAutoPublish(e.target.checked)}
-              className="h-3.5 w-3.5 accent-[#fd5523]"
+              className="h-3.5 w-3.5 accent-brand"
             />
             Auto-publish generated flows immediately
           </label>
@@ -403,12 +403,12 @@ export function CourseTutorTab({
               variant="outline"
               disabled={autopilotPreviewLoading || autopilotRunning}
               onClick={() => void handlePreviewAutopilot()}
-              className="h-9 shrink-0 rounded-xl px-3 text-xs font-bold text-[#062e39]"
+              className="h-9 shrink-0 rounded-xl px-3 text-xs font-bold text-ink"
             >
               {autopilotPreviewLoading ? (
                 <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
               ) : (
-                <Eye className="mr-1.5 h-3.5 w-3.5 text-[#fd5523]" />
+                <Eye className="mr-1.5 h-3.5 w-3.5 text-brand-text" />
               )}
               Preview Plan
             </Button>
@@ -416,7 +416,7 @@ export function CourseTutorTab({
               type="button"
               disabled={autopilotRunning}
               onClick={() => void handleRunAutopilot()}
-              className="h-9 flex-1 rounded-xl bg-[#062e39] text-xs font-bold text-white hover:bg-[#0a4352]"
+              className="h-9 flex-1 rounded-xl bg-ink text-xs font-bold text-white hover:bg-ink-hover"
             >
               {autopilotRunning ? (
                 <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
@@ -438,13 +438,13 @@ export function CourseTutorTab({
               <ul className="max-h-40 space-y-1 overflow-y-auto">
                 {autopilotPreview.map((l) => (
                   <li key={l.lessonId} className="flex items-center justify-between gap-2">
-                    <span className="truncate text-[#062e39]">{l.lessonTitle}</span>
+                    <span className="truncate text-ink">{l.lessonTitle}</span>
                     {l.hasExistingTutorBlock ? (
                       <span className="shrink-0 rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-bold text-slate-600">
                         Already has teacher
                       </span>
                     ) : l.willGenerate ? (
-                      <span className="shrink-0 rounded-full bg-[#fff2e9] px-2 py-0.5 text-[10px] font-bold text-[#c83a10]">
+                      <span className="shrink-0 rounded-full bg-brand-tint px-2 py-0.5 text-[10px] font-bold text-brand-hover">
                         {l.templateLabel}
                       </span>
                     ) : (
@@ -460,7 +460,7 @@ export function CourseTutorTab({
             <ul className="space-y-1.5 rounded-2xl bg-slate-50 p-3 text-xs">
               {autopilotResults.map((r) => (
                 <li key={r.lessonId} className="flex items-center justify-between gap-2">
-                  <span className="truncate font-medium text-[#062e39]">{r.lessonTitle}</span>
+                  <span className="truncate font-medium text-ink">{r.lessonTitle}</span>
                   {r.status === "created" ? (
                     <span className="inline-flex shrink-0 items-center gap-1 font-semibold text-emerald-700">
                       <CheckCircle2 className="h-3.5 w-3.5" /> Added
@@ -480,7 +480,7 @@ export function CourseTutorTab({
             <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-emerald-700">
               <Award className="h-3.5 w-3.5" /> Certificate Viva (Optional)
             </span>
-            <h3 className="mt-1 text-base font-bold text-[#062e39]">
+            <h3 className="mt-1 text-base font-bold text-ink">
               End-of-course Oral Check Gate
             </h3>
             <p className="text-xs text-slate-500">
@@ -494,7 +494,7 @@ export function CourseTutorTab({
             </p>
           )}
 
-          <label className="flex items-center gap-2.5 text-xs font-semibold text-[#062e39]">
+          <label className="flex items-center gap-2.5 text-xs font-semibold text-ink">
             <input
               type="checkbox"
               checked={requireViva}
@@ -504,7 +504,7 @@ export function CourseTutorTab({
                 setRequireViva(next);
                 void handleSaveVivaConfig(next, vivaScenarioId);
               }}
-              className="h-4 w-4 accent-[#fd5523]"
+              className="h-4 w-4 accent-brand"
             />
             Require learners to pass oral viva to claim certificate
           </label>
@@ -518,7 +518,7 @@ export function CourseTutorTab({
                 setVivaScenarioId(nextId);
                 void handleSaveVivaConfig(requireViva, nextId);
               }}
-              className="h-9 min-w-0 flex-1 rounded-xl border border-slate-200 bg-white px-2.5 text-xs text-[#062e39]"
+              className="h-9 min-w-0 flex-1 rounded-xl border border-slate-200 bg-white px-2.5 text-xs text-ink"
             >
               <option value="">Select oral viva flow...</option>
               {scenarios.map((s) => (
@@ -532,12 +532,12 @@ export function CourseTutorTab({
               variant="outline"
               disabled={vivaWorking}
               onClick={() => void handleGenerateVivaFlow()}
-              className="h-9 shrink-0 rounded-xl text-xs font-bold text-[#062e39]"
+              className="h-9 shrink-0 rounded-xl text-xs font-bold text-ink"
             >
               {vivaWorking ? (
                 <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
               ) : (
-                <Sparkles className="mr-1.5 h-3.5 w-3.5 text-[#fd5523]" />
+                <Sparkles className="mr-1.5 h-3.5 w-3.5 text-brand-text" />
               )}
               Auto-draft Viva
             </Button>
@@ -549,7 +549,7 @@ export function CourseTutorTab({
       <div className="rounded-3xl border border-slate-200/80 bg-white p-5 shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h3 className="text-base font-bold text-[#062e39]">
+            <h3 className="text-base font-bold text-ink">
               Course Learner Insights &amp; Misconceptions
             </h3>
             <p className="text-xs text-slate-500">
@@ -561,7 +561,7 @@ export function CourseTutorTab({
             variant="outline"
             size="sm"
             onClick={() => setShowInsights((prev) => !prev)}
-            className="h-9 rounded-xl text-xs font-bold text-[#062e39]"
+            className="h-9 rounded-xl text-xs font-bold text-ink"
           >
             {showInsights ? "Hide Course Insights" : "View Course Insights"}
           </Button>
@@ -587,7 +587,7 @@ export function CourseTutorTab({
             size="sm"
             disabled={isBusy}
             onClick={handleSeedPersonas}
-            className="shrink-0 rounded-xl bg-[#062e39] text-xs font-bold text-white hover:bg-[#0a4352]"
+            className="shrink-0 rounded-xl bg-ink text-xs font-bold text-white hover:bg-ink-hover"
           >
             {isBusy ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <Wand2 className="mr-1.5 h-3.5 w-3.5" />}
             Import Starter Cast
@@ -606,7 +606,7 @@ export function CourseTutorTab({
               label="Animated AI teacher"
             />
           </div>
-          <h3 className="mt-4 text-lg font-black text-[#062e39]">Add your first AI Teacher flow</h3>
+          <h3 className="mt-4 text-lg font-black text-ink">Add your first AI Teacher flow</h3>
           <p className="mx-auto mt-1 max-w-md text-xs text-slate-500 sm:text-sm">
             Draft a speaking role-play manually or let AI build one from your course curriculum. Learners will practise out loud with the animated 3D/Rive teacher.
           </p>
@@ -616,7 +616,7 @@ export function CourseTutorTab({
               setEditingScenario(null);
               setEditorOpen(true);
             }}
-            className="mt-5 h-11 rounded-xl bg-[#fd5523] px-6 font-bold text-white hover:bg-[#ea4817]"
+            className="mt-5 h-11 rounded-xl bg-brand px-6 font-bold text-white hover:bg-brand-hover"
           >
             <Sparkles className="mr-2 h-4 w-4" />
             Create AI Teacher Flow
@@ -658,7 +658,7 @@ export function CourseTutorTab({
                       </span>
                     )}
                   </div>
-                  <h3 className="truncate text-sm font-bold text-[#062e39]">{s.title}</h3>
+                  <h3 className="truncate text-sm font-bold text-ink">{s.title}</h3>
                   <p className="line-clamp-2 text-xs text-slate-500">{s.goal}</p>
                   <p className="text-[11px] text-slate-400">
                     {s.persona ? `${s.persona.display_name || s.persona.name} · ` : ""}
@@ -703,9 +703,9 @@ export function CourseTutorTab({
                       size="sm"
                       onClick={() => handleCopyPublicTryLink(s.id)}
                       title="Copy shareable public mini-lesson link (/try/...)"
-                      className="h-8 rounded-lg px-2.5 text-xs font-bold text-[#062e39]"
+                      className="h-8 rounded-lg px-2.5 text-xs font-bold text-ink"
                     >
-                      <Share2 className="mr-1 h-3 w-3 text-[#fd5523]" />
+                      <Share2 className="mr-1 h-3 w-3 text-brand-text" />
                       Share
                     </Button>
                   )}
@@ -717,7 +717,7 @@ export function CourseTutorTab({
                     }
                     className="inline-flex h-8 items-center justify-center rounded-lg border border-input bg-background px-2.5 text-xs font-bold shadow-xs transition hover:bg-accent hover:text-accent-foreground"
                   >
-                    <Play className="mr-1 h-3 w-3 text-[#fd5523]" />
+                    <Play className="mr-1 h-3 w-3 text-brand-text" />
                     Test
                   </Link>
                   <Button

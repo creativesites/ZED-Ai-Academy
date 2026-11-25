@@ -1,5 +1,7 @@
 # 01 — Design system
 
+> **Superseded (25 Nov 2026):** colours and fonts in this plan predate the CS Learn rebrand. Current tokens are Royal Blue `#075BEB` (replacing the `#fd5523` orange), Deep Navy `#09152B` as `ink` (replacing the `#062e39` teal), and Manrope instead of Plus Jakarta Sans. See [../BRAND.md](../BRAND.md). The token approach described here (no raw hex in className) still applies.
+
 One system for every app surface (staff and student). Owned and built by **Agent A in phase A0**.
 Agent B consumes it and requests additions through [HANDOFF.md](HANDOFF.md).
 

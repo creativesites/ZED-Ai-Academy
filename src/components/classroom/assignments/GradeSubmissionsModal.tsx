@@ -110,7 +110,7 @@ export function GradeSubmissionsModal({
       <div className="bg-white rounded-2xl sm:rounded-3xl max-w-4xl w-full p-4 sm:p-6 md:p-8 shadow-2xl border border-slate-100 max-h-[85dvh] overflow-y-auto animate-in zoom-in-95 duration-200 space-y-4 sm:space-y-6">
         <div className="flex items-center justify-between pb-4 border-b border-slate-100">
           <div>
-            <h3 className="text-lg font-black text-[#062e39]">Review Submissions &amp; Grade</h3>
+            <h3 className="text-lg font-black text-ink">Review Submissions &amp; Grade</h3>
             <p className="text-xs text-slate-500 font-medium">
               {assignment.title} (Max {assignment.max_points} pts)
             </p>
@@ -180,7 +180,7 @@ export function GradeSubmissionsModal({
               {selectedSubmissionToGrade ? (
                 <form onSubmit={handleSaveGrade} className="space-y-4">
                   <div>
-                    <h4 className="text-sm font-black text-[#062e39]">
+                    <h4 className="text-sm font-black text-ink">
                       {selectedSubmissionToGrade.student?.full_name || "Student Submission"}
                     </h4>
                     <p className="text-[11px] text-slate-500">

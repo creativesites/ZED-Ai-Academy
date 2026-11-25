@@ -53,7 +53,7 @@ export function ModernTemplate(props: {
     content, adminProfile, stats 
   } = props;
 
-  const academyName = tenant?.name || "Zed AI Academy";
+  const academyName = tenant?.name || "CS Learn";
   const defaultHeroTitle = `Welcome to ${academyName}`;
   const defaultHeroSubtitle = "Master practical artificial intelligence, modern workflows, and certified high-demand skills.";
   const defaultAboutTitle = `About ${academyName}`;
@@ -225,7 +225,7 @@ export function ModernTemplate(props: {
                 <BookOpen className="h-3.5 w-3.5" />
                 Our Mission
               </div>
-              <h2 className="font-serif text-4xl md:text-5xl lg:text-6xl font-black tracking-tighter leading-[1.1] text-[#062e39]">
+              <h2 className="font-serif text-4xl md:text-5xl lg:text-6xl font-black tracking-tighter leading-[1.1] text-ink">
                 {finalAboutTitle}
               </h2>
               <p className="text-lg md:text-xl font-medium leading-relaxed text-slate-600 whitespace-pre-wrap">
@@ -252,7 +252,7 @@ export function ModernTemplate(props: {
                     <div className="h-10 w-10 rounded-xl bg-white flex items-center justify-center shadow-sm mb-4">
                       <item.icon className="h-5 w-5 text-emerald-600" />
                     </div>
-                    <h4 className="font-black text-[#062e39] mb-1">{item.title}</h4>
+                    <h4 className="font-black text-ink mb-1">{item.title}</h4>
                     <p className="text-xs text-slate-500 leading-relaxed">
                       {item.desc}
                     </p>
@@ -297,7 +297,7 @@ export function ModernTemplate(props: {
                 <GraduationCap className="h-3.5 w-3.5 text-emerald-600" />
                 Academic Catalog
               </div>
-              <h2 className="font-serif text-4xl md:text-5xl lg:text-6xl font-black tracking-tighter leading-none text-[#062e39]">
+              <h2 className="font-serif text-4xl md:text-5xl lg:text-6xl font-black tracking-tighter leading-none text-ink">
                 Academic Programs
               </h2>
               <p className="text-lg font-medium text-slate-500">
@@ -306,7 +306,7 @@ export function ModernTemplate(props: {
             </div>
             <Link
               href="#courses"
-              className="inline-flex items-center gap-3 px-8 py-4 rounded-2xl bg-[#062e39] text-white font-black uppercase tracking-widest text-xs hover:bg-[#0a4a5c] transition-colors group"
+              className="inline-flex items-center gap-3 px-8 py-4 rounded-2xl bg-ink text-white font-black uppercase tracking-widest text-xs hover:bg-[#0a4a5c] transition-colors group"
             >
               Explore All{" "}
               <ArrowRight className="h-4 w-4 text-emerald-400 group-hover:translate-x-1 transition-transform" />
@@ -323,7 +323,7 @@ export function ModernTemplate(props: {
 
       {/* CTA */}
       <section className="py-24 container mx-auto px-6">
-        <div className="rounded-[4rem] p-12 md:p-24 text-center relative overflow-hidden shadow-2xl bg-[#062e39] text-white group">
+        <div className="rounded-[4rem] p-12 md:p-24 text-center relative overflow-hidden shadow-2xl bg-ink text-white group">
           {/* Animated Background Element */}
           <div className="absolute top-0 right-0 p-12 opacity-5 pointer-events-none rotate-12 transition-transform duration-700 group-hover:rotate-[30deg] group-hover:scale-125">
             <Zap className="h-64 w-64 text-white" />

@@ -28,8 +28,8 @@ export default async function Cta() {
                     <div className="cta-one__content">
                         <div className="sec-title__tagline" style={{ marginBottom: "15px" }}>
                              <div className="text" style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                                 <Users className="text-[#fd5523]" size={18} />
-                                 <h4 style={{ margin: 0, fontSize: "12px", fontWeight: "800", textTransform: "uppercase", letterSpacing: "0.1em", color: "#fd5523" }}>Corporate AI Readiness</h4>
+                                 <Users className="text-brand-text" size={18} />
+                                 <h4 style={{ margin: 0, fontSize: "12px", fontWeight: "800", textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--color-brand-text)" }}>Corporate AI Readiness</h4>
                              </div>
                         </div>
                         <h2>Train Your Whole Team <br/> on <span>AI Skills!</span></h2>

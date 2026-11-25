@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { submitReview } from "@/actions/reviews";
 import { Star, Loader2, MessageSquare, CheckCircle } from "lucide-react";
 import type { Review } from "@/types/database";
+import { BRAND_COLORS } from "@/lib/brand";
 
 type ReviewWithProfile = Review & { profiles: { full_name: string | null; avatar_url: string | null } | null };
 
@@ -23,8 +24,8 @@ function StarRow({ value, onChange, readonly }: { value: number; onChange?: (v: 
         >
           <Star
             className="h-5 w-5"
-            fill={(hovered || value) >= i ? "#fd5523" : "none"}
-            stroke={(hovered || value) >= i ? "#fd5523" : "#d1d5db"}
+            fill={(hovered || value) >= i ? BRAND_COLORS.gold : "none"}
+            stroke={(hovered || value) >= i ? BRAND_COLORS.orange : "#d1d5db"}
           />
         </button>
       ))}
@@ -77,8 +78,8 @@ export function CourseReviews({
   return (
     <div style={{ marginBottom: "55px" }}>
       <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "24px" }}>
-        <MessageSquare style={{ width: "22px", height: "22px", color: "#fd5523" }} />
-        <h2 style={{ fontSize: "26px", fontWeight: 700, color: "#062e39", margin: 0 }}>
+        <MessageSquare style={{ width: "22px", height: "22px", color: "var(--color-brand-text)" }} />
+        <h2 style={{ fontSize: "26px", fontWeight: 700, color: "var(--color-ink)", margin: 0 }}>
           Student Reviews
         </h2>
         {reviews.length > 0 && (
@@ -93,7 +94,7 @@ export function CourseReviews({
         <div style={{ display: "flex", gap: "24px", marginBottom: "32px", padding: "24px", borderRadius: "16px", background: "#fff", border: "1px solid #f0f0f0", flexWrap: "wrap", alignItems: "center" }}>
           {/* Left: Score */}
           <div style={{ flexShrink: 0, textAlign: "center", minWidth: "140px" }}>
-            <p style={{ fontSize: "56px", fontWeight: 800, color: "#062e39", lineHeight: 1, marginBottom: "8px" }}>
+            <p style={{ fontSize: "56px", fontWeight: 800, color: "var(--color-ink)", lineHeight: 1, marginBottom: "8px" }}>
               {avg.toFixed(1)}
             </p>
             <div style={{ display: "flex", justifyContent: "center", marginBottom: "8px" }}>
@@ -113,10 +114,10 @@ export function CourseReviews({
                 <div key={star} style={{ display: "flex", alignItems: "center", gap: "12px" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: "4px", width: "32px", flexShrink: 0 }}>
                     <span style={{ fontSize: "13px", fontWeight: 600, color: "#555" }}>{star}</span>
-                    <Star style={{ width: "12px", height: "12px", color: "#fd5523", fill: "#fd5523" }} />
+                    <Star style={{ width: "12px", height: "12px", color: "var(--color-brand-text)", fill: "var(--color-brand)" }} />
                   </div>
                   <div style={{ flex: 1, height: "8px", background: "#f0f0f0", borderRadius: "4px", overflow: "hidden" }}>
-                    <div style={{ width: `${percent}%`, height: "100%", background: "#fd5523", borderRadius: "4px" }} />
+                    <div style={{ width: `${percent}%`, height: "100%", background: "var(--color-brand)", borderRadius: "4px" }} />
                   </div>
                   <span style={{ fontSize: "12px", color: "#999", width: "24px", textAlign: "right", flexShrink: 0 }}>
                     {Math.round(percent)}%
@@ -134,14 +135,14 @@ export function CourseReviews({
           {reviews.map((rev) => (
             <div key={rev.id} style={{ padding: "20px", borderRadius: "14px", border: "1px solid #f0f0f0", background: "#fff" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "10px" }}>
-                <div style={{ width: "38px", height: "38px", borderRadius: "50%", background: "#fff2e9", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, color: "#fd5523", fontSize: "15px", flexShrink: 0 }}>
+                <div style={{ width: "38px", height: "38px", borderRadius: "50%", background: "var(--color-brand-tint)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, color: "var(--color-brand-text)", fontSize: "15px", flexShrink: 0 }}>
                   {rev.profiles?.avatar_url
                     ? <img src={rev.profiles.avatar_url} alt="" style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }} />
                     : (rev.profiles?.full_name?.[0] ?? "?")}
                 </div>
                 <div>
                   <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "3px" }}>
-                    <p style={{ fontWeight: 700, color: "#062e39", fontSize: "14px", margin: 0 }}>
+                    <p style={{ fontWeight: 700, color: "var(--color-ink)", fontSize: "14px", margin: 0 }}>
                       {rev.profiles?.full_name ?? "Anonymous"}
                     </p>
                     <span style={{ fontSize: "10px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: "#16a34a", background: "#f0fdf4", border: "1px solid #bbf7d0", padding: "2px 6px", borderRadius: "12px", display: "flex", alignItems: "center", gap: "3px" }}>
@@ -166,7 +167,7 @@ export function CourseReviews({
       {/* Write a review */}
       {isEnrolled && !existingReview && !success && (
         <div style={{ padding: "24px", borderRadius: "16px", border: "1px solid #e8e8e8", background: "#fffbf8" }}>
-          <p style={{ fontSize: "15px", fontWeight: 700, color: "#062e39", marginBottom: "16px" }}>
+          <p style={{ fontSize: "15px", fontWeight: 700, color: "var(--color-ink)", marginBottom: "16px" }}>
             Share your experience
           </p>
           <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
@@ -188,7 +189,7 @@ export function CourseReviews({
               disabled={pending || rating === 0}
               style={{
                 alignSelf: "flex-start", padding: "10px 28px", borderRadius: "30px",
-                background: rating === 0 ? "#e5e5e5" : "#fd5523", color: "#fff",
+                background: rating === 0 ? "#e5e5e5" : "var(--color-brand)", color: "#fff",
                 fontWeight: 700, fontSize: "14px", border: "none",
                 cursor: rating === 0 ? "not-allowed" : "pointer",
                 display: "flex", alignItems: "center", gap: "8px",

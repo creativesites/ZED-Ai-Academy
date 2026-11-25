@@ -2,6 +2,7 @@ import CounterUp from "@/components/elements/CounterUp"
 import Link from "next/link"
 import { Target } from "lucide-react"
 import { getResolvedPageMediaSlots } from "@/lib/page-media";
+import { BrandLogo } from "@/components/shared/brand-logo"
 
 export default async function About() {
     const slots = await getResolvedPageMediaSlots("home");
@@ -58,7 +59,7 @@ export default async function About() {
                                         <h4>About Us</h4>
                                     </div>
                                     <div className="icon">
-                                        <Target className="text-[#fd5523]" size={20} />
+                                        <Target className="text-brand-text" size={20} />
                                     </div>
                                 </div>
                                 <h2 className="sec-title__title tg-element-title">Zambia&apos;s AI Learning <br/>
@@ -67,7 +68,7 @@ export default async function About() {
                             </div>
 
                             <div className="about-two__content-text1">
-                                <p>Zed AI Academy was founded with a single mission: to ensure Zambian 
+                                <p>CS Learn was founded with a single mission: to ensure Zambian 
                                     professionals aren't left behind in the global AI race. We believe 
                                     in democratizing access to world-class AI training, tailored for our local 
                                     market and economy.</p>
@@ -112,10 +113,10 @@ export default async function About() {
 
                                 <div className="author-info">
                                     <div className="img-box">
-                                        <img src="/images/zed-ai-logo.png" alt="Zed AI Academy"/>
+                                        <BrandLogo variant="emblem" className="h-auto w-full" />
                                     </div>
                                     <div className="text-box">
-                                        <h3>Zed AI Academy</h3>
+                                        <h3>CreativeSites Learn</h3>
                                         <p>LUSAKA, ZAMBIA 🇿🇲</p>
                                     </div>
                                 </div>

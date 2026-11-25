@@ -20,7 +20,7 @@ export function Progress({ className, value = 0, ...props }: ProgressProps) {
       {...props}
     >
       <div
-        className="h-full w-full flex-1 bg-[#fd5523] transition-all duration-300"
+        className="h-full w-full flex-1 bg-brand transition-all duration-300"
         style={{ transform: `translateX(-${100 - safeValue}%)` }}
       />
     </div>

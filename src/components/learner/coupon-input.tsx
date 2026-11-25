@@ -59,7 +59,7 @@ export function CouponInput({
           disabled={pending || !code.trim()}
           style={{
             padding: "10px 16px", borderRadius: "12px", border: "none",
-            background: code.trim() ? "#fd5523" : "rgba(255,255,255,0.1)",
+            background: code.trim() ? "var(--color-brand)" : "rgba(255,255,255,0.1)",
             color: "#fff", fontWeight: 700, fontSize: "13px",
             cursor: code.trim() ? "pointer" : "not-allowed",
             display: "flex", alignItems: "center", gap: "6px", flexShrink: 0,

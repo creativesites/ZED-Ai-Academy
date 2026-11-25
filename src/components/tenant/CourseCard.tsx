@@ -12,10 +12,10 @@ export function CourseCard({ course, variant = "default", tenantSlug }: CourseCa
   const styles = {
     default: {
       card: "bg-white rounded-[2.5rem] shadow-sm border border-slate-100 hover:shadow-2xl hover:-translate-y-2",
-      badge: "bg-white/90 backdrop-blur text-[#062e39]",
-      title: "text-[#062e39] group-hover:text-[var(--primary-color)]",
-      price: "text-[#062e39]",
-      button: "bg-[#062e39] hover:bg-[var(--primary-color)]",
+      badge: "bg-white/90 backdrop-blur text-ink",
+      title: "text-ink group-hover:text-[var(--primary-color)]",
+      price: "text-ink",
+      button: "bg-ink hover:bg-[var(--primary-color)]",
     },
     minimal: {
       card: "bg-white rounded-3xl shadow-none border border-slate-200/50 hover:shadow-md",

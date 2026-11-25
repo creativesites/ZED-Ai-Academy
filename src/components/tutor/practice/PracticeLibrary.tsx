@@ -22,6 +22,7 @@ import { startableModes } from "@/lib/tutor/practice-library";
 import type { LearnerTutorOverview } from "@/lib/tutor/server/learner-overview";
 import { Teacher } from "@/components/tutor/avatar/Teacher";
 import { DEFAULT_PERSONA_LOOK } from "@/components/tutor/avatar/types";
+import { BRAND_COLORS } from "@/lib/brand";
 
 type PracticeLibraryProps = {
   groups: LanguageGroup[];
@@ -82,7 +83,7 @@ export function PracticeLibrary({
         {/* Header */}
         <header className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
           <div className="max-w-2xl space-y-2">
-            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#fd5523]">
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-brand-text">
               Teacher&apos;s Room
             </p>
             <h1 className="font-heading text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
@@ -96,16 +97,16 @@ export function PracticeLibrary({
               {deckHref && (
                 <Link
                   href={deckHref}
-                  className="group inline-flex shrink-0 items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm transition hover:border-[#fd5523]/40 hover:shadow-md"
+                  className="group inline-flex shrink-0 items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm transition hover:border-brand/40 hover:shadow-md"
                 >
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#fff6ee] text-[#fd5523]">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-soft text-brand-text">
                     <BookMarked className="h-5 w-5" />
                   </div>
                   <div className="text-left">
                     <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">
                       Study Deck
                     </p>
-                    <p className="text-sm font-bold text-[#062e39]">
+                    <p className="text-sm font-bold text-ink">
                       {overview && overview.deck.dueNow > 0
                         ? `${overview.deck.dueNow} due now`
                         : overview && overview.deck.total > 0
@@ -113,7 +114,7 @@ export function PracticeLibrary({
                           : "Active Recall"}
                     </p>
                   </div>
-                  <ArrowRight className="h-4 w-4 text-slate-400 transition-transform group-hover:translate-x-0.5 group-hover:text-[#fd5523]" />
+                  <ArrowRight className="h-4 w-4 text-slate-400 transition-transform group-hover:translate-x-0.5 group-hover:text-brand-text" />
                 </Link>
               )}
 
@@ -129,7 +130,7 @@ export function PracticeLibrary({
                     <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">
                       Past Reports
                     </p>
-                    <p className="text-sm font-bold text-[#062e39]">
+                    <p className="text-sm font-bold text-ink">
                       {overview && overview.completedSessionsCount > 0
                         ? `${overview.completedSessionsCount} session${overview.completedSessionsCount === 1 ? "" : "s"}`
                         : "History"}
@@ -146,7 +147,7 @@ export function PracticeLibrary({
         {overview && (
           <section aria-label="Your practice progress" className="grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1.8fr)]">
             {/* Weekly Goal Ring + XP Tier Card */}
-            <div className="flex items-center gap-4 rounded-3xl border border-slate-200 bg-gradient-to-br from-[#062e39] via-[#0b3c49] to-[#1a2240] p-5 text-white shadow-md">
+            <div className="flex items-center gap-4 rounded-3xl border border-slate-200 bg-gradient-to-br from-ink via-[#0b3c49] to-[#1a2240] p-5 text-white shadow-md">
               <div className="relative flex h-20 w-20 shrink-0 items-center justify-center">
                 <svg className="h-20 w-20 -rotate-90" viewBox="0 0 80 80" aria-hidden="true">
                   <circle
@@ -162,7 +163,7 @@ export function PracticeLibrary({
                     cy="40"
                     r="33"
                     fill="none"
-                    stroke={overview.habits.weeklyGoalMet ? "#34d399" : "#fd5523"}
+                    stroke={overview.habits.weeklyGoalMet ? "#34d399" : BRAND_COLORS.royalBlue}
                     strokeWidth="7"
                     strokeLinecap="round"
                     strokeDasharray={2 * Math.PI * 33}
@@ -210,13 +211,13 @@ export function PracticeLibrary({
             {/* 4 Compact Stat Tiles */}
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-2 xl:grid-cols-4">
               <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                <div className="flex items-center gap-2 text-[#fd5523]">
+                <div className="flex items-center gap-2 text-brand-text">
                   <Flame className="h-4 w-4" />
                   <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
                     Streak
                   </span>
                 </div>
-                <p className="mt-1.5 text-2xl font-black text-[#062e39]">
+                <p className="mt-1.5 text-2xl font-black text-ink">
                   {overview.streakDays} {overview.streakDays === 1 ? "day" : "days"}
                 </p>
               </div>
@@ -228,7 +229,7 @@ export function PracticeLibrary({
                     Practice Time
                   </span>
                 </div>
-                <p className="mt-1.5 text-2xl font-black text-[#062e39]">
+                <p className="mt-1.5 text-2xl font-black text-ink">
                   {overview.totalSpeakingMinutes} min
                 </p>
               </div>
@@ -240,7 +241,7 @@ export function PracticeLibrary({
                     Sessions
                   </span>
                 </div>
-                <p className="mt-1.5 text-2xl font-black text-[#062e39]">
+                <p className="mt-1.5 text-2xl font-black text-ink">
                   {overview.completedSessionsCount}
                 </p>
               </div>
@@ -252,7 +253,7 @@ export function PracticeLibrary({
                     Cards Mastered
                   </span>
                 </div>
-                <p className="mt-1.5 text-2xl font-black text-[#062e39]">
+                <p className="mt-1.5 text-2xl font-black text-ink">
                   {overview.deck.mastered}
                   {overview.deck.total > 0 && (
                     <span className="ml-1 text-sm font-semibold text-slate-400">
@@ -273,7 +274,7 @@ export function PracticeLibrary({
                 id="assigned-heading"
                 className="flex items-center gap-2 font-heading text-xl font-bold text-slate-900"
               >
-                <CalendarClock className="h-5 w-5 text-[#fd5523]" />
+                <CalendarClock className="h-5 w-5 text-brand-text" />
                 Assigned by Your Teacher
               </h2>
               <span className="text-xs font-semibold text-slate-500">
@@ -285,7 +286,7 @@ export function PracticeLibrary({
                 <li key={a.assignmentId}>
                   <Link
                     href={sessionHref(a.scenarioId)}
-                    className="group flex h-full flex-col justify-between gap-4 rounded-2xl border-2 border-[#fd5523]/25 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-[#fd5523]/60 hover:shadow-md"
+                    className="group flex h-full flex-col justify-between gap-4 rounded-2xl border-2 border-brand/25 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-brand/60 hover:shadow-md"
                   >
                     <div className="space-y-3">
                       <div className="flex items-start gap-3">
@@ -304,7 +305,7 @@ export function PracticeLibrary({
                                 <CheckCircle2 className="h-3 w-3" /> Completed
                               </span>
                             ) : (
-                              <span className="rounded-full bg-[#fff6ee] px-2 py-0.5 text-[11px] font-bold text-[#fd5523]">
+                              <span className="rounded-full bg-brand-soft px-2 py-0.5 text-[11px] font-bold text-brand-text">
                                 Assigned
                               </span>
                             )}
@@ -321,7 +322,7 @@ export function PracticeLibrary({
                       </div>
                       <p className="line-clamp-2 text-xs leading-relaxed text-slate-600">{a.goal}</p>
                     </div>
-                    <div className="flex items-center justify-between border-t border-slate-100 pt-3 text-xs font-semibold text-[#fd5523]">
+                    <div className="flex items-center justify-between border-t border-slate-100 pt-3 text-xs font-semibold text-brand-text">
                       <span>{a.personaName ? `With ${a.personaName}` : `Up to ${a.maxMinutes} min`}</span>
                       <span className="inline-flex items-center gap-1">
                         {a.completed ? "Practise again" : "Start now"}
@@ -344,7 +345,7 @@ export function PracticeLibrary({
                 onClick={() => setActiveGroup("all")}
                 className={`rounded-full px-3.5 py-1.5 text-xs font-bold transition-colors ${
                   activeGroup === "all"
-                    ? "bg-[#062e39] text-white"
+                    ? "bg-ink text-white"
                     : "border border-slate-200 bg-white text-slate-600 hover:bg-slate-100"
                 }`}
               >
@@ -357,7 +358,7 @@ export function PracticeLibrary({
                   onClick={() => setActiveGroup(g.key)}
                   className={`rounded-full px-3.5 py-1.5 text-xs font-bold transition-colors ${
                     activeGroup === g.key
-                      ? "bg-[#fd5523] text-white"
+                      ? "bg-brand text-white"
                       : "border border-slate-200 bg-white text-slate-600 hover:bg-slate-100"
                   }`}
                 >
@@ -373,7 +374,7 @@ export function PracticeLibrary({
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search scenes or teachers..."
-                className="h-10 w-full rounded-xl border border-slate-200 bg-white pl-9 pr-3 text-sm text-slate-800 placeholder:text-slate-400 focus:border-[#fd5523] focus:outline-none focus:ring-2 focus:ring-[#fd5523]/20"
+                className="h-10 w-full rounded-xl border border-slate-200 bg-white pl-9 pr-3 text-sm text-slate-800 placeholder:text-slate-400 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20"
               />
             </div>
           </div>
@@ -391,7 +392,7 @@ export function PracticeLibrary({
                 setQuery("");
                 setActiveGroup("all");
               }}
-              className="mt-2 text-xs font-bold text-[#fd5523] hover:underline"
+              className="mt-2 text-xs font-bold text-brand-text hover:underline"
             >
               Clear filters
             </button>

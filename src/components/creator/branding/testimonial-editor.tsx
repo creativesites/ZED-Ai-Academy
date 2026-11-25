@@ -55,7 +55,7 @@ export function TestimonialEditor({
       {
         name: "Chanda Mwila",
         role: "Data Analyst & Alum",
-        content: `The direct guidance and hands-on exercises at ${academyName || "Zed AI Academy"} helped me transition into a high-paying tech role within 3 months.`,
+        content: `The direct guidance and hands-on exercises at ${academyName || "CS Learn"} helped me transition into a high-paying tech role within 3 months.`,
         rating: 5,
       },
       {
@@ -83,7 +83,7 @@ export function TestimonialEditor({
             <Quote className="h-4 w-4" />
           </div>
           <div>
-            <h4 className="text-sm font-black text-[#062e39] uppercase tracking-wide">Student Testimonials & Reviews</h4>
+            <h4 className="text-sm font-black text-ink uppercase tracking-wide">Student Testimonials & Reviews</h4>
             <p className="text-[11px] text-slate-400">Social proof is the #1 driver of course enrollment.</p>
           </div>
         </div>
@@ -104,7 +104,7 @@ export function TestimonialEditor({
             type="button"
             size="sm"
             onClick={addTestimonial}
-            className="rounded-xl text-xs font-bold bg-[#062e39] text-white hover:bg-slate-800"
+            className="rounded-xl text-xs font-bold bg-ink text-white hover:bg-slate-800"
           >
             <Plus className="h-3.5 w-3.5 mr-1" /> Add Review
           </Button>
@@ -123,7 +123,7 @@ export function TestimonialEditor({
             variant="outline"
             size="sm"
             onClick={generateDefaultTestimonials}
-            className="rounded-xl text-xs font-bold text-[#fd5523] border-[#fd5523]/30 bg-white"
+            className="rounded-xl text-xs font-bold text-brand-text border-brand/30 bg-white"
           >
             Add Starter Reviews
           </Button>

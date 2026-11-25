@@ -1,4 +1,4 @@
-# Roadmap — Zed AI Academy
+# Roadmap — CS Learn
 
 Solo build. Ship something learners can actually use at each phase before moving to the next.
 

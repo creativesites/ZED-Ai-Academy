@@ -145,7 +145,7 @@ export function TutorSessionBlockEditor({
               variant="outline"
               size="sm"
               onClick={() => setCreatorOpen(true)}
-              className="h-8 rounded-lg border-[#fd5523]/30 bg-[#fff6ee] px-3 text-xs font-bold text-[#fd5523] hover:bg-[#ffebdc]"
+              className="h-8 rounded-lg border-brand/30 bg-brand-soft px-3 text-xs font-bold text-brand-text hover:bg-[#ffebdc]"
             >
               <Plus className="mr-1 h-3.5 w-3.5" />
               Create / AI Draft Scenario
@@ -165,7 +165,7 @@ export function TutorSessionBlockEditor({
                 type="button"
                 size="sm"
                 onClick={() => setCreatorOpen(true)}
-                className="mt-3 rounded-xl bg-[#fd5523] text-xs font-bold text-white hover:bg-[#ea4817]"
+                className="mt-3 rounded-xl bg-brand text-xs font-bold text-white hover:bg-brand-hover"
               >
                 <Sparkles className="mr-1.5 h-3.5 w-3.5" />
                 Create Scenario with AI Teacher
@@ -180,7 +180,7 @@ export function TutorSessionBlockEditor({
               setScenarioId(e.target.value);
               emit({ scenarioId: e.target.value });
             }}
-            className="h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#fd5523]/40"
+            className="h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand/40"
           >
             <option value="">Choose a scenario…</option>
             {(["course", "tenant_library", "platform"] as const).map((vis) => {
@@ -209,7 +209,7 @@ export function TutorSessionBlockEditor({
               />
             </div>
             <div className="min-w-0 text-xs text-slate-600">
-              <p className="font-semibold text-[#062e39]">
+              <p className="font-semibold text-ink">
                 {selected.persona ? `${selected.persona.displayName ?? selected.persona.name} · ` : ""}
                 up to {selected.maxMinutes} min
               </p>
@@ -233,7 +233,7 @@ export function TutorSessionBlockEditor({
               }}
               className={`rounded-lg border p-3 text-left transition-colors ${
                 style === s
-                  ? "border-[#fd5523] bg-[#fff6ee] ring-2 ring-[#fd5523]/20"
+                  ? "border-brand bg-brand-soft ring-2 ring-brand/20"
                   : "border-slate-300 bg-white hover:border-slate-400"
               }`}
             >
@@ -252,7 +252,7 @@ export function TutorSessionBlockEditor({
             setRequired(e.target.checked);
             emit({ required: e.target.checked });
           }}
-          className="mt-0.5 h-4 w-4 accent-[#fd5523]"
+          className="mt-0.5 h-4 w-4 accent-brand"
         />
         <span>
           <span className="block text-sm font-semibold text-slate-800">Required to complete the lesson</span>

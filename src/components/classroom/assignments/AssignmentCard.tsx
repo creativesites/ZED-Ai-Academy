@@ -27,7 +27,7 @@ export function AssignmentCard({
       )}
     >
       <div className="flex items-start justify-between gap-2">
-        <h4 className="text-xs font-black text-[#062e39] group-hover:text-sky-700 transition-colors line-clamp-1">
+        <h4 className="text-xs font-black text-ink group-hover:text-sky-700 transition-colors line-clamp-1">
           {assignment.title}
         </h4>
         <ChevronRight

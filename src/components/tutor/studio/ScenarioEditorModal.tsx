@@ -463,8 +463,8 @@ export function ScenarioEditorModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-lg font-black text-[#062e39]">
-            <Sparkles className="h-5 w-5 text-[#fd5523]" />
+          <DialogTitle className="flex items-center gap-2 text-lg font-black text-ink">
+            <Sparkles className="h-5 w-5 text-brand-text" />
             {initialScenario ? "Edit AI Teacher Flow" : "Create AI Teacher Flow"}
           </DialogTitle>
           <DialogDescription>
@@ -502,7 +502,7 @@ export function ScenarioEditorModal({
                       setTargetItems(tpl.targetItems);
                       toast.success(`Loaded "${tpl.label}" template`);
                     }}
-                    className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[11px] font-semibold text-slate-700 hover:border-[#fd5523]/50 hover:bg-[#fff6ee] hover:text-[#fd5523]"
+                    className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[11px] font-semibold text-slate-700 hover:border-brand/50 hover:bg-brand-soft hover:text-brand-text"
                   >
                     {tpl.label}
                   </button>
@@ -513,7 +513,7 @@ export function ScenarioEditorModal({
 
           {/* AI Quick Draft Bar (when inside a course/lesson) */}
           {courseId && (
-            <div className="space-y-2 rounded-2xl border border-[#fd5523]/25 bg-[#fff6ee] p-3.5">
+            <div className="space-y-2 rounded-2xl border border-brand/25 bg-brand-soft p-3.5">
               <div className="flex flex-wrap items-center gap-1.5">
                 {AUTHORING_TEMPLATES.map((tpl) => (
                   <button
@@ -528,8 +528,8 @@ export function ScenarioEditorModal({
                     }}
                     className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold transition-colors ${
                       templateId === tpl.id
-                        ? "bg-[#fd5523] text-white"
-                        : "border border-slate-200 bg-white text-slate-600 hover:border-[#fd5523]/40"
+                        ? "bg-brand text-white"
+                        : "border border-slate-200 bg-white text-slate-600 hover:border-brand/40"
                     }`}
                   >
                     {tpl.label}
@@ -548,7 +548,7 @@ export function ScenarioEditorModal({
                   size="sm"
                   disabled={isDrafting}
                   onClick={handleAiDraft}
-                  className="shrink-0 rounded-xl bg-[#fd5523] text-xs font-bold text-white hover:bg-[#ea4817]"
+                  className="shrink-0 rounded-xl bg-brand text-xs font-bold text-white hover:bg-brand-hover"
                 >
                   {isDrafting ? (
                     <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
@@ -719,7 +719,7 @@ export function ScenarioEditorModal({
                 type="checkbox"
                 checked={voiceAllowed}
                 onChange={(e) => setVoiceAllowed(e.target.checked)}
-                className="accent-[#fd5523]"
+                className="accent-brand"
               />
               Voice (hold to talk)
             </label>
@@ -728,7 +728,7 @@ export function ScenarioEditorModal({
                 type="checkbox"
                 checked={textAllowed}
                 onChange={(e) => setTextAllowed(e.target.checked)}
-                className="accent-[#fd5523]"
+                className="accent-brand"
               />
               Text chat
             </label>
@@ -833,7 +833,7 @@ export function ScenarioEditorModal({
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="flex items-center gap-1.5">
                   <ShieldCheck className="h-4 w-4 text-emerald-600" />
-                  <span className="text-xs font-bold text-[#062e39]">
+                  <span className="text-xs font-bold text-ink">
                     Simulated Student QA ({stressResult.passedCount}/{stressResult.totalCount} personas passed)
                   </span>
                 </div>
@@ -854,7 +854,7 @@ export function ScenarioEditorModal({
                     className="space-y-1.5 rounded-xl border border-slate-200/80 bg-white p-2.5 text-[11px]"
                   >
                     <div className="flex items-center justify-between gap-1">
-                      <span className="font-bold text-[#062e39]">{c.label}</span>
+                      <span className="font-bold text-ink">{c.label}</span>
                       {c.passed ? (
                         <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-emerald-600" />
                       ) : (
@@ -892,7 +892,7 @@ export function ScenarioEditorModal({
                 className="h-9 rounded-xl text-xs font-bold"
               >
                 {isStressTesting ? (
-                  <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin text-[#fd5523]" />
+                  <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin text-brand-text" />
                 ) : (
                   <ShieldCheck className="mr-1.5 h-3.5 w-3.5 text-emerald-600" />
                 )}
@@ -903,9 +903,9 @@ export function ScenarioEditorModal({
                   href={`/practice/${initialScenario.id}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-input bg-background px-3 text-xs font-bold text-[#062e39] shadow-xs transition hover:bg-accent hover:text-accent-foreground"
+                  className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-input bg-background px-3 text-xs font-bold text-ink shadow-xs transition hover:bg-accent hover:text-accent-foreground"
                 >
-                  <ExternalLink className="h-3.5 w-3.5 text-[#fd5523]" />
+                  <ExternalLink className="h-3.5 w-3.5 text-brand-text" />
                   Open full practice
                 </Link>
               ) : (
@@ -922,7 +922,7 @@ export function ScenarioEditorModal({
                 type="button"
                 disabled={isSaving}
                 onClick={handleSave}
-                className="rounded-xl bg-[#062e39] px-6 font-bold text-white hover:bg-[#0a4352]"
+                className="rounded-xl bg-ink px-6 font-bold text-white hover:bg-ink-hover"
               >
                 {isSaving && <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />}
                 {initialScenario ? "Save Changes" : "Create Scenario"}

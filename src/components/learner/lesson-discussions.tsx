@@ -39,7 +39,7 @@ function Avatar({ profile, size = "md" }: { profile: DiscussionWithProfile["prof
     );
   }
   return (
-    <div className={cn("rounded-full bg-[#fff6ee] text-[#fd5523] font-bold flex items-center justify-center shrink-0 ring-2 ring-white", sizeClasses)}>
+    <div className={cn("rounded-full bg-brand-soft text-brand-text font-bold flex items-center justify-center shrink-0 ring-2 ring-white", sizeClasses)}>
       {profile?.full_name?.[0] ?? "?"}
     </div>
   );
@@ -114,7 +114,7 @@ function DiscussionItem({
           <Avatar profile={item.profiles} size="sm" />
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2 mb-1">
-              <span className="text-[11px] font-bold text-[#062e39] truncate">{item.profiles?.full_name || "Member"}</span>
+              <span className="text-[11px] font-bold text-ink truncate">{item.profiles?.full_name || "Member"}</span>
               <span className="text-[10px] text-slate-300">{timeAgo(item.created_at)}</span>
               {!item.is_public && <Lock className="h-2.5 w-2.5 text-slate-300" />}
             </div>
@@ -132,14 +132,14 @@ function DiscussionItem({
         <div className="flex-1 min-w-0 pt-0.5">
           <div className="flex items-center justify-between mb-1">
             <div className="flex items-center gap-3">
-              <span className="text-sm font-bold text-[#062e39]">{item.profiles?.full_name ?? "Anonymous"}</span>
+              <span className="text-sm font-bold text-ink">{item.profiles?.full_name ?? "Anonymous"}</span>
               <span className="text-xs text-slate-300 font-medium">{timeAgo(item.created_at)}</span>
               {item.is_public ? (
                 <span className="inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider text-slate-400 bg-slate-50 px-2 py-0.5 rounded-full">
                   <Globe className="h-2.5 w-2.5" /> Public
                 </span>
               ) : (
-                <span className="inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider text-[#fd5523] bg-[#fd5523]/5 px-2 py-0.5 rounded-full">
+                <span className="inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider text-brand-text bg-brand/5 px-2 py-0.5 rounded-full">
                   <Lock className="h-2.5 w-2.5" /> Private
                 </span>
               )}
@@ -192,7 +192,7 @@ function DiscussionItem({
             {depth < 2 && (
               <button
                 onClick={() => setReplyOpen((v) => !v)}
-                className="inline-flex items-center gap-1.5 text-xs font-bold text-[#fd5523] hover:underline"
+                className="inline-flex items-center gap-1.5 text-xs font-bold text-brand-text hover:underline"
               >
                 <Reply className="h-3.5 w-3.5" />
                 Reply
@@ -207,14 +207,14 @@ function DiscussionItem({
                 onChange={(e) => setReplyText(e.target.value)}
                 placeholder="Write a reply…"
                 rows={2}
-                className="w-full rounded-2xl border-2 border-slate-100 bg-slate-50 p-4 text-sm focus:bg-white focus:border-[#fd5523]/30 transition-all outline-none"
+                className="w-full rounded-2xl border-2 border-slate-100 bg-slate-50 p-4 text-sm focus:bg-white focus:border-brand/30 transition-all outline-none"
               />
               {error && <p className="text-xs text-red-500 mt-2">{error}</p>}
               <div className="flex gap-3 mt-2">
                 <button
                   onClick={submitReply}
                   disabled={pending || !replyText.trim()}
-                  className="px-5 py-2 rounded-full bg-[#fd5523] text-white text-xs font-bold hover:bg-[#ef4a16] disabled:opacity-50 transition-all flex items-center gap-2"
+                  className="px-5 py-2 rounded-full bg-brand text-white text-xs font-bold hover:bg-brand-hover disabled:opacity-50 transition-all flex items-center gap-2"
                 >
                   {pending && <Loader2 className="h-3 w-3 animate-spin" />}
                   Post Reply
@@ -323,13 +323,13 @@ export function LessonDiscussions({
               value={content}
               onChange={(e) => setContent(e.target.value)}
               placeholder={isPublic ? "Join discussion..." : "Ask tutor privately..."}
-              className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 text-xs focus:bg-white focus:ring-2 focus:ring-[#fd5523]/20 outline-none pr-20"
+              className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 text-xs focus:bg-white focus:ring-2 focus:ring-brand/20 outline-none pr-20"
               onKeyDown={(e) => e.key === 'Enter' && submit()}
              />
              <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-2">
                <button 
                 onClick={() => setIsPublic(!isPublic)}
-                className={cn("p-1.5 rounded-md transition-colors", isPublic ? "text-slate-300" : "text-[#fd5523] bg-[#fd5523]/10")}
+                className={cn("p-1.5 rounded-md transition-colors", isPublic ? "text-slate-300" : "text-brand-text bg-brand/10")}
                 title={isPublic ? "Make Private" : "Make Public"}
                >
                  {isPublic ? <Globe className="h-3.5 w-3.5" /> : <Lock className="h-3.5 w-3.5" />}
@@ -337,7 +337,7 @@ export function LessonDiscussions({
                <button 
                 onClick={submit}
                 disabled={pending || !content.trim()}
-                className="text-[#fd5523] disabled:opacity-30 p-1.5"
+                className="text-brand-text disabled:opacity-30 p-1.5"
                >
                  {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                </button>
@@ -352,10 +352,10 @@ export function LessonDiscussions({
     <div className="space-y-8 pb-20">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-2xl bg-[#fff6ee] flex items-center justify-center">
-            <MessageSquare className="h-5 w-5 text-[#fd5523]" />
+          <div className="h-10 w-10 rounded-2xl bg-brand-soft flex items-center justify-center">
+            <MessageSquare className="h-5 w-5 text-brand-text" />
           </div>
-          <h3 className="text-lg font-bold text-[#062e39]">
+          <h3 className="text-lg font-bold text-ink">
             Discussions <span className="text-slate-300 ml-1">({discussions.length})</span>
           </h3>
         </div>
@@ -374,7 +374,7 @@ export function LessonDiscussions({
             onChange={(e) => setContent(e.target.value)}
             placeholder={isPublic ? "Ask a question or share your insight..." : "Ask the tutor a private question..."}
             rows={3}
-            className="w-full rounded-2xl border-2 border-slate-100 bg-slate-50 p-5 text-sm leading-relaxed focus:bg-white focus:border-[#fd5523]/30 transition-all outline-none resize-none"
+            className="w-full rounded-2xl border-2 border-slate-100 bg-slate-50 p-5 text-sm leading-relaxed focus:bg-white focus:border-brand/30 transition-all outline-none resize-none"
           />
           {error && <p className="text-xs text-red-500 mt-3">{error}</p>}
           
@@ -384,11 +384,11 @@ export function LessonDiscussions({
                 onClick={() => setIsPublic(true)}
                 className={cn(
                   "flex items-center gap-2 text-xs font-bold transition-colors",
-                  isPublic ? "text-[#fd5523]" : "text-slate-400 hover:text-slate-600"
+                  isPublic ? "text-brand-text" : "text-slate-400 hover:text-slate-600"
                 )}
               >
-                <div className={cn("h-4 w-4 rounded-full border-2 flex items-center justify-center", isPublic ? "border-[#fd5523]" : "border-slate-300")}>
-                  {isPublic && <div className="h-2 w-2 rounded-full bg-[#fd5523]" />}
+                <div className={cn("h-4 w-4 rounded-full border-2 flex items-center justify-center", isPublic ? "border-brand" : "border-slate-300")}>
+                  {isPublic && <div className="h-2 w-2 rounded-full bg-brand" />}
                 </div>
                 Public Discussion
               </button>
@@ -396,11 +396,11 @@ export function LessonDiscussions({
                 onClick={() => setIsPublic(false)}
                 className={cn(
                   "flex items-center gap-2 text-xs font-bold transition-colors",
-                  !isPublic ? "text-[#fd5523]" : "text-slate-400 hover:text-slate-600"
+                  !isPublic ? "text-brand-text" : "text-slate-400 hover:text-slate-600"
                 )}
               >
-                <div className={cn("h-4 w-4 rounded-full border-2 flex items-center justify-center", !isPublic ? "border-[#fd5523]" : "border-slate-300")}>
-                  {!isPublic && <div className="h-2 w-2 rounded-full bg-[#fd5523]" />}
+                <div className={cn("h-4 w-4 rounded-full border-2 flex items-center justify-center", !isPublic ? "border-brand" : "border-slate-300")}>
+                  {!isPublic && <div className="h-2 w-2 rounded-full bg-brand" />}
                 </div>
                 Private to Tutor
               </button>
@@ -410,8 +410,8 @@ export function LessonDiscussions({
               onClick={submit}
               disabled={pending || !content.trim()}
               className={cn(
-                "px-8 py-3 rounded-full text-white font-bold text-sm shadow-lg shadow-[#fd5523]/20 transition-all hover:scale-105 active:scale-95 flex items-center gap-2",
-                content.trim() ? "bg-[#fd5523] hover:bg-[#ef4a16]" : "bg-slate-200 cursor-not-allowed"
+                "px-8 py-3 rounded-full text-white font-bold text-sm shadow-lg shadow-brand/20 transition-all hover:scale-105 active:scale-95 flex items-center gap-2",
+                content.trim() ? "bg-brand hover:bg-brand-hover" : "bg-slate-200 cursor-not-allowed"
               )}
             >
               {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}

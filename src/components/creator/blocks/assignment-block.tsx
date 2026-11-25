@@ -44,8 +44,8 @@ export function AssignmentBlockEditor({
 
   return (
     <div className="space-y-4">
-      <div className="mb-2 flex items-center gap-2 text-[#062e39]">
-        <ClipboardCheck className="h-4 w-4 text-[#fd5523]" />
+      <div className="mb-2 flex items-center gap-2 text-ink">
+        <ClipboardCheck className="h-4 w-4 text-brand-text" />
         <span className="text-xs font-bold uppercase tracking-widest">Assignment</span>
       </div>
 

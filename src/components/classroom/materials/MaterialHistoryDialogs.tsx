@@ -23,6 +23,7 @@ import {
 } from "@/actions/classroom-materials";
 import { uploadClassroomFileWithSignedUrl } from "@/lib/storage/client-signed-upload";
 import { FOLDER_COLORS, formatBytes } from "./types";
+import { DEFAULT_PRIMARY_COLOR } from "@/lib/brand";
 
 export function MaterialFolderDialog({
   open,
@@ -40,7 +41,7 @@ export function MaterialFolderDialog({
   onCreated: () => void;
 }) {
   const [folderName, setFolderName] = useState("");
-  const [folderColor, setFolderColor] = useState("#fd5523");
+  const [folderColor, setFolderColor] = useState<string>(DEFAULT_PRIMARY_COLOR);
   const [isCreatingFolder, startCreateFolder] = useTransition();
 
   function handleCreateFolder(e: React.FormEvent) {
@@ -71,7 +72,7 @@ export function MaterialFolderDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="w-[95vw] sm:max-w-[440px] rounded-2xl sm:rounded-3xl p-4 sm:p-6 max-h-[85dvh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-xl font-black text-[#062e39]">Create New Folder</DialogTitle>
+          <DialogTitle className="text-xl font-black text-ink">Create New Folder</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleCreateFolder} className="space-y-4 pt-2">
           <div className="space-y-1.5">
@@ -111,7 +112,7 @@ export function MaterialFolderDialog({
             <Button
               type="submit"
               disabled={isCreatingFolder || !folderName.trim()}
-              className="w-full bg-[#fd5523] hover:bg-[#ef4a16] text-white font-bold rounded-xl h-12"
+              className="w-full bg-brand hover:bg-brand-hover text-white font-bold rounded-xl h-12"
             >
               {isCreatingFolder ? <Loader2 className="h-4 w-4 animate-spin mr-1.5" /> : null}
               Save Folder
@@ -216,8 +217,8 @@ export function MaterialVersionHistoryDialog({
     <Dialog open={!!doc} onOpenChange={() => onClose()}>
       <DialogContent className="w-[95vw] sm:max-w-[620px] rounded-2xl sm:rounded-3xl p-4 sm:p-6 max-h-[85dvh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-xl font-black text-[#062e39] flex items-center gap-2">
-            <History className="h-5 w-5 text-[#fd5523]" />
+          <DialogTitle className="text-xl font-black text-ink flex items-center gap-2">
+            <History className="h-5 w-5 text-brand-text" />
             Version History
           </DialogTitle>
           <p className="text-xs text-slate-400 mt-1">{doc?.title}</p>
@@ -238,7 +239,7 @@ export function MaterialVersionHistoryDialog({
                 type="file"
                 required
                 onChange={(e) => setVersionFile(e.target.files?.[0] || null)}
-                className="rounded-xl border-slate-200 text-xs h-10 file:mr-2 file:py-1 file:px-2.5 file:rounded-md file:border-0 file:text-[11px] file:font-bold file:bg-[#fd5523]/10 file:text-[#fd5523]"
+                className="rounded-xl border-slate-200 text-xs h-10 file:mr-2 file:py-1 file:px-2.5 file:rounded-md file:border-0 file:text-[11px] file:font-bold file:bg-brand/10 file:text-brand-text"
               />
             </div>
             <div className="space-y-1">
@@ -253,7 +254,7 @@ export function MaterialVersionHistoryDialog({
             <Button
               type="submit"
               disabled={isUploadingVersion || !versionFile}
-              className="w-full bg-[#fd5523] hover:bg-[#e0481d] text-white text-xs font-bold rounded-xl h-10 shadow-md shadow-[#fd5523]/20"
+              className="w-full bg-brand hover:bg-brand-hover text-white text-xs font-bold rounded-xl h-10 shadow-md shadow-brand/20"
             >
               {isUploadingVersion ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> : <Upload className="h-3.5 w-3.5 mr-1.5" />}
               Upload &amp; Replace Active Version
@@ -268,7 +269,7 @@ export function MaterialVersionHistoryDialog({
 
           {isLoadingVersions ? (
             <div className="py-8 text-center text-slate-400 flex items-center justify-center gap-2 text-xs">
-              <Loader2 className="h-4 w-4 animate-spin text-[#fd5523]" /> Loading versions...
+              <Loader2 className="h-4 w-4 animate-spin text-brand-text" /> Loading versions...
             </div>
           ) : versions.length === 0 ? (
             <div className="p-4 text-center text-xs text-slate-400 border border-dashed rounded-xl">
@@ -306,7 +307,7 @@ export function MaterialVersionHistoryDialog({
                       href={ver.file_url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="h-8 px-3 rounded-lg bg-slate-100 hover:bg-[#fd5523] hover:text-white text-slate-700 text-xs font-bold flex items-center gap-1.5 transition-colors shrink-0"
+                      className="h-8 px-3 rounded-lg bg-slate-100 hover:bg-brand hover:text-white text-slate-700 text-xs font-bold flex items-center gap-1.5 transition-colors shrink-0"
                     >
                       <Download className="h-3.5 w-3.5" />
                       Download
@@ -362,7 +363,7 @@ export function MaterialAcknowledgementsDialog({
     <Dialog open={!!doc} onOpenChange={() => onClose()}>
       <DialogContent className="w-[95vw] sm:max-w-[540px] rounded-2xl sm:rounded-3xl p-4 sm:p-6 max-h-[85dvh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-xl font-black text-[#062e39] flex items-center gap-2">
+          <DialogTitle className="text-xl font-black text-ink flex items-center gap-2">
             <CheckCheck className="h-5 w-5 text-emerald-600" />
             Document Acknowledgements
           </DialogTitle>
@@ -374,7 +375,7 @@ export function MaterialAcknowledgementsDialog({
         <div className="space-y-3 pt-2">
           {isLoadingAcks ? (
             <div className="py-8 text-center text-slate-400 flex items-center justify-center gap-2 text-xs">
-              <Loader2 className="h-4 w-4 animate-spin text-[#fd5523]" /> Loading sign-offs...
+              <Loader2 className="h-4 w-4 animate-spin text-brand-text" /> Loading sign-offs...
             </div>
           ) : acknowledgements.length === 0 ? (
             <div className="p-8 text-center text-xs text-slate-400 border border-dashed rounded-2xl bg-slate-50">

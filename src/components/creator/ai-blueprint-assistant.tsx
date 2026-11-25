@@ -179,7 +179,7 @@ export function AIBlueprintAssistant({ courseId, triggerLabel, triggerClassName 
           }
         }}
         className={cn(
-          "h-9 rounded-xl border-[#fd5523]/25 bg-[#fff6ee] px-3.5 text-xs font-bold text-[#fd5523] hover:bg-[#fd5523] hover:text-white transition-all shadow-xs",
+          "h-9 rounded-xl border-brand/25 bg-brand-soft px-3.5 text-xs font-bold text-brand-text hover:bg-brand hover:text-white transition-all shadow-xs",
           triggerClassName
         )}
       >
@@ -197,9 +197,9 @@ export function AIBlueprintAssistant({ courseId, triggerLabel, triggerClassName 
         }}
       >
         <DialogContent className="w-[calc(100vw-1.5rem)] max-w-[calc(100vw-1.5rem)] sm:max-w-3xl lg:max-w-4xl max-h-[88vh] flex flex-col gap-0 p-0 overflow-hidden rounded-2xl sm:rounded-3xl border border-slate-200 shadow-2xl">
-          <DialogHeader className="p-5 sm:p-6 bg-[#062e39] text-white shrink-0">
+          <DialogHeader className="p-5 sm:p-6 bg-ink text-white shrink-0">
             <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#fd5523] text-white shrink-0">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand text-white shrink-0">
                 <Sparkles className="h-4 w-4" />
               </div>
               <div className="text-left">
@@ -227,21 +227,21 @@ export function AIBlueprintAssistant({ courseId, triggerLabel, triggerClassName 
               <TabsList className="h-12 bg-transparent gap-4 sm:gap-6 p-0">
                 <TabsTrigger
                   value="generate"
-                  className="h-12 rounded-none border-b-2 border-transparent px-1 text-xs sm:text-sm font-bold text-slate-500 data-[state=active]:border-[#fd5523] data-[state=active]:text-[#062e39] data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+                  className="h-12 rounded-none border-b-2 border-transparent px-1 text-xs sm:text-sm font-bold text-slate-500 data-[state=active]:border-brand data-[state=active]:text-ink data-[state=active]:bg-transparent data-[state=active]:shadow-none"
                 >
                   <WandSparkles className="mr-1.5 h-3.5 w-3.5" />
                   Generate with AI
                 </TabsTrigger>
                 <TabsTrigger
                   value="export"
-                  className="h-12 rounded-none border-b-2 border-transparent px-1 text-xs sm:text-sm font-bold text-slate-500 data-[state=active]:border-[#fd5523] data-[state=active]:text-[#062e39] data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+                  className="h-12 rounded-none border-b-2 border-transparent px-1 text-xs sm:text-sm font-bold text-slate-500 data-[state=active]:border-brand data-[state=active]:text-ink data-[state=active]:bg-transparent data-[state=active]:shadow-none"
                 >
                   <Download className="mr-1.5 h-3.5 w-3.5" />
                   Export
                 </TabsTrigger>
                 <TabsTrigger
                   value="import"
-                  className="h-12 rounded-none border-b-2 border-transparent px-1 text-xs sm:text-sm font-bold text-slate-500 data-[state=active]:border-[#fd5523] data-[state=active]:text-[#062e39] data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+                  className="h-12 rounded-none border-b-2 border-transparent px-1 text-xs sm:text-sm font-bold text-slate-500 data-[state=active]:border-brand data-[state=active]:text-ink data-[state=active]:bg-transparent data-[state=active]:shadow-none"
                 >
                   <Upload className="mr-1.5 h-3.5 w-3.5" />
                   Import JSON
@@ -265,11 +265,11 @@ export function AIBlueprintAssistant({ courseId, triggerLabel, triggerClassName 
                         className={cn(
                           "rounded-xl border p-3 text-left transition-all",
                           domainPreset === preset.id
-                            ? "border-[#fd5523] bg-[#fff6ee]"
+                            ? "border-brand bg-brand-soft"
                             : "border-slate-200 bg-white hover:border-slate-300"
                         )}
                       >
-                        <p className="text-xs font-bold text-[#062e39]">{preset.label}</p>
+                        <p className="text-xs font-bold text-ink">{preset.label}</p>
                         <p className="text-[11px] text-slate-500 mt-0.5 line-clamp-1">
                           {preset.description}
                         </p>
@@ -296,7 +296,7 @@ export function AIBlueprintAssistant({ courseId, triggerLabel, triggerClassName 
                     type="button"
                     onClick={handleGenerate}
                     disabled={generating}
-                    className="h-10 rounded-xl bg-[#062e39] px-5 text-xs sm:text-sm font-bold text-white hover:bg-[#0a4055]"
+                    className="h-10 rounded-xl bg-ink px-5 text-xs sm:text-sm font-bold text-white hover:bg-ink-hover"
                   >
                     {generating ? (
                       <>
@@ -315,8 +315,8 @@ export function AIBlueprintAssistant({ courseId, triggerLabel, triggerClassName 
                 {previewModules && (
                   <div className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
                     <div className="flex flex-wrap items-center justify-between gap-2">
-                      <div className="flex items-center gap-2 text-xs font-bold text-[#062e39]">
-                        <Layers className="h-4 w-4 text-[#fd5523]" />
+                      <div className="flex items-center gap-2 text-xs font-bold text-ink">
+                        <Layers className="h-4 w-4 text-brand-text" />
                         <span>
                           Proposed Outline: {previewModules.length} modules · {totalGeneratedLessons} lessons
                         </span>
@@ -325,7 +325,7 @@ export function AIBlueprintAssistant({ courseId, triggerLabel, triggerClassName 
                         type="button"
                         onClick={handleApplyGenerated}
                         disabled={applyingGenerated || previewModules.length === 0}
-                        className="h-9 rounded-xl bg-[#fd5523] px-4 text-xs font-bold text-white hover:bg-[#ef4a16]"
+                        className="h-9 rounded-xl bg-brand px-4 text-xs font-bold text-white hover:bg-brand-hover"
                       >
                         {applyingGenerated ? (
                           <>
@@ -348,7 +348,7 @@ export function AIBlueprintAssistant({ courseId, triggerLabel, triggerClassName 
                           className="rounded-xl border border-slate-200 bg-white p-3 space-y-2"
                         >
                           <div className="flex items-center justify-between gap-2">
-                            <p className="text-xs sm:text-sm font-bold text-[#062e39]">
+                            <p className="text-xs sm:text-sm font-bold text-ink">
                               Module {idx + 1}: {mod.title}
                             </p>
                             <button
@@ -381,8 +381,8 @@ export function AIBlueprintAssistant({ courseId, triggerLabel, triggerClassName 
               {/* TAB 2: EXPORT */}
               <TabsContent value="export" className="mt-0 space-y-4 outline-none">
                 <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div className="flex items-center gap-2 text-sm font-bold text-[#062e39]">
-                    <FileJson className="h-4 w-4 text-[#fd5523]" />
+                  <div className="flex items-center gap-2 text-sm font-bold text-ink">
+                    <FileJson className="h-4 w-4 text-brand-text" />
                     Course Structure & Prompt
                   </div>
                   <div className="flex items-center gap-2">
@@ -402,7 +402,7 @@ export function AIBlueprintAssistant({ courseId, triggerLabel, triggerClassName 
                       size="sm"
                       onClick={handleCopy}
                       disabled={!promptText}
-                      className="h-9 rounded-xl bg-[#062e39] text-white hover:bg-[#0a4055] text-xs font-bold"
+                      className="h-9 rounded-xl bg-ink text-white hover:bg-ink-hover text-xs font-bold"
                     >
                       {copied ? <Check className="mr-1.5 h-3.5 w-3.5" /> : <Copy className="mr-1.5 h-3.5 w-3.5" />}
                       {copied ? "Copied" : "Copy Prompt"}
@@ -412,7 +412,7 @@ export function AIBlueprintAssistant({ courseId, triggerLabel, triggerClassName 
 
                 {isExporting ? (
                   <div className="h-56 flex flex-col items-center justify-center bg-slate-50 rounded-xl border border-slate-200 gap-2">
-                    <Loader2 className="h-6 w-6 animate-spin text-[#fd5523]" />
+                    <Loader2 className="h-6 w-6 animate-spin text-brand-text" />
                     <p className="text-xs font-medium text-slate-500">Exporting course blueprint...</p>
                   </div>
                 ) : (
@@ -427,13 +427,13 @@ export function AIBlueprintAssistant({ courseId, triggerLabel, triggerClassName 
               {/* TAB 3: IMPORT JSON */}
               <TabsContent value="import" className="mt-0 space-y-4 outline-none">
                 <p className="text-xs sm:text-sm text-slate-500">
-                  Paste a valid blueprint JSON object with a <code className="text-[#062e39] font-semibold">modules</code> array to create modules and lessons automatically.
+                  Paste a valid blueprint JSON object with a <code className="text-ink font-semibold">modules</code> array to create modules and lessons automatically.
                 </p>
                 <Textarea
                   value={importJson}
                   onChange={(e) => setImportJson(e.target.value)}
                   placeholder='{ "title": "...", "modules": [{ "title": "Module 1", "lessons": [{ "title": "Lesson 1", "content_blocks": [] }] }] }'
-                  className="h-64 bg-slate-50 font-mono text-xs p-3.5 rounded-xl border-slate-200 leading-relaxed focus:border-[#fd5523]"
+                  className="h-64 bg-slate-50 font-mono text-xs p-3.5 rounded-xl border-slate-200 leading-relaxed focus:border-brand"
                 />
                 <div className="flex items-center justify-end gap-2.5">
                   <Button
@@ -448,7 +448,7 @@ export function AIBlueprintAssistant({ courseId, triggerLabel, triggerClassName 
                     type="button"
                     disabled={!importJson.trim() || isImporting}
                     onClick={handleImport}
-                    className="h-10 rounded-xl bg-[#fd5523] px-5 text-xs sm:text-sm font-bold text-white hover:bg-[#ef4a16]"
+                    className="h-10 rounded-xl bg-brand px-5 text-xs sm:text-sm font-bold text-white hover:bg-brand-hover"
                   >
                     {isImporting ? (
                       <>

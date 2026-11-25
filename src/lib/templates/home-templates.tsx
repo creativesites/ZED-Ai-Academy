@@ -23,7 +23,7 @@ type TemplateProps = {
 };
 
 export function TemplateRenderer({ tenant, courses, membership, content, brandColor, template, adminProfile, stats }: TemplateProps) {
-  const academyName = tenant.name || "Zed AI Academy";
+  const academyName = tenant.name || "CS Learn";
   const heroTitle = content.hero_title || `Welcome to ${academyName}`;
   const heroSubtitle = content.hero_subtitle || "Empowering leaders, professionals, and students with modern practical skills, live workshops, and certified mastery.";
   const aboutTitle = content.about_title || `About ${academyName}`;

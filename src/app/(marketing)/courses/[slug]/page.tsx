@@ -67,7 +67,7 @@ export default async function LegacyCourseDetailPage({ params }: PageProps) {
             ? course.companies[0]
             : course.companies;
           const tenantSlug = comp?.slug || "zedai";
-          const tenantName = comp?.name || "Zed AI Academy";
+          const tenantName = comp?.name || "CS Learn";
           return (
             <li key={course.id}>
               <Link
@@ -78,7 +78,7 @@ export default async function LegacyCourseDetailPage({ params }: PageProps) {
                   <div className="font-semibold">{course.title}</div>
                   <div className="text-xs text-slate-500">{tenantName}</div>
                 </div>
-                <span className="text-xs font-semibold text-[#fd5523]">Open →</span>
+                <span className="text-xs font-semibold text-brand-text">Open →</span>
               </Link>
             </li>
           );

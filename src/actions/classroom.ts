@@ -10,6 +10,7 @@ import {
   extractReportAverageScore,
   speakingMsToMinutes,
 } from "@/lib/classroom/speaking-metrics";
+import { DEFAULT_PRIMARY_COLOR } from "@/lib/brand";
 
 type ClassScheduleInsert = {
   company_id: string;
@@ -434,7 +435,7 @@ export async function createClassroomGroup(formData: FormData) {
   const courseId = (formData.get("courseId") as string) || null;
   const academicPeriod = (formData.get("academicPeriod") as string)?.trim() || null;
   const primaryTeacherId = (formData.get("primaryTeacherId") as string) || null;
-  const color = (formData.get("color") as string) || "#fd5523";
+  const color = (formData.get("color") as string) || DEFAULT_PRIMARY_COLOR;
   const status = (formData.get("status") as string) || "active";
   
   if (!name) throw new Error("Cohort name is required");
@@ -469,7 +470,7 @@ export async function updateClassroomGroup(groupId: string, formData: FormData) 
   const courseId = (formData.get("courseId") as string) || null;
   const academicPeriod = (formData.get("academicPeriod") as string)?.trim() || null;
   const primaryTeacherId = (formData.get("primaryTeacherId") as string) || null;
-  const color = (formData.get("color") as string) || "#fd5523";
+  const color = (formData.get("color") as string) || DEFAULT_PRIMARY_COLOR;
   const status = (formData.get("status") as string) || "active";
 
   if (!name) throw new Error("Cohort name is required");

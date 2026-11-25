@@ -71,22 +71,22 @@ export default function Services() {
     return (
         <section className="service-two py-24 bg-white relative overflow-hidden">
             {/* Background elements */}
-            <div className="absolute top-0 right-0 w-1/3 h-1/3 bg-[#fd5523]/5 rounded-full blur-[120px] -mr-32 -mt-32"></div>
-            <div className="absolute bottom-0 left-0 w-1/4 h-1/4 bg-[#062e39]/5 rounded-full blur-[100px] -ml-20 -mb-20"></div>
+            <div className="absolute top-0 right-0 w-1/3 h-1/3 bg-brand/5 rounded-full blur-[120px] -mr-32 -mt-32"></div>
+            <div className="absolute bottom-0 left-0 w-1/4 h-1/4 bg-ink/5 rounded-full blur-[100px] -ml-20 -mb-20"></div>
 
             <div className="container relative z-10">
                 <div className="sec-title center text-center mb-16">
                     <div className="flex items-center justify-center gap-3 mb-4">
-                        <div className="h-px w-8 bg-[#fd5523]"></div>
-                        <div className="flex items-center gap-2 text-[#fd5523] font-bold text-sm uppercase tracking-[0.3em]">
+                        <div className="h-px w-8 bg-brand"></div>
+                        <div className="flex items-center gap-2 text-brand-text font-bold text-sm uppercase tracking-[0.3em]">
                             <Sparkles className="h-4 w-4" />
                             Solutions
                         </div>
-                        <div className="h-px w-8 bg-[#fd5523]"></div>
+                        <div className="h-px w-8 bg-brand"></div>
                     </div>
-                    <h2 className="text-4xl md:text-5xl font-extrabold text-[#062e39] tracking-tight">
+                    <h2 className="text-4xl md:text-5xl font-extrabold text-ink tracking-tight">
                         Transforming Industry with <br/>
-                        <span className="text-[#fd5523]">Intelligence</span>
+                        <span className="text-brand-text">Intelligence</span>
                     </h2>
                 </div>
 
@@ -95,18 +95,18 @@ export default function Services() {
                         <SwiperSlide key={index}>
                             <div className="service-two__single group h-full bg-[#f8fafc] rounded-[2.5rem] p-10 border border-slate-100 transition-all hover:bg-white hover:shadow-2xl hover:shadow-slate-200 hover:-translate-y-2">
                                 <div className="service-two__single-content flex flex-col h-full">
-                                    <div className="icon mb-8 h-16 w-16 rounded-2xl bg-white flex items-center justify-center text-[#fd5523] shadow-sm group-hover:bg-[#fd5523] group-hover:text-white transition-all duration-500">
+                                    <div className="icon mb-8 h-16 w-16 rounded-2xl bg-white flex items-center justify-center text-brand-text shadow-sm group-hover:bg-brand group-hover:text-white transition-all duration-500">
                                         <service.icon className="h-8 w-8" />
                                     </div>
                                     <div className="service-two__single-content-inner text-left flex-1">
-                                        <h3 className="text-2xl font-bold text-[#062e39] mb-4 leading-tight group-hover:text-[#fd5523] transition-colors">
+                                        <h3 className="text-2xl font-bold text-ink mb-4 leading-tight group-hover:text-brand-text transition-colors">
                                             {service.title}
                                         </h3>
                                         <p className="text-slate-500 leading-relaxed mb-8">
                                             {service.description}
                                         </p>
                                         <div className="mt-auto">
-                                            <Link href={service.link} className="inline-flex items-center gap-2 text-sm font-bold text-[#062e39] group-hover:text-[#fd5523] transition-all">
+                                            <Link href={service.link} className="inline-flex items-center gap-2 text-sm font-bold text-ink group-hover:text-brand-text transition-all">
                                                 Explore Solution 
                                                 <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
                                             </Link>

@@ -1,8 +1,8 @@
-# Zed AI Academy — Course Creator 2.0 Product & Technical Specification
+# CS Learn — Course Creator 2.0 Product & Technical Specification
 
 ## 1. Product Vision
 
-Transform Zed AI Academy's course creator from a fragmented sequence of administrative forms into a **modern, AI-assisted (never AI-dependent) Course Authoring Studio** where independent multi-tenant academies can design, author, ingest source materials, verify quality, and publish world-class courses.
+Transform CS Learn's course creator from a fragmented sequence of administrative forms into a **modern, AI-assisted (never AI-dependent) Course Authoring Studio** where independent multi-tenant academies can design, author, ingest source materials, verify quality, and publish world-class courses.
 
 ### Core Principles
 1. **Manual-First Independence:** Every authoring workflow works 100% end-to-end without an AI API key or a single AI call.

@@ -3,7 +3,7 @@
 import { cn } from "@/lib/utils";
 
 const CALLOUT_STYLES: Record<string, { container: string; emoji: string; iconColor: string }> = {
-  tip:       { container: "bg-[#fff6ee] border-[#fd5523]/20 text-[#062e39]",   emoji: "⚡", iconColor: "text-[#fd5523]" },
+  tip:       { container: "bg-brand-soft border-brand/20 text-ink",   emoji: "⚡", iconColor: "text-brand-text" },
   warning:   { container: "bg-amber-50 border-amber-200 text-amber-900",       emoji: "⚠️", iconColor: "text-amber-600" },
   important: { container: "bg-indigo-50 border-indigo-100 text-indigo-900",    emoji: "💡", iconColor: "text-indigo-600" },
   danger:    { container: "bg-red-50 border-red-100 text-red-900",             emoji: "🚫", iconColor: "text-red-600" },

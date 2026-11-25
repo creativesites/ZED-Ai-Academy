@@ -73,7 +73,7 @@ export function AIBrandModal({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           action: "generate_brand_kit",
-          academyName: academyName || "Zed AI Academy",
+          academyName: academyName || "CS Learn",
           niche,
           targetAudience,
           tone,
@@ -121,7 +121,7 @@ export function AIBrandModal({
         render={
           <Button
             type="button"
-            className="flex items-center gap-2 rounded-2xl px-4 py-2.5 bg-[#fff6ee] text-[#fd5523] border border-[#fd5523]/30 hover:bg-[#fd5523] hover:text-white font-black text-xs uppercase tracking-wider shadow-sm transition-all"
+            className="flex items-center gap-2 rounded-2xl px-4 py-2.5 bg-brand-soft text-brand-text border border-brand/30 hover:bg-brand hover:text-white font-black text-xs uppercase tracking-wider shadow-sm transition-all"
           >
             <Sparkles className="h-4 w-4" />
             <span>AI Brand Assistant</span>
@@ -130,9 +130,9 @@ export function AIBrandModal({
       />
       <DialogContent className="max-w-2xl rounded-[2rem] border border-slate-100 p-0 overflow-hidden shadow-2xl bg-white max-h-[90vh] flex flex-col">
         {/* Clean Header */}
-        <DialogHeader className="p-6 sm:p-8 bg-[#062e39] text-white shrink-0">
+        <DialogHeader className="p-6 sm:p-8 bg-ink text-white shrink-0">
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-white/10 flex items-center justify-center text-[#fd5523]">
+            <div className="h-10 w-10 rounded-xl bg-white/10 flex items-center justify-center text-brand-text">
               <Wand2 className="h-5 w-5" />
             </div>
             <div>
@@ -152,7 +152,7 @@ export function AIBrandModal({
               onClick={() => setActiveTab("ai-architect")}
               className={`px-3.5 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 ${
                 activeTab === "ai-architect"
-                  ? "bg-white text-[#062e39] shadow-sm"
+                  ? "bg-white text-ink shadow-sm"
                   : "bg-white/10 text-white/80 hover:bg-white/20"
               }`}
             >
@@ -164,7 +164,7 @@ export function AIBrandModal({
               onClick={() => setActiveTab("palettes")}
               className={`px-3.5 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 ${
                 activeTab === "palettes"
-                  ? "bg-white text-[#062e39] shadow-sm"
+                  ? "bg-white text-ink shadow-sm"
                   : "bg-white/10 text-white/80 hover:bg-white/20"
               }`}
             >
@@ -217,7 +217,7 @@ export function AIBrandModal({
                           onClick={() => setTone(t.id)}
                           className={`p-2.5 rounded-xl border text-left text-xs font-bold transition-all ${
                             tone === t.id
-                              ? "border-[#fd5523] bg-[#fff6ee] text-[#fd5523]"
+                              ? "border-brand bg-brand-soft text-brand-text"
                               : "border-slate-200 text-slate-600 hover:border-slate-300"
                           }`}
                         >
@@ -232,16 +232,16 @@ export function AIBrandModal({
                       type="button"
                       onClick={handleGenerate}
                       disabled={isGenerating || !niche.trim()}
-                      className="w-full h-12 rounded-xl bg-[#062e39] text-white font-bold text-xs uppercase tracking-wider hover:bg-slate-800 transition-all flex items-center justify-center gap-2"
+                      className="w-full h-12 rounded-xl bg-ink text-white font-bold text-xs uppercase tracking-wider hover:bg-slate-800 transition-all flex items-center justify-center gap-2"
                     >
                       {isGenerating ? (
                         <>
-                          <Loader2 className="h-4 w-4 animate-spin text-[#fd5523]" />
+                          <Loader2 className="h-4 w-4 animate-spin text-brand-text" />
                           <span>Generating Brand Identity...</span>
                         </>
                       ) : (
                         <>
-                          <Wand2 className="h-4 w-4 text-[#fd5523]" />
+                          <Wand2 className="h-4 w-4 text-brand-text" />
                           <span>Generate Brand Kit</span>
                         </>
                       )}
@@ -288,9 +288,9 @@ export function AIBrandModal({
                   <div className="space-y-3">
                     <div className="p-3.5 rounded-xl border border-slate-100 space-y-1 bg-white">
                       <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                        <FileText className="h-3 w-3 text-[#fd5523]" /> Hero Section
+                        <FileText className="h-3 w-3 text-brand-text" /> Hero Section
                       </div>
-                      <h4 className="text-sm font-bold text-[#062e39]">{generatedKit.hero_title}</h4>
+                      <h4 className="text-sm font-bold text-ink">{generatedKit.hero_title}</h4>
                       <p className="text-xs text-slate-600 leading-relaxed">{generatedKit.hero_subtitle}</p>
                     </div>
 
@@ -298,7 +298,7 @@ export function AIBrandModal({
                       <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
                         <Layers className="h-3 w-3 text-emerald-600" /> Mission & Story
                       </div>
-                      <h4 className="text-xs font-bold text-[#062e39]">{generatedKit.about_title}</h4>
+                      <h4 className="text-xs font-bold text-ink">{generatedKit.about_title}</h4>
                       <p className="text-xs text-slate-600 leading-relaxed line-clamp-2">{generatedKit.about_text}</p>
                     </div>
                   </div>
@@ -308,7 +308,7 @@ export function AIBrandModal({
                     <Button
                       type="button"
                       onClick={handleApplyAll}
-                      className="flex-1 h-11 rounded-xl bg-[#fd5523] text-white font-bold text-xs uppercase tracking-wider hover:bg-[#ef4a16] shadow-sm flex items-center justify-center gap-2"
+                      className="flex-1 h-11 rounded-xl bg-brand text-white font-bold text-xs uppercase tracking-wider hover:bg-brand-hover shadow-sm flex items-center justify-center gap-2"
                     >
                       <Sparkles className="h-4 w-4" /> Apply All to Settings
                     </Button>
@@ -358,13 +358,13 @@ export function AIBrandModal({
                       toast.success(`Applied ${pal.name} palette!`);
                       setIsOpen(false);
                     }}
-                    className="p-3 rounded-xl border border-slate-200 text-left hover:border-[#fd5523] hover:bg-[#fffaf6] transition-all group bg-white space-y-2"
+                    className="p-3 rounded-xl border border-slate-200 text-left hover:border-brand hover:bg-surface transition-all group bg-white space-y-2"
                   >
                     <div className="flex items-center justify-between">
-                      <span className="font-bold text-xs text-[#062e39] group-hover:text-[#fd5523] transition-colors">
+                      <span className="font-bold text-xs text-ink group-hover:text-brand-text transition-colors">
                         {pal.name}
                       </span>
-                      <ArrowRight className="h-3.5 w-3.5 text-slate-300 group-hover:text-[#fd5523] transition-colors" />
+                      <ArrowRight className="h-3.5 w-3.5 text-slate-300 group-hover:text-brand-text transition-colors" />
                     </div>
 
                     <div className="flex items-center gap-1.5">

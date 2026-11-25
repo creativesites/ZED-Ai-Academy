@@ -1,5 +1,6 @@
+import { BRAND } from "@/lib/brand";
 /**
- * Calendar export helper utilities for Zed AI Academy live sessions.
+ * Calendar export helper utilities for CS Learn live sessions.
  */
 
 export type CalendarEventDetails = {
@@ -21,7 +22,7 @@ export function getGoogleCalendarUrl(event: CalendarEventDetails): string {
   const params = new URLSearchParams({
     action: "TEMPLATE",
     text: event.title,
-    details: event.description || "Zed AI Academy Live Session",
+    details: event.description || "CS Learn Live Session",
     location: event.location || locationUrl,
     dates: `${startTimeStr}/${endTimeStr}`,
   });
@@ -33,7 +34,7 @@ export function getGoogleCalendarUrl(event: CalendarEventDetails): string {
  * Resolves the next upcoming date & time range for a class schedule.
  */
 export function getScheduleEventDetails(schedule: any, companySlug: string): CalendarEventDetails {
-  const origin = typeof window !== "undefined" ? window.location.origin : (process.env.NEXT_PUBLIC_APP_URL || "https://academy.zedai.org");
+  const origin = typeof window !== "undefined" ? window.location.origin : (process.env.NEXT_PUBLIC_APP_URL || BRAND.url);
   const classroomUrl = `${origin}/academy/${companySlug}/classroom?tab=session`;
   const title = schedule.title || "Live Class Session";
   const description = `${schedule.topics_covered ? `Topics Covered: ${schedule.topics_covered}\n\n` : ""}${schedule.description ? `${schedule.description}\n\n` : ""}Join live classroom: ${classroomUrl}`;
@@ -78,7 +79,7 @@ export function getScheduleEventDetails(schedule: any, companySlug: string): Cal
     description,
     startsAt,
     endsAt,
-    location: `Zed AI Academy Classroom (${classroomUrl})`,
+    location: `CS Learn Classroom (${classroomUrl})`,
   };
 }
 
@@ -93,16 +94,16 @@ export function downloadIcsFile(event: CalendarEventDetails): void {
   const icsContent = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "PRODID:-//Zed AI Academy//Live Sessions//EN",
+    "PRODID:-//CreativeSites//CS Learn Live Sessions//EN",
     "CALSCALE:GREGORIAN",
     "METHOD:PUBLISH",
     "BEGIN:VEVENT",
-    `UID:zed-session-${Date.now()}@zedaiacademy.com`,
+    `UID:cs-learn-session-${Date.now()}@learn.creativesites.site`,
     `DTSTAMP:${nowStr}`,
     `DTSTART:${startTimeStr}`,
     `DTEND:${endTimeStr}`,
     `SUMMARY:${escapeIcsText(event.title)}`,
-    `DESCRIPTION:${escapeIcsText(event.description || "Zed AI Academy Live Session")}`,
+    `DESCRIPTION:${escapeIcsText(event.description || "CS Learn Live Session")}`,
     `LOCATION:${escapeIcsText(event.location || window.location.href)}`,
     "STATUS:CONFIRMED",
     "END:VEVENT",

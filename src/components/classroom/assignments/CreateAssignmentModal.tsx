@@ -113,7 +113,7 @@ export function CreateAssignmentModal({
     <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
       <div className="bg-white rounded-2xl sm:rounded-3xl max-w-2xl w-full p-4 sm:p-6 md:p-8 shadow-2xl border border-slate-100 max-h-[85dvh] overflow-y-auto animate-in zoom-in-95 duration-200">
         <div className="flex items-center justify-between pb-4 border-b border-slate-100">
-          <h3 className="text-lg font-black text-[#062e39]">Create New Assignment</h3>
+          <h3 className="text-lg font-black text-ink">Create New Assignment</h3>
           <Button variant="ghost" size="icon" onClick={onClose} className="rounded-xl h-8 w-8 text-slate-400">
             <X className="h-4 w-4" />
           </Button>
@@ -259,7 +259,7 @@ export function CreateAssignmentModal({
                     { id: String(Date.now()), title: "New Criterion", points: 10 },
                   ])
                 }
-                className="text-xs text-[#fd5523] hover:text-[#e0481d] h-7"
+                className="text-xs text-brand-text hover:text-brand-hover h-7"
               >
                 + Add Criterion
               </Button>
@@ -310,7 +310,7 @@ export function CreateAssignmentModal({
             <Button
               type="submit"
               disabled={pending}
-              className="bg-[#fd5523] hover:bg-[#e0481d] text-white rounded-xl text-xs font-black shadow-md shadow-[#fd5523]/20"
+              className="bg-brand hover:bg-brand-hover text-white rounded-xl text-xs font-black shadow-md shadow-brand/20"
             >
               {pending ? (
                 <>

@@ -77,7 +77,7 @@ export function PracticeExerciseBlockEditor({
   return (
     <div className="space-y-8">
       <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center gap-2 text-[#062e39]">
+        <div className="flex items-center gap-2 text-ink">
           <Brain className="h-4 w-4 text-emerald-600" />
           <span className="text-xs font-bold uppercase tracking-widest text-emerald-700">Practice Exercise Editor</span>
         </div>
@@ -160,7 +160,7 @@ export function PracticeExerciseBlockEditor({
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <Label className="text-sm font-bold text-slate-700">Step-by-Step Instructions</Label>
-          <Button variant="ghost" size="sm" onClick={addInstruction} className="text-[#fd5523] hover:text-[#fd5523] hover:bg-[#fff6ee]">
+          <Button variant="ghost" size="sm" onClick={addInstruction} className="text-brand-text hover:text-brand-text hover:bg-brand-soft">
             <Plus className="mr-1.5 h-3.5 w-3.5" />
             Add Step
           </Button>

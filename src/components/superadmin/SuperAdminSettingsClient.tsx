@@ -67,7 +67,7 @@ export function SuperAdminSettingsClient({
           <Button
             onClick={handleSave}
             disabled={isSaving}
-            className="bg-[#fd5523] hover:bg-[#ea4817] text-white text-xs font-bold"
+            className="bg-brand hover:bg-brand-hover text-white text-xs font-bold"
           >
             {isSaving ? "Saving..." : "Save Configuration"}
           </Button>

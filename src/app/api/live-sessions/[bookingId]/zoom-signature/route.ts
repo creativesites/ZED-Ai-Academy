@@ -52,7 +52,7 @@ export async function POST(
   }
 
   const user = await currentUser();
-  const displayName = user?.fullName || user?.username || "Zed AI Academy";
+  const displayName = user?.fullName || user?.username || "CS Learn";
   const email = user?.primaryEmailAddress?.emailAddress || "";
   
   // Instructors must join with role 1 (Host) to start the meeting

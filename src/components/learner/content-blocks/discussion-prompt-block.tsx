@@ -22,12 +22,12 @@ export function DiscussionPromptBlock({ content }: { content: Record<string, unk
           <p className="text-[10px] font-black uppercase tracking-[0.22em] text-sky-600">
             {mode === "individual" ? "Reflection" : "Discussion"}
           </p>
-          <h3 className="text-2xl font-bold tracking-tight text-[#062e39]">{title}</h3>
+          <h3 className="text-2xl font-bold tracking-tight text-ink">{title}</h3>
         </div>
       </div>
 
       <div className="rounded-2xl border border-sky-100 bg-sky-50/60 p-4">
-        <p className="text-base font-medium leading-relaxed text-[#062e39]">{prompt}</p>
+        <p className="text-base font-medium leading-relaxed text-ink">{prompt}</p>
       </div>
 
       {guidance.length > 0 && (

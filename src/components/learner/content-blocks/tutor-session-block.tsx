@@ -78,7 +78,7 @@ export function TutorSessionBlock({
             <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-cyan-700 sm:text-[11px]">
               {personaName ? `AI Teacher · ${personaName}` : "AI Teacher"}
             </p>
-            <h3 className="text-base font-bold leading-snug text-[#062e39] sm:text-xl">{title}</h3>
+            <h3 className="text-base font-bold leading-snug text-ink sm:text-xl">{title}</h3>
           </div>
         </div>
 
@@ -87,7 +87,7 @@ export function TutorSessionBlock({
             {TUTOR_STYLE_LABELS[block.style]}
           </span>
           {block.required && (
-            <span className="rounded-full bg-[#fff6ee] px-2.5 py-0.5 text-[11px] font-semibold text-[#fd5523] sm:text-xs">
+            <span className="rounded-full bg-brand-soft px-2.5 py-0.5 text-[11px] font-semibold text-brand-text sm:text-xs">
               Required
             </span>
           )}
@@ -115,7 +115,7 @@ export function TutorSessionBlock({
           {canStart ? (
             <Link
               href={practiceHref}
-              className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-[#fd5523] px-5 text-sm font-bold text-white shadow-sm transition hover:bg-[#ef4a16] sm:h-12 sm:rounded-2xl sm:px-6 sm:text-base"
+              className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-brand px-5 text-sm font-bold text-white shadow-sm transition hover:bg-brand-hover sm:h-12 sm:rounded-2xl sm:px-6 sm:text-base"
             >
               <Mic className="h-4 w-4 sm:h-5 sm:w-5" />
               {done ? "Practice again" : "Start AI Teacher"}
@@ -125,7 +125,7 @@ export function TutorSessionBlock({
             <button
               type="button"
               disabled
-              className="inline-flex h-11 cursor-not-allowed items-center justify-center gap-2 rounded-xl bg-[#fd5523]/50 px-5 text-sm font-bold text-white sm:h-12 sm:rounded-2xl sm:px-6 sm:text-base"
+              className="inline-flex h-11 cursor-not-allowed items-center justify-center gap-2 rounded-xl bg-brand/50 px-5 text-sm font-bold text-white sm:h-12 sm:rounded-2xl sm:px-6 sm:text-base"
             >
               <Mic className="h-4 w-4 sm:h-5 sm:w-5" />
               Start AI Teacher

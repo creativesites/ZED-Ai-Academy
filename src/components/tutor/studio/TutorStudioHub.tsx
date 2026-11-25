@@ -254,11 +254,11 @@ export function TutorStudioHub({
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-[#fff6ee] px-3 py-1 text-[10px] font-black uppercase tracking-widest text-[#fd5523]">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-soft px-3 py-1 text-[10px] font-black uppercase tracking-widest text-brand-text">
             <Sparkles className="h-3.5 w-3.5" />
             AI Teacher Studio
           </span>
-          <h1 className="mt-2 text-2xl font-black tracking-tight text-[#062e39] sm:text-3xl">
+          <h1 className="mt-2 text-2xl font-black tracking-tight text-ink sm:text-3xl">
             {companyName} — AI Teachers &amp; Flows
           </h1>
           <p className="mt-1 max-w-2xl text-sm text-slate-500">
@@ -270,9 +270,9 @@ export function TutorStudioHub({
           <Link
             href={`/academy/${companySlug}/practice`}
             target="_blank"
-            className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-xs font-bold text-[#062e39] shadow-sm hover:bg-slate-50"
+            className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-xs font-bold text-ink shadow-sm hover:bg-slate-50"
           >
-            <Mic className="h-3.5 w-3.5 text-[#fd5523]" />
+            <Mic className="h-3.5 w-3.5 text-brand-text" />
             Open Teacher&apos;s Room
             <ExternalLink className="h-3 w-3 opacity-50" />
           </Link>
@@ -281,33 +281,33 @@ export function TutorStudioHub({
 
       {/* Main Tabs */}
       <Tabs defaultValue="personas">
-        <TabsList className="mb-6 inline-flex h-auto w-full flex-wrap justify-start gap-1 rounded-2xl bg-[#062e39]/5 p-1">
+        <TabsList className="mb-6 inline-flex h-auto w-full flex-wrap justify-start gap-1 rounded-2xl bg-ink/5 p-1">
           <TabsTrigger
             value="personas"
-            className="h-10 rounded-xl px-4 text-xs font-bold data-[state=active]:bg-white data-[state=active]:text-[#062e39] data-[state=active]:shadow-sm"
+            className="h-10 rounded-xl px-4 text-xs font-bold data-[state=active]:bg-white data-[state=active]:text-ink data-[state=active]:shadow-sm"
           >
-            <Users className="mr-1.5 h-4 w-4 text-[#fd5523]" />
+            <Users className="mr-1.5 h-4 w-4 text-brand-text" />
             AI Teachers ({personas.length})
           </TabsTrigger>
           <TabsTrigger
             value="scenarios"
-            className="h-10 rounded-xl px-4 text-xs font-bold data-[state=active]:bg-white data-[state=active]:text-[#062e39] data-[state=active]:shadow-sm"
+            className="h-10 rounded-xl px-4 text-xs font-bold data-[state=active]:bg-white data-[state=active]:text-ink data-[state=active]:shadow-sm"
           >
-            <BookOpen className="mr-1.5 h-4 w-4 text-[#fd5523]" />
+            <BookOpen className="mr-1.5 h-4 w-4 text-brand-text" />
             Scenario Library ({scenarios.length})
           </TabsTrigger>
           <TabsTrigger
             value="insights"
-            className="h-10 rounded-xl px-4 text-xs font-bold data-[state=active]:bg-white data-[state=active]:text-[#062e39] data-[state=active]:shadow-sm"
+            className="h-10 rounded-xl px-4 text-xs font-bold data-[state=active]:bg-white data-[state=active]:text-ink data-[state=active]:shadow-sm"
           >
-            <BarChart3 className="mr-1.5 h-4 w-4 text-[#fd5523]" />
+            <BarChart3 className="mr-1.5 h-4 w-4 text-brand-text" />
             Insights &amp; Misconceptions
           </TabsTrigger>
           <TabsTrigger
             value="settings"
-            className="h-10 rounded-xl px-4 text-xs font-bold data-[state=active]:bg-white data-[state=active]:text-[#062e39] data-[state=active]:shadow-sm"
+            className="h-10 rounded-xl px-4 text-xs font-bold data-[state=active]:bg-white data-[state=active]:text-ink data-[state=active]:shadow-sm"
           >
-            <Settings className="mr-1.5 h-4 w-4 text-[#fd5523]" />
+            <Settings className="mr-1.5 h-4 w-4 text-brand-text" />
             Settings &amp; Review Queue ({sessions.length})
             {flaggedSessionsCount > 0 && (
               <span className="ml-1.5 rounded-full bg-red-100 px-1.5 py-0.5 text-[10px] font-black text-red-700">
@@ -330,7 +330,7 @@ export function TutorStudioHub({
         <TabsContent value="scenarios" className="mt-0 space-y-5">
           <div className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h2 className="text-base font-bold text-[#062e39]">AI Teacher Flows</h2>
+              <h2 className="text-base font-bold text-ink">AI Teacher Flows</h2>
               <p className="text-xs text-slate-500">
                 Published flows marked &quot;Teacher&apos;s Room&quot; appear for learners in your academy&apos;s Teacher&apos;s Room and can be added to any lesson.
               </p>
@@ -339,7 +339,7 @@ export function TutorStudioHub({
               type="button"
               size="sm"
               onClick={openNewScenario}
-              className="rounded-xl bg-[#fd5523] text-xs font-bold text-white hover:bg-[#ea4817]"
+              className="rounded-xl bg-brand text-xs font-bold text-white hover:bg-brand-hover"
             >
               <Plus className="mr-1.5 h-3.5 w-3.5" />
               New Scenario
@@ -348,15 +348,15 @@ export function TutorStudioHub({
 
           {scenarios.length === 0 ? (
             <div className="rounded-3xl border border-dashed border-slate-300 bg-white p-10 text-center">
-              <Sparkles className="mx-auto h-10 w-10 text-[#fd5523]" />
-              <h3 className="mt-3 text-base font-bold text-[#062e39]">No AI Teacher flows yet</h3>
+              <Sparkles className="mx-auto h-10 w-10 text-brand-text" />
+              <h3 className="mt-3 text-base font-bold text-ink">No AI Teacher flows yet</h3>
               <p className="mx-auto mt-1 max-w-md text-xs text-slate-500">
                 Create your first interactive role-play, guided lesson, or oral check with your animated AI teachers.
               </p>
               <Button
                 type="button"
                 onClick={openNewScenario}
-                className="mt-4 rounded-xl bg-[#fd5523] font-bold text-white hover:bg-[#ea4817]"
+                className="mt-4 rounded-xl bg-brand font-bold text-white hover:bg-brand-hover"
               >
                 <Plus className="mr-1.5 h-4 w-4" />
                 Create First Scenario
@@ -398,7 +398,7 @@ export function TutorStudioHub({
                           </span>
                         )}
                       </div>
-                      <h3 className="truncate text-sm font-bold text-[#062e39]">{s.title}</h3>
+                      <h3 className="truncate text-sm font-bold text-ink">{s.title}</h3>
                       <p className="line-clamp-2 text-xs text-slate-500">{s.goal}</p>
                       <p className="text-[11px] text-slate-400">
                         {s.persona ? `${s.persona.display_name || s.persona.name} · ` : ""}
@@ -442,9 +442,9 @@ export function TutorStudioHub({
                           variant="outline"
                           size="sm"
                           onClick={() => setAssignScenario(s)}
-                          className="h-8 rounded-lg px-2.5 text-xs font-bold text-[#062e39]"
+                          className="h-8 rounded-lg px-2.5 text-xs font-bold text-ink"
                         >
-                          <CalendarPlus className="mr-1 h-3 w-3 text-[#fd5523]" />
+                          <CalendarPlus className="mr-1 h-3 w-3 text-brand-text" />
                           Assign
                         </Button>
                       )}
@@ -460,9 +460,9 @@ export function TutorStudioHub({
                             }
                           }}
                           title="Copy shareable public mini-lesson link"
-                          className="h-8 rounded-lg px-2.5 text-xs font-bold text-[#062e39]"
+                          className="h-8 rounded-lg px-2.5 text-xs font-bold text-ink"
                         >
-                          <Share2 className="mr-1 h-3 w-3 text-[#fd5523]" />
+                          <Share2 className="mr-1 h-3 w-3 text-brand-text" />
                           Share
                         </Button>
                       )}
@@ -474,7 +474,7 @@ export function TutorStudioHub({
                         }
                         className="inline-flex h-8 items-center justify-center rounded-lg border border-input bg-background px-2.5 text-xs font-bold shadow-xs transition hover:bg-accent hover:text-accent-foreground"
                       >
-                        <Play className="mr-1 h-3 w-3 text-[#fd5523]" />
+                        <Play className="mr-1 h-3 w-3 text-brand-text" />
                         Test
                       </Link>
                       <Button
@@ -507,8 +507,8 @@ export function TutorStudioHub({
           {assignments.length > 0 && (
             <div className="space-y-3 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
               <div className="flex items-center justify-between">
-                <h3 className="flex items-center gap-2 text-sm font-black uppercase tracking-wider text-[#062e39]">
-                  <CalendarPlus className="h-4 w-4 text-[#fd5523]" />
+                <h3 className="flex items-center gap-2 text-sm font-black uppercase tracking-wider text-ink">
+                  <CalendarPlus className="h-4 w-4 text-brand-text" />
                   Active Speaking Assignments ({assignments.length})
                 </h3>
               </div>
@@ -519,7 +519,7 @@ export function TutorStudioHub({
                     className="flex items-center justify-between gap-3 rounded-2xl border border-slate-100 bg-slate-50/70 px-4 py-3"
                   >
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-bold text-[#062e39]">{a.scenario_title}</p>
+                      <p className="truncate text-sm font-bold text-ink">{a.scenario_title}</p>
                       <p className="text-xs text-slate-500">
                         {a.group_name ? `Cohort: ${a.group_name}` : "Whole academy"}
                         {a.due_at ? ` · Due ${new Date(a.due_at).toLocaleDateString()}` : ""}
@@ -553,7 +553,7 @@ export function TutorStudioHub({
           {/* Tutor Settings */}
           <div className="space-y-5 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
             <div>
-              <h2 className="text-base font-bold text-[#062e39]">Teacher&apos;s Room Settings</h2>
+              <h2 className="text-base font-bold text-ink">Teacher&apos;s Room Settings</h2>
               <p className="text-xs text-slate-500">
                 Control Teacher&apos;s Room availability, monthly free-practice quotas, and allowed interaction modes.
               </p>
@@ -566,10 +566,10 @@ export function TutorStudioHub({
                 onChange={(e) =>
                   setSettings((prev) => ({ ...prev, practice_room_enabled: e.target.checked }))
                 }
-                className="mt-0.5 h-4 w-4 accent-[#fd5523]"
+                className="mt-0.5 h-4 w-4 accent-brand"
               />
               <span>
-                <span className="block text-sm font-bold text-[#062e39]">Enable Teacher&apos;s Room</span>
+                <span className="block text-sm font-bold text-ink">Enable Teacher&apos;s Room</span>
                 <span className="block text-xs text-slate-500">
                   Allow enrolled academy learners to practise freely with published AI teachers at /academy/{companySlug}/practice.
                 </span>
@@ -609,7 +609,7 @@ export function TutorStudioHub({
                     default_persona_id: e.target.value || null,
                   }))
                 }
-                className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-[#062e39]"
+                className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-ink"
               >
                 <option value="">Platform default (Tinashe)</option>
                 {personas.map((p) => (
@@ -635,7 +635,7 @@ export function TutorStudioHub({
                       type="checkbox"
                       checked={settings.allowed_modes.includes(m)}
                       onChange={() => toggleMode(m)}
-                      className="accent-[#fd5523]"
+                      className="accent-brand"
                     />
                     <span className="capitalize">{m}</span>
                   </label>
@@ -647,7 +647,7 @@ export function TutorStudioHub({
               type="button"
               disabled={isBusy}
               onClick={handleSaveSettings}
-              className="rounded-xl bg-[#062e39] px-5 font-bold text-white hover:bg-[#0a4352]"
+              className="rounded-xl bg-ink px-5 font-bold text-white hover:bg-ink-hover"
             >
               {isBusy ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Save className="mr-1.5 h-4 w-4" />}
               Save Settings
@@ -661,8 +661,8 @@ export function TutorStudioHub({
               <div className="space-y-4 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h2 className="flex items-center gap-2 text-base font-bold text-[#062e39]">
-                      <BarChart3 className="h-4 w-4 text-[#fd5523]" />
+                    <h2 className="flex items-center gap-2 text-base font-bold text-ink">
+                      <BarChart3 className="h-4 w-4 text-brand-text" />
                       AI Usage &amp; Estimated Cost (Last {aiUsage.periodDays}d)
                     </h2>
                     <p className="text-xs text-slate-500">
@@ -670,7 +670,7 @@ export function TutorStudioHub({
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="text-2xl font-black text-[#062e39]">
+                    <p className="text-2xl font-black text-ink">
                       ${aiUsage.totalCostUsd.toFixed(2)}
                     </p>
                     <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
@@ -685,7 +685,7 @@ export function TutorStudioHub({
                         <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">
                           {row.kind.replace(/_/g, " ")}
                         </p>
-                        <p className="mt-0.5 text-sm font-black text-[#062e39]">
+                        <p className="mt-0.5 text-sm font-black text-ink">
                           ${row.costUsd.toFixed(3)}
                         </p>
                         <p className="text-[11px] text-slate-500">{row.events} calls</p>
@@ -700,7 +700,7 @@ export function TutorStudioHub({
             <div className="space-y-4 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                  <h2 className="text-base font-bold text-[#062e39]">
+                  <h2 className="text-base font-bold text-ink">
                     Teacher Review Queue &amp; Speaking Activity
                   </h2>
                   <p className="text-xs text-slate-500">
@@ -736,7 +736,7 @@ export function TutorStudioHub({
                     onClick={() => setSessionFilter(pill.id)}
                     className={`rounded-lg px-2.5 py-1 text-[11px] font-bold transition-colors ${
                       sessionFilter === pill.id
-                        ? "bg-[#062e39] text-white"
+                        ? "bg-ink text-white"
                         : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                     }`}
                   >
@@ -761,11 +761,11 @@ export function TutorStudioHub({
                         type="button"
                         key={sess.id}
                         onClick={() => setReviewingSessionId(sess.id)}
-                        className="flex w-full items-center justify-between gap-3 rounded-2xl border border-slate-100 bg-slate-50/70 p-3.5 text-left transition-colors hover:border-[#062e39]/30 hover:bg-white"
+                        className="flex w-full items-center justify-between gap-3 rounded-2xl border border-slate-100 bg-slate-50/70 p-3.5 text-left transition-colors hover:border-ink/30 hover:bg-white"
                       >
                         <div className="min-w-0">
                           <div className="flex items-center gap-2">
-                            <p className="truncate text-sm font-bold text-[#062e39]">{sess.learner_name}</p>
+                            <p className="truncate text-sm font-bold text-ink">{sess.learner_name}</p>
                             {sess.shared_with_teacher && (
                               <span title="Shared with teacher" className="inline-flex shrink-0">
                                 <Share2 className="h-3 w-3 text-indigo-500" />
@@ -843,8 +843,8 @@ export function TutorStudioHub({
       <Dialog open={Boolean(assignScenario)} onOpenChange={(o) => !o && setAssignScenario(null)}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 font-black text-[#062e39]">
-              <CalendarPlus className="h-5 w-5 text-[#fd5523]" />
+            <DialogTitle className="flex items-center gap-2 font-black text-ink">
+              <CalendarPlus className="h-5 w-5 text-brand-text" />
               Assign Speaking Scenario
             </DialogTitle>
             <DialogDescription>
@@ -854,7 +854,7 @@ export function TutorStudioHub({
           {assignScenario && (
             <div className="space-y-4 pt-2">
               <div className="rounded-xl bg-slate-50 p-3">
-                <p className="text-xs font-bold text-[#062e39]">{assignScenario.title}</p>
+                <p className="text-xs font-bold text-ink">{assignScenario.title}</p>
                 <p className="mt-0.5 text-[11px] text-slate-500">{assignScenario.goal}</p>
               </div>
 
@@ -891,7 +891,7 @@ export function TutorStudioHub({
                   type="button"
                   disabled={isBusy}
                   onClick={handleAssignSubmit}
-                  className="rounded-xl bg-[#fd5523] font-bold text-white hover:bg-[#ea4817]"
+                  className="rounded-xl bg-brand font-bold text-white hover:bg-brand-hover"
                 >
                   {isBusy && <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />}
                   Assign Scenario

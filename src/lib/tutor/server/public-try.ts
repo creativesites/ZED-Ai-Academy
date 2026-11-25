@@ -3,6 +3,7 @@ import { createServiceClient } from "@/lib/supabase/server";
 import type { DemoScenario, DemoScene } from "../demo-scenarios.ts";
 import type { SceneArtboard } from "../rive-driver.ts";
 import { personaLookFromVariant, sceneFromValue, type TutorPersonaLook } from "../tutor-session-block.ts";
+import { DEFAULT_PRIMARY_COLOR } from "@/lib/brand";
 
 export type PublicTryScenarioData = {
   scenario: DemoScenario;
@@ -146,7 +147,7 @@ export async function loadPublicTryScenario(scenarioId: string): Promise<PublicT
     level: row.level ?? "Interactive Mini-Lesson",
     maxMinutes: Math.min(5, Math.max(2, row.max_minutes ?? 4)),
     scene: normalizeDemoScene(actualScene),
-    thumb: { from: "#fff2e9", to: "#e9f8f2" },
+    thumb: { from: "#EEF4FF", to: "#E6F8FE" },
     persona: {
       id: persona?.id ?? "default",
       preset: "tendai",
@@ -178,10 +179,10 @@ export async function loadPublicTryScenario(scenarioId: string): Promise<PublicT
     look: persona ? personaLookFromVariant(persona.rive_variant) : undefined,
     academy: {
       id: company?.id ?? "platform",
-      name: company?.name ?? "Zed AI Academy",
+      name: company?.name ?? "CS Learn",
       slug: company?.slug ?? "",
       logoUrl: company?.logo_url ?? null,
-      primaryColor: company?.primary_color ?? "#fd5523",
+      primaryColor: company?.primary_color ?? DEFAULT_PRIMARY_COLOR,
     },
   };
 }

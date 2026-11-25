@@ -78,8 +78,8 @@ export function PlanEnrollModal({
         onClick={handleOpen}
         className={
           planName === "Pro"
-            ? "w-full rounded-full bg-white text-[#062e39] hover:bg-[#fff6ee] font-bold h-12 mt-4"
-            : "w-full rounded-full bg-[#062e39] text-white hover:bg-[#0a3d4b] font-bold h-12 mt-4"
+            ? "w-full rounded-full bg-white text-ink hover:bg-brand-soft font-bold h-12 mt-4"
+            : "w-full rounded-full bg-ink text-white hover:bg-[#0a3d4b] font-bold h-12 mt-4"
         }
       >
         {planName === "Free" ? "Get started free" : `Start ${planName} — ${priceLabel}`}
@@ -95,9 +95,9 @@ export function PlanEnrollModal({
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="bg-[#062e39] px-8 py-8 text-white relative">
+            <div className="bg-ink px-8 py-8 text-white relative">
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10 mb-4">
-                <Zap className="h-6 w-6 text-[#fd5523]" />
+                <Zap className="h-6 w-6 text-brand-text" />
               </div>
               <h3 className="text-2xl font-bold">Secure Checkout</h3>
               <p className="text-white/60 text-sm mt-1">Upgrade to {planName} Plan</p>
@@ -150,14 +150,14 @@ export function PlanEnrollModal({
                     </div>
                   </div>
 
-                  <div className="rounded-[2rem] bg-[#fff6ee] p-6 border border-[#fd5523]/10">
+                  <div className="rounded-[2rem] bg-brand-soft p-6 border border-brand/10">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-bold text-[#062e39] opacity-60">Selected Plan</span>
-                      <span className="text-sm font-bold text-[#fd5523] uppercase tracking-widest">{planName}</span>
+                      <span className="text-sm font-bold text-ink opacity-60">Selected Plan</span>
+                      <span className="text-sm font-bold text-brand-text uppercase tracking-widest">{planName}</span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-lg font-extrabold text-[#062e39]">Total Due</span>
-                      <span className="text-lg font-extrabold text-[#062e39]">{priceLabel}</span>
+                      <span className="text-lg font-extrabold text-ink">Total Due</span>
+                      <span className="text-lg font-extrabold text-ink">{priceLabel}</span>
                     </div>
                   </div>
 
@@ -179,7 +179,7 @@ export function PlanEnrollModal({
                   <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-[2rem] bg-green-50 mb-6">
                     <CheckCircle2 className="h-10 w-10 text-green-500" />
                   </div>
-                  <h3 className="text-2xl font-bold text-[#062e39] mb-2">Redirecting to WhatsApp</h3>
+                  <h3 className="text-2xl font-bold text-ink mb-2">Redirecting to WhatsApp</h3>
                   <p className="text-slate-500 leading-relaxed px-4">
                     If WhatsApp didn&apos;t open automatically, click the button below to send your confirmation message.
                   </p>

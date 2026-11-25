@@ -11,12 +11,12 @@ export function CaseStudyBlock({ content }: { content: Record<string, unknown> }
   
   return (
     <div className="rounded-[2.5rem] border-2 border-slate-100 bg-white overflow-hidden shadow-xl">
-      <div className="bg-[#062e39] px-8 py-6 text-white flex items-center gap-4">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 text-[#fd5523]">
+      <div className="bg-ink px-8 py-6 text-white flex items-center gap-4">
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 text-brand-text">
           <BookOpen className="h-5 w-5" />
         </div>
         <div>
-          <p className="text-[10px] font-black uppercase tracking-[0.25em] text-[#fd8d69]">Case Study</p>
+          <p className="text-[10px] font-black uppercase tracking-[0.25em] text-brand-electric">Case Study</p>
           <h3 className="text-xl font-bold tracking-tight">{title}</h3>
         </div>
       </div>

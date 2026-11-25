@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { createClient } from "@/lib/supabase/server";
 import { sendEnrollmentConfirmation } from "@/lib/email/emailjs";
+import { BRAND } from "@/lib/brand";
 
 /**
  * POST /api/hero-enroll
@@ -76,7 +77,7 @@ export async function POST(req: NextRequest) {
   // Send confirmation email (non-blocking)
   if (email) {
     const firstName = clerkUser?.firstName ?? "there";
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://academy.zedai.org";
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || BRAND.url;
     sendEnrollmentConfirmation({
       toEmail: email,
       toName: firstName,

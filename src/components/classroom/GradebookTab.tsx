@@ -172,10 +172,10 @@ export function GradebookTab({
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="text-lg sm:text-xl font-bold text-[#062e39] tracking-tight">
+              <h2 className="text-lg sm:text-xl font-bold text-ink tracking-tight">
                 Student Gradebook &amp; Analytics
               </h2>
-              <GraduationCap className="h-5 w-5 text-[#fd5523] shrink-0" />
+              <GraduationCap className="h-5 w-5 text-brand-text shrink-0" />
             </div>
             <p className="text-xs text-slate-500 mt-0.5">
               Inspect student lesson completion, quiz test scores, and certification records.
@@ -197,7 +197,7 @@ export function GradebookTab({
             <Button
               onClick={exportCSV}
               disabled={!data?.students.length}
-              className="flex-1 sm:flex-none bg-[#062e39] hover:bg-[#0a4555] text-white rounded-xl h-9 px-4 text-xs font-semibold flex items-center justify-center gap-1.5 transition-all shadow-xs"
+              className="flex-1 sm:flex-none bg-ink hover:bg-[#0a4555] text-white rounded-xl h-9 px-4 text-xs font-semibold flex items-center justify-center gap-1.5 transition-all shadow-xs"
             >
               <Download className="h-3.5 w-3.5" />
               Export CSV
@@ -209,14 +209,14 @@ export function GradebookTab({
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5 sm:gap-4">
           {/* Stat 1 */}
           <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-xs flex items-center gap-4">
-            <div className="h-11 w-11 rounded-xl bg-orange-50 text-[#fd5523] flex items-center justify-center shrink-0 border border-orange-100">
+            <div className="h-11 w-11 rounded-xl bg-orange-50 text-brand-text flex items-center justify-center shrink-0 border border-orange-100">
               <Users className="h-5 w-5" />
             </div>
             <div className="min-w-0">
               <p className="text-[11px] font-black uppercase tracking-wider text-slate-400">
                 Enrolled Students
               </p>
-              <p className="text-xl sm:text-2xl font-black text-[#062e39] tracking-tight">
+              <p className="text-xl sm:text-2xl font-black text-ink tracking-tight">
                 {data?.metrics.totalStudents ?? 0}
               </p>
             </div>
@@ -231,7 +231,7 @@ export function GradebookTab({
               <p className="text-[11px] font-black uppercase tracking-wider text-slate-400">
                 Avg. Completion
               </p>
-              <p className="text-xl sm:text-2xl font-black text-[#062e39] tracking-tight">
+              <p className="text-xl sm:text-2xl font-black text-ink tracking-tight">
                 {data?.metrics.avgCompletionRate ?? 0}%
               </p>
             </div>
@@ -246,7 +246,7 @@ export function GradebookTab({
               <p className="text-[11px] font-black uppercase tracking-wider text-slate-400">
                 Avg. Quiz Score
               </p>
-              <p className="text-xl sm:text-2xl font-black text-[#062e39] tracking-tight">
+              <p className="text-xl sm:text-2xl font-black text-ink tracking-tight">
                 {data?.metrics.avgQuizScore ?? 0}%
               </p>
             </div>
@@ -261,7 +261,7 @@ export function GradebookTab({
               <p className="text-[11px] font-black uppercase tracking-wider text-slate-400">
                 Speaking Practice
               </p>
-              <p className="text-xl sm:text-2xl font-black text-[#062e39] tracking-tight">
+              <p className="text-xl sm:text-2xl font-black text-ink tracking-tight">
                 {data?.metrics.totalSpeakingMinutes ?? 0}m
               </p>
               <p className="text-[10px] font-semibold text-slate-400 truncate">
@@ -282,7 +282,7 @@ export function GradebookTab({
               <p className="text-[11px] font-black uppercase tracking-wider text-slate-400">
                 Certificates Issued
               </p>
-              <p className="text-xl sm:text-2xl font-black text-[#062e39] tracking-tight">
+              <p className="text-xl sm:text-2xl font-black text-ink tracking-tight">
                 {data?.metrics.certificatesIssued ?? 0}
               </p>
             </div>
@@ -297,7 +297,7 @@ export function GradebookTab({
               placeholder="Search by student name or email..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 h-11 rounded-xl border-slate-200 bg-white font-medium text-xs focus:ring-[#fd5523]/20"
+              className="pl-10 h-11 rounded-xl border-slate-200 bg-white font-medium text-xs focus:ring-brand/20"
             />
           </div>
 
@@ -311,7 +311,7 @@ export function GradebookTab({
                 className={cn(
                   "min-h-[38px] px-3 py-1.5 rounded-lg text-xs font-bold capitalize transition-all shrink-0",
                   statusFilter === status
-                    ? "bg-[#fd5523] text-white shadow-2xs"
+                    ? "bg-brand text-white shadow-2xs"
                     : "text-slate-500 hover:text-slate-800"
                 )}
               >
@@ -325,7 +325,7 @@ export function GradebookTab({
             <select
               value={courseFilter}
               onChange={(e) => setCourseFilter(e.target.value)}
-              className="h-11 px-3 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#fd5523]/20"
+              className="h-11 px-3 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand/20"
             >
               <option value="all">All Courses</option>
               {data.courses.map((c) => (
@@ -342,7 +342,7 @@ export function GradebookTab({
       <div className="flex-1 overflow-y-auto px-3 sm:px-6 lg:px-8 pb-8">
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20 text-slate-400">
-            <Loader2 className="h-9 w-9 animate-spin mb-3 text-[#fd5523]" />
+            <Loader2 className="h-9 w-9 animate-spin mb-3 text-brand-text" />
             <p className="text-xs font-bold uppercase tracking-wider">Loading Gradebook Records...</p>
           </div>
         ) : filteredStudents.length === 0 ? (
@@ -392,7 +392,7 @@ export function GradebookTab({
                             )}
                           </div>
                           <div className="min-w-0">
-                            <p className="font-bold text-slate-900 group-hover:text-[#fd5523] transition-colors truncate">
+                            <p className="font-bold text-slate-900 group-hover:text-brand-text transition-colors truncate">
                               {student.full_name}
                             </p>
                             <p className="text-[11px] text-slate-400 truncate">{student.email}</p>
@@ -425,7 +425,7 @@ export function GradebookTab({
                             <div
                               className={cn(
                                 "h-full rounded-full transition-all duration-500",
-                                student.completionPercent >= 100 ? "bg-emerald-500" : "bg-[#fd5523]"
+                                student.completionPercent >= 100 ? "bg-emerald-500" : "bg-brand"
                               )}
                               style={{ width: `${student.completionPercent}%` }}
                             />
@@ -461,7 +461,7 @@ export function GradebookTab({
                           }
                           return (
                             <div className="inline-flex flex-col items-center gap-0.5">
-                              <span className="inline-flex items-center gap-1 rounded-lg bg-[#fff6ee] px-2 py-0.5 text-[11px] font-black text-[#fd5523]">
+                              <span className="inline-flex items-center gap-1 rounded-lg bg-brand-soft px-2 py-0.5 text-[11px] font-black text-brand-text">
                                 <Mic className="h-3 w-3" />
                                 {m.sessionsCompleted} · {m.speakingMinutes}m
                               </span>
@@ -533,7 +533,7 @@ export function GradebookTab({
                             e.stopPropagation();
                             setSelectedStudent(student);
                           }}
-                          className="h-8 px-2.5 text-xs font-bold text-slate-500 hover:text-[#fd5523] hover:bg-orange-50 rounded-lg"
+                          className="h-8 px-2.5 text-xs font-bold text-slate-500 hover:text-brand-text hover:bg-orange-50 rounded-lg"
                         >
                           <UserCheck className="h-3.5 w-3.5 mr-1" />
                           Inspect
@@ -555,7 +555,7 @@ export function GradebookTab({
             {/* Modal Header */}
             <div className="flex items-start justify-between gap-4 border-b border-slate-100 pb-4 sm:pb-5">
               <div className="flex items-center gap-3 sm:gap-3.5 min-w-0">
-                <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-xl sm:rounded-2xl bg-orange-50 text-[#fd5523] flex items-center justify-center font-bold text-sm sm:text-base overflow-hidden border border-orange-100 shrink-0">
+                <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-xl sm:rounded-2xl bg-orange-50 text-brand-text flex items-center justify-center font-bold text-sm sm:text-base overflow-hidden border border-orange-100 shrink-0">
                   {selectedStudent.avatar_url ? (
                     <img src={selectedStudent.avatar_url} alt="" className="h-full w-full object-cover" />
                   ) : (
@@ -646,7 +646,7 @@ export function GradebookTab({
             {/* Section 1: Quiz Submissions Breakdown */}
             <div className="space-y-3">
               <h4 className="text-xs font-black uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                <Award className="h-4 w-4 text-[#fd5523]" /> Quiz Submissions & Attempts
+                <Award className="h-4 w-4 text-brand-text" /> Quiz Submissions & Attempts
               </h4>
 
               {selectedStudent.quizAttempts.length === 0 ? (

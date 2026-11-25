@@ -21,7 +21,7 @@ export function normalizeHexColor(value: string | null | undefined): string | nu
  * Mixes two #RRGGBB colors cleanly (weight in [0, 1] toward `target`).
  */
 export function mixHex(baseHex: string, targetHex: string, weight: number): string {
-  const b = normalizeHexColor(baseHex) ?? "#062E39";
+  const b = normalizeHexColor(baseHex) ?? "#09152B";
   const t = normalizeHexColor(targetHex) ?? "#FFFFFF";
   const w = Math.max(0, Math.min(1, weight));
   const parse = (hex: string, start: number) => parseInt(hex.slice(start, start + 2), 16);

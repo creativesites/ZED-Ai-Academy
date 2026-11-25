@@ -116,13 +116,13 @@ export default async function PracticeSubmissionsPage() {
     <main className="container max-w-7xl mx-auto px-4 py-6 sm:py-10">
       <div className="mb-8 flex flex-col justify-between gap-4 md:flex-row md:items-end">
         <div>
-          <p className="text-xs font-black uppercase tracking-[0.2em] text-[#fd5523]">Creator Studio</p>
-          <h1 className="mt-2 text-2xl sm:text-4xl font-black tracking-tight text-[#062e39]">Practice Submissions</h1>
+          <p className="text-xs font-black uppercase tracking-[0.2em] text-brand-text">Creator Studio</p>
+          <h1 className="mt-2 text-2xl sm:text-4xl font-black tracking-tight text-ink">Practice Submissions</h1>
           <p className="mt-2 max-w-2xl text-sm sm:text-base text-slate-500">
             Review learner exercise submissions, AI scores, uploaded evidence, and items needing human feedback.
           </p>
         </div>
-        <Link href="/creator/live-sessions" className="text-xs sm:text-sm font-bold text-[#062e39] hover:text-[#fd5523]">
+        <Link href="/creator/live-sessions" className="text-xs sm:text-sm font-bold text-ink hover:text-brand-text">
           Live sessions →
         </Link>
       </div>
@@ -131,7 +131,7 @@ export default async function PracticeSubmissionsPage() {
         {submissions.length === 0 ? (
           <div className="rounded-[2rem] border border-dashed border-slate-200 bg-white p-10 text-center">
             <FileText className="mx-auto h-12 w-12 text-slate-300" />
-            <h2 className="mt-4 text-2xl font-bold text-[#062e39]">No submissions yet</h2>
+            <h2 className="mt-4 text-2xl font-bold text-ink">No submissions yet</h2>
             <p className="mt-2 text-sm text-slate-500">Learner submissions will appear here after practice exercises are added to lessons.</p>
           </div>
         ) : submissions.map((submission) => {
@@ -153,7 +153,7 @@ export default async function PracticeSubmissionsPage() {
                       </span>
                     )}
                   </div>
-                  <h2 className="text-xl font-bold text-[#062e39]">
+                  <h2 className="text-xl font-bold text-ink">
                     {submission.courses?.title ?? "Course"} · {submission.lessons?.title ?? "Lesson"}
                   </h2>
                   <p className="mt-1 text-sm text-slate-500">
@@ -192,14 +192,14 @@ export default async function PracticeSubmissionsPage() {
                   )}
                 </div>
 
-                <aside className="w-full shrink-0 rounded-2xl bg-[#fff6ee] p-5 lg:w-80">
-                  <div className="mb-3 flex items-center gap-2 text-xs font-black uppercase tracking-widest text-[#fd5523]">
+                <aside className="w-full shrink-0 rounded-2xl bg-brand-soft p-5 lg:w-80">
+                  <div className="mb-3 flex items-center gap-2 text-xs font-black uppercase tracking-widest text-brand-text">
                     <Sparkles className="h-4 w-4" />
                     AI Feedback
                   </div>
                   {score ? (
                     <>
-                      <p className="text-4xl font-bold text-[#062e39]">{Math.round(score.score)}<span className="text-lg text-slate-400">/{Math.round(score.max_score)}</span></p>
+                      <p className="text-4xl font-bold text-ink">{Math.round(score.score)}<span className="text-lg text-slate-400">/{Math.round(score.max_score)}</span></p>
                       {score.feedback_summary && <p className="mt-3 text-sm leading-relaxed text-slate-700">{score.feedback_summary}</p>}
                     </>
                   ) : (
@@ -212,7 +212,7 @@ export default async function PracticeSubmissionsPage() {
                         Latest review · {latestReview.status.replace(/_/g, " ")}
                       </p>
                       {latestReview.score_override !== null && (
-                        <p className="mt-2 text-sm font-bold text-[#062e39]">Override: {Math.round(latestReview.score_override)}/100</p>
+                        <p className="mt-2 text-sm font-bold text-ink">Override: {Math.round(latestReview.score_override)}/100</p>
                       )}
                       {latestReview.feedback && <p className="mt-2 text-sm leading-relaxed text-slate-700">{latestReview.feedback}</p>}
                     </div>
@@ -229,7 +229,7 @@ export default async function PracticeSubmissionsPage() {
                         max={100}
                         step="0.1"
                         placeholder="Optional"
-                        className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:border-[#fd5523]"
+                        className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:border-brand"
                       />
                     </label>
                     <label className="block">
@@ -238,14 +238,14 @@ export default async function PracticeSubmissionsPage() {
                         name="feedback"
                         rows={4}
                         placeholder="Add feedback for the learner"
-                        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-[#fd5523]"
+                        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-brand"
                       />
                     </label>
                     <div className="grid gap-2 sm:grid-cols-2">
                       <button
                         name="status"
                         value="reviewed"
-                        className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-[#062e39] px-4 text-sm font-bold text-white"
+                        className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-ink px-4 text-sm font-bold text-white"
                       >
                         <Send className="h-4 w-4" />
                         Mark reviewed

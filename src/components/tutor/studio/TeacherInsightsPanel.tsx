@@ -93,7 +93,7 @@ export function TeacherInsightsPanel({
   if (loading && !summary) {
     return (
       <div className="flex items-center justify-center rounded-3xl border border-slate-200 bg-white p-12 text-xs text-slate-500">
-        <Loader2 className="mr-2 h-4 w-4 animate-spin text-[#fd5523]" />
+        <Loader2 className="mr-2 h-4 w-4 animate-spin text-brand-text" />
         Loading learner mastery &amp; misconceptions...
       </div>
     );
@@ -113,7 +113,7 @@ export function TeacherInsightsPanel({
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
         <div>
-          <h2 className="text-base font-bold text-[#062e39]">
+          <h2 className="text-base font-bold text-ink">
             Insights &amp; Misconceptions
           </h2>
           <p className="text-xs text-slate-500">
@@ -143,10 +143,10 @@ export function TeacherInsightsPanel({
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
           <div className="flex items-center gap-2 text-xs font-semibold text-slate-500">
-            <BarChart3 className="h-4 w-4 text-[#fd5523]" />
+            <BarChart3 className="h-4 w-4 text-brand-text" />
             Sessions run
           </div>
-          <p className="mt-2 text-2xl font-black text-[#062e39]">{summary.totalSessions}</p>
+          <p className="mt-2 text-2xl font-black text-ink">{summary.totalSessions}</p>
           <p className="mt-0.5 text-[11px] text-slate-400">
             {summary.completedSessions} completed ({summary.completionRatePct}%)
           </p>
@@ -157,7 +157,7 @@ export function TeacherInsightsPanel({
             <Users className="h-4 w-4 text-emerald-600" />
             Active learners
           </div>
-          <p className="mt-2 text-2xl font-black text-[#062e39]">{summary.uniqueLearners}</p>
+          <p className="mt-2 text-2xl font-black text-ink">{summary.uniqueLearners}</p>
           <p className="mt-0.5 text-[11px] text-slate-400">
             Across {summary.trackedObjectives} tracked objectives
           </p>
@@ -168,7 +168,7 @@ export function TeacherInsightsPanel({
             <Clock className="h-4 w-4 text-sky-600" />
             Speaking time
           </div>
-          <p className="mt-2 text-2xl font-black text-[#062e39]">{summary.totalSpeakingMinutes} min</p>
+          <p className="mt-2 text-2xl font-black text-ink">{summary.totalSpeakingMinutes} min</p>
           <p className="mt-0.5 text-[11px] text-slate-400">Combined teacher &amp; learner turns</p>
         </div>
 
@@ -177,7 +177,7 @@ export function TeacherInsightsPanel({
             <AlertTriangle className="h-4 w-4 text-amber-600" />
             Misconception clusters
           </div>
-          <p className="mt-2 text-2xl font-black text-[#062e39]">{summary.topMisconceptions.length}</p>
+          <p className="mt-2 text-2xl font-black text-ink">{summary.topMisconceptions.length}</p>
           <p className="mt-0.5 text-[11px] text-slate-400">Objectives needing clarification</p>
         </div>
       </div>
@@ -186,7 +186,7 @@ export function TeacherInsightsPanel({
       <div className="grid gap-6 lg:grid-cols-2">
         <div className="space-y-3 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-bold text-[#062e39]">
+            <h3 className="text-sm font-bold text-ink">
               Top Recurring Misconceptions
             </h3>
             <span className="text-[11px] font-semibold text-slate-400">
@@ -206,7 +206,7 @@ export function TeacherInsightsPanel({
                   className="rounded-2xl border border-slate-200/80 bg-slate-50/70 p-4"
                 >
                   <div className="flex flex-wrap items-start justify-between gap-2">
-                    <p className="text-sm font-bold text-[#062e39]">{item.objectiveText}</p>
+                    <p className="text-sm font-bold text-ink">{item.objectiveText}</p>
                     <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase">
                       {item.misconceptionCount > 0 && (
                         <span className="rounded-full bg-rose-50 px-2 py-0.5 text-rose-700">
@@ -227,7 +227,7 @@ export function TeacherInsightsPanel({
                     <ul className="mt-2.5 space-y-1 border-t border-slate-200/70 pt-2 text-xs text-slate-600">
                       {item.sampleDetails.map((detail, i) => (
                         <li key={i} className="flex items-start gap-1.5">
-                          <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[#fd5523]" />
+                          <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-brand" />
                           <span>{detail}</span>
                         </li>
                       ))}
@@ -249,7 +249,7 @@ export function TeacherInsightsPanel({
                         type="button"
                         disabled={creatingKey !== null}
                         onClick={() => void handleCreateFixIt(item)}
-                        className="inline-flex items-center gap-1.5 rounded-full border border-[#fd5523]/30 bg-[#fff2e9] px-3 py-1 text-[11px] font-bold text-[#c83a10] transition hover:bg-[#ffe5d4] disabled:opacity-50"
+                        className="inline-flex items-center gap-1.5 rounded-full border border-brand/30 bg-brand-tint px-3 py-1 text-[11px] font-bold text-brand-hover transition hover:bg-[#ffe5d4] disabled:opacity-50"
                       >
                         {creatingKey === item.objectiveKey ? (
                           <Loader2 className="h-3 w-3 animate-spin" />
@@ -269,7 +269,7 @@ export function TeacherInsightsPanel({
         {/* Objective Mastery Breakdown */}
         <div className="space-y-3 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-bold text-[#062e39]">
+            <h3 className="text-sm font-bold text-ink">
               Objective Mastery Breakdown
             </h3>
             <span className="text-[11px] font-semibold text-slate-400">
@@ -291,14 +291,14 @@ export function TeacherInsightsPanel({
                     className="rounded-2xl border border-slate-100 bg-slate-50/70 p-3.5"
                   >
                     <div className="flex items-start justify-between gap-2">
-                      <p className="text-xs font-bold text-[#062e39]">{obj.objectiveText}</p>
+                      <p className="text-xs font-bold text-ink">{obj.objectiveText}</p>
                       <span className="shrink-0 text-[11px] font-bold text-slate-600 tabular-nums">
                         {obj.avgLevel}/3
                       </span>
                     </div>
                     <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-200">
                       <div
-                        className="h-full rounded-full bg-gradient-to-r from-[#fd5523] to-emerald-600"
+                        className="h-full rounded-full bg-gradient-to-r from-brand to-emerald-600"
                         style={{ width: `${pct}%` }}
                       />
                     </div>

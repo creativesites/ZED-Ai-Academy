@@ -51,8 +51,8 @@ export function StepsBlockEditor({
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2 text-[#062e39] mb-2">
-        <ListOrdered className="h-4 w-4 text-[#fd5523]" />
+      <div className="flex items-center gap-2 text-ink mb-2">
+        <ListOrdered className="h-4 w-4 text-brand-text" />
         <span className="text-xs font-bold uppercase tracking-widest">Step-by-Step Block</span>
       </div>
 
@@ -69,7 +69,7 @@ export function StepsBlockEditor({
       <div className="space-y-3">
         {steps.map((step, i) => (
           <div key={i} className="flex gap-3 rounded-2xl border border-slate-100 bg-slate-50 p-4">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-[#062e39] text-sm font-black text-white">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-ink text-sm font-black text-white">
               {i + 1}
             </div>
             <div className="flex-1 space-y-2">
@@ -100,7 +100,7 @@ export function StepsBlockEditor({
       <Button
         onClick={addStep}
         variant="outline"
-        className="w-full border-dashed border-slate-300 text-slate-500 hover:border-[#fd5523] hover:text-[#fd5523]"
+        className="w-full border-dashed border-slate-300 text-slate-500 hover:border-brand hover:text-brand-text"
       >
         <Plus className="mr-2 h-4 w-4" />
         Add Step

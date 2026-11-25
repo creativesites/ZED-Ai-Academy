@@ -24,13 +24,13 @@ export function CheckoutPanel({
             <span style={{ fontSize: "14px", color: "rgba(255,255,255,0.45)", textDecoration: "line-through" }}>
               ZMW {originalPrice.toLocaleString()}
             </span>
-            <span style={{ fontSize: "11px", background: "#fd5523", color: "#fff", padding: "2px 8px", borderRadius: "10px", fontWeight: 700 }}>
+            <span style={{ fontSize: "11px", background: "var(--color-brand)", color: "#fff", padding: "2px 8px", borderRadius: "10px", fontWeight: 700 }}>
               COUPON
             </span>
           </div>
         )}
         <div style={{ display: "flex", alignItems: "baseline", gap: "4px" }}>
-          <span style={{ fontSize: "40px", fontWeight: 800, color: "#fd8d69", lineHeight: 1 }}>
+          <span style={{ fontSize: "40px", fontWeight: 800, color: "var(--color-brand-electric)", lineHeight: 1 }}>
             {finalPrice.toLocaleString()}
           </span>
           <span style={{ fontSize: "12px", fontWeight: 700, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.08em" }}>ZMW</span>

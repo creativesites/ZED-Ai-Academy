@@ -1,6 +1,7 @@
 import presets from "../../../../design/rive/presets.json";
 import { FACE_STYLES, HAIR_STYLES, OUTFIT_STYLES, PROPS } from "@/lib/tutor/contract.generated";
 import type { PersonaLook } from "./types";
+import { BRAND_COLORS } from "@/lib/brand";
 
 // The five characters for the Avatar Lab and tests. The values come from design/rive/presets.json, the
 // Rive agent's file, which is imported directly so there is one copy. Each value is checked against the
@@ -70,7 +71,7 @@ export const SCALE_PERSONA_PRESETS: ReadonlyArray<{
       hairColor: "#111111",
       outfitPrimary: "#1E3A5F",
       outfitSecondary: "#F8FAFC",
-      accentColor: "#FD5523",
+      accentColor: BRAND_COLORS.royalBlue,
       hairStyle: "short",
       outfitStyle: "blazer",
       prop: "book",
@@ -102,7 +103,7 @@ export const SCALE_PERSONA_PRESETS: ReadonlyArray<{
       hairColor: "#14100E",
       outfitPrimary: "#B45309",
       outfitSecondary: "#FFFBEB",
-      accentColor: "#062E39",
+      accentColor: BRAND_COLORS.navy,
       hairStyle: "curly",
       outfitStyle: "cardigan",
       prop: "book",

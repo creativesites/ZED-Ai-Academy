@@ -94,12 +94,12 @@ export function SpeakingHistoryView({
           <div>
             <Link
               href={backHref}
-              className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-[#fd5523]"
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-brand-text"
             >
               <ArrowLeft className="h-3.5 w-3.5" />
               {backLabel}
             </Link>
-            <h1 className="mt-1.5 font-heading text-2xl font-black tracking-tight text-[#062e39] sm:text-3xl">
+            <h1 className="mt-1.5 font-heading text-2xl font-black tracking-tight text-ink sm:text-3xl">
               Speaking History &amp; Feedback Reports
             </h1>
             <p className="mt-1 text-sm text-slate-500">
@@ -111,13 +111,13 @@ export function SpeakingHistoryView({
         {/* Summary Strip */}
         <div className="grid grid-cols-3 gap-3">
           <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-            <div className="flex items-center gap-1.5 text-[#fd5523]">
+            <div className="flex items-center gap-1.5 text-brand-text">
               <History className="h-4 w-4" />
               <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
                 Sessions
               </span>
             </div>
-            <p className="mt-1 text-2xl font-black text-[#062e39]">{sessions.length}</p>
+            <p className="mt-1 text-2xl font-black text-ink">{sessions.length}</p>
           </div>
           <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
             <div className="flex items-center gap-1.5 text-blue-600">
@@ -126,7 +126,7 @@ export function SpeakingHistoryView({
                 Spoken Time
               </span>
             </div>
-            <p className="mt-1 text-2xl font-black text-[#062e39]">{totalMinutes} min</p>
+            <p className="mt-1 text-2xl font-black text-ink">{totalMinutes} min</p>
           </div>
           <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
             <div className="flex items-center gap-1.5 text-emerald-600">
@@ -135,7 +135,7 @@ export function SpeakingHistoryView({
                 Avg Guidance
               </span>
             </div>
-            <p className="mt-1 text-2xl font-black text-[#062e39]">
+            <p className="mt-1 text-2xl font-black text-ink">
               {overallAvg !== null ? `${overallAvg}%` : "—"}
             </p>
           </div>
@@ -144,17 +144,17 @@ export function SpeakingHistoryView({
         {/* Session List */}
         {sessions.length === 0 ? (
           <div className="rounded-3xl border border-dashed border-slate-300 bg-white p-12 text-center space-y-3">
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[#fff6ee] text-[#fd5523]">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-soft text-brand-text">
               <Mic className="h-7 w-7" />
             </div>
-            <h2 className="text-lg font-black text-[#062e39]">No speaking sessions yet</h2>
+            <h2 className="text-lg font-black text-ink">No speaking sessions yet</h2>
             <p className="mx-auto max-w-md text-sm text-slate-500">
               Once you finish a conversation with your AI Language Teacher, your full report card, strengths, and corrections will appear here.
             </p>
             <div className="pt-2">
               <Link
                 href={backHref}
-                className="inline-flex h-11 items-center gap-2 rounded-xl bg-[#fd5523] px-6 text-xs font-black uppercase tracking-wider text-white shadow-md hover:bg-[#ea4817]"
+                className="inline-flex h-11 items-center gap-2 rounded-xl bg-brand px-6 text-xs font-black uppercase tracking-wider text-white shadow-md hover:bg-brand-hover"
               >
                 <Sparkles className="h-4 w-4" />
                 Start Your First Scene
@@ -203,7 +203,7 @@ export function SpeakingHistoryView({
                             {new Date(item.startedAt).toLocaleDateString()} · ~{mins} min
                           </span>
                         </div>
-                        <h2 className="mt-0.5 truncate text-base font-bold text-[#062e39]">
+                        <h2 className="mt-0.5 truncate text-base font-bold text-ink">
                           {item.scenarioTitle}
                         </h2>
                         {item.personaName && (
@@ -238,11 +238,11 @@ export function SpeakingHistoryView({
                                 <div key={key} className="rounded-xl border border-slate-200 bg-white p-3">
                                   <div className="flex items-center justify-between text-xs font-bold text-slate-700">
                                     <span>{SCORE_LABELS[key] ?? key}</span>
-                                    <span className="text-[#062e39]">{val}%</span>
+                                    <span className="text-ink">{val}%</span>
                                   </div>
                                   <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-100">
                                     <div
-                                      className="h-full rounded-full bg-[#fd5523]"
+                                      className="h-full rounded-full bg-brand"
                                       style={{ width: `${Math.min(100, Math.max(0, val))}%` }}
                                     />
                                   </div>
@@ -286,7 +286,7 @@ export function SpeakingHistoryView({
                                     <div className="flex flex-wrap items-baseline gap-2">
                                       <span className="text-slate-400 line-through">{m.said}</span>
                                       <span className="text-slate-400">→</span>
-                                      <span className="font-bold text-[#062e39]">{m.correct}</span>
+                                      <span className="font-bold text-ink">{m.correct}</span>
                                       <span className="ml-auto rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold uppercase text-slate-500">
                                         {m.category}
                                       </span>
@@ -338,7 +338,7 @@ export function SpeakingHistoryView({
                             <Button
                               type="button"
                               size="sm"
-                              className="rounded-xl bg-[#fd5523] text-xs font-bold text-white hover:bg-[#ea4817]"
+                              className="rounded-xl bg-brand text-xs font-bold text-white hover:bg-brand-hover"
                             >
                               <Play className="mr-1.5 h-3.5 w-3.5" />
                               Practise Again

@@ -115,7 +115,7 @@ export interface BulkInviteResult {
  * Registers or invites one or many students into the academy, optionally
  * assigning them to a specific Course and Class/Subject cohort.
  *
- * - Existing Zed AI Academy users are enrolled immediately into the academy, course & class.
+ * - Existing CS Learn users are enrolled immediately into the academy, course & class.
  * - New users receive a Clerk invitation with a tenant-aware redirect URL so joining
  *   automatically completes their academy, course, and cohort placement.
  */

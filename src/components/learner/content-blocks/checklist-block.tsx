@@ -100,7 +100,7 @@ export function ChecklistBlock({ content }: { content: Record<string, unknown> }
                   </span>
                 </div>
                 <div>
-                  <h3 className="text-lg sm:text-xl md:text-2xl font-bold tracking-tight text-[#062e39]">
+                  <h3 className="text-lg sm:text-xl md:text-2xl font-bold tracking-tight text-ink">
                     {title}
                   </h3>
                   {isComplete && (
@@ -207,7 +207,7 @@ export function ChecklistBlock({ content }: { content: Record<string, unknown> }
                       text-sm sm:text-base leading-relaxed transition-all duration-300
                       ${isChecked 
                         ? 'line-through text-slate-400' 
-                        : 'text-[#062e39] font-medium'
+                        : 'text-ink font-medium'
                       }
                     `}
                   >

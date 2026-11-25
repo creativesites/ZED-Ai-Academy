@@ -37,7 +37,7 @@ function DeployStudioButton() {
     <Button
       type="submit"
       disabled={pending}
-      className="h-12 w-full sm:w-auto rounded-xl bg-[#fd5523] px-7 text-sm font-bold text-white transition-all hover:bg-[#ef4a16] active:scale-[0.99] shadow-md disabled:opacity-70"
+      className="h-12 w-full sm:w-auto rounded-xl bg-brand px-7 text-sm font-bold text-white transition-all hover:bg-brand-hover active:scale-[0.99] shadow-md disabled:opacity-70"
     >
       {pending ? (
         <>
@@ -100,13 +100,13 @@ export function NewCourseForm({
             aria-label="Back to courses"
             className={cn(
               buttonVariants({ variant: "ghost" }),
-              "h-10 w-10 shrink-0 rounded-xl border border-slate-200 bg-white p-0 text-slate-500 hover:bg-slate-100 hover:text-[#062e39]"
+              "h-10 w-10 shrink-0 rounded-xl border border-slate-200 bg-white p-0 text-slate-500 hover:bg-slate-100 hover:text-ink"
             )}
           >
             <ArrowLeft className="h-4 w-4" />
           </Link>
           <div>
-            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-[#062e39]">
+            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-ink">
               Create New Course
             </h1>
             <p className="text-sm text-slate-500 mt-0.5">
@@ -125,11 +125,11 @@ export function NewCourseForm({
             className={cn(
               "h-10 flex-1 sm:flex-none rounded-xl px-4 text-xs font-bold uppercase tracking-wider transition-all",
               assistantMode === "materials"
-                ? "bg-[#062e39] text-white hover:bg-[#0a4055]"
-                : "border-slate-200 bg-white text-[#062e39] hover:bg-slate-50"
+                ? "bg-ink text-white hover:bg-ink-hover"
+                : "border-slate-200 bg-white text-ink hover:bg-slate-50"
             )}
           >
-            <BookOpen className="mr-2 h-4 w-4 text-[#fd5523]" />
+            <BookOpen className="mr-2 h-4 w-4 text-brand-text" />
             From Materials
           </Button>
           <Button
@@ -139,8 +139,8 @@ export function NewCourseForm({
             className={cn(
               "h-10 flex-1 sm:flex-none rounded-xl px-4 text-xs font-bold uppercase tracking-wider transition-all",
               assistantMode === "idea"
-                ? "bg-[#062e39] text-white hover:bg-[#0a4055]"
-                : "border-[#fd5523]/30 bg-[#fff6ee] text-[#fd5523] hover:bg-[#fd5523] hover:text-white"
+                ? "bg-ink text-white hover:bg-ink-hover"
+                : "border-brand/30 bg-brand-soft text-brand-text hover:bg-brand hover:text-white"
             )}
           >
             <Sparkles className="mr-2 h-4 w-4" />
@@ -165,8 +165,8 @@ export function NewCourseForm({
       {referenceMaterial && !assistantMode && (
         <div className="rounded-2xl border border-slate-200 bg-white p-4 space-y-2 shadow-xs">
           <div className="flex items-center justify-between gap-2">
-            <span className="text-xs font-bold uppercase tracking-wider text-[#062e39] flex items-center gap-2">
-              <BookOpen className="h-4 w-4 text-[#fd5523]" />
+            <span className="text-xs font-bold uppercase tracking-wider text-ink flex items-center gap-2">
+              <BookOpen className="h-4 w-4 text-brand-text" />
               Reference Material: {referenceMaterial.fileName}
             </span>
             <button
@@ -215,17 +215,17 @@ export function NewCourseForm({
               {/* Section 1: Course Basics */}
               <section className="space-y-5 border-b border-slate-100 pb-7">
                 <div className="flex items-center gap-2.5">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#fff6ee] text-[#fd5523]">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-soft text-brand-text">
                     <Briefcase className="h-4 w-4" />
                   </div>
-                  <h2 className="text-sm font-black uppercase tracking-wider text-[#062e39]">
+                  <h2 className="text-sm font-black uppercase tracking-wider text-ink">
                     Course Basics
                   </h2>
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="title" className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                    Course Title <span className="text-[#fd5523]">*</span>
+                    Course Title <span className="text-brand-text">*</span>
                   </Label>
                   <Input
                     id="title"
@@ -234,7 +234,7 @@ export function NewCourseForm({
                     onChange={(event) => setTitle(event.target.value)}
                     placeholder="e.g. AI Workflows for Client-Facing Teams"
                     required
-                    className="h-12 rounded-xl border-slate-200 bg-white text-base font-semibold text-[#062e39] focus:border-[#fd5523] focus:ring-[#fd5523]/10"
+                    className="h-12 rounded-xl border-slate-200 bg-white text-base font-semibold text-ink focus:border-brand focus:ring-brand/10"
                   />
                 </div>
 
@@ -249,7 +249,7 @@ export function NewCourseForm({
                     onChange={(event) => setDescription(event.target.value)}
                     placeholder="Describe the practical outcome, who this is for, and what learners will build or apply."
                     rows={4}
-                    className="resize-none rounded-xl border-slate-200 bg-white p-3.5 text-sm leading-relaxed text-[#062e39] focus:border-[#fd5523] focus:ring-[#fd5523]/10"
+                    className="resize-none rounded-xl border-slate-200 bg-white p-3.5 text-sm leading-relaxed text-ink focus:border-brand focus:ring-brand/10"
                   />
                 </div>
 
@@ -264,7 +264,7 @@ export function NewCourseForm({
                     value={thumbnailUrl}
                     onChange={(event) => setThumbnailUrl(event.target.value)}
                     placeholder="https://..."
-                    className="h-11 rounded-xl border-slate-200 bg-white text-sm text-[#062e39]"
+                    className="h-11 rounded-xl border-slate-200 bg-white text-sm text-ink"
                   />
                 </div>
               </section>
@@ -272,10 +272,10 @@ export function NewCourseForm({
               {/* Section 2: Track & Audience */}
               <section className="space-y-5 border-b border-slate-100 pb-7">
                 <div className="flex items-center gap-2.5">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#fff6ee] text-[#fd5523]">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-soft text-brand-text">
                     <Layers className="h-4 w-4" />
                   </div>
-                  <h2 className="text-sm font-black uppercase tracking-wider text-[#062e39]">
+                  <h2 className="text-sm font-black uppercase tracking-wider text-ink">
                     Track & Audience
                   </h2>
                 </div>
@@ -297,11 +297,11 @@ export function NewCourseForm({
                         className={cn(
                           "rounded-xl border p-3.5 text-left transition-all",
                           domainPreset === preset.id
-                            ? "border-[#fd5523] bg-[#fff6ee]/70 shadow-sm"
+                            ? "border-brand bg-brand-soft/70 shadow-sm"
                             : "border-slate-200 bg-white hover:border-slate-300"
                         )}
                       >
-                        <p className="text-sm font-bold text-[#062e39]">{preset.label}</p>
+                        <p className="text-sm font-bold text-ink">{preset.label}</p>
                         <p className="mt-1 text-xs leading-relaxed text-slate-500">{preset.description}</p>
                       </button>
                     ))}
@@ -317,7 +317,7 @@ export function NewCourseForm({
                       name="category"
                       value={category}
                       onChange={(event) => setCategory(event.target.value)}
-                      className="flex h-11 w-full rounded-xl border border-slate-200 bg-white px-3.5 text-sm font-semibold text-[#062e39] outline-none transition-all focus:border-[#fd5523] focus:ring-2 focus:ring-[#fd5523]/10"
+                      className="flex h-11 w-full rounded-xl border border-slate-200 bg-white px-3.5 text-sm font-semibold text-ink outline-none transition-all focus:border-brand focus:ring-2 focus:ring-brand/10"
                     >
                       <option value="">Select category</option>
                       {COURSE_CATEGORIES.map((item) => (
@@ -336,7 +336,7 @@ export function NewCourseForm({
                       name="level"
                       value={level}
                       onChange={(event) => setLevel(event.target.value)}
-                      className="flex h-11 w-full rounded-xl border border-slate-200 bg-white px-3.5 text-sm font-semibold text-[#062e39] outline-none transition-all focus:border-[#fd5523] focus:ring-2 focus:ring-[#fd5523]/10"
+                      className="flex h-11 w-full rounded-xl border border-slate-200 bg-white px-3.5 text-sm font-semibold text-ink outline-none transition-all focus:border-brand focus:ring-2 focus:ring-brand/10"
                     >
                       <option value="">Select level</option>
                       <option value="beginner">Beginner</option>
@@ -350,10 +350,10 @@ export function NewCourseForm({
               {/* Section 3: Pricing */}
               <section className="space-y-5">
                 <div className="flex items-center gap-2.5">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#fff6ee] text-[#fd5523]">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-soft text-brand-text">
                     <CircleDollarSign className="h-4 w-4" />
                   </div>
-                  <h2 className="text-sm font-black uppercase tracking-wider text-[#062e39]">
+                  <h2 className="text-sm font-black uppercase tracking-wider text-ink">
                     Pricing
                   </h2>
                 </div>
@@ -369,7 +369,7 @@ export function NewCourseForm({
                       onChange={(event) =>
                         setPriceType(event.target.value as CourseBlueprintResponse["price_type"])
                       }
-                      className="flex h-11 w-full rounded-xl border border-slate-200 bg-white px-3.5 text-sm font-semibold text-[#062e39] outline-none transition-all focus:border-[#fd5523] focus:ring-2 focus:ring-[#fd5523]/10"
+                      className="flex h-11 w-full rounded-xl border border-slate-200 bg-white px-3.5 text-sm font-semibold text-ink outline-none transition-all focus:border-brand focus:ring-2 focus:ring-brand/10"
                     >
                       <option value="free">Free</option>
                       <option value="one_time">One-time purchase</option>
@@ -396,7 +396,7 @@ export function NewCourseForm({
                           value={priceAmount}
                           onChange={(event) => setPriceAmount(event.target.value)}
                           placeholder="e.g. 250"
-                          className="h-11 rounded-xl border-slate-200 bg-white pl-10 text-sm font-bold text-[#062e39]"
+                          className="h-11 rounded-xl border-slate-200 bg-white pl-10 text-sm font-bold text-ink"
                         />
                       </div>
                     </div>
@@ -450,16 +450,16 @@ export function NewCourseForm({
             </div>
             <CardContent className="p-4 space-y-2.5">
               <div className="flex items-center justify-between gap-2 text-[11px] font-bold uppercase tracking-wider">
-                <span className="text-[#fd5523] truncate">{category || "Category"}</span>
+                <span className="text-brand-text truncate">{category || "Category"}</span>
                 <span className="text-slate-400 shrink-0">{level || "Level"}</span>
               </div>
-              <h3 className="font-bold text-base text-[#062e39] leading-snug line-clamp-2">
+              <h3 className="font-bold text-base text-ink leading-snug line-clamp-2">
                 {title || "Your Course Title"}
               </h3>
               <p className="text-xs text-slate-500 line-clamp-2">
                 {description || "A brief summary of what learners will achieve in this course."}
               </p>
-              <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-[#062e39]">
+              <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-ink">
                 <span className="flex items-center gap-1.5 text-slate-400 font-medium">
                   <BookOpen className="h-3.5 w-3.5" /> Draft Studio
                 </span>
@@ -476,9 +476,9 @@ export function NewCourseForm({
             </CardContent>
           </Card>
 
-          <Card className="rounded-2xl border-0 bg-[#062e39] p-5 text-white shadow-sm">
+          <Card className="rounded-2xl border-0 bg-ink p-5 text-white shadow-sm">
             <CardContent className="space-y-3 p-0">
-              <div className="flex items-center gap-2 text-[#fd8d69]">
+              <div className="flex items-center gap-2 text-brand-electric">
                 <Rocket className="h-4 w-4" />
                 <h3 className="text-xs font-bold uppercase tracking-widest">Course Tips</h3>
               </div>

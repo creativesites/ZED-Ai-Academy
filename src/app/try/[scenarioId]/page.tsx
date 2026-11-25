@@ -19,7 +19,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { scenarioId } = await params;
   const data = await loadPublicTryScenario(scenarioId);
-  if (!data) return { title: "AI Teacher Mini-Lesson — Zed AI Academy" };
+  if (!data) return { title: "AI Teacher Mini-Lesson" };
   return {
     title: `Try "${data.scenario.title}" — ${data.academy.name}`,
     description: data.scenario.goal,

@@ -202,14 +202,14 @@ export function ClassroomTabs({
         {cohorts.length > 0 && (
           <div className="bg-white rounded-xl px-3 py-2 border border-slate-200/80 shadow-xs flex items-center justify-between gap-2.5">
             <div className="flex items-center gap-2 min-w-0">
-              <div className="h-7 w-7 rounded-lg bg-[#062e39] text-white flex items-center justify-center shrink-0 text-[11px] font-bold">
+              <div className="h-7 w-7 rounded-lg bg-ink text-white flex items-center justify-center shrink-0 text-[11px] font-bold">
                 {selectedCohort?.name ? selectedCohort.name.charAt(0) : "C"}
               </div>
               <div className="min-w-0">
                 <span className="text-[9px] font-semibold uppercase tracking-wider text-slate-400 block leading-none">
                   Class / Cohort
                 </span>
-                <p className="text-xs font-bold text-[#062e39] truncate mt-0.5">
+                <p className="text-xs font-bold text-ink truncate mt-0.5">
                   {activeCohortId === "all" ? "All Classes" : selectedCohort?.name || "All Classes"}
                 </p>
               </div>
@@ -247,7 +247,7 @@ export function ClassroomTabs({
                 className={cn(
                   "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold shrink-0 transition-all min-h-[36px] cursor-pointer",
                   isActive
-                    ? "bg-[#fd5523] text-white shadow-xs"
+                    ? "bg-brand text-white shadow-xs"
                     : "bg-white border border-slate-200/80 text-slate-600 hover:bg-slate-100"
                 )}
               >
@@ -301,8 +301,8 @@ export function ClassroomTabs({
                   className={cn(
                     "flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all w-full cursor-pointer text-left",
                     isActive
-                      ? "bg-[#fd5523] text-white shadow-xs"
-                      : "text-slate-600 hover:bg-slate-50 hover:text-[#062e39]"
+                      ? "bg-brand text-white shadow-xs"
+                      : "text-slate-600 hover:bg-slate-50 hover:text-ink"
                   )}
                 >
                   <tab.icon className={cn("h-4 w-4 shrink-0", isActive ? "text-white" : "text-slate-400")} />
@@ -334,7 +334,7 @@ export function ClassroomTabs({
                 <div
                   className={cn(
                     "p-1.5 rounded-lg transition-all",
-                    isActive ? "bg-[#fd5523] text-white" : "text-slate-400 hover:text-slate-600"
+                    isActive ? "bg-brand text-white" : "text-slate-400 hover:text-slate-600"
                   )}
                 >
                   <tab.icon className="h-4 w-4" />
@@ -342,7 +342,7 @@ export function ClassroomTabs({
                 <span
                   className={cn(
                     "text-[10px] font-semibold truncate max-w-full px-0.5 text-center leading-tight",
-                    isActive ? "text-[#fd5523]" : "text-slate-500"
+                    isActive ? "text-brand-text" : "text-slate-500"
                   )}
                 >
                   {tab.label}
@@ -360,19 +360,19 @@ export function ClassroomTabs({
               className={cn(
                 "p-1.5 rounded-lg transition-all relative",
                 isMoreTabActive || isMobileMoreOpen
-                  ? "bg-[#062e39] text-white"
+                  ? "bg-ink text-white"
                   : "text-slate-400 hover:text-slate-600"
               )}
             >
               <MoreHorizontal className="h-4 w-4" />
               {isMoreTabActive && (
-                <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-[#fd5523] ring-2 ring-white" />
+                <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-brand ring-2 ring-white" />
               )}
             </div>
             <span
               className={cn(
                 "text-[10px] font-semibold truncate text-center leading-tight",
-                isMoreTabActive || isMobileMoreOpen ? "text-[#062e39]" : "text-slate-500"
+                isMoreTabActive || isMobileMoreOpen ? "text-ink" : "text-slate-500"
               )}
             >
               More
@@ -394,7 +394,7 @@ export function ClassroomTabs({
           <div className="relative z-10 bg-white rounded-t-3xl p-5 pb-[max(5.5rem,calc(env(safe-area-inset-bottom)+4.5rem))] shadow-2xl border-t border-slate-100 animate-in slide-in-from-bottom duration-300 max-h-[85dvh] overflow-y-auto">
             <div className="flex items-center justify-between pb-3.5 border-b border-slate-100 mb-4">
               <div>
-                <h4 className="text-sm font-bold text-[#062e39]">Classroom Tools</h4>
+                <h4 className="text-sm font-bold text-ink">Classroom Tools</h4>
                 <p className="text-[11px] text-slate-400">Collaborate, interact and track learning</p>
               </div>
               <button
@@ -420,7 +420,7 @@ export function ClassroomTabs({
                     className={cn(
                       "flex items-center gap-2.5 p-3 rounded-xl border text-left transition-all min-h-[52px] cursor-pointer min-w-0",
                       isActive
-                        ? "bg-[#fd5523] text-white border-[#fd5523] shadow-sm"
+                        ? "bg-brand text-white border-brand shadow-sm"
                         : "bg-slate-50 border-slate-200/70 text-slate-700 hover:bg-slate-100"
                     )}
                   >

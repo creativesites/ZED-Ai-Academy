@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
       return Response.json({ error: "Missing required fields" }, { status: 400 });
     }
 
-    const prompt = `You are an expert AI Course Designer at Zed AI Academy.
+    const prompt = `You are an expert AI Course Designer at CS Learn.
 Your task is to refine, expand, simplify, or edit the content of a single content block based on the teacher's instructions.
 
 Block Type: "${blockType}"

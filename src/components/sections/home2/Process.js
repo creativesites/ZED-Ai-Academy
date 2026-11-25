@@ -67,8 +67,8 @@ export default function Process() {
                                     justifyContent: "center", 
                                     width: "70px", 
                                     height: "70px", 
-                                    background: "rgba(253,85,35,0.08)", 
-                                    color: "#fd5523",
+                                    background: "rgba(7, 91, 235,0.08)", 
+                                    color: "var(--color-brand-text)",
                                     borderRadius: "20px",
                                     marginBottom: "25px",
                                     position: "relative"
@@ -79,7 +79,7 @@ export default function Process() {
                                         right: "-10px",
                                         width: "28px",
                                         height: "28px",
-                                        background: "#062e39",
+                                        background: "var(--color-ink)",
                                         color: "#fff",
                                         borderRadius: "50%",
                                         fontSize: "12px",
@@ -93,7 +93,7 @@ export default function Process() {
                                 </div>
 
                                 <div className="content-box">
-                                    <h2 style={{ fontSize: "18px", fontWeight: "800", color: "#062e39", marginBottom: "12px" }}>
+                                    <h2 style={{ fontSize: "18px", fontWeight: "800", color: "var(--color-ink)", marginBottom: "12px" }}>
                                         <Link href={step.link} style={{ color: "inherit", textDecoration: "none" }}>{step.title}</Link>
                                     </h2>
                                     <p style={{ fontSize: "14px", color: "#666", lineHeight: "1.6", margin: 0 }}>{step.desc}</p>
@@ -113,7 +113,7 @@ export default function Process() {
                 .working-process-one__single:hover {
                     transform: translateY(-8px);
                     box-shadow: 0 15px 40px rgba(0,0,0,0.06);
-                    border-color: #fd552340 !important;
+                    border-color: rgba(7, 91, 235, 0.25) !important;
                 }
             `}} />
         </section>

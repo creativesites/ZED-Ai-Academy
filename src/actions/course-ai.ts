@@ -96,7 +96,7 @@ export async function exportCourseBlueprint(courseId: string) {
   };
 
   const promptText = `
-You are an expert AI Course Designer at Zed AI Academy. 
+You are an expert AI Course Designer at CS Learn. 
 Your task is to analyze, expand, or refine the following course curriculum.
 
 CURRENT COURSE JSON:

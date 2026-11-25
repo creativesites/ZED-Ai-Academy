@@ -109,7 +109,7 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
     );
   }
 
-  // Redirect apex /courses to the platform academy (Zed AI Academy)
+  // Redirect apex /courses to the platform academy (CS Learn)
   if (!isTenantSubdomain && (pathname === '/courses' || pathname === '/courses/')) {
     return NextResponse.redirect(new URL('/academy/zedai', `${protocol}://${hostname}`));
   }

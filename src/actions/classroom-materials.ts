@@ -18,6 +18,7 @@ import {
   isMissingTableError,
   updateWithSchemaFallback,
 } from "@/lib/supabase/schema-fallback";
+import { DEFAULT_PRIMARY_COLOR } from "@/lib/brand";
 
 async function ensureProfileRow(
   serviceClient: ReturnType<typeof createServiceClient>,
@@ -147,7 +148,7 @@ export async function getClassroomFolders(
     company_id: f.company_id,
     cohort_id: f.cohort_id,
     name: f.name,
-    color: f.color || "#fd5523",
+    color: f.color || DEFAULT_PRIMARY_COLOR,
     icon: f.icon || "folder",
     created_at: f.created_at,
     materials_count: f.classroom_materials?.[0]?.count || 0,
@@ -158,7 +159,7 @@ export async function createClassroomFolder(formData: FormData) {
   const companyId = formData.get("companyId") as string;
   const companySlug = formData.get("companySlug") as string;
   const name = (formData.get("name") as string)?.trim();
-  const color = (formData.get("color") as string) || "#fd5523";
+  const color = (formData.get("color") as string) || DEFAULT_PRIMARY_COLOR;
   const icon = (formData.get("icon") as string) || "folder";
   const cohortId = (formData.get("cohortId") as string) || null;
 

@@ -1,80 +1,41 @@
-# Zed AI Academy Styling Guide
+# CS Learn Styling Guide
 
-## 1. Visual Direction
-A modern, light-first interface with high readability, soft depth, and crisp blue accents.
+> Brand identity, logo usage, colour and type tokens: see **[BRAND.md](./BRAND.md)**. This file covers how to apply them in UI work.
 
-Design goals:
-- Keep backgrounds bright and clean.
-- Use subtle gradients and soft shadows instead of heavy dark panels.
-- Prioritize clear hierarchy and generous spacing.
+## 1. Visual direction
+A premium, modern learning platform with a navy foundation, Royal Blue actions, and a few gold/orange achievement accents. Clean, structured layouts, generous whitespace, clear hierarchy, and restrained gradients. Avoid heavy glow and neon effects.
 
 ## 2. Typography
-Defined in `/Users/winstonzulu/Documents/GitHub/zed-ai-academy/src/app/layout.tsx`:
-- Primary (`--font-manrope`): `Manrope`
-- Heading (`--font-sora`): `Sora`
-- Mono (`--font-jetbrains-mono`): `JetBrains Mono`
+Fonts load in `src/app/layout.tsx` (`next/font`):
+- `--font-inter` → **Inter**: body and UI (`font-sans`)
+- `--font-manrope` → **Manrope**: headings and display (`font-heading`, `font-display`)
+- `--font-jetbrains-mono` → **JetBrains Mono** (`font-mono`)
 
-Usage:
-- Body copy: `font-sans`
-- Headings: automatically mapped to `font-heading` in `globals.css`
-- Technical snippets or IDs: `font-mono`
+`h1`–`h6` use Manrope automatically (`globals.css`). Body text defaults to 15px with relaxed line height.
 
-## 3. Color System
-Design tokens live in `/Users/winstonzulu/Documents/GitHub/zed-ai-academy/src/app/globals.css`.
+## 3. Colour
+- Semantic shadcn tokens (`bg-background`, `bg-card`, `text-muted-foreground`, `bg-primary`, `border-border`, `ring-ring`) for generic UI.
+- Brand tokens (`bg-brand`, `text-brand-text`, `text-ink`, `bg-navy`, `bg-brand-soft`, `text-brand-gold`) for brand-specific moments.
+- **No raw hex in `className`** (`bg-[#…]`). If a colour is missing, add a token in `globals.css` and a mirror in `src/lib/brand.ts`.
+- Inline styles can use CSS variables: `style={{ color: "var(--color-brand-text)" }}`.
+- Canvas, SVG attributes, values saved to the DB and contrast maths need real hex: import `BRAND_COLORS`.
 
-Core semantic tokens:
-- `--background`: app canvas
-- `--foreground`: default text
-- `--primary`: action blue
-- `--secondary`: neutral UI fill
-- `--muted` / `--muted-foreground`: subdued surfaces and secondary text
-- `--border`: low-contrast separators and strokes
+## 4. Components
+- **Radius:** 10–16px for controls and cards (`rounded-xl`/`rounded-2xl`). `--radius` is 0.875rem.
+- **Primary button:** `bg-brand hover:bg-brand-hover text-white font-semibold` (shadcn `Button` default variant uses `--primary`, which is the same colour).
+- **Secondary button:** transparent or `bg-card` with `border` and `text-foreground`.
+- **Cards:** `bg-card border border-border shadow-elev-1`, title and short description, progress bar (`bg-gradient-cs` fill is fine), and a category/difficulty label.
+- **Achievement UI** (certificates, streaks, milestones): `text-brand-gold`, `bg-gradient-learn`.
+- **Shadows:** `shadow-elev-1`, `shadow-elev-2`, `shadow-elev-3`. Keep them subtle. No coloured glow shadows on ordinary controls.
 
-Guidelines:
-- Use `text-slate-900` or `text-foreground` for major text.
-- Use `text-slate-600` or `text-muted-foreground` for supporting text.
-- Reserve `primary` color for key actions, links, and status emphasis.
+## 5. Dark surfaces
+Use `bg-navy` / `bg-ink` (or `.dark`, or `data-surface="dark"`) for dark sections. Inside them `text-brand-text` brightens automatically. Use white for primary text and `text-slate-400` for secondary text.
 
-## 4. Surface & Elevation
-Utility in `globals.css`:
-- `.surface-card`: shared elevated light surface style for cards.
+## 6. Motion and accessibility
+- Transitions of 150–300ms on colour, opacity and transform.
+- Reduced motion is respected globally.
+- Keep the visible focus states (global `:focus-visible` outline, or `focus-visible:ring-2 ring-ring`).
+- Aim for WCAG AA contrast. Never rely on colour alone to show status.
 
-Use `.surface-card` for feature cards, metric blocks, and neutral panels.
-
-## 5. Component Styling Rules
-Buttons:
-- Primary CTA: filled blue (`bg-blue-600`, `hover:bg-blue-500`, white text)
-- Secondary CTA: outlined neutral (`border-slate-300`, `bg-white`)
-
-Cards:
-- Rounded corners (`rounded-2xl` or token-based radius)
-- Light border (`border-slate-200` or `border-border`)
-- Soft shadow only (avoid dark, high-contrast shadows)
-
-Badges:
-- Lightweight semantic badges (`blue-50`, `cyan-50`) with subtle borders.
-
-## 6. Layout & Spacing
-- Use `max-w-6xl` or `max-w-7xl` content containers.
-- Section rhythm: usually `py-16` to `py-20`.
-- Keep hero content width constrained (`max-w-3xl`) for readability.
-
-## 7. Motion
-- Keep transitions short and calm (`transition-all`, `duration-200` to `300`).
-- Use subtle hover lift (`hover:-translate-y-0.5`) and shadow changes.
-- Avoid aggressive scale/rotation on key UI elements.
-
-## 8. Accessibility
-- Maintain strong color contrast on all text and CTAs.
-- Ensure focus styles remain visible (ring tokens are already configured).
-- Never rely on color alone for critical state communication.
-
-## 9. Implementation Notes
-Primary files for this system:
-- `/Users/winstonzulu/Documents/GitHub/zed-ai-academy/src/app/layout.tsx`
-- `/Users/winstonzulu/Documents/GitHub/zed-ai-academy/src/app/globals.css`
-- `/Users/winstonzulu/Documents/GitHub/zed-ai-academy/src/app/(marketing)/page.tsx`
-- `/Users/winstonzulu/Documents/GitHub/zed-ai-academy/src/components/shared/navbar.tsx`
-- `/Users/winstonzulu/Documents/GitHub/zed-ai-academy/src/components/shared/footer.tsx`
-
-When designing new pages, start from token-based colors and shared surface styles instead of hard-coded dark palettes.
+## 7. Legacy template
+Marketing pages still use the purchased "logistiq" template (`public/assets/css/style.css`, Bootstrap). Its `--logistiq-base` and `--logistiq-black` variables are mapped to Royal Blue and Deep Navy, and the header logo panels use Midnight Navy. App surfaces (`.app-surface`) reset the template's unlayered styles. See `app-surface-reset.css`.

@@ -15,7 +15,7 @@ function getMeetingGoogleCalendarUrl(title: string, startTime?: string) {
   const encTitle = encodeURIComponent(title || "Live Training Session");
   const url = typeof window !== "undefined" ? window.location.href : "";
   const encDetails = encodeURIComponent(`Live training session in your coursework.\n\nJoin link: ${url}`);
-  const encLoc = encodeURIComponent("Zed AI Academy Live Studio");
+  const encLoc = encodeURIComponent("CS Learn Live Studio");
 
   let startIso = "";
   let endIso = "";
@@ -51,7 +51,7 @@ function downloadMeetingIcs(title: string, startTime?: string) {
   const ics = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "PRODID:-//Zed AI Academy//Live Lesson//EN",
+    "PRODID:-//CreativeSites//CS Learn Live Lesson//EN",
     "CALSCALE:GREGORIAN",
     "BEGIN:VEVENT",
     `SUMMARY:${encTitle}`,
@@ -114,7 +114,7 @@ function Countdown({ targetDate, onComplete }: { targetDate: string; onComplete?
       ].map((unit) => (
         <div key={unit.label} className="flex flex-col items-center">
           <div className="text-3xl sm:text-4xl font-black text-white">{String(unit.value).padStart(2, '0')}</div>
-          <div className="text-[10px] font-black uppercase tracking-widest text-[#fd8d69]">{unit.label}</div>
+          <div className="text-[10px] font-black uppercase tracking-widest text-brand-electric">{unit.label}</div>
         </div>
       ))}
     </div>
@@ -193,12 +193,12 @@ export function MeetingBlockInner({
     return (
       <div className="rounded-[2rem] border border-slate-200 bg-white p-6 md:p-8">
         <div className="flex flex-col gap-5 sm:flex-row sm:items-start">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#fff6ee] text-[#fd5523] shadow-sm">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-brand-soft text-brand-text shadow-sm">
             <Calendar className="h-6 w-6" />
           </div>
           <div className="flex-1 space-y-2">
-            <p className="text-[10px] font-black uppercase tracking-[0.25em] text-[#fd5523]">Live Session Preview</p>
-            <h3 className="text-2xl font-bold tracking-tight text-[#062e39]">{title}</h3>
+            <p className="text-[10px] font-black uppercase tracking-[0.25em] text-brand-text">Live Session Preview</p>
+            <h3 className="text-2xl font-bold tracking-tight text-ink">{title}</h3>
             <p className="text-sm leading-relaxed text-slate-600">
               {startTime
                 ? `Learners will see the schedule, countdown, and join flow for ${new Date(startTime).toLocaleString()}.`
@@ -248,7 +248,7 @@ export function MeetingBlockInner({
             </div>
             <div className="space-y-2 flex-1">
               <p className="text-[10px] font-black uppercase tracking-[0.25em] text-amber-700">Booking Status</p>
-              <h3 className="text-2xl font-bold tracking-tight text-[#062e39]">Session Requested</h3>
+              <h3 className="text-2xl font-bold tracking-tight text-ink">Session Requested</h3>
               {bookedAt && (
                 <p className="text-sm font-semibold text-amber-800">{bookedAt}</p>
               )}
@@ -309,7 +309,7 @@ export function MeetingBlockInner({
             <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-slate-400 shadow-sm mb-4">
               <Calendar className="h-6 w-6" />
             </div>
-            <h3 className="text-xl font-bold text-[#062e39]">Session Completed</h3>
+            <h3 className="text-xl font-bold text-ink">Session Completed</h3>
             <p className="mt-2 text-sm text-slate-500">
               This live session occurred on {confirmedBooking.starts_at ? new Date(confirmedBooking.starts_at).toLocaleDateString() : "a past date"}.
             </p>
@@ -326,18 +326,18 @@ export function MeetingBlockInner({
 
       return (
         <div className="space-y-3">
-          <div className="rounded-[2.5rem] bg-[#062e39] p-6 md:p-10 text-white shadow-2xl relative overflow-hidden group">
+          <div className="rounded-[2.5rem] bg-ink p-6 md:p-10 text-white shadow-2xl relative overflow-hidden group">
             <div className="absolute inset-0 mesh-orange opacity-20 transition-opacity group-hover:opacity-30" />
             <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-10">
               <div className="space-y-6">
                 <div className="flex items-center gap-3">
                   <div className={cn(
-                    "flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 text-[#fd5523]",
+                    "flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 text-brand-text",
                     isLive && "animate-pulse"
                   )}>
-                    {isLive ? <div className="h-2 w-2 rounded-full bg-[#fd5523]" /> : <Calendar className="h-5 w-5" />}
+                    {isLive ? <div className="h-2 w-2 rounded-full bg-brand" /> : <Calendar className="h-5 w-5" />}
                   </div>
-                  <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#fd8d69]">
+                  <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-brand-electric">
                     {isLive ? "Session is Live" : "Confirmed Session"}
                   </span>
                 </div>
@@ -359,7 +359,7 @@ export function MeetingBlockInner({
                   className={cn(
                     "rounded-2xl px-10 py-8 text-xl font-black text-white shadow-2xl transition-all duration-300",
                     isLive
-                      ? "bg-[#fd5523] hover:bg-[#ef4a16] shadow-[#fd5523]/40 hover:scale-105 active:scale-95"
+                      ? "bg-brand hover:bg-brand-hover shadow-brand/40 hover:scale-105 active:scale-95"
                       : "bg-white/10 hover:bg-white/20 text-white/40 cursor-not-allowed"
                   )}
                   onClick={handleJoin}
@@ -370,7 +370,7 @@ export function MeetingBlockInner({
                   ) : isLive ? "Join Session Now" : "Ready Soon"}
                 </Button>
                 {isLive && (
-                  <p className="text-xs font-bold text-[#fd8d69] animate-bounce">
+                  <p className="text-xs font-bold text-brand-electric animate-bounce">
                     Instructor is ready for you!
                   </p>
                 )}
@@ -386,7 +386,7 @@ export function MeetingBlockInner({
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold transition-all"
                 >
-                  <Calendar className="h-3.5 w-3.5 text-[#fd8d69]" />
+                  <Calendar className="h-3.5 w-3.5 text-brand-electric" />
                   Add to Google Calendar
                 </a>
                 <button
@@ -407,7 +407,7 @@ export function MeetingBlockInner({
                   "inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl font-bold transition-all",
                   reminded
                     ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
-                    : "bg-[#fd5523]/20 hover:bg-[#fd5523]/30 text-[#fd8d69] border border-[#fd5523]/30"
+                    : "bg-brand/20 hover:bg-brand/30 text-brand-electric border border-brand/30"
                 )}
               >
                 {reminded ? <Check className="h-3.5 w-3.5" /> : <Bell className="h-3.5 w-3.5" />}
@@ -433,15 +433,15 @@ export function MeetingBlockInner({
   // Default booking flow — only shown when there is no booking at all (real or optimistic)
   if (serviceId && !currentBooking) {
     return (
-      <div className="rounded-[2rem] border border-dashed border-[#fd5523]/30 bg-[#fff6ee] p-6 md:p-8">
+      <div className="rounded-[2rem] border border-dashed border-brand/30 bg-brand-soft p-6 md:p-8">
         <div className="flex flex-col gap-5 sm:flex-row sm:items-start">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white text-[#fd5523] shadow-sm">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white text-brand-text shadow-sm">
             <Calendar className="h-6 w-6" />
           </div>
           <div className="space-y-4 flex-1">
             <div>
-              <p className="text-[10px] font-black uppercase tracking-[0.25em] text-[#fd5523]">Live Session</p>
-              <h3 className="mt-2 text-2xl font-bold tracking-tight text-[#062e39]">{title}</h3>
+              <p className="text-[10px] font-black uppercase tracking-[0.25em] text-brand-text">Live Session</p>
+              <h3 className="mt-2 text-2xl font-bold tracking-tight text-ink">{title}</h3>
             </div>
             {startTime && <p className="text-sm font-semibold text-slate-600">{startTime}</p>}
             <p className="max-w-2xl text-sm leading-relaxed text-slate-600">
@@ -457,7 +457,7 @@ export function MeetingBlockInner({
                 router.refresh();
               }}
               trigger={
-                <Button className="rounded-xl bg-[#fd5523] px-6 py-4 text-white hover:bg-[#ef4a16] h-auto">
+                <Button className="rounded-xl bg-brand px-6 py-4 text-white hover:bg-brand-hover h-auto">
                   Book Your Slot
                   <Calendar className="ml-2 h-4 w-4" />
                 </Button>
@@ -488,15 +488,15 @@ export function MeetingBlockInner({
   if (meetingId || startTime) {
     return (
       <div className="space-y-3">
-        <div className="rounded-[2.5rem] bg-[#062e39] p-6 md:p-10 text-white shadow-2xl relative overflow-hidden group">
+        <div className="rounded-[2.5rem] bg-ink p-6 md:p-10 text-white shadow-2xl relative overflow-hidden group">
           <div className="absolute inset-0 mesh-orange opacity-20 transition-opacity group-hover:opacity-30" />
           <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-8">
             <div className="space-y-4">
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 text-[#fd5523]">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 text-brand-text">
                   <Video className="h-5 w-5" />
                 </div>
-                <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#fd8d69]">
+                <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-brand-electric">
                   Live Class in Coursework
                 </span>
               </div>
@@ -515,7 +515,7 @@ export function MeetingBlockInner({
 
             <div className="flex flex-col items-center sm:items-end gap-3">
               <Button
-                className="rounded-2xl px-8 py-7 text-lg font-black bg-[#fd5523] hover:bg-[#ef4a16] text-white shadow-xl shadow-[#fd5523]/30 hover:scale-105 active:scale-95 transition-all"
+                className="rounded-2xl px-8 py-7 text-lg font-black bg-brand hover:bg-brand-hover text-white shadow-xl shadow-brand/30 hover:scale-105 active:scale-95 transition-all"
                 onClick={handleJoin}
                 disabled={joining}
               >
@@ -540,7 +540,7 @@ export function MeetingBlockInner({
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold transition-all"
               >
-                <Calendar className="h-3.5 w-3.5 text-[#fd8d69]" />
+                <Calendar className="h-3.5 w-3.5 text-brand-electric" />
                 Add to Google Calendar
               </a>
               <button
@@ -561,7 +561,7 @@ export function MeetingBlockInner({
                 "inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl font-bold transition-all",
                 reminded
                   ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
-                  : "bg-[#fd5523]/20 hover:bg-[#fd5523]/30 text-[#fd8d69] border border-[#fd5523]/30"
+                  : "bg-brand/20 hover:bg-brand/30 text-brand-electric border border-brand/30"
               )}
             >
               {reminded ? <Check className="h-3.5 w-3.5" /> : <Bell className="h-3.5 w-3.5" />}
@@ -579,7 +579,7 @@ export function MeetingBlockInner({
       <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-slate-400 shadow-sm mb-3">
         <Video className="h-6 w-6" />
       </div>
-      <h4 className="text-base font-bold text-[#062e39]">{title || "Live Session"}</h4>
+      <h4 className="text-base font-bold text-ink">{title || "Live Session"}</h4>
       <p className="mt-1 text-xs text-slate-500 max-w-md mx-auto">
         Live session room and schedule details will be configured by the instructor. Check back soon or visit your School Timetable.
       </p>

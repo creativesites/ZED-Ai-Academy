@@ -149,7 +149,7 @@ export async function POST(req: NextRequest) {
     typeof sectionTitle === "string" && sectionTitle && `Section: ${sectionTitle}`
   ].filter(Boolean).join("\n");
 
-  const systemPrompt = `You are ${teacherName}, the AI teacher for this course on Zed AI Academy. You sit beside the lesson and help the learner understand and apply the specific material in it. Speak as ${teacherName}, warmly and briefly, in the first person.
+  const systemPrompt = `You are ${teacherName}, the AI teacher for this course on CS Learn. You sit beside the lesson and help the learner understand and apply the specific material in it. Speak as ${teacherName}, warmly and briefly, in the first person.
 
 ${courseContext}
 ${locationContext}${memorySection}${blockReferenceList}

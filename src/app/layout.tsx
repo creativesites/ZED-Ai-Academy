@@ -1,11 +1,12 @@
 import type { Metadata, Viewport } from "next";
 import { ClerkProvider } from "@clerk/nextjs";
-import { Inter, Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
+import { Inter, Manrope, JetBrains_Mono } from "next/font/google";
 import NextTopLoader from "nextjs-toploader";
 import { NetworkStatusProvider } from "@/components/providers/NetworkStatusProvider";
 import { SWRProvider } from "@/components/providers/SWRProvider";
 import "./globals.css";
 import "./app-surface-reset.css";
+import { BRAND, BRAND_COLORS, appUrl } from "@/lib/brand";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -13,10 +14,11 @@ const inter = Inter({
   display: "swap",
 });
 
-const plusJakarta = Plus_Jakarta_Sans({
+// Display font for headings, course titles and large statistics.
+const manrope = Manrope({
   subsets: ["latin"],
   weight: ["500", "600", "700", "800"],
-  variable: "--font-plus-jakarta",
+  variable: "--font-manrope",
   display: "swap",
 });
 
@@ -28,39 +30,62 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const viewport: Viewport = {
-  themeColor: "#062e39",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: BRAND_COLORS.softWhite },
+    { media: "(prefers-color-scheme: dark)", color: BRAND_COLORS.midnight },
+  ],
 };
 
 export const metadata: Metadata = {
+  metadataBase: new URL(appUrl()),
+  applicationName: BRAND.name,
   title: {
-    default: "Zed AI Academy — Learn AI Skills That Matter",
-    template: "%s | Zed AI Academy",
+    default: `${BRAND.fullName} — Learn, Practice, Build, Grow`,
+    template: `%s | ${BRAND.name}`,
   },
-  description:
-    "Master AI tools, prompt engineering, and machine learning with hands-on courses built for individuals and teams in Africa.",
-  keywords: ["AI courses", "artificial intelligence", "machine learning", "prompt engineering", "Zambia", "Africa"],
+  description: BRAND.description,
+  keywords: ["CS Learn", "CreativeSites Learn", "CreativeSites", "AI courses", "online courses", "AI tutor", "certificates", "Zambia", "Africa"],
+  authors: [{ name: BRAND.parent }],
+  creator: BRAND.parent,
+  publisher: BRAND.parent,
   openGraph: {
-    title: "Zed AI Academy",
-    description: "Master AI skills with courses built for Africa.",
+    title: BRAND.fullName,
+    description: BRAND.description,
+    siteName: BRAND.fullName,
     type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: BRAND.fullName,
+    description: BRAND.description,
   },
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
-    statusBarStyle: "default",
+    title: BRAND.name,
+    statusBarStyle: "black-translucent",
   },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <ClerkProvider>
+    <ClerkProvider
+      appearance={{
+        variables: {
+          colorPrimary: BRAND_COLORS.royalBlue,
+          colorForeground: BRAND_COLORS.charcoal,
+          fontFamily: "var(--font-inter), Inter, system-ui, sans-serif",
+          borderRadius: "0.75rem",
+        },
+      }}
+    >
       <html
         lang="en"
-        className={`h-full antialiased ${inter.variable} ${plusJakarta.variable} ${jetbrainsMono.variable}`}
+        className={`h-full antialiased ${inter.variable} ${manrope.variable} ${jetbrainsMono.variable}`}
       >
         <body className="min-h-full flex flex-col overflow-x-hidden bg-background text-foreground font-sans">
           <NextTopLoader
-            color="#fd5523"
+            color={BRAND_COLORS.royalBlue}
             initialPosition={0.08}
             crawlSpeed={200}
             height={3}
@@ -68,7 +93,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             showSpinner={false}
             easing="ease"
             speed={200}
-            shadow="0 0 10px #fd5523,0 0 5px #fd5523"
+            shadow={`0 0 10px ${BRAND_COLORS.electricBlue},0 0 5px ${BRAND_COLORS.royalBlue}`}
           />
           <NetworkStatusProvider>
             <SWRProvider>{children}</SWRProvider>

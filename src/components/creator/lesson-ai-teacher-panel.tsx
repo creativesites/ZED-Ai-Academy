@@ -407,7 +407,7 @@ export function LessonAITeacherPanel({
     <div className="space-y-4">
       <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
         {/* Header */}
-        <div className="flex items-center gap-3 border-b border-slate-100 bg-gradient-to-r from-[#062e39] via-[#083b49] to-[#0c4a5c] p-4 text-white">
+        <div className="flex items-center gap-3 border-b border-slate-100 bg-gradient-to-r from-ink via-[#083b49] to-[#0c4a5c] p-4 text-white">
           <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-white/10">
             <Teacher
               variant="bust"
@@ -417,7 +417,7 @@ export function LessonAITeacherPanel({
             />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#fd8d69]">
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-electric">
               AI Teacher Co-Author
             </p>
             <h3 className="truncate text-sm font-bold">
@@ -443,21 +443,21 @@ export function LessonAITeacherPanel({
         {stage === "start" && (
           <div className="space-y-4 p-4">
             <p className="text-xs leading-relaxed text-slate-600">
-              Turn <span className="font-semibold text-[#062e39]">{lessonTitle || "this lesson"}</span> into an
+              Turn <span className="font-semibold text-ink">{lessonTitle || "this lesson"}</span> into an
               interactive AI Teacher flow in under two minutes — no prompt writing needed.
             </p>
 
             <div className="space-y-2 rounded-xl border border-slate-100 bg-slate-50 p-3 text-xs text-slate-600">
               <div className="flex items-center gap-2">
-                <Target className="h-3.5 w-3.5 shrink-0 text-[#fd5523]" />
+                <Target className="h-3.5 w-3.5 shrink-0 text-brand-text" />
                 <span>1. Pull 2–5 measurable objectives from your blocks</span>
               </div>
               <div className="flex items-center gap-2">
-                <Layers className="h-3.5 w-3.5 shrink-0 text-[#fd5523]" />
+                <Layers className="h-3.5 w-3.5 shrink-0 text-brand-text" />
                 <span>2. Draft a step-by-step storyboard &amp; tweak in plain words</span>
               </div>
               <div className="flex items-center gap-2">
-                <Play className="h-3.5 w-3.5 shrink-0 text-[#fd5523]" />
+                <Play className="h-3.5 w-3.5 shrink-0 text-brand-text" />
                 <span>3. Test as a student, then add to your lesson</span>
               </div>
             </div>
@@ -466,7 +466,7 @@ export function LessonAITeacherPanel({
               type="button"
               onClick={handleExtractObjectives}
               disabled={extracting}
-              className="h-11 w-full rounded-xl bg-[#fd5523] text-xs font-bold text-white hover:bg-[#ea4817]"
+              className="h-11 w-full rounded-xl bg-brand text-xs font-bold text-white hover:bg-brand-hover"
             >
               {extracting ? (
                 <>
@@ -488,7 +488,7 @@ export function LessonAITeacherPanel({
           <div className="space-y-4 p-4">
             <div className="flex items-center justify-between gap-2">
               <div>
-                <p className="text-xs font-bold text-[#062e39]">Learning objectives ({objectives.length})</p>
+                <p className="text-xs font-bold text-ink">Learning objectives ({objectives.length})</p>
                 <p className="text-[11px] text-slate-500">Edit what learners should prove out loud.</p>
               </div>
               <div className="flex items-center gap-1.5">
@@ -527,7 +527,7 @@ export function LessonAITeacherPanel({
               {objectives.map((obj, idx) => (
                 <div key={obj.id} className="space-y-2 rounded-xl border border-slate-200 bg-slate-50/70 p-3">
                   <div className="flex items-center justify-between gap-2">
-                    <Label htmlFor={`obj-text-${obj.id}`} className="text-[11px] font-bold text-[#062e39]">
+                    <Label htmlFor={`obj-text-${obj.id}`} className="text-[11px] font-bold text-ink">
                       Objective {idx + 1}
                     </Label>
                     {objectives.length > 1 && (
@@ -574,7 +574,7 @@ export function LessonAITeacherPanel({
 
             {/* 6 Templates */}
             <div className="space-y-2">
-              <Label className="text-xs font-bold text-[#062e39]">Flow template</Label>
+              <Label className="text-xs font-bold text-ink">Flow template</Label>
               <div className="grid grid-cols-2 gap-2">
                 {AUTHORING_TEMPLATES.map((tpl) => {
                   const Icon = TEMPLATE_ICONS[tpl.id];
@@ -586,14 +586,14 @@ export function LessonAITeacherPanel({
                       aria-pressed={active}
                       onClick={() => setTemplateId(tpl.id)}
                       className={cn(
-                        "flex flex-col items-start gap-1 rounded-xl border p-2.5 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#fd5523]",
+                        "flex flex-col items-start gap-1 rounded-xl border p-2.5 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand",
                         active
-                          ? "border-[#fd5523] bg-[#fff6ee] ring-1 ring-[#fd5523]/30"
+                          ? "border-brand bg-brand-soft ring-1 ring-brand/30"
                           : "border-slate-200 bg-white hover:border-slate-300",
                       )}
                     >
-                      <span className="flex items-center gap-1.5 text-xs font-bold text-[#062e39]">
-                        <Icon className={cn("h-3.5 w-3.5", active ? "text-[#fd5523]" : "text-slate-500")} />
+                      <span className="flex items-center gap-1.5 text-xs font-bold text-ink">
+                        <Icon className={cn("h-3.5 w-3.5", active ? "text-brand-text" : "text-slate-500")} />
                         {tpl.label}
                       </span>
                       <span className="line-clamp-2 text-[10px] leading-snug text-slate-500">{tpl.tagline}</span>
@@ -606,14 +606,14 @@ export function LessonAITeacherPanel({
             {/* Teacher Selector */}
             {personas.length > 0 && (
               <div className="space-y-1">
-                <Label htmlFor="lesson-ai-teacher-persona" className="text-xs font-bold text-[#062e39]">
+                <Label htmlFor="lesson-ai-teacher-persona" className="text-xs font-bold text-ink">
                   Teacher
                 </Label>
                 <select
                   id="lesson-ai-teacher-persona"
                   value={personaId}
                   onChange={(e) => setPersonaId(e.target.value)}
-                  className="h-9 w-full rounded-lg border border-slate-200 bg-white px-2.5 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#fd5523]/40"
+                  className="h-9 w-full rounded-lg border border-slate-200 bg-white px-2.5 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand/40"
                 >
                   {personas.map((p) => (
                     <option key={p.id} value={p.id}>
@@ -628,7 +628,7 @@ export function LessonAITeacherPanel({
               type="button"
               disabled={drafting}
               onClick={handleDraftFlow}
-              className="h-11 w-full rounded-xl bg-[#fd5523] text-xs font-bold text-white hover:bg-[#ea4817]"
+              className="h-11 w-full rounded-xl bg-brand text-xs font-bold text-white hover:bg-brand-hover"
             >
               {drafting ? (
                 <>
@@ -708,7 +708,7 @@ export function LessonAITeacherPanel({
                 </div>
               </div>
               <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-500">
-                <span className="rounded-full bg-white px-2 py-0.5 font-semibold text-[#062e39] ring-1 ring-slate-200">
+                <span className="rounded-full bg-white px-2 py-0.5 font-semibold text-ink ring-1 ring-slate-200">
                   {TUTOR_STYLE_LABELS[flow.style]}
                 </span>
                 <span className="inline-flex items-center gap-1">
@@ -744,16 +744,16 @@ export function LessonAITeacherPanel({
                 type="button"
                 variant="outline"
                 onClick={() => setPreviewOpen(true)}
-                className="h-10 rounded-xl border-slate-300 text-xs font-bold text-[#062e39]"
+                className="h-10 rounded-xl border-slate-300 text-xs font-bold text-ink"
               >
-                <Play className="mr-1.5 h-3.5 w-3.5 text-[#fd5523]" />
+                <Play className="mr-1.5 h-3.5 w-3.5 text-brand-text" />
                 Test as student
               </Button>
               <Button
                 type="button"
                 disabled={addingToLesson}
                 onClick={handleAddToLesson}
-                className="h-10 rounded-xl bg-[#062e39] text-xs font-bold text-white hover:bg-[#0a4055]"
+                className="h-10 rounded-xl bg-ink text-xs font-bold text-white hover:bg-ink-hover"
               >
                 {addingToLesson ? (
                   <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
@@ -771,9 +771,9 @@ export function LessonAITeacherPanel({
       <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm space-y-3">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <MapPin className="h-4 w-4 text-[#fd5523]" />
+            <MapPin className="h-4 w-4 text-brand-text" />
             <div>
-              <h4 className="text-xs font-bold text-[#062e39]">Teacher moments ({moments.length})</h4>
+              <h4 className="text-xs font-bold text-ink">Teacher moments ({moments.length})</h4>
               <p className="text-[11px] text-slate-500">
                 Place short AI check-ins after specific lesson blocks.
               </p>
@@ -804,7 +804,7 @@ export function LessonAITeacherPanel({
                       className="flex items-start justify-between gap-2 rounded-xl border border-slate-100 bg-slate-50 p-2.5 text-xs"
                     >
                       <div className="min-w-0">
-                        <p className="truncate font-semibold text-[#062e39]">
+                        <p className="truncate font-semibold text-ink">
                           {m.title || m.scenario_title || "Teacher moment"}
                         </p>
                         <p className="truncate text-[11px] text-slate-500">{anchorLabel}</p>
@@ -879,7 +879,7 @@ export function LessonAITeacherPanel({
                     onClick={handleAddMoment}
                     className="h-8 shrink-0 rounded-lg text-xs font-semibold"
                   >
-                    <MessageSquareText className="mr-1 h-3.5 w-3.5 text-[#fd5523]" />
+                    <MessageSquareText className="mr-1 h-3.5 w-3.5 text-brand-text" />
                     Place
                   </Button>
                 </div>

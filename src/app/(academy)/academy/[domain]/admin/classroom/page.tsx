@@ -50,14 +50,14 @@ export default async function AdminClassroomPage({
       <div className="container max-w-7xl px-3 sm:px-6">
         <div className="mb-5 flex items-center gap-3 min-w-0">
           <div className="flex h-10 w-10 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-xl bg-white shadow-xs border border-slate-200/80 p-2">
-            <Building2 className="h-5 w-5 text-[#062e39]" />
+            <Building2 className="h-5 w-5 text-ink" />
           </div>
           <div className="min-w-0">
-            <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-[#fd5523]/10 text-[#fd5523] text-[10px] font-bold uppercase tracking-wider">
+            <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-brand/10 text-brand-text text-[10px] font-bold uppercase tracking-wider">
               Management Console
             </span>
-            <h1 className="text-lg sm:text-2xl font-bold text-[#062e39] tracking-tight truncate mt-0.5">
-              {company.name} <span className="text-[#fd5523]">Classroom</span>
+            <h1 className="text-lg sm:text-2xl font-bold text-ink tracking-tight truncate mt-0.5">
+              {company.name} <span className="text-brand-text">Classroom</span>
             </h1>
           </div>
         </div>

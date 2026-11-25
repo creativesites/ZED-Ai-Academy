@@ -70,9 +70,9 @@ export function LessonPreviewPane({
     <div key={refreshKey} className="space-y-6">
       {/* Lesson Header Banner */}
       <section className="overflow-hidden rounded-2xl sm:rounded-[2rem] border border-slate-100 bg-white shadow-sm">
-        <div className="border-b border-slate-100 bg-gradient-to-r from-[#062e39] via-[#083b49] to-[#0c4a5c] px-4 py-5 sm:px-6 sm:py-6 text-white">
+        <div className="border-b border-slate-100 bg-gradient-to-r from-ink via-[#083b49] to-[#0c4a5c] px-4 py-5 sm:px-6 sm:py-6 text-white">
           <div className="flex items-center justify-between gap-2">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 backdrop-blur-sm px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] text-[#fd8d69]">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 backdrop-blur-sm px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] text-brand-electric">
               <Sparkles className="h-3 w-3" />
               Learner Experience
             </span>
@@ -88,7 +88,7 @@ export function LessonPreviewPane({
 
           <div className="mt-3 flex flex-wrap items-center gap-2">
             <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.15em] text-white/80">
-              <PlayCircle className="h-3 w-3 text-[#fd8d69]" />
+              <PlayCircle className="h-3 w-3 text-brand-electric" />
               {moduleTitle || "General Module"}
             </span>
             <span className="inline-flex rounded-full bg-white/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.15em] text-white/70">
@@ -110,7 +110,7 @@ export function LessonPreviewPane({
                         <HelpCircle className="h-5 w-5" />
                       </div>
                       <div>
-                        <h4 className="font-bold text-[#062e39]">Knowledge Check</h4>
+                        <h4 className="font-bold text-ink">Knowledge Check</h4>
                         <p className="text-xs text-slate-500">Preview of the learner quiz experience.</p>
                       </div>
                     </div>
@@ -124,10 +124,10 @@ export function LessonPreviewPane({
             ))
           ) : (
             <div className="rounded-2xl sm:rounded-[2rem] border border-dashed border-slate-200 bg-white p-8 text-center">
-              <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#fff6ee] text-[#fd5523]">
+              <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-soft text-brand-text">
                 <Sparkles className="h-6 w-6" />
               </div>
-              <h4 className="text-sm font-bold text-[#062e39]">Preview Canvas Ready</h4>
+              <h4 className="text-sm font-bold text-ink">Preview Canvas Ready</h4>
               <p className="mt-1 text-xs text-slate-500">
                 Add content blocks or use AI Co-Author to see how learners will interact with this lesson.
               </p>
@@ -142,7 +142,7 @@ export function LessonPreviewPane({
                   <HelpCircle className="h-5 w-5" />
                 </div>
                 <div>
-                  <h4 className="font-bold text-[#062e39]">Knowledge Check</h4>
+                  <h4 className="font-bold text-ink">Knowledge Check</h4>
                   <p className="text-xs text-slate-500">End-of-lesson knowledge verification.</p>
                 </div>
               </div>
@@ -166,15 +166,15 @@ export function LessonPreviewPane({
     >
       <div className={cn("w-full bg-white rounded-2xl sm:rounded-[2.5rem] overflow-hidden border border-slate-200/60 shadow-2xl flex flex-col", isExpanded && "max-w-6xl max-h-[92vh]")}>
         {/* Top Control Bar */}
-        <div className="border-b border-slate-100 bg-[#fffaf6] px-4 py-3 sm:px-6 sm:py-4">
+        <div className="border-b border-slate-100 bg-surface px-4 py-3 sm:px-6 sm:py-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-2.5">
-              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#fff0e6] text-[#fd5523]">
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#fff0e6] text-brand-text">
                 <Smartphone className="h-4 w-4" />
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <p className="text-[10px] font-black uppercase tracking-[0.25em] text-[#fd5523]">
+                  <p className="text-[10px] font-black uppercase tracking-[0.25em] text-brand-text">
                     Device Preview
                   </p>
                   <span className="hidden sm:inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[9px] font-bold text-emerald-600">
@@ -182,7 +182,7 @@ export function LessonPreviewPane({
                     Instant Sync
                   </span>
                 </div>
-                <h2 className="text-sm sm:text-base font-bold text-[#062e39]">Learner Surface</h2>
+                <h2 className="text-sm sm:text-base font-bold text-ink">Learner Surface</h2>
               </div>
             </div>
 
@@ -196,8 +196,8 @@ export function LessonPreviewPane({
                     className={cn(
                       "flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] transition-all",
                       viewport === id
-                        ? "bg-[#062e39] text-white shadow-sm"
-                        : "text-slate-400 hover:text-[#062e39]"
+                        ? "bg-ink text-white shadow-sm"
+                        : "text-slate-400 hover:text-ink"
                     )}
                     title={`Switch to ${label} view`}
                   >
@@ -209,7 +209,7 @@ export function LessonPreviewPane({
 
               <button
                 onClick={() => setRefreshKey((k) => k + 1)}
-                className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 hover:bg-slate-50 hover:text-[#062e39] transition-colors"
+                className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 hover:bg-slate-50 hover:text-ink transition-colors"
                 title="Reset preview scroll"
               >
                 <RotateCcw className="h-3.5 w-3.5" />
@@ -217,7 +217,7 @@ export function LessonPreviewPane({
 
               <button
                 onClick={() => setIsExpanded(!isExpanded)}
-                className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 hover:bg-slate-50 hover:text-[#062e39] transition-colors"
+                className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 hover:bg-slate-50 hover:text-ink transition-colors"
                 title={isExpanded ? "Collapse preview" : "Expand preview modal"}
               >
                 {isExpanded ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
@@ -305,7 +305,7 @@ export function LessonPreviewPane({
                   {/* Browser Address Bar */}
                   <div className="flex h-7 w-full max-w-md items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 text-[11px] font-mono text-slate-500 shadow-xs">
                     <Lock className="h-3 w-3 text-emerald-600" />
-                    <span className="truncate">https://academy.zedai.org/courses/preview/lesson</span>
+                    <span className="truncate">https://learn.creativesites.site/courses/preview/lesson</span>
                   </div>
 
                   <div className="w-12 text-right">

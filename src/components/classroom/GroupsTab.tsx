@@ -33,9 +33,11 @@ import {
 } from "@/components/ui/dialog";
 import { ManageGroupModal } from "./ManageGroupModal";
 import { cn } from "@/lib/utils";
+import { DEFAULT_PRIMARY_COLOR, BRAND_COLORS } from "@/lib/brand";
 
 const COHORT_COLORS = [
-  { name: "Orange", hex: "#fd5523" },
+  { name: "Royal Blue", hex: BRAND_COLORS.royalBlue },
+  { name: "Orange", hex: BRAND_COLORS.orange },
   { name: "Emerald", hex: "#10b981" },
   { name: "Sky", hex: "#0ea5e9" },
   { name: "Indigo", hex: "#6366f1" },
@@ -57,7 +59,7 @@ export function GroupsTab({ companyId, companySlug }: { companyId: string; compa
   const [formCourseId, setFormCourseId] = useState("all");
   const [formPeriod, setFormPeriod] = useState("");
   const [formDescription, setFormDescription] = useState("");
-  const [selectedColor, setSelectedColor] = useState("#fd5523");
+  const [selectedColor, setSelectedColor] = useState<string>(DEFAULT_PRIMARY_COLOR);
 
   async function load() {
     try {
@@ -84,7 +86,7 @@ export function GroupsTab({ companyId, companySlug }: { companyId: string; compa
     setFormCourseId("all");
     setFormPeriod("");
     setFormDescription("");
-    setSelectedColor("#fd5523");
+    setSelectedColor(DEFAULT_PRIMARY_COLOR);
     setOpen(true);
   }
 
@@ -94,7 +96,7 @@ export function GroupsTab({ companyId, companySlug }: { companyId: string; compa
     setFormCourseId(group.course_id || group.course?.id || "all");
     setFormPeriod(group.academic_period || "");
     setFormDescription(group.description || "");
-    setSelectedColor(group.color || "#fd5523");
+    setSelectedColor(group.color || DEFAULT_PRIMARY_COLOR);
     setOpen(true);
   }
 
@@ -150,7 +152,7 @@ export function GroupsTab({ companyId, companySlug }: { companyId: string; compa
     formData.append("courseId", courseId || "all");
     formData.append("academicPeriod", group.academic_period || "");
     formData.append("description", group.description || "");
-    formData.append("color", group.color || "#fd5523");
+    formData.append("color", group.color || DEFAULT_PRIMARY_COLOR);
     try {
       await updateClassroomGroup(groupId, formData);
       toast.success("Course linked to class!");
@@ -166,7 +168,7 @@ export function GroupsTab({ companyId, companySlug }: { companyId: string; compa
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="min-w-0">
           <div className="flex items-center gap-2.5">
-            <h2 className="text-xl sm:text-2xl font-black text-[#062e39] tracking-tight truncate">
+            <h2 className="text-xl sm:text-2xl font-black text-ink tracking-tight truncate">
               Subjects, Classes &amp; Courses
             </h2>
             <span className="text-xs px-2.5 py-0.5 rounded-full bg-slate-100 font-black text-slate-500 shrink-0">
@@ -181,15 +183,15 @@ export function GroupsTab({ companyId, companySlug }: { companyId: string; compa
         <div className="flex flex-wrap items-center gap-2 shrink-0">
           <Link
             href={`/academy/${companySlug}/admin/courses/new`}
-            className="h-10 px-4 rounded-xl border border-slate-200 bg-white text-xs font-bold text-[#062e39] hover:bg-slate-50 inline-flex items-center justify-center gap-1.5"
+            className="h-10 px-4 rounded-xl border border-slate-200 bg-white text-xs font-bold text-ink hover:bg-slate-50 inline-flex items-center justify-center gap-1.5"
           >
-            <BookOpen className="h-3.5 w-3.5 text-[#fd5523]" />
+            <BookOpen className="h-3.5 w-3.5 text-brand-text" />
             <span>New Course</span>
           </Link>
           <Button
             type="button"
             onClick={openCreateModal}
-            className="h-10 px-4 rounded-xl bg-[#fd5523] text-white hover:bg-[#ef4a16] text-xs font-bold inline-flex items-center justify-center gap-1.5 shadow-sm"
+            className="h-10 px-4 rounded-xl bg-brand text-white hover:bg-brand-hover text-xs font-bold inline-flex items-center justify-center gap-1.5 shadow-sm"
           >
             <Plus className="h-4 w-4" />
             <span>New Subject / Class</span>
@@ -200,9 +202,9 @@ export function GroupsTab({ companyId, companySlug }: { companyId: string; compa
       {/* Create / Edit Modal */}
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="w-[calc(100vw-1.5rem)] max-w-[calc(100vw-1.5rem)] sm:max-w-lg rounded-2xl sm:rounded-3xl border-slate-100 p-0 overflow-hidden max-h-[88dvh] flex flex-col">
-          <div className="p-5 sm:p-6 bg-[#062e39] text-white shrink-0">
+          <div className="p-5 sm:p-6 bg-ink text-white shrink-0">
             <DialogHeader>
-              <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-[#fd8d69]">
+              <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-brand-electric">
                 <GraduationCap className="h-4 w-4" /> Subject / Class Group
               </div>
               <DialogTitle className="text-lg sm:text-xl font-black text-white mt-1">
@@ -214,7 +216,7 @@ export function GroupsTab({ companyId, companySlug }: { companyId: string; compa
           <form onSubmit={handleSaveGroup} className="p-4 sm:p-6 space-y-4 bg-white flex-1 overflow-y-auto">
             <div className="space-y-1.5">
               <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                Subject / Class Name <span className="text-[#fd5523]">*</span>
+                Subject / Class Name <span className="text-brand-text">*</span>
               </label>
               <Input
                 value={formName}
@@ -233,7 +235,7 @@ export function GroupsTab({ companyId, companySlug }: { companyId: string; compa
                 <select
                   value={formCourseId}
                   onChange={(e) => setFormCourseId(e.target.value)}
-                  className="flex h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-[#062e39] outline-none focus:border-[#fd5523]"
+                  className="flex h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-ink outline-none focus:border-brand"
                 >
                   <option value="all">General / Cross-Course</option>
                   {courses.map((c) => (
@@ -293,7 +295,7 @@ export function GroupsTab({ companyId, companySlug }: { companyId: string; compa
               <Button
                 type="submit"
                 disabled={saving || !formName.trim()}
-                className="w-full h-11 rounded-xl bg-[#fd5523] hover:bg-[#ef4a16] text-white font-bold text-xs uppercase tracking-wider shadow-sm"
+                className="w-full h-11 rounded-xl bg-brand hover:bg-brand-hover text-white font-bold text-xs uppercase tracking-wider shadow-sm"
               >
                 {saving && <Loader2 className="h-4 w-4 animate-spin mr-1.5" />}
                 {editingGroup ? "Save Changes" : "Create Subject / Class"}
@@ -306,15 +308,15 @@ export function GroupsTab({ companyId, companySlug }: { companyId: string; compa
       {/* Subjects & Classes Grid */}
       {loading ? (
         <div className="flex flex-col items-center justify-center py-16 text-slate-400">
-          <Loader2 className="h-8 w-8 animate-spin text-[#fd5523] mb-3" />
+          <Loader2 className="h-8 w-8 animate-spin text-brand-text mb-3" />
           <p className="text-xs font-bold uppercase tracking-widest">Loading Classes &amp; Courses...</p>
         </div>
       ) : groups.length === 0 ? (
         <div className="py-14 text-center bg-white rounded-2xl border-2 border-dashed border-slate-200 p-6">
-          <div className="h-14 w-14 rounded-2xl bg-orange-50 text-[#fd5523] flex items-center justify-center mx-auto mb-3">
+          <div className="h-14 w-14 rounded-2xl bg-orange-50 text-brand-text flex items-center justify-center mx-auto mb-3">
             <UsersRound className="h-7 w-7" />
           </div>
-          <h3 className="text-base sm:text-lg font-black text-[#062e39]">No Subjects or Classes Yet</h3>
+          <h3 className="text-base sm:text-lg font-black text-ink">No Subjects or Classes Yet</h3>
           <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
             Create classes or subjects and link them to your courses so students find their materials, assignments, and schedules in one place.
           </p>
@@ -322,7 +324,7 @@ export function GroupsTab({ companyId, companySlug }: { companyId: string; compa
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {groups.map((group) => {
-            const brandColor = group.color || "#fd5523";
+            const brandColor = group.color || DEFAULT_PRIMARY_COLOR;
             return (
               <div
                 key={group.id}
@@ -346,7 +348,7 @@ export function GroupsTab({ companyId, companySlug }: { companyId: string; compa
                         variant="ghost"
                         size="icon"
                         onClick={() => openEditModal(group)}
-                        className="h-8 w-8 text-slate-400 hover:text-[#062e39] rounded-lg"
+                        className="h-8 w-8 text-slate-400 hover:text-ink rounded-lg"
                         title="Edit Subject / Link Course"
                       >
                         <Pencil className="h-3.5 w-3.5" />
@@ -364,7 +366,7 @@ export function GroupsTab({ companyId, companySlug }: { companyId: string; compa
                     </div>
                   </div>
 
-                  <h3 className="text-base sm:text-lg font-bold text-[#062e39] tracking-tight">
+                  <h3 className="text-base sm:text-lg font-bold text-ink tracking-tight">
                     {group.name}
                   </h3>
 
@@ -380,7 +382,7 @@ export function GroupsTab({ companyId, companySlug }: { companyId: string; compa
                         onChange={(e) => {
                           if (e.target.value) handleAssignCourseToClass(group.id, e.target.value);
                         }}
-                        className="h-8 rounded-lg border border-dashed border-slate-300 bg-slate-50 px-2.5 text-[11px] font-semibold text-slate-600 outline-none focus:border-[#fd5523]"
+                        className="h-8 rounded-lg border border-dashed border-slate-300 bg-slate-50 px-2.5 text-[11px] font-semibold text-slate-600 outline-none focus:border-brand"
                       >
                         <option value="">+ Link a course...</option>
                         {courses.map((c) => (
@@ -397,7 +399,7 @@ export function GroupsTab({ companyId, companySlug }: { companyId: string; compa
 
                 <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
                   <span className="text-xs font-bold text-slate-600 flex items-center gap-1.5">
-                    <Users className="h-3.5 w-3.5 text-[#fd5523]" />
+                    <Users className="h-3.5 w-3.5 text-brand-text" />
                     <span>{group.students_count || 0} Learners</span>
                   </span>
 
@@ -414,7 +416,7 @@ export function GroupsTab({ companyId, companySlug }: { companyId: string; compa
         <section className="bg-white rounded-2xl border border-slate-200/80 p-4 sm:p-5 space-y-3">
           <div className="flex items-center justify-between gap-2">
             <div>
-              <h3 className="text-sm sm:text-base font-bold text-[#062e39]">
+              <h3 className="text-sm sm:text-base font-bold text-ink">
                 Academy Courses ({courses.length})
               </h3>
               <p className="text-xs text-slate-500">
@@ -423,7 +425,7 @@ export function GroupsTab({ companyId, companySlug }: { companyId: string; compa
             </div>
             <Link
               href={`/academy/${companySlug}/admin/courses`}
-              className="text-xs font-bold text-[#fd5523] hover:underline whitespace-nowrap"
+              className="text-xs font-bold text-brand-text hover:underline whitespace-nowrap"
             >
               Manage All →
             </Link>
@@ -440,7 +442,7 @@ export function GroupsTab({ companyId, companySlug }: { companyId: string; compa
                   className="flex items-center justify-between gap-3 rounded-xl border border-slate-200/80 bg-slate-50/50 p-3"
                 >
                   <div className="min-w-0">
-                    <p className="text-xs sm:text-sm font-bold text-[#062e39] truncate">{course.title}</p>
+                    <p className="text-xs sm:text-sm font-bold text-ink truncate">{course.title}</p>
                     <p className="text-[11px] text-slate-500 truncate mt-0.5">
                       {linkedClasses.length > 0
                         ? `Class: ${linkedClasses.map((g) => g.name).join(", ")}`
@@ -449,7 +451,7 @@ export function GroupsTab({ companyId, companySlug }: { companyId: string; compa
                   </div>
                   <Link
                     href={`/academy/${companySlug}/admin/courses/${course.id}`}
-                    className="h-8 px-2.5 rounded-lg border border-slate-200 bg-white text-[11px] font-bold text-[#062e39] hover:border-[#fd5523] hover:text-[#fd5523] inline-flex items-center gap-1 shrink-0"
+                    className="h-8 px-2.5 rounded-lg border border-slate-200 bg-white text-[11px] font-bold text-ink hover:border-brand hover:text-brand-text inline-flex items-center gap-1 shrink-0"
                   >
                     <span>Studio</span>
                     <ExternalLink className="h-3 w-3" />

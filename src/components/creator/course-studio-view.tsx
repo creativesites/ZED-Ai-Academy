@@ -30,6 +30,7 @@ import {
 import { Toaster } from "@/components/ui/sonner";
 import { cn } from "@/lib/utils";
 import type { Course, Lesson, Module } from "@/types/database";
+import { BRAND_COLORS } from "@/lib/brand";
 
 type LessonRow = Pick<Lesson, "id" | "title" | "position" | "is_preview"> & {
   content_block_count?: number;
@@ -260,12 +261,12 @@ export async function CourseStudioView({
       <div className="rounded-2xl border border-slate-200/80 bg-white p-4 sm:p-6">
         <div className="mb-4 flex items-end justify-between gap-4">
           <div>
-            <h2 className="text-lg font-bold text-[#062e39]">Launch checklist</h2>
+            <h2 className="text-lg font-bold text-ink">Launch checklist</h2>
             <p className="text-sm text-slate-500">
               {isReady ? "Everything required is done." : `${required.length - requiredDone} required step${required.length - requiredDone !== 1 ? "s" : ""} left before you can publish.`}
             </p>
           </div>
-          <p className={cn("text-2xl font-bold tabular-nums", isReady ? "text-emerald-600" : "text-[#fd5523]")}>
+          <p className={cn("text-2xl font-bold tabular-nums", isReady ? "text-emerald-600" : "text-brand-text")}>
             {readinessPct}%
           </p>
         </div>
@@ -278,7 +279,7 @@ export async function CourseStudioView({
                 <Circle className={cn("mt-0.5 h-5 w-5 shrink-0", item.required ? "text-amber-400" : "text-slate-300")} />
               )}
               <div className="min-w-0 flex-1">
-                <p className="flex flex-wrap items-center gap-2 text-sm font-semibold text-[#062e39]">
+                <p className="flex flex-wrap items-center gap-2 text-sm font-semibold text-ink">
                   {item.label}
                   {!item.required && (
                     <span className="rounded-md bg-slate-100 px-1.5 py-px text-[10px] font-semibold uppercase tracking-wide text-slate-500">
@@ -291,7 +292,7 @@ export async function CourseStudioView({
               {!item.done && (
                 <Link
                   href={`?tab=${item.tab}`}
-                  className="shrink-0 rounded-lg px-2 py-1 text-xs font-semibold text-[#fd5523] hover:bg-[#fff6ee]"
+                  className="shrink-0 rounded-lg px-2 py-1 text-xs font-semibold text-brand-text hover:bg-brand-soft"
                 >
                   Fix
                 </Link>
@@ -313,8 +314,8 @@ export async function CourseStudioView({
       </div>
 
       <div className="space-y-5">
-        <div className="rounded-2xl bg-[#062e39] p-5 text-white">
-          <p className="text-xs font-semibold uppercase tracking-wider text-[#fd8d69]">
+        <div className="rounded-2xl bg-ink p-5 text-white">
+          <p className="text-xs font-semibold uppercase tracking-wider text-brand-electric">
             {course.status === "published" ? "Live in your catalog" : isReady ? "Ready to launch" : "Not ready yet"}
           </p>
           <p className="mt-1.5 text-sm leading-relaxed text-white/75">
@@ -337,7 +338,7 @@ export async function CourseStudioView({
           ].map((s) => (
             <div key={s.label} className="rounded-2xl border border-slate-200/80 bg-white p-3.5">
               <dt className="text-xs text-slate-500">{s.label}</dt>
-              <dd className="mt-0.5 font-bold text-[#062e39]">{s.value}</dd>
+              <dd className="mt-0.5 font-bold text-ink">{s.value}</dd>
             </div>
           ))}
         </dl>
@@ -360,23 +361,23 @@ export async function CourseStudioView({
         ].map((s) => (
           <div key={s.label} className="rounded-2xl border border-slate-200/80 bg-white p-4">
             <p className="text-xs text-slate-500">{s.label}</p>
-            <p className="mt-1 text-2xl font-bold tabular-nums text-[#062e39]">{s.value}</p>
+            <p className="mt-1 text-2xl font-bold tabular-nums text-ink">{s.value}</p>
           </div>
         ))}
       </div>
       <div className="grid gap-5 lg:grid-cols-2">
         <div className="rounded-2xl border border-slate-200/80 bg-white p-4 sm:p-6">
-          <h3 className="mb-4 text-sm font-bold text-[#062e39]">New learners · last 8 weeks</h3>
+          <h3 className="mb-4 text-sm font-bold text-ink">New learners · last 8 weeks</h3>
           {weeklyData.every((w) => w.count === 0) ? (
             <p className="py-8 text-center text-sm text-slate-400">No enrollments yet.</p>
           ) : (
             <div className="flex h-36 items-end gap-1.5 sm:gap-2">
               {weeklyData.map((w) => (
                 <div key={w.week} className="flex flex-1 flex-col items-center gap-1">
-                  <span className="text-[11px] font-semibold tabular-nums text-[#062e39]">{w.count || ""}</span>
-                  <div className="relative h-24 w-full overflow-hidden rounded-md bg-[#fd5523]/10">
+                  <span className="text-[11px] font-semibold tabular-nums text-ink">{w.count || ""}</span>
+                  <div className="relative h-24 w-full overflow-hidden rounded-md bg-brand/10">
                     <div
-                      className="absolute bottom-0 w-full rounded-md bg-[#fd5523]"
+                      className="absolute bottom-0 w-full rounded-md bg-brand"
                       style={{ height: `${Math.round((w.count / weeklyMax) * 100)}%` }}
                     />
                   </div>
@@ -387,12 +388,12 @@ export async function CourseStudioView({
           )}
         </div>
         <div className="rounded-2xl border border-slate-200/80 bg-white p-4 sm:p-6">
-          <h3 className="mb-4 text-sm font-bold text-[#062e39]">Learner feedback</h3>
+          <h3 className="mb-4 text-sm font-bold text-ink">Learner feedback</h3>
           {reviewRows.length === 0 ? (
             <p className="py-8 text-center text-sm text-slate-400">No reviews yet.</p>
           ) : (
             <div className="flex items-center gap-4">
-              <p className="text-5xl font-bold tabular-nums text-[#062e39]">{avgRating?.toFixed(1)}</p>
+              <p className="text-5xl font-bold tabular-nums text-ink">{avgRating?.toFixed(1)}</p>
               <div>
                 <div className="flex gap-0.5">
                   {[1, 2, 3, 4, 5].map((i) => (
@@ -400,7 +401,7 @@ export async function CourseStudioView({
                       key={i}
                       className={cn(
                         "h-4 w-4",
-                        avgRating !== null && i <= Math.round(avgRating) ? "fill-[#fd5523] text-[#fd5523]" : "text-slate-200"
+                        avgRating !== null && i <= Math.round(avgRating) ? "fill-brand text-brand-text" : "text-slate-200"
                       )}
                     />
                   ))}
@@ -424,7 +425,7 @@ export async function CourseStudioView({
         <header className="mb-1">
           <Link
             href={backHref}
-            className="mb-3 inline-flex items-center gap-1.5 rounded-lg py-1 text-sm font-medium text-slate-500 transition-colors hover:text-[#062e39]"
+            className="mb-3 inline-flex items-center gap-1.5 rounded-lg py-1 text-sm font-medium text-slate-500 transition-colors hover:text-ink"
           >
             <ArrowLeft className="h-4 w-4" />
             All courses
@@ -432,7 +433,7 @@ export async function CourseStudioView({
 
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex min-w-0 items-center gap-3 sm:gap-4">
-              <div className="relative h-14 w-20 shrink-0 overflow-hidden rounded-xl bg-gradient-to-br from-[#062e39] to-[#0d4d5e] sm:h-16 sm:w-24">
+              <div className="relative h-14 w-20 shrink-0 overflow-hidden rounded-xl bg-gradient-to-br from-ink to-[#0d4d5e] sm:h-16 sm:w-24">
                 {course.thumbnail_url ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={course.thumbnail_url} alt="" className="h-full w-full object-cover" />
@@ -454,7 +455,7 @@ export async function CourseStudioView({
                       .join(" · ")}
                   </span>
                 </div>
-                <h1 className="line-clamp-2 text-xl font-bold leading-tight tracking-tight text-[#062e39] sm:text-2xl">
+                <h1 className="line-clamp-2 text-xl font-bold leading-tight tracking-tight text-ink sm:text-2xl">
                   {course.title}
                 </h1>
               </div>
@@ -464,7 +465,7 @@ export async function CourseStudioView({
               <Link
                 href={previewHref}
                 target="_blank"
-                className="inline-flex h-10 flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-[#062e39] transition-colors hover:bg-slate-50 sm:flex-none"
+                className="inline-flex h-10 flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-ink transition-colors hover:bg-slate-50 sm:flex-none"
               >
                 <ExternalLink className="h-4 w-4" />
                 {course.status === "published" ? "View live" : "Preview"}
@@ -479,7 +480,7 @@ export async function CourseStudioView({
           {course.status !== "published" && nextStep && (
             <Link
               href={`?tab=${nextStep.tab}`}
-              className="mt-4 flex items-center gap-3 rounded-2xl border border-slate-200/80 bg-white p-3 transition-colors hover:border-[#fd5523]/40"
+              className="mt-4 flex items-center gap-3 rounded-2xl border border-slate-200/80 bg-white p-3 transition-colors hover:border-brand/40"
             >
               <div className="relative h-10 w-10 shrink-0">
                 <svg viewBox="0 0 36 36" className="h-10 w-10 -rotate-90">
@@ -489,24 +490,24 @@ export async function CourseStudioView({
                     cy="18"
                     r="15.5"
                     fill="none"
-                    stroke="#fd5523"
+                    stroke={BRAND_COLORS.royalBlue}
                     strokeWidth="4"
                     strokeLinecap="round"
                     strokeDasharray={`${(readinessPct / 100) * 97.4} 97.4`}
                   />
                 </svg>
-                <span className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-[#062e39]">
+                <span className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-ink">
                   {requiredDone}/{required.length}
                 </span>
               </div>
               <div className="min-w-0 flex-1">
                 <p className="text-xs font-medium text-slate-500">Next step</p>
-                <p className="truncate text-sm font-semibold text-[#062e39]">
+                <p className="truncate text-sm font-semibold text-ink">
                   {nextStep.label}
                   <span className="font-normal text-slate-500"> — {nextStep.detail}</span>
                 </p>
               </div>
-              <span className="shrink-0 text-xs font-semibold text-[#fd5523]">Go →</span>
+              <span className="shrink-0 text-xs font-semibold text-brand-text">Go →</span>
             </Link>
           )}
         </header>

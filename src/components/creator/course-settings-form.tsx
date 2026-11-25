@@ -99,7 +99,7 @@ export function CourseSettingsForm({
   return (
     <div className="space-y-6">
       {/* Visibility Status Banner */}
-      <section className="rounded-2xl sm:rounded-3xl border border-[#fd5523]/15 bg-[#fff6ee]/60 p-5 sm:p-6 shadow-sm">
+      <section className="rounded-2xl sm:rounded-3xl border border-brand/15 bg-brand-soft/60 p-5 sm:p-6 shadow-sm">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3.5">
             <div
@@ -112,7 +112,7 @@ export function CourseSettingsForm({
               {status === "published" ? <Eye className="h-5 w-5" /> : <EyeOff className="h-5 w-5" />}
             </div>
             <div>
-              <p className="text-base sm:text-lg font-bold text-[#062e39] uppercase tracking-tight">
+              <p className="text-base sm:text-lg font-bold text-ink uppercase tracking-tight">
                 Status: {status}
               </p>
               <p className="text-xs sm:text-sm text-slate-500">
@@ -129,8 +129,8 @@ export function CourseSettingsForm({
             disabled={publishPending}
             className={`h-11 w-full sm:w-auto rounded-xl px-6 text-sm font-bold transition-all ${
               status === "published"
-                ? "bg-[#062e39] text-white hover:bg-[#0a4055]"
-                : "bg-[#fd5523] text-white hover:bg-[#ef4a16]"
+                ? "bg-ink text-white hover:bg-ink-hover"
+                : "bg-brand text-white hover:bg-brand-hover"
             }`}
           >
             {publishPending ? (
@@ -148,9 +148,9 @@ export function CourseSettingsForm({
           {/* Core Info */}
           <Card className="rounded-2xl sm:rounded-3xl border border-slate-200/80 bg-white shadow-sm">
             <CardContent className="space-y-5 p-5 sm:p-6">
-              <div className="flex items-center gap-2 text-[#fd5523]">
+              <div className="flex items-center gap-2 text-brand-text">
                 <FileText className="h-4 w-4" />
-                <h3 className="text-sm font-black uppercase tracking-wider text-[#062e39]">
+                <h3 className="text-sm font-black uppercase tracking-wider text-ink">
                   Core Identity
                 </h3>
               </div>
@@ -164,7 +164,7 @@ export function CourseSettingsForm({
                   name="title"
                   defaultValue={course.title}
                   required
-                  className="h-11 rounded-xl border-slate-200 bg-white text-base font-semibold text-[#062e39] focus:border-[#fd5523] focus:ring-[#fd5523]/10"
+                  className="h-11 rounded-xl border-slate-200 bg-white text-base font-semibold text-ink focus:border-brand focus:ring-brand/10"
                 />
               </div>
 
@@ -178,7 +178,7 @@ export function CourseSettingsForm({
                   defaultValue={course.description ?? ""}
                   rows={5}
                   placeholder="What will learners be able to DO after this course?"
-                  className="resize-none rounded-xl border-slate-200 bg-white p-3.5 text-sm leading-relaxed text-[#062e39] focus:border-[#fd5523] focus:ring-[#fd5523]/10"
+                  className="resize-none rounded-xl border-slate-200 bg-white p-3.5 text-sm leading-relaxed text-ink focus:border-brand focus:ring-brand/10"
                 />
               </div>
             </CardContent>
@@ -187,9 +187,9 @@ export function CourseSettingsForm({
           {/* Media & Meta */}
           <Card className="rounded-2xl sm:rounded-3xl border border-slate-200/80 bg-white shadow-sm">
             <CardContent className="space-y-5 p-5 sm:p-6">
-              <div className="flex items-center gap-2 text-[#fd5523]">
+              <div className="flex items-center gap-2 text-brand-text">
                 <Sparkles className="h-4 w-4" />
-                <h3 className="text-sm font-black uppercase tracking-wider text-[#062e39]">
+                <h3 className="text-sm font-black uppercase tracking-wider text-ink">
                   Cover & Metadata
                 </h3>
               </div>
@@ -202,9 +202,9 @@ export function CourseSettingsForm({
 
                 <div className="relative mt-1">
                   {uploading ? (
-                    <div className="flex aspect-video w-full flex-col items-center justify-center rounded-xl border-2 border-dashed border-[#fd5523]/30 bg-[#fd5523]/5 p-4 text-center">
-                      <Loader2 className="h-7 w-7 animate-spin text-[#fd5523]" />
-                      <p className="mt-2 text-xs font-bold uppercase tracking-wider text-[#062e39]">
+                    <div className="flex aspect-video w-full flex-col items-center justify-center rounded-xl border-2 border-dashed border-brand/30 bg-brand/5 p-4 text-center">
+                      <Loader2 className="h-7 w-7 animate-spin text-brand-text" />
+                      <p className="mt-2 text-xs font-bold uppercase tracking-wider text-ink">
                         Uploading cover image...
                       </p>
                     </div>
@@ -226,9 +226,9 @@ export function CourseSettingsForm({
                       </button>
                     </div>
                   ) : (
-                    <label className="group flex aspect-video w-full cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-200 bg-slate-50/70 p-4 text-center transition-all hover:border-[#fd5523]/40 hover:bg-[#fd5523]/5">
-                      <Upload className="h-7 w-7 text-slate-400 transition-colors group-hover:text-[#fd5523]" />
-                      <span className="mt-2 text-xs font-bold text-slate-600 group-hover:text-[#062e39]">
+                    <label className="group flex aspect-video w-full cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-200 bg-slate-50/70 p-4 text-center transition-all hover:border-brand/40 hover:bg-brand/5">
+                      <Upload className="h-7 w-7 text-slate-400 transition-colors group-hover:text-brand-text" />
+                      <span className="mt-2 text-xs font-bold text-slate-600 group-hover:text-ink">
                         Click to upload cover image
                       </span>
                       <span className="mt-1 text-[11px] text-slate-400">
@@ -273,7 +273,7 @@ export function CourseSettingsForm({
                   <select
                     name="category"
                     defaultValue={course.category ?? ""}
-                    className="flex h-11 w-full rounded-xl border border-slate-200 bg-white px-3.5 text-sm font-semibold text-[#062e39] outline-none transition-all focus:border-[#fd5523] focus:ring-2 focus:ring-[#fd5523]/10"
+                    className="flex h-11 w-full rounded-xl border border-slate-200 bg-white px-3.5 text-sm font-semibold text-ink outline-none transition-all focus:border-brand focus:ring-2 focus:ring-brand/10"
                   >
                     <option value="">No category</option>
                     {COURSE_CATEGORIES.map((cat) => (
@@ -291,7 +291,7 @@ export function CourseSettingsForm({
                   <select
                     name="level"
                     defaultValue={course.level ?? ""}
-                    className="flex h-11 w-full rounded-xl border border-slate-200 bg-white px-3.5 text-sm font-semibold text-[#062e39] outline-none transition-all focus:border-[#fd5523] focus:ring-2 focus:ring-[#fd5523]/10"
+                    className="flex h-11 w-full rounded-xl border border-slate-200 bg-white px-3.5 text-sm font-semibold text-ink outline-none transition-all focus:border-brand focus:ring-2 focus:ring-brand/10"
                   >
                     <option value="">No level</option>
                     <option value="beginner">Beginner</option>
@@ -307,9 +307,9 @@ export function CourseSettingsForm({
           <Card className="rounded-2xl sm:rounded-3xl border border-slate-200/80 bg-white shadow-sm lg:col-span-2">
             <CardContent className="grid gap-5 p-5 sm:p-6 sm:grid-cols-2 lg:grid-cols-3 lg:items-end">
               <div className="space-y-1 sm:col-span-2 lg:col-span-1">
-                <div className="flex items-center gap-2 text-[#fd5523]">
+                <div className="flex items-center gap-2 text-brand-text">
                   <CircleDollarSign className="h-4 w-4" />
-                  <h3 className="text-sm font-black uppercase tracking-wider text-[#062e39]">
+                  <h3 className="text-sm font-black uppercase tracking-wider text-ink">
                     Pricing
                   </h3>
                 </div>
@@ -326,7 +326,7 @@ export function CourseSettingsForm({
                   name="price_type"
                   value={priceType}
                   onChange={(e) => setPriceType(e.target.value as Course["price_type"])}
-                  className="flex h-11 w-full rounded-xl border border-slate-200 bg-white px-3.5 text-sm font-semibold text-[#062e39] outline-none transition-all focus:border-[#fd5523] focus:ring-2 focus:ring-[#fd5523]/10"
+                  className="flex h-11 w-full rounded-xl border border-slate-200 bg-white px-3.5 text-sm font-semibold text-ink outline-none transition-all focus:border-brand focus:ring-2 focus:ring-brand/10"
                 >
                   <option value="free">Free</option>
                   <option value="one_time">One-time purchase</option>
@@ -351,7 +351,7 @@ export function CourseSettingsForm({
                       min="0"
                       step="0.01"
                       defaultValue={course.price_amount ?? ""}
-                      className="h-11 rounded-xl border-slate-200 bg-white pl-10 text-sm font-bold text-[#062e39]"
+                      className="h-11 rounded-xl border-slate-200 bg-white pl-10 text-sm font-bold text-ink"
                     />
                   </div>
                 </div>
@@ -363,7 +363,7 @@ export function CourseSettingsForm({
             <Card className="rounded-2xl sm:rounded-3xl border border-slate-200/80 bg-white shadow-sm lg:col-span-2">
               <CardContent className="p-5 sm:p-6 space-y-3">
                 <div>
-                  <h3 className="text-sm font-black uppercase tracking-wider text-[#062e39]">
+                  <h3 className="text-sm font-black uppercase tracking-wider text-ink">
                     Belongs to Subjects / Classes
                   </h3>
                   <p className="text-xs text-slate-500 mt-0.5">
@@ -380,7 +380,7 @@ export function CourseSettingsForm({
                         onClick={() => toggleClassId(cls.id)}
                         className={`px-3.5 py-2 rounded-xl text-xs font-bold border transition-all ${
                           active
-                            ? "border-[#fd5523] bg-[#fff6ee] text-[#fd5523]"
+                            ? "border-brand bg-brand-soft text-brand-text"
                             : "border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100"
                         }`}
                       >
@@ -414,7 +414,7 @@ export function CourseSettingsForm({
           <Button
             type="submit"
             disabled={saving}
-            className="h-11 w-full sm:w-auto rounded-xl bg-[#fd5523] px-7 text-sm font-bold text-white transition-all hover:bg-[#ef4a16] shadow-sm"
+            className="h-11 w-full sm:w-auto rounded-xl bg-brand px-7 text-sm font-bold text-white transition-all hover:bg-brand-hover shadow-sm"
           >
             {saving ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />

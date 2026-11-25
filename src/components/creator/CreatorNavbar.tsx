@@ -13,11 +13,11 @@ import {
   LayoutDashboard,
   Menu,
   X,
-  GraduationCap,
   Sparkles,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { BrandLogo } from "@/components/shared/brand-logo";
 
 const NAV_ITEMS = [
   { label: "Courses", href: "/creator/courses", icon: BookOpen },
@@ -45,14 +45,12 @@ export function CreatorNavbar({ children }: { children?: ReactNode }) {
         <div className="container max-w-7xl mx-auto px-4 h-16 flex items-center justify-between gap-4">
           {/* Brand */}
           <Link href="/creator/courses" className="flex items-center gap-2.5 shrink-0 group">
-            <div className="h-9 w-9 rounded-xl bg-[#fd5523] group-hover:bg-[#062e39] flex items-center justify-center text-white transition-colors shadow-sm">
-              <GraduationCap className="h-5 w-5" />
-            </div>
+            <BrandLogo variant="emblem" decorative className="h-9 w-auto transition-transform group-hover:scale-105" />
             <div className="flex flex-col leading-none">
-              <span className="font-black text-sm text-[#062e39] tracking-tight">
-                Zed AI Academy
+              <span className="font-black text-sm text-ink tracking-tight">
+                CS Learn
               </span>
-              <span className="text-[10px] font-bold uppercase tracking-wider text-[#fd5523]">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-brand-text">
                 Creator Studio
               </span>
             </div>
@@ -69,11 +67,11 @@ export function CreatorNavbar({ children }: { children?: ReactNode }) {
                   className={cn(
                     "px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap",
                     active
-                      ? "bg-[#fff6ee] text-[#fd5523] font-extrabold"
-                      : "text-slate-600 hover:text-[#062e39] hover:bg-slate-100/70"
+                      ? "bg-brand-soft text-brand-text font-extrabold"
+                      : "text-slate-600 hover:text-ink hover:bg-slate-100/70"
                   )}
                 >
-                  <item.icon className={cn("h-3.5 w-3.5", active ? "text-[#fd5523]" : "text-slate-400")} />
+                  <item.icon className={cn("h-3.5 w-3.5", active ? "text-brand-text" : "text-slate-400")} />
                   <span>{item.label}</span>
                 </Link>
               );
@@ -84,7 +82,7 @@ export function CreatorNavbar({ children }: { children?: ReactNode }) {
           <div className="flex items-center gap-2.5 shrink-0">
             <Link
               href="/dashboard"
-              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50 text-xs font-bold text-[#062e39] hover:bg-slate-100 transition-colors whitespace-nowrap"
+              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50 text-xs font-bold text-ink hover:bg-slate-100 transition-colors whitespace-nowrap"
             >
               <LayoutDashboard className="h-3.5 w-3.5 text-slate-500" />
               <span>Dashboard</span>
@@ -130,7 +128,7 @@ export function CreatorNavbar({ children }: { children?: ReactNode }) {
                   className={cn(
                     "flex items-center gap-3 px-3.5 py-3 rounded-xl text-sm font-bold transition-colors",
                     active
-                      ? "bg-[#fff6ee] text-[#fd5523]"
+                      ? "bg-brand-soft text-brand-text"
                       : "text-slate-600 hover:bg-slate-50"
                   )}
                 >
@@ -142,7 +140,7 @@ export function CreatorNavbar({ children }: { children?: ReactNode }) {
             <Link
               href="/dashboard"
               onClick={() => setMobileOpen(false)}
-              className="flex items-center gap-3 px-3.5 py-3 rounded-xl text-sm font-bold text-[#062e39] bg-slate-50 border border-slate-200 mt-2"
+              className="flex items-center gap-3 px-3.5 py-3 rounded-xl text-sm font-bold text-ink bg-slate-50 border border-slate-200 mt-2"
             >
               <LayoutDashboard className="h-4 w-4 text-slate-500" />
               <span>Student Dashboard</span>

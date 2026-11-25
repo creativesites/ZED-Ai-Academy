@@ -1,4 +1,4 @@
-# Database Schema — Zed AI Academy
+# Database Schema — CS Learn
 
 Backed by Supabase (Postgres). All tables use Row Level Security (RLS). UUIDs for all primary keys.
 

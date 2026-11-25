@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { notFound, redirect } from "next/navigation";
 import { getCurrentTenantAccess } from "@/lib/tenants/access";
 import { SettingsForm } from "@/components/creator/settings-form";
+import { DEFAULT_PRIMARY_COLOR } from "@/lib/brand";
 
 export const metadata = { title: "Branding & Site Settings — Academy Admin" };
 
@@ -34,10 +35,10 @@ export default async function SettingsPage({
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#fff6ee] to-white">
+    <div className="min-h-screen bg-gradient-to-b from-brand-soft to-white">
       <div className="px-4 py-6 sm:px-6 lg:px-8 max-w-6xl mx-auto space-y-5">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[#062e39]">
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-ink">
             Branding &amp; Design
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 mt-1">
@@ -48,7 +49,7 @@ export default async function SettingsPage({
         <SettingsForm 
           initialData={{
             logo_url: company.logo_url || "",
-            primary_color: company.primary_color || "#fd5523",
+            primary_color: company.primary_color || DEFAULT_PRIMARY_COLOR,
             home_template: company.home_template,
             home_content: company.home_content || {},
           }}

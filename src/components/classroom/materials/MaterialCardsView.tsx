@@ -83,10 +83,10 @@ export function MaterialCardsView({
                         <div className={cn("p-2 rounded-lg border", meta.color)}>
                           <Icon className="h-4 w-4" />
                         </div>
-                        <span className="font-bold text-slate-900 group-hover:text-[#fd5523] transition-colors">
+                        <span className="font-bold text-slate-900 group-hover:text-brand-text transition-colors">
                           {item.title}
                         </span>
-                        {item.is_pinned && <Pin className="h-3 w-3 text-[#fd5523]" />}
+                        {item.is_pinned && <Pin className="h-3 w-3 text-brand-text" />}
                       </div>
                     </td>
                     <td className="py-3 px-4 text-slate-500 font-medium">{meta.label}</td>
@@ -100,7 +100,7 @@ export function MaterialCardsView({
                             href={item.file_url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="p-1.5 rounded-lg text-slate-400 hover:text-[#fd5523] hover:bg-slate-100"
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-brand-text hover:bg-slate-100"
                           >
                             <Download className="h-3.5 w-3.5" />
                           </a>
@@ -135,7 +135,7 @@ export function MaterialCardsView({
         return (
           <div
             key={item.id}
-            className="group relative flex flex-col justify-between p-4 sm:p-5 rounded-2xl sm:rounded-3xl bg-white border border-slate-100 shadow-sm hover:shadow-xl hover:border-[#fd5523]/30 transition-all"
+            className="group relative flex flex-col justify-between p-4 sm:p-5 rounded-2xl sm:rounded-3xl bg-white border border-slate-100 shadow-sm hover:shadow-xl hover:border-brand/30 transition-all"
           >
             <div>
               {/* Card Top: Type badge, cohort/course tags, bookmark & options */}
@@ -176,7 +176,7 @@ export function MaterialCardsView({
                     className={cn(
                       "h-7 w-7 rounded-lg flex items-center justify-center transition-colors",
                       item.is_bookmarked
-                        ? "text-[#fd5523] bg-orange-50 hover:bg-orange-100"
+                        ? "text-brand-text bg-orange-50 hover:bg-orange-100"
                         : "text-slate-400 hover:text-slate-600 hover:bg-slate-100",
                     )}
                     title={item.is_bookmarked ? "Remove Bookmark" : "Save Bookmark"}
@@ -188,7 +188,7 @@ export function MaterialCardsView({
                     )}
                   </button>
 
-                  {item.is_pinned && <Pin className="h-3.5 w-3.5 text-[#fd5523]" />}
+                  {item.is_pinned && <Pin className="h-3.5 w-3.5 text-brand-text" />}
 
                   <DropdownMenu>
                     <DropdownMenuTrigger
@@ -258,7 +258,7 @@ export function MaterialCardsView({
               {/* Title */}
               <h4
                 onClick={() => onPreview(item)}
-                className="text-base font-black text-[#062e39] tracking-tight group-hover:text-[#fd5523] transition-colors cursor-pointer line-clamp-2"
+                className="text-base font-black text-ink tracking-tight group-hover:text-brand-text transition-colors cursor-pointer line-clamp-2"
               >
                 {item.title}
               </h4>
@@ -321,7 +321,7 @@ export function MaterialCardsView({
                   variant="ghost"
                   size="sm"
                   onClick={() => onPreview(item)}
-                  className="h-7 px-2.5 rounded-lg text-xs font-bold text-slate-600 hover:text-[#fd5523] hover:bg-orange-50"
+                  className="h-7 px-2.5 rounded-lg text-xs font-bold text-slate-600 hover:text-brand-text hover:bg-orange-50"
                 >
                   <Eye className="mr-1 h-3 w-3" />
                   Preview
@@ -332,7 +332,7 @@ export function MaterialCardsView({
                     target="_blank"
                     rel="noopener noreferrer"
                     download={item.title}
-                    className="h-7 w-7 rounded-lg flex items-center justify-center text-slate-500 hover:text-[#fd5523] hover:bg-orange-50 transition-colors"
+                    className="h-7 w-7 rounded-lg flex items-center justify-center text-slate-500 hover:text-brand-text hover:bg-orange-50 transition-colors"
                     title="Open or Download"
                   >
                     <Download className="h-3.5 w-3.5" />

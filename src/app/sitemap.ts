@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { createServiceClient } from "@/lib/supabase/server";
+import { BRAND } from "@/lib/brand";
 
 export const revalidate = 3600;
 
@@ -7,7 +8,7 @@ function getBaseUrl(): string {
   const raw =
     process.env.NEXT_PUBLIC_APP_URL ||
     process.env.NEXT_PUBLIC_SITE_URL ||
-    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "https://zedai.academy");
+    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : BRAND.url);
   return raw.replace(/\/+$/, "");
 }
 

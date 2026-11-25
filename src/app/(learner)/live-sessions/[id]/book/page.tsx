@@ -60,28 +60,28 @@ export default async function BookLiveSessionPage({ params, searchParams }: Page
     <main className="container" style={{ paddingTop: "60px", paddingBottom: "120px" }}>
       <div className="grid gap-8 lg:grid-cols-[0.85fr_1.15fr]">
         <aside className="space-y-6">
-          <div className="rounded-[2rem] bg-[#062e39] p-8 text-white shadow-2xl">
-            <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-white/10 text-[#fd5523]">
+          <div className="rounded-[2rem] bg-ink p-8 text-white shadow-2xl">
+            <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-white/10 text-brand-text">
               <Video className="h-7 w-7" />
             </div>
-            <p className="text-xs font-black uppercase tracking-[0.25em] text-[#fd8d69]">Live Session</p>
+            <p className="text-xs font-black uppercase tracking-[0.25em] text-brand-electric">Live Session</p>
             <h1 className="mt-3 text-4xl font-bold tracking-tight">{service.title}</h1>
             {service.description && <p className="mt-4 text-base leading-relaxed text-white/70">{service.description}</p>}
 
             <div className="mt-8 grid gap-3">
               <div className="flex items-center gap-3 rounded-2xl bg-white/10 px-4 py-3">
-                <Clock3 className="h-5 w-5 text-[#fd5523]" />
+                <Clock3 className="h-5 w-5 text-brand-text" />
                 <span className="text-sm font-bold">{service.duration_minutes} minutes</span>
               </div>
               <div className="flex items-center gap-3 rounded-2xl bg-white/10 px-4 py-3">
-                <CalendarDays className="h-5 w-5 text-[#fd5523]" />
+                <CalendarDays className="h-5 w-5 text-brand-text" />
                 <span className="text-sm font-bold">{slotCount} available slot{slotCount !== 1 ? "s" : ""}</span>
               </div>
             </div>
           </div>
 
           <div className="rounded-[2rem] border border-slate-100 bg-white p-6 shadow-xl shadow-slate-200/50">
-            <h2 className="text-lg font-bold text-[#062e39]">Your Current Requests</h2>
+            <h2 className="text-lg font-bold text-ink">Your Current Requests</h2>
             <div className="mt-4 space-y-3">
               {activeBookings.length === 0 ? (
                 <p className="rounded-xl bg-slate-50 p-4 text-sm text-slate-500">You have no active booking for this session type.</p>
@@ -90,14 +90,14 @@ export default async function BookLiveSessionPage({ params, searchParams }: Page
                   <div className="flex items-start gap-3">
                     <CheckCircle className="mt-0.5 h-5 w-5 text-green-600" />
                     <div>
-                      <p className="text-sm font-bold text-[#062e39]">{formatExistingBooking(booking)}</p>
+                      <p className="text-sm font-bold text-ink">{formatExistingBooking(booking)}</p>
                       <p className="mt-1 text-xs text-slate-500">
                         {booking.status === "requested"
                           ? "Waiting for instructor confirmation."
                           : "Your session is confirmed."}
                       </p>
                       {booking.status === "confirmed" && (
-                        <Link href={`/live-sessions/${booking.id}/studio`} className="mt-3 inline-flex text-sm font-bold text-[#fd5523]">
+                        <Link href={`/live-sessions/${booking.id}/studio`} className="mt-3 inline-flex text-sm font-bold text-brand-text">
                           Open live studio
                         </Link>
                       )}
@@ -108,7 +108,7 @@ export default async function BookLiveSessionPage({ params, searchParams }: Page
             </div>
           </div>
 
-          <Link href="/dashboard" className="inline-flex text-sm font-bold text-[#062e39] hover:text-[#fd5523]">
+          <Link href="/dashboard" className="inline-flex text-sm font-bold text-ink hover:text-brand-text">
             Back to dashboard
           </Link>
         </aside>

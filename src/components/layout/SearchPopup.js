@@ -45,11 +45,11 @@ export default function SearchPopup({ isPopup, handlePopup }) {
                                 value={query}
                                 onChange={(e) => setQuery(e.target.value)}
                                 placeholder="Search courses, tools, or topics..." 
-                                className="w-full bg-white/10 border-2 border-white/20 rounded-[2rem] px-8 py-6 text-2xl text-white placeholder:text-white/40 focus:border-[#fd5523] focus:outline-none transition-all pr-20"
+                                className="w-full bg-white/10 border-2 border-white/20 rounded-[2rem] px-8 py-6 text-2xl text-white placeholder:text-white/40 focus:border-brand focus:outline-none transition-all pr-20"
                                 autoFocus={isPopup}
                             />
                             <div className="absolute right-6 top-1/2 -translate-y-1/2 flex items-center gap-4">
-                                {loading && <Loader2 className="h-6 w-6 text-[#fd5523] animate-spin" />}
+                                {loading && <Loader2 className="h-6 w-6 text-brand-text animate-spin" />}
                                 <button onClick={handlePopup} className="text-white/40 hover:text-white transition-colors">
                                     <X className="h-8 w-8" />
                                 </button>
@@ -67,24 +67,24 @@ export default function SearchPopup({ isPopup, handlePopup }) {
                                                 key={course.id} 
                                                 href={`/courses/${course.slug}`}
                                                 onClick={handlePopup}
-                                                className="group flex items-center gap-6 p-4 rounded-[2rem] bg-white/5 hover:bg-white/10 border border-white/5 hover:border-[#fd5523]/30 transition-all"
+                                                className="group flex items-center gap-6 p-4 rounded-[2rem] bg-white/5 hover:bg-white/10 border border-white/5 hover:border-brand/30 transition-all"
                                             >
                                                 <div className="h-16 w-16 rounded-2xl bg-white/10 overflow-hidden shrink-0">
                                                     <img src={course.thumbnail_url || 'https://images.unsplash.com/photo-1675271591211-126ad94e495d?w=200'} alt="" className="h-full w-full object-cover" />
                                                 </div>
                                                 <div className="flex-1 min-w-0">
                                                     <div className="flex items-center gap-2 mb-1">
-                                                        <span className="text-[10px] font-bold uppercase tracking-widest text-[#fd5523]">{course.category}</span>
+                                                        <span className="text-[10px] font-bold uppercase tracking-widest text-brand-text">{course.category}</span>
                                                     </div>
-                                                    <h3 className="text-lg font-bold text-white truncate group-hover:text-[#fd5523] transition-colors">{course.title}</h3>
+                                                    <h3 className="text-lg font-bold text-white truncate group-hover:text-brand-text transition-colors">{course.title}</h3>
                                                 </div>
-                                                <div className="h-10 w-10 rounded-full bg-white/5 flex items-center justify-center text-white/40 group-hover:bg-[#fd5523] group-hover:text-white transition-all">
+                                                <div className="h-10 w-10 rounded-full bg-white/5 flex items-center justify-center text-white/40 group-hover:bg-brand group-hover:text-white transition-all">
                                                     <ChevronRight className="h-5 w-5" />
                                                 </div>
                                             </Link>
                                         ))}
                                     </div>
-                                    <Link href="/academy/zedai" onClick={handlePopup} className="block text-center mt-8 text-sm font-bold text-[#fd5523] hover:underline">
+                                    <Link href="/academy/zedai" onClick={handlePopup} className="block text-center mt-8 text-sm font-bold text-brand-text hover:underline">
                                         View flagship courses →
                                     </Link>
                                 </>
@@ -108,7 +108,7 @@ export default function SearchPopup({ isPopup, handlePopup }) {
                                         <button 
                                             key={tag}
                                             onClick={() => setQuery(tag)}
-                                            className="px-6 py-3 rounded-full bg-white/5 border border-white/10 text-white font-bold text-sm hover:bg-[#fd5523] hover:border-[#fd5523] transition-all"
+                                            className="px-6 py-3 rounded-full bg-white/5 border border-white/10 text-white font-bold text-sm hover:bg-brand hover:border-brand transition-all"
                                         >
                                             {tag}
                                         </button>

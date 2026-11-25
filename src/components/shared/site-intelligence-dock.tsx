@@ -83,8 +83,8 @@ function getContext(pathname: string) {
       title: "Coach Active",
       description: "Ask me to explain concepts, build workflows, or critique your work.",
       suggestions: LEARNER_SUGGESTIONS,
-      color: "from-[#fd5523] to-[#ef4a16]",
-      accent: "text-[#fd5523]",
+      color: "from-brand to-brand-hover",
+      accent: "text-brand-text",
     };
   }
 
@@ -121,7 +121,7 @@ export function SiteIntelligenceDock() {
       } else if (pathname.includes("/learn") || pathname.startsWith("/dashboard")) {
         initialMessage = "Hey there! I'm your AI learning coach. Whether you're stuck on a concept or want to turn today's lesson into a real-world workflow, I've got your back. What can we master today?";
       } else {
-        initialMessage = "Welcome to Zed AI Academy! I'm **Zed Intelligence**, your guide to the future of skills. I can help you find the perfect course, explain how AI transforms businesses, or map out your learning path. Where should we begin?";
+        initialMessage = "Welcome to CS Learn! I'm **CS Intelligence**, your guide to the future of skills. I can help you find the perfect course, explain how AI transforms businesses, or map out your learning path. Where should we begin?";
       }
 
       setMessages([
@@ -203,7 +203,7 @@ export function SiteIntelligenceDock() {
     setMessages([
       {
         role: "assistant",
-        content: `Hi! I'm **Zed Intelligence**. ${context.description}`,
+        content: `Hi! I'm **CS Intelligence**. ${context.description}`,
       },
     ]);
   };
@@ -236,7 +236,7 @@ export function SiteIntelligenceDock() {
           <div className={cn("flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br text-white", context.color)}>
             <Bot className="h-4 w-4" />
           </div>
-          <p className="text-sm font-bold text-[#062e39]">Zed Intelligence</p>
+          <p className="text-sm font-bold text-ink">CS Intelligence</p>
         </div>
         <Maximize2 className="h-4 w-4 text-slate-400" />
       </button>
@@ -254,7 +254,7 @@ export function SiteIntelligenceDock() {
           </div>
           <div>
             <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/70">{context.eyebrow}</p>
-            <h6 className="font-bold tracking-tight">Zed Intelligence</h6>
+            <h6 className="font-bold tracking-tight">CS Intelligence</h6>
           </div>
         </div>
         <div className="flex items-center gap-1">
@@ -293,7 +293,7 @@ export function SiteIntelligenceDock() {
             <div className={cn(
               "mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-[10px] font-bold shadow-sm",
               msg.role === "user" 
-                ? "bg-[#062e39] text-white" 
+                ? "bg-ink text-white" 
                 : cn("bg-white border border-slate-100", context.accent)
             )}>
               {msg.role === "user" ? "Me" : <Bot className="h-4 w-4" />}
@@ -301,7 +301,7 @@ export function SiteIntelligenceDock() {
             <div className={cn(
               "max-w-[85%] rounded-[1.8rem] px-5 py-4 text-sm leading-relaxed shadow-sm",
               msg.role === "user"
-                ? "bg-[#062e39] text-white rounded-tr-sm"
+                ? "bg-ink text-white rounded-tr-sm"
                 : "bg-white text-slate-700 border border-slate-100 rounded-tl-sm"
             )}>
               {msg.content ? (
@@ -329,7 +329,7 @@ export function SiteIntelligenceDock() {
                 <button
                   key={idx}
                   onClick={() => sendMessage(s.prompt)}
-                  className="flex items-center gap-2 rounded-full border border-slate-100 bg-slate-50 px-3 py-1 text-[8px]  text-[#062e39] transition-all whitespace-nowrap hover:border-[#fd5523]/20 hover:bg-[#fff6ee] hover:text-[#fd5523]"
+                  className="flex items-center gap-2 rounded-full border border-slate-100 bg-slate-50 px-3 py-1 text-[8px]  text-ink transition-all whitespace-nowrap hover:border-brand/20 hover:bg-brand-soft hover:text-brand-text"
                 >
                   <Zap className="h-3 w-3 flex-shrink-0" />
                   {s.label}
@@ -347,7 +347,7 @@ export function SiteIntelligenceDock() {
             onKeyDown={handleKeyDown}
             placeholder="Ask me anything..."
             rows={1}
-            className="min-h-[50px] max-h-[120px] w-full resize-none rounded-2xl border border-slate-200 bg-slate-50 pl-4 pr-12 py-3.5 text-sm text-[#062e39] placeholder:text-slate-400 focus:border-[#fd5523]/40 focus:bg-white focus:outline-none focus:ring-4 focus:ring-[#fd5523]/5 transition-all"
+            className="min-h-[50px] max-h-[120px] w-full resize-none rounded-2xl border border-slate-200 bg-slate-50 pl-4 pr-12 py-3.5 text-sm text-ink placeholder:text-slate-400 focus:border-brand/40 focus:bg-white focus:outline-none focus:ring-4 focus:ring-brand/5 transition-all"
           />
           <button
             disabled={!input.trim() || isStreaming}

@@ -212,11 +212,11 @@ export function DeviceTestModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl rounded-[2.5rem] bg-[#062e39] text-white border border-white/10 p-6 md:p-8 shadow-2xl">
+      <DialogContent className="max-w-2xl rounded-[2.5rem] bg-ink text-white border border-white/10 p-6 md:p-8 shadow-2xl">
         <DialogHeader>
-          <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-[#fd5523]/10 border border-[#fd5523]/20 w-fit mb-2">
-            <ShieldCheck className="h-3.5 w-3.5 text-[#fd5523]" />
-            <span className="text-[10px] font-black uppercase tracking-widest text-[#fd8d69]">Pre-Call Setup</span>
+          <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-brand/10 border border-brand/20 w-fit mb-2">
+            <ShieldCheck className="h-3.5 w-3.5 text-brand-text" />
+            <span className="text-[10px] font-black uppercase tracking-widest text-brand-electric">Pre-Call Setup</span>
           </div>
           <DialogTitle className="text-2xl font-black text-white tracking-tight">
             Check Your Camera & Microphone
@@ -231,7 +231,7 @@ export function DeviceTestModal({
           <div className="relative aspect-video w-full overflow-hidden rounded-3xl bg-black/60 border border-white/10 shadow-inner flex items-center justify-center">
             {initializing ? (
               <div className="flex flex-col items-center gap-2 text-slate-400">
-                <Loader2 className="h-8 w-8 animate-spin text-[#fd5523]" />
+                <Loader2 className="h-8 w-8 animate-spin text-brand-text" />
                 <p className="text-xs font-bold uppercase tracking-widest">Initializing devices...</p>
               </div>
             ) : cameraEnabled && stream ? (
@@ -276,7 +276,7 @@ export function DeviceTestModal({
           <div className="space-y-2">
             <div className="flex items-center justify-between text-xs font-bold text-slate-300">
               <span className="flex items-center gap-2">
-                <Volume2 className="h-4 w-4 text-[#fd5523]" />
+                <Volume2 className="h-4 w-4 text-brand-text" />
                 Microphone Input Test
               </span>
               <span className="font-mono text-emerald-400">{micEnabled ? `${audioLevel}%` : "Muted"}</span>
@@ -293,16 +293,16 @@ export function DeviceTestModal({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <label className="space-y-1.5">
               <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5">
-                <Mic className="h-3.5 w-3.5 text-[#fd5523]" />
+                <Mic className="h-3.5 w-3.5 text-brand-text" />
                 Microphone
               </span>
               <select
                 value={selectedAudioInput}
                 onChange={(e) => setSelectedAudioInput(e.target.value)}
-                className="h-11 w-full rounded-xl bg-black/40 border border-white/10 px-3 text-xs text-white focus:outline-none focus:border-[#fd5523]"
+                className="h-11 w-full rounded-xl bg-black/40 border border-white/10 px-3 text-xs text-white focus:outline-none focus:border-brand"
               >
                 {audioDevices.map((device) => (
-                  <option key={device.deviceId} value={device.deviceId} className="bg-[#062e39] text-white">
+                  <option key={device.deviceId} value={device.deviceId} className="bg-ink text-white">
                     {device.label || `Microphone (${device.deviceId.slice(0, 5)})`}
                   </option>
                 ))}
@@ -311,16 +311,16 @@ export function DeviceTestModal({
 
             <label className="space-y-1.5">
               <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5">
-                <Video className="h-3.5 w-3.5 text-[#fd5523]" />
+                <Video className="h-3.5 w-3.5 text-brand-text" />
                 Camera
               </span>
               <select
                 value={selectedVideoInput}
                 onChange={(e) => setSelectedVideoInput(e.target.value)}
-                className="h-11 w-full rounded-xl bg-black/40 border border-white/10 px-3 text-xs text-white focus:outline-none focus:border-[#fd5523]"
+                className="h-11 w-full rounded-xl bg-black/40 border border-white/10 px-3 text-xs text-white focus:outline-none focus:border-brand"
               >
                 {videoDevices.map((device) => (
-                  <option key={device.deviceId} value={device.deviceId} className="bg-[#062e39] text-white">
+                  <option key={device.deviceId} value={device.deviceId} className="bg-ink text-white">
                     {device.label || `Camera (${device.deviceId.slice(0, 5)})`}
                   </option>
                 ))}
@@ -352,7 +352,7 @@ export function DeviceTestModal({
           <Button
             type="button"
             onClick={handleJoin}
-            className="rounded-xl bg-[#fd5523] hover:bg-[#ef4a16] px-8 text-white font-bold text-sm shadow-xl shadow-[#fd5523]/20"
+            className="rounded-xl bg-brand hover:bg-brand-hover px-8 text-white font-bold text-sm shadow-xl shadow-brand/20"
           >
             <Check className="mr-2 h-4 w-4" />
             Enter Live Studio

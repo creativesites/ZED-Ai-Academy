@@ -6,6 +6,7 @@ import {
   Link2,
   Presentation,
 } from "lucide-react";
+import { BRAND_COLORS } from "@/lib/brand";
 
 export type MaterialCohort = { id: string; name: string };
 export type MaterialCourse = { id: string; title: string; slug?: string };
@@ -20,7 +21,8 @@ export interface MaterialsTabProps {
 }
 
 export const FOLDER_COLORS = [
-  { name: "Orange", hex: "#fd5523" },
+  { name: "Royal Blue", hex: BRAND_COLORS.royalBlue },
+  { name: "Orange", hex: BRAND_COLORS.orange },
   { name: "Emerald", hex: "#10b981" },
   { name: "Sky", hex: "#0ea5e9" },
   { name: "Indigo", hex: "#6366f1" },

@@ -96,7 +96,7 @@ export default function TenantHomeNavBar({
                         <span
                             className={cn(
                                 "text-[15px] font-extrabold tracking-tight leading-none",
-                                isDark ? "text-[#f0f6fc]" : "text-[#062e39]"
+                                isDark ? "text-[#f0f6fc]" : "text-ink"
                             )}
                         >
                             {tenant.name}
@@ -116,7 +116,7 @@ export default function TenantHomeNavBar({
                                                     "px-3.5 py-1.5 rounded-lg text-[13px] font-semibold transition-colors duration-150",
                                                     isDark
                                                         ? "text-slate-400 hover:text-slate-100 hover:bg-white/[0.06]"
-                                                        : "text-slate-500 hover:text-[#062e39] hover:bg-slate-100"
+                                                        : "text-slate-500 hover:text-ink hover:bg-slate-100"
                                                 )}
                                             >
                                                 Classroom
@@ -148,7 +148,7 @@ export default function TenantHomeNavBar({
 
                                         <Link
                                             href={`/academy/${tenant.slug}/dashboard`}
-                                            className="h-8 px-4 rounded-lg bg-[#fd5523] hover:bg-[#e84b1c] text-white text-[12px] font-bold flex items-center gap-1.5 transition-all duration-150 hover:-translate-y-px hover:shadow-[0_4px_12px_rgba(253,85,35,0.35)]"
+                                            className="h-8 px-4 rounded-lg bg-brand hover:bg-brand-hover text-white text-[12px] font-bold flex items-center gap-1.5 transition-all duration-150 hover:-translate-y-px hover:shadow-[0_4px_12px_rgba(7,91,235,0.35)]"
                                         >
                                             <LayoutDashboard className="h-3.5 w-3.5" />
                                             Dashboard
@@ -160,7 +160,7 @@ export default function TenantHomeNavBar({
                                         <input type="hidden" name="role" value="student" />
                                         <button
                                             type="submit"
-                                            className="h-8 px-4 rounded-lg bg-[#fd5523] hover:bg-[#e84b1c] text-white text-[12px] font-bold flex items-center gap-1.5 transition-all duration-150 hover:-translate-y-px hover:shadow-[0_4px_12px_rgba(253,85,35,0.35)] cursor-pointer"
+                                            className="h-8 px-4 rounded-lg bg-brand hover:bg-brand-hover text-white text-[12px] font-bold flex items-center gap-1.5 transition-all duration-150 hover:-translate-y-px hover:shadow-[0_4px_12px_rgba(7,91,235,0.35)] cursor-pointer"
                                         >
                                             <UserPlus className="h-3.5 w-3.5" />
                                             Join Academy
@@ -181,14 +181,14 @@ export default function TenantHomeNavBar({
                                         "px-4 py-1.5 rounded-lg text-[12px] font-bold transition-colors duration-150",
                                         isDark
                                             ? "text-slate-400 hover:text-slate-100 hover:bg-white/[0.06]"
-                                            : "text-slate-600 hover:text-[#062e39] hover:bg-slate-100"
+                                            : "text-slate-600 hover:text-ink hover:bg-slate-100"
                                     )}
                                 >
                                     Login
                                 </Link>
                                 <Link
                                     href={signUpUrl}
-                                    className="h-8 px-4 rounded-lg bg-[#fd5523] hover:bg-[#e84b1c] text-white text-[12px] font-bold flex items-center gap-1.5 transition-all duration-150 hover:-translate-y-px hover:shadow-[0_4px_12px_rgba(253,85,35,0.35)]"
+                                    className="h-8 px-4 rounded-lg bg-brand hover:bg-brand-hover text-white text-[12px] font-bold flex items-center gap-1.5 transition-all duration-150 hover:-translate-y-px hover:shadow-[0_4px_12px_rgba(7,91,235,0.35)]"
                                 >
                                     Get Started
                                     <ArrowUpRight className="h-3.5 w-3.5" />
@@ -254,7 +254,7 @@ export default function TenantHomeNavBar({
                                                 "flex items-center gap-3 px-3 py-3 rounded-xl text-[14px] font-semibold transition-colors",
                                                 isDark
                                                     ? "text-slate-400 hover:text-slate-100 hover:bg-white/[0.05]"
-                                                    : "text-slate-600 hover:text-[#062e39] hover:bg-slate-50"
+                                                    : "text-slate-600 hover:text-ink hover:bg-slate-50"
                                             )}
                                         >
                                             <BookOpen className="h-[18px] w-[18px] flex-shrink-0" />
@@ -270,7 +270,7 @@ export default function TenantHomeNavBar({
                                                 "flex items-center gap-3 px-3 py-3 rounded-xl text-[14px] font-semibold transition-colors",
                                                 isDark
                                                     ? "text-slate-400 hover:text-slate-100 hover:bg-white/[0.05]"
-                                                    : "text-slate-600 hover:text-[#062e39] hover:bg-slate-50"
+                                                    : "text-slate-600 hover:text-ink hover:bg-slate-50"
                                             )}
                                         >
                                             <Settings className="h-[18px] w-[18px] flex-shrink-0" />
@@ -288,7 +288,7 @@ export default function TenantHomeNavBar({
                                     <Link
                                         href={`/academy/${tenant.slug}/dashboard`}
                                         onClick={() => setIsMobileMenuOpen(false)}
-                                        className="h-12 rounded-xl bg-[#fd5523] hover:bg-[#e84b1c] text-white text-[13px] font-bold flex items-center justify-center gap-2 transition-colors"
+                                        className="h-12 rounded-xl bg-brand hover:bg-brand-hover text-white text-[13px] font-bold flex items-center justify-center gap-2 transition-colors"
                                     >
                                         <LayoutDashboard className="h-4 w-4" />
                                         Student Dashboard
@@ -300,7 +300,7 @@ export default function TenantHomeNavBar({
                                     <input type="hidden" name="role" value="student" />
                                     <button
                                         type="submit"
-                                        className="w-full h-12 rounded-xl bg-[#fd5523] hover:bg-[#e84b1c] text-white text-[13px] font-bold flex items-center justify-center gap-2 transition-colors cursor-pointer"
+                                        className="w-full h-12 rounded-xl bg-brand hover:bg-brand-hover text-white text-[13px] font-bold flex items-center justify-center gap-2 transition-colors cursor-pointer"
                                     >
                                         <UserPlus className="h-4 w-4" />
                                         Join Academy
@@ -335,7 +335,7 @@ export default function TenantHomeNavBar({
                                 <Link
                                     href={signUpUrl}
                                     onClick={() => setIsMobileMenuOpen(false)}
-                                    className="h-12 rounded-xl bg-[#fd5523] hover:bg-[#e84b1c] text-white text-[13px] font-bold flex items-center justify-center gap-2 transition-colors"
+                                    className="h-12 rounded-xl bg-brand hover:bg-brand-hover text-white text-[13px] font-bold flex items-center justify-center gap-2 transition-colors"
                                 >
                                     Get Started
                                     <ArrowUpRight className="h-4 w-4" />

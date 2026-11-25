@@ -35,7 +35,7 @@ export default function Faq() {
     return (
         <>
         <section className="faq-one">
-            <div className="shape1 float-bob-x"><img src="images/logo-dark.png" style={{width:'24rem', opacity: '0.1', marginTop: '5rem'}} alt=""/></div>
+            <div className="shape1 float-bob-x"><img src="/brand/cs-learn-emblem.png" style={{width:'24rem', opacity: '0.1', marginTop: '5rem'}} alt=""/></div>
             <div className="container">
                 <div className="row">
                     {/*Start Faq One Content*/}
@@ -49,7 +49,7 @@ export default function Faq() {
                                             <h4>Expert Support</h4>
                                         </div>
                                         <div className="icon">
-                                            <HelpCircle className="text-[#fd5523]" size={20} />
+                                            <HelpCircle className="text-brand-text" size={20} />
                                         </div>
                                     </div>
                                     <h2 className="sec-title__title tg-element-title">Frequently Asked <br/>

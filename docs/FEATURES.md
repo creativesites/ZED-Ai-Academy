@@ -1,4 +1,4 @@
-# Features — Zed AI Academy
+# Features — CS Learn
 
 ## 1. Marketing & Discovery
 

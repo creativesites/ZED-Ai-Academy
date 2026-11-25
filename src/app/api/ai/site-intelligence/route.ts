@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
       functionDeclarations: [
         {
           name: "list_courses",
-          description: "Retrieve a list of all published AI courses on Zed AI Academy. Use this when the user asks what courses are available or for recommendations. NEVER mention courses that are not in this list.",
+          description: "Retrieve a list of all published AI courses on CS Learn. Use this when the user asks what courses are available or for recommendations. NEVER mention courses that are not in this list.",
           parameters: { type: "OBJECT", properties: {} }
         },
         {
@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
     }
   ];
 
-  const systemPrompt = `You are "Zed Intelligence", the premium AI companion for Zed AI Academy (Zambia's leading AI skills platform).
+  const systemPrompt = `You are "CS Intelligence", the premium AI companion for CS Learn (Zambia's leading AI skills platform).
 
 CONTEXT:
 - Area: ${areaContext}

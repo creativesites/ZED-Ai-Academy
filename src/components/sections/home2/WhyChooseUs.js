@@ -24,7 +24,7 @@ export default function WhyChooseUs() {
                                 <h4>Why Choose Us</h4>
                             </div>
                             <div className="icon">
-                                <Award className="text-[#fd5523]" size={20} />
+                                <Award className="text-brand-text" size={20} />
                             </div>
                         </div>
                         <h2 className="sec-title__title tg-element-title">The AI Academy Built <br/> For
@@ -33,7 +33,7 @@ export default function WhyChooseUs() {
                     </div>
 
                     <div className="why-choose-two__content-text">
-                        <p>Every course on Zed AI Academy is designed with the Zambian professional in mind —
+                        <p>Every course on CS Learn is designed with the Zambian professional in mind —
                             practical, affordable, and focused on the tools that are transforming work right now.</p>
                     </div>
 
@@ -62,7 +62,7 @@ export default function WhyChooseUs() {
                             <ul>
                                 <li className="why-choose-two__single">
                                     <div className="why-choose-two__single-top">
-                                        <div className="icon" style={{ background: 'rgba(253,85,35,0.1)', color: '#fd5523', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                        <div className="icon" style={{ background: 'rgba(7, 91, 235,0.1)', color: "var(--color-brand-text)", display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                             <Globe size={24} />
                                         </div>
 
@@ -77,7 +77,7 @@ export default function WhyChooseUs() {
 
                                 <li className="why-choose-two__single">
                                     <div className="why-choose-two__single-top">
-                                        <div className="icon" style={{ background: 'rgba(253,85,35,0.1)', color: '#fd5523', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                        <div className="icon" style={{ background: 'rgba(7, 91, 235,0.1)', color: "var(--color-brand-text)", display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                             <Zap size={24} />
                                         </div>
 
@@ -94,7 +94,7 @@ export default function WhyChooseUs() {
                             <ul>
                                 <li className="why-choose-two__single">
                                     <div className="why-choose-two__single-top">
-                                        <div className="icon" style={{ background: 'rgba(253,85,35,0.1)', color: '#fd5523', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                        <div className="icon" style={{ background: 'rgba(7, 91, 235,0.1)', color: "var(--color-brand-text)", display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                             <Users size={24} />
                                         </div>
 
@@ -109,7 +109,7 @@ export default function WhyChooseUs() {
 
                                 <li className="why-choose-two__single">
                                     <div className="why-choose-two__single-top">
-                                        <div className="icon" style={{ background: 'rgba(253,85,35,0.1)', color: '#fd5523', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                        <div className="icon" style={{ background: 'rgba(7, 91, 235,0.1)', color: "var(--color-brand-text)", display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                             <Award size={24} />
                                         </div>
 

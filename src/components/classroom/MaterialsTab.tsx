@@ -221,7 +221,7 @@ export function MaterialsTab({
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="text-xl sm:text-2xl font-black text-[#062e39] tracking-tight">
+              <h2 className="text-xl sm:text-2xl font-black text-ink tracking-tight">
                 {activeFolderName}
               </h2>
               <span className="text-xs px-2.5 py-0.5 rounded-full bg-slate-100 font-black text-slate-500">
@@ -241,7 +241,7 @@ export function MaterialsTab({
                   setEditingMaterial(null);
                   setIsUploadModalOpen(true);
                 }}
-                className="w-full sm:w-auto h-10 bg-[#fd5523] hover:bg-[#ef4a16] text-white rounded-xl text-xs font-semibold px-4 flex items-center justify-center gap-2 shadow-sm"
+                className="w-full sm:w-auto h-10 bg-brand hover:bg-brand-hover text-white rounded-xl text-xs font-semibold px-4 flex items-center justify-center gap-2 shadow-sm"
               >
                 <Plus className="h-4 w-4 shrink-0" />
                 <span>Upload Material</span>
@@ -255,7 +255,7 @@ export function MaterialsTab({
           <div className="space-y-3 p-4 rounded-3xl bg-white border border-slate-100 shadow-sm">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-slate-500">
-                <Pin className="h-3.5 w-3.5 text-[#fd5523]" />
+                <Pin className="h-3.5 w-3.5 text-brand-text" />
                 <span>Pinned Materials ({pinnedMaterials.length})</span>
               </div>
             </div>
@@ -268,7 +268,7 @@ export function MaterialsTab({
                   <div
                     key={item.id}
                     onClick={() => setPreviewMaterial(item)}
-                    className="group relative flex items-center gap-3 p-3.5 rounded-2xl border border-slate-100 bg-slate-50/60 hover:bg-white hover:border-[#fd5523]/30 hover:shadow-md transition-all cursor-pointer"
+                    className="group relative flex items-center gap-3 p-3.5 rounded-2xl border border-slate-100 bg-slate-50/60 hover:bg-white hover:border-brand/30 hover:shadow-md transition-all cursor-pointer"
                   >
                     <div
                       className={cn(
@@ -279,14 +279,14 @@ export function MaterialsTab({
                       <Icon className="h-5 w-5" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs font-black text-slate-900 truncate group-hover:text-[#fd5523] transition-colors">
+                      <p className="text-xs font-black text-slate-900 truncate group-hover:text-brand-text transition-colors">
                         {item.title}
                       </p>
                       <p className="text-[10px] text-slate-400 font-medium truncate">
                         {item.folder?.name || meta.label} · {formatBytes(item.file_size_bytes)}
                       </p>
                     </div>
-                    <Pin className="h-3.5 w-3.5 text-[#fd5523] shrink-0" />
+                    <Pin className="h-3.5 w-3.5 text-brand-text shrink-0" />
                   </div>
                 );
               })}
@@ -362,7 +362,7 @@ export function MaterialsTab({
               className={cn(
                 "h-9 px-3 rounded-xl border text-xs font-semibold flex items-center gap-1.5 transition-all",
                 isBookmarksOnly
-                  ? "bg-[#fd5523] text-white border-[#fd5523] shadow-sm shadow-[#fd5523]/30"
+                  ? "bg-brand text-white border-brand shadow-sm shadow-brand/30"
                   : "bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100",
               )}
             >
@@ -376,7 +376,7 @@ export function MaterialsTab({
                 onClick={() => setViewMode("grid")}
                 className={cn(
                   "p-1.5 rounded-lg transition-all",
-                  viewMode === "grid" ? "bg-white text-[#fd5523] shadow-xs" : "text-slate-400 hover:text-slate-600",
+                  viewMode === "grid" ? "bg-white text-brand-text shadow-xs" : "text-slate-400 hover:text-slate-600",
                 )}
                 title="Grid View"
               >
@@ -387,7 +387,7 @@ export function MaterialsTab({
                 onClick={() => setViewMode("list")}
                 className={cn(
                   "p-1.5 rounded-lg transition-all",
-                  viewMode === "list" ? "bg-white text-[#fd5523] shadow-xs" : "text-slate-400 hover:text-slate-600",
+                  viewMode === "list" ? "bg-white text-brand-text shadow-xs" : "text-slate-400 hover:text-slate-600",
                 )}
                 title="List View"
               >
@@ -408,7 +408,7 @@ export function MaterialsTab({
                 className={cn(
                   "min-h-[38px] px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all shrink-0",
                   isSelected
-                    ? "bg-[#062e39] text-white shadow-sm"
+                    ? "bg-ink text-white shadow-sm"
                     : "bg-white border border-slate-200/80 text-slate-600 hover:border-slate-300 hover:bg-slate-50",
                 )}
               >
@@ -421,15 +421,15 @@ export function MaterialsTab({
         {/* Materials Content */}
         {loading ? (
           <div className="flex-1 flex flex-col items-center justify-center py-24 text-slate-400">
-            <Loader2 className="h-8 w-8 animate-spin text-[#fd5523] mb-3" />
+            <Loader2 className="h-8 w-8 animate-spin text-brand-text mb-3" />
             <p className="text-xs font-bold uppercase tracking-widest">Loading Learning Materials...</p>
           </div>
         ) : filteredMaterials.length === 0 ? (
           <div className="flex-1 flex flex-col items-center justify-center py-20 text-center rounded-3xl border-2 border-dashed border-slate-200 bg-white p-8">
-            <div className="h-16 w-16 rounded-2xl bg-orange-50 text-[#fd5523] flex items-center justify-center mb-4">
+            <div className="h-16 w-16 rounded-2xl bg-orange-50 text-brand-text flex items-center justify-center mb-4">
               <Folder className="h-8 w-8" />
             </div>
-            <h3 className="text-lg font-bold text-[#062e39]">No materials in this view</h3>
+            <h3 className="text-lg font-bold text-ink">No materials in this view</h3>
             <p className="text-xs text-slate-500 max-w-sm mt-1">
               {searchQuery
                 ? `No materials matched "${searchQuery}". Try a different keyword.`
@@ -441,7 +441,7 @@ export function MaterialsTab({
                   setEditingMaterial(null);
                   setIsUploadModalOpen(true);
                 }}
-                className="mt-5 bg-[#fd5523] hover:bg-[#ef4a16] text-white rounded-xl text-xs font-bold"
+                className="mt-5 bg-brand hover:bg-brand-hover text-white rounded-xl text-xs font-bold"
               >
                 <Plus className="mr-1.5 h-4 w-4" />
                 Upload First Material

@@ -6,7 +6,7 @@ export default function Funfacts() {
 
         <section className="counter-one counter-one--two">
             <div className="big-title wow slideInRight" data-wow-delay="100ms" data-wow-duration="2500ms">
-                <h2>ZED AI ACADEMY</h2>
+                <h2>CS LEARN</h2>
             </div>
             <div className="container clearfix">
                 <div className="counter-one--two__inner">

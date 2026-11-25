@@ -48,7 +48,7 @@ export function AssignmentDetailPanel({
       <button
         type="button"
         onClick={onBackToList}
-        className="lg:hidden inline-flex items-center gap-1.5 text-xs font-black text-[#fd5523] hover:text-[#e0481d] min-h-[44px]"
+        className="lg:hidden inline-flex items-center gap-1.5 text-xs font-black text-brand-text hover:text-brand-hover min-h-[44px]"
       >
         <ArrowLeft className="h-4 w-4" />
         <span>Back to All Assignments</span>
@@ -68,7 +68,7 @@ export function AssignmentDetailPanel({
               </span>
             )}
           </div>
-          <h1 className="text-xl md:text-2xl font-black text-[#062e39] tracking-tight">
+          <h1 className="text-xl md:text-2xl font-black text-ink tracking-tight">
             {assignment.title}
           </h1>
           <p className="text-xs text-slate-400 font-medium mt-1">
@@ -102,7 +102,7 @@ export function AssignmentDetailPanel({
                 "rounded-xl text-xs font-black px-4 py-2 shadow-sm gap-2",
                 assignment.my_submission
                   ? "bg-slate-100 text-slate-800 hover:bg-slate-200"
-                  : "bg-[#fd5523] hover:bg-[#e0481d] text-white shadow-[#fd5523]/20",
+                  : "bg-brand hover:bg-brand-hover text-white shadow-brand/20",
               )}
             >
               <Upload className="h-4 w-4" />
@@ -120,7 +120,7 @@ export function AssignmentDetailPanel({
               <Award className="h-6 w-6" />
             </div>
             <div>
-              <h4 className="text-sm font-black text-[#062e39]">Grade Received</h4>
+              <h4 className="text-sm font-black text-ink">Grade Received</h4>
               <p className="text-[11px] text-slate-500 font-medium">
                 Graded on{" "}
                 {assignment.my_submission.graded_at
@@ -195,7 +195,7 @@ export function AssignmentDetailPanel({
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
               Maximum Points
             </span>
-            <span className="text-base font-black text-[#062e39] mt-0.5 block">
+            <span className="text-base font-black text-ink mt-0.5 block">
               {assignment.max_points} Points
             </span>
           </div>
@@ -204,7 +204,7 @@ export function AssignmentDetailPanel({
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
               Submission Mode
             </span>
-            <span className="text-base font-black text-[#062e39] mt-0.5 block capitalize">
+            <span className="text-base font-black text-ink mt-0.5 block capitalize">
               {assignment.submission_type === "file_or_link"
                 ? "File or GitHub Link"
                 : assignment.submission_type === "file"
@@ -217,7 +217,7 @@ export function AssignmentDetailPanel({
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
               Deadline
             </span>
-            <span className="text-sm font-black text-[#062e39] mt-1 block">
+            <span className="text-sm font-black text-ink mt-1 block">
               {new Date(assignment.due_date).toLocaleDateString([], {
                 month: "short",
                 day: "numeric",

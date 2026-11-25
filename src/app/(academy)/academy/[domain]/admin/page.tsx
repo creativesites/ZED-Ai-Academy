@@ -100,16 +100,16 @@ export default async function AdminTenantHubPage({
             {company.logo_url ? (
               <img src={company.logo_url} alt={company.name} className="h-full w-auto object-contain" />
             ) : (
-              <Building2 className="h-7 w-7 text-[#062e39]" />
+              <Building2 className="h-7 w-7 text-ink" />
             )}
           </div>
           <div className="space-y-1.5">
-            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-[#062e39] tracking-tight leading-tight">
-              {company.name} <span className="text-[#fd5523]">Hub</span>
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-ink tracking-tight leading-tight">
+              {company.name} <span className="text-brand-text">Hub</span>
             </h1>
             <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
-               <span className="px-2.5 py-1 rounded-full bg-[#fd5523]/10 text-[#fd5523] text-[10px] font-bold uppercase tracking-wider">Command Center</span>
-               <Link href={`/academy/${company.slug}`} target="_blank" className="px-2.5 py-1 rounded-full bg-slate-100 text-[10px] font-bold uppercase tracking-wider text-slate-600 hover:text-[#fd5523] hover:bg-[#fd5523]/5 flex items-center gap-1.5 transition-all border border-slate-200">
+               <span className="px-2.5 py-1 rounded-full bg-brand/10 text-brand-text text-[10px] font-bold uppercase tracking-wider">Command Center</span>
+               <Link href={`/academy/${company.slug}`} target="_blank" className="px-2.5 py-1 rounded-full bg-slate-100 text-[10px] font-bold uppercase tracking-wider text-slate-600 hover:text-brand-text hover:bg-brand/5 flex items-center gap-1.5 transition-all border border-slate-200">
                  <Globe className="h-3 w-3" /> Visit Academy
                </Link>
             </div>
@@ -118,14 +118,14 @@ export default async function AdminTenantHubPage({
         <div className="flex flex-wrap items-center justify-center gap-2.5 w-full md:w-auto">
            <Link
             href={`${base}/ai-teachers`}
-            className="w-full sm:w-auto justify-center flex items-center gap-2 h-10 px-4 rounded-xl bg-[#062e39] text-white text-xs font-semibold hover:bg-[#0a4352] transition-all shadow-xs"
+            className="w-full sm:w-auto justify-center flex items-center gap-2 h-10 px-4 rounded-xl bg-ink text-white text-xs font-semibold hover:bg-ink-hover transition-all shadow-xs"
           >
             <Sparkles className="h-3.5 w-3.5 text-amber-300" />
             AI Teachers
           </Link>
            <Link
             href={`${base}/classroom?tab=session&action=start`}
-            className="group w-full sm:w-auto justify-center flex items-center gap-2 h-10 px-4 rounded-xl bg-[#fd5523] hover:bg-[#e0481d] text-white text-xs font-semibold transition-all shadow-xs"
+            className="group w-full sm:w-auto justify-center flex items-center gap-2 h-10 px-4 rounded-xl bg-brand hover:bg-brand-hover text-white text-xs font-semibold transition-all shadow-xs"
           >
             <div className="h-5 w-5 rounded-full bg-white/20 flex items-center justify-center group-hover:scale-105 transition-transform">
               <Play className="h-3 w-3 fill-current" />
@@ -177,7 +177,7 @@ export default async function AdminTenantHubPage({
                 <div className={cn("h-9 w-9 rounded-xl flex items-center justify-center mb-3 group-hover:scale-105 transition-transform", kpi.accent)}>
                   <kpi.icon className="h-4.5 w-4.5" />
                 </div>
-                <div className="text-xl sm:text-2xl font-bold text-[#062e39] tracking-tight">{kpi.value}</div>
+                <div className="text-xl sm:text-2xl font-bold text-ink tracking-tight">{kpi.value}</div>
                 <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mt-1">{kpi.label}</div>
               </Link>
             ))}
@@ -186,13 +186,13 @@ export default async function AdminTenantHubPage({
           {/* School Timetable Calendar */}
           <div className="space-y-4">
             <div className="flex items-center justify-between gap-2">
-              <h2 className="text-lg sm:text-xl font-bold text-[#062e39] tracking-tight flex items-center gap-2.5">
-                <div className="h-8 w-8 rounded-xl bg-[#fd5523]/10 flex items-center justify-center shrink-0">
-                  <Calendar className="h-4 w-4 text-[#fd5523]" />
+              <h2 className="text-lg sm:text-xl font-bold text-ink tracking-tight flex items-center gap-2.5">
+                <div className="h-8 w-8 rounded-xl bg-brand/10 flex items-center justify-center shrink-0">
+                  <Calendar className="h-4 w-4 text-brand-text" />
                 </div>
                 School Timetable
               </h2>
-              <Link href={`/academy/${company.slug}/admin/classroom?tab=timetable`} className="text-xs font-semibold text-slate-600 hover:text-[#fd5523] transition-colors bg-white px-3.5 py-1.5 rounded-xl border border-slate-200/80 shadow-xs">
+              <Link href={`/academy/${company.slug}/admin/classroom?tab=timetable`} className="text-xs font-semibold text-slate-600 hover:text-brand-text transition-colors bg-white px-3.5 py-1.5 rounded-xl border border-slate-200/80 shadow-xs">
                 Edit Schedule
               </Link>
             </div>
@@ -204,7 +204,7 @@ export default async function AdminTenantHubPage({
         <div className="lg:col-span-4 space-y-6">
           
           {/* Quick Actions */}
-          <div className="bg-[#062e39] rounded-2xl p-5 sm:p-6 shadow-sm text-white relative overflow-hidden">
+          <div className="bg-ink rounded-2xl p-5 sm:p-6 shadow-sm text-white relative overflow-hidden">
              <div className="absolute top-0 right-0 p-8 opacity-5 pointer-events-none">
                 <Sparkles className="h-28 w-28" />
              </div>
@@ -234,8 +234,8 @@ export default async function AdminTenantHubPage({
 
           {/* Upcoming Classes Sidebar */}
           <div className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/80 shadow-xs">
-             <h3 className="text-xs font-bold uppercase tracking-wider text-[#062e39] mb-4 flex items-center gap-2">
-               <Clock className="h-4 w-4 text-[#fd5523]" /> Upcoming Classes
+             <h3 className="text-xs font-bold uppercase tracking-wider text-ink mb-4 flex items-center gap-2">
+               <Clock className="h-4 w-4 text-brand-text" /> Upcoming Classes
              </h3>
              <div className="space-y-3.5">
                 {upcomingClasses.length > 0 ? upcomingClasses.map((item: any) => (
@@ -244,16 +244,16 @@ export default async function AdminTenantHubPage({
                     href={`${base}/classroom?tab=timetable`}
                     className="flex items-center gap-3 group"
                   >
-                    <div className="h-10 w-10 rounded-xl bg-slate-50 flex flex-col items-center justify-center text-[#fd5523] border border-slate-200/80 shrink-0 group-hover:bg-[#fd5523] group-hover:text-white transition-all">
+                    <div className="h-10 w-10 rounded-xl bg-slate-50 flex flex-col items-center justify-center text-brand-text border border-slate-200/80 shrink-0 group-hover:bg-brand group-hover:text-white transition-all">
                        <span className="text-[10px] font-bold">{item.start_time_only?.slice(0, 5) || "TBA"}</span>
                     </div>
                     <div className="flex-1 min-w-0">
-                       <p className="text-xs sm:text-sm font-semibold text-[#062e39] truncate">{item.title}</p>
+                       <p className="text-xs sm:text-sm font-semibold text-ink truncate">{item.title}</p>
                        <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">
                          {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"][(item.day_of_week ?? 1) - 1] || "TBA"}
                        </p>
                     </div>
-                    <ChevronRight className="h-4 w-4 text-slate-300 group-hover:text-[#fd5523] transition-colors" />
+                    <ChevronRight className="h-4 w-4 text-slate-300 group-hover:text-brand-text transition-colors" />
                   </Link>
                 )) : (
                   <p className="text-xs text-slate-400 font-medium italic">No classes scheduled yet.</p>
@@ -263,8 +263,8 @@ export default async function AdminTenantHubPage({
 
           {/* Recent Activity */}
           <div className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/80 shadow-xs">
-             <h3 className="text-xs font-bold uppercase tracking-wider text-[#062e39] mb-4 flex items-center gap-2">
-               <GraduationCap className="h-4 w-4 text-[#fd5523]" /> New Enrollments
+             <h3 className="text-xs font-bold uppercase tracking-wider text-ink mb-4 flex items-center gap-2">
+               <GraduationCap className="h-4 w-4 text-brand-text" /> New Enrollments
              </h3>
              <div className="space-y-3.5">
                 {(recentEnrollments || []).map((enroll: any) => (
@@ -273,7 +273,7 @@ export default async function AdminTenantHubPage({
                        {enroll.profiles?.full_name?.[0] || "U"}
                     </div>
                     <div className="flex-1 min-w-0">
-                       <p className="text-xs font-semibold text-[#062e39] truncate">{enroll.profiles?.full_name || "Unknown User"}</p>
+                       <p className="text-xs font-semibold text-ink truncate">{enroll.profiles?.full_name || "Unknown User"}</p>
                        <p className="text-[10px] text-slate-400">{new Date(enroll.enrolled_at).toLocaleDateString()}</p>
                     </div>
                     <div className={cn(
@@ -283,7 +283,7 @@ export default async function AdminTenantHubPage({
                   </div>
                 ))}
              </div>
-             <Link href={`/academy/${company.slug}/admin/enrollments`} className="mt-5 block text-center py-2.5 rounded-xl bg-slate-50 text-slate-600 text-xs font-semibold hover:bg-[#fff6ee] hover:text-[#fd5523] transition-all border border-slate-200/70">
+             <Link href={`/academy/${company.slug}/admin/enrollments`} className="mt-5 block text-center py-2.5 rounded-xl bg-slate-50 text-slate-600 text-xs font-semibold hover:bg-brand-soft hover:text-brand-text transition-all border border-slate-200/70">
                View All Students
              </Link>
           </div>

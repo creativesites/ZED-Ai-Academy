@@ -21,16 +21,16 @@ export default async function SettingsPage() {
           <div className="space-y-1">
             <Link 
               href="/dashboard" 
-              className="group inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-[#fd5523] transition-colors"
+              className="group inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-brand-text transition-colors"
             >
               <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
               Back to Dashboard
             </Link>
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#062e39]">
+              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-ink">
                 <SettingsIcon className="h-5 w-5 text-white" />
               </div>
-              <h1 className="text-3xl font-bold tracking-tight text-[#062e39]">Account Settings</h1>
+              <h1 className="text-3xl font-bold tracking-tight text-ink">Account Settings</h1>
             </div>
           </div>
         </div>
@@ -44,14 +44,14 @@ export default async function SettingsPage() {
                 card: "shadow-none border-0 w-full",
                 navbar: "hidden sm:flex",
                 scrollBox: "rounded-none",
-                headerTitle: "text-2xl font-bold text-[#062e39]",
+                headerTitle: "text-2xl font-bold text-ink",
                 headerSubtitle: "text-slate-500",
-                profileSectionTitleText: "text-[#062e39] font-bold",
-                userPreviewMainIdentifier: "text-[#062e39] font-bold",
+                profileSectionTitleText: "text-ink font-bold",
+                userPreviewMainIdentifier: "text-ink font-bold",
                 userPreviewSecondaryIdentifier: "text-slate-500",
-                formButtonPrimary: "bg-[#fd5523] hover:bg-[#ef4a16] text-white font-bold rounded-xl",
+                formButtonPrimary: "bg-brand hover:bg-brand-hover text-white font-bold rounded-xl",
                 formFieldInput: "rounded-xl border-slate-200",
-                badge: "bg-[#fff6ee] text-[#fd5523] font-bold border-0",
+                badge: "bg-brand-soft text-brand-text font-bold border-0",
               }
             }}
             routing="hash"

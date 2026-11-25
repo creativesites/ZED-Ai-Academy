@@ -15,6 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, BookOpen, CheckCircle, Lock, Shield } from "lucide-react";
 import type { Metadata } from "next";
 import { CheckoutPanel } from "@/components/learner/checkout-panel";
+import { BRAND } from "@/lib/brand";
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -163,7 +164,7 @@ async function startCheckout(slug: string, courseId: string, formData: FormData)
     });
   }
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://academy.zedai.org";
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || BRAND.url;
 
   const result = await initiatePayment({
     txRef,
@@ -243,7 +244,7 @@ export default async function CheckoutPage({ params, searchParams }: Props) {
         href={`/academy/${tenantSlug}/courses/${slug}`}
         className={cn(
           buttonVariants({ variant: "ghost" }),
-          "mb-8 rounded-full text-slate-500 hover:bg-[#fff6ee] hover:text-[#062e39] flex items-center justify-center w-fit h-9 px-3"
+          "mb-8 rounded-full text-slate-500 hover:bg-brand-soft hover:text-ink flex items-center justify-center w-fit h-9 px-3"
         )}
       >
         <ArrowLeft className="mr-1 h-4 w-4" />
@@ -251,8 +252,8 @@ export default async function CheckoutPage({ params, searchParams }: Props) {
       </Link>
 
       <div className="mb-8">
-        <p className="text-xs font-bold uppercase tracking-widest text-[#fd5523] mb-1">Secure Checkout</p>
-        <h1 className="text-3xl font-bold tracking-tight text-[#062e39]">Complete your enrollment</h1>
+        <p className="text-xs font-bold uppercase tracking-widest text-brand-text mb-1">Secure Checkout</p>
+        <h1 className="text-3xl font-bold tracking-tight text-ink">Complete your enrollment</h1>
       </div>
 
       <div className="grid gap-8 lg:grid-cols-[1fr_380px]">
@@ -262,7 +263,7 @@ export default async function CheckoutPage({ params, searchParams }: Props) {
 
           {/* Course preview */}
           <div className="marketing-card rounded-[2.5rem] border-0 p-6 flex gap-6 items-start">
-            <div className="h-24 w-32 shrink-0 overflow-hidden rounded-[1.5rem] bg-[#fff6ee]">
+            <div className="h-24 w-32 shrink-0 overflow-hidden rounded-[1.5rem] bg-brand-soft">
               {course.thumbnail_url ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
@@ -272,14 +273,14 @@ export default async function CheckoutPage({ params, searchParams }: Props) {
                 />
               ) : (
                 <div className="flex h-full w-full items-center justify-center">
-                  <BookOpen className="h-8 w-8 text-[#fd5523]/40" />
+                  <BookOpen className="h-8 w-8 text-brand-text/40" />
                 </div>
               )}
             </div>
             <div className="min-w-0 flex-1">
               <div className="mb-2 flex flex-wrap gap-1.5">
                 {course.category && (
-                  <Badge className="border-0 bg-[#fff6ee] text-[#fd5523] text-[11px] font-bold">
+                  <Badge className="border-0 bg-brand-soft text-brand-text text-[11px] font-bold">
                     {course.category}
                   </Badge>
                 )}
@@ -289,7 +290,7 @@ export default async function CheckoutPage({ params, searchParams }: Props) {
                   </Badge>
                 )}
               </div>
-              <h2 className="text-lg font-bold text-[#062e39] line-clamp-2">{course.title}</h2>
+              <h2 className="text-lg font-bold text-ink line-clamp-2">{course.title}</h2>
               {course.description && (
                 <p className="mt-1.5 text-sm text-slate-500 line-clamp-2 leading-relaxed">{course.description}</p>
               )}
@@ -299,8 +300,8 @@ export default async function CheckoutPage({ params, searchParams }: Props) {
           {/* What's included */}
           <div className="marketing-outline-card rounded-[2.5rem] border-0 p-8">
             <div className="mb-5 flex items-center gap-2">
-              <CheckCircle className="h-5 w-5 text-[#fd5523]" />
-              <h3 className="text-xs font-bold uppercase tracking-widest text-[#062e39]">What You Get</h3>
+              <CheckCircle className="h-5 w-5 text-brand-text" />
+              <h3 className="text-xs font-bold uppercase tracking-widest text-ink">What You Get</h3>
             </div>
             <ul className="space-y-4">
               {[
@@ -310,7 +311,7 @@ export default async function CheckoutPage({ params, searchParams }: Props) {
                 "Certificate of completion",
                 "Self-paced — learn on your schedule",
               ].map((item) => (
-                <li key={item} className="flex items-center gap-3 text-sm font-medium text-[#062e39]">
+                <li key={item} className="flex items-center gap-3 text-sm font-medium text-ink">
                   <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-green-100 text-green-600">
                     <CheckCircle className="h-4 w-4" />
                   </div>
@@ -334,8 +335,8 @@ export default async function CheckoutPage({ params, searchParams }: Props) {
         </div>
 
         {/* Right — order summary + CTA */}
-        <div className="h-fit rounded-[2.5rem] bg-[#062e39] p-8 text-white shadow-2xl">
-          <p className="text-xs font-bold uppercase tracking-widest text-[#fd8d69] mb-6">Order Summary</p>
+        <div className="h-fit rounded-[2.5rem] bg-ink p-8 text-white shadow-2xl">
+          <p className="text-xs font-bold uppercase tracking-widest text-brand-electric mb-6">Order Summary</p>
 
           <div className="space-y-3 border-b border-white/10 pb-6 mb-6">
             <div className="flex items-center justify-between text-sm">
@@ -356,7 +357,7 @@ export default async function CheckoutPage({ params, searchParams }: Props) {
                 <input type="hidden" name="couponCode" value={couponCode ?? ""} />
                 <Button
                   type="submit"
-                  className="w-full rounded-full bg-[#fd5523] py-7 text-base font-bold text-white hover:bg-[#ef4a16] transition-all hover:scale-[1.02] active:scale-95 shadow-xl"
+                  className="w-full rounded-full bg-brand py-7 text-base font-bold text-white hover:bg-brand-hover transition-all hover:scale-[1.02] active:scale-95 shadow-xl"
                 >
                   {finalPrice <= 0 ? "Enrol now — Free with coupon" : "Pay with PayChangu"}
                 </Button>

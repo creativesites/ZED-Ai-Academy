@@ -69,7 +69,7 @@ export function AICurriculumGenerator({ courseId }: { courseId: string }) {
   return (
     <div className={cn(
       "relative overflow-hidden rounded-[2.5rem] border transition-all duration-500",
-      open ? "border-[#fd5523]/40 bg-white shadow-2xl shadow-[#fd5523]/5" : "border-slate-100 bg-slate-50/50"
+      open ? "border-brand/40 bg-white shadow-2xl shadow-brand/5" : "border-slate-100 bg-slate-50/50"
     )}>
       {/* Header / Toggle */}
       <button
@@ -78,17 +78,17 @@ export function AICurriculumGenerator({ courseId }: { courseId: string }) {
       >
         <div className={cn(
           "flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl transition-all duration-500",
-          open ? "bg-[#062e39] text-white rotate-90" : "bg-white text-[#fd5523] shadow-sm border border-slate-100"
+          open ? "bg-ink text-white rotate-90" : "bg-white text-brand-text shadow-sm border border-slate-100"
         )}>
           {open ? <X className="h-5 w-5" /> : <BrainCircuit className="h-6 w-6" />}
         </div>
         
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[#fd5523]">AI Co-Pilot</span>
-            {generating && <Loader2 className="h-3 w-3 animate-spin text-[#fd5523]" />}
+            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-text">AI Co-Pilot</span>
+            {generating && <Loader2 className="h-3 w-3 animate-spin text-brand-text" />}
           </div>
-          <h3 className="text-sm lg:text-base font-black text-[#062e39] truncate">
+          <h3 className="text-sm lg:text-base font-black text-ink truncate">
             {preview ? "Review Generated Path" : "Magic Curriculum Builder"}
           </h3>
         </div>
@@ -115,7 +115,7 @@ export function AICurriculumGenerator({ courseId }: { courseId: string }) {
                   <select
                     value={domainPreset}
                     onChange={(e) => setDomainPreset(e.target.value as CourseDomainPresetId)}
-                    className="mb-3 flex h-11 w-full rounded-[1.2rem] border-2 border-slate-100 bg-white px-4 text-sm font-bold text-[#062e39] outline-none transition-all focus:border-[#fd5523]/30 focus:ring-4 focus:ring-[#fd5523]/5"
+                    className="mb-3 flex h-11 w-full rounded-[1.2rem] border-2 border-slate-100 bg-white px-4 text-sm font-bold text-ink outline-none transition-all focus:border-brand/30 focus:ring-4 focus:ring-brand/5"
                   >
                     {COURSE_DOMAIN_PRESETS.map((preset) => (
                       <option key={preset.id} value={preset.id}>
@@ -128,7 +128,7 @@ export function AICurriculumGenerator({ courseId }: { courseId: string }) {
                     onChange={(e) => setBrief(e.target.value)}
                     placeholder="Describe your course goal... (e.g. Real Estate marketing for beginners in Lusaka)"
                     rows={4}
-                    className="w-full resize-none rounded-[1.5rem] border-2 border-slate-100 bg-white px-5 py-4 text-sm font-medium text-[#062e39] transition-all placeholder:text-slate-300 focus:border-[#fd5523]/30 focus:outline-none focus:ring-4 focus:ring-[#fd5523]/5"
+                    className="w-full resize-none rounded-[1.5rem] border-2 border-slate-100 bg-white px-5 py-4 text-sm font-medium text-ink transition-all placeholder:text-slate-300 focus:border-brand/30 focus:outline-none focus:ring-4 focus:ring-brand/5"
                   />
                   <div className="absolute bottom-4 right-4 text-[10px] font-bold text-slate-300 uppercase tracking-widest">
                     {brief.length} chars
@@ -138,7 +138,7 @@ export function AICurriculumGenerator({ courseId }: { courseId: string }) {
                 <Button
                   onClick={handleGenerate}
                   disabled={generating || !brief.trim()}
-                  className="group w-full h-14 rounded-2xl bg-[#fd5523] hover:bg-[#062e39] text-white shadow-lg shadow-[#fd5523]/20 transition-all duration-300 active:scale-[0.97]"
+                  className="group w-full h-14 rounded-2xl bg-brand hover:bg-ink text-white shadow-lg shadow-brand/20 transition-all duration-300 active:scale-[0.97]"
                 >
                   {generating ? (
                     <Loader2 className="h-5 w-5 animate-spin" />
@@ -156,11 +156,11 @@ export function AICurriculumGenerator({ courseId }: { courseId: string }) {
                 <div className="flex items-center justify-between px-2">
                   <div className="flex flex-col">
                     <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Structure</span>
-                    <span className="text-xs font-bold text-[#062e39]">{preview.length} Modules • {totalLessons} Lessons</span>
+                    <span className="text-xs font-bold text-ink">{preview.length} Modules • {totalLessons} Lessons</span>
                   </div>
                   <button 
                     onClick={() => setPreview(null)}
-                    className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-[#fd5523] hover:opacity-70 transition-opacity"
+                    className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-brand-text hover:opacity-70 transition-opacity"
                   >
                     <RefreshCcw className="h-3 w-3" />
                     Reset
@@ -169,12 +169,12 @@ export function AICurriculumGenerator({ courseId }: { courseId: string }) {
 
                 <div className="space-y-3 max-h-[350px] overflow-y-auto pr-2 scrollbar-hide">
                   {preview.map((mod, mi) => (
-                    <div key={mi} className="group rounded-[1.5rem] border border-slate-100 bg-slate-50/50 p-4 transition-all hover:bg-white hover:border-[#fd5523]/20">
+                    <div key={mi} className="group rounded-[1.5rem] border border-slate-100 bg-slate-50/50 p-4 transition-all hover:bg-white hover:border-brand/20">
                       <div className="flex items-center gap-3 mb-3">
-                        <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-white border border-slate-100 text-[#fd5523] font-black text-xs shadow-sm">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-white border border-slate-100 text-brand-text font-black text-xs shadow-sm">
                           {mi + 1}
                         </div>
-                        <h4 className="text-sm font-black text-[#062e39] leading-tight">{mod.title}</h4>
+                        <h4 className="text-sm font-black text-ink leading-tight">{mod.title}</h4>
                       </div>
                       
                       <div className="space-y-2 ml-11">
@@ -193,7 +193,7 @@ export function AICurriculumGenerator({ courseId }: { courseId: string }) {
                   <Button
                     onClick={handleApply}
                     disabled={applying}
-                    className="w-full h-14 rounded-2xl bg-[#062e39] hover:bg-[#fd5523] text-white transition-all duration-500 active:scale-[0.97] group"
+                    className="w-full h-14 rounded-2xl bg-ink hover:bg-brand text-white transition-all duration-500 active:scale-[0.97] group"
                   >
                     {applying ? (
                       <div className="flex items-center gap-3 text-xs font-black uppercase tracking-widest">

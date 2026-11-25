@@ -43,30 +43,30 @@ export default async function BlogDetailPage({ params }: { params: Promise<{ slu
             <div className="col-xl-8">
               <div className="blog-details__content">
                 <div className="mb-12">
-                  <Link href="/blog" className="inline-flex items-center gap-2 text-sm font-bold text-[#fd5523] hover:-translate-x-1 transition-transform mb-8">
+                  <Link href="/blog" className="inline-flex items-center gap-2 text-sm font-bold text-brand-text hover:-translate-x-1 transition-transform mb-8">
                     <ArrowLeft className="h-4 w-4" />
                     Back to all articles
                   </Link>
-                  <h1 className="text-4xl sm:text-5xl font-extrabold text-[#062e39] leading-[1.1] tracking-tight mb-8">
+                  <h1 className="text-4xl sm:text-5xl font-extrabold text-ink leading-[1.1] tracking-tight mb-8">
                     {post.title}
                   </h1>
                   <div className="flex flex-wrap items-center gap-6 sm:gap-8 py-6 border-y border-slate-100">
                     <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center text-[#062e39]">
+                      <div className="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center text-ink">
                         <User className="h-5 w-5" />
                       </div>
                       <div>
                         <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Author</p>
-                        <p className="text-sm font-bold text-[#062e39]">{post.author_name}</p>
+                        <p className="text-sm font-bold text-ink">{post.author_name}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center text-[#062e39]">
+                      <div className="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center text-ink">
                         <Calendar className="h-5 w-5" />
                       </div>
                       <div>
                         <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Date</p>
-                        <p className="text-sm font-bold text-[#062e39]">
+                        <p className="text-sm font-bold text-ink">
                           {new Date(post.published_at).toLocaleDateString("en-US", {
                             day: "numeric",
                             month: "long",
@@ -76,12 +76,12 @@ export default async function BlogDetailPage({ params }: { params: Promise<{ slu
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-full bg-[#fff2e9] flex items-center justify-center text-[#fd5523]">
+                      <div className="h-10 w-10 rounded-full bg-brand-tint flex items-center justify-center text-brand-text">
                         <Clock className="h-5 w-5" />
                       </div>
                       <div>
                         <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Read</p>
-                        <p className="text-sm font-bold text-[#fd5523]">{post.read_time}</p>
+                        <p className="text-sm font-bold text-brand-text">{post.read_time}</p>
                       </div>
                     </div>
                   </div>
@@ -96,7 +96,7 @@ export default async function BlogDetailPage({ params }: { params: Promise<{ slu
                   {post.content_blocks.map((block, idx) => {
                     if (block.type === "h2") {
                       return (
-                        <h2 key={idx} className="text-2xl sm:text-3xl font-extrabold text-[#062e39] mt-12 mb-6 tracking-tight">
+                        <h2 key={idx} className="text-2xl sm:text-3xl font-extrabold text-ink mt-12 mb-6 tracking-tight">
                           {block.text}
                         </h2>
                       );
@@ -104,8 +104,8 @@ export default async function BlogDetailPage({ params }: { params: Promise<{ slu
 
                     if (block.type === "callout") {
                       return (
-                        <div key={idx} className="my-8 p-6 sm:p-8 rounded-2xl bg-[#fffbf8] border-l-4 border-[#fd5523]">
-                          <p className="text-base leading-relaxed text-[#062e39] font-medium">{block.text}</p>
+                        <div key={idx} className="my-8 p-6 sm:p-8 rounded-2xl bg-[#fffbf8] border-l-4 border-brand">
+                          <p className="text-base leading-relaxed text-ink font-medium">{block.text}</p>
                         </div>
                       );
                     }
@@ -122,7 +122,7 @@ export default async function BlogDetailPage({ params }: { params: Promise<{ slu
                   <div className="flex items-center gap-3 flex-wrap">
                     <Tag className="h-4 w-4 text-slate-400" />
                     {(post.tags as string[]).map((tag) => (
-                      <Link key={tag} href="/blog" className="px-4 py-2 rounded-full bg-slate-50 text-slate-500 text-xs font-bold hover:bg-[#fd5523] hover:text-white transition-all">
+                      <Link key={tag} href="/blog" className="px-4 py-2 rounded-full bg-slate-50 text-slate-500 text-xs font-bold hover:bg-brand hover:text-white transition-all">
                         {tag}
                       </Link>
                     ))}
@@ -136,23 +136,23 @@ export default async function BlogDetailPage({ params }: { params: Promise<{ slu
             <div className="col-xl-4">
               <aside className="sticky top-24 space-y-10 pl-0 lg:pl-4">
                 <div className="p-8 sm:p-10 rounded-[2.5rem] bg-white border-2 border-slate-50 shadow-xl shadow-slate-200/40">
-                  <h3 className="text-lg font-bold text-[#062e39] mb-6 tracking-tight">Categories</h3>
+                  <h3 className="text-lg font-bold text-ink mb-6 tracking-tight">Categories</h3>
                   <ul className="space-y-3">
                     {Object.entries(categoryCounts).map(([name, count]) => (
                       <li key={name}>
                         <Link href="/blog" className="flex items-center justify-between group py-1">
-                          <span className="text-slate-600 text-sm font-medium group-hover:text-[#fd5523] transition-colors">{name}</span>
-                          <span className="h-6 w-8 rounded-lg bg-slate-50 text-slate-400 text-[10px] font-bold flex items-center justify-center group-hover:bg-[#fd5523] group-hover:text-white transition-all">{count}</span>
+                          <span className="text-slate-600 text-sm font-medium group-hover:text-brand-text transition-colors">{name}</span>
+                          <span className="h-6 w-8 rounded-lg bg-slate-50 text-slate-400 text-[10px] font-bold flex items-center justify-center group-hover:bg-brand group-hover:text-white transition-all">{count}</span>
                         </Link>
                       </li>
                     ))}
                   </ul>
                 </div>
 
-                <div className="p-8 sm:p-10 rounded-[2.5rem] bg-[#062e39] text-white overflow-hidden relative shadow-2xl">
+                <div className="p-8 sm:p-10 rounded-[2.5rem] bg-ink text-white overflow-hidden relative shadow-2xl">
                   <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]" />
                   <div className="relative z-10">
-                    <div className="h-12 w-12 rounded-2xl bg-[#fd5523] flex items-center justify-center mb-6 shadow-xl shadow-[#fd5523]/20">
+                    <div className="h-12 w-12 rounded-2xl bg-brand flex items-center justify-center mb-6 shadow-xl shadow-brand/20">
                       <Zap className="h-6 w-6 text-white" />
                     </div>
                     <h3 className="text-xl font-bold mb-3 tracking-tight">Accelerate Your AI Journey</h3>

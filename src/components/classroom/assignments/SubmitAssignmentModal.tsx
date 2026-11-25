@@ -89,7 +89,7 @@ export function SubmitAssignmentModal({
       <div className="bg-white rounded-2xl sm:rounded-3xl max-w-lg w-full p-4 sm:p-6 md:p-8 shadow-2xl border border-slate-100 animate-in zoom-in-95 duration-200 max-h-[85dvh] overflow-y-auto">
         <div className="flex items-center justify-between pb-4 border-b border-slate-100">
           <div>
-            <h3 className="text-lg font-black text-[#062e39]">Turn In Assignment</h3>
+            <h3 className="text-lg font-black text-ink">Turn In Assignment</h3>
             <p className="text-xs text-slate-500 font-medium truncate max-w-xs">{assignment.title}</p>
           </div>
           <Button variant="ghost" size="icon" onClick={onClose} className="rounded-xl h-8 w-8 text-slate-400">
@@ -151,7 +151,7 @@ export function SubmitAssignmentModal({
             <Button
               type="submit"
               disabled={pending}
-              className="bg-[#fd5523] hover:bg-[#e0481d] text-white rounded-xl text-xs font-black shadow-md shadow-[#fd5523]/20"
+              className="bg-brand hover:bg-brand-hover text-white rounded-xl text-xs font-black shadow-md shadow-brand/20"
             >
               {pending ? (
                 <>

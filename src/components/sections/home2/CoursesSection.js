@@ -52,7 +52,7 @@ export default async function CoursesSection() {
                     <div className="sec-title__tagline">
                         <div className="line"></div>
                         <div className="text"><h4>Level Up Your Career</h4></div>
-                        <div className="icon"><Sparkles className="text-[#fd5523]" size={20} /></div>
+                        <div className="icon"><Sparkles className="text-brand-text" size={20} /></div>
                     </div>
                     <h2 className="sec-title__title">Most Popular <span>AI Courses</span></h2>
                 </div>
@@ -80,13 +80,13 @@ export default async function CoursesSection() {
                                     {course.is_featured && (
                                         <span style={{ 
                                             position: "absolute", top: "15px", left: "15px", 
-                                            background: "#fd5523", color: "#fff", padding: "4px 12px", 
+                                            background: "var(--color-brand)", color: "#fff", padding: "4px 12px", 
                                             borderRadius: "100px", fontSize: "11px", fontWeight: "800", textTransform: "uppercase" 
                                         }}>Featured</span>
                                     )}
                                     <div style={{ 
                                         position: "absolute", bottom: "15px", right: "15px", 
-                                        background: "rgba(6,46,57,0.85)", backdropFilter: "blur(4px)", color: "#fff", 
+                                        background: "rgba(9, 21, 43,0.85)", backdropFilter: "blur(4px)", color: "#fff", 
                                         padding: "4px 14px", borderRadius: "100px", fontSize: "13px", fontWeight: "800" 
                                     }}>
                                         {course.price_type === "free" ? "FREE" : `ZMW ${Math.round(course.price_amount)}`}
@@ -95,7 +95,7 @@ export default async function CoursesSection() {
                                 
                                 <div className="course-card__content" style={{ padding: "24px", flex: 1, display: "flex", flexDirection: "column" }}>
                                     <div style={{ display: "flex", gap: "10px", marginBottom: "12px" }}>
-                                        <span style={{ fontSize: "11px", fontWeight: "700", color: "#fd5523", background: "rgba(253,85,35,0.1)", padding: "2px 10px", borderRadius: "100px", textTransform: "uppercase" }}>
+                                        <span style={{ fontSize: "11px", fontWeight: "700", color: "var(--color-brand-text)", background: "rgba(7, 91, 235,0.1)", padding: "2px 10px", borderRadius: "100px", textTransform: "uppercase" }}>
                                             {course.category}
                                         </span>
                                         <span style={{ fontSize: "11px", fontWeight: "700", color: "#666", background: "#f0f2f5", padding: "2px 10px", borderRadius: "100px", textTransform: "uppercase" }}>
@@ -103,7 +103,7 @@ export default async function CoursesSection() {
                                         </span>
                                     </div>
                                     
-                                    <h3 style={{ fontSize: "20px", fontWeight: "800", color: "#062e39", marginBottom: "12px", lineHeight: "1.3" }}>
+                                    <h3 style={{ fontSize: "20px", fontWeight: "800", color: "var(--color-ink)", marginBottom: "12px", lineHeight: "1.3" }}>
                                         <Link href={`/courses/${course.slug}`} style={{ color: "inherit", textDecoration: "none" }}>{course.title}</Link>
                                     </h3>
                                     
@@ -117,7 +117,7 @@ export default async function CoursesSection() {
                                     }}>
                                         <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
                                             <div style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "13px", fontWeight: "600", color: "#666" }}>
-                                                <Users size={14} className="text-[#fd5523]" />
+                                                <Users size={14} className="text-brand-text" />
                                                 {enrollMap[course.id] || 0}
                                             </div>
                                             <div style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "13px", fontWeight: "600", color: "#666" }}>
@@ -141,7 +141,7 @@ export default async function CoursesSection() {
                 </div>
 
                 <div className="text-center" style={{ marginTop: "50px" }}>
-                    <Link href="/courses" className="thm-btn" style={{ background: "transparent", border: "2px solid #062e39", color: "#062e39" }}>
+                    <Link href="/courses" className="thm-btn" style={{ background: "transparent", border: "2px solid var(--color-ink)", color: "var(--color-ink)" }}>
                         View All Courses
                         <i className="icon-right-arrow21"></i>
                         <span className="hover-btn hover-bx"></span>
@@ -155,8 +155,8 @@ export default async function CoursesSection() {
             <style dangerouslySetInnerHTML={{ __html: `
                 .course-card:hover {
                     transform: translateY(-8px);
-                    box-shadow: 0 20px 40px rgba(6,46,57,0.1) !important;
-                    border-color: #fd552320 !important;
+                    box-shadow: 0 20px 40px rgba(9, 21, 43,0.1) !important;
+                    border-color: rgba(7, 91, 235, 0.13) !important;
                 }
                 .course-card:hover .course-card__img img {
                     transform: scale(1.05);

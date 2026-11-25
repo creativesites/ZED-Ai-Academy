@@ -1,10 +1,11 @@
 import type { MetadataRoute } from "next";
+import { BRAND } from "@/lib/brand";
 
 function getBaseUrl(): string {
   const raw =
     process.env.NEXT_PUBLIC_APP_URL ||
     process.env.NEXT_PUBLIC_SITE_URL ||
-    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "https://zedai.academy");
+    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : BRAND.url);
   return raw.replace(/\/+$/, "");
 }
 

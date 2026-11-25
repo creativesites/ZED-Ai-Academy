@@ -47,7 +47,7 @@ export function LiveSessionStudioClient({
   const [pending, startTransition] = useTransition();
 
   // Primary room identifier matching Instructor join room
-  const canonicalRoomName = zoomMeetingId || `zed-session-${bookingId}`;
+  const canonicalRoomName = zoomMeetingId || `cs-learn-session-${bookingId}`;
 
   function handleStartJoinFlow() {
     // Trigger pre-call device test modal
@@ -96,7 +96,7 @@ export function LiveSessionStudioClient({
       title,
       startsAt,
       endsAt,
-      description: "Zed AI Academy Live Interactive Studio Session",
+      description: "CS Learn Live Interactive Studio Session",
     });
     window.open(url, "_blank");
   };
@@ -107,7 +107,7 @@ export function LiveSessionStudioClient({
       title,
       startsAt,
       endsAt,
-      description: "Zed AI Academy Live Interactive Studio Session",
+      description: "CS Learn Live Interactive Studio Session",
     });
   };
 
@@ -150,16 +150,16 @@ export function LiveSessionStudioClient({
 
   return (
     <div className="rounded-[2.5rem] border border-slate-100 bg-white p-8 lg:p-12 text-center shadow-xl shadow-slate-200/50 relative overflow-hidden">
-      <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-3xl bg-[#fff6ee] text-[#fd5523] shadow-inner mb-6">
+      <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-3xl bg-brand-soft text-brand-text shadow-inner mb-6">
         <Video className="h-10 w-10" />
       </div>
 
-      <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-50 text-[#fd5523] text-xs font-bold uppercase tracking-wider mb-4">
+      <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-50 text-brand-text text-xs font-bold uppercase tracking-wider mb-4">
         <Sparkles className="h-3.5 w-3.5" />
         Encrypted HD Studio
       </div>
 
-      <h2 className="text-3xl font-black text-[#062e39]">Ready for Your Session</h2>
+      <h2 className="text-3xl font-black text-ink">Ready for Your Session</h2>
       <p className="mx-auto mt-3 max-w-xl text-slate-500 leading-relaxed text-base">
         Click below to run a quick device check and enter the live studio. Audio, video, live notes, and automated attendance logging will be enabled once you join.
       </p>
@@ -186,9 +186,9 @@ export function LiveSessionStudioClient({
             variant="outline"
             size="sm"
             onClick={handleGoogleCalendar}
-            className="rounded-xl border-slate-200 text-slate-700 hover:border-[#fd5523] text-xs font-bold gap-2"
+            className="rounded-xl border-slate-200 text-slate-700 hover:border-brand text-xs font-bold gap-2"
           >
-            <Calendar className="h-4 w-4 text-[#fd5523]" />
+            <Calendar className="h-4 w-4 text-brand-text" />
             Add to Google Calendar
           </Button>
 
@@ -197,9 +197,9 @@ export function LiveSessionStudioClient({
             variant="outline"
             size="sm"
             onClick={handleDownloadIcs}
-            className="rounded-xl border-slate-200 text-slate-700 hover:border-[#fd5523] text-xs font-bold gap-2"
+            className="rounded-xl border-slate-200 text-slate-700 hover:border-brand text-xs font-bold gap-2"
           >
-            <Download className="h-4 w-4 text-[#fd5523]" />
+            <Download className="h-4 w-4 text-brand-text" />
             Download .ics Calendar File
           </Button>
         </div>
@@ -210,7 +210,7 @@ export function LiveSessionStudioClient({
       <Button
         onClick={handleStartJoinFlow}
         disabled={!canJoin || pending}
-        className="rounded-2xl bg-[#fd5523] hover:bg-[#ef4a16] px-10 py-7 text-white font-black text-lg shadow-xl shadow-[#fd5523]/20 transition-all active:scale-95"
+        className="rounded-2xl bg-brand hover:bg-brand-hover px-10 py-7 text-white font-black text-lg shadow-xl shadow-brand/20 transition-all active:scale-95"
       >
         {pending ? (
           <>

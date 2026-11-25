@@ -74,9 +74,9 @@ export function StudentsTab({
       <div className="p-3 sm:p-5 lg:p-6 pb-3">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <h2 className="text-lg sm:text-xl font-bold text-[#062e39] tracking-tight flex items-center gap-2">
+            <h2 className="text-lg sm:text-xl font-bold text-ink tracking-tight flex items-center gap-2">
               Student Directory
-              <Users className="h-5 w-5 text-[#fd5523]" />
+              <Users className="h-5 w-5 text-brand-text" />
             </h2>
             <p className="text-xs text-slate-500 mt-0.5">Manage and track your academy's learners.</p>
           </div>
@@ -84,7 +84,7 @@ export function StudentsTab({
             <Button
               type="button"
               onClick={() => setIsInviteModalOpen(true)}
-              className="bg-[#fd5523] text-white hover:bg-[#ef4a16] rounded-xl h-10 px-4 font-semibold text-xs shadow-xs transition-all flex items-center justify-center gap-1.5 w-full sm:w-auto"
+              className="bg-brand text-white hover:bg-brand-hover rounded-xl h-10 px-4 font-semibold text-xs shadow-xs transition-all flex items-center justify-center gap-1.5 w-full sm:w-auto"
             >
               <UserPlus className="h-4 w-4 shrink-0" />
               <span>Invite Student</span>
@@ -105,15 +105,15 @@ export function StudentsTab({
 
         <div className="mt-4 flex flex-col sm:flex-row gap-2.5">
           <div className="relative flex-1 group">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-[#fd5523] transition-colors" />
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-brand-text transition-colors" />
             <Input 
               placeholder="Search by name or email..." 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 h-10 rounded-xl border-slate-200 bg-white shadow-xs focus:ring-[#fd5523]/10 focus:border-[#fd5523]/30 transition-all font-medium text-xs sm:text-sm"
+              className="pl-10 h-10 rounded-xl border-slate-200 bg-white shadow-xs focus:ring-brand/10 focus:border-brand/30 transition-all font-medium text-xs sm:text-sm"
             />
           </div>
-          <Button variant="outline" className="hidden sm:flex h-10 w-10 rounded-xl border-slate-200 bg-white shrink-0 shadow-xs text-slate-400 hover:text-[#fd5523]">
+          <Button variant="outline" className="hidden sm:flex h-10 w-10 rounded-xl border-slate-200 bg-white shrink-0 shadow-xs text-slate-400 hover:text-brand-text">
             <ListFilter className="h-4 w-4" />
           </Button>
         </div>
@@ -123,13 +123,13 @@ export function StudentsTab({
       <div className="flex-1 overflow-y-auto px-3 sm:px-6 pb-6">
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20 text-slate-400">
-            <Loader2 className="h-10 w-10 animate-spin mb-4 text-[#fd5523]" />
+            <Loader2 className="h-10 w-10 animate-spin mb-4 text-brand-text" />
             <p className="text-[10px] font-black uppercase tracking-widest">Accessing Student Records...</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-3 sm:gap-4">
             {filteredStudents.map((student) => (
-              <div key={student.id} className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-xs hover:shadow-md hover:border-[#fd5523]/30 transition-all group flex items-center gap-3 sm:gap-4 relative overflow-hidden">
+              <div key={student.id} className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-xs hover:shadow-md hover:border-brand/30 transition-all group flex items-center gap-3 sm:gap-4 relative overflow-hidden">
                 <div className="absolute -right-4 -bottom-4 opacity-[0.03] group-hover:opacity-[0.08] transition-opacity pointer-events-none">
                   <LayoutGrid className="h-24 w-24" />
                 </div>
@@ -144,7 +144,7 @@ export function StudentsTab({
 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
-                    <h4 className="text-sm sm:text-lg font-black text-[#062e39] truncate group-hover:text-[#fd5523] transition-colors">{student.full_name || "Unknown Learner"}</h4>
+                    <h4 className="text-sm sm:text-lg font-black text-ink truncate group-hover:text-brand-text transition-colors">{student.full_name || "Unknown Learner"}</h4>
                     <div className="px-2 py-0.5 rounded bg-emerald-50 text-emerald-600 text-[8px] font-black uppercase tracking-widest border border-emerald-100 shrink-0">Active</div>
                   </div>
                   <div className="flex items-center gap-4 text-slate-400 font-bold text-xs truncate">
@@ -162,17 +162,17 @@ export function StudentsTab({
                     <DropdownMenuContent align="end" className="rounded-2xl p-2 border-slate-100 shadow-xl w-48">
                       <DropdownMenuItem 
                         onClick={() => onViewPerformance?.(student.id)}
-                        className="rounded-xl font-bold text-slate-600 flex items-center gap-2 p-3 focus:bg-[#fd5523]/5 focus:text-[#fd5523] cursor-pointer"
+                        className="rounded-xl font-bold text-slate-600 flex items-center gap-2 p-3 focus:bg-brand/5 focus:text-brand-text cursor-pointer"
                       >
                         <UserCheck className="h-4 w-4" /> View Gradebook & Scores
                       </DropdownMenuItem>
-                      <DropdownMenuItem className="rounded-xl font-bold text-slate-600 flex items-center gap-2 p-3 focus:bg-[#fd5523]/5 focus:text-[#fd5523] cursor-pointer">
+                      <DropdownMenuItem className="rounded-xl font-bold text-slate-600 flex items-center gap-2 p-3 focus:bg-brand/5 focus:text-brand-text cursor-pointer">
                         <Shield className="h-4 w-4" /> Change Permissions
                       </DropdownMenuItem>
                       
                       {groups.length > 0 && (
                         <DropdownMenuSub>
-                          <DropdownMenuSubTrigger className="rounded-xl font-bold text-slate-600 flex items-center gap-2 p-3 focus:bg-[#fd5523]/5 focus:text-[#fd5523] cursor-pointer">
+                          <DropdownMenuSubTrigger className="rounded-xl font-bold text-slate-600 flex items-center gap-2 p-3 focus:bg-brand/5 focus:text-brand-text cursor-pointer">
                             <UsersRound className="h-4 w-4" /> Assign to Group
                           </DropdownMenuSubTrigger>
                           <DropdownMenuPortal>
@@ -188,7 +188,7 @@ export function StudentsTab({
                                       toast.error(e.message);
                                     }
                                   }}
-                                  className="rounded-xl font-bold text-slate-600 flex items-center p-3 focus:bg-[#fd5523]/5 focus:text-[#fd5523] cursor-pointer"
+                                  className="rounded-xl font-bold text-slate-600 flex items-center p-3 focus:bg-brand/5 focus:text-brand-text cursor-pointer"
                                 >
                                   {group.name}
                                 </DropdownMenuItem>
@@ -213,7 +213,7 @@ export function StudentsTab({
                 <div className="h-14 w-14 rounded-2xl bg-slate-50 flex items-center justify-center mx-auto mb-4">
                    <Users className="h-7 w-7 text-slate-300" />
                 </div>
-                <h3 className="text-lg font-bold text-[#062e39]">No Students Found</h3>
+                <h3 className="text-lg font-bold text-ink">No Students Found</h3>
                 <p className="text-slate-400 text-xs mt-1.5 max-w-xs mx-auto">
                   {searchQuery ? `No results for "${searchQuery}"` : "This academy doesn't have any students enrolled yet."}
                 </p>

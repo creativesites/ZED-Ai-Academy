@@ -105,21 +105,21 @@ export function NetworkStatusProvider({ children }: { children: React.ReactNode 
 
       {/* 1. Global Offline Overlay (Full Screen Glassmorphism) */}
       {!isOnline && (
-        <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center p-6 bg-[#062e39]/80 backdrop-blur-lg animate-fade-in">
+        <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center p-6 bg-ink/80 backdrop-blur-lg animate-fade-in">
           <div className="relative w-full max-w-md overflow-hidden rounded-3xl border border-white/10 bg-white/5 p-8 text-center shadow-2xl backdrop-blur-2xl">
-            <div className="absolute -top-24 -left-24 h-48 w-48 rounded-full bg-[#fd5523]/20 blur-3xl" />
-            <div className="absolute -bottom-24 -right-24 h-48 w-48 rounded-full bg-[#062e39]/40 blur-3xl" />
+            <div className="absolute -top-24 -left-24 h-48 w-48 rounded-full bg-brand/20 blur-3xl" />
+            <div className="absolute -bottom-24 -right-24 h-48 w-48 rounded-full bg-ink/40 blur-3xl" />
 
             <div className="relative space-y-6">
               {/* Pulsing connection status icon */}
-              <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-3xl bg-[#fd5523]/10 border border-[#fd5523]/20 text-[#fd5523] animate-pulse">
+              <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-3xl bg-brand/10 border border-brand/20 text-brand-text animate-pulse">
                 <WifiOff className="h-10 w-10" />
               </div>
 
               <div className="space-y-2">
                 <h2 className="text-2xl font-bold tracking-tight text-white">Network Connection Lost</h2>
                 <p className="text-sm leading-relaxed text-slate-300">
-                  Zed AI Academy is currently unreachable. Please check your wi-fi, cellular data, or local ethernet connection.
+                  CS Learn is currently unreachable. Please check your wi-fi, cellular data, or local ethernet connection.
                 </p>
               </div>
 
@@ -127,7 +127,7 @@ export function NetworkStatusProvider({ children }: { children: React.ReactNode 
                 <Button
                   onClick={testConnection}
                   disabled={isTesting}
-                  className="rounded-full bg-[#fd5523] px-8 py-5 font-bold text-white hover:bg-[#ef4a16] shadow-lg shadow-[#fd5523]/20 transition-all duration-300 flex items-center justify-center gap-2"
+                  className="rounded-full bg-brand px-8 py-5 font-bold text-white hover:bg-brand-hover shadow-lg shadow-brand/20 transition-all duration-300 flex items-center justify-center gap-2"
                 >
                   <RefreshCw className={`h-4 w-4 ${isTesting ? "animate-spin" : ""}`} />
                   {isTesting ? "Testing..." : "Test Connection"}
@@ -154,12 +154,12 @@ export function NetworkStatusProvider({ children }: { children: React.ReactNode 
 
       {/* 2. Top-sliding warning banner for temporary, non-fatal API/network issues */}
       {isOnline && hasNetworkError && (
-        <div className="fixed top-4 left-1/2 z-[9990] w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 p-0.5 rounded-2xl bg-gradient-to-r from-[#fd5523] to-[#062e39] shadow-xl animate-slide-down">
+        <div className="fixed top-4 left-1/2 z-[9990] w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 p-0.5 rounded-2xl bg-gradient-to-r from-brand to-ink shadow-xl animate-slide-down">
           <div className="flex items-center justify-between gap-3 rounded-[14px] bg-[#f8f7f4]/95 backdrop-blur-md px-4 py-3 border border-white/40">
-            <div className="flex items-center gap-2 text-[#062e39]">
-              <AlertCircle className="h-5 w-5 shrink-0 text-[#fd5523]" />
+            <div className="flex items-center gap-2 text-ink">
+              <AlertCircle className="h-5 w-5 shrink-0 text-brand-text" />
               <div className="text-xs sm:text-sm font-medium">
-                <span className="font-bold text-[#fd5523] mr-1">Network Error:</span>
+                <span className="font-bold text-brand-text mr-1">Network Error:</span>
                 {networkErrorMessage || "Failed to communicate with the server."}
               </div>
             </div>

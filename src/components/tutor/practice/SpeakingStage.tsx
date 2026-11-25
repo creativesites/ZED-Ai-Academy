@@ -62,12 +62,12 @@ type SpeakingStageProps = {
 };
 
 const SPARKLES = [
-  { top: "14%", left: "18%", color: "#fd5523", delay: "0ms" },
+  { top: "14%", left: "18%", color: "var(--color-brand-text)", delay: "0ms" },
   { top: "20%", left: "78%", color: "#15805f", delay: "70ms" },
   { top: "36%", left: "12%", color: "#f59e0b", delay: "130ms" },
   { top: "32%", left: "86%", color: "#3b82f6", delay: "90ms" },
   { top: "10%", left: "50%", color: "#ec4899", delay: "40ms" },
-  { top: "46%", left: "76%", color: "#fd5523", delay: "160ms" },
+  { top: "46%", left: "76%", color: "var(--color-brand-text)", delay: "160ms" },
 ] as const;
 
 export function SpeakingStage({
@@ -273,7 +273,7 @@ function Captions({
               onClick={onReplaySlow}
               title="Replay slowly (0.75×)"
               aria-label="Replay slowly at 0.75x speed"
-              className="flex h-7 w-7 items-center justify-center rounded-full border border-[var(--line-strong)] bg-white/90 text-[var(--ink-dim)] transition hover:bg-[#fff2e9] hover:text-[#fd5523]"
+              className="flex h-7 w-7 items-center justify-center rounded-full border border-[var(--line-strong)] bg-white/90 text-[var(--ink-dim)] transition hover:bg-brand-tint hover:text-brand-text"
             >
               <Snail className="h-3.5 w-3.5" aria-hidden="true" />
             </button>

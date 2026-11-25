@@ -9,7 +9,8 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-inter), "Inter", system-ui, -apple-system, sans-serif;
   --font-mono: var(--font-jetbrains-mono), "JetBrains Mono", ui-monospace, monospace;
-  --font-heading: var(--font-plus-jakarta), "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
+  --font-heading: var(--font-manrope), "Manrope", system-ui, -apple-system, sans-serif;
+  --font-display: var(--font-manrope), "Manrope", system-ui, -apple-system, sans-serif;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -47,79 +48,151 @@
   --radius-3xl: calc(var(--radius) * 2.35);
 }
 
-:root {
-  --font-inter: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-plus-jakarta: "Plus Jakarta Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-jetbrains-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  --logistiq-font: var(--font-inter);
-  --logistiq-font-two: var(--font-plus-jakarta);
-  --background: oklch(0.975 0.01 65);
-  --foreground: oklch(0.28 0.04 220);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.28 0.04 220);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.28 0.04 220);
-  --primary: oklch(0.67 0.2 41);
-  --primary-foreground: oklch(0.99 0.01 85);
-  --secondary: oklch(0.95 0.012 60);
-  --secondary-foreground: oklch(0.34 0.035 220);
-  --muted: oklch(0.955 0.008 60);
-  --muted-foreground: oklch(0.52 0.02 235);
-  --accent: oklch(0.95 0.03 48);
-  --accent-foreground: oklch(0.31 0.05 220);
-  --destructive: oklch(0.62 0.22 27);
-  --border: oklch(0.9 0.015 65);
-  --input: oklch(0.93 0.012 65);
-  --ring: oklch(0.67 0.2 41);
-  --chart-1: oklch(0.67 0.2 41);
-  --chart-2: oklch(0.54 0.11 220);
-  --chart-3: oklch(0.72 0.13 72);
-  --chart-4: oklch(0.63 0.13 160);
-  --chart-5: oklch(0.59 0.16 18);
-  --radius: 1rem;
-  --sidebar: oklch(0.992 0.004 70);
-  --sidebar-foreground: oklch(0.28 0.04 220);
-  --sidebar-primary: oklch(0.67 0.2 41);
-  --sidebar-primary-foreground: oklch(0.99 0.01 85);
-  --sidebar-accent: oklch(0.95 0.012 60);
-  --sidebar-accent-foreground: oklch(0.31 0.05 220);
-  --sidebar-border: oklch(0.89 0.014 65);
-  --sidebar-ring: oklch(0.67 0.2 41);
-  --marketing-ink: #062e39;
-  --marketing-ink-soft: rgba(6, 46, 57, 0.78);
-  --marketing-orange: #fd5523;
-  --marketing-orange-soft: rgba(253, 85, 35, 0.14);
-  --marketing-cream: #fff6ee;
-  --marketing-border: rgba(6, 46, 57, 0.1);
+/* ──────────────────────────────────────────────────────────────────────────
+ * CS Learn brand tokens (CreativeSites Learn). Single source for brand colour.
+ * Use these utilities instead of hard-coded hex: bg-brand, text-brand-text,
+ * text-ink, bg-navy, border-line, bg-brand-soft, text-brand-gold, …
+ * Hex mirrors for non-CSS contexts live in src/lib/brand.ts.
+ * Not `inline`, so the values can be re-scoped (see dark-surface rules below).
+ * ────────────────────────────────────────────────────────────────────────── */
+@theme {
+  /* Primary */
+  --color-brand: #075beb;            /* Royal Blue — primary buttons, fills, rings */
+  --color-brand-hover: #0549c8;      /* Royal Blue pressed/hover */
+  --color-brand-text: #075beb;       /* Accent text/icons; auto-brightens on dark surfaces */
+  --color-brand-soft: #eef4ff;       /* Tinted surface (hover rows, chips) */
+  --color-brand-tint: #e1ecfe;       /* Stronger tint (icon wells, badges) */
+  --color-brand-electric: #00b9f4;   /* Highlights, interactive accents on dark */
+  --color-brand-purple: #6500f5;
+  --color-brand-violet: #9200e8;
+  --color-brand-magenta: #f000a8;
+  --color-brand-orange: #ff8500;     /* Achievement & emphasis — use sparingly */
+  --color-brand-gold: #ffc400;       /* Learning/achievement accents — use sparingly */
+
+  /* Navy foundation */
+  --color-ink: #09152b;              /* Primary dark text + dark section background */
+  --color-ink-hover: #15233d;
+  --color-navy: #050d20;             /* Midnight Navy — flagship dark background */
+  --color-navy-deep: #09152b;
+  --color-navy-card: #101d35;
+  --color-navy-elevated: #15233d;
+
+  /* Neutrals */
+  --color-surface: #f5f7fc;          /* Soft White */
+  --color-line: #e5eaf2;             /* Light Gray borders */
+  --color-charcoal: #172033;
+  --color-slate-ink: #334155;
+
+  /* Typography scale (Manrope display, Inter body) */
+  --text-display: clamp(2.5rem, 5vw, 4rem);
+  --text-display--line-height: 1.05;
+  --text-display--font-weight: 800;
+
+  /* Elevation */
+  --shadow-elev-1: 0 1px 2px rgb(9 21 43 / 0.06), 0 1px 1px rgb(9 21 43 / 0.04);
+  --shadow-elev-2: 0 8px 24px -8px rgb(9 21 43 / 0.14), 0 2px 6px rgb(9 21 43 / 0.06);
+  --shadow-elev-3: 0 24px 48px -16px rgb(9 21 43 / 0.24);
 }
 
+:root {
+  --font-inter: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-manrope: "Manrope", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-jetbrains-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  --logistiq-font: var(--font-inter);
+  --logistiq-font-two: var(--font-manrope);
+
+  /* Gradients — use selectively (brand moments, progress, key highlights) */
+  --gradient-cs: linear-gradient(120deg, #00b9f4, #075beb, #6500f5);
+  --gradient-learn: linear-gradient(120deg, #ffc400, #ff8500, #f000a8);
+  --gradient-brand: linear-gradient(110deg, #00b9f4, #075beb, #6500f5, #f000a8, #ff8500);
+
+  /* Light theme (shadcn semantic tokens) */
+  --background: #f5f7fc;
+  --foreground: #172033;
+  --card: #ffffff;
+  --card-foreground: #172033;
+  --popover: #ffffff;
+  --popover-foreground: #172033;
+  --primary: #075beb;
+  --primary-foreground: #ffffff;
+  --secondary: #eef2f8;
+  --secondary-foreground: #172033;
+  --muted: #eef2f8;
+  --muted-foreground: #64748b;
+  --accent: #eef4ff;
+  --accent-foreground: #09152b;
+  --destructive: #dc2626;
+  --border: #e5eaf2;
+  --input: #dce3ee;
+  --ring: #075beb;
+  --chart-1: #075beb;
+  --chart-2: #00b9f4;
+  --chart-3: #6500f5;
+  --chart-4: #ff8500;
+  --chart-5: #f000a8;
+  --radius: 0.875rem;
+  --sidebar: #ffffff;
+  --sidebar-foreground: #172033;
+  --sidebar-primary: #075beb;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #eef4ff;
+  --sidebar-accent-foreground: #09152b;
+  --sidebar-border: #e5eaf2;
+  --sidebar-ring: #075beb;
+
+  /* Legacy marketing aliases (kept so older sections pick up the new palette) */
+  --marketing-ink: #09152b;
+  --marketing-ink-soft: rgba(9, 21, 43, 0.78);
+  --marketing-orange: #075beb;
+  --marketing-orange-soft: rgba(7, 91, 235, 0.12);
+  --marketing-cream: #eef4ff;
+  --marketing-border: rgba(9, 21, 43, 0.1);
+}
+
+/* Dark theme — the flagship navy expression */
 .dark {
-  --background: oklch(0.22 0.028 220);
-  --foreground: oklch(0.96 0.01 70);
-  --card: oklch(0.25 0.03 220);
-  --card-foreground: oklch(0.96 0.01 70);
-  --popover: oklch(0.25 0.03 220);
-  --popover-foreground: oklch(0.96 0.01 70);
-  --primary: oklch(0.72 0.18 42);
-  --primary-foreground: oklch(0.24 0.03 220);
-  --secondary: oklch(0.3 0.02 220);
-  --secondary-foreground: oklch(0.96 0.01 70);
-  --muted: oklch(0.3 0.02 220);
-  --muted-foreground: oklch(0.77 0.015 70);
-  --accent: oklch(0.33 0.035 42);
-  --accent-foreground: oklch(0.96 0.01 70);
-  --destructive: oklch(0.7 0.18 24);
-  --border: oklch(1 0 0 / 0.1);
-  --input: oklch(1 0 0 / 0.14);
-  --ring: oklch(0.72 0.18 42);
-  --sidebar: oklch(0.24 0.03 220);
-  --sidebar-foreground: oklch(0.96 0.01 70);
-  --sidebar-primary: oklch(0.72 0.18 42);
-  --sidebar-primary-foreground: oklch(0.24 0.03 220);
-  --sidebar-accent: oklch(0.31 0.02 220);
-  --sidebar-accent-foreground: oklch(0.96 0.01 70);
-  --sidebar-border: oklch(1 0 0 / 0.1);
-  --sidebar-ring: oklch(0.72 0.18 42);
+  --background: #050d20;
+  --foreground: #ffffff;
+  --card: #101d35;
+  --card-foreground: #ffffff;
+  --popover: #15233d;
+  --popover-foreground: #ffffff;
+  --primary: #075beb;
+  --primary-foreground: #ffffff;
+  --secondary: #15233d;
+  --secondary-foreground: #ffffff;
+  --muted: #15233d;
+  --muted-foreground: #94a3b8;
+  --accent: #15233d;
+  --accent-foreground: #ffffff;
+  --destructive: #f87171;
+  --border: rgb(255 255 255 / 0.09);
+  --input: rgb(255 255 255 / 0.14);
+  --ring: #00b9f4;
+  --sidebar: #09152b;
+  --sidebar-foreground: #ffffff;
+  --sidebar-primary: #075beb;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #15233d;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: rgb(255 255 255 / 0.09);
+  --sidebar-ring: #00b9f4;
+}
+
+/*
+ * Accent text on dark surfaces: Royal Blue text on navy fails WCAG AA, so inside
+ * dark containers `text-brand-text` switches to Electric Blue (≈7.8:1 on navy).
+ * Light cards nested inside dark sections switch back.
+ */
+.dark,
+.bg-ink, .bg-navy, .bg-navy-deep, .bg-navy-card, .bg-navy-elevated, .bg-charcoal,
+.bg-ink\/90, .bg-ink\/95, .bg-ink\/80, .from-ink, .from-navy,
+[data-surface="dark"] {
+  --color-brand-text: #33c5f6;
+}
+.bg-white, .bg-card, .bg-surface, .bg-background, .bg-brand-soft, .bg-slate-50,
+[data-surface="light"] {
+  --color-brand-text: #075beb;
 }
 
 @layer base {
@@ -139,14 +212,24 @@
   body {
     @apply bg-background text-foreground font-sans text-[15px] leading-relaxed;
     background-image:
-      radial-gradient(circle at top left, rgba(253, 85, 35, 0.12), transparent 28%),
-      radial-gradient(circle at top right, rgba(6, 46, 57, 0.08), transparent 24%),
-      linear-gradient(180deg, #fffaf6 0%, #fff 34%, #fff8f2 100%);
+      radial-gradient(circle at top left, rgba(7, 91, 235, 0.07), transparent 30%),
+      radial-gradient(circle at top right, rgba(101, 0, 245, 0.05), transparent 26%),
+      linear-gradient(180deg, #f5f7fc 0%, #fff 34%, #f5f7fc 100%);
   }
 
   ::selection {
-    background: rgba(253, 85, 35, 0.2);
-    color: var(--marketing-ink);
+    background: rgba(7, 91, 235, 0.18);
+    color: var(--color-ink);
+  }
+
+  /* Visible keyboard focus everywhere (components may refine with ring utilities) */
+  :focus-visible {
+    outline: 2px solid var(--color-brand);
+    outline-offset: 2px;
+  }
+  .dark :focus-visible,
+  [data-surface="dark"] :focus-visible {
+    outline-color: var(--color-brand-electric);
   }
 
   h1,
@@ -155,7 +238,7 @@
   h4,
   h5,
   h6 {
-    font-family: var(--font-heading), var(--font-sans), sans-serif;
+    font-family: var(--font-heading);
     letter-spacing: -0.02em;
     line-height: 1.18;
   }
@@ -178,6 +261,28 @@
 }
 
 @layer utilities {
+  /* ── CS Learn brand utilities ─────────────────────────────────────────── */
+  .bg-gradient-cs { background-image: var(--gradient-cs); }
+  .bg-gradient-learn { background-image: var(--gradient-learn); }
+  .bg-gradient-brand { background-image: var(--gradient-brand); }
+  .text-gradient-cs,
+  .text-gradient-learn,
+  .text-gradient-brand {
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+  }
+  .text-gradient-cs { background-image: var(--gradient-cs); }
+  .text-gradient-learn { background-image: var(--gradient-learn); }
+  .text-gradient-brand { background-image: var(--gradient-brand); }
+  .font-display { font-family: var(--font-display); }
+  .brand-surface-dark {
+    background-color: var(--color-navy);
+    color: #fff;
+    --color-brand-text: #33c5f6;
+  }
+
   .no-scrollbar,
   .scrollbar-hide {
     -ms-overflow-style: none;
@@ -203,8 +308,8 @@
     inset: 0;
     z-index: -1;
     background-image:
-      linear-gradient(rgba(6, 46, 57, 0.03) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(6, 46, 57, 0.03) 1px, transparent 1px);
+      linear-gradient(rgba(9, 21, 43, 0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(9, 21, 43, 0.03) 1px, transparent 1px);
     background-size: 88px 88px;
     mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.45), transparent 85%);
     pointer-events: none;
@@ -212,28 +317,28 @@
 
   .marketing-card {
     background: rgba(255, 255, 255, 0.92);
-    border: 1px solid rgba(6, 46, 57, 0.1);
+    border: 1px solid rgba(9, 21, 43, 0.1);
     box-shadow:
       0 1px 0 rgba(255, 255, 255, 0.7) inset,
-      0 18px 40px rgba(6, 46, 57, 0.08);
+      0 18px 40px rgba(9, 21, 43, 0.08);
     backdrop-filter: blur(18px);
   }
 
   .marketing-outline-card {
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(255, 246, 238, 0.94));
-    border: 1px solid rgba(6, 46, 57, 0.08);
-    box-shadow: 0 18px 44px rgba(6, 46, 57, 0.06);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(238, 244, 255, 0.94));
+    border: 1px solid rgba(9, 21, 43, 0.08);
+    box-shadow: 0 18px 44px rgba(9, 21, 43, 0.06);
   }
 
   .marketing-dark-card {
-    background: linear-gradient(180deg, rgba(6, 46, 57, 0.96), rgba(8, 56, 70, 0.96));
+    background: linear-gradient(180deg, rgba(9, 21, 43, 0.96), rgba(16, 29, 53, 0.96));
     border: 1px solid rgba(255, 255, 255, 0.08);
-    box-shadow: 0 24px 60px rgba(6, 46, 57, 0.22);
+    box-shadow: 0 24px 60px rgba(9, 21, 43, 0.22);
   }
 
   .marketing-kicker {
     @apply inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-semibold uppercase tracking-[0.22em];
-    background: rgba(253, 85, 35, 0.12);
+    background: rgba(7, 91, 235, 0.12);
     color: var(--marketing-orange);
   }
 
@@ -270,13 +375,13 @@
 
   .mesh-orange {
     background:
-      radial-gradient(circle at 20% 20%, rgba(253, 85, 35, 0.22), transparent 40%),
-      radial-gradient(circle at 80% 0%, rgba(255, 184, 112, 0.2), transparent 34%),
-      linear-gradient(180deg, rgba(6, 46, 57, 0.96), rgba(8, 56, 70, 0.96));
+      radial-gradient(circle at 20% 20%, rgba(7, 91, 235, 0.22), transparent 40%),
+      radial-gradient(circle at 80% 0%, rgba(0, 185, 244, 0.16), transparent 34%),
+      linear-gradient(180deg, rgba(9, 21, 43, 0.96), rgba(16, 29, 53, 0.96));
   }
 
   .surface-accent {
-    background: linear-gradient(180deg, rgba(255, 246, 238, 0.95), rgba(255, 255, 255, 0.98));
+    background: linear-gradient(180deg, rgba(238, 244, 255, 0.95), rgba(255, 255, 255, 0.98));
   }
 
   .noise {
@@ -326,7 +431,7 @@
   .hero-orbit {
     box-shadow:
       0 0 0 1px rgba(255, 255, 255, 0.1),
-      0 18px 48px rgba(6, 46, 57, 0.3);
+      0 18px 48px rgba(9, 21, 43, 0.3);
   }
 }
 

@@ -59,10 +59,10 @@ export function LaunchChecklistCard({
   return (
     <div className="mb-6 bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
       {/* Header */}
-      <div className="px-5 py-4 bg-gradient-to-r from-[#062e39] to-[#0a4352] text-white flex items-center justify-between gap-4">
+      <div className="px-5 py-4 bg-gradient-to-r from-ink to-ink-hover text-white flex items-center justify-between gap-4">
         <div className="flex items-center gap-3 min-w-0">
           <div className="h-9 w-9 rounded-xl bg-white/10 flex items-center justify-center shrink-0">
-            <Rocket className="h-4.5 w-4.5 text-[#fd5523]" />
+            <Rocket className="h-4.5 w-4.5 text-brand-text" />
           </div>
           <div className="min-w-0">
             <div className="flex items-center gap-2">
@@ -83,7 +83,7 @@ export function LaunchChecklistCard({
           <div className="hidden sm:flex items-center gap-2">
             <div className="w-24 h-1.5 rounded-full bg-white/15 overflow-hidden">
               <div
-                className="h-full rounded-full bg-[#fd5523] transition-all duration-500"
+                className="h-full rounded-full bg-brand transition-all duration-500"
                 style={{ width: `${percent}%` }}
               />
             </div>
@@ -109,20 +109,20 @@ export function LaunchChecklistCard({
             href={item.href}
             className={cn(
               "p-4 flex flex-col justify-between gap-3 transition-colors group",
-              item.done ? "bg-slate-50/60" : "hover:bg-[#fffaf6]"
+              item.done ? "bg-slate-50/60" : "hover:bg-surface"
             )}
           >
             <div className="flex items-start gap-2.5">
               {item.done ? (
                 <CheckCircle2 className="h-4.5 w-4.5 text-emerald-500 shrink-0 mt-0.5" />
               ) : (
-                <Circle className="h-4.5 w-4.5 text-slate-300 group-hover:text-[#fd5523] shrink-0 mt-0.5 transition-colors" />
+                <Circle className="h-4.5 w-4.5 text-slate-300 group-hover:text-brand-text shrink-0 mt-0.5 transition-colors" />
               )}
               <div className="min-w-0">
                 <p
                   className={cn(
                     "text-xs font-bold leading-snug",
-                    item.done ? "text-slate-400 line-through" : "text-[#062e39]"
+                    item.done ? "text-slate-400 line-through" : "text-ink"
                   )}
                 >
                   {item.title}
@@ -134,7 +134,7 @@ export function LaunchChecklistCard({
             </div>
 
             {!item.done && (
-              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-[#fd5523] group-hover:translate-x-0.5 transition-transform pl-7">
+              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-brand-text group-hover:translate-x-0.5 transition-transform pl-7">
                 <span>{item.cta}</span>
                 <ChevronRight className="h-3 w-3" />
               </span>

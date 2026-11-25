@@ -76,7 +76,7 @@ function SortableStepCard({
       style={{ transform: CSS.Transform.toString(transform), transition }}
       className={cn(
         "rounded-2xl border bg-white p-3.5 transition-shadow",
-        isDragging ? "z-20 border-[#fd5523] shadow-xl" : "border-slate-200 hover:border-slate-300",
+        isDragging ? "z-20 border-brand shadow-xl" : "border-slate-200 hover:border-slate-300",
       )}
     >
       <div className="mb-2.5 flex items-center justify-between gap-2">
@@ -86,11 +86,11 @@ function SortableStepCard({
             aria-label={`Drag step ${index + 1} to reorder`}
             {...attributes}
             {...listeners}
-            className="flex h-7 w-7 cursor-grab touch-none items-center justify-center rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#fd5523] active:cursor-grabbing"
+            className="flex h-7 w-7 cursor-grab touch-none items-center justify-center rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand active:cursor-grabbing"
           >
             <GripVertical className="h-4 w-4" />
           </button>
-          <span className="inline-flex h-6 min-w-6 items-center justify-center rounded-full bg-[#062e39] px-2 text-[11px] font-bold text-white">
+          <span className="inline-flex h-6 min-w-6 items-center justify-center rounded-full bg-ink px-2 text-[11px] font-bold text-white">
             Step {index + 1}
           </span>
           <span className="text-[11px] font-medium text-slate-400">{step.id}</span>
@@ -102,7 +102,7 @@ function SortableStepCard({
             disabled={index === 0}
             onClick={() => onMove(-1)}
             aria-label={`Move step ${index + 1} up`}
-            className="flex h-7 w-7 items-center justify-center rounded-md text-slate-500 hover:bg-slate-100 hover:text-[#062e39] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#fd5523] disabled:opacity-30"
+            className="flex h-7 w-7 items-center justify-center rounded-md text-slate-500 hover:bg-slate-100 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:opacity-30"
           >
             <ArrowUp className="h-3.5 w-3.5" />
           </button>
@@ -111,7 +111,7 @@ function SortableStepCard({
             disabled={index === total - 1}
             onClick={() => onMove(1)}
             aria-label={`Move step ${index + 1} down`}
-            className="flex h-7 w-7 items-center justify-center rounded-md text-slate-500 hover:bg-slate-100 hover:text-[#062e39] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#fd5523] disabled:opacity-30"
+            className="flex h-7 w-7 items-center justify-center rounded-md text-slate-500 hover:bg-slate-100 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:opacity-30"
           >
             <ArrowDown className="h-3.5 w-3.5" />
           </button>
@@ -146,7 +146,7 @@ function SortableStepCard({
         <div className="grid gap-2.5 sm:grid-cols-2">
           <div className="space-y-1">
             <Label htmlFor={boardId} className="flex items-center gap-1 text-[11px] font-semibold text-slate-600">
-              <LayoutList className="h-3 w-3 text-[#fd5523]" />
+              <LayoutList className="h-3 w-3 text-brand-text" />
               Board content
             </Label>
             <Textarea
@@ -176,9 +176,9 @@ function SortableStepCard({
         </div>
 
         {step.boardContent.trim() && (
-          <div className="rounded-xl border border-slate-200/80 bg-[#062e39]/[0.03] px-3 py-2">
+          <div className="rounded-xl border border-slate-200/80 bg-ink/[0.03] px-3 py-2">
             <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Board preview</p>
-            <p className="mt-0.5 whitespace-pre-line text-xs text-[#062e39]">{step.boardContent}</p>
+            <p className="mt-0.5 whitespace-pre-line text-xs text-ink">{step.boardContent}</p>
           </div>
         )}
       </div>
@@ -257,9 +257,9 @@ export function FlowStoryboard({
       {onAiRevise && (
         <form
           onSubmit={submitInstruction}
-          className="space-y-2 rounded-2xl border border-[#fd5523]/25 bg-[#fff6ee] p-3"
+          className="space-y-2 rounded-2xl border border-brand/25 bg-brand-soft p-3"
         >
-          <Label htmlFor="ai-flow-edit-bar" className="text-[11px] font-bold uppercase tracking-wider text-[#062e39]">
+          <Label htmlFor="ai-flow-edit-bar" className="text-[11px] font-bold uppercase tracking-wider text-ink">
             Edit flow with one instruction
           </Label>
           <div className="flex gap-2">
@@ -275,7 +275,7 @@ export function FlowStoryboard({
               type="submit"
               size="sm"
               disabled={isRevising || !instruction.trim()}
-              className="shrink-0 rounded-xl bg-[#fd5523] text-xs font-bold text-white hover:bg-[#ea4817]"
+              className="shrink-0 rounded-xl bg-brand text-xs font-bold text-white hover:bg-brand-hover"
             >
               {isRevising ? (
                 <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
@@ -292,7 +292,7 @@ export function FlowStoryboard({
                 type="button"
                 disabled={isRevising}
                 onClick={() => setInstruction(chip)}
-                className="rounded-full border border-slate-200 bg-white px-2.5 py-0.5 text-[11px] font-medium text-slate-600 hover:border-[#fd5523]/50 hover:text-[#fd5523] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#fd5523]"
+                className="rounded-full border border-slate-200 bg-white px-2.5 py-0.5 text-[11px] font-medium text-slate-600 hover:border-brand/50 hover:text-brand-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
               >
                 {chip}
               </button>

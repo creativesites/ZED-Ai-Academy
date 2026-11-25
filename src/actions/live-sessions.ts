@@ -237,7 +237,7 @@ export async function confirmLiveSessionBooking(bookingId: string) {
 
     if (!existingMeeting) {
       const zoomMeeting = await createZoomMeeting({
-        topic: service?.title || "Zed AI Academy Live Session",
+        topic: service?.title || "CS Learn Live Session",
         startsAt: booking.starts_at,
         durationMinutes: service?.duration_minutes || Math.max(15, Math.round((new Date(booking.ends_at).getTime() - new Date(booking.starts_at).getTime()) / 60_000)),
         timezone: booking.timezone,

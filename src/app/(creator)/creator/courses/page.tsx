@@ -87,7 +87,7 @@ export default async function CreatorCoursesPage() {
     <div className="mx-auto w-full max-w-5xl space-y-6 px-4 py-6 sm:py-10">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-[#062e39] sm:text-3xl">Your courses</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-ink sm:text-3xl">Your courses</h1>
           <p className="mt-1 text-sm text-slate-500">
             {courses?.length ?? 0} course{courses?.length === 1 ? "" : "s"} · {publishedCount} live · {draftCount} draft
             {draftCount === 1 ? "" : "s"} · {totalLearners} learner{totalLearners === 1 ? "" : "s"}
@@ -96,14 +96,14 @@ export default async function CreatorCoursesPage() {
         <div className="flex items-center gap-2">
           <Link
             href="/creator/settings"
-            className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-[#062e39] hover:bg-slate-50"
+            className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-ink hover:bg-slate-50"
           >
             <Palette className="h-4 w-4 text-slate-500" />
             Settings
           </Link>
           <Link
             href="/creator/courses/new"
-            className="inline-flex h-10 flex-1 items-center justify-center gap-2 rounded-xl bg-[#fd5523] px-5 text-sm font-semibold text-white shadow-sm hover:bg-[#ef4a16] sm:flex-none"
+            className="inline-flex h-10 flex-1 items-center justify-center gap-2 rounded-xl bg-brand px-5 text-sm font-semibold text-white shadow-sm hover:bg-brand-hover sm:flex-none"
           >
             <Plus className="h-4 w-4" />
             New course
@@ -122,7 +122,7 @@ export default async function CreatorCoursesPage() {
                   href={`/creator/courses/${course.id}`}
                   className="group flex items-center gap-3 rounded-2xl border border-slate-200/80 bg-white p-3 transition-all hover:border-slate-300 hover:shadow-sm sm:gap-4 sm:p-4"
                 >
-                  <div className="relative aspect-video w-24 shrink-0 overflow-hidden rounded-xl bg-gradient-to-br from-[#062e39] to-[#0d4d5e] sm:w-40">
+                  <div className="relative aspect-video w-24 shrink-0 overflow-hidden rounded-xl bg-gradient-to-br from-ink to-[#0d4d5e] sm:w-40">
                     {course.thumbnail_url ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img src={course.thumbnail_url} alt="" className="h-full w-full object-cover" />
@@ -139,7 +139,7 @@ export default async function CreatorCoursesPage() {
                       </span>
                       <span className="truncate text-xs text-slate-500">{formatPrice(course.price_type, course.price_amount)}</span>
                     </div>
-                    <h2 className="line-clamp-2 text-[15px] font-semibold leading-snug text-[#062e39] group-hover:text-[#fd5523] sm:text-base">
+                    <h2 className="line-clamp-2 text-[15px] font-semibold leading-snug text-ink group-hover:text-brand-text sm:text-base">
                       {course.title}
                     </h2>
                     <p className="mt-1 flex flex-wrap gap-x-3 text-xs text-slate-500">
@@ -147,7 +147,7 @@ export default async function CreatorCoursesPage() {
                       <span className="inline-flex items-center gap-1"><GraduationCap className="h-3.5 w-3.5" />{learners} learner{learners === 1 ? "" : "s"}</span>
                     </p>
                   </div>
-                  <ArrowRight className="hidden h-5 w-5 shrink-0 text-slate-300 transition-transform group-hover:translate-x-0.5 group-hover:text-[#fd5523] sm:block" />
+                  <ArrowRight className="hidden h-5 w-5 shrink-0 text-slate-300 transition-transform group-hover:translate-x-0.5 group-hover:text-brand-text sm:block" />
                 </Link>
               </li>
             );
@@ -155,16 +155,16 @@ export default async function CreatorCoursesPage() {
         </ul>
       ) : (
         <div className="rounded-2xl border-2 border-dashed border-slate-200 bg-white px-4 py-14 text-center sm:py-20">
-          <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#fff6ee] text-[#fd5523]">
+          <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-soft text-brand-text">
             <Sparkles className="h-7 w-7" />
           </div>
-          <h2 className="text-xl font-bold text-[#062e39]">Create your first course</h2>
+          <h2 className="text-xl font-bold text-ink">Create your first course</h2>
           <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-slate-500">
             Describe your idea and AI drafts the outline — or start from scratch. You can publish when it&apos;s ready.
           </p>
           <Link
             href="/creator/courses/new"
-            className="mt-6 inline-flex h-11 items-center gap-2 rounded-xl bg-[#fd5523] px-6 text-sm font-semibold text-white hover:bg-[#ef4a16]"
+            className="mt-6 inline-flex h-11 items-center gap-2 rounded-xl bg-brand px-6 text-sm font-semibold text-white hover:bg-brand-hover"
           >
             Create course
             <ArrowRight className="h-4 w-4" />

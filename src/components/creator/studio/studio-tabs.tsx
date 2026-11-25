@@ -62,8 +62,8 @@ export function StudioTabs({ tabs, defaultTab }: { tabs: StudioTab[]; defaultTab
                 className={cn(
                   "inline-flex h-9 shrink-0 items-center gap-1.5 rounded-xl px-3 text-[13px] font-semibold transition-colors",
                   isActive
-                    ? "bg-[#062e39] text-white shadow-sm"
-                    : "text-slate-600 hover:bg-white hover:text-[#062e39]"
+                    ? "bg-ink text-white shadow-sm"
+                    : "text-slate-600 hover:bg-white hover:text-ink"
                 )}
               >
                 {tab.icon}

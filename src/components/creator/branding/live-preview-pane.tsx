@@ -21,6 +21,7 @@ import {
 import { cn } from "@/lib/utils";
 import { TemplateRenderer } from "@/lib/templates/home-templates";
 import { getContrastRatio } from "./palette-presets";
+import { DEFAULT_PRIMARY_COLOR } from "@/lib/brand";
 
 type Viewport = "mobile" | "tablet" | "desktop";
 type Surface = "landing" | "ui-kit" | "classroom";
@@ -46,14 +47,14 @@ export function LivePreviewPane({
   const [surface, setSurface] = useState<Surface>("landing");
   const [zoom, setZoom] = useState<number>(1.0);
 
-  const contrast = getContrastRatio(primaryColor || "#fd5523");
+  const contrast = getContrastRatio(primaryColor || DEFAULT_PRIMARY_COLOR);
 
   const simulatedTenant = {
     id: "preview-tenant-id",
-    name: academyName || "Zed AI Academy",
+    name: academyName || "CS Learn",
     slug: tenantSlug || "preview",
     logo_url: logoUrl || null,
-    primary_color: primaryColor || "#fd5523",
+    primary_color: primaryColor || DEFAULT_PRIMARY_COLOR,
     home_template: homeTemplate || "modern",
     home_content: homeContent,
   };
@@ -105,7 +106,7 @@ export function LivePreviewPane({
             onClick={() => setSurface("landing")}
             className={cn(
               "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all",
-              surface === "landing" ? "bg-white text-[#062e39] shadow-sm" : "text-slate-500 hover:text-slate-800"
+              surface === "landing" ? "bg-white text-ink shadow-sm" : "text-slate-500 hover:text-slate-800"
             )}
           >
             <Layers className="h-3.5 w-3.5" />
@@ -116,7 +117,7 @@ export function LivePreviewPane({
             onClick={() => setSurface("ui-kit")}
             className={cn(
               "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all",
-              surface === "ui-kit" ? "bg-white text-[#062e39] shadow-sm" : "text-slate-500 hover:text-slate-800"
+              surface === "ui-kit" ? "bg-white text-ink shadow-sm" : "text-slate-500 hover:text-slate-800"
             )}
           >
             <Palette className="h-3.5 w-3.5" />
@@ -127,7 +128,7 @@ export function LivePreviewPane({
             onClick={() => setSurface("classroom")}
             className={cn(
               "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all",
-              surface === "classroom" ? "bg-white text-[#062e39] shadow-sm" : "text-slate-500 hover:text-slate-800"
+              surface === "classroom" ? "bg-white text-ink shadow-sm" : "text-slate-500 hover:text-slate-800"
             )}
           >
             <GraduationCap className="h-3.5 w-3.5" />
@@ -142,7 +143,7 @@ export function LivePreviewPane({
             onClick={() => setViewport("desktop")}
             className={cn(
               "flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all",
-              viewport === "desktop" ? "bg-white text-[#062e39] shadow-sm" : "text-slate-500 hover:text-slate-800"
+              viewport === "desktop" ? "bg-white text-ink shadow-sm" : "text-slate-500 hover:text-slate-800"
             )}
             title="Desktop (100%)"
           >
@@ -154,7 +155,7 @@ export function LivePreviewPane({
             onClick={() => setViewport("tablet")}
             className={cn(
               "flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all",
-              viewport === "tablet" ? "bg-white text-[#062e39] shadow-sm" : "text-slate-500 hover:text-slate-800"
+              viewport === "tablet" ? "bg-white text-ink shadow-sm" : "text-slate-500 hover:text-slate-800"
             )}
             title="Tablet (768px)"
           >
@@ -166,7 +167,7 @@ export function LivePreviewPane({
             onClick={() => setViewport("mobile")}
             className={cn(
               "flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all",
-              viewport === "mobile" ? "bg-white text-[#062e39] shadow-sm" : "text-slate-500 hover:text-slate-800"
+              viewport === "mobile" ? "bg-white text-ink shadow-sm" : "text-slate-500 hover:text-slate-800"
             )}
             title="Mobile (390px)"
           >
@@ -245,7 +246,7 @@ export function LivePreviewPane({
                   <div className="h-2.5 w-2.5 rounded-full bg-emerald-400" />
                 </div>
                 <div className="flex-1 bg-white border border-slate-200/80 rounded-md px-3 py-1 text-[11px] font-mono text-slate-500 truncate text-center">
-                  https://zedai.academy/academy/{tenantSlug}
+                  https://learn.creativesites.site/academy/{tenantSlug}
                 </div>
               </div>
             )}
@@ -275,7 +276,7 @@ export function LivePreviewPane({
           >
             <div className="border-b border-slate-100 pb-4 flex items-center justify-between">
               <div>
-                <h3 className="text-xl font-black text-[#062e39]">Brand System & UI Kit</h3>
+                <h3 className="text-xl font-black text-ink">Brand System & UI Kit</h3>
                 <p className="text-xs text-slate-500 mt-1">Live tokens and interactive UI components in your active brand style.</p>
               </div>
               <span
@@ -340,7 +341,7 @@ export function LivePreviewPane({
                 </button>
                 <button
                   type="button"
-                  className="h-11 px-6 rounded-xl bg-[#062e39] text-white text-xs font-black uppercase tracking-wider hover:bg-slate-800 transition-all flex items-center gap-2"
+                  className="h-11 px-6 rounded-xl bg-ink text-white text-xs font-black uppercase tracking-wider hover:bg-slate-800 transition-all flex items-center gap-2"
                 >
                   Explore Catalog <ArrowRight className="h-3.5 w-3.5" />
                 </button>

@@ -32,11 +32,11 @@ export async function POST(req: NextRequest) {
     return Response.json({ error: "Provide a course brief or upload source materials." }, { status: 400 });
   }
 
-  const systemInstruction = `You design premium, practical courses on Zed AI Academy.
+  const systemInstruction = `You design premium, practical courses on CS Learn.
 
 Return only valid JSON without markdown fences or explanatory text.`;
 
-  const prompt = `You are designing a course for Zed AI Academy.
+  const prompt = `You are designing a course for CS Learn.
 
 The academy prioritizes:
 - output-first learning

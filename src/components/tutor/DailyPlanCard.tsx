@@ -14,7 +14,7 @@ const ITEM_META: Record<
   unfinished_lesson: {
     badge: "Next lesson",
     Icon: BookOpen,
-    iconBg: "bg-[#fd5523]/15 text-[#fd5523]",
+    iconBg: "bg-brand/15 text-brand-text",
   },
   untried_flow: {
     badge: "Practice flow",
@@ -39,13 +39,13 @@ export function DailyPlanCard({
     >
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2.5">
-          <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-[#fd5523]/10 text-[#fd5523]">
+          <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-brand/10 text-brand-text">
             <Sparkles className="h-4.5 w-4.5" aria-hidden="true" />
           </div>
           <div>
             <h2
               id="daily-plan-heading"
-              className="font-heading text-base font-bold text-[#062e39] sm:text-lg"
+              className="font-heading text-base font-bold text-ink sm:text-lg"
             >
               Today with {teacherName}
             </h2>
@@ -66,7 +66,7 @@ export function DailyPlanCard({
           return (
             <li
               key={item.id}
-              className="flex flex-col justify-between rounded-2xl border border-slate-200/80 bg-slate-50/70 p-4 transition hover:border-[#fd5523]/30 hover:bg-white"
+              className="flex flex-col justify-between rounded-2xl border border-slate-200/80 bg-slate-50/70 p-4 transition hover:border-brand/30 hover:bg-white"
             >
               <div className="space-y-2">
                 <div className="flex items-center justify-between gap-2">
@@ -81,7 +81,7 @@ export function DailyPlanCard({
                     {item.durationMinutes} min
                   </span>
                 </div>
-                <h3 className="line-clamp-2 text-sm font-bold text-[#062e39]">
+                <h3 className="line-clamp-2 text-sm font-bold text-ink">
                   {item.title}
                 </h3>
                 <p className="line-clamp-2 text-xs leading-relaxed text-slate-600">
@@ -92,7 +92,7 @@ export function DailyPlanCard({
               <div className="mt-4 pt-2">
                 <Link
                   href={item.href}
-                  className="inline-flex w-full items-center justify-between rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-[#062e39] transition hover:border-[#fd5523] hover:bg-[#fd5523] hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#fd5523]"
+                  className="inline-flex w-full items-center justify-between rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-ink transition hover:border-brand hover:bg-brand hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
                 >
                   <span>{item.ctaLabel}</span>
                   <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />

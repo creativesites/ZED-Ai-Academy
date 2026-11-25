@@ -30,7 +30,7 @@ export default async function SuperAdminTenantsPage() {
         <Link
           href="/launch-your-academy"
           target="_blank"
-          className="flex items-center gap-2 bg-[#fd5523] hover:bg-[#ea4817] text-white text-xs font-bold uppercase tracking-wider px-4 py-2.5 rounded-xl shadow-lg shadow-[#fd5523]/20 transition-all hover:scale-105 active:scale-95"
+          className="flex items-center gap-2 bg-brand hover:bg-brand-hover text-white text-xs font-bold uppercase tracking-wider px-4 py-2.5 rounded-xl shadow-lg shadow-brand/20 transition-all hover:scale-105 active:scale-95"
         >
           <Plus className="h-4 w-4" />
           <span>Create New Academy</span>

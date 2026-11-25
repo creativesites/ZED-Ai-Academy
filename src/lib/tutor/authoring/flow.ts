@@ -158,7 +158,7 @@ export function buildDraftFlowPrompt(input: {
     .map((s, i) => `${i + 1}. [${s.id}] ${s.label}: ${s.hint}`)
     .join("\n");
 
-  const systemInstruction = `You are an expert curriculum co-author for Zed AI Academy.
+  const systemInstruction = `You are an expert curriculum co-author for CS Learn.
 Design an interactive AI Teacher flow from the lesson's learning objectives and material.
 Rules:
 - Return ONLY valid JSON matching the schema.

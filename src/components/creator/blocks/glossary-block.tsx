@@ -45,8 +45,8 @@ export function GlossaryBlockEditor({
 
   return (
     <div className="space-y-4">
-      <div className="mb-2 flex items-center gap-2 text-[#062e39]">
-        <BookMarked className="h-4 w-4 text-[#fd5523]" />
+      <div className="mb-2 flex items-center gap-2 text-ink">
+        <BookMarked className="h-4 w-4 text-brand-text" />
         <span className="text-xs font-bold uppercase tracking-widest">Glossary</span>
       </div>
 
@@ -93,7 +93,7 @@ export function GlossaryBlockEditor({
       <Button
         onClick={addTerm}
         variant="outline"
-        className="w-full border-dashed border-slate-300 text-slate-500 hover:border-[#fd5523] hover:text-[#fd5523]"
+        className="w-full border-dashed border-slate-300 text-slate-500 hover:border-brand hover:text-brand-text"
       >
         <Plus className="mr-2 h-4 w-4" />
         Add Term

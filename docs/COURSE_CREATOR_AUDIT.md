@@ -1,4 +1,4 @@
-# Zed AI Academy — Course Creator Technical Audit
+# CS Learn — Course Creator Technical Audit
 
 **Audit Date:** 2026-11-13  
 **Scope:** End-to-end course authoring, curriculum management, AI generation, document/media upload, multi-tenant isolation, and publishing workflows.  

@@ -1,6 +1,8 @@
 import Link from "next/link";
-import { ArrowRight, BrainCircuit, Mail, MapPin, Phone } from "lucide-react";
+import { ArrowRight, Mail, MapPin, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { BRAND } from "@/lib/brand";
+import { BrandLogo } from "@/components/shared/brand-logo";
 
 const FOOTER_LINKS = {
   Explore: [
@@ -22,7 +24,7 @@ const FOOTER_LINKS = {
 
 export function Footer() {
   return (
-    <footer className="relative mt-16 overflow-hidden bg-[#062e39] text-white">
+    <footer className="relative mt-16 overflow-hidden bg-ink text-white">
       <div
         className="absolute inset-0 opacity-20"
         style={{ backgroundImage: "url('/logistiq-images/pattern/footer-v1-pattern.png')" }}
@@ -33,13 +35,7 @@ export function Footer() {
         <div className="grid gap-8 lg:grid-cols-[1.15fr_1.6fr]">
           <div className="marketing-pattern-grid noise rounded-[2rem] border border-white/10 bg-white/6 p-7 md:p-8">
             <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#fd5523] text-white shadow-[0_16px_32px_rgba(253,85,35,0.25)]">
-                <BrainCircuit className="h-5 w-5" />
-              </div>
-              <div>
-                <p className="text-sm font-semibold uppercase tracking-[0.24em] text-[#fd8d69]">Zed AI</p>
-                <p className="text-2xl font-semibold tracking-[-0.04em] text-white">Academy</p>
-              </div>
+              <BrandLogo variant="onDark" className="h-16 w-auto" />
             </div>
 
             <p className="mt-6 max-w-md text-base leading-7 text-white/72">
@@ -48,23 +44,23 @@ export function Footer() {
 
             <div className="mt-8 grid gap-4 sm:grid-cols-2">
               <div className="rounded-[1.5rem] border border-white/10 bg-white/8 p-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#fd8d69]">Contact</p>
-                <a href="mailto:hello@zedaiacademy.com" className="mt-3 inline-flex items-center gap-2 text-sm text-white/78 hover:text-white">
-                  <Mail className="h-4 w-4 text-[#fd5523]" />
-                  hello@zedaiacademy.com
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-brand-electric">Contact</p>
+                <a href={`mailto:${BRAND.supportEmail}`} className="mt-3 inline-flex items-center gap-2 text-sm text-white/78 hover:text-white">
+                  <Mail className="h-4 w-4 text-brand-text" />
+                  {BRAND.supportEmail}
                 </a>
               </div>
               <div className="rounded-[1.5rem] border border-white/10 bg-white/8 p-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#fd8d69]">Location</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-brand-electric">Location</p>
                 <p className="mt-3 inline-flex items-center gap-2 text-sm text-white/78">
-                  <MapPin className="h-4 w-4 text-[#fd5523]" />
+                  <MapPin className="h-4 w-4 text-brand-text" />
                   Lusaka, Zambia
                 </p>
               </div>
             </div>
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <Button className="rounded-full bg-[#fd5523] px-6 text-white hover:bg-[#ef4a16]" render={<Link href="/sign-up" />}>
+              <Button className="rounded-full bg-brand px-6 text-white hover:bg-brand-hover" render={<Link href="/sign-up" />}>
                 Start Learning
               </Button>
               <Button
@@ -80,12 +76,12 @@ export function Footer() {
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {Object.entries(FOOTER_LINKS).map(([section, links]) => (
               <div key={section} className="rounded-[1.75rem] border border-white/10 bg-white/6 p-6">
-                <h3 className="text-sm font-semibold uppercase tracking-[0.22em] text-[#fd8d69]">{section}</h3>
+                <h3 className="text-sm font-semibold uppercase tracking-[0.22em] text-brand-electric">{section}</h3>
                 <ul className="mt-5 space-y-3">
                   {links.map(({ href, label }) => (
                     <li key={href}>
                       <Link href={href} className="inline-flex items-center gap-2 text-sm text-white/72 hover:text-white">
-                        <ArrowRight className="h-4 w-4 text-[#fd5523]" />
+                        <ArrowRight className="h-4 w-4 text-brand-text" />
                         {label}
                       </Link>
                     </li>
@@ -95,12 +91,12 @@ export function Footer() {
             ))}
 
             <div className="rounded-[1.75rem] border border-white/10 bg-white/6 p-6">
-              <h3 className="text-sm font-semibold uppercase tracking-[0.22em] text-[#fd8d69]">Support</h3>
+              <h3 className="text-sm font-semibold uppercase tracking-[0.22em] text-brand-electric">Support</h3>
               <p className="mt-5 text-sm leading-6 text-white/72">
                 Need onboarding help, billing support, or a private cohort for your team?
               </p>
               <a href="tel:+260977000000" className="mt-5 inline-flex items-center gap-2 text-sm font-medium text-white">
-                <Phone className="h-4 w-4 text-[#fd5523]" />
+                <Phone className="h-4 w-4 text-brand-text" />
                 Talk to admissions
               </a>
             </div>
@@ -108,7 +104,7 @@ export function Footer() {
         </div>
 
         <div className="mt-10 flex flex-col gap-3 border-t border-white/10 pt-6 text-sm text-white/55 sm:flex-row sm:items-center sm:justify-between">
-          <p>© {new Date().getFullYear()} Zed AI Academy. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} CreativeSites Learn. All rights reserved.</p>
           <p>Built for ambitious teams learning AI in public and in practice.</p>
         </div>
       </div>

@@ -47,11 +47,11 @@ export function OnboardingForm() {
     <div style={{ maxWidth: "600px", margin: "0 auto" }}>
       {/* Header */}
       <div style={{ textAlign: "center", marginBottom: "48px" }}>
-        <div style={{ display: "inline-flex", alignItems: "center", gap: "8px", padding: "6px 16px", borderRadius: "20px", background: "#fff2e9", color: "#fd5523", fontSize: "12px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "20px" }}>
+        <div style={{ display: "inline-flex", alignItems: "center", gap: "8px", padding: "6px 16px", borderRadius: "20px", background: "var(--color-brand-tint)", color: "var(--color-brand-text)", fontSize: "12px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "20px" }}>
           <Sparkles style={{ width: "14px", height: "14px" }} />
-          Welcome to Zed AI Academy
+          Welcome to CS Learn
         </div>
-        <h1 style={{ fontSize: "clamp(28px, 5vw, 40px)", fontWeight: 800, color: "#062e39", marginBottom: "12px", lineHeight: 1.15 }}>
+        <h1 style={{ fontSize: "clamp(28px, 5vw, 40px)", fontWeight: 800, color: "var(--color-ink)", marginBottom: "12px", lineHeight: 1.15 }}>
           {step === 1 ? "Let's get you set up" : "How do you learn best?"}
         </h1>
         <p style={{ color: "#666", fontSize: "16px", lineHeight: 1.6, maxWidth: "440px", margin: "0 auto" }}>
@@ -66,7 +66,7 @@ export function OnboardingForm() {
         {[1, 2].map((s) => (
           <div key={s} style={{
             width: s === step ? "32px" : "8px", height: "8px", borderRadius: "4px",
-            background: s === step ? "#fd5523" : s < step ? "#fd5523" : "#e5e5e5",
+            background: s === step ? "var(--color-brand)" : s < step ? "var(--color-brand)" : "#e5e5e5",
             transition: "all 0.3s",
           }} />
         ))}
@@ -85,13 +85,13 @@ export function OnboardingForm() {
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g. Mwansa Kabwe"
               required
-              className="h-14 rounded-2xl border-slate-200 bg-white text-xl font-medium text-[#062e39]"
+              className="h-14 rounded-2xl border-slate-200 bg-white text-xl font-medium text-ink"
             />
           </div>
           {error && <p style={{ color: "#ef4444", fontSize: "14px" }}>{error}</p>}
           <Button
             type="submit"
-            className="h-14 rounded-full bg-[#fd5523] text-base font-bold text-white hover:bg-[#ef4a16]"
+            className="h-14 rounded-full bg-brand text-base font-bold text-white hover:bg-brand-hover"
           >
             Continue <ArrowRight className="ml-2 h-5 w-5" />
           </Button>
@@ -114,18 +114,18 @@ export function OnboardingForm() {
                   style={{
                     display: "flex", alignItems: "center", gap: "14px",
                     padding: "14px 18px", borderRadius: "14px", border: "2px solid",
-                    borderColor: level === l.id ? "#fd5523" : "#e5e5e5",
-                    background: level === l.id ? "#fff2e9" : "#fff",
+                    borderColor: level === l.id ? "var(--color-brand)" : "#e5e5e5",
+                    background: level === l.id ? "var(--color-brand-tint)" : "#fff",
                     cursor: "pointer", textAlign: "left", transition: "all 0.15s",
                   }}
                 >
                   <div style={{
                     width: "18px", height: "18px", borderRadius: "50%", border: "2px solid",
-                    borderColor: level === l.id ? "#fd5523" : "#d1d5db",
-                    background: level === l.id ? "#fd5523" : "transparent", flexShrink: 0,
+                    borderColor: level === l.id ? "var(--color-brand)" : "#d1d5db",
+                    background: level === l.id ? "var(--color-brand)" : "transparent", flexShrink: 0,
                   }} />
                   <div>
-                    <p style={{ fontWeight: 700, color: "#062e39", fontSize: "14px", margin: 0 }}>{l.label}</p>
+                    <p style={{ fontWeight: 700, color: "var(--color-ink)", fontSize: "14px", margin: 0 }}>{l.label}</p>
                     <p style={{ color: "#999", fontSize: "12px", margin: "2px 0 0" }}>{l.desc}</p>
                   </div>
                 </button>
@@ -148,13 +148,13 @@ export function OnboardingForm() {
                     style={{
                       display: "flex", flexDirection: "column", alignItems: "flex-start", gap: "8px",
                       padding: "16px", borderRadius: "14px", border: "2px solid",
-                      borderColor: goal === g.id ? "#fd5523" : "#e5e5e5",
-                      background: goal === g.id ? "#fff2e9" : "#fff",
+                      borderColor: goal === g.id ? "var(--color-brand)" : "#e5e5e5",
+                      background: goal === g.id ? "var(--color-brand-tint)" : "#fff",
                       cursor: "pointer", textAlign: "left", transition: "all 0.15s",
                     }}
                   >
-                    <Icon style={{ width: "20px", height: "20px", color: goal === g.id ? "#fd5523" : "#bbb" }} />
-                    <p style={{ fontWeight: 600, color: "#062e39", fontSize: "13px", margin: 0, lineHeight: 1.4 }}>{g.label}</p>
+                    <Icon style={{ width: "20px", height: "20px", color: goal === g.id ? "var(--color-brand)" : "#bbb" }} />
+                    <p style={{ fontWeight: 600, color: "var(--color-ink)", fontSize: "13px", margin: 0, lineHeight: 1.4 }}>{g.label}</p>
                   </button>
                 );
               })}
@@ -163,7 +163,7 @@ export function OnboardingForm() {
 
           <Button
             type="submit"
-            className="h-14 rounded-full bg-[#062e39] text-base font-bold text-white hover:bg-[#0a4055]"
+            className="h-14 rounded-full bg-ink text-base font-bold text-white hover:bg-ink-hover"
           >
             Find my first course <ArrowRight className="ml-2 h-5 w-5" />
           </Button>

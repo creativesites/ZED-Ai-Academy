@@ -168,15 +168,15 @@ export function AILessonGenerator({
   }
 
   return (
-    <div className="rounded-2xl sm:rounded-3xl overflow-hidden border border-[#062e39]/15 bg-gradient-to-br from-[#062e39] via-[#083b49] to-[#0c4a5c] text-white shadow-lg p-5 space-y-4">
+    <div className="rounded-2xl sm:rounded-3xl overflow-hidden border border-ink/15 bg-gradient-to-br from-ink via-[#083b49] to-[#0c4a5c] text-white shadow-lg p-5 space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between gap-3 border-b border-white/10 pb-4">
         <div className="flex items-center gap-3 min-w-0">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#fd5523] text-white shadow-sm">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand text-white shadow-sm">
             <Sparkles className="h-5 w-5" />
           </div>
           <div className="min-w-0">
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#fd8d69]">
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-electric">
               AI Co-Author
             </p>
             <h3 className="text-base font-bold leading-tight truncate">
@@ -209,7 +209,7 @@ export function AILessonGenerator({
                   className={cn(
                     "w-full text-left rounded-xl border p-3 transition-all flex items-start gap-3",
                     checked
-                      ? "border-[#fd5523] bg-white/10"
+                      ? "border-brand bg-white/10"
                       : "border-white/10 bg-white/5 opacity-55 hover:opacity-80"
                   )}
                 >
@@ -217,14 +217,14 @@ export function AILessonGenerator({
                     className={cn(
                       "mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md border transition-colors",
                       checked
-                        ? "border-[#fd5523] bg-[#fd5523] text-white"
+                        ? "border-brand bg-brand text-white"
                         : "border-white/30 bg-transparent"
                     )}
                   >
                     {checked && <Check className="h-3.5 w-3.5" />}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <span className="inline-block text-[10px] font-black uppercase tracking-wider text-[#fd8d69]">
+                    <span className="inline-block text-[10px] font-black uppercase tracking-wider text-brand-electric">
                       {formatBlockTypeLabel(block.type)}
                     </span>
                     <p className="text-xs font-medium text-white/90 line-clamp-2 mt-0.5">
@@ -264,7 +264,7 @@ export function AILessonGenerator({
               type="button"
               disabled={saving || selectedIndices.length === 0}
               onClick={handleInsertSelected}
-              className="h-10 flex-1 rounded-xl bg-[#fd5523] text-xs font-bold text-white hover:bg-[#ef4a16]"
+              className="h-10 flex-1 rounded-xl bg-brand text-xs font-bold text-white hover:bg-brand-hover"
             >
               {saving ? (
                 <>
@@ -294,7 +294,7 @@ export function AILessonGenerator({
                 className={cn(
                   "rounded-lg py-2 px-2 text-center transition-all",
                   mode === m.id
-                    ? "bg-[#fd5523] text-white shadow-xs"
+                    ? "bg-brand text-white shadow-xs"
                     : "text-white/70 hover:text-white hover:bg-white/5"
                 )}
               >
@@ -311,7 +311,7 @@ export function AILessonGenerator({
                 type="button"
                 onClick={() => setBrief((prev) => (prev ? `${prev}\n${s.text}` : s.text))}
                 disabled={generating}
-                className="rounded-full border border-white/15 bg-white/5 px-2.5 py-1 text-[11px] font-medium text-slate-200 transition-colors hover:bg-[#fd5523]/20 hover:border-[#fd5523]/40 disabled:opacity-50"
+                className="rounded-full border border-white/15 bg-white/5 px-2.5 py-1 text-[11px] font-medium text-slate-200 transition-colors hover:bg-brand/20 hover:border-brand/40 disabled:opacity-50"
               >
                 + {s.label}
               </button>
@@ -329,7 +329,7 @@ export function AILessonGenerator({
               placeholder="e.g. Include a practical exercise on writing executive briefs, keep examples local..."
               rows={3}
               disabled={generating}
-              className="w-full resize-none rounded-xl border border-white/15 bg-white/5 px-3.5 py-2.5 text-xs text-white placeholder:text-slate-400 focus:border-[#fd5523] focus:outline-none disabled:opacity-50 leading-relaxed"
+              className="w-full resize-none rounded-xl border border-white/15 bg-white/5 px-3.5 py-2.5 text-xs text-white placeholder:text-slate-400 focus:border-brand focus:outline-none disabled:opacity-50 leading-relaxed"
             />
           </div>
 
@@ -349,7 +349,7 @@ export function AILessonGenerator({
                 <select
                   value={domainPreset}
                   onChange={(e) => setDomainPreset(e.target.value as CourseDomainPresetId)}
-                  className="flex h-9 w-full rounded-xl border border-white/15 bg-[#083542] px-3 text-xs font-bold text-white outline-none focus:border-[#fd5523]"
+                  className="flex h-9 w-full rounded-xl border border-white/15 bg-[#083542] px-3 text-xs font-bold text-white outline-none focus:border-brand"
                 >
                   {COURSE_DOMAIN_PRESETS.map((preset) => (
                     <option key={preset.id} value={preset.id} className="bg-[#083542] text-white">
@@ -362,8 +362,8 @@ export function AILessonGenerator({
           </div>
 
           {generating && progress && (
-            <div className="flex items-center gap-2.5 rounded-xl border border-[#fd8d69]/20 bg-[#fd8d69]/10 p-3">
-              <Loader2 className="h-4 w-4 animate-spin text-[#fd8d69] shrink-0" />
+            <div className="flex items-center gap-2.5 rounded-xl border border-brand-electric/20 bg-brand-electric/10 p-3">
+              <Loader2 className="h-4 w-4 animate-spin text-brand-electric shrink-0" />
               <p className="text-xs text-slate-200 truncate">{progress}</p>
             </div>
           )}
@@ -372,7 +372,7 @@ export function AILessonGenerator({
             type="button"
             onClick={handleGenerate}
             disabled={generating}
-            className="h-11 w-full rounded-xl bg-[#fd5523] text-xs sm:text-sm font-bold text-white hover:bg-[#ef4a16] shadow-md disabled:opacity-50"
+            className="h-11 w-full rounded-xl bg-brand text-xs sm:text-sm font-bold text-white hover:bg-brand-hover shadow-md disabled:opacity-50"
           >
             {generating ? (
               <>

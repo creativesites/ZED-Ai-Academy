@@ -38,7 +38,7 @@ const Container = () => {
   return (
     <div className="h-full w-full">
       {roomName && jwt && appId ? (
-        <div className="flex flex-col h-full w-full bg-[#062e39] rounded-3xl shadow-2xl overflow-hidden border border-white/10 animate-in fade-in zoom-in-95 duration-500">
+        <div className="flex flex-col h-full w-full bg-ink rounded-3xl shadow-2xl overflow-hidden border border-white/10 animate-in fade-in zoom-in-95 duration-500">
           {/* Header */}
           <div className="flex items-center justify-between px-6 py-4 bg-white/5 border-b border-white/10">
             <div className="flex items-center gap-3">
@@ -125,7 +125,7 @@ const Container = () => {
             Premium JaaS Studio
           </div>
 
-          <h2 className="text-4xl font-black text-[#062e39] mb-4 tracking-tighter">AI Teaching Studio</h2>
+          <h2 className="text-4xl font-black text-ink mb-4 tracking-tighter">AI Teaching Studio</h2>
           <p className="text-slate-500 text-lg max-w-[480px] mb-10 leading-relaxed">
             Secure, high-fidelity video sessions powered by Jitsi as a Service. Professional infrastructure for your academy.
           </p>
@@ -138,7 +138,7 @@ const Container = () => {
             ].map((item, i) => (
               <div key={i} className="flex flex-col items-center gap-2 p-4 rounded-2xl bg-slate-50 border border-slate-100/50">
                 <item.icon className={`h-5 w-5 ${item.color}`} />
-                <span className="text-xs font-bold text-[#062e39] uppercase tracking-wider">{item.label}</span>
+                <span className="text-xs font-bold text-ink uppercase tracking-wider">{item.label}</span>
               </div>
             ))}
           </div>

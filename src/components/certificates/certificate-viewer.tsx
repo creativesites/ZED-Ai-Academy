@@ -3,7 +3,6 @@
 import { useState } from "react";
 import Link from "next/link";
 import {
-  Award,
   CheckCircle2,
   Printer,
   Copy,
@@ -18,6 +17,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { BrandLogo } from "@/components/shared/brand-logo";
 
 type CertificateData = {
   id: string;
@@ -70,7 +70,7 @@ export function CertificateViewer({
 
   function handleShareLinkedIn() {
     const url = encodeURIComponent(verificationUrl);
-    const title = encodeURIComponent(`I've completed "${courseTitle}" on Zed AI Academy!`);
+    const title = encodeURIComponent(`I've completed "${courseTitle}" on CS Learn!`);
     window.open(
       `https://www.linkedin.com/sharing/share-offsite/?url=${url}&title=${title}`,
       "_blank",
@@ -85,7 +85,7 @@ export function CertificateViewer({
         <div className="flex items-center gap-3">
           <Link
             href={certificate.courses?.slug ? `/courses/${certificate.courses.slug}` : "/"}
-            className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-600 hover:bg-[#062e39] hover:text-white transition-colors"
+            className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-600 hover:bg-ink hover:text-white transition-colors"
             title="Back to Course"
           >
             <ArrowLeft className="h-5 w-5" />
@@ -97,7 +97,7 @@ export function CertificateViewer({
                 Verified Credential
               </p>
             </div>
-            <h2 className="text-sm sm:text-base font-bold text-[#062e39] truncate max-w-xs sm:max-w-md">
+            <h2 className="text-sm sm:text-base font-bold text-ink truncate max-w-xs sm:max-w-md">
               {courseTitle}
             </h2>
           </div>
@@ -133,16 +133,16 @@ export function CertificateViewer({
 
           <Button
             onClick={handlePrint}
-            className="h-9 sm:h-10 rounded-xl bg-[#062e39] text-xs sm:text-sm font-bold text-white hover:bg-[#0a4055] shadow-md shadow-[#062e39]/20"
+            className="h-9 sm:h-10 rounded-xl bg-ink text-xs sm:text-sm font-bold text-white hover:bg-ink-hover shadow-md shadow-ink/20"
           >
-            <Printer className="mr-1.5 h-4 w-4 text-[#fd8d69]" />
+            <Printer className="mr-1.5 h-4 w-4 text-brand-electric" />
             Print / Save PDF
           </Button>
         </div>
       </div>
 
       {/* ── Official Certificate Diploma (High-Res Print & Screen) ── */}
-      <div className="relative mx-auto w-full max-w-4xl bg-gradient-to-br from-[#fcfbf9] via-white to-[#faf8f5] p-4 sm:p-10 shadow-[0_25px_70px_rgba(6,46,57,0.12)] rounded-3xl sm:rounded-[2.5rem] border-[3px] border-[#e2d5c3] print:shadow-none print:border-[2px] print:rounded-none print:p-8 print:max-w-full">
+      <div className="relative mx-auto w-full max-w-4xl bg-gradient-to-br from-[#fcfbf9] via-white to-[#faf8f5] p-4 sm:p-10 shadow-[0_25px_70px_rgba(9,21,43,0.12)] rounded-3xl sm:rounded-[2.5rem] border-[3px] border-[#e2d5c3] print:shadow-none print:border-[2px] print:rounded-none print:p-8 print:max-w-full">
         {/* Intricate Inner Border */}
         <div className="relative rounded-2xl border-2 border-[#d4af37]/40 p-6 sm:p-12 print:p-6 bg-gradient-to-b from-[#fffefc] to-white/95">
           {/* Ornate Corner Accents */}
@@ -154,20 +154,18 @@ export function CertificateViewer({
           {/* Certificate Header / Emblems */}
           <div className="flex flex-col items-center text-center space-y-3">
             <div className="flex items-center justify-center gap-3">
-              <div className="flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-[#062e39] to-[#0a4055] text-[#fd5523] shadow-xl border-2 border-[#d4af37]/30">
-                <Award className="h-9 w-9 sm:h-11 sm:w-11" />
-              </div>
+              <BrandLogo variant="onLight" priority className="h-16 sm:h-20 w-auto" />
             </div>
 
             <div className="space-y-1">
               <div className="flex items-center justify-center gap-2">
                 <span className="h-[1px] w-8 sm:w-16 bg-[#d4af37]" />
                 <p className="text-[11px] sm:text-xs font-black uppercase tracking-[0.3em] text-[#b8860b]">
-                  Zed AI Academy Certification
+                  CreativeSites Learn Certification
                 </p>
                 <span className="h-[1px] w-8 sm:w-16 bg-[#d4af37]" />
               </div>
-              <h1 className="text-2xl sm:text-4xl font-serif font-black tracking-tight text-[#062e39] uppercase">
+              <h1 className="text-2xl sm:text-4xl font-serif font-black tracking-tight text-ink uppercase">
                 Certificate of Mastery
               </h1>
               <p className="text-[11px] sm:text-xs font-medium uppercase tracking-[0.2em] text-slate-400">
@@ -182,7 +180,7 @@ export function CertificateViewer({
               This credential certifies that
             </p>
             <div className="py-2">
-              <h2 className="text-2xl sm:text-5xl font-serif font-black tracking-tight text-[#062e39] leading-tight">
+              <h2 className="text-2xl sm:text-5xl font-serif font-black tracking-tight text-ink leading-tight">
                 {studentName}
               </h2>
               <div className="mx-auto mt-2 h-[2px] w-48 sm:w-80 bg-gradient-to-r from-transparent via-[#d4af37] to-transparent" />
@@ -195,17 +193,17 @@ export function CertificateViewer({
 
           {/* Course Details Card */}
           <div className="mt-6 sm:mt-8 text-center space-y-2 rounded-2xl bg-gradient-to-r from-amber-500/[0.04] via-slate-50 to-amber-500/[0.04] p-5 sm:p-6 border border-amber-200/40">
-            <h3 className="text-lg sm:text-2xl font-bold tracking-tight text-[#062e39]">
+            <h3 className="text-lg sm:text-2xl font-bold tracking-tight text-ink">
               {courseTitle}
             </h3>
             <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
               <span className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-600 border border-slate-200 shadow-xs">
-                <Sparkles className="h-3 w-3 text-[#fd5523]" />
+                <Sparkles className="h-3 w-3 text-brand-text" />
                 {category}
               </span>
               {companyName && (
                 <span className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-600 border border-slate-200 shadow-xs">
-                  <Building2 className="h-3 w-3 text-[#062e39]" />
+                  <Building2 className="h-3 w-3 text-ink" />
                   {companyName}
                 </span>
               )}
@@ -217,24 +215,24 @@ export function CertificateViewer({
             {/* Left Signature */}
             <div className="space-y-1.5">
               <div className="h-9 flex items-center justify-center">
-                <span className="font-serif italic text-xl sm:text-2xl font-bold text-[#062e39] tracking-wider select-none">
+                <span className="font-serif italic text-xl sm:text-2xl font-bold text-ink tracking-wider select-none">
                   W. Zulu
                 </span>
               </div>
               <div className="mx-auto h-[1px] w-36 bg-slate-300" />
-              <p className="text-[11px] font-bold text-[#062e39] uppercase tracking-wider">Academic Lead</p>
-              <p className="text-[9px] text-slate-400">Zed AI Academy</p>
+              <p className="text-[11px] font-bold text-ink uppercase tracking-wider">Academic Lead</p>
+              <p className="text-[9px] text-slate-400">CreativeSites Learn</p>
             </div>
 
             {/* Center Official Gold Seal */}
             <div className="flex flex-col items-center justify-center">
-              <div className="relative flex h-20 w-20 sm:h-24 sm:w-24 items-center justify-center rounded-full bg-gradient-to-br from-[#d4af37] via-[#f7e49e] to-[#aa8014] text-[#062e39] shadow-lg border-2 border-white p-1">
-                <div className="h-full w-full rounded-full border border-dashed border-[#062e39]/30 flex flex-col items-center justify-center text-center p-1">
-                  <ShieldCheck className="h-6 w-6 text-[#062e39]" />
-                  <span className="text-[7px] font-black uppercase tracking-tighter text-[#062e39] mt-0.5">
+              <div className="relative flex h-20 w-20 sm:h-24 sm:w-24 items-center justify-center rounded-full bg-gradient-to-br from-[#d4af37] via-[#f7e49e] to-[#aa8014] text-ink shadow-lg border-2 border-white p-1">
+                <div className="h-full w-full rounded-full border border-dashed border-ink/30 flex flex-col items-center justify-center text-center p-1">
+                  <ShieldCheck className="h-6 w-6 text-ink" />
+                  <span className="text-[7px] font-black uppercase tracking-tighter text-ink mt-0.5">
                     VERIFIED
                   </span>
-                  <span className="text-[6px] font-bold uppercase tracking-widest text-[#062e39]/80">
+                  <span className="text-[6px] font-bold uppercase tracking-widest text-ink/80">
                     EXCELLENCE
                   </span>
                 </div>
@@ -244,12 +242,12 @@ export function CertificateViewer({
             {/* Right Date & Verification */}
             <div className="space-y-1.5">
               <div className="h-9 flex items-center justify-center">
-                <span className="text-sm sm:text-base font-semibold text-[#062e39]">
+                <span className="text-sm sm:text-base font-semibold text-ink">
                   {issuedDate}
                 </span>
               </div>
               <div className="mx-auto h-[1px] w-36 bg-slate-300" />
-              <p className="text-[11px] font-bold text-[#062e39] uppercase tracking-wider">Date of Issuance</p>
+              <p className="text-[11px] font-bold text-ink uppercase tracking-wider">Date of Issuance</p>
               <p className="text-[9px] text-slate-400">Accredited Record</p>
             </div>
           </div>

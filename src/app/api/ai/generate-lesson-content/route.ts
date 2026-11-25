@@ -80,7 +80,7 @@ export async function POST(req: NextRequest) {
       ? `- Existing blocks already in this lesson: ${existingBlockTypes.join(", ")}. Complement them without repeating identical blocks.`
       : "- This lesson is currently empty.";
 
-  const prompt = `You are an expert instructional designer at Zed AI Academy. Generate engaging, practical, ready-to-publish lesson content blocks.
+  const prompt = `You are an expert instructional designer at CS Learn. Generate engaging, practical, ready-to-publish lesson content blocks.
 
 Course Context:
 - Course: "${course.title}" (${course.level || "beginner"} level)

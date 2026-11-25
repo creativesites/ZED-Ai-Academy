@@ -1,4 +1,4 @@
-# Zed AI Academy — Course Creator 2.0 Implementation Roadmap
+# CS Learn — Course Creator 2.0 Implementation Roadmap
 
 **Goal:** Incrementally transform the course creator from its current form-based prototype into a reliable, multi-tenant, AI-assisted Course Authoring Studio without disrupting live academies.
 

@@ -1,3 +1,14 @@
+# CS Learn — CreativeSites Learn
+
+**LEARN • PRACTICE • BUILD • GROW**
+
+CS Learn is the learning platform by CreativeSites: courses, an AI tutor, live classes, certificates, and white-label academies for organisations. It runs in production at **https://learn.creativesites.site**.
+
+- Brand & design tokens: [`docs/BRAND.md`](docs/BRAND.md) · [`docs/STYLING_GUIDE.md`](docs/STYLING_GUIDE.md)
+- Architecture: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) · Deployment: [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md)
+
+---
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started

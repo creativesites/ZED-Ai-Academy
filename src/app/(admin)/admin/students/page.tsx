@@ -7,7 +7,7 @@ import {
 import { EnrollmentActions } from "@/components/admin/enrollment-actions";
 import { BulkEnrollmentActions } from "@/components/admin/bulk-enrollment-actions";
 
-export const metadata = { title: "Student Management — Zed AI Academy Admin" };
+export const metadata = { title: "Student Management — Admin" };
 
 type PageProps = {
   searchParams: Promise<{ status?: string; q?: string; course?: string }>;
@@ -99,13 +99,13 @@ export default async function StudentsPage({ searchParams }: PageProps) {
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <div
-              className="marketing-kicker bg-[#fff6ee] text-[#fd5523]"
+              className="marketing-kicker bg-brand-soft text-brand-text"
               style={{ display: "inline-flex", marginBottom: "16px" }}
             >
               <ShieldCheck style={{ width: "14px", height: "14px", marginRight: "8px" }} />
               Admin · LMS
             </div>
-            <h1 className="text-4xl font-bold tracking-tight text-[#062e39]">
+            <h1 className="text-4xl font-bold tracking-tight text-ink">
               Student Management
             </h1>
             <p className="mt-2 text-slate-500">
@@ -126,7 +126,7 @@ export default async function StudentsPage({ searchParams }: PageProps) {
         {/* KPI row */}
         <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
           {[
-            { label: "Total Enrollments", value: allCount ?? 0, icon: GraduationCap, accent: "bg-[#fff6ee] text-[#fd5523]" },
+            { label: "Total Enrollments", value: allCount ?? 0, icon: GraduationCap, accent: "bg-brand-soft text-brand-text" },
             { label: "Active", value: activeCount ?? 0, icon: CheckCircle2, accent: "bg-green-50 text-green-600" },
             { label: "Pending Payment", value: pendingCount ?? 0, icon: Clock3, accent: "bg-amber-50 text-amber-600" },
             { label: "Revoked", value: revokedCount ?? 0, icon: XCircle, accent: "bg-red-50 text-red-500" },
@@ -135,7 +135,7 @@ export default async function StudentsPage({ searchParams }: PageProps) {
               <div className={`mb-3 flex h-10 w-10 items-center justify-center rounded-2xl ${kpi.accent}`}>
                 <kpi.icon className="h-5 w-5" />
               </div>
-              <p className="text-3xl font-bold tracking-tight text-[#062e39]">{kpi.value}</p>
+              <p className="text-3xl font-bold tracking-tight text-ink">{kpi.value}</p>
               <p className="mt-1 text-xs font-bold uppercase tracking-widest text-slate-400">{kpi.label}</p>
             </div>
           ))}
@@ -152,7 +152,7 @@ export default async function StudentsPage({ searchParams }: PageProps) {
                   href={`/admin/students?status=${tab.key}${q ? `&q=${encodeURIComponent(q)}` : ""}${courseFilter ? `&course=${courseFilter}` : ""}`}
                   className={`flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-bold transition-colors ${
                     statusFilter === tab.key
-                      ? "bg-[#062e39] text-white"
+                      ? "bg-ink text-white"
                       : "border border-slate-200 text-slate-500 hover:bg-slate-50"
                   }`}
                 >
@@ -171,14 +171,14 @@ export default async function StudentsPage({ searchParams }: PageProps) {
               name="q"
               defaultValue={q}
               placeholder="Search name, email, phone…"
-              className="h-10 flex-1 min-w-[200px] rounded-xl border border-slate-200 bg-white px-4 text-sm text-[#062e39] placeholder:text-slate-400 focus:border-[#fd5523] focus:outline-none"
+              className="h-10 flex-1 min-w-[200px] rounded-xl border border-slate-200 bg-white px-4 text-sm text-ink placeholder:text-slate-400 focus:border-brand focus:outline-none"
             />
 
             {/* Course filter */}
             <select
               name="course"
               defaultValue={courseFilter}
-              className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm text-[#062e39] focus:border-[#fd5523] focus:outline-none"
+              className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm text-ink focus:border-brand focus:outline-none"
             >
               <option value="">All Courses</option>
               {(allCourses ?? []).map((c) => (
@@ -191,7 +191,7 @@ export default async function StudentsPage({ searchParams }: PageProps) {
 
             <button
               type="submit"
-              className="h-10 rounded-xl bg-[#062e39] px-5 text-sm font-bold text-white hover:bg-[#0a4055] transition-colors"
+              className="h-10 rounded-xl bg-ink px-5 text-sm font-bold text-white hover:bg-ink-hover transition-colors"
             >
               Search
             </button>
@@ -228,11 +228,11 @@ export default async function StudentsPage({ searchParams }: PageProps) {
                         {/* Student */}
                         <td className="px-5 py-4">
                           <div className="flex items-center gap-3">
-                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#fff6ee] text-sm font-bold text-[#fd5523]">
+                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand-soft text-sm font-bold text-brand-text">
                               {(row.profiles?.full_name ?? row.profiles?.email ?? "?")[0]?.toUpperCase()}
                             </div>
                             <div className="min-w-0">
-                              <p className="font-semibold text-[#062e39] truncate max-w-[160px]">
+                              <p className="font-semibold text-ink truncate max-w-[160px]">
                                 {row.profiles?.full_name ?? "—"}
                               </p>
                               <p className="text-xs text-slate-400 truncate max-w-[160px]">
@@ -247,7 +247,7 @@ export default async function StudentsPage({ searchParams }: PageProps) {
                           {row.courses ? (
                             <Link
                               href={`/creator/courses`}
-                              className="flex items-center gap-1.5 font-medium text-[#062e39] hover:text-[#fd5523] transition-colors"
+                              className="flex items-center gap-1.5 font-medium text-ink hover:text-brand-text transition-colors"
                             >
                               <BookOpen className="h-3.5 w-3.5 shrink-0 text-slate-400" />
                               <span className="truncate max-w-[160px]">{row.courses.title}</span>

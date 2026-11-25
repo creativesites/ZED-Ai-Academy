@@ -70,7 +70,7 @@ export function ComparisonTableEditor({
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-2 text-[#062e39] mb-2">
+      <div className="flex items-center gap-2 text-ink mb-2">
         <Table className="h-4 w-4 text-violet-500" />
         <span className="text-xs font-bold uppercase tracking-widest">Comparison Table</span>
       </div>
@@ -94,7 +94,7 @@ export function ComparisonTableEditor({
                 </th>
               ))}
               <th className="p-3 border-b border-slate-200 w-10">
-                <button onClick={addColumn} className="h-8 w-8 flex items-center justify-center rounded-lg bg-white border border-slate-200 text-slate-400 hover:text-[#fd5523]">
+                <button onClick={addColumn} className="h-8 w-8 flex items-center justify-center rounded-lg bg-white border border-slate-200 text-slate-400 hover:text-brand-text">
                   <Plus className="h-4 w-4" />
                 </button>
               </th>
@@ -127,7 +127,7 @@ export function ComparisonTableEditor({
         onClick={addRow}
         variant="outline"
         size="sm"
-        className="w-full border-dashed border-slate-300 text-slate-500 hover:border-[#fd5523] hover:text-[#fd5523]"
+        className="w-full border-dashed border-slate-300 text-slate-500 hover:border-brand hover:text-brand-text"
       >
         <Plus className="mr-2 h-4 w-4" />
         Add Row

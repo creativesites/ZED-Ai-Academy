@@ -18,14 +18,14 @@ export function GlossaryBlock({ content }: { content: Record<string, unknown> })
         </div>
         <div>
           <p className="text-[10px] font-black uppercase tracking-[0.22em] text-violet-600">Key Terms</p>
-          <h3 className="text-2xl font-bold tracking-tight text-[#062e39]">{title}</h3>
+          <h3 className="text-2xl font-bold tracking-tight text-ink">{title}</h3>
         </div>
       </div>
 
       <div className="space-y-3">
         {terms.map((item, index) => (
           <div key={`${item.term}-${index}`} className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
-            <p className="text-sm font-bold text-[#062e39]">{item.term || "Term"}</p>
+            <p className="text-sm font-bold text-ink">{item.term || "Term"}</p>
             <p className="mt-1 text-sm leading-relaxed text-slate-600">{item.definition || "Definition"}</p>
           </div>
         ))}
