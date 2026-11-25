@@ -328,7 +328,7 @@ export function ReportCard({
             className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-2xl border border-[var(--line-strong)] bg-[var(--soft)] px-5 py-3 text-sm font-semibold text-[var(--ink)] hover:bg-[var(--soft-hover)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus)]"
           >
             <Sparkles className="h-4 w-4 text-[var(--accent)]" aria-hidden="true" />
-            5-min revision sprint
+            5-min revision
           </button>
         )}
         <button

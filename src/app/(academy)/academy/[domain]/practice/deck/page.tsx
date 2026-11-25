@@ -50,7 +50,7 @@ export default async function TenantPracticeDeckPage({
         initialCards={cards}
         companyId={company.id}
         backHref={`/academy/${company.slug}/practice`}
-        backLabel={`Back to ${company.name} Teacher's Room`}
+        backLabel="Back to Teacher"
       />
     </>
   );

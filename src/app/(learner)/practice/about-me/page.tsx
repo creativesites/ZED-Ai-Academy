@@ -27,7 +27,7 @@ export default async function PracticeAboutMePage() {
         data={data}
         domain={company?.slug ?? "zedai"}
         backHref="/practice"
-        backLabel="Back to Teacher's Room"
+        backLabel="Back to Teacher"
       />
     </>
   );

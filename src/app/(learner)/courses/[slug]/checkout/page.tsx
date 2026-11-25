@@ -305,7 +305,7 @@ export default async function CheckoutPage({ params, searchParams }: Props) {
             <ul className="space-y-4">
               {[
                 "Lifetime access — yours forever",
-                "AI Tutor available in every lesson",
+                "An AI teacher in every lesson",
                 "Scored quizzes & knowledge checks",
                 "Certificate of completion",
                 "Self-paced — learn on your schedule",

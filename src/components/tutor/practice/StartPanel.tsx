@@ -55,13 +55,13 @@ export function StartPanel({
       <div className="grid gap-0.5">
         <p className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-[0.14em] text-[#fd5523] sm:text-[11px]">
           <Sparkles className="h-3 w-3" aria-hidden="true" />
-          AI Teacher
+          Teaching session
         </p>
         <h1
           id="start-title"
           className="font-heading text-lg font-bold leading-snug text-[var(--ink)] sm:text-2xl"
         >
-          {info ? info.title : "AI Teacher session"}
+          {info ? info.title : "Teaching session"}
         </h1>
         {info && (
           <p className="text-xs font-medium text-[var(--ink-dim)] sm:text-sm">

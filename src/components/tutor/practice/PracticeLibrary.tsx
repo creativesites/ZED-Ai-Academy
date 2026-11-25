@@ -86,7 +86,7 @@ export function PracticeLibrary({
         <header className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
           <div className="max-w-2xl space-y-2">
             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#fd5523]">
-              Teacher&apos;s Room
+              Teacher
             </p>
             <h1 className="font-heading text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
               {heading}
@@ -147,7 +147,7 @@ export function PracticeLibrary({
                   href={aboutMeHref}
                   className="inline-flex shrink-0 items-center rounded-2xl px-3 py-3 text-sm font-semibold text-slate-600 underline-offset-4 hover:text-[#fd5523] hover:underline"
                 >
-                  What my teacher knows
+                  What your teacher knows about you
                 </Link>
               )}
             </div>

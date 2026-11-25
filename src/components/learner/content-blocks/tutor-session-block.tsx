@@ -47,13 +47,13 @@ export function TutorSessionBlock({
   if (!block) {
     return (
       <div className="rounded-2xl border border-dashed border-slate-200 p-4 text-sm text-slate-400">
-        This AI Teacher activity is not set up yet.
+        This teaching session is not set up yet.
       </div>
     );
   }
 
   const resolvedOrigin = origin ?? (lessonId ? "lesson" : "practice");
-  const title = block.title || scenario?.title || "AI Teacher";
+  const title = block.title || scenario?.title || "Teaching session";
   const canStart = !!scenario && (resolvedOrigin === "practice" || !!lessonId);
   const persona = scenario?.persona;
   const personaName = persona ? persona.displayName ?? persona.name : null;
@@ -80,12 +80,12 @@ export function TutorSessionBlock({
               engine={lite ? "placeholder" : undefined}
               persona={persona?.look ?? DEFAULT_PERSONA_LOOK}
               className="h-12 w-12 sm:h-16 sm:w-16"
-              label={personaName ?? "Animated AI teacher"}
+              label={personaName ?? "Your teacher"}
             />
           </div>
           <div className="min-w-0 flex-1">
             <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-cyan-700 sm:text-[11px]">
-              {personaName ? `AI Teacher · ${personaName}` : "AI Teacher"}
+              {personaName ? `Teaching session · ${personaName}` : "Teaching session"}
             </p>
             <h3 className="text-base font-bold leading-snug text-[#062e39] sm:text-xl">{title}</h3>
           </div>
@@ -127,7 +127,7 @@ export function TutorSessionBlock({
               className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-[#fd5523] px-5 text-sm font-bold text-white shadow-sm transition hover:bg-[#ef4a16] sm:h-12 sm:rounded-2xl sm:px-6 sm:text-base"
             >
               <Mic className="h-4 w-4 sm:h-5 sm:w-5" />
-              {done ? "Practice again" : "Start AI Teacher"}
+              {done ? "Go again" : personaName ? `Start with ${personaName}` : "Start session"}
               <ArrowRight className="h-4 w-4" />
             </Link>
           ) : (
@@ -137,7 +137,7 @@ export function TutorSessionBlock({
               className="inline-flex h-11 cursor-not-allowed items-center justify-center gap-2 rounded-xl bg-[#fd5523]/50 px-5 text-sm font-bold text-white sm:h-12 sm:rounded-2xl sm:px-6 sm:text-base"
             >
               <Mic className="h-4 w-4 sm:h-5 sm:w-5" />
-              Start AI Teacher
+              Start session
             </button>
           )}
           {done && (

@@ -199,7 +199,7 @@ export default async function TenantStudentDashboardPage({
                 className="group h-10 px-4 rounded-xl bg-white/10 hover:bg-white/20 text-white border border-white/15 text-xs font-semibold flex items-center gap-2 transition-all"
               >
                 <Mic className="h-4 w-4 text-amber-300" />
-                <span>Practice with AI Teacher</span>
+                <span>Learn with {upNextData.teacher.name}</span>
               </Link>
             </div>
           </div>

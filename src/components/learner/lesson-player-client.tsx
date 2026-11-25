@@ -623,7 +623,7 @@ export function LessonPlayerClient({
                     Free Open Showcase · No login required
                   </p>
                   <p className="text-xs text-slate-600 sm:text-sm">
-                    Explore every lesson, interactive quiz, and live 3D/2D AI Teacher session freely. Sign in anytime to save progress &amp; earn a certificate.
+                    Explore every lesson, interactive quiz, and teaching session with {teacher.name} freely. Sign in anytime to save progress &amp; earn a certificate.
                   </p>
                 </div>
                 <Link
@@ -861,7 +861,7 @@ export function LessonPlayerClient({
                           {certificate
                             ? "Your certificate is ready to share."
                             : vivaStatus?.required && !vivaStatus.passed
-                              ? vivaStatus.reason ?? `Complete your oral Certificate Viva with ${teacher.name} to unlock your certificate.`
+                              ? vivaStatus.reason ?? `Complete a short oral check with ${teacher.name} to unlock your certificate.`
                               : "Claim your verified certificate to share your achievement."}
                         </p>
                       </div>
@@ -898,7 +898,7 @@ export function LessonPlayerClient({
                       origin="practice"
                       content={{
                         scenarioId: vivaStatus.scenarioId,
-                        title: `Certificate Viva with ${vivaStatus.scenario.persona?.displayName ?? vivaStatus.scenario.persona?.name ?? teacher.name}`,
+                        title: `Oral check with ${vivaStatus.scenario.persona?.displayName ?? vivaStatus.scenario.persona?.name ?? teacher.name}`,
                         intro: vivaStatus.reason ?? "Demonstrate what you learned in a short oral check to unlock your certificate.",
                         required: true,
                       }}

@@ -89,7 +89,7 @@ function createSpeechRecognition(): BrowserSpeechRecognition | null {
 export function VocabDeckReview({
   initialCards,
   backHref,
-  backLabel = "Back to Teacher's Room",
+  backLabel = "Back to Teacher",
   companyId,
 }: {
   initialCards: LearnerDeckCard[];
@@ -460,8 +460,8 @@ export function VocabDeckReview({
                 </h2>
                 <p className="mx-auto max-w-md text-sm text-slate-500">
                   {summary.total === 0
-                    ? "Bookmark key concepts, board takeaways, or phrases during any AI Teacher session and they appear here for spaced-repetition review."
-                    : "Great work! Come back later when your next cards are due, or start a live AI Teacher session."}
+                    ? "Bookmark key concepts, board takeaways, or phrases during any teaching session and they appear here for spaced-repetition review."
+                    : "Great work! Come back later when your next cards are due, or start a teaching session."}
                 </p>
                 <div className="flex flex-wrap justify-center gap-3 pt-2">
                   <Button
@@ -477,7 +477,7 @@ export function VocabDeckReview({
                     className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-xs font-bold text-[#062e39] hover:bg-slate-50"
                   >
                     <Sparkles className="h-3.5 w-3.5 text-[#fd5523]" />
-                    Open AI Teacher Room
+                    Open Teacher
                   </Link>
                 </div>
               </div>
