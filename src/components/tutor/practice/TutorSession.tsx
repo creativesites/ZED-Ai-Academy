@@ -19,6 +19,7 @@ import { compareResponseToTarget, type ResponseMatchResult } from "@/lib/tutor/r
 import { MAX_SPEAKING_MS, SpeakingTimeAccumulator } from "@/lib/tutor/speaking-time";
 import { deriveTurnInteraction } from "@/lib/tutor/turn-interaction";
 import { personaLookFromVariant } from "@/lib/tutor/tutor-session-block";
+import { academyHref, academySlugFromPath } from "@/lib/tutor/academy-href";
 import { VadTracker } from "@/lib/tutor/vad";
 import {
   detectMicPermission,
@@ -43,7 +44,7 @@ import { TeachingBoard, type ChoiceState } from "./TeachingBoard";
 import { TranscriptDrawer, type TranscriptEntry } from "./TranscriptDrawer";
 import { useLiteMode } from "./use-lite-mode";
 import styles from "./practice.module.css";
-import { TeacherAudio } from "./teacher-audio";
+import { TeacherVoice } from "@/components/tutor/voice/teacher-voice";
 import { useReducedMotion } from "./use-reduced-motion";
 
 // The in-session experience: start screen, the teacher on the stage, Voice (hold to talk) or Text
@@ -126,6 +127,8 @@ export function TutorSession({
   const [micBlocked, setMicBlocked] = useState(false);
 
   const [teacherName, setTeacherName] = useState(preview?.teacherName ?? "Your teacher");
+  // The persona's TTS voice, so the report card's "Hear it" uses the same TeacherVoice as the session.
+  const [teacherVoice, setTeacherVoice] = useState<string | null>(null);
   const [sceneTitle, setSceneTitle] = useState(preview?.title ?? "Practice session");
   const [goal, setGoal] = useState(preview?.goal ?? "");
   const [maxMinutes, setMaxMinutes] = useState(preview?.maxMinutes ?? 8);
@@ -183,7 +186,7 @@ export function TutorSession({
   // Refs hold what the event callbacks and the recorder need without re-creating them.
   const avatarRef = useRef<TeacherStageHandle | null>(null);
   const playerRef = useRef<EventPlayer | null>(null);
-  const audioRef = useRef<TeacherAudio | null>(null);
+  const audioRef = useRef<TeacherVoice | null>(null);
   const ambientRef = useRef<AmbientSoundscape | null>(null);
   const liveClientRef = useRef<GeminiLiveClient | null>(null);
   const recorderRef = useRef<LearnerRecorder | null>(null);
@@ -224,7 +227,7 @@ export function TutorSession({
 
   // Build the player, audio and recorder once, after mount. Cleanup cancels every timer and stream.
   useEffect(() => {
-    const teacherAudio = new TeacherAudio();
+    const teacherAudio = new TeacherVoice();
     const recorder = new LearnerRecorder();
     audioRef.current = teacherAudio;
     recorderRef.current = recorder;
@@ -671,6 +674,7 @@ export function TutorSession({
       personaLangRef.current = started.persona.languages?.[0] ?? "en";
       audioRef.current?.setLanguage(started.persona.languages?.[0]);
       audioRef.current?.setTtsVoice(client ? null : started.persona.voiceName ?? null);
+      setTeacherVoice(client ? null : started.persona.voiceName ?? null);
       audioRef.current?.setPronunciationGlossary(started.persona.pronunciationGlossary ?? []);
       audioRef.current?.setMuted(false);
       mutedRef.current = false;
@@ -1135,13 +1139,12 @@ export function TutorSession({
   const navigateToSprint = useCallback(
     (objectiveText?: string) => {
       if (typeof window === "undefined") return;
-      const match = /^\/academy\/([^/]+)/.exec(window.location.pathname);
-      const base = match ? `/academy/${match[1]}` : "";
       const params = new URLSearchParams();
       if (objectiveText) params.set("focus", objectiveText);
       if (sprintCourseId) params.set("courseId", sprintCourseId);
       const qs = params.toString();
-      window.location.assign(`${base}/practice/sprint${qs ? `?${qs}` : ""}`);
+      const academy = academySlugFromPath(window.location.pathname);
+      window.location.assign(academyHref(academy, `/practice/sprint${qs ? `?${qs}` : ""}`));
     },
     [sprintCourseId],
   );
@@ -1191,6 +1194,8 @@ export function TutorSession({
             starting={phase === "starting"}
             error={error}
             onStart={() => void handleStart()}
+            lite={lite}
+            onLiteChange={setLite}
           />
         </div>
       </div>
@@ -1226,12 +1231,16 @@ export function TutorSession({
                 ? undefined
                 : (nextId) => {
                     if (typeof window === "undefined") return;
-                    const match = /^\/academy\/([^/]+)/.exec(window.location.pathname);
-                    const base = match ? `/academy/${match[1]}` : "";
-                    window.location.assign(`${base}/practice/${nextId}`);
+                    const academy = academySlugFromPath(window.location.pathname);
+                    window.location.assign(academyHref(academy, `/practice/${encodeURIComponent(nextId)}`));
                   }
             }
             onDone={handleDone}
+            teacherVoice={teacherVoice}
+            deckHref={academyHref(
+              academySlugFromPath(typeof window === "undefined" ? null : window.location.pathname),
+              "/practice/deck",
+            )}
           />
         </div>
       </div>

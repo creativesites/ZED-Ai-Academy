@@ -9,10 +9,10 @@ import type { KnowledgeCheckResult } from "./chat-components/KnowledgeCheck";
 import { Teacher } from "@/components/tutor/avatar/Teacher";
 import { PERSONA_PRESETS } from "@/components/tutor/avatar/persona-presets";
 import type { AvatarDriver, PersonaLook } from "@/components/tutor/avatar/types";
-import { TeacherAudio } from "@/components/tutor/practice/teacher-audio";
+import { TeacherVoice } from "@/components/tutor/voice/teacher-voice";
 import { TeachingBoard } from "@/components/tutor/practice/TeachingBoard";
 import { useLiteMode } from "@/components/tutor/practice/use-lite-mode";
-import { DEFAULT_TEACHER_NAME } from "@/lib/tutor/course-teacher";
+import { DEFAULT_TEACHER_NAME, DEFAULT_TEACHER_VOICE } from "@/lib/tutor/course-teacher";
 import { stripDockMarkupForSpeech } from "@/lib/tutor/dock-chat";
 import { dispatchLessonSeek, extractDockBoardFromText } from "@/lib/tutor/lesson-seek";
 import type { VisemeValue } from "@/lib/tutor/contract.generated";
@@ -91,7 +91,7 @@ export function AiTutor({
   onClose,
 }: {
   /** The course's AI teacher (see courseTeacher()). Defaults to the platform default teacher. */
-  teacher?: { name: string; look?: Partial<PersonaLook> };
+  teacher?: { name: string; look?: Partial<PersonaLook>; voiceName?: string };
   /** Signed-out visitor on a free preview: always the in-memory /api/ai/tutor path, nothing stored. */
   isGuest?: boolean;
   courseId: string;
@@ -103,6 +103,7 @@ export function AiTutor({
   onClose: () => void;
 }) {
   const teacherName = teacher?.name ?? DEFAULT_TEACHER_NAME;
+  const teacherVoice = teacher?.voiceName ?? DEFAULT_TEACHER_VOICE;
   const greeting = `Hi, I'm ${teacherName}, your teacher for this course. Ask me anything about this lesson, or pick one below.`;
   const storageKey = `zed-ai-coach-history-${lessonId}-${sectionTitle || "default"}`;
   const [messages, setMessages] = useState<Message[]>(() => {
@@ -126,7 +127,7 @@ export function AiTutor({
   const [speakingMsgIdx, setSpeakingMsgIdx] = useState<number | null>(null);
   const [dictating, setDictating] = useState(false);
   const avatarRef = useRef<AvatarDriver | null>(null);
-  const audioRef = useRef<TeacherAudio | null>(null);
+  const audioRef = useRef<TeacherVoice | null>(null);
   const autoSpeakRef = useRef(autoSpeak);
   const playerRef = useRef<EventPlayer | null>(null);
   const playQueueRef = useRef<Promise<void>>(Promise.resolve());
@@ -144,9 +145,8 @@ export function AiTutor({
   }, [messages]);
 
   useEffect(() => {
-    const audio = new TeacherAudio();
+    const audio = new TeacherVoice();
     audio.setLanguage("en");
-    audio.setTtsVoice("Kore");
     audioRef.current = audio;
     return () => {
       playerRef.current?.stop();
@@ -155,6 +155,11 @@ export function AiTutor({
       recognitionRef.current?.stop();
     };
   }, []);
+
+  // The course teacher's own voice (same as in sessions), not a hard-coded one.
+  useEffect(() => {
+    audioRef.current?.setTtsVoice(teacherVoice);
+  }, [teacherVoice]);
 
   const stopSpeaking = useCallback(() => {
     playerRef.current?.stop();

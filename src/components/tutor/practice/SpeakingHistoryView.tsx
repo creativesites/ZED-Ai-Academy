@@ -41,7 +41,7 @@ function averageScore(scores: Record<string, number> | undefined): number | null
 export function SpeakingHistoryView({
   initialSessions,
   backHref,
-  backLabel = "Back to Teacher's Room",
+  backLabel = "Back to Teacher",
   sessionBasePath,
 }: {
   initialSessions: LearnerSessionHistoryItem[];
@@ -186,7 +186,7 @@ export function SpeakingHistoryView({
                           variant="bust"
                           persona={item.personaLook ?? DEFAULT_PERSONA_LOOK}
                           className="h-12 w-12"
-                          label={item.personaName ?? "AI Teacher"}
+                          label={item.personaName ?? "Your teacher"}
                         />
                       </div>
                       <div className="min-w-0">

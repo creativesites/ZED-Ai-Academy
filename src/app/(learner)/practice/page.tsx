@@ -5,7 +5,7 @@ import { groupByLanguage } from "@/lib/tutor/practice-library";
 import { loadPracticeLibrary } from "@/lib/tutor/server/practice-library";
 import { loadLearnerTutorOverview } from "@/lib/tutor/server/learner-overview";
 
-export const metadata = { title: "Teacher's Room — Zed AI Academy" };
+export const metadata = { title: "Teacher — Zed AI Academy" };
 export const dynamic = "force-dynamic";
 
 // /practice: the learner's Practice Room. Shows the library of every academy they belong to, plus the

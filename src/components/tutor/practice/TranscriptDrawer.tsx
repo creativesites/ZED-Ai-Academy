@@ -56,7 +56,7 @@ export function TranscriptDrawer({
 
   const handleDownloadNotes = () => {
     const md = buildStudyNotesMarkdown({
-      title: sceneTitle || "AI Teacher Session",
+      title: sceneTitle || "Teaching session",
       teacherName,
       transcript: entries.map((e) => ({
         role: e.role,

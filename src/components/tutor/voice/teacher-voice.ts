@@ -1,7 +1,9 @@
-// Plays the teacher's `say` audio and drives the avatar's mouth from it. Browser only; the pure
-// pieces (viseme mapping, timing, voice choice) live in src/lib/tutor. One instance is shared by a
-// session. Lines with no audio (the scripted demo before its voice is cached, or a failed TTS call)
-// are read by the browser's own speech synthesis, so the teacher is never silent.
+// TeacherVoice: the one voice of the AI teacher (P1-10). Plays the teacher's lines with the persona's
+// server TTS voice (/api/tutor/tts, cached by text + voice) and drives the avatar's mouth from the audio.
+// Used by the Teaching Room session (through EventPlayer), the lesson dock and the cards deck (through
+// useTeacherVoice). There is deliberately no browser speechSynthesis fallback: a line without server audio
+// returns "unavailable", and callers show captions with a text-timed mouth, so the teacher never speaks in
+// a different, robotic voice. Browser only; the pure pieces (visemes, timing) live in src/lib/tutor.
 
 import type { AvatarDriver } from "@/components/tutor/avatar/types";
 import type { SaySpeechEvent, SpeakOutcome } from "@/components/tutor/EventPlayer";
@@ -9,36 +11,19 @@ import {
   hybridVisemeFromAudio,
   visemeAtCalibratedTime,
   visemeTimelineFromText,
-  type VisemeSegment,
 } from "@/lib/tutor/visemes";
 import type { VisemeValue } from "@/lib/tutor/contract.generated";
 import { applyPronunciationGlossary, type PronunciationEntry } from "@/lib/tutor/pronunciation";
 import { secondsToMs } from "@/lib/tutor/speaking-time";
-import { pickVoice, speechLangFor } from "@/lib/tutor/speech-lang";
 
 /** How often the mouth is updated from the audio (about 40 Hz, inside the 30-60 Hz target). */
 const VISEME_INTERVAL_MS = 25;
-/** Browser speech can fail to fire `end`. Give up after the line's rough length plus this margin. */
-const SYNTH_WATCHDOG_MARGIN_MS = 4000;
-const SYNTH_MS_PER_CHAR = 120;
-/** Audio that has not started by now (a slow first TTS render) gives way to the browser voice. */
+/** Audio that has not started by now (a slow first TTS render) is given up; captions carry the line. */
 const AUDIO_START_TIMEOUT_MS = 8000;
-
-/** Looks up the active phonetic viseme at `elapsedMs` from a `visemeTimelineFromText` segment list. */
-function visemeAt(timeline: ReadonlyArray<VisemeSegment>, elapsedMs: number, rateScale = 1): VisemeValue {
-  if (timeline.length === 0) return 0;
-  const scaledMs = Math.max(0, elapsedMs * rateScale);
-  let cursor = 0;
-  for (let i = 0; i < timeline.length; i += 1) {
-    cursor += timeline[i].ms;
-    if (scaledMs < cursor) return timeline[i].viseme;
-  }
-  return 0;
-}
 
 type AudioContextCtor = typeof AudioContext;
 
-export class TeacherAudio {
+export class TeacherVoice {
   private ctx: AudioContext | null = null;
   private analyser: AnalyserNode | null = null;
   private element: HTMLAudioElement | null = null;
@@ -53,11 +38,8 @@ export class TeacherAudio {
   private ttsVoice: string | null = null;
   private pronunciationGlossary: PronunciationEntry[] = [];
   private ttsCache = new Map<string, Promise<string | null>>();
-  private synthPrimed = false;
   /** Set when the element was routed through a context that would not run. Plays direct from then on. */
   private analyserDisabled = false;
-  /** Chrome stops an utterance (and drops its events) if it is garbage collected while speaking. */
-  private currentUtterance: SpeechSynthesisUtterance | null = null;
 
   /**
    * Call from a user gesture (a tap or key press). Creates and resumes the AudioContext so later
@@ -74,7 +56,6 @@ export class TeacherAudio {
       }
       void this.ctx?.resume().catch(() => undefined);
       this.ensureElement();
-      this.primeSynthesis();
     } catch {
       // No audio: the session still runs with captions and the fallback mouth.
     }
@@ -100,7 +81,7 @@ export class TeacherAudio {
     return () => this.blockedListeners.delete(listener);
   }
 
-  /** The session's target language ("zh", "es", "fr" or "en"). Used to pick the browser voice. */
+  /** The session's target language ("zh", "es", "fr" or "en"). The persona's server voice speaks it. */
   setLanguage(language: string | null | undefined): void {
     this.language = language ?? null;
   }
@@ -194,13 +175,12 @@ export class TeacherAudio {
   /** Stops anything playing. The EventPlayer also aborts the running line through its signal. */
   stopPlayback(): void {
     this.element?.pause();
-    if (typeof window !== "undefined" && window.speechSynthesis) window.speechSynthesis.cancel();
   }
 
   /**
-   * The SpeakHook for EventPlayer. Resolves when the line ends, is aborted, or cannot start. Plays
-   * the line's audio when it has some, and falls back to the browser voice when it has none or the
-   * audio fails to load.
+   * The SpeakHook for EventPlayer. Resolves when the line ends, is aborted, or cannot start. Plays the
+   * line's audio when it has some, else the persona voice from /api/tutor/tts. "unavailable" when neither
+   * plays: the caller then shows the caption with a text-timed mouth (no browser voice).
    */
   readonly speak = async (event: SaySpeechEvent, avatar: AvatarDriver, signal: AbortSignal): Promise<SpeakOutcome> => {
     if (this.muted) return "unavailable";
@@ -210,12 +190,9 @@ export class TeacherAudio {
       audioUrl = (await this.resolveTtsUrl(event.text)) ?? undefined;
       if (signal.aborted) return "stopped";
     }
-    if (audioUrl) {
-      const outcome = await this.playAudio(audioUrl, event.text, avatar, signal);
-      // Blocked by autoplay: the browser voice would be blocked too. The UI shows "tap to hear".
-      if (outcome !== "unavailable" || this.blocked) return outcome;
-    }
-    return this.synthesize(event.text, avatar, signal);
+    if (!audioUrl) return "unavailable";
+    // Blocked by autoplay reports "unavailable" with isBlocked() set; the UI shows "tap to hear".
+    return this.playAudio(audioUrl, event.text, avatar, signal);
   };
 
   private async playAudio(url: string, text: string, avatar: AvatarDriver, signal: AbortSignal): Promise<SpeakOutcome> {
@@ -323,120 +300,6 @@ export class TeacherAudio {
     this.sourceNode = null;
     this.analyser = null;
     this.element = null;
-  }
-
-  /** Chrome loads its voice list after the page; wait briefly for it so the right language is used. */
-  private async voices(synth: SpeechSynthesis): Promise<SpeechSynthesisVoice[]> {
-    const now = synth.getVoices();
-    if (now.length > 0) return now;
-    await new Promise<void>((resolve) => {
-      const done = () => {
-        synth.removeEventListener?.("voiceschanged", done);
-        resolve();
-      };
-      synth.addEventListener?.("voiceschanged", done);
-      setTimeout(done, 800);
-    });
-    return synth.getVoices();
-  }
-
-  /** Reads the line with the browser's speech synthesis. "unavailable" when the browser has none. */
-  private async synthesize(text: string, avatar: AvatarDriver, signal: AbortSignal): Promise<SpeakOutcome> {
-    const synth = typeof window !== "undefined" ? window.speechSynthesis : undefined;
-    if (!synth || typeof SpeechSynthesisUtterance === "undefined") return "unavailable";
-
-    const lang = speechLangFor(text, this.language);
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = lang;
-    const voice = pickVoice(await this.voices(synth), lang);
-    if (signal.aborted) return "stopped";
-    try {
-      if (voice) utterance.voice = voice;
-    } catch {
-      // Some browsers reject a voice from an older list. utterance.lang still picks one.
-    }
-    // A touch slower than default: learners are listening to a new language.
-    const baseRate = lang === "en-GB" ? 1 : 0.9;
-    utterance.rate = Math.max(0.65, Math.min(1.5, baseRate * this.playbackRate));
-    utterance.volume = this.volume;
-
-    const phoneticTimeline = visemeTimelineFromText(text);
-
-    return new Promise<SpeakOutcome>((resolve) => {
-      let settled = false;
-      let started = false;
-      let startedAt = performance.now();
-
-      const finish = (outcome: SpeakOutcome) => {
-        if (settled) return;
-        settled = true;
-        clearInterval(intervalId);
-        clearTimeout(watchdog);
-        signal.removeEventListener("abort", onAbort);
-        utterance.onstart = null;
-        utterance.onend = null;
-        utterance.onerror = null;
-        avatar.setViseme(0);
-        if (this.currentUtterance === utterance) this.currentUtterance = null;
-        if (outcome === "stopped") synth.cancel();
-        if (started) this.playedMs += Math.round(performance.now() - startedAt);
-        resolve(outcome);
-      };
-      const onAbort = () => finish("stopped");
-
-      utterance.onstart = () => {
-        started = true;
-        startedAt = performance.now();
-      };
-      utterance.onend = () => finish("played");
-      utterance.onerror = (e) => {
-        if (e.error === "not-allowed") this.setBlocked(true);
-        // "interrupted" and "canceled" come from our own cancel(): the line was stopped.
-        finish(e.error === "interrupted" || e.error === "canceled" ? "stopped" : started ? "played" : "unavailable");
-      };
-      signal.addEventListener("abort", onAbort);
-
-      // Drive mouth using phonetic text-to-viseme timeline for natural lip-sync during synthesis.
-      const intervalId = setInterval(() => {
-        if (!started) return;
-        const elapsed = performance.now() - startedAt;
-        avatar.setViseme(visemeAt(phoneticTimeline, elapsed, utterance.rate));
-      }, VISEME_INTERVAL_MS);
-      const watchdog = setTimeout(
-        () => finish(started ? "played" : "unavailable"),
-        // Han characters are a syllable each, so they take about twice as long as a Latin letter.
-        (text.length + (text.match(/[㐀-鿿]/g)?.length ?? 0) * 2) * SYNTH_MS_PER_CHAR + SYNTH_WATCHDOG_MARGIN_MS,
-      );
-
-      this.currentUtterance = utterance;
-      // Clear anything left in the queue, then speak. Chrome drops an utterance queued in the same
-      // tick as cancel(), so only cancel when something is queued, and speak a moment later.
-      const leftover = synth.speaking || synth.pending;
-      if (leftover) synth.cancel();
-      setTimeout(
-        () => {
-          if (settled) return;
-          // Chrome can leave the queue paused after a tab switch.
-          synth.resume();
-          synth.speak(utterance);
-        },
-        leftover ? 60 : 0,
-      );
-    });
-  }
-
-  /**
-   * iOS Safari only allows speech that starts inside a user gesture. Speaking a silent, empty line
-   * during the Start tap unlocks it for the rest of the session. Also starts loading the voice list.
-   */
-  private primeSynthesis(): void {
-    const synth = typeof window !== "undefined" ? window.speechSynthesis : undefined;
-    if (!synth || this.synthPrimed || typeof SpeechSynthesisUtterance === "undefined") return;
-    this.synthPrimed = true;
-    synth.getVoices();
-    const silent = new SpeechSynthesisUtterance(" ");
-    silent.volume = 0;
-    synth.speak(silent);
   }
 
   private ensureElement(): HTMLAudioElement | null {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { QuizPlayer } from "@/components/learner/quiz-player";
@@ -130,7 +130,8 @@ export function LessonPlayerClient({
 }) {
   const router = useRouter();
   const [completed, setCompleted] = useState(new Set(completedLessonIds));
-  const [tutorDone, setTutorDone] = useState(new Set(tutorCompletedScenarioIds));
+  // Completion comes from the server: the block card navigates to the session, and the lesson re-renders on return.
+  const tutorDone = useMemo(() => new Set(tutorCompletedScenarioIds), [tutorCompletedScenarioIds]);
   const [certificate, setCertificate] = useState(existingCertificate);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -625,7 +626,7 @@ export function LessonPlayerClient({
                     Free Open Showcase · No login required
                   </p>
                   <p className="text-xs text-slate-600 sm:text-sm">
-                    Explore every lesson, interactive quiz, and live 3D/2D AI Teacher session freely. Sign in anytime to save progress &amp; earn a certificate.
+                    Explore every lesson, interactive quiz, and teaching session with {teacher.name} freely. Sign in anytime to save progress &amp; earn a certificate.
                   </p>
                 </div>
                 <Link
@@ -742,10 +743,7 @@ export function LessonPlayerClient({
                           scenario={tutorScenarios[moment.scenario_id]}
                           done={tutorDone.has(moment.scenario_id)}
                           isGuest={isGuest}
-                          onComplete={(scenarioId: string) => {
-                            setTutorDone((prev) => new Set([...prev, scenarioId]));
-                            toast.success("AI Teacher check-in complete");
-                          }}
+                          academySlug={course.company_slug ?? null}
                         />
                       </div>
                     ));
@@ -791,10 +789,7 @@ export function LessonPlayerClient({
                             scenarios: tutorScenarios,
                             completedScenarioIds: [...tutorDone],
                             isGuest,
-                            onComplete: (scenarioId: string) => {
-                              setTutorDone((prev) => new Set([...prev, scenarioId]));
-                              toast.success("AI Teacher check-in complete");
-                            },
+                            academySlug: course.company_slug ?? null,
                           }}
                           onLaunchStudio={(initialTool) =>
                             handleOpenStudio(block.id, initialTool, {
@@ -821,10 +816,7 @@ export function LessonPlayerClient({
                         scenario={tutorScenarios[moment.scenario_id]}
                         done={tutorDone.has(moment.scenario_id)}
                         isGuest={isGuest}
-                        onComplete={(scenarioId: string) => {
-                          setTutorDone((prev) => new Set([...prev, scenarioId]));
-                          toast.success("AI Teacher check-in complete");
-                        }}
+                        academySlug={course.company_slug ?? null}
                       />
                     </div>
                   ))}
@@ -872,7 +864,7 @@ export function LessonPlayerClient({
                           {certificate
                             ? "Your certificate is ready to share."
                             : vivaStatus?.required && !vivaStatus.passed
-                              ? vivaStatus.reason ?? `Complete your oral Certificate Viva with ${teacher.name} to unlock your certificate.`
+                              ? vivaStatus.reason ?? `Complete a short oral check with ${teacher.name} to unlock your certificate.`
                               : "Claim your verified certificate to share your achievement."}
                         </p>
                         {!certificate && vivaStatus?.canRequestReview && <VivaReviewRequest courseId={course.id} />}
@@ -910,16 +902,13 @@ export function LessonPlayerClient({
                       origin="practice"
                       content={{
                         scenarioId: vivaStatus.scenarioId,
-                        title: `Certificate Viva with ${vivaStatus.scenario.persona?.displayName ?? vivaStatus.scenario.persona?.name ?? teacher.name}`,
+                        title: `Oral check with ${vivaStatus.scenario.persona?.displayName ?? vivaStatus.scenario.persona?.name ?? teacher.name}`,
                         intro: vivaStatus.reason ?? "Demonstrate what you learned in a short oral check to unlock your certificate.",
                         required: true,
                       }}
                       scenario={vivaStatus.scenario}
                       done={false}
-                      onComplete={() => {
-                        toast.success("Certificate Viva completed — checking certificate eligibility");
-                        router.refresh();
-                      }}
+                      academySlug={course.company_slug ?? null}
                     />
                   </div>
                 )}

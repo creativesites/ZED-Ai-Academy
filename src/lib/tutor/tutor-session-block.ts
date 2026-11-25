@@ -114,8 +114,23 @@ export type TutorScenarioView = {
   maxMinutes: number;
   /** Modes the scenario allows that the session overlay can use (voice and text). */
   modes: ("voice" | "text")[];
-  persona: { name: string; displayName: string | null; look: Partial<TutorPersonaLook> | undefined } | null;
+  persona: {
+    name: string;
+    displayName: string | null;
+    look: Partial<TutorPersonaLook> | undefined;
+    /** TTS voice from ai_personas.voice.voiceName; null when the row has none (or was not selected). */
+    voiceName?: string | null;
+  } | null;
 };
+
+/** The TTS voice name in an ai_personas.voice JSON ({ voiceName: "Puck" }), or null. */
+export function voiceNameFromPersonaVoice(voice: unknown): string | null {
+  if (!voice || typeof voice !== "object" || Array.isArray(voice)) return null;
+  const name = (voice as Record<string, unknown>).voiceName;
+  if (typeof name !== "string") return null;
+  const trimmed = name.trim();
+  return /^[A-Za-z][A-Za-z-]{0,39}$/.test(trimmed) ? trimmed : null;
+}
 
 /** A practice_scenarios row joined with its persona (ai_personas), as the server reads it. */
 export type TutorScenarioRow = {
@@ -126,7 +141,7 @@ export type TutorScenarioRow = {
   scene: string | null;
   max_minutes: number | null;
   allowed_modes: string[] | null;
-  ai_personas: { name: string; display_name: string | null; rive_variant: unknown } | null;
+  ai_personas: { name: string; display_name: string | null; rive_variant: unknown; voice?: unknown } | null;
 };
 
 export function scenarioViewFromRow(row: TutorScenarioRow): TutorScenarioView {
@@ -147,6 +162,7 @@ export function scenarioViewFromRow(row: TutorScenarioRow): TutorScenarioView {
           name: persona.name,
           displayName: persona.display_name,
           look: personaLookFromVariant(persona.rive_variant),
+          voiceName: voiceNameFromPersonaVoice(persona.voice),
         }
       : null,
   };
