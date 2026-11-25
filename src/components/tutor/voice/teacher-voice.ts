@@ -20,6 +20,12 @@ import { secondsToMs } from "@/lib/tutor/speaking-time";
 const VISEME_INTERVAL_MS = 25;
 /** Audio that has not started by now (a slow first TTS render) is given up; captions carry the line. */
 const AUDIO_START_TIMEOUT_MS = 8000;
+/**
+ * How long to wait for /api/tutor/tts. A line that is not cached yet is synthesised and uploaded first, which
+ * takes about 5-10 s (measured ~9.7 s); cached lines return in well under a second. The route's own limit is
+ * 30 s. Lines of a turn are prefetched in parallel, so only the first new line waits this long.
+ */
+const TTS_FETCH_TIMEOUT_MS = 15_000;
 
 type AudioContextCtor = typeof AudioContext;
 
@@ -114,7 +120,7 @@ export class TeacherVoice {
 
     const promise = (async () => {
       const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), 3200);
+      const timer = setTimeout(() => controller.abort(), TTS_FETCH_TIMEOUT_MS);
       try {
         const res = await fetch("/api/tutor/tts", {
           method: "POST",
@@ -136,6 +142,10 @@ export class TeacherVoice {
     // Cap cache size to keep memory bounded across long sessions
     if (this.ttsCache.size > 40) this.ttsCache.clear();
     this.ttsCache.set(key, promise);
+    // A failed or timed-out fetch is not remembered, so the line is retried the next time it is spoken.
+    void promise.then((url) => {
+      if (!url && this.ttsCache.get(key) === promise) this.ttsCache.delete(key);
+    });
     return promise;
   }
 
