@@ -1,13 +1,23 @@
 "use client";
 
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
+import type { RefAttributes } from "react";
+import dynamic from "next/dynamic";
 import type { Gesture, Mood, ToneShape, VisemeValue } from "@/lib/tutor/contract.generated";
 import type { SceneArtboard } from "@/lib/tutor/rive-driver";
 import { PlaceholderTeacher } from "./PlaceholderTeacher";
-import { RiveTeacher } from "./RiveTeacher";
 import type { RiveTeacherProps } from "./RiveTeacher";
 import { ThreeTeacher } from "./ThreeTeacher";
 import type { AvatarDriver } from "./types";
+
+// The Rive runtime (@rive-app/canvas, ~616 KB JS plus its wasm and .riv files) is split into its own chunk
+// and fetched only when a Rive teacher is actually drawn. Lite mode and the placeholder never load it, and
+// pages that show a teacher (lesson card, dock, deck, dashboard card) do not carry it in their initial JS.
+// Client only: the canvas cannot render on the server. React 19 passes `ref` through as a prop.
+const RiveTeacher = dynamic<RiveTeacherProps & RefAttributes<AvatarDriver>>(
+  () => import("./RiveTeacher").then((m) => m.RiveTeacher),
+  { ssr: false },
+);
 
 // Unified renderer for Rive 2.5D, Three.js 3D WebGL, and SVG placeholder.
 // Switching between 3D WebGL and Rive is seamless:
