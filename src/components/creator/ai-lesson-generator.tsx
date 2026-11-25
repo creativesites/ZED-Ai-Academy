@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import type { ContentBlockType, Json } from "@/types/database";
 import { COURSE_DOMAIN_PRESETS, type CourseDomainPresetId } from "@/lib/course-domain-presets";
+import { unwrapAction } from "@/lib/actions/unwrap";
 
 type GeneratedBlock = { type: ContentBlockType; content: Json };
 
@@ -144,7 +145,7 @@ export function AILessonGenerator({
     setSaving(true);
     try {
       const chosen = selectedIndices.map((i) => stagedBlocks[i]).filter(Boolean);
-      const created = await createContentBlocksBatch(lessonId, courseId, chosen);
+      const created = await unwrapAction(createContentBlocksBatch(lessonId, courseId, chosen));
 
       toast.success(`Added ${created.length} block${created.length !== 1 ? "s" : ""} to "${lessonTitle || "lesson"}"`);
       if (onBlocksGenerated && created.length > 0) {

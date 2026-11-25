@@ -7,6 +7,7 @@ import { publishCourseDraftFlows } from "@/actions/tutor-authoring";
 import { EyeOff, Loader2, Rocket } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { unwrapAction } from "@/lib/actions/unwrap";
 
 type Props = {
   courseId: string;
@@ -28,7 +29,7 @@ export function PublishButton({ courseId, status, tenantSlug, ready = true, vari
     }
     startTransition(async () => {
       try {
-        await publishCourse(courseId, !isPublished, tenantSlug);
+        await unwrapAction(publishCourse(courseId, !isPublished, tenantSlug));
         if (!isPublished) {
           await publishCourseDraftFlows(courseId).catch(() => undefined);
         }

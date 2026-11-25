@@ -14,6 +14,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import type { ContentBlockType, Json } from "@/types/database";
+import { unwrapAction } from "@/lib/actions/unwrap";
 
 type Target = { id: string; title: string };
 
@@ -64,7 +65,7 @@ export function BulkLessonGenerator({
           (b) => b.type !== "quiz"
         );
         if (blocks.length > 0) {
-          await createContentBlocksBatch(lesson.id, courseId, blocks);
+          await unwrapAction(createContentBlocksBatch(lesson.id, courseId, blocks));
           ok++;
         }
       } catch {

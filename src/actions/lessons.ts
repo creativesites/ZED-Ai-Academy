@@ -1,5 +1,6 @@
 "use server";
 
+import { toActionResult } from "@/lib/actions/result";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { auth } from "@clerk/nextjs/server";
@@ -52,7 +53,7 @@ export async function createLesson(moduleId: string, title: string, tenantSlug?:
   redirect(getLessonEditorPath(courseId, lesson.id, tenantSlug));
 }
 
-export async function updateLesson(
+async function updateLessonImpl(
   lessonId: string,
   courseId: string,
   data: { title?: string; is_preview?: boolean },
@@ -78,7 +79,7 @@ export async function updateLesson(
   revalidatePath(getLessonEditorPath(courseId, lessonId, tenantSlug));
 }
 
-export async function deleteLesson(lessonId: string, courseId: string, tenantSlug?: string) {
+async function deleteLessonImpl(lessonId: string, courseId: string, tenantSlug?: string) {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
 
@@ -92,7 +93,7 @@ export async function deleteLesson(lessonId: string, courseId: string, tenantSlu
   redirect(coursePath);
 }
 
-export async function reorderLessons(
+async function reorderLessonsImpl(
   moduleId: string,
   courseId: string,
   orderedIds: string[],
@@ -111,16 +112,18 @@ export async function reorderLessons(
     .maybeSingle();
   if (!mod) throw new Error("Unauthorized");
 
-  await Promise.all(
+  const results = await Promise.all(
     orderedIds.map((id, index) =>
       supabase.from("lessons").update({ position: index + 1 }).eq("id", id).eq("module_id", moduleId)
     )
   );
+  const failed = results.find((r) => r.error);
+  if (failed?.error) throw new Error(failed.error.message);
   revalidatePath(getCourseEditorPath(courseId, tenantSlug));
 }
 
 /** Create a lesson and stay in the outline (no redirect) — used for rapid outlining. */
-export async function addLesson(moduleId: string, title: string, tenantSlug?: string) {
+async function addLessonImpl(moduleId: string, title: string, tenantSlug?: string) {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
 
@@ -150,7 +153,7 @@ export async function addLesson(moduleId: string, title: string, tenantSlug?: st
 }
 
 /** Copy a lesson with its content blocks and quiz, placed directly after the original. */
-export async function duplicateLesson(lessonId: string, courseId: string, tenantSlug?: string) {
+async function duplicateLessonImpl(lessonId: string, courseId: string, tenantSlug?: string) {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
 
@@ -226,4 +229,25 @@ export async function duplicateLesson(lessonId: string, courseId: string, tenant
 
   revalidatePath(getCourseEditorPath(courseId, tenantSlug));
   return { ...copy, content_block_count: blocks?.length ?? 0, has_quiz: Boolean(quiz) };
+}
+
+// ── Public actions: return { ok, data | error } so the real error reaches the author. ──
+export async function updateLesson(...args: Parameters<typeof updateLessonImpl>) {
+  return toActionResult("updateLesson", () => updateLessonImpl(...args));
+}
+
+export async function deleteLesson(...args: Parameters<typeof deleteLessonImpl>) {
+  return toActionResult("deleteLesson", () => deleteLessonImpl(...args));
+}
+
+export async function reorderLessons(...args: Parameters<typeof reorderLessonsImpl>) {
+  return toActionResult("reorderLessons", () => reorderLessonsImpl(...args));
+}
+
+export async function addLesson(...args: Parameters<typeof addLessonImpl>) {
+  return toActionResult("addLesson", () => addLessonImpl(...args));
+}
+
+export async function duplicateLesson(...args: Parameters<typeof duplicateLessonImpl>) {
+  return toActionResult("duplicateLesson", () => duplicateLessonImpl(...args));
 }

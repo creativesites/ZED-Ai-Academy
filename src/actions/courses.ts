@@ -1,5 +1,6 @@
 "use server";
 
+import { toActionResult } from "@/lib/actions/result";
 import { revalidatePath } from "next/cache";
 import { redirect, unstable_rethrow } from "next/navigation";
 import { auth } from "@clerk/nextjs/server";
@@ -215,7 +216,7 @@ export async function createCourseAction(
   }
 }
 
-export async function updateCourse(courseId: string, formData: FormData, tenantSlug?: string) {
+async function updateCourseImpl(courseId: string, formData: FormData, tenantSlug?: string) {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
 
@@ -246,7 +247,7 @@ export async function updateCourse(courseId: string, formData: FormData, tenantS
   }
 }
 
-export async function publishCourse(courseId: string, publish: boolean, tenantSlug?: string) {
+async function publishCourseImpl(courseId: string, publish: boolean, tenantSlug?: string) {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
 
@@ -269,7 +270,7 @@ export async function publishCourse(courseId: string, publish: boolean, tenantSl
   }
 }
 
-export async function deleteCourse(courseId: string, tenantSlug?: string) {
+async function deleteCourseImpl(courseId: string, tenantSlug?: string) {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
 
@@ -285,4 +286,17 @@ export async function deleteCourse(courseId: string, tenantSlug?: string) {
   const listPath = getCourseListPath(tenantSlug);
   revalidatePath(listPath);
   redirect(listPath);
+}
+
+// ── Public actions: return { ok, data | error } so the real error reaches the author. ──
+export async function updateCourse(...args: Parameters<typeof updateCourseImpl>) {
+  return toActionResult("updateCourse", () => updateCourseImpl(...args));
+}
+
+export async function publishCourse(...args: Parameters<typeof publishCourseImpl>) {
+  return toActionResult("publishCourse", () => publishCourseImpl(...args));
+}
+
+export async function deleteCourse(...args: Parameters<typeof deleteCourseImpl>) {
+  return toActionResult("deleteCourse", () => deleteCourseImpl(...args));
 }

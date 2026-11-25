@@ -23,9 +23,10 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
 import { COURSE_CATEGORIES } from "@/lib/course-experience";
-import { uploadMedia } from "@/actions/upload";
+import { uploadCourseMedia } from "@/lib/media/upload-course-media";
 import { setCourseClassLinks } from "@/actions/classroom";
 import type { Course } from "@/types/database";
+import { unwrapAction } from "@/lib/actions/unwrap";
 
 export function CourseSettingsForm({
   course,
@@ -59,7 +60,7 @@ export function CourseSettingsForm({
   function handleSubmit(formData: FormData) {
     startSave(async () => {
       try {
-        await updateCourse(course.id, formData, tenantSlug);
+        await unwrapAction(updateCourse(course.id, formData, tenantSlug));
         if (course.company_id && companyClasses.length > 0) {
           await setCourseClassLinks(course.company_id, course.id, selectedClassIds, tenantSlug);
         }
@@ -75,7 +76,7 @@ export function CourseSettingsForm({
     startPublish(async () => {
       const targetPublish = status !== "published";
       try {
-        await publishCourse(course.id, targetPublish, tenantSlug);
+        await unwrapAction(publishCourse(course.id, targetPublish, tenantSlug));
         setStatus(targetPublish ? "published" : "draft");
         toast.success(targetPublish ? "Course published." : "Course moved to draft.");
         router.refresh();
@@ -89,7 +90,7 @@ export function CourseSettingsForm({
     if (!confirm(`Permanently delete "${course.title}"? This cannot be undone.`)) return;
     startDelete(async () => {
       try {
-        await deleteCourse(course.id, tenantSlug);
+        await unwrapAction(deleteCourse(course.id, tenantSlug));
       } catch (err) {
         toast.error(err instanceof Error ? err.message : "Unable to delete course.");
       }
@@ -242,12 +243,8 @@ export function CourseSettingsForm({
                           if (!file) return;
                           setUploading(true);
                           try {
-                            const formData = new FormData();
-                            formData.append("file", file);
-                            formData.append("courseId", course.id);
-                            formData.append("folder", "thumbnails");
 
-                            const res = await uploadMedia(formData);
+                            const res = await uploadCourseMedia(file, course.id, "thumbnails");
                             setThumbnailUrl(res.url);
                             toast.success("Cover image uploaded!");
                           } catch (err) {

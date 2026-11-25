@@ -1,5 +1,6 @@
 "use server";
 
+import { toActionResult } from "@/lib/actions/result";
 import { revalidatePath } from "next/cache";
 import { auth } from "@clerk/nextjs/server";
 import { createClient } from "@/lib/supabase/server";
@@ -15,7 +16,7 @@ async function verifyBlockOwner(
   return { courseId };
 }
 
-export async function createContentBlock(
+async function createContentBlockImpl(
   lessonId: string,
   courseId: string,
   type: ContentBlockType,
@@ -48,7 +49,7 @@ export async function createContentBlock(
   return data;
 }
 
-export async function createContentBlocksBatch(
+async function createContentBlocksBatchImpl(
   lessonId: string,
   courseId: string,
   blocks: { type: ContentBlockType; content: Json }[]
@@ -88,7 +89,7 @@ export async function createContentBlocksBatch(
   return data ?? [];
 }
 
-export async function updateContentBlock(
+async function updateContentBlockImpl(
   blockId: string,
   lessonId: string,
   courseId: string,
@@ -110,7 +111,7 @@ export async function updateContentBlock(
   revalidatePath(`/creator/courses/${courseId}/lessons/${lessonId}`);
 }
 
-export async function deleteContentBlock(blockId: string, lessonId: string, courseId: string) {
+async function deleteContentBlockImpl(blockId: string, lessonId: string, courseId: string) {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
 
@@ -140,7 +141,7 @@ export async function deleteContentBlock(blockId: string, lessonId: string, cour
   revalidatePath(`/creator/courses/${courseId}/lessons/${lessonId}`);
 }
 
-export async function reorderContentBlocks(
+async function reorderContentBlocksImpl(
   lessonId: string,
   courseId: string,
   orderedIds: string[]
@@ -151,10 +152,33 @@ export async function reorderContentBlocks(
   const supabase = createClient();
   await verifyBlockOwner(supabase, lessonId, userId);
 
-  await Promise.all(
+  const results = await Promise.all(
     orderedIds.map((id, index) =>
       supabase.from("content_blocks").update({ position: index + 1 }).eq("id", id).eq("lesson_id", lessonId)
     )
   );
+  const failed = results.find((r) => r.error);
+  if (failed?.error) throw new Error(failed.error.message);
   revalidatePath(`/creator/courses/${courseId}/lessons/${lessonId}`);
+}
+
+// ── Public actions: return { ok, data | error } so the real error reaches the author. ──
+export async function createContentBlock(...args: Parameters<typeof createContentBlockImpl>) {
+  return toActionResult("createContentBlock", () => createContentBlockImpl(...args));
+}
+
+export async function createContentBlocksBatch(...args: Parameters<typeof createContentBlocksBatchImpl>) {
+  return toActionResult("createContentBlocksBatch", () => createContentBlocksBatchImpl(...args));
+}
+
+export async function updateContentBlock(...args: Parameters<typeof updateContentBlockImpl>) {
+  return toActionResult("updateContentBlock", () => updateContentBlockImpl(...args));
+}
+
+export async function deleteContentBlock(...args: Parameters<typeof deleteContentBlockImpl>) {
+  return toActionResult("deleteContentBlock", () => deleteContentBlockImpl(...args));
+}
+
+export async function reorderContentBlocks(...args: Parameters<typeof reorderContentBlocksImpl>) {
+  return toActionResult("reorderContentBlocks", () => reorderContentBlocksImpl(...args));
 }

@@ -115,6 +115,7 @@ import {
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import type { ContentBlockType, Json } from "@/types/database";
+import { unwrapAction } from "@/lib/actions/unwrap";
 
 type Block = {
   id: string;
@@ -379,7 +380,7 @@ function SortableBlock({
     }
     onStatus(block.id, "saving");
     try {
-      await updateContentBlock(block.id, lessonId, courseId, snapshot);
+      await unwrapAction(updateContentBlock(block.id, lessonId, courseId, snapshot));
       lastSaved.current = json;
       onStatus(block.id, JSON.stringify(latest.current) === json ? null : "dirty");
     } catch (err) {
@@ -722,6 +723,10 @@ export function LessonEditorClient({
   initialMoments?: TeacherMomentRecord[];
 }) {
   const [blocks, setBlocks] = useState(initialBlocks);
+  const blocksRef = useRef(blocks);
+  useEffect(() => {
+    blocksRef.current = blocks;
+  }, [blocks]);
   const [title, setTitle] = useState(lesson.title);
   const [isPreview, setIsPreview] = useState(lesson.is_preview);
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -730,6 +735,8 @@ export function LessonEditorClient({
   const [asideTab, setAsideTab] = useState<"preview" | "ai" | "teacher">("preview");
   const [statuses, setStatuses] = useState<Record<string, SaveState>>({});
   const flushers = useRef(new Map<string, () => Promise<void>>());
+  // Latest content typed into blocks that are still being created (temp ids).
+  const pendingContent = useRef(new Map<string, Json>());
   const titleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const savedTitle = useRef(lesson.title);
 
@@ -777,7 +784,7 @@ export function LessonEditorClient({
     }
     setStatus("__title", "saving");
     try {
-      await updateLesson(lesson.id, courseId, { title: clean }, tenantSlug);
+      await unwrapAction(updateLesson(lesson.id, courseId, { title: clean }, tenantSlug));
       savedTitle.current = clean;
       setStatus("__title", null);
     } catch (err) {
@@ -823,7 +830,7 @@ export function LessonEditorClient({
     const next = !isPreview;
     setIsPreview(next);
     setStatus("__preview", "saving");
-    updateLesson(lesson.id, courseId, { is_preview: next }, tenantSlug)
+    unwrapAction(updateLesson(lesson.id, courseId, { is_preview: next }, tenantSlug))
       .then(() => {
         setStatus("__preview", null);
         toast.success(next ? "Free preview on — anyone can open this lesson" : "Enrolled learners only");
@@ -839,7 +846,7 @@ export function LessonEditorClient({
   async function persistOrder(next: Block[]) {
     const real = next.filter((b) => !b.id.startsWith("temp-"));
     try {
-      await reorderContentBlocks(lesson.id, courseId, real.map((b) => b.id));
+      await unwrapAction(reorderContentBlocks(lesson.id, courseId, real.map((b) => b.id)));
     } catch {
       toast.error("Couldn't save the new order.");
     }
@@ -868,33 +875,48 @@ export function LessonEditorClient({
     const tempId = `temp-${Date.now()}`;
     const index = at === null ? blocks.length : Math.min(at, blocks.length);
     const temp: Block = { id: tempId, type, position: index + 1, content };
-    let ordered: Block[] = [];
-    setBlocks((prev) => {
-      ordered = [...prev.slice(0, index), temp, ...prev.slice(index)];
-      return ordered;
-    });
+    const insertedMidLesson = index < blocks.length;
+    setBlocks((prev) => [...prev.slice(0, index), temp, ...prev.slice(index)]);
     setMobileView("edit");
 
     try {
-      const created = await createContentBlock(lesson.id, courseId, type, content);
+      const created = await unwrapAction(createContentBlock(lesson.id, courseId, type, content));
       const real: Block = {
         id: created.id,
         type: created.type as ContentBlockType,
         position: created.position,
         content: created.content as Json,
       };
-      let finalOrder: Block[] = [];
-      setBlocks((prev) => {
-        finalOrder = prev.map((b) => (b.id === tempId ? real : b));
-        return finalOrder;
-      });
+      // Keep anything typed into the block while it was being created, then save it under the real id.
+      const typed = pendingContent.current.get(tempId);
+      pendingContent.current.delete(tempId);
+      const typedWhileCreating: Json | null =
+        typed !== undefined && JSON.stringify(typed) !== JSON.stringify(real.content) ? typed : null;
+      if (typedWhileCreating !== null) real.content = typedWhileCreating;
+      setBlocks((prev) => prev.map((b) => (b.id === tempId ? real : b)));
+      setStatus(tempId, null);
+      if (typedWhileCreating !== null) {
+        setStatus(real.id, "saving");
+        unwrapAction(updateContentBlock(real.id, lesson.id, courseId, typedWhileCreating))
+          .then(() => setStatus(real.id, null))
+          .catch((err) => {
+            setStatus(real.id, "error");
+            toast.error(err instanceof Error ? err.message : "Couldn't save this block.");
+          });
+      }
       // Server appends at the end; reorder if we inserted mid-lesson.
-      if (index < ordered.length - 1) void persistOrder(finalOrder.length ? finalOrder : ordered.map((b) => (b.id === tempId ? real : b)));
+      if (insertedMidLesson) {
+        const latest = blocksRef.current.map((b) => (b.id === tempId ? real : b));
+        if (!latest.some((b) => b.id === real.id)) latest.splice(index, 0, real);
+        void persistOrder(latest);
+      }
       requestAnimationFrame(() =>
         document.getElementById(`block-${real.id}`)?.scrollIntoView({ behavior: "smooth", block: "center" })
       );
-    } catch {
-      toast.error("Couldn't add that block. Please try again.");
+    } catch (err) {
+      toast.error(err instanceof Error ? `Couldn't add that block: ${err.message}` : "Couldn't add that block. Please try again.");
+      setStatus(tempId, null);
+      pendingContent.current.delete(tempId);
       setBlocks((prev) => prev.filter((b) => b.id !== tempId));
     }
   }
@@ -919,7 +941,7 @@ export function LessonEditorClient({
     setStatus(block.id, null);
     if (block.id.startsWith("temp-")) return;
     try {
-      await deleteContentBlock(block.id, lesson.id, courseId);
+      await unwrapAction(deleteContentBlock(block.id, lesson.id, courseId));
       toast.success("Block deleted");
     } catch (err) {
       setBlocks(before);
@@ -1148,9 +1170,10 @@ export function LessonEditorClient({
                         courseTitle={courseTitle}
                         moduleTitle={moduleTitle}
                         quiz={block.type === "quiz" ? quiz : null}
-                        onContentChange={(id, content) =>
-                          setBlocks((prev) => prev.map((b) => (b.id === id ? { ...b, content } : b)))
-                        }
+                        onContentChange={(id, content) => {
+                          if (id.startsWith("temp-")) pendingContent.current.set(id, content);
+                          setBlocks((prev) => prev.map((b) => (b.id === id ? { ...b, content } : b)));
+                        }}
                         onStatus={setStatus}
                         registerFlush={registerFlush}
                         onDelete={deleteBlock}

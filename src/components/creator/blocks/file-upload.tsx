@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState, useTransition, DragEvent, ChangeEvent } from "react";
-import { uploadMedia } from "@/actions/upload";
+import { uploadCourseMedia } from "@/lib/media/upload-course-media";
 import { Loader2, Upload, X, ImageIcon, FileText } from "lucide-react";
 
 type Props = {
@@ -33,14 +33,10 @@ export function FileUpload({ courseId, folder, accept, label, currentUrl, isImag
       setError(`File exceeds ${isImage ? "5 MB" : "25 MB"} limit`);
       return;
     }
-    const fd = new FormData();
-    fd.append("file", file);
-    fd.append("courseId", courseId);
-    fd.append("folder", folder);
 
     start(async () => {
       try {
-        const result = await uploadMedia(fd);
+        const result = await uploadCourseMedia(file, courseId, folder);
         onUpload(result.url, result.name, result.size);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Upload failed");

@@ -54,6 +54,7 @@ import { BulkLessonGenerator } from "./studio/bulk-lesson-generator";
 import { COURSE_DOMAIN_PRESETS, type CourseDomainPresetId } from "@/lib/course-domain-presets";
 import { getLessonEditorPath } from "@/lib/courses/course-routes";
 import { cn } from "@/lib/utils";
+import { unwrapAction } from "@/lib/actions/unwrap";
 
 type LessonItem = {
   id: string;
@@ -140,7 +141,7 @@ function SortableLesson({
     const next = !lesson.is_preview;
     startTransition(async () => {
       try {
-        await updateLesson(lesson.id, courseId, { is_preview: next }, tenantSlug);
+        await unwrapAction(updateLesson(lesson.id, courseId, { is_preview: next }, tenantSlug));
         onChange({ ...lesson, is_preview: next });
         toast.success(next ? "Anyone can now preview this lesson" : "Lesson is for enrolled learners only");
       } catch (err) {
@@ -152,7 +153,7 @@ function SortableLesson({
   function handleDuplicate() {
     startTransition(async () => {
       try {
-        const copy = await duplicateLesson(lesson.id, courseId, tenantSlug);
+        const copy = await unwrapAction(duplicateLesson(lesson.id, courseId, tenantSlug));
         onDuplicated(lesson.id, copy);
         toast.success("Lesson duplicated");
       } catch (err) {
@@ -165,7 +166,7 @@ function SortableLesson({
     if (!window.confirm(`Delete “${lesson.title}”? Its content and quiz will be removed.`)) return;
     startTransition(async () => {
       try {
-        await deleteLesson(lesson.id, courseId, tenantSlug);
+        await unwrapAction(deleteLesson(lesson.id, courseId, tenantSlug));
         onRemove(lesson.id);
         toast.success("Lesson deleted");
       } catch (err) {
@@ -315,7 +316,7 @@ function SortableModule({
     onModuleChange((m) => ({ ...m, lessons }));
     startTransition(async () => {
       try {
-        await reorderLessons(mod.id, courseId, lessons.map((l) => l.id), tenantSlug);
+        await unwrapAction(reorderLessons(mod.id, courseId, lessons.map((l) => l.id), tenantSlug));
       } catch (err) {
         toast.error(err instanceof Error ? err.message : "Unable to reorder lessons.");
         router.refresh();
@@ -348,7 +349,7 @@ function SortableModule({
     onModuleChange((m) => ({ ...m, title: trimmed }));
     startTransition(async () => {
       try {
-        await updateModule(mod.id, courseId, trimmed, tenantSlug);
+        await unwrapAction(updateModule(mod.id, courseId, trimmed, tenantSlug));
       } catch (err) {
         toast.error(err instanceof Error ? err.message : "Unable to rename module.");
         onModuleChange((m) => ({ ...m, title: mod.title }));
@@ -361,7 +362,7 @@ function SortableModule({
     if (!window.confirm(`Delete “${mod.title}”${n ? ` and its ${n} lesson${n === 1 ? "" : "s"}` : ""}? This can't be undone.`)) return;
     startTransition(async () => {
       try {
-        await deleteModule(mod.id, courseId, tenantSlug);
+        await unwrapAction(deleteModule(mod.id, courseId, tenantSlug));
         onModuleRemoved(mod.id);
         toast.success("Module deleted");
       } catch (err) {
@@ -381,7 +382,7 @@ function SortableModule({
       ...m,
       lessons: [...m.lessons, { id: tempId, title: clean, position: m.lessons.length + 1, is_preview: false, content_block_count: 0 }],
     }));
-    addLesson(mod.id, clean, tenantSlug)
+    unwrapAction(addLesson(mod.id, clean, tenantSlug))
       .then((created) =>
         onModuleChange((m) => ({
           ...m,
@@ -650,7 +651,7 @@ export function CurriculumBuilder({
     setModules(next);
     startTransition(async () => {
       try {
-        await reorderModules(courseId, next.map((m) => m.id), tenantSlug);
+        await unwrapAction(reorderModules(courseId, next.map((m) => m.id), tenantSlug));
       } catch (err) {
         toast.error(err instanceof Error ? err.message : "Unable to reorder modules.");
         router.refresh();
@@ -679,7 +680,7 @@ export function CurriculumBuilder({
     if (!clean) return;
     startTransition(async () => {
       try {
-        await createModule(courseId, clean, tenantSlug);
+        await unwrapAction(createModule(courseId, clean, tenantSlug));
         setNewModuleTitle("");
         setAddingModule(false);
         router.refresh();
