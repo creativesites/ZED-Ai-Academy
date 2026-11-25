@@ -30,7 +30,6 @@ import {
   type ReviewQuality,
 } from "@/lib/tutor/srs";
 import { speechLangFor } from "@/lib/tutor/speech-lang";
-import { visemeTimelineFromText } from "@/lib/tutor/visemes";
 import {
   addManualVocabCard,
   deleteLearnerVocabCard,
@@ -39,6 +38,7 @@ import {
 import type { LearnerDeckCard } from "@/lib/tutor/server/learner-overview";
 import { playChoiceChime, playStepTick } from "./sound-fx";
 import { useLiteMode } from "./use-lite-mode";
+import { useTeacherVoice } from "@/components/tutor/voice/use-teacher-voice";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -59,26 +59,6 @@ const LANG_LABELS: Record<string, string> = {
   ny: "Nyanja",
   tog: "Tonga",
 };
-
-const deckTtsCache = new Map<string, string | null>();
-let activeDeckAudio: HTMLAudioElement | null = null;
-let activeDeckInterval: ReturnType<typeof setInterval> | undefined;
-
-function stopDeckAudio(avatar?: AvatarDriver | null) {
-  if (activeDeckInterval !== undefined) {
-    clearInterval(activeDeckInterval);
-    activeDeckInterval = undefined;
-  }
-  if (activeDeckAudio) {
-    activeDeckAudio.pause();
-    activeDeckAudio = null;
-  }
-  if (typeof window !== "undefined" && "speechSynthesis" in window) {
-    window.speechSynthesis.cancel();
-  }
-  avatar?.setSpeaking(false);
-  avatar?.setViseme(0);
-}
 
 type BrowserSpeechRecognition = {
   lang: string;
@@ -106,144 +86,6 @@ function createSpeechRecognition(): BrowserSpeechRecognition | null {
   }
 }
 
-function speakTermWithBrowser(
-  text: string,
-  language: string,
-  rate: number,
-  avatar: AvatarDriver | null,
-) {
-  if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
-  try {
-    window.speechSynthesis.cancel();
-    const utter = new SpeechSynthesisUtterance(text);
-    const targetLang = speechLangFor(text, language);
-    utter.lang = targetLang;
-    utter.rate = rate;
-
-    const timeline = visemeTimelineFromText(text);
-    let startedAt = 0;
-
-    const cleanup = () => {
-      if (activeDeckInterval !== undefined) {
-        clearInterval(activeDeckInterval);
-        activeDeckInterval = undefined;
-      }
-      avatar?.setSpeaking(false);
-      avatar?.setViseme(0);
-    };
-
-    utter.onstart = () => {
-      startedAt = performance.now();
-      avatar?.setSpeaking(true);
-      activeDeckInterval = setInterval(() => {
-        const elapsed = (performance.now() - startedAt) * rate;
-        let cursor = 0;
-        let v: 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 = 0;
-        for (const seg of timeline) {
-          cursor += seg.ms;
-          if (elapsed < cursor) {
-            v = seg.viseme;
-            break;
-          }
-        }
-        avatar?.setViseme(v);
-      }, 30);
-    };
-    utter.onend = cleanup;
-    utter.onerror = cleanup;
-    window.speechSynthesis.speak(utter);
-  } catch {
-    // Browser TTS unavailable
-  }
-}
-
-async function speakTerm(
-  text: string,
-  language: string,
-  rate: number,
-  avatar: AvatarDriver | null,
-) {
-  if (typeof window === "undefined" || !text.trim()) return;
-  stopDeckAudio(avatar);
-
-  const voice = deckTeacherFor(language).voice;
-  const cacheKey = `${voice}::${text}`;
-  let url = deckTtsCache.get(cacheKey);
-
-  if (url === undefined) {
-    try {
-      const res = await fetch("/api/tutor/tts", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "same-origin",
-        body: JSON.stringify({ text, voice }),
-      });
-      if (res.ok) {
-        const data = (await res.json().catch(() => null)) as { url?: unknown } | null;
-        url = typeof data?.url === "string" && data.url ? data.url : null;
-      } else {
-        url = null;
-      }
-    } catch {
-      url = null;
-    }
-    if (deckTtsCache.size > 60) deckTtsCache.clear();
-    deckTtsCache.set(cacheKey, url);
-  }
-
-  if (!url) {
-    speakTermWithBrowser(text, language, rate, avatar);
-    return;
-  }
-
-  const timeline = visemeTimelineFromText(text);
-  const totalTimelineMs = timeline.reduce((acc, s) => acc + s.ms, 0);
-  const el = new Audio(url);
-  el.playbackRate = Math.max(0.65, Math.min(1.35, rate));
-  activeDeckAudio = el;
-
-  const cleanup = () => {
-    if (activeDeckInterval !== undefined) {
-      clearInterval(activeDeckInterval);
-      activeDeckInterval = undefined;
-    }
-    if (activeDeckAudio === el) activeDeckAudio = null;
-    avatar?.setSpeaking(false);
-    avatar?.setViseme(0);
-  };
-
-  el.onplaying = () => {
-    avatar?.setSpeaking(true);
-    activeDeckInterval = setInterval(() => {
-      const durationMs = Number.isFinite(el.duration) && el.duration > 0 ? el.duration * 1000 : totalTimelineMs;
-      const scale = durationMs > 0 && totalTimelineMs > 0 ? totalTimelineMs / durationMs : 1;
-      const elapsed = el.currentTime * 1000 * scale;
-      let cursor = 0;
-      let v: 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 = 0;
-      for (const seg of timeline) {
-        cursor += seg.ms;
-        if (elapsed < cursor) {
-          v = seg.viseme;
-          break;
-        }
-      }
-      avatar?.setViseme(v);
-    }, 28);
-  };
-  el.onended = cleanup;
-  el.onerror = () => {
-    cleanup();
-    speakTermWithBrowser(text, language, rate, avatar);
-  };
-
-  try {
-    await el.play();
-  } catch {
-    cleanup();
-    speakTermWithBrowser(text, language, rate, avatar);
-  }
-}
-
 export function VocabDeckReview({
   initialCards,
   backHref,
@@ -258,6 +100,20 @@ export function VocabDeckReview({
   const avatarRef = useRef<AvatarDriver | null>(null);
   // Data saver: the light SVG teacher instead of the Rive one. The card is still read aloud.
   const [lite] = useLiteMode();
+  // TeacherVoice: each card is read by its language's teacher with that persona's server voice (no
+  // browser speech). Without server audio the card is simply not read aloud.
+  const { speak: speakWithTeacher } = useTeacherVoice({ voice: DEFAULT_DECK_TEACHER.voice });
+  const speakTerm = useCallback(
+    (text: string, language: string, rate: number) => {
+      void speakWithTeacher(text, {
+        voice: deckTeacherFor(language).voice,
+        language,
+        rate,
+        avatar: avatarRef.current,
+      });
+    },
+    [speakWithTeacher],
+  );
   const [cards, setCards] = useState<LearnerDeckCard[]>(initialCards);
   const [langFilter, setLangFilter] = useState<string>("all");
   const [revealed, setRevealed] = useState(false);
@@ -659,7 +515,7 @@ export function VocabDeckReview({
                       variant="outline"
                       size="sm"
                       onClick={() =>
-                        speakTerm(activeCard.term, activeCard.language, 1.0, avatarRef.current)
+                        speakTerm(activeCard.term, activeCard.language, 1.0)
                       }
                       className="rounded-full border-slate-200 text-xs font-bold"
                     >
@@ -671,7 +527,7 @@ export function VocabDeckReview({
                       variant="outline"
                       size="sm"
                       onClick={() =>
-                        speakTerm(activeCard.term, activeCard.language, 0.7, avatarRef.current)
+                        speakTerm(activeCard.term, activeCard.language, 0.7)
                       }
                       className="rounded-full border-slate-200 text-xs font-semibold text-slate-600"
                     >
@@ -854,7 +710,7 @@ export function VocabDeckReview({
                     <div className="flex items-center gap-1">
                       <button
                         type="button"
-                        onClick={() => speakTerm(c.term, c.language, 1.0, avatarRef.current)}
+                        onClick={() => speakTerm(c.term, c.language, 1.0)}
                         className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-[#fd5523]"
                         aria-label={`Listen to ${c.term}`}
                       >
