@@ -6,9 +6,12 @@ import { loadOwnedSession, readJson, sessionIdSchema } from "@/lib/tutor/server/
 import { runSessionTurn, TurnConflictError } from "@/lib/tutor/server/turn-runner";
 import { sessionLimitReason } from "@/lib/tutor/server/turn-pipeline";
 import { LEARNER_AUDIO_TYPES, LEARNER_IMAGE_TYPES, MAX_IMAGE_BYTES } from "@/lib/tutor/recording";
+import { CONTRACT_VERSION } from "@/lib/tutor/events";
+import { interactionInputSchema, type InteractionInput } from "@/lib/tutor/runtime/interactions";
 
 // POST /api/tutor/sessions/[id]/turn: one Voice, Text, or Multimodal Image exchange.
-// Body: JSON { text } or multipart/form-data with an `audio` file (max 2 MB) or `image` file (max 3 MB, optional `text`).
+// Body: JSON { text }, JSON { interaction: { id, value }, text? } (answer to a graded check, P2-04),
+// or multipart/form-data with an `audio` file (max 2 MB) or `image` file (max 3 MB, optional `text`).
 
 const MAX_AUDIO_BYTES = 2 * 1024 * 1024;
 const ALLOWED_AUDIO_TYPES = new Set(LEARNER_AUDIO_TYPES);
@@ -19,10 +22,17 @@ const textSchema = z.object({
   text: z.string().trim().min(1).max(MAX_TEXT_CHARS),
 });
 
+// An interaction answer may come with the words the learner "said" (e.g. "I choose: B") for the transcript.
+const interactionBodySchema = z.object({
+  interaction: interactionInputSchema,
+  text: z.string().trim().min(1).max(MAX_TEXT_CHARS).optional(),
+});
+
 type TurnInput =
   | {
       ok: true;
       text?: string;
+      interaction?: InteractionInput;
       audio?: { bytes: Buffer; mimeType: string };
       image?: { bytes: Buffer; mimeType: string };
     }
@@ -74,9 +84,11 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
       learnerImage,
       openingInstruction: "",
       deferTts: true,
+      interaction: !limit ? (input.interaction ?? null) : null,
     });
     return NextResponse.json({
       turnIdx: idx,
+      contractVersion: CONTRACT_VERSION,
       learnerText: result.learnerText ?? learnerText,
       events: result.events,
       ended: result.ended,
@@ -144,7 +156,10 @@ async function readTurnInput(req: NextRequest): Promise<TurnInput> {
     return { ok: true, text };
   }
 
-  const parsed = textSchema.safeParse(await readJson(req));
-  if (!parsed.success) return { ok: false, status: 400, error: "Send { text } or multipart audio" };
+  const body = await readJson(req);
+  const answered = interactionBodySchema.safeParse(body);
+  if (answered.success) return { ok: true, text: answered.data.text, interaction: answered.data.interaction };
+  const parsed = textSchema.safeParse(body);
+  if (!parsed.success) return { ok: false, status: 400, error: "Send { text }, { interaction } or multipart audio" };
   return { ok: true, text: parsed.data.text };
 }

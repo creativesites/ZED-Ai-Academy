@@ -1,10 +1,8 @@
 import "server-only";
 import { createServiceClient } from "@/lib/supabase/server";
 import type { Json } from "@/types/database";
-import { modelFor } from "@/lib/ai/models";
 import { buildSystemPrompt, type TutorPromptMode } from "./prompt.ts";
 import { generateTurnJson, synthesizeCachedSpeech } from "./gemini-calls.ts";
-import { getOrCreatePromptCache } from "./prompt-cache.ts";
 import { applyPronunciationGlossary } from "../pronunciation.ts";
 import {
   personaPronunciationGlossary,
@@ -17,6 +15,9 @@ import {
 import { recordUsage } from "./usage.ts";
 import { CONTRACT_VERSION } from "../contract/index.ts";
 import { isSchemaUnavailableError } from "../mastery/server";
+import type { InteractionInput } from "../runtime/interactions.ts";
+import { holdChecks } from "../runtime/server.ts";
+import { prepareRuntimeTurn } from "../runtime/turn-server.ts";
 import {
   DEBUG_RAW_OUTPUT_TYPE,
   fallbackLanguageFor,
@@ -59,16 +60,20 @@ export async function runSessionTurn(input: {
   openingInstruction: string;
   /** When true, skips blocking server TTS so captions/board/choices return immediately (~1s) while the client fetches cached audio progressively via /api/tutor/tts. */
   deferTts?: boolean;
+  /** P2-04: the learner's answer to a held check ({ id, value }). Graded server-side. */
+  interaction?: InteractionInput | null;
 }): Promise<TurnPipelineResult> {
   const { ctx } = input;
   const session = ctx.session;
   const mode = session.mode === "text" ? "text" : "voice";
   const supabase = createServiceClient();
+  // [Stream F runtime] grading, session state + teaching policy, context window, shared cache (P2-04/05/06).
+  const runtime = await prepareRuntimeTurn({ ctx, mode, learnerText: input.learnerText, interaction: input.interaction });
 
   const deps: TurnPipelineDeps = {
     now: () => Date.now(),
     generate: async (req) => {
-      const cachedContent = await getOrCreatePromptCache(modelFor("tutorTurn"), req.systemInstruction);
+      const cachedContent = await runtime.cachedContent();
       const result = await generateTurnJson({ ...req, cachedContent });
       // Fire-and-forget usage metering so it never adds latency to the learner's turn.
       void recordUsage({
@@ -113,13 +118,29 @@ export async function runSessionTurn(input: {
         events: stored as unknown as Json,
         latency_ms: turn.latencyMs,
       };
-      let { error } = await supabase.from("tutor_turns").insert({ ...row, contract_version: CONTRACT_VERSION });
+      // P2-04/05/06 telemetry columns (migration 20261125000400); before it is applied, fall back step by step.
+      const telemetry = {
+        policy_move: runtime.policyMove,
+        input_tokens: turn.usage?.inputTokens ?? null,
+        output_tokens: turn.usage?.outputTokens ?? null,
+        cached_tokens: turn.usage?.cachedTokens ?? null,
+        ungraded_checks: turn.ungradedChecks ?? 0,
+      };
+      const turns = supabase.from("tutor_turns") as unknown as {
+        insert: (r: Record<string, unknown>) => PromiseLike<{ error: { code?: string; message: string } | null }>;
+      };
+      let { error } = await turns.insert({ ...row, contract_version: CONTRACT_VERSION, ...telemetry });
+      if (error && isSchemaUnavailableError(error)) {
+        ({ error } = await supabase.from("tutor_turns").insert({ ...row, contract_version: CONTRACT_VERSION }));
+      }
       // Before the contract_version migration is applied, store the turn without it.
       if (error && isSchemaUnavailableError(error)) ({ error } = await supabase.from("tutor_turns").insert(row));
       if (error) {
         if (error.code === "23505") throw new TurnConflictError(turn.idx);
         throw new Error(`could not store turn: ${error.message}`);
       }
+      // Answer keys are held server-side, never in the turn row. Not held ⇒ the reply is judged by the teacher.
+      if (turn.checks?.length) await holdChecks(session.id, turn.checks);
     },
   };
 
@@ -128,18 +149,20 @@ export async function runSessionTurn(input: {
       sessionStartedAtMs: Date.parse(session.started_at),
       maxMinutes: ctx.scenario.max_minutes,
       idx: input.idx,
-      learnerText: input.learnerText,
+      learnerText: runtime.learnerText,
       learnerAudio: input.learnerAudio,
       learnerImage: input.learnerImage,
       openingInstruction: input.openingInstruction,
-      systemInstruction: sessionSystemPrompt(ctx, mode),
+      systemInstruction: runtime.systemInstruction,
       voice: personaVoiceName(ctx.persona),
-      history: ctx.history,
+      history: runtime.history,
+      context: runtime.context,
       fallbackLanguage: fallbackLanguageFor(ctx.skillLanguage ?? ctx.profileLanguage),
     },
     deps,
   );
 
+  await runtime.finish(result);
   if (result.ended) await endSession(session);
   return result;
 }

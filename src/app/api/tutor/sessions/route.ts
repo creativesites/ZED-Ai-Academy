@@ -22,6 +22,7 @@ import {
 } from "@/lib/tutor/server/session-store";
 import { recordUsage } from "@/lib/tutor/server/usage";
 import { runSessionTurn, sessionSystemPrompt } from "@/lib/tutor/server/turn-runner";
+import { CONTRACT_VERSION } from "@/lib/tutor/events";
 import { buildOpeningWithWarmup } from "@/lib/tutor/warmup";
 import { loadLearnerPreferences } from "@/lib/tutor/learner/preferences-server";
 import { resolvePreferMode } from "@/lib/tutor/learner/preferences";
@@ -188,6 +189,7 @@ export async function POST(req: NextRequest) {
       liveToken: minted.token,
       liveModel: minted.liveModel,
       liveTokenExpiresAt: minted.expireTime,
+      contractVersion: CONTRACT_VERSION,
       persona,
       scenario,
     });
@@ -204,6 +206,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       sessionId: session.id,
       mode,
+      contractVersion: CONTRACT_VERSION,
       persona,
       scenario,
       openingEvents: opening.events,

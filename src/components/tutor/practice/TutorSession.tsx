@@ -8,7 +8,8 @@ import type { AvatarDriver } from "@/components/tutor/avatar/types";
 import type { TeacherStageHandle } from "@/components/tutor/avatar/TeacherStage";
 import type { TeacherEngine } from "@/components/tutor/avatar/Teacher";
 import type { AvatarEvent, PersonaLook } from "@/components/tutor/avatar/types";
-import { EventPlayer, type CardItem, type ClipEvent, type LessonRefEvent, type PlayerUI, type SaySpeechEvent } from "@/components/tutor/EventPlayer";
+import { EventPlayer, type CardItem, type CheckEvent, type ClipEvent, type LessonRefEvent, type PlayerUI, type SaySpeechEvent } from "@/components/tutor/EventPlayer";
+import type { InteractionAnswer } from "./api";
 import { boardFromEvent, choiceReply, revealBoard, type BoardState, type ConfidenceLevel } from "@/lib/tutor/board";
 import type { TutorEvent } from "@/lib/tutor/events";
 import { SCENE_ARTBOARDS, type SceneArtboard } from "@/lib/tutor/rive-driver";
@@ -86,7 +87,7 @@ export type TutorSessionProps = {
 type Phase = "intro" | "starting" | "live" | "ending" | "report";
 
 type TurnInput =
-  | { kind: "text"; text: string }
+  | { kind: "text"; text: string; interaction?: InteractionAnswer }
   | { kind: "audio"; clip: RecordingResult }
   | { kind: "image"; file: File; text?: string };
 
@@ -138,6 +139,9 @@ export function TutorSession({
   // Teaching surface (event contract v2).
   const [board, setBoard] = useState<BoardState | null>(null);
   const [choice, setChoice] = useState<ChoiceState | null>(null);
+  // Contract v3 (P2-04): the turn's answerable check, and whether controls may still be inferred (pre-v3 servers).
+  const [check, setCheck] = useState<CheckEvent | null>(null);
+  const [inferControls, setInferControls] = useState(true);
   const [confidence, setConfidence] = useState<{ prompt?: string } | null>(null);
   const [lessonRefs, setLessonRefs] = useState<LessonRefEvent[]>([]);
   const [clip, setClip] = useState<ClipEvent | null>(null);
@@ -287,6 +291,7 @@ export function TutorSession({
       },
       onReveal: (index) => setBoard((b) => (b ? revealBoard(b, index) : b)),
       onChoice: (question, options) => setChoice({ question, options }),
+      onCheck: (ev) => setCheck(ev),
       onConfidence: (prompt) => setConfidence({ prompt }),
       onLessonRef: (ref) => setLessonRefs((refs) => [...refs.filter((r) => r.label !== ref.label), ref].slice(-3)),
       onClip: (c) => setClip(c),
@@ -447,6 +452,7 @@ export function TutorSession({
       setTeacherSpeaking(false);
       setListenHint(null);
       setChoice(null);
+      setCheck(null);
       setConfidence(null);
       setError(null);
       setThinking(true);
@@ -489,7 +495,7 @@ export function TutorSession({
       const res = await api.turn(
         sessionId,
         input.kind === "text"
-          ? { kind: "text", text: input.text }
+          ? { kind: "text", text: input.text, ...(input.interaction ? { interaction: input.interaction } : {}) }
           : input.kind === "image"
             ? { kind: "image", file: input.file, text: input.text }
             : { kind: "audio", blob: input.clip.blob, mimeType: input.clip.mimeType },
@@ -667,6 +673,7 @@ export function TutorSession({
     setLastLearnerAudioUrl(null);
 
     const setupSessionUi = (started: typeof data) => {
+      setInferControls(!(typeof started.contractVersion === "number" && started.contractVersion >= 3));
       sessionIdRef.current = started.sessionId;
       personaLangRef.current = started.persona.languages?.[0] ?? "en";
       audioRef.current?.setLanguage(started.persona.languages?.[0]);
@@ -712,6 +719,7 @@ export function TutorSession({
       setSceneOverride(null);
       setBoard(null);
       setChoice(null);
+      setCheck(null);
       setConfidence(null);
       setLessonRefs([]);
       setClip(null);
@@ -842,6 +850,7 @@ export function TutorSession({
     audioRef.current?.unlock();
     if (liveClientRef.current && liveActive) {
       setChoice(null);
+      setCheck(null);
       setConfidence(null);
       liveClientRef.current.sendText(text);
       return;
@@ -874,7 +883,20 @@ export function TutorSession({
   const handleChoose = (option: string) => {
     playChoiceChime({ muted: mutedRef.current, volume: volumeRef.current });
     setChoice((c) => (c ? { ...c, picked: option } : c));
-    handleSendText(choiceReply(option));
+    const held = interaction.activeChoice;
+    const idx = held?.options.indexOf(option) ?? -1;
+    if (held?.checkId && idx >= 0) handleAnswer(held.checkId, idx, choiceReply(option));
+    else handleSendText(choiceReply(option));
+  };
+
+  // P2-04: the answer to a server-held check. Live has no held checks (no checkId), so it never gets here.
+  const handleAnswer = (checkId: string, value: InteractionAnswer["value"], text: string) => {
+    audioRef.current?.unlock();
+    if (liveClientRef.current && liveActive) {
+      handleSendText(text);
+      return;
+    }
+    void submitTurn({ kind: "text", text, interaction: { id: checkId, value } });
   };
 
   const handleConfidence = (level: ConfidenceLevel) => {
@@ -1250,6 +1272,8 @@ export function TutorSession({
     caption,
     listenHint,
     turnCount,
+    check,
+    inferFromContext: inferControls,
   });
 
   // TeachingBoard displays board content, clips, awards, and lesson references;
@@ -1591,6 +1615,8 @@ export function TutorSession({
             activeChoice={interaction.activeChoice}
             activeOrderChallenge={interaction.activeOrderChallenge}
             activeFillBlank={interaction.activeFillBlank}
+            activeNumeric={interaction.activeNumeric}
+            onAnswer={handleAnswer}
             showConfidence={interaction.showConfidence}
             confidencePrompt={confidence?.prompt}
             preferTextInput={interaction.preferTextInput}

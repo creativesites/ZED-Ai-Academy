@@ -84,7 +84,16 @@ export async function generateTurnJson(input: {
     }),
     { meter: input.meter ?? CALLER_METERS },
   );
-  return { text: result.text, totalTokens: result.usage.totalTokens, model: result.model };
+  return {
+    text: result.text,
+    totalTokens: result.usage.totalTokens,
+    usage: {
+      inputTokens: result.usage.inputTokens,
+      outputTokens: result.usage.outputTokens,
+      cachedTokens: result.usage.cachedTokens,
+    },
+    model: result.model,
+  };
 }
 
 const TRANSCRIBE_INSTRUCTION =

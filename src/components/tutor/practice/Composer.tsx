@@ -8,6 +8,7 @@ import type { ResponseMatchResult } from "@/lib/tutor/response-match";
 import type {
   ActiveChoice,
   ActiveFillBlank,
+  ActiveNumeric,
   ActiveOrderChallenge,
   DynamicQuickAction,
 } from "@/lib/tutor/turn-interaction";
@@ -61,6 +62,13 @@ type ComposerProps = {
   activeChoice: ActiveChoice | null;
   activeOrderChallenge: ActiveOrderChallenge | null;
   activeFillBlank: ActiveFillBlank | null;
+  /** Contract v3 ask_numeric (P2-04). */
+  activeNumeric?: ActiveNumeric | null;
+  /**
+   * Answer to a server-held check (the control carries a `checkId`): graded on the server. Without it, or for
+   * controls without a checkId, answers go through onSendText as before.
+   */
+  onAnswer?: (checkId: string, value: number | string | Array<number | string>, text: string) => void;
   showConfidence: boolean;
   confidencePrompt?: string;
   preferTextInput: boolean;
@@ -114,6 +122,8 @@ export function Composer(props: ComposerProps) {
     activeChoice,
     activeOrderChallenge,
     activeFillBlank,
+    activeNumeric = null,
+    onAnswer,
     showConfidence,
     confidencePrompt,
     preferTextInput,
@@ -249,12 +259,15 @@ export function Composer(props: ComposerProps) {
     onHoldEnd();
   };
 
+  // A typed reply to a held fill/numeric check is graded server-side; anything else is plain text.
+  const typedCheckId = activeFillBlank?.checkId ?? activeNumeric?.checkId;
   const submit = (e: FormEvent) => {
     e.preventDefault();
     const text = draft.trim();
     if (!text || !canType) return;
     setDraft("");
-    onSendText(text);
+    if (typedCheckId && onAnswer) onAnswer(typedCheckId, text, `My answer: ${text}${activeNumeric?.unit ? ` ${activeNumeric.unit}` : ""}`);
+    else onSendText(text);
   };
 
   const onInputKey = (e: KeyboardEvent<HTMLInputElement>) => {
@@ -273,7 +286,11 @@ export function Composer(props: ComposerProps) {
     const sequence = orderedIndices
       .map((idx, pos) => `${pos + 1}. ${activeOrderChallenge.items[idx]}`)
       .join(" → ");
-    onSendText(`My order: ${sequence}`);
+    if (activeOrderChallenge.checkId && onAnswer && orderedIndices.length === activeOrderChallenge.items.length) {
+      onAnswer(activeOrderChallenge.checkId, orderedIndices, `My order: ${sequence}`);
+    } else {
+      onSendText(`My order: ${sequence}`);
+    }
     setOrderedIndices([]);
   };
 
@@ -531,7 +548,11 @@ export function Composer(props: ComposerProps) {
                   key={word}
                   type="button"
                   disabled={!canType}
-                  onClick={() => onSendText(word)}
+                  onClick={() =>
+                    activeFillBlank.checkId && onAnswer
+                      ? onAnswer(activeFillBlank.checkId, word, `My answer: ${word}`)
+                      : onSendText(word)
+                  }
                   className="rounded-full border border-amber-300 bg-white px-2.5 py-1 text-xs font-bold text-[#062e39] shadow-xs transition hover:border-[#fd5523] hover:bg-[#fff2e9] hover:text-[#fd5523] disabled:opacity-45"
                 >
                   {word}
@@ -539,6 +560,17 @@ export function Composer(props: ComposerProps) {
               ))}
             </div>
           )}
+        </div>
+      )}
+
+      {/* 3b. Numeric answer (contract v3 ask_numeric): typed in the reply box below, graded on the server */}
+      {activeNumeric && (
+        <div className="grid gap-1.5 rounded-xl border border-amber-200/80 bg-amber-50/70 px-3 py-2">
+          <p className="text-[11px] font-bold uppercase tracking-wider text-amber-800">Your answer</p>
+          <p className="text-xs font-medium leading-snug text-[#062e39] sm:text-[13px]">
+            {activeNumeric.prompt}
+            {activeNumeric.unit ? <span className="ml-1 text-[var(--ink-dim)]">({activeNumeric.unit})</span> : null}
+          </p>
         </div>
       )}
 
@@ -923,7 +955,9 @@ export function Composer(props: ComposerProps) {
               disabled={!canType}
               autoComplete="off"
               placeholder={
-                activeFillBlank
+                activeNumeric
+                  ? `Type a number${activeNumeric.unit ? ` in ${activeNumeric.unit}` : ""}...`
+                  : activeFillBlank
                   ? "Type the missing word or phrase..."
                   : canType
                     ? "Type your reply..."
