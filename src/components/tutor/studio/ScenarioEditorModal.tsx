@@ -7,6 +7,7 @@ import { AlertTriangle, CheckCircle2, ExternalLink, Loader2, Plus, ShieldCheck, 
 import { Teacher } from "@/components/tutor/avatar/Teacher";
 import { DEFAULT_PERSONA_LOOK } from "@/components/tutor/avatar/types";
 import { FlowStoryboard } from "@/components/tutor/studio/FlowStoryboard";
+import { FlowVersionsPanel } from "@/components/tutor/studio/FlowVersionsPanel";
 import type { DraftedFlow, FlowDiffEntry, FlowStep } from "@/lib/tutor/authoring/flow";
 import type { StressTestSummary } from "@/lib/tutor/authoring/stress-test";
 import { AUTHORING_TEMPLATES, type AuthoringTemplateId } from "@/lib/tutor/authoring/templates";
@@ -878,6 +879,17 @@ export function ScenarioEditorModal({
                 ))}
               </div>
             </div>
+          )}
+
+          {initialScenario?.id && (
+            <FlowVersionsPanel
+              scenarioId={initialScenario.id}
+              onRestored={(saved) => {
+                // The form holds the pre-restore content; close it so the restored flow is reopened fresh.
+                onSaved(saved);
+                onOpenChange(false);
+              }}
+            />
           )}
 
           {/* Footer actions */}

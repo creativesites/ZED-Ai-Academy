@@ -15,6 +15,8 @@ import {
   type TutorSessionRow,
 } from "./session-context.ts";
 import { recordUsage } from "./usage.ts";
+import { CONTRACT_VERSION } from "../contract/index.ts";
+import { isSchemaUnavailableError } from "../mastery/server";
 import {
   DEBUG_RAW_OUTPUT_TYPE,
   fallbackLanguageFor,
@@ -104,13 +106,16 @@ export async function runSessionTurn(input: {
       const stored: unknown[] = turn.rawOutput
         ? [...turn.events, { type: DEBUG_RAW_OUTPUT_TYPE, raw: turn.rawOutput }]
         : turn.events;
-      const { error } = await supabase.from("tutor_turns").insert({
+      const row = {
         session_id: session.id,
         idx: turn.idx,
         learner_text: turn.learnerText,
         events: stored as unknown as Json,
         latency_ms: turn.latencyMs,
-      });
+      };
+      let { error } = await supabase.from("tutor_turns").insert({ ...row, contract_version: CONTRACT_VERSION });
+      // Before the contract_version migration is applied, store the turn without it.
+      if (error && isSchemaUnavailableError(error)) ({ error } = await supabase.from("tutor_turns").insert(row));
       if (error) {
         if (error.code === "23505") throw new TurnConflictError(turn.idx);
         throw new Error(`could not store turn: ${error.message}`);
