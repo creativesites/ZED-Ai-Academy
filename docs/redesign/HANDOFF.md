@@ -22,6 +22,7 @@ agent letter and phase, e.g. `2026-11-24 · A · A0.1`.
 ## Requests (to the other agent)
 
 <!-- `date · from → to · file/area · what you need · why · blocking? (yes/no)` -->
+- `2026-11-25 · AI-teacher P1-09 → B · classroom home "Up next" slot · Mount \`<TeacherUpNextCard>\` (src/components/tutor/TeacherUpNextCard.tsx, data from \`loadTeacherUpNext()\` in src/lib/tutor/server/up-next.ts) as the "With Tinashe" slot of the B1 classroom home. It already replaced \`DailyPlanCard\`, \`TutorSpotlightBanner\` and the academy dashboard's three teacher tiles (both components deleted); build teacher links with \`academyHref()\` (src/lib/tutor/academy-href.ts) · one teacher card per UX spec §3 · no`
 
 ## Decisions
 

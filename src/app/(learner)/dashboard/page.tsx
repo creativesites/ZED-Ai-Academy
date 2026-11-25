@@ -20,10 +20,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import type { CompanyMemberRole, UserRole } from "@/types/database";
 import { getUpcomingUserClasses } from "@/actions/classroom";
-import { DailyPlanCard } from "@/components/tutor/DailyPlanCard";
-import { TutorSpotlightBanner } from "@/components/tutor/TutorSpotlightBanner";
-import { loadDashboardDailyPlan } from "@/lib/tutor/mastery/server";
-import { loadLearnerTutorOverview } from "@/lib/tutor/server/learner-overview";
+import { TeacherUpNextCard } from "@/components/tutor/TeacherUpNextCard";
+import { loadLearnerTutorOverview, type LearnerTutorOverview } from "@/lib/tutor/server/learner-overview";
+import { loadTeacherUpNext } from "@/lib/tutor/server/up-next";
+import { academyHref, lessonHref } from "@/lib/tutor/academy-href";
 
 export const metadata = { title: "Your Academies — Zed AI Academy" };
 export const dynamic = "force-dynamic";
@@ -302,17 +302,8 @@ export default async function DashboardPage() {
           </div>
         )}
 
-        {/* AI Teacher Spotlight */}
-        <div className="mb-8">
-          <TutorSpotlightBanner
-            streakDays={tutorOverview?.streakDays}
-            dueCardsCount={tutorOverview?.deck.dueNow}
-            completedSessionsCount={tutorOverview?.completedSessionsCount}
-          />
-        </div>
-
-        {/* Today with <teacher> daily plan */}
-        <DailyPlanSection userId={userId} />
+        {/* Up next with <Teacher> (replaces the spotlight banner and the daily plan) */}
+        <UpNextSection userId={userId} overview={tutorOverview} />
 
         {/* Continue Learning Section */}
         {resumeCourses.length > 0 && (
@@ -340,7 +331,7 @@ export default async function DashboardPage() {
                 return (
                   <Link
                     key={enr.id}
-                    href={`/courses/${course.slug}/learn`}
+                    href={lessonHref(course.slug)}
                     className="group flex flex-col justify-between rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-[#fd5523]/40 hover:shadow-md"
                   >
                     <div>
@@ -542,12 +533,23 @@ export default async function DashboardPage() {
   );
 }
 
-async function DailyPlanSection({ userId }: { userId: string }) {
-  const plan = await loadDashboardDailyPlan({ userId });
-  if (plan.items.length === 0) return null;
+async function UpNextSection({
+  userId,
+  overview,
+}: {
+  userId: string;
+  overview: LearnerTutorOverview | null;
+}) {
+  // The hub spans academies, so links use platform paths (no academy scope).
+  const data = await loadTeacherUpNext({ userId, companyId: null, academySlug: null, overview });
   return (
     <div className="mb-8">
-      <DailyPlanCard teacherName={plan.teacherName} items={plan.items} />
+      <TeacherUpNextCard
+        teacher={data.teacher}
+        upNext={data.upNext}
+        teacherHomeHref={academyHref(null, "/practice")}
+        startHref="/academy/zedai"
+      />
     </div>
   );
 }
