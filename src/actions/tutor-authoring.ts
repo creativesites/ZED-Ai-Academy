@@ -473,12 +473,12 @@ const STARTER_PERSONA_META: Record<
       "You are Tinashe, an insightful study coach and tutor who helps learners explain concepts out loud, verify understanding, and apply lessons to real-world work.",
   },
   mwila: {
-    displayName: "Mwila",
+    displayName: "Maureen",
     languages: ["en", "bem"],
     voiceName: "Kore",
     defaultScene: "Scene_Studio",
     personalityPrompt:
-      "You are Mwila, a sharp practical AI workflow coach from Lusaka. Guide learners with real Zambian SME, farming, and office examples, short prompt challenges, and crisp feedback.",
+      "You are Maureen, a sharp practical AI workflow coach from Lusaka. Guide learners with real Zambian SME, farming, and office examples, short prompt challenges, and crisp feedback.",
   },
   banda: {
     displayName: "Banda",

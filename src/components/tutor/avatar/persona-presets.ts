@@ -47,7 +47,7 @@ export const SCALE_PERSONA_PRESETS: ReadonlyArray<{
 }> = [
   {
     key: "mwila",
-    label: "Mwila",
+    label: "Maureen",
     look: {
       skinColor: "#6B3E26",
       skinShadeColor: "#4E2B19",

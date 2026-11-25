@@ -18,7 +18,7 @@ Live on main (zed-ai-academy.vercel.app):
   is published with a Rive plan that adds the splash screen; accepted.
 - **Lite / data saver**: lighter visuals; the teacher still speaks.
 - **Renames**: Teacher's Room, AI Teacher Flows, Teacher (mobile nav).
-- **Test content**: Glory Academy has Tinashe and Mwila, three published flows and the free course
+- **Test content**: Glory Academy has Tinashe and Maureen, three published flows and the free course
   "AI Teacher Test Drive" (`scripts/seed-glory-teacher.mjs`, re-runnable).
 
 AI runs on **Gemini** (`src/lib/ai/models.ts`): turns `gemini-3.8-flash`, speech `gemini-3.8-flash-lite-tts`,
@@ -70,7 +70,7 @@ Goal: the teacher remembers what each learner knows and acts on it.
 ## Phase 3: Scale (later, not assigned)
 
 Academy-branded teacher, insights and misconceptions for teachers, course autopilot, certificate viva, new faces
-(Mwila, Banda, Amina, Chanda), more scenes and packs.
+(Maureen, Banda, Amina, Chanda), more scenes and packs.
 
 ## Decisions still open (owner)
 

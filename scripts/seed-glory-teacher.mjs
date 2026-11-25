@@ -2,7 +2,7 @@
 //   node --env-file=.env.local scripts/seed-glory-teacher.mjs [company-slug]
 //
 // Upserts fixed ids, so running it again updates the rows instead of duplicating them:
-//   2 ai_personas         Tinashe (Scene_Classroom) and Mwila (Scene_Studio), general teachers
+//   2 ai_personas         Tinashe (Scene_Classroom) and Maureen (Scene_Studio), general teachers
 //   3 practice_scenarios  general-tutor flows, published, visibility tenant_library (Teacher's Room)
 //   1 course              "AI Teacher Test Drive", free and published, 1 module, 3 lessons
 //   6 content_blocks      per lesson: a short text intro and the tutor_session block
@@ -72,8 +72,8 @@ await must(
     {
       id: ID.mwila,
       company_id: company.id,
-      name: "Mwila",
-      display_name: "Mwila",
+      name: "Maureen",
+      display_name: "Maureen",
       languages: ["en"],
       rive_variant: {
         skinColor: "#7A4B33", skinShadeColor: "#5A3523", hairColor: "#1A1310", outfitPrimary: "#7C3AED",
@@ -81,7 +81,7 @@ await must(
       },
       voice: { provider: "gemini", voiceName: "Kore" },
       personality_prompt:
-        "You are Mwila, a friendly AI-skills coach for busy professionals. Show, don't lecture: give a small example, let the learner try, then improve it together. Keep the language plain and the tone upbeat.",
+        "You are Maureen, a friendly AI-skills coach for busy professionals. Show, don't lecture: give a small example, let the learner try, then improve it together. Keep the language plain and the tone upbeat.",
       default_scene: "Scene_Studio",
       is_active: true,
     },
@@ -171,7 +171,7 @@ await must(
     slug: "ai-teacher-test-drive",
     title: "AI Teacher Test Drive",
     description:
-      "Three short lessons with an AI teacher who talks, writes on the board, asks questions and gives you a report: fractions with Tinashe, better AI prompts with Mwila, and a spoken check on what AI is.",
+      "Three short lessons with an AI teacher who talks, writes on the board, asks questions and gives you a report: fractions with Tinashe, better AI prompts with Maureen, and a spoken check on what AI is.",
     category: "AI Skills",
     level: "beginner",
     instructor_id: company.admin_id,
@@ -195,10 +195,10 @@ const lessons = [
   },
   {
     title: "Write a better AI prompt",
-    intro: "<p>Mwila coaches you through the four parts of a good prompt, then you rewrite one for your own work.</p>",
+    intro: "<p>Maureen coaches you through the four parts of a good prompt, then you rewrite one for your own work.</p>",
     scenarioId: ID.prompts,
-    blockTitle: "Prompt clinic with Mwila",
-    blockIntro: "Pick the missing part, then write your own prompt. Mwila will improve it with you.",
+    blockTitle: "Prompt clinic with Maureen",
+    blockIntro: "Pick the missing part, then write your own prompt. Maureen will improve it with you.",
   },
   {
     title: "Spoken check: what is AI?",
