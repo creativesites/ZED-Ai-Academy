@@ -2,6 +2,7 @@ import { auth } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { createServiceClient } from "@/lib/supabase/server";
+import { pinScenarioVersion } from "@/lib/tutor/authoring/versions-server";
 import { isSchemaUnavailableError } from "@/lib/tutor/mastery/server";
 import { applyModePreference, chooseStartMode } from "@/lib/tutor/mode-policy";
 import { resolveTutorAccess } from "@/lib/tutor/server/access";
@@ -111,17 +112,22 @@ export async function POST(req: NextRequest) {
     status: "active" as const,
   };
 
+  // Pin the flow version this session runs, so editing the flow mid-session does not change it.
+  const scenarioVersion = baseInsert.scenario_id ? await pinScenarioVersion(serviceClient, baseInsert.scenario_id) : null;
+
   let insertRes = await serviceClient
     .from("tutor_sessions")
     .insert(
       access.sprintContext
         ? ({ ...baseInsert, sprint_context: access.sprintContext } as typeof baseInsert)
-        : baseInsert,
+        : scenarioVersion !== null
+          ? ({ ...baseInsert, scenario_version: scenarioVersion } as typeof baseInsert)
+          : baseInsert,
     )
     .select("*")
     .single();
 
-  if (insertRes.error && access.sprintContext && isSchemaUnavailableError(insertRes.error)) {
+  if (insertRes.error && (access.sprintContext || scenarioVersion !== null) && isSchemaUnavailableError(insertRes.error)) {
     insertRes = await serviceClient.from("tutor_sessions").insert(baseInsert).select("*").single();
   }
 

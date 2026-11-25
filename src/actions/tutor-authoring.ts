@@ -32,7 +32,15 @@ import {
 } from "@/lib/tutor/tutor-session-block";
 import { ALL_PERSONA_PRESETS } from "@/components/tutor/avatar/persona-presets";
 import { isSchemaUnavailableError } from "@/lib/tutor/mastery/server";
-import type { Json } from "@/types/database";
+import { planRestore, type ScenarioVersionSummary } from "@/lib/tutor/authoring/versions";
+import {
+  archiveScenario,
+  listScenarioVersionSummaries,
+  loadScenarioVersions,
+  recordScenarioVersion,
+  withoutArchived,
+} from "@/lib/tutor/authoring/versions-server";
+import type { Database, Json } from "@/types/database";
 
 // ─── Shared Auth Helpers ──────────────────────────────────────────────────────
 
@@ -766,11 +774,10 @@ export async function listScenariosForCourseStudio(courseId: string): Promise<Sc
   await assertCanManageCourse(supabase, courseId, userId);
 
   const db = createServiceClient();
-  const { data, error } = await db
-    .from("practice_scenarios")
-    .select(SCENARIO_FULL_SELECT)
-    .eq("course_id", courseId)
-    .order("created_at", { ascending: false });
+  const { data, error } = await withoutArchived((hideArchived) => {
+    const query = db.from("practice_scenarios").select(SCENARIO_FULL_SELECT).eq("course_id", courseId);
+    return (hideArchived ? query.is("archived_at", null) : query).order("created_at", { ascending: false });
+  });
 
   if (error) throw new Error(error.message);
   return (data ?? []).map((row) => mapScenarioRow(row as unknown as Record<string, unknown>));
@@ -782,11 +789,10 @@ export async function listScenariosForTenant(companyId: string): Promise<Scenari
   await assertTenantStaff(companyId, userId);
 
   const db = createServiceClient();
-  const { data, error } = await db
-    .from("practice_scenarios")
-    .select(SCENARIO_FULL_SELECT)
-    .eq("company_id", companyId)
-    .order("updated_at", { ascending: false });
+  const { data, error } = await withoutArchived((hideArchived) => {
+    const query = db.from("practice_scenarios").select(SCENARIO_FULL_SELECT).eq("company_id", companyId);
+    return (hideArchived ? query.is("archived_at", null) : query).order("updated_at", { ascending: false });
+  });
 
   if (error) throw new Error(error.message);
   return (data ?? []).map((row) => mapScenarioRow(row as unknown as Record<string, unknown>));
@@ -888,6 +894,9 @@ export async function upsertScenario(input: UpsertScenarioInput): Promise<Scenar
 
   if (error || !data) throw new Error(error?.message ?? "Failed to save scenario");
 
+  // Every save is a new published version; running sessions stay on the version they pinned.
+  await recordScenarioVersion(db, { row: data as Record<string, unknown>, userId });
+
   revalidatePath("/practice");
   revalidatePath("/creator/ai-teachers");
   if (parsed.courseId) {
@@ -929,15 +938,97 @@ export async function deleteScenario(companyId: string, scenarioId: string): Pro
   await assertTenantStaff(companyId, userId);
 
   const db = createServiceClient();
-  const { error } = await db
-    .from("practice_scenarios")
-    .delete()
-    .eq("id", scenarioId)
-    .eq("company_id", companyId);
+  // Soft delete, so sessions, reports and history that reference the flow keep working.
+  // Before the versioning migration is applied there is no archived_at column: hard delete as before.
+  const archived = await archiveScenario(db, { scenarioId, companyId });
+  if (!archived) {
+    const { error } = await db
+      .from("practice_scenarios")
+      .delete()
+      .eq("id", scenarioId)
+      .eq("company_id", companyId);
+    if (error) throw new Error(error.message);
+  }
 
-  if (error) throw new Error(error.message);
   revalidatePath("/practice");
   revalidatePath("/creator/ai-teachers");
+}
+
+// ─── Flow Versions ────────────────────────────────────────────────────────────
+
+/**
+ * Loads a flow and checks the caller may edit it. The tenant comes from the flow row, never the client:
+ * course flows need course management rights, other flows need tenant staff.
+ */
+async function authorizeScenarioEditor(
+  scenarioId: string,
+  userId: string,
+): Promise<{ companyId: string; courseId: string | null }> {
+  const { data } = await createServiceClient()
+    .from("practice_scenarios")
+    .select("id, company_id, course_id")
+    .eq("id", scenarioId)
+    .maybeSingle();
+  if (!data) throw new Error("Scenario not found");
+  if (data.course_id) {
+    await assertCanManageCourse(createClient(), data.course_id, userId);
+  } else {
+    await assertTenantStaff(data.company_id, userId);
+  }
+  return { companyId: data.company_id, courseId: data.course_id };
+}
+
+export async function listScenarioVersions(scenarioId: string): Promise<{
+  available: boolean;
+  publishedVersion: number | null;
+  versions: ScenarioVersionSummary[];
+}> {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+  const id = z.string().uuid().parse(scenarioId);
+  await authorizeScenarioEditor(id, userId);
+  return listScenarioVersionSummaries(createServiceClient(), id);
+}
+
+/** Restores an old version by publishing its snapshot as a new version. History is never rewritten. */
+export async function restoreScenarioVersion(scenarioId: string, version: number): Promise<ScenarioRecord> {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+  const id = z.string().uuid().parse(scenarioId);
+  const target = z.number().int().min(1).parse(version);
+  const { companyId, courseId } = await authorizeScenarioEditor(id, userId);
+
+  const db = createServiceClient();
+  const { available, rows } = await loadScenarioVersions(db, id);
+  if (!available) throw new Error("Flow versions are not available yet.");
+  const plan = planRestore({ target, versions: rows });
+  if (!plan.ok) throw new Error(plan.reason === "version_not_found" ? "Version not found" : "That version cannot be restored");
+
+  const patch: Record<string, unknown> = { ...plan.snapshot };
+  if (typeof patch.persona_id === "string") {
+    // The old persona may have been deleted or moved; keep the current one rather than failing the restore.
+    try {
+      await assertTenantRefs(companyId, { personaId: patch.persona_id });
+    } catch {
+      delete patch.persona_id;
+    }
+  }
+
+  const { data, error } = await db
+    .from("practice_scenarios")
+    .update(patch as Database["public"]["Tables"]["practice_scenarios"]["Update"])
+    .eq("id", id)
+    .eq("company_id", companyId)
+    .select(SCENARIO_FULL_SELECT)
+    .single();
+  if (error || !data) throw new Error(error?.message ?? "Failed to restore version");
+
+  await recordScenarioVersion(db, { row: data as unknown as Record<string, unknown>, userId, note: plan.note, forceNew: true });
+
+  revalidatePath("/practice");
+  revalidatePath("/creator/ai-teachers");
+  if (courseId) revalidatePath(`/creator/courses/${courseId}`);
+  return mapScenarioRow(data as unknown as Record<string, unknown>);
 }
 
 // ─── Tutor Settings Actions ───────────────────────────────────────────────────

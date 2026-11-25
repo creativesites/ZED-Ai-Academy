@@ -5,6 +5,8 @@ import type { Database } from "@/types/database";
 import { DEFAULT_TEACHER_NAME } from "../course-teacher.ts";
 import { loadSessionMemoryNotes, loadWeakMasteryRows } from "../mastery/server.ts";
 import { buildRevisionSprintScenario } from "../mastery/sprint.ts";
+import { applySnapshot } from "../authoring/versions.ts";
+import { loadScenarioSnapshot } from "../authoring/versions-server.ts";
 import { parseMemory } from "../memory.ts";
 import { parsePronunciationGlossary, type PronunciationEntry } from "../pronunciation.ts";
 import { profileLanguage } from "../progress.ts";
@@ -194,12 +196,23 @@ export async function loadSessionContext(
       .eq("id", session.scenario_id)
       .single();
     if (scenarioError || !scenarioRow) throw new Error("scenario not found for session");
-    scenario = scenarioRow;
+    // Run the flow version pinned at session start, not whatever the live row says now (P1-04).
+    // Unpinned sessions, or a missing snapshot, fall back to the live row as before.
+    const snapshot = await loadScenarioSnapshot(supabase, session.scenario_id, session.scenario_version);
+    scenario = applySnapshot(scenarioRow, snapshot);
     courseId = scenario.course_id ?? null;
 
-    const { data: personaRow, error: personaError } = scenario.persona_id
+    let { data: personaRow, error: personaError } = scenario.persona_id
       ? await supabase.from("ai_personas").select("*").eq("id", scenario.persona_id).single()
       : { data: null, error: new Error("scenario has no persona") };
+    // A pinned version may name a persona deleted since; fall back to the flow's current persona.
+    if ((personaError || !personaRow) && scenarioRow.persona_id && scenarioRow.persona_id !== scenario.persona_id) {
+      ({ data: personaRow, error: personaError } = await supabase
+        .from("ai_personas")
+        .select("*")
+        .eq("id", scenarioRow.persona_id)
+        .single());
+    }
     if (personaError || !personaRow) throw new Error("persona not found for scenario");
     persona = personaRow;
   } else {

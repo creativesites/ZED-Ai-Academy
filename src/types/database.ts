@@ -2013,8 +2013,13 @@ export interface Database {
           created_by: string | null;
           created_at: string;
           updated_at: string;
+          /** Absent until migration 20261125000101 is applied. */
+          published_version?: number | null;
+          archived_at?: string | null;
         };
         Insert: {
+          published_version?: number | null;
+          archived_at?: string | null;
           id?: string;
           company_id: string;
           course_id?: string | null;
@@ -2038,6 +2043,8 @@ export interface Database {
           updated_at?: string;
         };
         Update: {
+          published_version?: number | null;
+          archived_at?: string | null;
           course_id?: string | null;
           lesson_id?: string | null;
           skill_pack?: string;
@@ -2055,6 +2062,30 @@ export interface Database {
           style?: TutorScenarioStyle;
           status?: TutorScenarioStatus;
           updated_at?: string;
+        };
+        Relationships: R;
+      };
+      practice_scenario_versions: {
+        Row: {
+          id: string;
+          scenario_id: string;
+          version: number;
+          snapshot: Json;
+          created_by: string | null;
+          created_at: string;
+          note: string | null;
+        };
+        Insert: {
+          id?: string;
+          scenario_id: string;
+          version: number;
+          snapshot: Json;
+          created_by?: string | null;
+          created_at?: string;
+          note?: string | null;
+        };
+        Update: {
+          note?: string | null;
         };
         Relationships: R;
       };
@@ -2108,8 +2139,11 @@ export interface Database {
           consent_audio: boolean;
           created_at: string;
           updated_at: string;
+          /** Pinned practice_scenario_versions.version. Absent until migration 20261125000101 is applied. */
+          scenario_version?: number | null;
         };
         Insert: {
+          scenario_version?: number | null;
           id?: string;
           company_id: string;
           user_id: string;
@@ -2131,6 +2165,7 @@ export interface Database {
           updated_at?: string;
         };
         Update: {
+          scenario_version?: number | null;
           scenario_id?: string | null;
           mode?: TutorMode;
           mode_changes?: Json;
