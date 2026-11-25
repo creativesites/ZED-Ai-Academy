@@ -31,6 +31,11 @@ export type MasteryState = {
   evidenceCount: number;
   lastResult: EvidenceResult | null;
   lastEvidenceAt: string | null;
+  /** Evidence v2 (P2-02), present when read back from the database after record_evidence(). */
+  objectiveId?: string | null;
+  pMastery?: number | null;
+  status?: string | null;
+  nextReviewAt?: string | null;
 };
 
 export type SessionObjectiveSummary = {

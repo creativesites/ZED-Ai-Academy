@@ -271,6 +271,57 @@ export function applyEvidence(prev: KnowledgeState, ev: EvidenceInput): Knowledg
   };
 }
 
+/**
+ * Builds a rule state from a stored learner_mastery row. A legacy row that has evidence but no v2 state yet
+ * (not backfilled) starts from its legacy level — the same seeding record_evidence() does in SQL.
+ */
+export function knowledgeStateFromRow(row: {
+  p_mastery?: number | string | null;
+  confidence?: number | string | null;
+  evidence_mass?: number | string | null;
+  stability_days?: number | string | null;
+  evidence_count?: number | null;
+  evidence_sources?: string[] | null;
+  spaced_reviews?: number | null;
+  last_evidence_at?: string | null;
+  secured_at?: string | null;
+  next_review_at?: string | null;
+  status?: string | null;
+  last_result?: string | null;
+  level?: number | null;
+}): KnowledgeState {
+  const num = (v: unknown): number | null => {
+    if (v === null || v === undefined || v === "") return null;
+    const n = typeof v === "number" ? v : Number(v);
+    return Number.isFinite(n) ? n : null;
+  };
+  const count = row.evidence_count ?? 0;
+  const mass = num(row.evidence_mass) ?? 0;
+  let p = num(row.p_mastery);
+  if (p === null && count > 0 && mass === 0) p = pFromLegacyLevel(row.level ?? 0);
+  const status = (MASTERY_STATUSES as readonly string[]).includes(row.status ?? "")
+    ? (row.status as MasteryStatus)
+    : "unseen";
+  const lastResult =
+    row.last_result === "correct" || row.last_result === "partial" || row.last_result === "misconception"
+      ? row.last_result
+      : null;
+  return {
+    pMastery: p,
+    confidence: num(row.confidence) ?? 0,
+    evidenceMass: mass,
+    stabilityDays: Math.max(KNOWLEDGE_PARAMS.minStabilityDays, num(row.stability_days) ?? KNOWLEDGE_PARAMS.initialStabilityDays),
+    evidenceCount: count,
+    evidenceSources: Array.isArray(row.evidence_sources) ? [...row.evidence_sources] : [],
+    spacedReviews: row.spaced_reviews ?? 0,
+    lastEvidenceAt: row.last_evidence_at ?? null,
+    securedAt: row.secured_at ?? null,
+    nextReviewAt: row.next_review_at ?? null,
+    status: p !== null && status === "unseen" ? deriveStatus({ pEffective: p, confidence: num(row.confidence) ?? 0, distinctSources: 0, spacedReviews: 0, securedAt: null }) : status,
+    lastResult,
+  };
+}
+
 /** Applies a chronological list of evidence from an empty (or given) state. */
 export function applyEvidenceSequence(evidence: ReadonlyArray<EvidenceInput>, start?: KnowledgeState): KnowledgeState {
   return evidence.reduce(applyEvidence, start ?? emptyKnowledgeState());

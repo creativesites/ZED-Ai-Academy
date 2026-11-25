@@ -10,6 +10,7 @@ import {
   emptyKnowledgeState,
   evidenceWeight,
   isEvidenceSource,
+  knowledgeStateFromRow,
   legacyLevelFromP,
   outcomeScore,
   pFromLegacyLevel,
@@ -202,6 +203,36 @@ describe("learner/knowledge rule", () => {
     const snapshot = JSON.stringify(prev);
     applyEvidence(prev, quiz("correct"));
     assert.equal(JSON.stringify(prev), snapshot);
+  });
+
+  it("reads stored rows, seeding legacy (not yet backfilled) rows from their level like the SQL function", () => {
+    const legacy = knowledgeStateFromRow({ level: 2, evidence_count: 3, evidence_mass: 0, p_mastery: null, status: "unseen" });
+    assert.equal(legacy.pMastery, 0.65);
+    assert.equal(legacy.status, "practising");
+    const next = applyEvidence(legacy, quiz("correct"));
+    assert.ok(Math.abs((next.pMastery ?? 0) - (0.65 + 0.25 * 0.35)) < 1e-6, "legacy rows are not 'first evidence'");
+
+    const unseen = knowledgeStateFromRow({ evidence_count: 0 });
+    assert.equal(unseen.pMastery, null);
+    assert.equal(unseen.status, "unseen");
+
+    const selfReportOnly = knowledgeStateFromRow({ evidence_count: 1, evidence_mass: "0.06", p_mastery: null, status: "unseen" });
+    assert.equal(selfReportOnly.pMastery, null);
+
+    const v2 = knowledgeStateFromRow({
+      p_mastery: "0.82",
+      confidence: "0.7",
+      evidence_mass: "3.5",
+      stability_days: "0",
+      evidence_count: 5,
+      evidence_sources: ["interaction", "quiz"],
+      status: "secure",
+      last_result: "weird",
+    });
+    assert.equal(v2.pMastery, 0.82);
+    assert.equal(v2.stabilityDays, 1);
+    assert.equal(v2.status, "secure");
+    assert.equal(v2.lastResult, null);
   });
 
   it("recognises evidence sources", () => {
