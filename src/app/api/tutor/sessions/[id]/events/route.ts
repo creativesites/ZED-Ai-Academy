@@ -3,7 +3,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { createServiceClient } from "@/lib/supabase/server";
 import type { Json } from "@/types/database";
-import { parseTutorTurn } from "@/lib/tutor/events";
+import { CONTRACT_VERSION, parseTutorTurn } from "@/lib/tutor/events";
+import { isSchemaUnavailableError } from "@/lib/tutor/mastery/server";
 import { loadOwnedSession, readJson, sessionIdSchema } from "@/lib/tutor/server/session-store";
 import { MAX_TURNS } from "@/lib/tutor/server/turn-pipeline";
 
@@ -63,9 +64,17 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
     };
   });
 
-  const { error } = await createServiceClient()
+  const db = createServiceClient();
+  let { error } = await db
     .from("tutor_turns")
-    .upsert(rows, { onConflict: "session_id,idx" });
+    .upsert(
+      rows.map((row) => ({ ...row, contract_version: CONTRACT_VERSION })),
+      { onConflict: "session_id,idx" },
+    );
+  // Before the contract_version migration is applied, store the turns without it.
+  if (error && isSchemaUnavailableError(error)) {
+    ({ error } = await db.from("tutor_turns").upsert(rows, { onConflict: "session_id,idx" }));
+  }
   if (error) {
     console.error("[tutor] could not save live turns:", error.message);
     return NextResponse.json({ error: "Could not save turns" }, { status: 500 });

@@ -2154,6 +2154,7 @@ export interface Database {
           learner_audio_ms: number | null;
           events: Json;
           latency_ms: number | null;
+          contract_version: number | null;
           created_at: string;
         };
         Insert: {
@@ -2164,6 +2165,7 @@ export interface Database {
           learner_audio_ms?: number | null;
           events?: Json;
           latency_ms?: number | null;
+          contract_version?: number | null;
           created_at?: string;
         };
         Update: {

@@ -1,0 +1,1449 @@
+{
+  "eventTypes": [
+    "say",
+    "gesture",
+    "mood",
+    "show_card",
+    "show_text",
+    "trace_tone",
+    "listen",
+    "note_mistake",
+    "advance_scene",
+    "end_session",
+    "show_board",
+    "reveal_step",
+    "ask_choice",
+    "ask_confidence",
+    "show_lesson_ref",
+    "play_clip",
+    "note_evidence",
+    "advance_step",
+    "switch_scene",
+    "award"
+  ],
+  "v1EventTypes": [
+    "say",
+    "gesture",
+    "mood",
+    "show_card",
+    "show_text",
+    "trace_tone",
+    "listen",
+    "note_mistake",
+    "advance_scene",
+    "end_session"
+  ],
+  "coreEventTypes": [
+    "say",
+    "gesture",
+    "mood",
+    "show_text",
+    "show_board",
+    "reveal_step",
+    "ask_choice",
+    "ask_confidence",
+    "show_lesson_ref",
+    "play_clip",
+    "listen",
+    "note_evidence",
+    "advance_step",
+    "switch_scene",
+    "award",
+    "end_session"
+  ],
+  "languageOnlyEventTypes": [
+    "show_card",
+    "trace_tone"
+  ],
+  "languagePackEventTypes": [
+    "show_card",
+    "trace_tone",
+    "note_mistake"
+  ],
+  "legacyAliases": {
+    "note_mistake": "note_evidence",
+    "advance_scene": "advance_step"
+  },
+  "boardKinds": [
+    "bullets",
+    "steps",
+    "equation",
+    "code",
+    "table",
+    "note",
+    "diagram",
+    "chart",
+    "compare"
+  ],
+  "evidenceResults": [
+    "correct",
+    "partial",
+    "misconception"
+  ],
+  "maxBoardItems": 8,
+  "maxEventsPerTurn": 12,
+  "liveTools": [
+    {
+      "name": "gesture",
+      "description": "Play a body gesture on the teacher avatar. Use 'trace_tone' with toneShape to show a tone contour; use 'count' with countTo to count.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "enum": [
+              "idle",
+              "wave",
+              "nod",
+              "head_shake",
+              "explain",
+              "point_card",
+              "point_left",
+              "point_right",
+              "thumbs_up",
+              "clap",
+              "think",
+              "listen",
+              "celebrate",
+              "count",
+              "shrug",
+              "beckon",
+              "trace_tone",
+              "oops"
+            ],
+            "description": "Gesture to play."
+          },
+          "toneShape": {
+            "type": "string",
+            "enum": [
+              "t1",
+              "t2",
+              "t3",
+              "t4",
+              "neutral",
+              "rise",
+              "fall"
+            ],
+            "description": "Tone contour for trace_tone."
+          },
+          "countTo": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 5,
+            "description": "Count target for count."
+          }
+        },
+        "required": [
+          "name"
+        ]
+      }
+    },
+    {
+      "name": "mood",
+      "description": "Set the teacher's facial mood.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "mood": {
+            "type": "string",
+            "enum": [
+              "neutral",
+              "warm",
+              "happy",
+              "proud",
+              "curious",
+              "surprised",
+              "concerned",
+              "playful"
+            ]
+          },
+          "intensity": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100
+          }
+        },
+        "required": [
+          "mood"
+        ]
+      }
+    },
+    {
+      "name": "show_card",
+      "description": "Show a vocabulary card on screen next to the teacher.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "item": {
+            "type": "object",
+            "description": "Card contents: text, optional pron, meaning, audioUrl, vocabId.",
+            "properties": {
+              "text": {
+                "type": "string"
+              },
+              "pron": {
+                "type": "string"
+              },
+              "meaning": {
+                "type": "string"
+              },
+              "audioUrl": {
+                "type": "string"
+              },
+              "vocabId": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "text"
+            ]
+          }
+        },
+        "required": [
+          "item"
+        ]
+      }
+    },
+    {
+      "name": "show_text",
+      "description": "Write text on the whiteboard. Optionally highlight substrings.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string"
+          },
+          "highlight": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "text"
+        ]
+      }
+    },
+    {
+      "name": "trace_tone",
+      "description": "Show one to four tone contours in order, with optional labels.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "tones": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "t1",
+                "t2",
+                "t3",
+                "t4",
+                "neutral",
+                "rise",
+                "fall"
+              ]
+            },
+            "minItems": 1,
+            "maxItems": 4
+          },
+          "labels": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "tones"
+        ]
+      }
+    },
+    {
+      "name": "listen",
+      "description": "Hand the turn to the learner. Optionally give the expected answer and a hint.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "expect": {
+            "type": "string"
+          },
+          "hint": {
+            "type": "string"
+          }
+        },
+        "required": []
+      }
+    },
+    {
+      "name": "note_mistake",
+      "description": "Silently record a learner mistake for the report. Not shown to the learner.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "said": {
+            "type": "string",
+            "description": "What the learner said."
+          },
+          "correct": {
+            "type": "string",
+            "description": "The correct form."
+          },
+          "category": {
+            "type": "string",
+            "description": "Mistake category, e.g. tone, vocabulary, grammar."
+          }
+        },
+        "required": [
+          "said",
+          "correct",
+          "category"
+        ]
+      }
+    },
+    {
+      "name": "advance_scene",
+      "description": "Move the scenario on to the named beat.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "beat": {
+            "type": "string",
+            "description": "Beat id from the scenario."
+          }
+        },
+        "required": [
+          "beat"
+        ]
+      }
+    },
+    {
+      "name": "end_session",
+      "description": "End the session, with an optional summary for the learner.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "summary": {
+            "type": "string"
+          }
+        },
+        "required": []
+      }
+    },
+    {
+      "name": "show_board",
+      "description": "Put teaching content on the board next to the teacher: bullets, numbered steps, an equation or worked line, code, a small table, or a short note. Only use facts from the lesson content.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "bullets",
+              "steps",
+              "equation",
+              "code",
+              "table",
+              "note",
+              "diagram",
+              "chart",
+              "compare"
+            ]
+          },
+          "title": {
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 8,
+            "description": "bullets / steps"
+          },
+          "text": {
+            "type": "string",
+            "description": "equation, code or note"
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "maxItems": 8,
+            "description": "table rows; first row is the header"
+          },
+          "language": {
+            "type": "string",
+            "description": "code language"
+          },
+          "revealed": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 8,
+            "description": "items visible at first"
+          }
+        },
+        "required": [
+          "kind"
+        ]
+      }
+    },
+    {
+      "name": "reveal_step",
+      "description": "Reveal the next item on the board (or up to index), in step with what you are saying.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "index": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 8
+          }
+        },
+        "required": []
+      }
+    },
+    {
+      "name": "ask_choice",
+      "description": "Ask a multiple-choice question on the board. Do not reveal the answer; react to the learner's pick.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "question": {
+            "type": "string"
+          },
+          "options": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "minItems": 2,
+            "maxItems": 5
+          }
+        },
+        "required": [
+          "question",
+          "options"
+        ]
+      }
+    },
+    {
+      "name": "ask_confidence",
+      "description": "Ask the learner how sure they feel (Lost, Unsure, Got it). Use it to decide whether to simplify or move on.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "prompt": {
+            "type": "string"
+          }
+        },
+        "required": []
+      }
+    },
+    {
+      "name": "show_lesson_ref",
+      "description": "Point the learner back to part of this lesson, optionally a video time in seconds.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string"
+          },
+          "blockId": {
+            "type": "string"
+          },
+          "seconds": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "label"
+        ]
+      }
+    },
+    {
+      "name": "play_clip",
+      "description": "Play a short segment of a YouTube video that appears in the lesson content. Never invent a video id.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "videoId": {
+            "type": "string"
+          },
+          "start": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "end": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "caption": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "videoId"
+        ]
+      }
+    },
+    {
+      "name": "note_evidence",
+      "description": "Silently record evidence about a learning objective: correct, partial or misconception, with a short detail. Not shown to the learner.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "objective": {
+            "type": "string",
+            "description": "The objective or step goal this answer is evidence for."
+          },
+          "result": {
+            "type": "string",
+            "enum": [
+              "correct",
+              "partial",
+              "misconception"
+            ]
+          },
+          "detail": {
+            "type": "string"
+          },
+          "said": {
+            "type": "string"
+          },
+          "correct": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "objective",
+          "result"
+        ]
+      }
+    },
+    {
+      "name": "advance_step",
+      "description": "Move the flow on to the named step.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "step": {
+            "type": "string",
+            "description": "Step id from the flow."
+          }
+        },
+        "required": [
+          "step"
+        ]
+      }
+    },
+    {
+      "name": "switch_scene",
+      "description": "Change the backdrop scene, for example for a roleplay.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "scene": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "scene"
+        ]
+      }
+    },
+    {
+      "name": "award",
+      "description": "Celebrate a real achievement, such as an objective clearly met. Use rarely.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "detail": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "title"
+        ]
+      }
+    }
+  ],
+  "turnJsonSchema": {
+    "type": "object",
+    "properties": {
+      "learnerText": {
+        "type": "string",
+        "description": "When the learner spoke in audio, verbatim transcript of what they said."
+      },
+      "events": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "description": "One teacher event. Set only the fields that belong to its type.",
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "say",
+                "gesture",
+                "mood",
+                "show_card",
+                "show_text",
+                "trace_tone",
+                "listen",
+                "note_mistake",
+                "advance_scene",
+                "end_session",
+                "show_board",
+                "reveal_step",
+                "ask_choice",
+                "ask_confidence",
+                "show_lesson_ref",
+                "play_clip",
+                "note_evidence",
+                "advance_step",
+                "switch_scene",
+                "award"
+              ]
+            },
+            "text": {
+              "type": "string",
+              "description": "say: what the teacher speaks aloud. show_text: a short written prompt. show_board: equation, code or note text."
+            },
+            "romanization": {
+              "type": "string"
+            },
+            "translation": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string",
+              "enum": [
+                "idle",
+                "wave",
+                "nod",
+                "head_shake",
+                "explain",
+                "point_card",
+                "point_left",
+                "point_right",
+                "thumbs_up",
+                "clap",
+                "think",
+                "listen",
+                "celebrate",
+                "count",
+                "shrug",
+                "beckon",
+                "trace_tone",
+                "oops"
+              ]
+            },
+            "toneShape": {
+              "type": "string",
+              "enum": [
+                "t1",
+                "t2",
+                "t3",
+                "t4",
+                "neutral",
+                "rise",
+                "fall"
+              ]
+            },
+            "countTo": {
+              "type": "integer",
+              "description": "1 to 5."
+            },
+            "mood": {
+              "type": "string",
+              "enum": [
+                "neutral",
+                "warm",
+                "happy",
+                "proud",
+                "curious",
+                "surprised",
+                "concerned",
+                "playful"
+              ]
+            },
+            "intensity": {
+              "type": "number",
+              "description": "0 to 100."
+            },
+            "item": {
+              "type": "object",
+              "properties": {
+                "text": {
+                  "type": "string"
+                },
+                "pron": {
+                  "type": "string"
+                },
+                "meaning": {
+                  "type": "string"
+                },
+                "vocabId": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "text"
+              ]
+            },
+            "highlight": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "tones": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "t1",
+                  "t2",
+                  "t3",
+                  "t4",
+                  "neutral",
+                  "rise",
+                  "fall"
+                ]
+              }
+            },
+            "labels": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "expect": {
+              "type": "string"
+            },
+            "hint": {
+              "type": "string"
+            },
+            "said": {
+              "type": "string"
+            },
+            "correct": {
+              "type": "string"
+            },
+            "category": {
+              "type": "string",
+              "description": "tone, pronunciation, vocabulary, grammar, word_order or politeness."
+            },
+            "beat": {
+              "type": "string"
+            },
+            "summary": {
+              "type": "string"
+            },
+            "kind": {
+              "type": "string",
+              "enum": [
+                "bullets",
+                "steps",
+                "equation",
+                "code",
+                "table",
+                "note",
+                "diagram",
+                "chart",
+                "compare"
+              ]
+            },
+            "title": {
+              "type": "string",
+              "description": "show_board: board heading. award: what was achieved."
+            },
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "rows": {
+              "type": "array",
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "language": {
+              "type": "string"
+            },
+            "revealed": {
+              "type": "integer"
+            },
+            "index": {
+              "type": "integer"
+            },
+            "question": {
+              "type": "string"
+            },
+            "options": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "prompt": {
+              "type": "string"
+            },
+            "label": {
+              "type": "string"
+            },
+            "blockId": {
+              "type": "string"
+            },
+            "seconds": {
+              "type": "integer"
+            },
+            "videoId": {
+              "type": "string"
+            },
+            "start": {
+              "type": "integer"
+            },
+            "end": {
+              "type": "integer"
+            },
+            "caption": {
+              "type": "string"
+            },
+            "objective": {
+              "type": "string"
+            },
+            "result": {
+              "type": "string",
+              "enum": [
+                "correct",
+                "partial",
+                "misconception"
+              ]
+            },
+            "detail": {
+              "type": "string",
+              "description": "note_evidence detail. award: short detail."
+            },
+            "step": {
+              "type": "string"
+            },
+            "scene": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "type"
+          ]
+        }
+      }
+    },
+    "required": [
+      "events"
+    ]
+  },
+  "zodJsonSchema": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "oneOf": [
+      {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "say"
+          },
+          "text": {
+            "type": "string",
+            "minLength": 1
+          },
+          "romanization": {
+            "type": "string"
+          },
+          "translation": {
+            "type": "string"
+          },
+          "audioUrl": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "text"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "gesture"
+          },
+          "name": {
+            "type": "string",
+            "enum": [
+              "idle",
+              "wave",
+              "nod",
+              "head_shake",
+              "explain",
+              "point_card",
+              "point_left",
+              "point_right",
+              "thumbs_up",
+              "clap",
+              "think",
+              "listen",
+              "celebrate",
+              "count",
+              "shrug",
+              "beckon",
+              "trace_tone",
+              "oops"
+            ]
+          },
+          "toneShape": {
+            "type": "string",
+            "enum": [
+              "t1",
+              "t2",
+              "t3",
+              "t4",
+              "neutral",
+              "rise",
+              "fall"
+            ]
+          },
+          "countTo": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 5
+          }
+        },
+        "required": [
+          "type",
+          "name"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "mood"
+          },
+          "mood": {
+            "type": "string",
+            "enum": [
+              "neutral",
+              "warm",
+              "happy",
+              "proud",
+              "curious",
+              "surprised",
+              "concerned",
+              "playful"
+            ]
+          },
+          "intensity": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100
+          }
+        },
+        "required": [
+          "type",
+          "mood"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "show_card"
+          },
+          "item": {
+            "type": "object",
+            "properties": {
+              "text": {
+                "type": "string",
+                "minLength": 1
+              },
+              "pron": {
+                "type": "string"
+              },
+              "meaning": {
+                "type": "string"
+              },
+              "audioUrl": {
+                "type": "string"
+              },
+              "vocabId": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "text"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "type",
+          "item"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "show_text"
+          },
+          "text": {
+            "type": "string",
+            "minLength": 1
+          },
+          "highlight": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "type",
+          "text"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "trace_tone"
+          },
+          "tones": {
+            "minItems": 1,
+            "maxItems": 4,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "t1",
+                "t2",
+                "t3",
+                "t4",
+                "neutral",
+                "rise",
+                "fall"
+              ]
+            }
+          },
+          "labels": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "type",
+          "tones"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "listen"
+          },
+          "expect": {
+            "type": "string"
+          },
+          "hint": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "note_mistake"
+          },
+          "said": {
+            "type": "string"
+          },
+          "correct": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "type",
+          "said",
+          "correct",
+          "category"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "advance_scene"
+          },
+          "beat": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "type",
+          "beat"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "end_session"
+          },
+          "summary": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "show_board"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "bullets",
+              "steps",
+              "equation",
+              "code",
+              "table",
+              "note",
+              "diagram",
+              "chart",
+              "compare"
+            ]
+          },
+          "title": {
+            "type": "string",
+            "maxLength": 120
+          },
+          "items": {
+            "maxItems": 8,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 240
+            }
+          },
+          "text": {
+            "type": "string",
+            "maxLength": 1200
+          },
+          "rows": {
+            "maxItems": 8,
+            "type": "array",
+            "items": {
+              "minItems": 1,
+              "maxItems": 5,
+              "type": "array",
+              "items": {
+                "type": "string",
+                "maxLength": 120
+              }
+            }
+          },
+          "language": {
+            "type": "string",
+            "maxLength": 24
+          },
+          "revealed": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 8
+          }
+        },
+        "required": [
+          "type",
+          "kind"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "reveal_step"
+          },
+          "index": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 8
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "ask_choice"
+          },
+          "question": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 240
+          },
+          "options": {
+            "minItems": 2,
+            "maxItems": 5,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 160
+            }
+          }
+        },
+        "required": [
+          "type",
+          "question",
+          "options"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "ask_confidence"
+          },
+          "prompt": {
+            "type": "string",
+            "maxLength": 160
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "show_lesson_ref"
+          },
+          "label": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 160
+          },
+          "blockId": {
+            "type": "string",
+            "maxLength": 64
+          },
+          "seconds": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "type",
+          "label"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "play_clip"
+          },
+          "videoId": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]{11}$"
+          },
+          "start": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "end": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "caption": {
+            "type": "string",
+            "maxLength": 160
+          }
+        },
+        "required": [
+          "type",
+          "videoId"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "note_evidence"
+          },
+          "objective": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "result": {
+            "type": "string",
+            "enum": [
+              "correct",
+              "partial",
+              "misconception"
+            ]
+          },
+          "detail": {
+            "type": "string",
+            "maxLength": 400
+          },
+          "said": {
+            "type": "string",
+            "maxLength": 400
+          },
+          "correct": {
+            "type": "string",
+            "maxLength": 400
+          }
+        },
+        "required": [
+          "type",
+          "objective",
+          "result"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "advance_step"
+          },
+          "step": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "type",
+          "step"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "switch_scene"
+          },
+          "scene": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 40
+          }
+        },
+        "required": [
+          "type",
+          "scene"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "award"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "detail": {
+            "type": "string",
+            "maxLength": 160
+          }
+        },
+        "required": [
+          "type",
+          "title"
+        ],
+        "additionalProperties": false
+      }
+    ]
+  }
+}
