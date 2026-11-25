@@ -147,8 +147,9 @@ BEGIN
   RAISE NOTICE 'PASS invalid source refused';
 
   -- Same legacy key in two tenants is now allowed (unique key includes company_id).
-  PERFORM public.record_evidence('u_parity', 'co_other', 'parity:1', 't', 'correct', 'quiz', true);
-  SELECT count(*) INTO v_n FROM public.learner_mastery WHERE user_id = 'u_parity' AND objective_key = 'parity:1';
+  PERFORM public.record_evidence('u_parity', 'co_parity', 'tenant:shared', 't', 'correct', 'quiz', true);
+  PERFORM public.record_evidence('u_parity', 'co_other', 'tenant:shared', 't', 'correct', 'quiz', true);
+  SELECT count(*) INTO v_n FROM public.learner_mastery WHERE user_id = 'u_parity' AND objective_key = 'tenant:shared';
   IF v_n <> 2 THEN RAISE EXCEPTION 'FAIL per-tenant mastery rows (%)', v_n; END IF;
   RAISE NOTICE 'PASS unique key includes company_id';
 
