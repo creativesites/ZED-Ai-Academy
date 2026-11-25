@@ -50,6 +50,7 @@ export default async function TenantPracticePage({ params }: { params: Promise<{
         sessionBasePath={`/academy/${company.slug}/practice`}
         deckHref={`/academy/${company.slug}/practice/deck`}
         historyHref={`/academy/${company.slug}/practice/history`}
+        aboutMeHref={`/academy/${company.slug}/practice/about-me`}
         overview={overview}
         browseHref={`/academy/${company.slug}`}
         browseLabel="Back to the academy"

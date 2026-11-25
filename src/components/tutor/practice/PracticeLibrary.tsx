@@ -31,6 +31,8 @@ type PracticeLibraryProps = {
   deckHref?: string;
   /** Optional path to the learner's speaking session history & reports. */
   historyHref?: string;
+  /** Optional path to "What my teacher knows" (P1-08). */
+  aboutMeHref?: string;
   /** Optional learner stats, due deck count, and assigned speaking scenarios. */
   overview?: LearnerTutorOverview;
   /** Where the empty state sends the learner. */
@@ -45,6 +47,7 @@ export function PracticeLibrary({
   sessionBasePath,
   deckHref,
   historyHref,
+  aboutMeHref,
   overview,
   browseHref,
   browseLabel,
@@ -136,6 +139,15 @@ export function PracticeLibrary({
                     </p>
                   </div>
                   <ArrowRight className="h-4 w-4 text-slate-400 transition-transform group-hover:translate-x-0.5 group-hover:text-blue-600" />
+                </Link>
+              )}
+
+              {aboutMeHref && (
+                <Link
+                  href={aboutMeHref}
+                  className="inline-flex shrink-0 items-center rounded-2xl px-3 py-3 text-sm font-semibold text-slate-600 underline-offset-4 hover:text-[#fd5523] hover:underline"
+                >
+                  What my teacher knows
                 </Link>
               )}
             </div>
