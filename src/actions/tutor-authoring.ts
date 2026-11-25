@@ -948,7 +948,7 @@ async function authorizeScenarioEditor(
   if (data.course_id) {
     await assertCanManageCourse(createClient(), data.course_id, userId);
   } else {
-    await assertTenantStaff(data.company_id, userId);
+    await requireTenantStaff(data.company_id, userId);
   }
   return { companyId: data.company_id, courseId: data.course_id };
 }
