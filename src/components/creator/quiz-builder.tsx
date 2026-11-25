@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -22,7 +22,11 @@ import {
   updateQuestion,
   deleteQuestion,
   updateQuiz,
+  listQuestionObjectiveLinks,
+  setQuestionObjective,
 } from "@/actions/quizzes";
+import { listCourseObjectivesAction } from "@/actions/tutor-objectives";
+import type { RegisteredObjective } from "@/lib/tutor/learner/objectives";
 
 type Question = {
   id: string;
@@ -44,18 +48,43 @@ function QuestionEditor({
   q,
   courseId,
   lessonId,
+  objectiveOptions,
+  objectiveId,
+  onObjectiveChange,
   onDelete,
   onChange,
 }: {
   q: Question;
   courseId: string;
   lessonId: string;
+  /** Registered course objectives (P2-03); empty hides the picker. */
+  objectiveOptions: RegisteredObjective[];
+  objectiveId: string | null;
+  onObjectiveChange: (questionId: string, objectiveId: string | null) => void;
   onDelete: (id: string) => void;
   onChange: (id: string, updated: Partial<Question>) => void;
 }) {
   const [saving, startSave] = useTransition();
   const [deleting, startDelete] = useTransition();
+  const [linking, startLink] = useTransition();
   const [local, setLocal] = useState(q);
+
+  function handleObjective(value: string) {
+    const next = value || null;
+    startLink(async () => {
+      try {
+        const res = await setQuestionObjective(q.id, courseId, lessonId, next);
+        if (!res.available) {
+          toast.error("Objective links are not enabled on this environment yet.");
+          return;
+        }
+        onObjectiveChange(q.id, next);
+        toast.success(next ? "Question linked to objective" : "Objective link removed");
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Could not link objective");
+      }
+    });
+  }
 
   function toggleCorrect(idx: number) {
     const ci = local.correct_indices.includes(idx)
@@ -151,6 +180,31 @@ function QuestionEditor({
             </Button>
           </div>
 
+          {objectiveOptions.length > 0 && (
+            <div>
+              <label className="mb-1 block text-xs font-medium text-slate-600" htmlFor={`objective-${q.id}`}>
+                Objective this question checks (optional)
+              </label>
+              <div className="flex items-center gap-2">
+                <select
+                  id={`objective-${q.id}`}
+                  value={objectiveId ?? ""}
+                  disabled={linking}
+                  onChange={(e) => handleObjective(e.target.value)}
+                  className="h-8 w-full rounded-md border border-slate-300 bg-white px-2 text-sm text-slate-900"
+                >
+                  <option value="">Not linked</option>
+                  {objectiveOptions.map((o) => (
+                    <option key={o.id} value={o.id}>
+                      {o.code} · {o.text.length > 90 ? `${o.text.slice(0, 89)}…` : o.text}
+                    </option>
+                  ))}
+                </select>
+                {linking && <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin text-slate-400" />}
+              </div>
+            </div>
+          )}
+
           <div>
             <p className="mb-1 text-xs font-medium text-slate-600">Explanation (shown after answer)</p>
             <Textarea
@@ -196,6 +250,29 @@ export function QuizBuilder({
   const [threshold, setThreshold] = useState(initialQuiz?.pass_threshold ?? 70);
   const [maxAttempts, setMaxAttempts] = useState(initialQuiz?.max_attempts ?? 3);
   const [quizTitle, setQuizTitle] = useState(initialQuiz?.title ?? "Quiz");
+  const [objectiveOptions, setObjectiveOptions] = useState<RegisteredObjective[]>([]);
+  const [objectiveLinks, setObjectiveLinks] = useState<Record<string, string | null>>({});
+  const quizId = quiz?.id ?? null;
+
+  // P2-03: registered course objectives (this lesson's first) and the current question links.
+  useEffect(() => {
+    if (!quizId) return;
+    let cancelled = false;
+    Promise.all([listCourseObjectivesAction(courseId), listQuestionObjectiveLinks(quizId)])
+      .then(([objectivesRes, linksRes]) => {
+        if (cancelled || !objectivesRes.available || !linksRes.available) return;
+        const active = objectivesRes.objectives.filter((o) => o.status === "active");
+        active.sort((a, b) => Number(b.lessonId === lessonId) - Number(a.lessonId === lessonId));
+        setObjectiveOptions(active);
+        setObjectiveLinks(linksRes.links);
+      })
+      .catch(() => {
+        // Picker stays hidden; quiz editing works as before.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [courseId, lessonId, quizId]);
 
   function handleCreateQuiz() {
     startCreate(async () => {
@@ -389,6 +466,9 @@ export function QuizBuilder({
                 q={q}
                 courseId={courseId}
                 lessonId={lessonId}
+                objectiveOptions={objectiveOptions}
+                objectiveId={objectiveLinks[q.id] ?? null}
+                onObjectiveChange={(id, objectiveId) => setObjectiveLinks((prev) => ({ ...prev, [id]: objectiveId }))}
                 onDelete={(id) => setQuestions((prev) => prev.filter((x) => x.id !== id))}
                 onChange={(id, updated) =>
                   setQuestions((prev) => prev.map((x) => (x.id === id ? { ...x, ...updated } : x)))

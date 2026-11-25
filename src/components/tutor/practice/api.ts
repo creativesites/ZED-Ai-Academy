@@ -122,6 +122,7 @@ export function startTutorSession(input: TutorStartRequest): Promise<Result<Star
       ...(input.sprint ? { sprint: true } : {}),
       ...(input.sprintCourseId ? { courseId: input.sprintCourseId } : {}),
       ...(input.focusObjective ? { focusObjective: input.focusObjective } : {}),
+      ...(input.objectiveIds?.length ? { objectiveIds: input.objectiveIds } : {}),
       ...(input.companyId ? { companyId: input.companyId } : {}),
       micPermission: input.micPermission,
       ...(input.rttMs !== undefined ? { rttMs: input.rttMs } : {}),
@@ -189,6 +190,8 @@ export type TutorStartRequest = {
   sprint?: boolean;
   sprintCourseId?: string;
   focusObjective?: string;
+  /** Registered objective ids a revision sprint should target (e.g. from a quiz result). */
+  objectiveIds?: string[];
   companyId?: string;
   micPermission: MicPermission;
   rttMs?: number;

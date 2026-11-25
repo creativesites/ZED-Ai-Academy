@@ -58,6 +58,8 @@ export type TutorSessionProps = {
   sprint?: boolean;
   sprintCourseId?: string;
   focusObjective?: string;
+  /** Comma-separated registered objective ids to seed a revision sprint with (P2-03). */
+  sprintObjectiveIds?: string;
   companyId?: string;
   /** Called with the report when the learner taps Done on the report card. */
   onExit?: (report: TutorReportContent) => void;
@@ -99,6 +101,7 @@ export function TutorSession({
   sprint,
   sprintCourseId,
   focusObjective,
+  sprintObjectiveIds,
   companyId,
   onExit,
   doneHref,
@@ -627,6 +630,7 @@ export function TutorSession({
       sprint,
       sprintCourseId,
       focusObjective,
+      objectiveIds: sprintObjectiveIds ? sprintObjectiveIds.split(",").filter(Boolean) : undefined,
       companyId,
       micPermission: permission,
       rttMs,
@@ -809,7 +813,7 @@ export function TutorSession({
     setPhaseBoth("live");
     await speakEvents(data.openingEvents ?? []);
     if (pendingEndRef.current) void finalize("completed");
-  }, [api, client, lite, origin, scenarioId, lessonId, assignmentId, sprint, sprintCourseId, focusObjective, companyId, setPhaseBoth, speakEvents, finalize]);
+  }, [api, client, lite, origin, scenarioId, lessonId, assignmentId, sprint, sprintCourseId, focusObjective, sprintObjectiveIds, companyId, setPhaseBoth, speakEvents, finalize]);
 
   const changeMode = (next: InputMode) => {
     if (next === modeRef.current) return;

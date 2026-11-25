@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { saveQuizAttempt } from "@/actions/quizzes";
 import {
@@ -10,6 +11,7 @@ import {
   Loader2,
   Trophy,
   RotateCcw,
+  GraduationCap,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -35,7 +37,31 @@ type AttemptResult = {
   score: number;
   passed: boolean;
   correctAnswers: Record<string, number[]>;
+  /** Missed objectives that are now weak (server-side, enrolled learners only; never for guests). */
+  revision?: { objectiveIds: string[]; objectiveTexts: string[]; teacherName: string; href: string } | null;
 };
+
+function RevisionOffer({ revision }: { revision: NonNullable<AttemptResult["revision"]> }) {
+  return (
+    <div className="mx-auto mt-6 max-w-md rounded-2xl border border-white/20 bg-white/10 p-4 text-left backdrop-blur-md">
+      <p className="text-sm font-semibold">Want a hand with what you missed?</p>
+      {revision.objectiveTexts.length > 0 && (
+        <ul className="mt-2 list-disc space-y-1 pl-5 text-xs opacity-90">
+          {revision.objectiveTexts.map((t) => (
+            <li key={t}>{t}</li>
+          ))}
+        </ul>
+      )}
+      <Link
+        href={revision.href}
+        className="mt-3 inline-flex items-center rounded-xl bg-white px-4 py-2 text-sm font-bold text-[#062e39] shadow-sm transition-colors hover:bg-slate-100"
+      >
+        <GraduationCap className="mr-2 h-4 w-4" />
+        Go through these with {revision.teacherName}
+      </Link>
+    </div>
+  );
+}
 
 export function QuizPlayer({
   quiz,
@@ -297,7 +323,8 @@ export function QuizPlayer({
                 </div>
                 <h4 className="text-3xl font-bold tracking-tight mb-2">Mastery Confirmed!</h4>
                 <p className="text-green-50 font-medium mb-6">You scored {result.score}% — you&apos;ve cleared the pass threshold ({quiz.pass_threshold}%).</p>
-                <div className="flex flex-wrap items-center justify-center gap-3">
+                {result.revision && <RevisionOffer revision={result.revision} />}
+                <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
                   <Button
                     onClick={handleRetry}
                     className="rounded-xl border border-white/30 bg-white/15 px-6 py-2.5 text-sm font-semibold text-white hover:bg-white/25 transition-all shadow-sm"
@@ -325,6 +352,7 @@ export function QuizPlayer({
                   <RotateCcw className="mr-2 h-5 w-5" />
                   Try Again
                 </Button>}
+                {result.revision && <RevisionOffer revision={result.revision} />}
               </>
             )}
           </div>

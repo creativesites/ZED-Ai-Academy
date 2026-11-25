@@ -5,6 +5,10 @@ import { auth } from "@clerk/nextjs/server";
 import { createClient } from "@/lib/supabase/server";
 import type { Json } from "@/types/database";
 import { pendingRequiredTutorScenarios } from "@/lib/tutor/server/required-tutor-blocks";
+import { isSchemaUnavailableError } from "@/lib/tutor/mastery/server";
+import { recordQuizEvidence, type QuizRevisionOffer } from "@/lib/tutor/learner/quiz-evidence-server";
+import { loose } from "@/lib/tutor/learner/loose-db";
+import { isQuizAnswerCorrect } from "@/lib/tutor/learner/quiz-evidence";
 import {
   assertCanManageLesson,
   assertCanManageQuiz,
@@ -150,6 +154,68 @@ export async function deleteQuestion(
   revalidatePath(`/creator/courses/${courseId}/lessons/${lessonId}`);
 }
 
+/** Current question → objective links of a quiz, for the quiz editor (P2-03). Schema-safe. */
+export async function listQuestionObjectiveLinks(
+  quizId: string
+): Promise<{ available: boolean; links: Record<string, string | null> }> {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
+  const supabase = createClient();
+  await assertCanManageQuiz(supabase, quizId, userId);
+  const res = await loose(supabase).from("quiz_questions").select("id, objective_id").eq("quiz_id", quizId);
+  if (res.error) {
+    if (isSchemaUnavailableError(res.error)) return { available: false, links: {} };
+    throw new Error(res.error.message ?? "Could not load objective links");
+  }
+  const links: Record<string, string | null> = {};
+  for (const row of (res.data as Array<{ id: string; objective_id: string | null }> | null) ?? []) {
+    links[row.id] = row.objective_id ?? null;
+  }
+  return { available: true, links };
+}
+
+/**
+ * Links a quiz question to a registered objective of its course (or unlinks it with null), so answers feed
+ * the learner knowledge model (P2-03). Returns available=false while the migration is pending.
+ */
+export async function setQuestionObjective(
+  questionId: string,
+  courseId: string,
+  lessonId: string,
+  objectiveId: string | null
+): Promise<{ available: boolean }> {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
+  const supabase = createClient();
+  const owner = await assertCanManageQuestion(supabase, questionId, userId);
+  const db = loose(supabase);
+
+  if (objectiveId) {
+    const res = await db
+      .from("learning_objectives")
+      .select("id")
+      .eq("id", objectiveId)
+      .eq("course_id", owner.courseId)
+      .neq("status", "retired")
+      .maybeSingle();
+    if (res.error) {
+      if (isSchemaUnavailableError(res.error)) return { available: false };
+      throw new Error(res.error.message ?? "Could not check objective");
+    }
+    if (!res.data) throw new Error("Objective not found in this course.");
+  }
+
+  const upd = await db.from("quiz_questions").update({ objective_id: objectiveId }).eq("id", questionId);
+  if (upd.error) {
+    if (isSchemaUnavailableError(upd.error)) return { available: false };
+    throw new Error(upd.error.message ?? "Could not link objective");
+  }
+  revalidatePath(`/creator/courses/${courseId}/lessons/${lessonId}`);
+  return { available: true };
+}
+
 export async function getLatestQuizAttempt(quizId: string) {
   const { userId } = await auth();
   if (!userId) return null;
@@ -186,6 +252,8 @@ export async function saveQuizAttempt(
   lessonBlocked?: boolean;
   /** null = unlimited */
   attemptsRemaining?: number | null;
+  /** Missed objectives that are now weak: offer "Go through these with <Teacher>" (P2-03). */
+  revision?: QuizRevisionOffer | null;
 }> {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
@@ -216,10 +284,18 @@ export async function saveQuizAttempt(
     throw new Error("You have used all attempts for this knowledge check. Ask your instructor to reset it.");
   }
 
-  const { data: questions } = await supabase
+  // objective_id arrives with migration 20261125000202; before that, grade exactly as before.
+  let questions: Array<{ id: string; correct_indices: number[]; objective_id?: string | null }> | null = null;
+  const withObjectives = await loose(supabase)
     .from("quiz_questions")
-    .select("id, correct_indices")
+    .select("id, correct_indices, objective_id")
     .eq("quiz_id", quizId);
+  if (withObjectives.error && isSchemaUnavailableError(withObjectives.error)) {
+    const { data } = await supabase.from("quiz_questions").select("id, correct_indices").eq("quiz_id", quizId);
+    questions = data;
+  } else {
+    questions = (withObjectives.data as typeof questions) ?? null;
+  }
 
   if (!questions || questions.length === 0) throw new Error("No questions found");
 
@@ -247,6 +323,18 @@ export async function saveQuizAttempt(
     answers: answers as Json,
     score,
     passed,
+  });
+
+  // P2-03: per question with an objective, server-verified quiz evidence (enrolled learners only; never
+  // for guests, previews or practice retakes after a pass, where the answer key is already known).
+  const revision = await recordQuizEvidence({
+    userId,
+    courseId: access.courseId,
+    questions: questions.map((q) => ({
+      id: q.id,
+      objectiveId: q.objective_id ?? null,
+      correct: isQuizAnswerCorrect(q.correct_indices, answers[q.id]),
+    })),
   });
 
   // If passed and lessonId is available, auto-mark lesson complete in lesson_progress
@@ -289,5 +377,5 @@ export async function saveQuizAttempt(
     quiz.max_attempts && quiz.max_attempts > 0 ? Math.max(0, quiz.max_attempts - attemptsUsed - 1) : null;
   // Only reveal the answer key once the learner has passed or run out of attempts.
   const reveal = passed || attemptsRemaining === 0;
-  return { score, passed, correctAnswers: reveal ? correctAnswers : {}, lessonBlocked, attemptsRemaining };
+  return { score, passed, correctAnswers: reveal ? correctAnswers : {}, lessonBlocked, attemptsRemaining, revision };
 }

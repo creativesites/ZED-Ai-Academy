@@ -4,17 +4,18 @@ import { TutorSession } from "@/components/tutor/practice/TutorSession";
 import { createClient } from "@/lib/supabase/server";
 import { DEFAULT_TEACHER_NAME } from "@/lib/tutor/course-teacher";
 import { loadWeakMasteryRows } from "@/lib/tutor/mastery/server";
-import { buildRevisionSprintScenario } from "@/lib/tutor/mastery/sprint";
+import { buildRevisionSprintScenario, parseObjectiveIdsParam } from "@/lib/tutor/mastery/sprint";
 
 export const dynamic = "force-dynamic";
 
 export default async function RevisionSprintPage({
   searchParams,
 }: {
-  searchParams: Promise<{ focus?: string; courseId?: string }>;
+  searchParams: Promise<{ focus?: string; courseId?: string; objectives?: string }>;
 }) {
   const { userId } = await auth();
-  const { focus, courseId } = await searchParams;
+  const { focus, courseId, objectives } = await searchParams;
+  const objectiveIds = parseObjectiveIdsParam(objectives);
   if (!userId) {
     redirect("/sign-in?redirect_url=/practice/sprint");
   }
@@ -41,6 +42,7 @@ export default async function RevisionSprintPage({
       sprint
       sprintCourseId={courseId}
       focusObjective={focus}
+      sprintObjectiveIds={objectiveIds}
       scene="Scene_Classroom"
       doneHref="/dashboard"
       preview={{

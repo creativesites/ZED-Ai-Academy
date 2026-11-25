@@ -40,6 +40,7 @@ const startSchema = z
     sprint: z.boolean().optional(),
     courseId: z.string().uuid().optional(),
     focusObjective: z.string().trim().min(1).max(240).optional(),
+    objectiveIds: z.array(z.string().uuid()).max(5).optional(),
     companyId: z.string().trim().min(1).max(120).optional(),
     micPermission: z.enum(["granted", "denied", "prompt"]),
     rttMs: z.number().min(0).max(60_000).optional(),
@@ -82,6 +83,7 @@ export async function POST(req: NextRequest) {
     sprint: body.sprint,
     courseId: body.courseId,
     focusObjective: body.focusObjective,
+    objectiveIds: body.objectiveIds,
     companyId: body.companyId,
   });
   if (!access.ok) {
