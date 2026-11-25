@@ -184,15 +184,43 @@ export function buildDailyPlan(input: {
   weakObjectives: ReadonlyArray<MasteryCandidate>;
   unfinishedLessons: ReadonlyArray<DailyPlanLessonCandidate>;
   untriedFlows: ReadonlyArray<DailyPlanFlowCandidate>;
+  /**
+   * Scheduler output (P2-07, `loadDueReviews`). When available it replaces the "3 weakest" sprint item: the
+   * revision item appears only when something is due. Absent / unavailable → legacy weak-objective item.
+   */
+  dueReviews?: {
+    available: boolean;
+    count: number;
+    label: string | null;
+    href: string;
+    estimatedMinutes: number;
+    objectives: ReadonlyArray<{ text: string }>;
+  } | null;
 }): DailyPlanItem[] {
   const base = (input.basePath ?? "").replace(/\/$/, "");
   const items: DailyPlanItem[] = [];
 
-  const weak = selectWeakObjectives(
-    input.weakObjectives.filter((o) => o.level <= 2),
-    3,
-  );
-  if (weak.length > 0) {
+  const due = input.dueReviews?.available ? input.dueReviews : null;
+  const weak = due
+    ? []
+    : selectWeakObjectives(
+        input.weakObjectives.filter((o) => o.level <= 2),
+        3,
+      );
+  if (due && due.count > 0) {
+    const minutes = Math.max(1, Math.min(due.estimatedMinutes || 5, 15));
+    const texts = due.objectives.map((o) => o.text).filter((t) => t.trim().length > 0);
+    items.push({
+      id: "daily-revision",
+      kind: "revision_sprint",
+      title: `${minutes}-min revision with ${input.teacherName}`,
+      subtitle: texts.length > 0 ? `${due.label ?? "Reviews due"}, starting with ${texts[0]}` : (due.label ?? "Reviews due"),
+      durationMinutes: minutes,
+      objectiveTexts: texts,
+      ctaLabel: "Start revision",
+      href: due.href,
+    });
+  } else if (weak.length > 0) {
     const firstCourseId = weak.find((w) => w.courseId)?.courseId;
     const sprintHref = firstCourseId
       ? `${base}/practice/sprint?courseId=${encodeURIComponent(firstCourseId)}`

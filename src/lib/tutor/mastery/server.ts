@@ -389,12 +389,18 @@ export async function loadDashboardDailyPlan(input: {
 }): Promise<{ teacherName: string; items: DailyPlanItem[] }> {
   const supabase = createClient();
 
-  const weakObjectives = await loadWeakMasteryRows({
-    supabase,
-    userId: input.userId,
-    companyId: input.companyId,
-    limit: 6,
-  });
+  const [weakObjectives, dueReviews] = await Promise.all([
+    loadWeakMasteryRows({
+      supabase,
+      userId: input.userId,
+      companyId: input.companyId,
+      limit: 6,
+    }),
+    // P2-07: the review scheduler replaces "3 weakest" when its columns exist (unavailable → legacy path).
+    import("../learner/scheduler-server").then((m) =>
+      m.loadDueReviews(input.userId, input.companyId ?? null, { basePath: input.basePath, client: supabase }),
+    ),
+  ]);
 
   // 1. Enrolled courses & unfinished lessons
   const { data: enrollmentRows } = await supabase
@@ -655,6 +661,7 @@ export async function loadDashboardDailyPlan(input: {
     weakObjectives,
     unfinishedLessons,
     untriedFlows,
+    dueReviews,
   });
 
   return { teacherName, items };
