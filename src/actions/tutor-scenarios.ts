@@ -2,6 +2,7 @@
 
 import { auth } from "@clerk/nextjs/server";
 import { createServiceClient } from "@/lib/supabase/server";
+import { requireCourseEditor } from "@/lib/authz/context-server";
 import {
   scenarioViewFromRow,
   type TutorScenarioRow,
@@ -21,40 +22,6 @@ const SCENARIO_SELECT =
   "id, title, goal, style, scene, max_minutes, allowed_modes, visibility, status, skill_pack, persona_id, beats, target_items, company_id, course_id, ai_personas(name, display_name, rive_variant)";
 
 /**
- * Same rule as verifyBlockOwner in actions/content-blocks.ts, at course level: super admin, the
- * instructor, or an active company_admin / teacher / instructor of the course's tenant.
- */
-async function assertCourseEditor(courseId: string, userId: string) {
-  const db = createServiceClient();
-
-  const { data: course } = await db
-    .from("courses")
-    .select("instructor_id, company_id")
-    .eq("id", courseId)
-    .maybeSingle();
-  if (!course) throw new Error("Course not found");
-
-  const { data: profile } = await db.from("profiles").select("role").eq("id", userId).maybeSingle();
-  if (profile?.role === "super_admin") return { companyId: course.company_id as string | null };
-  if (course.instructor_id === userId) return { companyId: course.company_id as string | null };
-
-  if (course.company_id) {
-    const { data: member } = await db
-      .from("company_members")
-      .select("role")
-      .eq("company_id", course.company_id)
-      .eq("profile_id", userId)
-      .eq("status", "active")
-      .maybeSingle();
-    if (member && ["company_admin", "teacher", "instructor"].includes(member.role)) {
-      return { companyId: course.company_id as string | null };
-    }
-  }
-
-  throw new Error("Unauthorized");
-}
-
-/**
  * Published scenarios a teacher can place in this course's tutor_session blocks: this course's own
  * scenarios, the tenant library, and the ZAI platform starter packs.
  */
@@ -62,7 +29,7 @@ export async function listTutorScenariosForCourse(courseId: string): Promise<Tut
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
 
-  const { companyId } = await assertCourseEditor(courseId, userId);
+  const { companyId } = await requireCourseEditor(courseId, userId);
   const db = createServiceClient();
 
   const queries = [

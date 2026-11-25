@@ -1,7 +1,8 @@
 import { auth } from "@clerk/nextjs/server";
 import { createClient } from "@/lib/supabase/server";
-import { gemini } from "@/lib/ai/gemini";
-import { modelFor } from "@/lib/ai/models";
+import { aiJson } from "@/lib/ai/call";
+import { PRACTICE_EXERCISE_SCHEMA } from "@/lib/ai/generation/schemas";
+import { ZEDAI_TENANT_ID } from "@/lib/tenants/constants";
 import { blocksToText } from "@/lib/course-blocks/block-to-text";
 import { canManageCourse } from "@/lib/courses/course-auth-server";
 import { NextRequest } from "next/server";
@@ -39,8 +40,8 @@ export async function POST(req: NextRequest) {
     return Response.json({ error: "Unauthorized" }, { status: 403 });
   }
 
-  const { allowed } = await canManageCourse(supabase, courseId, userId);
-  if (!allowed) {
+  const { allowed, course } = await canManageCourse(supabase, courseId, userId);
+  if (!allowed || !course) {
     return Response.json({ error: "Unauthorized" }, { status: 403 });
   }
 
@@ -92,32 +93,17 @@ Lesson content:
 ${lessonContent}`;
 
   try {
-    const response = await gemini.models.generateContent({
-      model: modelFor("practiceExercise"),
-      contents: prompt,
-      config: {
+    const { data: exercise } = await aiJson(
+      "practiceExercise",
+      {
+        contents: prompt,
         systemInstruction,
+        responseJsonSchema: PRACTICE_EXERCISE_SCHEMA,
         maxOutputTokens: 2048,
         temperature: 0.7,
-        responseMimeType: "application/json",
       },
-    });
-
-    const raw = response.text ?? "{}";
-    
-    // Attempt to parse JSON directly
-    let exercise;
-    try {
-      exercise = JSON.parse(raw);
-    } catch (e) {
-      // Fallback: extract JSON if it was wrapped in markdown despite instructions
-      const match = raw.match(/\{[\s\S]*\}/);
-      if (match) {
-        exercise = JSON.parse(match[0]);
-      } else {
-        throw new Error("Failed to parse JSON");
-      }
-    }
+      { meter: { companyId: course.company_id ?? ZEDAI_TENANT_ID, userId } },
+    );
 
     return Response.json({ exercise });
   } catch (err) {

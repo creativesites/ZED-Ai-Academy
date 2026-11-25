@@ -1,7 +1,8 @@
-import { requireContentAuthor } from "@/lib/tenants/content-author-server";
+import { requireContentAuthor } from "@/lib/authz/content-author-server";
 import { auth } from "@clerk/nextjs/server";
-import { gemini } from "@/lib/ai/gemini";
-import { modelFor } from "@/lib/ai/models";
+import { aiJson } from "@/lib/ai/call";
+import { meterFor } from "@/lib/ai/meter-server";
+import { BRAND_KIT_SCHEMA, ENHANCED_COPY_SCHEMA } from "@/lib/ai/generation/schemas";
 import { NextRequest } from "next/server";
 
 export async function POST(req: NextRequest) {
@@ -74,23 +75,11 @@ Return a single JSON object with this exact shape:
   "cta_button": "Action-oriented button text (e.g. Start Your Journey Today)"
 }`;
 
-      const response = await gemini.models.generateContent({
-        model: modelFor("brandingAssistant"),
-        contents: prompt,
-        config: {
-          systemInstruction,
-          maxOutputTokens: 2500,
-          responseMimeType: "application/json",
-        },
-      });
-
-      const raw = response.text ?? "";
-      const match = raw.match(/\{[\s\S]*\}/);
-      if (!match) {
-        return Response.json({ error: "Failed to parse AI brand kit" }, { status: 500 });
-      }
-
-      const brandKit = JSON.parse(match[0]);
+      const { data: brandKit } = await aiJson(
+        "brandingAssistant",
+        { contents: prompt, systemInstruction, responseJsonSchema: BRAND_KIT_SCHEMA, maxOutputTokens: 2500 },
+        { meter: await meterFor(userId) },
+      );
       return Response.json({ brandKit });
     }
 
@@ -109,23 +98,11 @@ Instruction: ${instruction}
 
 Provide the enhanced version now as JSON.`;
 
-      const response = await gemini.models.generateContent({
-        model: modelFor("brandingAssistant"),
-        contents: prompt,
-        config: {
-          systemInstruction,
-          maxOutputTokens: 1024,
-          responseMimeType: "application/json",
-        },
-      });
-
-      const raw = response.text ?? "";
-      const match = raw.match(/\{[\s\S]*\}/);
-      if (!match) {
-        return Response.json({ error: "Failed to parse AI copy response" }, { status: 500 });
-      }
-
-      const result = JSON.parse(match[0]);
+      const { data: result } = await aiJson(
+        "brandingAssistant",
+        { contents: prompt, systemInstruction, responseJsonSchema: ENHANCED_COPY_SCHEMA, maxOutputTokens: 1024 },
+        { meter: await meterFor(userId) },
+      );
       return Response.json(result);
     }
 

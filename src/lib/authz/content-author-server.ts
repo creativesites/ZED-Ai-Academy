@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
-import { isContentAuthor } from "@/lib/tenants/content-author";
+import { isContentAuthor } from "@/lib/authz/content-author";
 
 /** Loads the facts for {@link isContentAuthor} and returns the decision. */
 export async function userIsContentAuthor(userId: string): Promise<boolean> {

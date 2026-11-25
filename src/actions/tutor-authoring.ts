@@ -6,8 +6,9 @@ import { z } from "zod";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { assertCanManageCourse, assertCanManageLesson } from "@/lib/courses/course-auth-server";
 import { ZEDAI_TENANT_ID } from "@/lib/tenants/constants";
-import { courseTenantId } from "@/lib/tenants/tenant-refs";
-import { assertTenantRefs } from "@/lib/tenants/tenant-refs-server";
+import { courseTenantId } from "@/lib/authz/refs";
+import { assertTenantRefs } from "@/lib/authz/refs-server";
+import { requireTenantStaff } from "@/lib/authz/context-server";
 import {
   FACE_STYLES,
   HAIR_STYLES,
@@ -43,32 +44,6 @@ import {
 import type { Database, Json } from "@/types/database";
 
 // ─── Shared Auth Helpers ──────────────────────────────────────────────────────
-
-async function assertTenantStaff(companyId: string, userId: string): Promise<{ isSuperAdmin: boolean }> {
-  const db = createServiceClient();
-
-  const [{ data: profile }, { data: company }, { data: member }] = await Promise.all([
-    db.from("profiles").select("role").eq("id", userId).maybeSingle(),
-    db.from("companies").select("admin_id").eq("id", companyId).maybeSingle(),
-    db
-      .from("company_members")
-      .select("role, status")
-      .eq("company_id", companyId)
-      .eq("profile_id", userId)
-      .maybeSingle(),
-  ]);
-
-  if (profile?.role === "super_admin") return { isSuperAdmin: true };
-  if (company?.admin_id === userId) return { isSuperAdmin: false };
-  if (
-    member?.status === "active" &&
-    ["company_admin", "teacher", "instructor"].includes(member.role)
-  ) {
-    return { isSuperAdmin: false };
-  }
-
-  throw new Error("Unauthorized");
-}
 
 /** Resolves the primary academy/company ID for a creator who visits `/creator/ai-teachers`. */
 export async function resolveCreatorCompanyContext(): Promise<{
@@ -536,7 +511,7 @@ const STARTER_PERSONA_META: Record<
 export async function listPersonasForTenant(companyId: string): Promise<PersonaRecord[]> {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
-  await assertTenantStaff(companyId, userId);
+  await requireTenantStaff(companyId, userId);
 
   const db = createServiceClient();
   const { data, error } = await db
@@ -582,7 +557,7 @@ export async function upsertPersona(input: UpsertPersonaInput): Promise<PersonaR
   if (!userId) throw new Error("Unauthorized");
 
   const parsed = personaInputSchema.parse(input);
-  await assertTenantStaff(parsed.companyId, userId);
+  await requireTenantStaff(parsed.companyId, userId);
 
   const db = createServiceClient();
   const payload = {
@@ -633,7 +608,7 @@ export async function upsertPersona(input: UpsertPersonaInput): Promise<PersonaR
 export async function deletePersona(companyId: string, personaId: string): Promise<void> {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
-  await assertTenantStaff(companyId, userId);
+  await requireTenantStaff(companyId, userId);
 
   const db = createServiceClient();
   const { error } = await db
@@ -666,7 +641,7 @@ export async function createFixItFlowFromMisconception(
   if (!userId) throw new Error("Unauthorized");
 
   const parsed = fixItSchema.parse(input);
-  await assertTenantStaff(parsed.companyId, userId);
+  await requireTenantStaff(parsed.companyId, userId);
   await assertTenantRefs(parsed.companyId, { courseId: parsed.courseId ?? null });
 
   const db = createServiceClient();
@@ -720,7 +695,7 @@ export async function createFixItFlowFromMisconception(
 export async function seedStarterPersonas(companyId: string): Promise<PersonaRecord[]> {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
-  await assertTenantStaff(companyId, userId);
+  await requireTenantStaff(companyId, userId);
 
   const db = createServiceClient();
   const { data: existing } = await db
@@ -786,7 +761,7 @@ export async function listScenariosForCourseStudio(courseId: string): Promise<Sc
 export async function listScenariosForTenant(companyId: string): Promise<ScenarioRecord[]> {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
-  await assertTenantStaff(companyId, userId);
+  await requireTenantStaff(companyId, userId);
 
   const db = createServiceClient();
   const { data, error } = await withoutArchived((hideArchived) => {
@@ -813,7 +788,7 @@ export async function upsertScenario(input: UpsertScenarioInput): Promise<Scenar
     const course = await assertCanManageCourse(supabase, parsed.courseId, userId);
     companyId = courseTenantId(course.company_id, ZEDAI_TENANT_ID);
   } else {
-    await assertTenantStaff(companyId, userId);
+    await requireTenantStaff(companyId, userId);
   }
   await assertTenantRefs(companyId, {
     courseId: parsed.courseId ?? null,
@@ -831,7 +806,7 @@ export async function upsertScenario(input: UpsertScenarioInput): Promise<Scenar
       .maybeSingle();
     if (!existing) throw new Error("Scenario not found");
     if (existing.course_id && existing.course_id !== parsed.courseId) {
-      await assertTenantStaff(companyId, userId);
+      await requireTenantStaff(companyId, userId);
     }
   }
 
@@ -915,7 +890,7 @@ export async function updateScenarioQuick(
 ): Promise<ScenarioRecord> {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
-  await assertTenantStaff(companyId, userId);
+  await requireTenantStaff(companyId, userId);
 
   const db = createServiceClient();
   const { data, error } = await db
@@ -935,7 +910,7 @@ export async function updateScenarioQuick(
 export async function deleteScenario(companyId: string, scenarioId: string): Promise<void> {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
-  await assertTenantStaff(companyId, userId);
+  await requireTenantStaff(companyId, userId);
 
   const db = createServiceClient();
   // Soft delete, so sessions, reports and history that reference the flow keep working.
@@ -1036,7 +1011,7 @@ export async function restoreScenarioVersion(scenarioId: string, version: number
 export async function getTutorSettings(companyId: string): Promise<TutorSettingsRecord> {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
-  await assertTenantStaff(companyId, userId);
+  await requireTenantStaff(companyId, userId);
 
   const db = createServiceClient();
   const { data } = await db
@@ -1074,7 +1049,7 @@ export async function upsertTutorSettings(input: UpsertTutorSettingsInput): Prom
   if (!userId) throw new Error("Unauthorized");
 
   const parsed = tutorSettingsSchema.parse(input);
-  await assertTenantStaff(parsed.companyId, userId);
+  await requireTenantStaff(parsed.companyId, userId);
 
   const db = createServiceClient();
   const basePayload = {
@@ -1124,7 +1099,7 @@ export async function upsertTutorSettings(input: UpsertTutorSettingsInput): Prom
 export async function getTenantBrandColor(companyId: string): Promise<string | null> {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
-  await assertTenantStaff(companyId, userId);
+  await requireTenantStaff(companyId, userId);
 
   const db = createServiceClient();
   const { data } = await db
@@ -1294,7 +1269,7 @@ export async function listStaffVisibleTutorSessions(
 ): Promise<StaffTutorSessionSummary[]> {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
-  await assertTenantStaff(companyId, userId);
+  await requireTenantStaff(companyId, userId);
 
   const db = createServiceClient();
   // Privacy split: staff only see lesson/assignment sessions, shared sessions, or flagged sessions.
@@ -1352,7 +1327,7 @@ export async function getStaffTutorSessionDetail(
 ): Promise<StaffTutorSessionDetail> {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
-  await assertTenantStaff(companyId, userId);
+  await requireTenantStaff(companyId, userId);
 
   const db = createServiceClient();
   const { data: sessionRow, error: sessError } = await db
@@ -1514,7 +1489,7 @@ export async function saveStaffSessionReview(
   if (!userId) throw new Error("Unauthorized");
 
   const parsed = saveSessionReviewSchema.parse(input);
-  await assertTenantStaff(parsed.companyId, userId);
+  await requireTenantStaff(parsed.companyId, userId);
 
   const db = createServiceClient();
   const [{ data: sessionRow, error: sessError }, { data: reviewerProfile }, { data: existingReport }, { data: company }] =
@@ -1637,7 +1612,7 @@ export async function listClassroomGroupsForTenant(
 ): Promise<Array<{ id: string; name: string }>> {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
-  await assertTenantStaff(companyId, userId);
+  await requireTenantStaff(companyId, userId);
 
   const db = createServiceClient();
   const { data } = await db
@@ -1654,7 +1629,7 @@ export async function listTutorAssignmentsForTenant(
 ): Promise<TutorAssignmentSummary[]> {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
-  await assertTenantStaff(companyId, userId);
+  await requireTenantStaff(companyId, userId);
 
   const db = createServiceClient();
   const { data: rows, error } = await db
@@ -1700,7 +1675,7 @@ export async function createTutorAssignment(input: {
 }): Promise<TutorAssignmentSummary> {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
-  await assertTenantStaff(input.companyId, userId);
+  await requireTenantStaff(input.companyId, userId);
   await assertTenantRefs(input.companyId, { scenarioId: input.scenarioId, groupId: input.groupId || null });
 
   const db = createServiceClient();
@@ -1741,7 +1716,7 @@ export async function createTutorAssignment(input: {
 export async function deleteTutorAssignment(companyId: string, assignmentId: string): Promise<void> {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
-  await assertTenantStaff(companyId, userId);
+  await requireTenantStaff(companyId, userId);
 
   const db = createServiceClient();
   const { error } = await db
@@ -1763,7 +1738,7 @@ export async function getTenantAiUsageSummary(
 ): Promise<TenantAiUsageSummary> {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
-  await assertTenantStaff(companyId, userId);
+  await requireTenantStaff(companyId, userId);
 
   const since = new Date(Date.now() - periodDays * 24 * 60 * 60 * 1000).toISOString();
   const db = createServiceClient();
@@ -1813,7 +1788,7 @@ export async function getTenantStudentSpeakingMetrics(
 ): Promise<Record<string, StudentSpeakingMetric>> {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
-  await assertTenantStaff(companyId, userId);
+  await requireTenantStaff(companyId, userId);
 
   const db = createServiceClient();
   const { data: sessions } = await db

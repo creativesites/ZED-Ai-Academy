@@ -1,8 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
-import { createClient, createServiceClient } from "@/lib/supabase/server";
-import { canManageCourse } from "@/lib/courses/course-auth-server";
-import { ZEDAI_TENANT_ID } from "@/lib/tenants/constants";
+import { authorizeFlowPreview } from "@/lib/authz/context-server";
 import { describeGeminiError } from "@/lib/tutor/gemini-errors";
 import { buildTranscript, parseTutorReport } from "@/lib/tutor/report-model";
 import { skillPackLanguage } from "@/lib/tutor/skill-packs";
@@ -23,32 +21,8 @@ export async function POST(req: NextRequest) {
   }
 
   const { flow, history } = parsed.data;
-  let companyId: string | null = null;
-
-  if (flow.courseId) {
-    const { allowed, course } = await canManageCourse(createClient(), flow.courseId, userId);
-    if (!allowed || !course) return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
-    companyId = course.company_id ?? ZEDAI_TENANT_ID;
-  } else if (flow.companyId) {
-    const db = createServiceClient();
-    const [{ data: profile }, { data: company }, { data: member }] = await Promise.all([
-      db.from("profiles").select("role").eq("id", userId).maybeSingle(),
-      db.from("companies").select("admin_id").eq("id", flow.companyId).maybeSingle(),
-      db
-        .from("company_members")
-        .select("role, status")
-        .eq("company_id", flow.companyId)
-        .eq("profile_id", userId)
-        .maybeSingle(),
-    ]);
-    if (
-      profile?.role === "super_admin" ||
-      company?.admin_id === userId ||
-      (member?.status === "active" && ["company_admin", "teacher", "instructor"].includes(member.role))
-    ) {
-      companyId = flow.companyId;
-    }
-  }
+  const authResult = await authorizeFlowPreview(userId, flow);
+  const companyId = authResult.allowed ? authResult.companyId : null;
   if (!companyId) return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
 
   const turns = previewHistoryToTurns(history);

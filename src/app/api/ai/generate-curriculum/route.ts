@@ -1,7 +1,9 @@
 import { auth } from "@clerk/nextjs/server";
 import { createClient } from "@/lib/supabase/server";
-import { gemini } from "@/lib/ai/gemini";
-import { modelFor } from "@/lib/ai/models";
+import { aiJson } from "@/lib/ai/call";
+import { CURRICULUM_SCHEMA } from "@/lib/ai/generation/schemas";
+import { validCurriculum } from "@/lib/ai/generation/parse";
+import { ZEDAI_TENANT_ID } from "@/lib/tenants/constants";
 import { NextRequest } from "next/server";
 import { getCourseDomainPreset } from "@/lib/course-domain-presets";
 import { canManageCourse } from "@/lib/courses/course-auth-server";
@@ -15,8 +17,8 @@ export async function POST(req: NextRequest) {
   const preset = getCourseDomainPreset(domainPreset);
 
   const supabase = createClient();
-  const { allowed } = await canManageCourse(supabase, courseId, userId);
-  if (!allowed) {
+  const { allowed, course: owned } = await canManageCourse(supabase, courseId, userId);
+  if (!allowed || !owned) {
     return Response.json({ error: "Not found" }, { status: 404 });
   }
 
@@ -67,18 +69,13 @@ Rules:
 - No filler lessons. Every lesson must deliver a usable learning outcome for the selected domain and age/context.`;
 
   try {
-    const response = await gemini.models.generateContent({
-      model: modelFor("curriculum"),
-      contents: prompt,
-      config: { maxOutputTokens: 2000, responseMimeType: "application/json" },
-    });
-
-    const raw = response.text ?? "";
-    const match = raw.match(/\{[\s\S]*\}/);
-    if (!match) return Response.json({ error: "Invalid response" }, { status: 500 });
-
-    const parsed = JSON.parse(match[0]);
-    if (!Array.isArray(parsed.modules) || parsed.modules.length === 0) {
+    const { data } = await aiJson(
+      "curriculum",
+      { contents: prompt, responseJsonSchema: CURRICULUM_SCHEMA, maxOutputTokens: 2000 },
+      { meter: { companyId: owned.company_id ?? ZEDAI_TENANT_ID, userId } },
+    );
+    const parsed = validCurriculum(data);
+    if (!parsed) {
       return Response.json({ error: "Invalid curriculum structure" }, { status: 500 });
     }
 

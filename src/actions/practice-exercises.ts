@@ -4,7 +4,9 @@ import { revalidatePath } from "next/cache";
 import { auth } from "@clerk/nextjs/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { canManageCourse } from "@/lib/courses/course-auth-server";
-import { gemini } from "@/lib/ai/gemini";
+import { aiJson, type AiMeter } from "@/lib/ai/call";
+import { PRACTICE_SCORE_SCHEMA } from "@/lib/ai/generation/schemas";
+import { ZEDAI_TENANT_ID } from "@/lib/tenants/constants";
 import { modelFor } from "@/lib/ai/models";
 import type { Json } from "@/types/database";
 
@@ -53,10 +55,12 @@ async function scoreSubmission({
   exercise,
   textResponse,
   fileCount,
+  meter,
 }: {
   exercise: Record<string, unknown>;
   textResponse: string;
   fileCount: number;
+  meter: AiMeter;
 }) {
   const rubric = Array.isArray(exercise.rubric) ? exercise.rubric : [];
   const prompt = `Score this practice exercise submission. Return only valid JSON.
@@ -81,17 +85,16 @@ Return JSON with:
   "needs_instructor_review": boolean
 }`;
 
-  const result = await gemini.models.generateContent({
-    model: modelFor("practiceScoring"),
-    contents: [{ role: "user", parts: [{ text: prompt }] }],
-    config: {
+  const { data } = await aiJson(
+    "practiceScoring",
+    {
+      contents: [{ role: "user", parts: [{ text: prompt }] }],
       temperature: 0.2,
-      responseMimeType: "application/json",
+      responseJsonSchema: PRACTICE_SCORE_SCHEMA,
     },
-  });
-
-  const raw = result.text ?? "{}";
-  return JSON.parse(raw) as {
+    { meter },
+  );
+  return data as {
     score?: number;
     rubric_breakdown?: unknown;
     feedback_summary?: string;
@@ -137,7 +140,7 @@ export async function submitPracticeExercise(formData: FormData) {
 
   const { data: course } = await supabase
     .from("courses")
-    .select("id, slug, instructor_id")
+    .select("id, slug, instructor_id, company_id")
     .eq("id", moduleRow.course_id)
     .single();
   if (!course) throw new Error("Course not found");
@@ -232,7 +235,12 @@ export async function submitPracticeExercise(formData: FormData) {
 
   if (exercise.ai_scoring_enabled !== false) {
     try {
-      const score = await scoreSubmission({ exercise, textResponse, fileCount: files.length });
+      const score = await scoreSubmission({
+        exercise,
+        textResponse,
+        fileCount: files.length,
+        meter: { companyId: course.company_id ?? ZEDAI_TENANT_ID, userId },
+      });
       const needsReview = Boolean(score.needs_instructor_review) || (files.length > 0 && !textResponse);
 
       const { error: scoreError } = await supabase.from("practice_exercise_scores").insert({

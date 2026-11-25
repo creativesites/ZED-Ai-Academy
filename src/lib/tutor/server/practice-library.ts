@@ -1,5 +1,6 @@
 import "server-only";
 import { createServiceClient } from "@/lib/supabase/server";
+import { isTenantStaffRole, tenantRole } from "../../authz/policy.ts";
 import type { PracticeLibraryItem } from "../practice-library.ts";
 import { startableModes } from "../practice-library.ts";
 import type { Mode, SkillPack } from "../scenario.ts";
@@ -167,11 +168,14 @@ export async function findPracticeScenario(
       : Promise.resolve({ data: null }),
   ]);
 
-  const isSuperAdmin = profile?.role === "super_admin";
-  const isStaff =
-    isSuperAdmin ||
-    Boolean(owned) ||
-    (membership != null && ["company_admin", "teacher", "instructor"].includes(membership.role));
+  const isStaff = isTenantStaffRole(
+    tenantRole({
+      userId,
+      profileRole: profile?.role ?? null,
+      tenantOwnerId: owned ? userId : null,
+      membership: membership ? { role: membership.role, status: membership.status } : null,
+    }),
+  );
   const isMember = isStaff || Boolean(membership);
 
   // Staff can preview any status/visibility in their academy.

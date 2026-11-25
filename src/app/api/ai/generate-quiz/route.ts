@@ -1,17 +1,12 @@
 import { auth } from "@clerk/nextjs/server";
 import { createClient } from "@/lib/supabase/server";
-import { gemini } from "@/lib/ai/gemini";
-import { modelFor } from "@/lib/ai/models";
+import { aiJson } from "@/lib/ai/call";
+import { QUIZ_QUESTIONS_SCHEMA } from "@/lib/ai/generation/schemas";
+import { quizQuestionCount, validQuizQuestions } from "@/lib/ai/generation/parse";
+import { ZEDAI_TENANT_ID } from "@/lib/tenants/constants";
 import { blocksToText } from "@/lib/course-blocks/block-to-text";
 import { canManageCourse } from "@/lib/courses/course-auth-server";
 import { NextRequest } from "next/server";
-
-type GeneratedQuestion = {
-  question: string;
-  options: string[];
-  correct_indices: number[];
-  explanation: string;
-};
 
 export async function POST(req: NextRequest) {
   const { userId } = await auth();
@@ -21,7 +16,8 @@ export async function POST(req: NextRequest) {
 
   const supabase = createClient();
 
-  const { lessonId, courseId, count = 3 } = await req.json();
+  const { lessonId, courseId, count: rawCount } = await req.json();
+  const count = quizQuestionCount(rawCount ?? 3);
 
   if (!lessonId || !courseId) {
     return Response.json({ error: "Missing lessonId or courseId" }, { status: 400 });
@@ -46,8 +42,8 @@ export async function POST(req: NextRequest) {
     return Response.json({ error: "Unauthorized" }, { status: 403 });
   }
 
-  const { allowed } = await canManageCourse(supabase, courseId, userId);
-  if (!allowed) {
+  const { allowed, course } = await canManageCourse(supabase, courseId, userId);
+  if (!allowed || !course) {
     return Response.json({ error: "Unauthorized" }, { status: 403 });
   }
 
@@ -94,41 +90,19 @@ Lesson content:
 ${lessonContent}`;
 
   try {
-    const response = await gemini.models.generateContent({
-      model: modelFor("quiz"),
-      contents: prompt,
-      config: {
+    const { data } = await aiJson(
+      "quiz",
+      {
+        contents: prompt,
         systemInstruction,
+        responseJsonSchema: QUIZ_QUESTIONS_SCHEMA,
         maxOutputTokens: 2048,
-        responseMimeType: "application/json",
       },
-    });
-
-    const raw = response.text ?? "";
-
-    // Extract JSON array from response
-    const match = raw.match(/\[[\s\S]*\]/);
-    if (!match) {
-      return Response.json({ error: "Failed to parse generated questions" }, { status: 500 });
-    }
-
-    const questions: GeneratedQuestion[] = JSON.parse(match[0]);
-
-    if (!Array.isArray(questions)) {
-      return Response.json({ error: "Invalid response format" }, { status: 500 });
-    }
-
-    // Validate each question
-    const valid = questions.every(
-      (q) =>
-        typeof q.question === "string" &&
-        Array.isArray(q.options) &&
-        q.options.length === 4 &&
-        Array.isArray(q.correct_indices) &&
-        q.correct_indices.length > 0
+      { meter: { companyId: course.company_id ?? ZEDAI_TENANT_ID, userId }, shape: "array" },
     );
 
-    if (!valid) {
+    const questions = validQuizQuestions(data);
+    if (!questions) {
       return Response.json({ error: "Generated questions failed validation" }, { status: 500 });
     }
 

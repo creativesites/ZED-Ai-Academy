@@ -1,24 +1,19 @@
 import "server-only";
-import { Modality, type LiveConnectConfig } from "@google/genai";
-import { gemini } from "@/lib/ai/gemini";
+import { LIVE_NEW_SESSION_WINDOW_MS, LIVE_TOKEN_TTL_MS, mintGeminiLiveToken } from "@/lib/ai/gemini/live";
 import { modelFor } from "@/lib/ai/models";
 import { createServiceClient } from "@/lib/supabase/server";
 import { liveToolDeclarations } from "../events.ts";
 import { ttsCachePath } from "../audio.ts";
 import { synthesizeSpeechWav } from "./gemini-models.ts";
 
-// Thin wrappers around @google/genai for the tutor. Everything that talks to Gemini goes through
-// here or gemini-models.ts, so routes and pipelines can be read without SDK details. The models
-// file has no database access and is what the public demo uses. This file adds the Supabase TTS
-// cache and the Live token. Nothing here is unit tested (no keys in the build environment); the SDK
-// surface was checked against @google/genai 1.52.0.
+// Tutor model calls that need the database: the Supabase TTS cache and the Live token. The model calls themselves
+// go through `aiCall` (src/lib/ai/call.ts) via gemini-models.ts; the Live token is minted by the Gemini-specific
+// src/lib/ai/gemini/live.ts. Nothing here is unit tested (no keys in the build environment).
 
 export { generateReportJson, generateTurnJson, transcribeLearnerAudio } from "./gemini-models.ts";
+export { LIVE_NEW_SESSION_WINDOW_MS, LIVE_TOKEN_TTL_MS };
 
 export const TTS_BUCKET = "tutor-tts-cache";
-
-export const LIVE_TOKEN_TTL_MS = 30 * 60_000;
-export const LIVE_NEW_SESSION_WINDOW_MS = 2 * 60_000;
 
 export type SynthesizedSpeech = {
   url: string;
@@ -61,38 +56,9 @@ export async function mintLiveToken(input: {
   /** The session's skill pack, so Live only gets the tools that pack is taught. */
   skillPack?: string | null;
 }): Promise<{ token: string; liveModel: string; expireTime: string }> {
-  const liveModel = modelFor("tutorLive");
-  const now = Date.now();
-  const expireTime = new Date(now + LIVE_TOKEN_TTL_MS).toISOString();
-
-  const liveConfig: LiveConnectConfig = {
-    responseModalities: [Modality.AUDIO],
+  return mintGeminiLiveToken({
     systemInstruction: input.systemInstruction,
-    tools: [
-      {
-        functionDeclarations: liveToolDeclarations(input.skillPack ?? undefined).map((decl) => ({
-          name: decl.name,
-          description: decl.description,
-          parametersJsonSchema: decl.parameters,
-        })),
-      },
-    ],
-    speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: input.voiceName } } },
-    inputAudioTranscription: {},
-    outputAudioTranscription: {},
-    contextWindowCompression: { slidingWindow: {} },
-    sessionResumption: {},
-  };
-
-  const token = await gemini.authTokens.create({
-    config: {
-      uses: 1,
-      expireTime,
-      newSessionExpireTime: new Date(now + LIVE_NEW_SESSION_WINDOW_MS).toISOString(),
-      httpOptions: { apiVersion: "v1alpha" },
-      liveConnectConstraints: { model: liveModel, config: liveConfig },
-    },
+    voiceName: input.voiceName,
+    tools: liveToolDeclarations(input.skillPack ?? undefined),
   });
-  if (!token.name) throw new Error("Gemini did not return an ephemeral token");
-  return { token: token.name, liveModel, expireTime };
 }
