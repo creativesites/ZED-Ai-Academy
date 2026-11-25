@@ -30,7 +30,6 @@ export function TutorSessionBlock({
   scenario: TutorScenarioView | undefined;
   done: boolean;
   isGuest?: boolean;
-  onComplete?: (scenarioId: string) => void;
 }) {
   const pathname = usePathname();
   const block = parseTutorSessionBlock(content);

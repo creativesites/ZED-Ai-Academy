@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { QuizPlayer } from "@/components/learner/quiz-player";
@@ -127,7 +127,8 @@ export function LessonPlayerClient({
 }) {
   const router = useRouter();
   const [completed, setCompleted] = useState(new Set(completedLessonIds));
-  const [tutorDone, setTutorDone] = useState(new Set(tutorCompletedScenarioIds));
+  // Completion comes from the server: the block card navigates to the session, and the lesson re-renders on return.
+  const tutorDone = useMemo(() => new Set(tutorCompletedScenarioIds), [tutorCompletedScenarioIds]);
   const [certificate, setCertificate] = useState(existingCertificate);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -739,10 +740,6 @@ export function LessonPlayerClient({
                           scenario={tutorScenarios[moment.scenario_id]}
                           done={tutorDone.has(moment.scenario_id)}
                           isGuest={isGuest}
-                          onComplete={(scenarioId: string) => {
-                            setTutorDone((prev) => new Set([...prev, scenarioId]));
-                            toast.success("AI Teacher check-in complete");
-                          }}
                         />
                       </div>
                     ));
@@ -788,10 +785,6 @@ export function LessonPlayerClient({
                             scenarios: tutorScenarios,
                             completedScenarioIds: [...tutorDone],
                             isGuest,
-                            onComplete: (scenarioId: string) => {
-                              setTutorDone((prev) => new Set([...prev, scenarioId]));
-                              toast.success("AI Teacher check-in complete");
-                            },
                           }}
                           onLaunchStudio={(initialTool) =>
                             handleOpenStudio(block.id, initialTool, {
@@ -818,10 +811,6 @@ export function LessonPlayerClient({
                         scenario={tutorScenarios[moment.scenario_id]}
                         done={tutorDone.has(moment.scenario_id)}
                         isGuest={isGuest}
-                        onComplete={(scenarioId: string) => {
-                          setTutorDone((prev) => new Set([...prev, scenarioId]));
-                          toast.success("AI Teacher check-in complete");
-                        }}
                       />
                     </div>
                   ))}
@@ -912,10 +901,6 @@ export function LessonPlayerClient({
                       }}
                       scenario={vivaStatus.scenario}
                       done={false}
-                      onComplete={() => {
-                        toast.success("Certificate Viva completed — checking certificate eligibility");
-                        router.refresh();
-                      }}
                     />
                   </div>
                 )}
