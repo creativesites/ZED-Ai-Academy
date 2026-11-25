@@ -6,7 +6,7 @@ import {
   createSupabaseRefLookup,
   TenantRefError,
   type TenantRefLookup,
-} from "./tenant-refs.ts";
+} from "./refs.ts";
 
 const PLATFORM = "org_platform";
 

@@ -1,6 +1,7 @@
 import "server-only";
 import { z } from "zod";
 import { createServiceClient } from "@/lib/supabase/server";
+import { STAFF_MEMBER_ROLES } from "../../authz/policy.ts";
 import type { TutorSessionRow } from "./session-context.ts";
 
 // Shared lookups for the tutor routes. All reads use the service client; callers apply the
@@ -44,7 +45,7 @@ export async function isTenantStaff(userId: string, companyId: string): Promise<
       .eq("company_id", companyId)
       .eq("profile_id", userId)
       .eq("status", "active")
-      .in("role", ["company_admin", "teacher", "instructor"])
+      .in("role", [...STAFF_MEMBER_ROLES])
       .maybeSingle(),
     supabase.from("companies").select("status").eq("id", companyId).maybeSingle(),
   ]);

@@ -1,4 +1,4 @@
-import { requireContentAuthor } from "@/lib/tenants/content-author-server";
+import { requireContentAuthor } from "@/lib/authz/content-author-server";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { gemini } from "@/lib/ai/gemini";

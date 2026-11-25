@@ -1,9 +1,8 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
-import { createClient, createServiceClient } from "@/lib/supabase/server";
-import { canManageCourse } from "@/lib/courses/course-auth-server";
+import { createServiceClient } from "@/lib/supabase/server";
+import { authorizeFlowPreview } from "@/lib/authz/context-server";
 import { blocksToText } from "@/lib/course-blocks/block-to-text";
-import { ZEDAI_TENANT_ID } from "@/lib/tenants/constants";
 import { DEFAULT_TEACHER_NAME } from "@/lib/tutor/course-teacher";
 import { describeGeminiError } from "@/lib/tutor/gemini-errors";
 import { LEARNER_AUDIO_TYPES } from "@/lib/tutor/recording";
@@ -12,7 +11,7 @@ import { generateTurnJson, synthesizeCachedSpeech, transcribeLearnerAudio } from
 import { buildSystemPrompt } from "@/lib/tutor/server/prompt";
 import { fallbackLanguageFor, runTutorTurn } from "@/lib/tutor/server/turn-pipeline";
 import { recordUsage } from "@/lib/tutor/server/usage";
-import { assertTenantRefs, tenantRefErrorResponse } from "@/lib/tenants/tenant-refs-server";
+import { assertTenantRefs, tenantRefErrorResponse } from "@/lib/authz/refs-server";
 import {
   PREVIEW_MAX_LEARNER_CHARS,
   previewHistoryToTurns,
@@ -30,41 +29,6 @@ const ALLOWED_AUDIO_TYPES = new Set(LEARNER_AUDIO_TYPES);
 
 const OPENING_INSTRUCTION =
   "The teacher is previewing this flow as a student. Open the session now in character, greet briefly, and begin the first step.";
-
-async function authorizeStaffPreview(
-  userId: string,
-  flow: PreviewFlowPayload,
-): Promise<{ allowed: true; companyId: string } | { allowed: false }> {
-  const db = createServiceClient();
-
-  if (flow.courseId) {
-    const { allowed, course } = await canManageCourse(createClient(), flow.courseId, userId);
-    if (!allowed || !course) return { allowed: false };
-    return { allowed: true, companyId: course.company_id ?? ZEDAI_TENANT_ID };
-  }
-
-  if (flow.companyId) {
-    const [{ data: profile }, { data: company }, { data: member }] = await Promise.all([
-      db.from("profiles").select("role").eq("id", userId).maybeSingle(),
-      db.from("companies").select("admin_id").eq("id", flow.companyId).maybeSingle(),
-      db
-        .from("company_members")
-        .select("role, status")
-        .eq("company_id", flow.companyId)
-        .eq("profile_id", userId)
-        .maybeSingle(),
-    ]);
-    if (
-      profile?.role === "super_admin" ||
-      company?.admin_id === userId ||
-      (member?.status === "active" && ["company_admin", "teacher", "instructor"].includes(member.role))
-    ) {
-      return { allowed: true, companyId: flow.companyId };
-    }
-  }
-
-  return { allowed: false };
-}
 
 type ParsedTurnBody =
   | {
@@ -159,7 +123,7 @@ export async function POST(req: NextRequest) {
   const body = await parseRequest(req);
   if (!body.ok) return NextResponse.json({ error: body.error }, { status: body.status });
 
-  const authResult = await authorizeStaffPreview(userId, body.flow);
+  const authResult = await authorizeFlowPreview(userId, body.flow);
   if (!authResult.allowed) return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
 
   const companyId = authResult.companyId;

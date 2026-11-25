@@ -6,7 +6,7 @@ import {
   createSupabaseRefLookup,
   TenantRefError,
   type TenantRefs,
-} from "@/lib/tenants/tenant-refs";
+} from "@/lib/authz/refs";
 
 /** Throws a {@link TenantRefError} when any id in `refs` belongs to another tenant. */
 export async function assertTenantRefs(companyId: string, refs: TenantRefs): Promise<void> {

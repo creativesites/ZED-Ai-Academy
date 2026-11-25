@@ -13,6 +13,7 @@ import { loadWeakMasteryRows } from "../mastery/server.ts";
 import { buildRevisionSprintScenario } from "../mastery/sprint.ts";
 import type { Mode, SessionOrigin } from "../scenario.ts";
 import { resolveDefaultPersona } from "./session-context.ts";
+import { STAFF_MEMBER_ROLES } from "../../authz/policy.ts";
 
 // Loads the facts for entitlements.ts and applies them. All DB reads use the service client;
 // the authorization decision is made here, from the verified Clerk user id.
@@ -62,7 +63,7 @@ export type ResolveTutorAccessInput = {
   companyId?: string;
 };
 
-const STAFF_ROLES = ["company_admin", "teacher", "instructor"];
+const STAFF_ROLES: readonly string[] = STAFF_MEMBER_ROLES;
 
 export const DEFAULT_TUTOR_SETTINGS = {
   practice_room_enabled: true,

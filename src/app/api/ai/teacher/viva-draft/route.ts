@@ -13,7 +13,7 @@ import { generateAuthoringJson, loadLessonAuthoringContext } from "@/lib/tutor/a
 import { isSchemaUnavailableError } from "@/lib/tutor/mastery/server";
 import { buildCourseVivaPrompt } from "@/lib/tutor/viva";
 import type { Json } from "@/types/database";
-import { assertTenantRefs, tenantRefErrorResponse } from "@/lib/tenants/tenant-refs-server";
+import { assertTenantRefs, tenantRefErrorResponse } from "@/lib/authz/refs-server";
 
 const bodySchema = z.object({
   courseId: z.string().uuid(),

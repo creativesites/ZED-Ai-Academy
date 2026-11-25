@@ -13,7 +13,7 @@ import { lessonObjectiveSchema, summarizeLessonMaterial } from "@/lib/tutor/auth
 import { AUTHORING_TEMPLATE_IDS, getAuthoringTemplate } from "@/lib/tutor/authoring/templates";
 import { generateAuthoringJson, loadLessonAuthoringContext } from "@/lib/tutor/authoring/server";
 import { sceneFromValue } from "@/lib/tutor/tutor-session-block";
-import { assertTenantRefs, tenantRefErrorResponse } from "@/lib/tenants/tenant-refs-server";
+import { assertTenantRefs, tenantRefErrorResponse } from "@/lib/authz/refs-server";
 
 const bodySchema = z.object({
   courseId: z.string().uuid(),
