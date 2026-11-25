@@ -2,7 +2,7 @@
 
 import { BookmarkCheck, BookmarkPlus, Download, RotateCcw, Sparkles, X } from "lucide-react";
 import type { SaySpeechEvent } from "@/components/tutor/EventPlayer";
-import { buildStudyNotesMarkdown, slugifyFilename } from "@/lib/tutor/study-export";
+import { downloadStudyNotesPdf } from "@/lib/tutor/download-study-pdf";
 
 export type TranscriptEntry =
   | {
@@ -40,7 +40,7 @@ type TranscriptDrawerProps = {
  * Slide-over session transcript & universal Study Notes drawer.
  * Works for ANY subject (concepts, formulas, definitions, code tips, or language phrases):
  * tap Bookmark on any teacher line or board takeaway to save it to your SM-2 Study Deck,
- * or export the full Markdown study sheet in one click.
+ * or export the full study sheet as a PDF in one click.
  */
 export function TranscriptDrawer({
   open,
@@ -55,7 +55,7 @@ export function TranscriptDrawer({
   if (!open) return null;
 
   const handleDownloadNotes = () => {
-    const md = buildStudyNotesMarkdown({
+    void downloadStudyNotesPdf({
       title: sceneTitle || "Teaching session",
       teacherName,
       transcript: entries.map((e) => ({
@@ -64,16 +64,7 @@ export function TranscriptDrawer({
         text: e.text,
         translation: e.role === "teacher" ? e.translation : undefined,
       })),
-    });
-    const blob = new Blob([md], { type: "text/markdown;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = slugifyFilename(sceneTitle || "ai-teacher-notes");
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
+    }).catch((err) => console.error("[study-notes] PDF export failed", err));
   };
 
   return (
@@ -103,7 +94,7 @@ export function TranscriptDrawer({
               <button
                 type="button"
                 onClick={handleDownloadNotes}
-                title="Download Markdown study notes"
+                title="Download your study notes as a PDF"
                 className="inline-flex h-8 items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-2.5 text-[11px] font-bold text-[#062e39] transition hover:border-[#fd5523]/40 hover:bg-[#fff2e9] hover:text-[#fd5523]"
               >
                 <Download className="h-3.5 w-3.5" aria-hidden="true" />

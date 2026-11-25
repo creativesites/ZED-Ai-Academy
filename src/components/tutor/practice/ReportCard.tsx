@@ -12,7 +12,8 @@ import {
 } from "@/lib/tutor/report-model";
 import { toneSegments } from "@/lib/tutor/romanization";
 import { useTeacherVoice } from "@/components/tutor/voice/use-teacher-voice";
-import { buildStudyNotesMarkdown, slugifyFilename, type ExportTranscriptLine } from "@/lib/tutor/study-export";
+import type { ExportTranscriptLine } from "@/lib/tutor/study-export";
+import { downloadStudyNotesPdf } from "@/lib/tutor/download-study-pdf";
 import { saveSessionWordsToDeck } from "@/actions/tutor-learner";
 import styles from "./practice.module.css";
 import { hasHan, toneClass } from "./SpeakingStage";
@@ -88,6 +89,7 @@ export function ReportCard({
   const reviewCount = objectives.filter((o) => o.status === "review").length;
   const hasWeakObjectives = partialCount + reviewCount > 0;
   const [deckState, setDeckState] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [downloadingNotes, setDownloadingNotes] = useState(false);
 
   async function handleSaveToDeck() {
     if (words.length === 0 || deckState === "saving" || deckState === "saved") return;
@@ -334,27 +336,26 @@ export function ReportCard({
         <button
           type="button"
           onClick={() => {
-            const md = buildStudyNotesMarkdown({
+            if (downloadingNotes) return;
+            setDownloadingNotes(true);
+            downloadStudyNotesPdf({
               title,
               teacherName,
               report,
               savedTakeaways: words,
               transcript,
-            });
-            const blob = new Blob([md], { type: "text/markdown;charset=utf-8" });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            a.href = url;
-            a.download = slugifyFilename(title);
-            document.body.appendChild(a);
-            a.click();
-            a.remove();
-            URL.revokeObjectURL(url);
+            })
+              .catch((err) => console.error("[study-notes] PDF export failed", err))
+              .finally(() => setDownloadingNotes(false));
           }}
           className="inline-flex items-center justify-center gap-1.5 rounded-2xl border border-[var(--line-strong)] bg-white px-4 py-3 text-sm font-semibold text-[var(--ink)] hover:bg-[var(--soft-hover)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus)]"
         >
-          <Download className="h-4 w-4 text-[#fd5523]" aria-hidden="true" />
-          Download notes
+          {downloadingNotes ? (
+            <Loader2 className="h-4 w-4 animate-spin text-[#fd5523]" aria-hidden="true" />
+          ) : (
+            <Download className="h-4 w-4 text-[#fd5523]" aria-hidden="true" />
+          )}
+          {downloadingNotes ? "Preparing PDF…" : "Download notes (PDF)"}
         </button>
         {onDone && (
           <button
