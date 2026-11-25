@@ -11,12 +11,15 @@ export function PracticeExerciseBlock({
   submission,
   onLaunchStudio,
   previewMode = false,
+  isGuest = false,
 }: {
   blockId: string;
   content: Record<string, unknown>;
   submission?: any;
   onLaunchStudio?: (initialTool?: string) => void;
   previewMode?: boolean;
+  /** Signed-out showcase visitor: can try the Prompt lab, but submitting needs an account. */
+  isGuest?: boolean;
 }) {
   const title = (content.title as string) || "Practice Exercise";
   const brief = content.brief as string | undefined;
@@ -373,6 +376,18 @@ export function PracticeExerciseBlock({
                 </Button>
               )}
 
+              {isGuest ? (
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
+                  <p className="font-semibold text-slate-800">Want feedback on your answer?</p>
+                  <p className="mt-1">Create a free account to submit this exercise and keep your progress.</p>
+                  <a
+                    href={`/sign-up?redirect_url=${encodeURIComponent(typeof window === "undefined" ? "/" : window.location.pathname + window.location.search)}`}
+                    className="mt-3 inline-flex items-center justify-center rounded-xl bg-[#fd5523] px-4 py-2 text-sm font-bold text-white hover:bg-[#ef4a16]"
+                  >
+                    Sign up free to submit
+                  </a>
+                </div>
+              ) : (
               <form action={submitPracticeExercise} className="space-y-4">
                 <input type="hidden" name="exercise_block_id" value={blockId} />
                 <input type="hidden" name="studio_output" id={`studio-output-${blockId}`} />
@@ -416,6 +431,7 @@ export function PracticeExerciseBlock({
                   🚀 Submit for Feedback
                 </Button>
               </form>
+              )}
             </div>
           </div>
         )}

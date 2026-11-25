@@ -125,6 +125,7 @@ export function BlockRenderer({
           submission={submission}
           onLaunchStudio={onLaunchStudio}
           previewMode={previewMode}
+          isGuest={tutor?.isGuest}
         />
       );
     }
