@@ -1,9 +1,10 @@
+import "server-only";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database";
 
-// Service-role client for all server-side code.
-// Authorization is enforced at the application layer via Clerk auth() before any
-// DB call — so bypassing RLS here is safe and avoids needing a Clerk JWT template.
+// Service-role client for all server-side code. ⚠️ This BYPASSES Row Level Security:
+// every caller must authorize the user (Clerk auth() + tenant/course checks) before touching
+// data. `server-only` makes any accidental import into client code a build error.
 export const createClient = () =>
   createSupabaseClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,

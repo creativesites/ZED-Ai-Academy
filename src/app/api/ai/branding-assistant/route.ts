@@ -109,6 +109,6 @@ Provide the enhanced version now as JSON.`;
     return Response.json({ error: "Invalid action" }, { status: 400 });
   } catch (error: any) {
     console.error("AI Branding Assistant error:", error);
-    return Response.json({ error: error.message || "Failed to process AI brand request" }, { status: 500 });
+    return Response.json({ error: "Failed to process AI brand request" }, { status: 500 });
   }
 }

@@ -5,7 +5,9 @@ import { uploadMedia } from "@/actions/upload";
 import { Loader2, Upload, X, ImageIcon, FileText } from "lucide-react";
 
 type Props = {
+  /** A course id, or "site-assets" (then tenantSlug is required) for academy site images. */
   courseId: string;
+  tenantSlug?: string;
   folder: string;
   accept?: string;
   label?: string;
@@ -20,7 +22,7 @@ function formatBytes(bytes: number) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-export function FileUpload({ courseId, folder, accept, label, currentUrl, isImage = false, onUpload }: Props) {
+export function FileUpload({ courseId, tenantSlug, folder, accept, label, currentUrl, isImage = false, onUpload }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -28,14 +30,15 @@ export function FileUpload({ courseId, folder, accept, label, currentUrl, isImag
 
   function handleFile(file: File) {
     setError(null);
-    const maxBytes = isImage ? 5 * 1024 * 1024 : 25 * 1024 * 1024;
+    const maxBytes = 4 * 1024 * 1024; // matches the server limit (Vercel caps request bodies at 4.5 MB)
     if (file.size > maxBytes) {
-      setError(`File exceeds ${isImage ? "5 MB" : "25 MB"} limit`);
+      setError("File exceeds the 4 MB limit. Compress it or link to it instead.");
       return;
     }
     const fd = new FormData();
     fd.append("file", file);
     fd.append("courseId", courseId);
+    if (tenantSlug) fd.append("tenantSlug", tenantSlug);
     fd.append("folder", folder);
 
     start(async () => {

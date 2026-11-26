@@ -1,4 +1,5 @@
 "use client";
+import { sanitizeRichHtml } from "@/lib/sanitize";
 
 export function TextBlock({ content }: { content: Record<string, unknown> }) {
   const html = content.html as string;
@@ -14,7 +15,7 @@ export function TextBlock({ content }: { content: Record<string, unknown> }) {
         prose-pre:bg-ink prose-pre:rounded-2xl prose-pre:shadow-xl
         prose-blockquote:border-l-brand prose-blockquote:bg-brand-soft/50 prose-blockquote:rounded-r-2xl prose-blockquote:py-1 prose-blockquote:px-6
         prose-li:text-slate-600 prose-li:marker:text-brand-text"
-      dangerouslySetInnerHTML={{ __html: html }}
+      dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(html) }}
     />
   );
 }

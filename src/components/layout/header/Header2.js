@@ -3,7 +3,6 @@ import { useState, useEffect } from "react";
 import Link from "next/link"
 import { useAuth } from "@clerk/nextjs"
 import { SignInButton, SignUpButton, UserButton, OrganizationSwitcher } from "@clerk/nextjs"
-import { getSiteAsset } from "@/lib/site-assets";
 import Menu from "../Menu"
 import MobileMenu from "../MobileMenu"
 import { LaunchAcademyCTA } from "@/components/layout/LaunchAcademyCTA"
@@ -106,13 +105,6 @@ function AuthButtons({ notificationBell }) {
 }
 
 export default function Header2({ scroll, handlePopup, handleSidebar, handleMobileMenu, notificationBell }) {
-    const [logoImg, setLogoImg] = useState("/brand/cs-learn-logo-on-dark.png");
-    const [logoImg1, setLogoImg1] = useState("/brand/cs-learn-logo-on-dark.png");
-
-    useEffect(() => {
-        getSiteAsset("home_hero", logoImg).then(setLogoImg);
-    }, []);
-
     const TopBar = () => (
         <div className="main-header-two__top py-3">
             <div className="main-header-two__top-inner">

@@ -15,6 +15,7 @@ import {
   Heading3,
   Quote,
 } from "lucide-react";
+import { sanitizeRichHtml } from "@/lib/sanitize";
 
 interface TextBlockContent {
   html: string;
@@ -158,6 +159,6 @@ export function TextBlockEditor({
 
 export function TextBlockPreview({ content }: { content: TextBlockContent }) {
   return (
-    <div className="prose prose-slate prose-sm max-w-none text-slate-800" dangerouslySetInnerHTML={{ __html: content.html }} />
+    <div className="prose prose-slate prose-sm max-w-none text-slate-800" dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(content.html) }} />
   );
 }

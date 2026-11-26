@@ -5,6 +5,7 @@ import { ensureProfile } from "@/lib/supabase/ensure-profile";
 import { resolveHome, tenantLandingPath } from "@/lib/tenants/resolve-home";
 import { createServiceClient } from "@/lib/supabase/server";
 import { ensureTenantMembership } from "@/actions/tenants";
+import { safeRedirectPath } from "@/lib/safe-redirect";
 
 /**
  * Post-sign-in router. Signed-in users should never idle on the main site:
@@ -23,24 +24,14 @@ export async function GET(req: NextRequest) {
 
   // If a safe same-origin redirect URL was requested (e.g. from a specific academy or course)
   if (rawRedirect) {
-    let safePath = "";
-    if (rawRedirect.startsWith("/") && !rawRedirect.startsWith("//")) {
-      safePath = rawRedirect;
-    } else if (rawRedirect.startsWith("http://") || rawRedirect.startsWith("https://")) {
-      try {
-        const parsed = new URL(rawRedirect);
-        const reqHost = req.headers.get("host") || req.nextUrl.host;
-        const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || "";
-        const isSameOrigin =
-          parsed.host === reqHost ||
-          (rootDomain && (parsed.host === rootDomain || parsed.host.endsWith(`.${rootDomain}`)));
-        if (isSameOrigin) {
-          safePath = parsed.pathname + parsed.search;
-        }
-      } catch {
-        safePath = "";
-      }
-    }
+    const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || "";
+    const reqHost = req.headers.get("host") || req.nextUrl.host;
+    const safePath =
+      safeRedirectPath(
+        rawRedirect,
+        req.nextUrl.origin,
+        (host) => host === reqHost || Boolean(rootDomain && (host === rootDomain || host.endsWith(`.${rootDomain}`)))
+      ) ?? "";
 
     // Check if this is an academy route: /academy/:slug/...
     if (safePath.startsWith("/academy/")) {

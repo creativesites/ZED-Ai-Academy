@@ -1,8 +1,10 @@
-import { auth, currentUser } from "@clerk/nextjs/server";
+import { auth, clerkClient, currentUser } from "@clerk/nextjs/server";
 import { notFound, redirect } from "next/navigation";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { JoinClient } from "./join-client";
 import { ensureTenantMembership, validateAndJoinStaff } from "@/actions/tenants";
+import { resolveJoinAssignments } from "@/lib/tenants/join-decision";
+import { staffCodeMatches } from "@/lib/tenants/staff-code";
 
 export const metadata = {
   title: "Join Academy",
@@ -10,7 +12,9 @@ export const metadata = {
 
 interface JoinPageProps {
   params: Promise<{ domain: string }>;
-  searchParams: Promise<{ code?: string; role?: string; courseId?: string; cohortId?: string }>;
+  // courseId / cohortId query params are deliberately ignored: course and cohort assignments
+  // come only from the invite metadata an admin set on the user (see resolveJoinAssignments).
+  searchParams: Promise<{ code?: string; role?: string }>;
 }
 
 async function applyPendingLearnerAssignments({
@@ -52,7 +56,8 @@ async function applyPendingLearnerAssignments({
           status: "active",
           notes: "Enrolled via academy invitation",
         });
-      } else if (existingEnroll.status !== "active") {
+      } else if (existingEnroll.status === "pending_payment") {
+        // An admin invite to this course outranks a pending checkout. Revoked access stays revoked.
         await service
           .from("enrollments")
           .update({ status: "active", company_id: companyId })
@@ -91,7 +96,7 @@ export default async function TenantJoinPage({
   searchParams,
 }: JoinPageProps) {
   const { domain } = await params;
-  const { code, role: rawRole, courseId: queryCourseId, cohortId: queryCohortId } = await searchParams;
+  const { code, role: rawRole } = await searchParams;
   const { userId } = await auth();
 
   const supabase = createClient();
@@ -106,6 +111,14 @@ export default async function TenantJoinPage({
   }
 
   const role: "teacher" | "learner" = rawRole === "teacher" ? "teacher" : "learner";
+  // Only these fields reach the browser. Never pass teacher_code to the client.
+  const publicCompany = {
+    id: company.id,
+    name: company.name,
+    slug: company.slug,
+    logo_url: company.logo_url,
+    primary_color: company.primary_color,
+  };
 
   // Check if current user is already a member
   let isAlreadyMember = false;
@@ -113,15 +126,24 @@ export default async function TenantJoinPage({
 
   if (userId) {
     const user = await currentUser();
-    const meta = (user?.publicMetadata ?? {}) as {
-      invitedCompanyId?: string;
-      invitedCourseId?: string | null;
-      invitedCohortId?: string | null;
+    const invite = resolveJoinAssignments(
+      company.id,
+      (user?.publicMetadata ?? null) as Parameters<typeof resolveJoinAssignments>[1]
+    );
+    const effectiveCourseId = invite.courseId;
+    const effectiveCohortId = invite.cohortId;
+    // Invite metadata is single-use: clear it once applied so it can't be replayed.
+    const clearInvite = async () => {
+      if (!invite.shouldClearInviteMetadata) return;
+      try {
+        const client = await clerkClient();
+        await client.users.updateUserMetadata(userId, {
+          publicMetadata: { invitedCompanyId: null, invitedCourseId: null, invitedCohortId: null },
+        });
+      } catch (err) {
+        console.error("[join] failed to clear invite metadata", err);
+      }
     };
-    const effectiveCourseId =
-      queryCourseId || (meta.invitedCompanyId === company.id ? meta.invitedCourseId : null);
-    const effectiveCohortId =
-      queryCohortId || (meta.invitedCompanyId === company.id ? meta.invitedCohortId : null);
 
     const { data: member } = await supabase
       .from("company_members")
@@ -140,6 +162,7 @@ export default async function TenantJoinPage({
         courseId: effectiveCourseId,
         cohortId: effectiveCohortId,
       });
+      await clearInvite();
 
       // If already a member with sufficient role, send them directly
       if (role === "teacher" && (member.role === "teacher" || member.role === "company_admin")) {
@@ -150,9 +173,22 @@ export default async function TenantJoinPage({
       }
     }
 
+    // Members an admin removed or suspended can't re-admit themselves through this page.
+    if (member && member.status !== "active") {
+      return (
+        <JoinClient
+          company={publicCompany}
+          role={role}
+          isSignedIn
+          isAlreadyMember={false}
+          membershipInactive
+        />
+      );
+    }
+
     // Auto-join if valid credentials provided
-    if (role === "teacher" && code && code === company.teacher_code) {
-      await validateAndJoinStaff(company.slug, code);
+    if (role === "teacher" && staffCodeMatches(company.teacher_code, code)) {
+      await validateAndJoinStaff(company.slug, code ?? "");
       redirect(`/academy/${company.slug}/admin`);
     }
 
@@ -164,13 +200,14 @@ export default async function TenantJoinPage({
         courseId: effectiveCourseId,
         cohortId: effectiveCohortId,
       });
+      await clearInvite();
       redirect(`/academy/${company.slug}/classroom`);
     }
   }
 
   return (
     <JoinClient
-      company={company}
+      company={publicCompany}
       initialCode={code}
       role={role}
       isSignedIn={Boolean(userId)}

@@ -51,20 +51,3 @@ export async function getReferralStats(): Promise<{ code: string; total: number;
   return { code, total: withReferral.length, converted };
 }
 
-// Called on successful enrollment if referral_code param present
-export async function trackReferral(referralCode: string, newUserId: string) {
-  const supabase = createClient();
-  const { data: referral } = await supabase
-    .from("referrals")
-    .select("id, referrer_id")
-    .eq("referral_code", referralCode)
-    .is("referred_id", null)
-    .maybeSingle();
-
-  if (!referral || referral.referrer_id === newUserId) return;
-
-  await supabase
-    .from("referrals")
-    .update({ referred_id: newUserId, status: "converted" })
-    .eq("id", referral.id);
-}

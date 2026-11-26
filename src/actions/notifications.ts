@@ -44,8 +44,10 @@ export async function markRead(notificationId: string) {
     .eq("user_id", userId);
 }
 
-// Called from server-side code (enrollments, certificates, etc.)
-export async function insertNotification({
+// Not exported: exported functions in a "use server" file are callable from the browser,
+// and this one can write to any user's inbox. Server code that needs it should import a
+// server-only helper instead.
+async function insertNotification({
   userId,
   type,
   title,

@@ -15,8 +15,15 @@ const SERVICE_ID = process.env.EMAILJS_SERVICE_ID ?? "service_ecfpcgk";
 const PUBLIC_KEY = process.env.EMAILJS_PUBLIC_KEY ?? "6c9PxVa7E_2DcRPVf";
 const PRIVATE_KEY = process.env.EMAILJS_PRIVATE_KEY!;
 
+const warnedMissing = new Set<string>();
+
 async function sendEmail(templateId: string | undefined, params: Record<string, string>) {
   if (!PRIVATE_KEY || !templateId) {
+    const what = !PRIVATE_KEY ? "EMAILJS_PRIVATE_KEY" : "template id";
+    if (!warnedMissing.has(what)) {
+      warnedMissing.add(what);
+      console.warn(`[email] Not sending: ${what} is not configured. Transactional emails are disabled.`);
+    }
     return;
   }
 

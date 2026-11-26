@@ -6,7 +6,10 @@ import { auth } from "@clerk/nextjs/server";
 import { revalidatePath } from "next/cache";
 import { resolveHome } from "@/lib/tenants/resolve-home";
 
-export async function getProfileContext(userId: string) {
+// The argument is ignored: the context is always for the signed-in user, never a caller-chosen id.
+export async function getProfileContext(_requestedUserId?: string) {
+  const { userId } = await auth();
+  if (!userId) return null;
   // Single parallel lookup shared with the post-sign-in redirect (see resolveHome).
   const home = await resolveHome(userId);
   if (!home.platformRole) return null;

@@ -1,7 +1,7 @@
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { redirect, notFound } from "next/navigation";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
-import { initiatePayment } from "@/lib/payments/paychangu";
+import { checkoutCurrency, initiatePayment } from "@/lib/payments/paychangu";
 import { isFreeAfterDiscount } from "@/lib/payments/pricing";
 import { insertOrder, incrementCouponUsage } from "@/lib/payments/orders";
 import { resolveCouponForCourse } from "@/actions/coupons";
@@ -98,7 +98,7 @@ async function startCheckout(slug: string, courseId: string, formData: FormData)
       courseId: course.id,
       companyId: course.company_id,
       amount: 0,
-      currency: "ZMW",
+      currency: checkoutCurrency(),
       status: "paid",
       paymentReference: txRef,
       paymentMethod: "coupon",
@@ -144,14 +144,17 @@ async function startCheckout(slug: string, courseId: string, formData: FormData)
     courseId: course.id,
     companyId: course.company_id,
     amount: finalAmount,
-    currency: "ZMW",
+    currency: checkoutCurrency(),
     status: "pending",
     paymentReference: txRef,
     couponCode: validatedCouponCode,
     discountAmount,
   });
 
-  if (orderError) throw new Error(orderError.message);
+  if (orderError) {
+    console.error("[checkout] could not create order", orderError);
+    redirect(`/courses/${course.slug}/checkout?error=${encodeURIComponent("We couldn't start your order. Please try again.")}`);
+  }
 
   if (process.env.NODE_ENV !== "production") {
     console.info("[checkout] Initiating PayChangu payment", {
@@ -169,17 +172,19 @@ async function startCheckout(slug: string, courseId: string, formData: FormData)
   const result = await initiatePayment({
     txRef,
     amount: finalAmount,
-    currency: "ZMW",
+    currency: checkoutCurrency(),
     email: primaryEmail,
     firstName: clerkUser.firstName ?? "",
     lastName: clerkUser.lastName ?? "",
     courseTitle: course.title,
-    returnUrl: `${appUrl}/courses/${course.slug}/learn?enrolled=1`,
+    returnUrl: `${appUrl}/courses/${course.slug}/checkout/return?tx_ref=${encodeURIComponent(txRef)}`,
     callbackUrl: `${appUrl}/api/webhooks/paychangu`,
   });
 
   if (!result.success) {
-    throw new Error(result.error);
+    // Don't leave a dangling pending order behind a gateway error.
+    await createServiceClient().from("orders").update({ status: "failed" }).eq("payment_reference", txRef).eq("status", "pending");
+    redirect(`/courses/${course.slug}/checkout?error=${encodeURIComponent(result.error)}`);
   }
 
   redirect(result.checkoutUrl);

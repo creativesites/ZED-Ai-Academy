@@ -436,6 +436,7 @@ export function SettingsForm({
 
               <FileUpload
                 courseId="site-assets"
+                tenantSlug={tenantSlug}
                 folder="logos"
                 accept="image/*"
                 isImage={true}
@@ -702,6 +703,7 @@ export function SettingsForm({
                     <Label className="text-xs font-bold text-slate-700">Featured Hero Image</Label>
                     <FileUpload
                       courseId="site-assets"
+                tenantSlug={tenantSlug}
                       folder="banners"
                       accept="image/*"
                       isImage={true}
@@ -764,6 +766,7 @@ export function SettingsForm({
                     <Label className="text-xs font-bold text-slate-700">Story Image</Label>
                     <FileUpload
                       courseId="site-assets"
+                tenantSlug={tenantSlug}
                       folder="about"
                       accept="image/*"
                       isImage={true}

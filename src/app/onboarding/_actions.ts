@@ -5,6 +5,7 @@ import { cookies } from "next/headers";
 import { createServiceClient } from "@/lib/supabase/server";
 import type { CompanyMemberRole, UserRole } from "@/types/database";
 import { generateUniqueSlug } from "@/lib/utils";
+import { isUsableStaffCode, staffCodeMatches } from "@/lib/tenants/staff-code";
 
 function normalizeSignupRole(rawRole: string | null): UserRole {
   if (rawRole === "company_admin" || rawRole === "tutor") return "company_admin";
@@ -50,15 +51,30 @@ export async function completeOnboarding(formData: FormData) {
       return { error: "Please create your academy before continuing." };
     }
 
-    await client.users.updateUser(userId, {
-      publicMetadata: {
-        onboardingComplete: true,
-        role: finalRole,
-      },
-    });
+    // Validate a staff (teacher) sign-up BEFORE writing anything, so a wrong or missing code
+    // can't leave the user marked as an onboarded teacher.
+    if (finalRole === "teacher") {
+      if (!tenantSlug) {
+        return { error: "Staff accounts must join through their academy's staff link." };
+      }
+      const { data: staffTenant } = await supabase
+        .from("companies")
+        .select("teacher_code")
+        .eq("slug", tenantSlug)
+        .maybeSingle();
+      if (!staffTenant) {
+        return { error: "Academy not found. Please use your academy's staff link." };
+      }
+      if (!isUsableStaffCode(staffTenant.teacher_code)) {
+        return { error: "This academy hasn't enabled staff sign-up yet. Ask the owner to set a staff access code." };
+      }
+      if (!staffCodeMatches(staffTenant.teacher_code, teacherCode)) {
+        return { error: "Invalid staff access code for this academy." };
+      }
+    }
 
     // 1. Update Profiles table FIRST to satisfy FK constraints
-    await supabase
+    const { error: profileError } = await supabase
       .from("profiles")
       .upsert({
         id: userId,
@@ -67,6 +83,16 @@ export async function completeOnboarding(formData: FormData) {
         onboarding_completed: true,
         updated_at: new Date().toISOString(),
       }, { onConflict: "id" });
+    if (profileError) throw new Error(`Could not save your profile: ${profileError.message}`);
+
+    // Mark onboarding complete in Clerk only after the DB profile exists, so the two can't
+    // disagree (Clerk says done, DB says not done → /after-sign-in ↔ /onboarding loop).
+    await client.users.updateUser(userId, {
+      publicMetadata: {
+        onboardingComplete: true,
+        role: finalRole,
+      },
+    });
 
     let joinedCompanyId: string | null = null;
     let joinedCompanySlug: string | null = null;
@@ -107,12 +133,8 @@ export async function completeOnboarding(formData: FormData) {
 
       if (tenant) {
         if (finalRole === "teacher") {
-          // "0000" is the legacy DB default, i.e. the owner never set a code: treat as not configured.
-          const expectedCode = tenant.teacher_code;
-          if (!expectedCode || expectedCode === "0000") {
-            return { error: "This academy hasn't enabled staff sign-up yet. Ask the owner to set a staff access code." };
-          }
-          if (teacherCode !== expectedCode) {
+          // Already validated above; re-check defensively.
+          if (!staffCodeMatches(tenant.teacher_code, teacherCode)) {
             return { error: "Invalid staff access code for this academy." };
           }
         }
@@ -122,10 +144,15 @@ export async function completeOnboarding(formData: FormData) {
 
         const { data: existingM } = await supabase
           .from("company_members")
-          .select("role, joined_at")
+          .select("role, joined_at, status")
           .eq("company_id", tenant.id)
           .eq("profile_id", userId)
           .maybeSingle();
+
+        // A removed/suspended member can't re-admit themselves through onboarding.
+        if (existingM && existingM.status && existingM.status !== "active") {
+          return { error: "Your access to this academy is inactive. Please ask the academy administrator to re-invite you." };
+        }
 
         const requestedMemberRole = membershipRoleForProfileRole(finalRole);
         const rank: Record<string, number> = { learner: 1, teacher: 2, instructor: 2, company_admin: 3 };
@@ -173,17 +200,27 @@ export async function completeOnboarding(formData: FormData) {
         .from("courses")
         .select("id, slug, price_type, company_id")
         .eq("slug", enrollCourseSlug)
-        .single();
+        .eq("status", "published")
+        .maybeSingle();
 
       if (requestedCourse) {
         if (requestedCourse.price_type === "free") {
-          await supabase.from("enrollments").upsert({
-            user_id: userId,
-            course_id: requestedCourse.id,
-            company_id: requestedCourse.company_id,
-            status: "active",
-            source: "individual_purchase",
-          }, { onConflict: "user_id,course_id" });
+          // Insert only: never re-activate an enrollment an admin revoked.
+          const { data: existingEnrollment } = await supabase
+            .from("enrollments")
+            .select("id")
+            .eq("user_id", userId)
+            .eq("course_id", requestedCourse.id)
+            .maybeSingle();
+          if (!existingEnrollment) {
+            await supabase.from("enrollments").insert({
+              user_id: userId,
+              course_id: requestedCourse.id,
+              company_id: requestedCourse.company_id,
+              status: "active",
+              source: "individual_purchase",
+            });
+          }
 
           if (requestedCourse.company_id) {
             const { data: existingM } = await supabase

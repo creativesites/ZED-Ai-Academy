@@ -10,6 +10,7 @@ import {
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { escapeHtml } from "@/lib/sanitize";
 
 // ── Types & Tool Definitions (unchanged) ──────────────────────────────────────
 
@@ -150,7 +151,7 @@ function renderMarkdown(text: string) {
       out.push(
         <div key={key++} className="flex gap-3 text-base text-slate-600 leading-relaxed mb-3">
           <span className="mt-2.5 h-1.5 w-1.5 shrink-0 rounded-full bg-brand" />
-          <span dangerouslySetInnerHTML={{ __html: line.slice(2).replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>") }} />
+          <span dangerouslySetInnerHTML={{ __html: escapeHtml(line.slice(2)).replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>") }} />
         </div>
       );
     } else if (line.startsWith("> ")) {
@@ -166,7 +167,7 @@ function renderMarkdown(text: string) {
         <p
           key={key++}
           className="text-base text-slate-600 leading-relaxed mb-4"
-          dangerouslySetInnerHTML={{ __html: line.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>").replace(/`(.*?)`/g, "<code class='bg-brand-soft px-2 py-0.5 rounded-lg text-brand-text text-sm font-mono'>$1</code>") }}
+          dangerouslySetInnerHTML={{ __html: escapeHtml(line).replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>").replace(/`(.*?)`/g, "<code class='bg-brand-soft px-2 py-0.5 rounded-lg text-brand-text text-sm font-mono'>$1</code>") }}
         />
       );
     }

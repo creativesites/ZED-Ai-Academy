@@ -1,6 +1,7 @@
 "use client";
 
 import { BookOpen } from "lucide-react";
+import { sanitizeRichHtml } from "@/lib/sanitize";
 
 export function CaseStudyBlock({ content }: { content: Record<string, unknown> }) {
   const title = content.title as string;
@@ -21,7 +22,7 @@ export function CaseStudyBlock({ content }: { content: Record<string, unknown> }
         </div>
       </div>
       <div className="p-8 md:p-10 space-y-6">
-        <div className="prose prose-slate max-w-none prose-p:text-lg prose-p:leading-relaxed text-slate-600" dangerouslySetInnerHTML={{ __html: body }} />
+        <div className="prose prose-slate max-w-none prose-p:text-lg prose-p:leading-relaxed text-slate-600" dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(body) }} />
         {outcome && (
           <div className="rounded-2xl bg-emerald-50 border border-emerald-100 p-6">
             <p className="text-[10px] font-black uppercase tracking-widest text-emerald-600 mb-2">Key Outcome</p>

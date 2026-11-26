@@ -67,8 +67,10 @@ export async function enrollManual(
     .select("id")
     .single();
 
-  if (error || !enrollment)
-    return { success: false, error: error?.message ?? "Enrollment failed" };
+  if (error || !enrollment) {
+    if (error) console.error("[enrollments] insert failed", error);
+    return { success: false, error: "Enrollment failed. Please try again." };
+  }
 
   // AUTOMATIC TENANT JOIN ON ENROLLMENT
   if (course.company_id) {

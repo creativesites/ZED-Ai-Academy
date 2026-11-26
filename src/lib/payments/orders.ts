@@ -4,6 +4,7 @@ import { ensureTenantMembership } from "@/actions/tenants";
 import { sendPaymentConfirmation } from "@/lib/email/emailjs";
 import type { OrderStatus } from "@/types/database";
 import { BRAND } from "@/lib/brand";
+import { decideSettlement, verifyTransaction } from "@/lib/payments/paychangu";
 
 type InsertOrderParams = {
   userId: string;
@@ -54,109 +55,142 @@ export async function insertOrder(params: InsertOrderParams) {
   return { error };
 }
 
-export async function incrementCouponUsage(couponCode: string | null | undefined) {
+/**
+ * Atomically bump a coupon's use count, respecting max_uses. Retries the compare-and-swap a
+ * few times so concurrent redemptions don't silently lose an increment.
+ * Returns false if the coupon is exhausted or unknown.
+ */
+export async function incrementCouponUsage(couponCode: string | null | undefined): Promise<boolean> {
   const normalized = couponCode?.trim().toUpperCase();
-  if (!normalized) return;
+  if (!normalized) return false;
 
   const serviceClient = createServiceClient();
-  const { data: coupon } = await serviceClient
-    .from("coupons")
-    .select("id, uses_count, max_uses")
-    .eq("code", normalized)
-    .maybeSingle();
+  for (let attempt = 0; attempt < 4; attempt++) {
+    const { data: coupon } = await serviceClient
+      .from("coupons")
+      .select("id, uses_count, max_uses")
+      .eq("code", normalized)
+      .maybeSingle();
 
-  if (!coupon) return;
-  if (coupon.max_uses !== null && coupon.uses_count >= coupon.max_uses) return;
+    if (!coupon) return false;
+    if (coupon.max_uses !== null && coupon.uses_count >= coupon.max_uses) return false;
 
-  await serviceClient
-    .from("coupons")
-    .update({ uses_count: coupon.uses_count + 1 })
-    .eq("id", coupon.id)
-    .eq("uses_count", coupon.uses_count);
+    const { data: updated } = await serviceClient
+      .from("coupons")
+      .update({ uses_count: coupon.uses_count + 1 })
+      .eq("id", coupon.id)
+      .eq("uses_count", coupon.uses_count)
+      .select("id");
+    if (updated && updated.length > 0) return true;
+  }
+  console.error("[coupons] could not increment usage after retries", normalized);
+  return false;
 }
 
-export async function confirmPaidOrder({
-  txRef,
-  paymentMethod,
-}: {
-  txRef: string;
-  paymentMethod?: string | null;
-}): Promise<{ ok: true; alreadyProcessed?: boolean } | { ok: false; error: string }> {
+type OrderRow = {
+  id: string;
+  user_id: string;
+  course_id: string | null;
+  company_id: string | null;
+  amount: number;
+  currency: string | null;
+  status: OrderStatus;
+  payment_reference: string;
+  coupon_code?: string | null;
+};
+
+export type SettleResult =
+  | { state: "paid"; courseId: string | null; alreadyProcessed: boolean }
+  | { state: "pending" | "failed" | "mismatch" | "not_found"; courseId: string | null };
+
+/**
+ * Bring a single order up to date with PayChangu. Safe to call any number of times, from the
+ * webhook, the buyer's return page or a reconcile job: only one caller can move an order from
+ * `pending` to `paid`, so enrollment, coupon usage and the receipt happen exactly once.
+ */
+export async function settleOrder(txRef: string): Promise<SettleResult> {
   const supabase = createServiceClient();
 
-  let order: {
-    id: string;
-    user_id: string;
-    course_id: string | null;
-    company_id: string | null;
-    amount: number;
-    coupon_code?: string | null;
-  } | null = null;
-
-  const primaryLookup = await supabase
+  const { data: order } = await supabase
     .from("orders")
-    .select("id, user_id, course_id, company_id, amount, coupon_code")
+    .select("id, user_id, course_id, company_id, amount, currency, status, payment_reference, coupon_code")
     .eq("payment_reference", txRef)
-    .eq("status", "pending")
-    .maybeSingle();
+    .maybeSingle<OrderRow>();
 
-  if (primaryLookup.error && isMissingColumnError(primaryLookup.error)) {
-    const fallbackLookup = await supabase
-      .from("orders")
-      .select("id, user_id, course_id, company_id, amount")
-      .eq("payment_reference", txRef)
-      .eq("status", "pending")
-      .maybeSingle();
-    order = fallbackLookup.data;
-  } else {
-    order = primaryLookup.data;
+  if (!order) return { state: "not_found", courseId: null };
+  if (order.status === "paid") return { state: "paid", courseId: order.course_id, alreadyProcessed: true };
+  if (order.status !== "pending") return { state: "failed", courseId: order.course_id };
+
+  const tx = await verifyTransaction(txRef);
+  const decision = decideSettlement(
+    { paymentReference: order.payment_reference, amount: Number(order.amount), currency: order.currency ?? "ZMW" },
+    tx
+  );
+
+  if (decision === "mismatch") {
+    console.error("[payments] verified transaction does not match order", {
+      orderId: order.id,
+      expected: { amount: order.amount, currency: order.currency },
+      got: tx ? { amount: tx.amount, currency: tx.currency, status: tx.status } : null,
+    });
+    return { state: "mismatch", courseId: order.course_id };
   }
 
-  if (!order) {
-    return { ok: true, alreadyProcessed: true };
+  if (decision === "failed") {
+    await supabase.from("orders").update({ status: "failed" }).eq("id", order.id).eq("status", "pending");
+    return { state: "failed", courseId: order.course_id };
   }
 
-  await supabase
+  if (decision === "pending") return { state: "pending", courseId: order.course_id };
+
+  // decision === "paid": claim the transition. Only the caller whose update matches wins.
+  const { data: claimed, error: claimError } = await supabase
     .from("orders")
-    .update({
-      status: "paid" as const,
-      payment_method: paymentMethod ?? null,
-      paid_at: new Date().toISOString(),
-    })
-    .eq("id", order.id);
+    .update({ status: "paid" as const, payment_method: tx?.channel ?? null, paid_at: new Date().toISOString() })
+    .eq("id", order.id)
+    .eq("status", "pending")
+    .select("id");
+
+  if (claimError) {
+    console.error("[payments] could not mark order paid", order.id, claimError);
+    throw new Error("Could not record payment");
+  }
+  if (!claimed || claimed.length === 0) {
+    return { state: "paid", courseId: order.course_id, alreadyProcessed: true };
+  }
+
+  await grantPaidAccess(order);
+  return { state: "paid", courseId: order.course_id, alreadyProcessed: false };
+}
+
+async function grantPaidAccess(order: OrderRow) {
+  const supabase = createServiceClient();
 
   if (order.coupon_code) {
     await incrementCouponUsage(order.coupon_code);
   }
 
-  if (!order.course_id) {
-    return { ok: true };
-  }
+  if (!order.course_id) return;
 
-  const { error: enrollError } = await supabase.from("enrollments").insert({
-    user_id: order.user_id,
-    course_id: order.course_id,
-    company_id: order.company_id,
-    status: "active",
-    source: "individual_purchase" as const,
-  });
-
-  if (enrollError && !enrollError.message.includes("duplicate")) {
-    console.error("Enrollment insert failed:", enrollError);
-    return { ok: false, error: "Enrollment failed" };
+  // Upsert so an existing pending_payment (or previously revoked) enrollment becomes active.
+  const { error: enrollError } = await supabase.from("enrollments").upsert(
+    {
+      user_id: order.user_id,
+      course_id: order.course_id,
+      company_id: order.company_id,
+      status: "active",
+      source: "individual_purchase" as const,
+    },
+    { onConflict: "user_id,course_id" }
+  );
+  if (enrollError) {
+    console.error("[payments] enrollment upsert failed for paid order", order.id, enrollError);
+    throw new Error("Enrollment failed");
   }
 
   const [profileResult, courseResult] = await Promise.all([
-    supabase
-      .from("profiles")
-      .select("full_name, email")
-      .eq("id", order.user_id)
-      .single(),
-    supabase
-      .from("courses")
-      .select("title, slug, company_id")
-      .eq("id", order.course_id)
-      .single(),
+    supabase.from("profiles").select("full_name, email").eq("id", order.user_id).single(),
+    supabase.from("courses").select("title, slug, company_id").eq("id", order.course_id).single(),
   ]);
 
   const resolvedCompanyId = courseResult.data?.company_id ?? order.company_id;
@@ -164,25 +198,47 @@ export async function confirmPaidOrder({
     try {
       await ensureTenantMembership(order.user_id, resolvedCompanyId, "learner");
     } catch (membershipErr) {
-      console.error("[PayChangu Webhook] Failed to ensure tenant membership:", membershipErr);
+      console.error("[payments] failed to ensure tenant membership:", membershipErr);
     }
   }
 
   const profileEmail = profileResult.data?.email;
   if (profileEmail && profileResult.data && courseResult.data) {
-    const profile = profileResult.data;
-    const course = courseResult.data;
-    const firstName = profile.full_name?.split(" ")[0] ?? "there";
+    const firstName = profileResult.data.full_name?.split(" ")[0] ?? "there";
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || BRAND.url;
-
-    await sendPaymentConfirmation({
+    // Receipt is best-effort: never fail a confirmed payment because email failed.
+    sendPaymentConfirmation({
       toEmail: profileEmail,
       toName: firstName,
-      courseTitle: course.title,
-      amount: `ZMW ${order.amount.toLocaleString()}`,
-      courseUrl: `${appUrl}/courses/${course.slug}/learn`,
-    });
+      courseTitle: courseResult.data.title,
+      amount: `${order.currency ?? "ZMW"} ${Number(order.amount).toLocaleString()}`,
+      courseUrl: `${appUrl}/courses/${courseResult.data.slug}/learn`,
+    }).catch((err) => console.error("[payments] receipt email failed", err));
   }
+}
 
-  return { ok: true };
+/** Re-check every order that has been pending longer than `olderThanMinutes`. */
+export async function reconcilePendingOrders(olderThanMinutes = 10, limit = 50) {
+  const supabase = createServiceClient();
+  const cutoff = new Date(Date.now() - olderThanMinutes * 60_000).toISOString();
+  const { data: pending } = await supabase
+    .from("orders")
+    .select("payment_reference")
+    .eq("status", "pending")
+    .lt("created_at", cutoff)
+    .order("created_at", { ascending: true })
+    .limit(limit);
+
+  const summary: Record<string, number> = {};
+  for (const row of pending ?? []) {
+    if (!row.payment_reference) continue;
+    try {
+      const r = await settleOrder(row.payment_reference);
+      summary[r.state] = (summary[r.state] ?? 0) + 1;
+    } catch (err) {
+      console.error("[payments] reconcile failed for", row.payment_reference, err);
+      summary.error = (summary.error ?? 0) + 1;
+    }
+  }
+  return { checked: pending?.length ?? 0, summary };
 }

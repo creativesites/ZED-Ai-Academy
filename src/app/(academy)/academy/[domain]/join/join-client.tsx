@@ -21,6 +21,8 @@ interface JoinClientProps {
   isSignedIn: boolean;
   isAlreadyMember: boolean;
   memberRole?: string | null;
+  /** The user was removed or suspended from this academy and must be re-invited by an admin. */
+  membershipInactive?: boolean;
 }
 
 export function JoinClient({
@@ -30,6 +32,7 @@ export function JoinClient({
   isSignedIn,
   isAlreadyMember,
   memberRole,
+  membershipInactive = false,
 }: JoinClientProps) {
   const router = useRouter();
   const [code, setCode] = useState(initialCode);
@@ -91,11 +94,17 @@ export function JoinClient({
             : `Welcome! Join ${company.name} to start learning, attending classes, and collaborating.`}
         </p>
 
-        {/* State 1: Not signed in */}
-        {!isSignedIn ? (
+        {/* State 0: removed/suspended member */}
+        {membershipInactive ? (
+          <div className="p-4 rounded-2xl bg-amber-50 text-amber-900 text-sm font-medium text-left" role="alert">
+            Your access to {company.name} is currently inactive. Please contact the academy administrator to be
+            re-invited.
+          </div>
+        ) : /* State 1: Not signed in */
+        !isSignedIn ? (
           <div className="space-y-3">
             <Link
-              href={`/sign-up?redirect_url=/academy/${company.slug}/join?role=${role}${code ? `&code=${code}` : ""}`}
+              href={`/sign-up?redirect_url=${encodeURIComponent(`/academy/${company.slug}/join?role=${role}${code ? `&code=${encodeURIComponent(code)}` : ""}`)}`}
               className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl text-white font-bold text-xs uppercase tracking-wider shadow-lg transition-all hover:scale-[1.02] active:scale-95"
               style={{ backgroundColor: brandColor }}
             >
@@ -104,7 +113,7 @@ export function JoinClient({
             </Link>
 
             <Link
-              href={`/sign-in?redirect_url=/academy/${company.slug}/join?role=${role}${code ? `&code=${code}` : ""}`}
+              href={`/sign-in?redirect_url=${encodeURIComponent(`/academy/${company.slug}/join?role=${role}${code ? `&code=${encodeURIComponent(code)}` : ""}`)}`}
               className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl border-2 border-slate-100 text-ink font-bold text-xs uppercase tracking-wider hover:bg-slate-50 transition-all"
             >
               <span>Already have an account? Sign In</span>
@@ -139,7 +148,7 @@ export function JoinClient({
                   type="text"
                   value={code}
                   onChange={(e) => setCode(e.target.value)}
-                  placeholder="Enter 6-digit staff code"
+                  placeholder="Enter your staff code"
                   required
                   className="w-full h-14 px-4 rounded-2xl border-2 border-slate-200 text-lg font-mono font-bold tracking-widest text-ink focus:outline-none focus:border-brand transition-all"
                 />

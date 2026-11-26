@@ -1,36 +1,47 @@
 import { NextRequest } from "next/server";
-import { createServiceClient } from "@/lib/supabase/server";
-import { verifyWebhook } from "@/lib/payments/paychangu";
-import { confirmPaidOrder } from "@/lib/payments/orders";
+import { checkWebhookSignature, extractTxRef } from "@/lib/payments/paychangu";
+import { settleOrder } from "@/lib/payments/orders";
 
+/**
+ * PayChangu webhook (IPN). The body is only used to learn which transaction changed:
+ * settleOrder() re-queries PayChangu's verify endpoint and checks status, currency and
+ * amount against the order before granting anything.
+ *
+ * PayChangu treats any non-200 as a failure and retries (3× at 30-minute intervals),
+ * so we return 500 only for errors worth retrying.
+ */
 export async function POST(req: NextRequest) {
-  const body = await req.json();
-  const authHeader = req.headers.get("authorization");
+  const rawBody = await req.text();
 
-  const payload = verifyWebhook(authHeader, body);
-  if (!payload) {
-    return new Response("Unauthorized", { status: 401 });
+  const signature = checkWebhookSignature(rawBody, req.headers.get("signature"));
+  if (signature === "invalid") {
+    return new Response("Invalid signature", { status: 401 });
+  }
+  if (signature === "unconfigured") {
+    console.warn("[paychangu webhook] PAYCHANGU_WEBHOOK_SECRET not set; relying on verify-payment only");
   }
 
-  if (payload.status !== "success") {
-    if (payload.tx_ref) {
-      const supabase = createServiceClient();
-      await supabase
-        .from("orders")
-        .update({ status: "failed" })
-        .eq("payment_reference", payload.tx_ref);
-    }
+  let payload: unknown;
+  try {
+    payload = JSON.parse(rawBody);
+  } catch {
+    return new Response("Bad request", { status: 400 });
+  }
+
+  const txRef = extractTxRef(payload);
+  if (!txRef) {
+    // Not one of our checkout transactions (e.g. payouts). Acknowledge so it isn't retried.
     return new Response("OK", { status: 200 });
   }
 
-  const result = await confirmPaidOrder({
-    txRef: payload.tx_ref,
-    paymentMethod: payload.payment_method ?? null,
-  });
-
-  if (!result.ok) {
-    return new Response(result.error, { status: 500 });
+  try {
+    const result = await settleOrder(txRef);
+    if (result.state === "mismatch") {
+      console.error("[paychangu webhook] amount/currency mismatch", { txRef });
+    }
+    return new Response("OK", { status: 200 });
+  } catch (err) {
+    console.error("[paychangu webhook] settle failed", { txRef, err });
+    return new Response("Retry later", { status: 500 });
   }
-
-  return new Response("OK", { status: 200 });
 }

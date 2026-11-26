@@ -24,7 +24,7 @@ export async function GET(
   } catch (error: any) {
     console.error("[api/live-sessions/slots] Error:", error);
     return NextResponse.json(
-      { error: error.message || "Internal Server Error" },
+      { error: "Could not load available slots" },
       { status: 500 }
     );
   }

@@ -17,7 +17,8 @@ async function requireEnrollmentAccess(companyId?: string | null) {
     .eq("id", userId)
     .single();
 
-  if (profile?.role === "super_admin" || profile?.role === "instructor") {
+  // Only platform super admins act across tenants. Instructors/teachers are checked per tenant below.
+  if (profile?.role === "super_admin") {
     return { userId, supabase };
   }
 

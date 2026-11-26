@@ -71,7 +71,8 @@ export async function POST(req: NextRequest) {
   });
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("[hero-enroll] enrollment failed", error);
+    return NextResponse.json({ error: "Enrollment failed. Please try again." }, { status: 500 });
   }
 
   // Send confirmation email (non-blocking)

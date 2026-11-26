@@ -32,10 +32,13 @@ const isPublicRoute = createRouteMatcher([
   '/api/ai/tutor',
   '/api/ai/practice-studio',
   '/api/webhooks/(.*)',
+  '/api/cron/(.*)', // authenticated by CRON_SECRET inside the route
   '/sign-in(.*)',
   '/sign-up(.*)',
   '/test(.*)',
   '/manifest.json',
+  '/robots.txt',
+  '/sitemap.xml',
   '/favicon.ico',
   '/launch-your-academy(.*)',
 ]);

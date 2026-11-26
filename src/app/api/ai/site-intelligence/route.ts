@@ -4,13 +4,28 @@ import { gemini } from "@/lib/ai/gemini/client";
 import { modelFor } from "@/lib/ai/models";
 import { NextRequest } from "next/server";
 
+function searchTerm(q: unknown): string {
+  return String(q ?? "").replace(/[^\p{L}\p{N} \-']/gu, " ").trim().slice(0, 80);
+}
+
 export async function POST(req: NextRequest) {
   const { userId } = await auth();
   
-  const { message, pathname, history = [] } = await req.json();
+  const body = await req.json().catch(() => ({}));
+  const message: unknown = body?.message;
+  const pathname: string = typeof body?.pathname === "string" ? body.pathname.slice(0, 200) : "";
+  // Bound prompt size: guests can call this, so cap the message and keep only recent, short history.
+  const history: { role: string; content: string }[] = (Array.isArray(body?.history) ? body.history : [])
+    .slice(-10)
+    .filter((m: unknown): m is { role: string; content: string } =>
+      Boolean(m) && typeof (m as { content?: unknown }).content === "string")
+    .map((m: { role: string; content: string }) => ({ role: m.role, content: m.content.slice(0, 2000) }));
 
   if (!message || typeof message !== "string") {
     return new Response("Missing message", { status: 400 });
+  }
+  if (message.length > 2000) {
+    return new Response("Message too long", { status: 413 });
   }
 
   const supabase = await createClient();
@@ -119,15 +134,18 @@ STYLE:
         } else if (name === "get_course_details" && args) {
           const { data } = await supabase
             .from("courses")
-            .select("*, modules(*, lessons(*))")
-            .eq("slug", (args as any).slug)
-            .single();
+            // Published courses only, and only the outline (never lesson bodies).
+            .select("title, slug, description, category, level, price_type, price_amount, modules(title, position, lessons(title, position, is_preview))")
+            .eq("slug", String((args as any).slug ?? ""))
+            .eq("status", "published")
+            .maybeSingle();
           resultData = { course: data };
         } else if (name === "search_content" && args) {
           const { data } = await supabase
             .from("courses")
             .select("title, slug, description, category, thumbnail_url")
-            .or(`title.ilike.%${(args as any).query}%,description.ilike.%${(args as any).query}%`)
+            // Strip PostgREST filter syntax from the model-supplied query before interpolating it.
+            .or(`title.ilike.%${searchTerm((args as any).query)}%,description.ilike.%${searchTerm((args as any).query)}%`)
             .eq("status", "published");
           resultData = { results: data || [] };
         }

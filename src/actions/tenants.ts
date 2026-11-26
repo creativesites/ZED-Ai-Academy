@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createServiceClient } from "@/lib/supabase/server";
 import type { CompanyMemberRole, UserRole } from "@/types/database";
+import { generateStaffCode, staffCodeMatches } from "@/lib/tenants/staff-code";
 
 type JoinTenantRole = "student" | "learner" | "teacher";
 
@@ -226,8 +227,7 @@ export async function validateAndJoinStaff(tenantSlug: string, code: string) {
     return { error: "Academy not found." };
   }
 
-  const cleanCode = code.trim();
-  if (!cleanCode || cleanCode !== company.teacher_code) {
+  if (!staffCodeMatches(company.teacher_code, code)) {
     return { error: "Invalid staff access code. Please check with your academy administrator." };
   }
 
@@ -241,7 +241,7 @@ export async function validateAndJoinStaff(tenantSlug: string, code: string) {
 }
 
 /**
- * Regenerates the 6-digit staff join code for an academy.
+ * Regenerates the 8-digit staff join code for an academy.
  */
 export async function regenerateStaffCode(companyId: string) {
   const { userId } = await auth();
@@ -265,7 +265,7 @@ export async function regenerateStaffCode(companyId: string) {
     }
   }
 
-  const newCode = Math.floor(100000 + Math.random() * 900000).toString();
+  const newCode = generateStaffCode();
 
   const { error } = await supabase
     .from("companies")
